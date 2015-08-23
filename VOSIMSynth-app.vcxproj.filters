@@ -81,6 +81,7 @@
     </ClCompile>
     <ClCompile Include="Oscillator.cpp" />
     <ClCompile Include="MIDIReceiver.cpp" />
+    <ClCompile Include="tables.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VOSIMSynth.rc" />

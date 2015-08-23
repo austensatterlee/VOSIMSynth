@@ -33,21 +33,21 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   TRACE;
 
   //arguments are: name, defaultVal, minVal, maxVal, step, label
-  GetParam(kKnob1)->InitDouble("Knob1", 0.1, 0.1, 1.0, 0.01, "%");
-  GetParam(kKnob1)->SetShape(1.);
-  GetParam(kKnob2)->InitDouble("Knob2", 0.1, 0.0, 1.0, 0.001, "%");
-  GetParam(kKnob2)->SetShape(1.);
-  GetParam(kKnob3)->InitDouble("Knob3", 0.5, 0.0, 1.0, 0.001, "%");
-  GetParam(kKnob3)->SetShape(1.);
-  GetParam(kKnob4)->InitDouble("Knob4", 0.9, 0.0, 1.0, 0.001, "%");
+  GetParam(kKnob1)->InitDouble("Env1A", 0.1, 0.1, 10.0, 0.01, "Env1 A");
+  GetParam(kKnob1)->SetShape(2.);
+  GetParam(kKnob2)->InitDouble("Env1D", 0.1, 0.1, 10.0, 0.01, "Env1 D");
+  GetParam(kKnob2)->SetShape(2.);
+  GetParam(kKnob3)->InitDouble("Env1R", 0.5, 0.1, 10.0, 0.01, "Env1 R");
+  GetParam(kKnob3)->SetShape(2.);
+  GetParam(kKnob4)->InitDouble("Env1S", 0, -60, 0, 1, "Env1 S");
   GetParam(kKnob4)->SetShape(1.);
 
-  GetParam(kKnob5)->InitDouble("VOSIM Width", 0.0001, 0.0001, 0.001250, 0.00001, "vosim");
+  GetParam(kKnob5)->InitDouble("VOSIMWidth", 0.0001, 0.0001, 0.001250, 0.00001, "VOSIM Width");
   GetParam(kKnob5)->SetShape(1.);
-  GetParam(kKnob6)->InitInt("VOSIM Number", 5, 1, 100, "vosim");
+  GetParam(kKnob6)->InitInt("VOSIMNumber", 5, 1, 100, "VOSIM Number");
   GetParam(kKnob6)->SetShape(1.);
-  GetParam(kKnob7)->InitDouble("VOSIM Decay", 0.01, 0.0, 1.0, 0.0001, "vosim");
-  GetParam(kKnob7)->SetShape(2.);
+  GetParam(kKnob7)->InitDouble("VOSIMDecay", 0.01, 0.0, 1.0, 0.0001, "VOSIM Decay");
+  GetParam(kKnob7)->SetShape(3.);
 
   IGraphics* pGraphics = MakeGraphics(this, kWidth, kHeight);
   pGraphics->AttachPanelBackground(&COLOR_WHITE);
@@ -98,6 +98,8 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
 				}
 				mOsc[i].tick();				
 				leftOutput[s] += mOsc[i].getOutput()*mAmpEnv[i].mOutput;
+			} else {
+				mVoiceStack[i] = 0;
 			}
 		}			
 		leftOutput[s] *= 1.0 / NUM_VOICES;
@@ -123,7 +125,6 @@ void VOSIMSynth::ReleaseNote(const int noteNumber, const int velocity) {
 	uint8_t i = NUM_VOICES;
 	while (i--) {
 		if (mVoiceStack[i] == noteNumber) {
-			mVoiceStack[i] = 0;
 			mAmpEnv[i].release();
 		}
 	}
@@ -153,19 +154,19 @@ void VOSIMSynth::OnParamChange(int paramIdx)
   {
     case kKnob1:
 		while (n--)
-			mAmpEnv[n].setPeriod(0, GetParam(kKnob1)->Value());
+			mAmpEnv[n].setPeriod(0, GetParam(kKnob1)->Value(), MIN_ENV_SHAPE);
 		break;
 	case kKnob2:
 		while (n--)
-			mAmpEnv[n].setPeriod(1, GetParam(kKnob2)->Value());
+			mAmpEnv[n].setPeriod(1, GetParam(kKnob2)->Value(), MIN_ENV_SHAPE);
 		break;
 	case kKnob3:
 		while (n--)
-			mAmpEnv[n].setPeriod(2, GetParam(kKnob3)->Value());
+			mAmpEnv[n].setPeriod(2, GetParam(kKnob3)->Value(), MIN_ENV_SHAPE);
 		break;
 	case kKnob4:
 		while (n--)
-			mAmpEnv[n].setPoint_dB(1, -60*(1-GetParam(kKnob4)->Value()));
+			mAmpEnv[n].setPoint_dB(1, GetParam(kKnob4)->Value());
 		break;
 	case kKnob5:
 		while (n--)

@@ -36,8 +36,8 @@ void VOSIM::setFreq(double freq) {
 	refreshPhaseScale();
 }
 double VOSIM::getOutput() {
-	double innerPhase = ((double)mPhase * (4.656612875245797e-10) + 1) * mPhaseScale;
-	//double innerPhase = ((double)mPhase * (4.656612875245797e-10)) / (mWidth) * 0.5;
+	//double innerPhase = ((double)mPhase * (4.656612875245797e-10) + 1) * mPhaseScale;
+	double innerPhase = ((double)mPhase * (4.656612875245797e-10) + 1) * (mTargetFreq*0.001250*mPhaseScale);
 	uint32_t N = (uint32_t)innerPhase;
 	mGain = mTargetGain;
 	if (!N)
@@ -57,10 +57,12 @@ double VOSIM::getOutput() {
  * Envelope methods
  * 
  ******************************/
-void Envelope::setPeriod(int segment, double period) {
+void Envelope::setPeriod(int segment, double period, double shape) {
 	mTargetPeriod[segment] = period;
-	mStep[segment] = 1.0 / (mFs * (period + MIN_ENV_PERIOD));
-	mMult[segment] = 1 + (log(mPoint[segment + 1]+MIN_ENV_PERIOD)-log(mPoint[segment]+MIN_ENV_PERIOD)) * mStep[segment];
+	period = period * mFs;
+	mShape[segment] = shape;
+	mMult[segment] = exp(-log((abs(mPoint[segment + 1] - mPoint[segment]) + shape) / shape) / period);
+	mBase[segment] = (mPoint[segment+1] - mPoint[segment] + shape)*(1.0 - mMult[segment]);
 }
 
 /*
@@ -69,9 +71,9 @@ void Envelope::setPeriod(int segment, double period) {
 void Envelope::_setPoint(int node, double gain) {
 	mPoint[node] = gain;
 	if (node) {
-		setPeriod(node - 1, mTargetPeriod[node - 1]);
+		setPeriod(node - 1, mTargetPeriod[node - 1], mShape[node - 1]);
 	}
-	setPeriod(node, mTargetPeriod[node]);
+	setPeriod(node, mTargetPeriod[node], mShape[node]);
 }
 
 /*
@@ -99,38 +101,35 @@ double Envelope::getOutput() {
 void Envelope::setFs(double fs) {
 	mFs = fs;
 	for (int i = 0; i < mNumSegments; i++) {
-		setPeriod(i,mTargetPeriod[i]);
+		setPeriod(i,mTargetPeriod[i],mShape[i]);
 	}
 }
 
 void Envelope::trigger() {
 	mCurrSegment = 0;
-	mPhase = 0;
-	mOutput = MIN_ENV_PERIOD;
+	mOutput = 0.0;
 	mIsDone = false;
 }
 
 void Envelope::release() {
 	mCurrSegment = mNumSegments - 1;
-	mMult[mCurrSegment] = 1 + (log(mPoint[mCurrSegment + 1] + MIN_ENV_PERIOD) - log(mPoint[mCurrSegment] + MIN_ENV_PERIOD)) * mStep[mCurrSegment];
-	mPhase = 0;
+	mMult[mCurrSegment] = exp(-log((abs(mPoint[mCurrSegment + 1] - mOutput) + mShape[mCurrSegment]) / mShape[mCurrSegment]) / (mTargetPeriod[mCurrSegment]*mFs));
+	mBase[mCurrSegment] = (mPoint[mCurrSegment + 1] - mOutput + mShape[mCurrSegment])*(1.0 - mMult[mCurrSegment]);
 }
 
 void Envelope::tick() {
 	if (mIsDone) {
 		return;
 	}
-	mPhase += mStep[mCurrSegment];
-	if (mPhase >= 1) {
+	if ((mBase[mCurrSegment]>0 && mOutput >= mPoint[mCurrSegment + 1]) || 
+		(mBase[mCurrSegment]<0 && mOutput <= mPoint[mCurrSegment + 1])) {
 		if (mCurrSegment < mNumSegments - 2) {
-			mPhase = 0.0;
 			mCurrSegment++;
 		} else {
 			if (mCurrSegment == mNumSegments-1)
 				mIsDone = true;
-			mPhase = 1.0;
 		}
 	}else{
-		mOutput *= mMult[mCurrSegment];
+		mOutput = mBase[mCurrSegment]+mMult[mCurrSegment]*mOutput;
 	}
 }

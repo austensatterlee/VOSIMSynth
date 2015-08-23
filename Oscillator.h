@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #define MIN_ENV_PERIOD 0.001
+#define MIN_ENV_SHAPE 0.1
 
 class Oscillator {
 protected:
@@ -60,19 +61,19 @@ public:
 class Envelope {
 private:
 	double mFs;
-	double mPhase;
 	int mNumSegments;
 	int mCurrSegment;
 	double *mTargetPeriod;
-	double *mStep;
 	double *mPoint;
+	double *mShape;
+	double *mBase;
 	double *mMult;
 	void _setPoint(int segment, double gain);
 public:
-	double mOutput;
-	bool mIsDone;
+	double	mOutput;
+	bool	mIsDone;
 	void	tick();
-	void	setPeriod(int segment, double period);
+	void	setPeriod(int segment, double period, double shape);
 	void	setPoint_dB(int segment, double dB);
 	void	setPoint(int segment, double gain);
 	void	setFs(double fs);
@@ -81,7 +82,6 @@ public:
 	double	getOutput();
 	Envelope(int numsteps = 0) :
 		mFs(44100),
-		mPhase(0),
 		mCurrSegment(0),
 		mIsDone(false),
 		mOutput(0.0)
@@ -89,15 +89,18 @@ public:
 		mNumSegments = numsteps+3;
 		mTargetPeriod = new double[mNumSegments];
 		mPoint = new double[mNumSegments+1];
-		mStep = new double[mNumSegments];
+		mShape = new double[mNumSegments];
+		mBase = new double[mNumSegments];
 		mMult = new double[mNumSegments];
 		for (int i = 0; i < mNumSegments; i++) {
-			_setPoint(i, 1);
-			setPeriod(i, 0);
+			mPoint[i] = 1;
 		}
-		_setPoint(0, 0);setPeriod(0, 1);
+		for (int i = 0; i < mNumSegments; i++) {
+			setPeriod(i, MIN_ENV_PERIOD, MIN_ENV_SHAPE);
+		}
+		_setPoint(0, 0);setPeriod(0, 1, MIN_ENV_SHAPE);
 		_setPoint(1, 1);
-		_setPoint(mNumSegments, 0); setPeriod(mNumSegments-1, 1);
+		_setPoint(mNumSegments, 0); setPeriod(mNumSegments-1, 1, MIN_ENV_SHAPE);
 	};
 };
 

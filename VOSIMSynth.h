@@ -5,7 +5,7 @@
 #include "Oscillator.h"
 #include "MIDIReceiver.h"
 #include <cstdint>
-#define NUM_VOICES 4
+#define NUM_VOICES 12
 #define MOD_FS_RAT 255
 
 class VOSIMSynth : public IPlug
