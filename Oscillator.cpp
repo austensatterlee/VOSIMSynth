@@ -11,18 +11,6 @@ void Oscillator::setFreq(double freq) {
 	mStep = (int32_t)((freq / mFs) * 0x7FFFFFFF);
 }
 
-void Oscillator::setGain(double gain) {
-	mTargetGain = mGain = gain;
-}
-
-void Oscillator::modFreq(double modAmt) {
-	mFreqMod += modAmt;
-}
-
-void Oscillator::modGain(double modAmt) {
-	mGainMod *= modAmt;
-}
-
 void Oscillator::applyMods() {
 	mFreq = mTargetFreq*(1 + mFreqMod);
 	mStep = (int32_t)((mFreq / mFs) * 0x7FFFFFFF);
@@ -60,13 +48,12 @@ double Oscillator::getOutput() {
 ******************************/
 void VOSIM::applyMods() {
 	Oscillator::applyMods();
-	mPFreq = mTargetPFreq*(1+mPFreqMod);
+	mPFreq = std::fmax(mFreq,mTargetPFreq*(1+mPFreqMod));
 	mDecay = std::fmax(0,std::fmin(1,((mTargetDecay-1)*mDecayMod)+1));
 	mDecayMod = 1;
 	mPFreqMod = 0;
 	refreshPhaseScale();
 }
-
 void VOSIM::refreshPhaseScale() {
 	mPhaseScale = 0.5 * mPFreq / mFreq;
 }
@@ -81,7 +68,7 @@ double VOSIM::getOutput() {
 	if (N >= mNumber) {
 		return 0;
 	} else {
-		return mAttenuation*VOSIM_PULSE_COS[pulsePhase];
+		return mAttenuation*2*VOSIM_PULSE_COS[pulsePhase];
 	}
 	mLastN = N;
 }
@@ -140,7 +127,6 @@ void Envelope::setFs(double fs) {
 
 void Envelope::trigger() {
 	mCurrSegment = 0;
-	mOutput = 0.0;
 	mIsDone = false;
 }
 
@@ -151,16 +137,15 @@ void Envelope::release() {
 }
 
 void Envelope::tick() {
-	if (mIsDone) {
-		return;
-	}
 	if ((mBase[mCurrSegment]>0 && mOutput >= mPoint[mCurrSegment + 1]) || 
 		(mBase[mCurrSegment]<0 && mOutput <= mPoint[mCurrSegment + 1])) {
+		mOutput = mPoint[mCurrSegment + 1];
 		if (mCurrSegment < mNumSegments - 2) {
 			mCurrSegment++;
 		} else {
-			if (mCurrSegment == mNumSegments-1)
+			if (mCurrSegment == mNumSegments - 1) {
 				mIsDone = true;
+			}
 		}
 	}else{
 		mOutput = mBase[mCurrSegment]+mMult[mCurrSegment]*mOutput;

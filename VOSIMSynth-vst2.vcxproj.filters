@@ -8,6 +8,7 @@
     <ClCompile Include="MIDIReceiver.cpp" />
     <ClCompile Include="Oscillator.cpp" />
     <ClCompile Include="tables.cpp" />
+    <ClCompile Include="UI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="VOSIMSynth.h" />
@@ -19,6 +20,7 @@
     <ClInclude Include="MIDIReceiver.h" />
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="GallantSignal.h" />
+    <ClInclude Include="UI.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VOSIMSynth.rc" />

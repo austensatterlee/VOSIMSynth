@@ -2,6 +2,7 @@
 #include "IPlug_include_in_plug_src.h"
 #include "IControl.h"
 #include "resource.h"
+#include "UI.h"
 
 const int kNumPrograms = 1;
 
@@ -46,43 +47,40 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   GetParam(kKnob3)->SetShape(3.);
   GetParam(kKnob4)->InitDouble("Env1S", -5, -30, 0, 1, "Env1 S");
   GetParam(kKnob4)->SetShape(1.);
-
-  GetParam(kKnob5)->InitDouble("VOSIMWidth", 0.5, 0, 1, 1./36, "VOSIM Width");
+  GetParam(kKnob5)->InitDouble("O1VF", 0.5, 0, 1, 1./48, "Osc1 VF");
   GetParam(kKnob5)->SetShape(1.);
-  GetParam(kKnob6)->InitInt("VOSIMNumber", 5, 1, 16, "VOSIM Number");
-  GetParam(kKnob6)->SetShape(1.);
-  GetParam(kKnob7)->InitDouble("VOSIMDecay", 0.001, 0.0, 1.0, 0.001, "VOSIM Decay");
-  GetParam(kKnob7)->SetShape(1.);
-  GetParam(kKnob10)->InitDouble("VWidthLFOf", 0.001, 0.0, 1.0, 0.001, "VOSIM Width LFO Freq");
-  GetParam(kKnob10)->SetShape(1.);
-  GetParam(kKnob11)->InitDouble("VWidthLFOg", 0.001, 0.0, 1.0, 0.001, "VOSIM Width LFO Gain");
-  GetParam(kKnob11)->SetShape(1.);
-
-  GetParam(kKnob8)->InitDouble("PLFOf", 0.001, 0.0, 1.0, 0.001, "Pitch LFO Freq");
+  GetParam(kKnob6)->InitInt("O1N", 5, 1, 48, "Osc1 Number");
+  GetParam(kKnob6)->SetShape(2.);
+  GetParam(kKnob7)->InitDouble("O1D", 0.001, 0.0, 1.0, 0.001, "Osc1 Decay");
+  GetParam(kKnob7)->SetShape(3.);
+  GetParam(kKnob8)->InitDouble("O1PMf", 0.001, 0.0, 1.0, 0.001, "Osc1 P. Mod F");
   GetParam(kKnob8)->SetShape(1.);
-  GetParam(kKnob9)->InitDouble("PLFOg", 0.001, 0.0, 1.0, 0.001, "Pitch LFO Gain");
+  GetParam(kKnob9)->InitDouble("O1PMg", 0.001, 0.0, 1.0, 0.001, "Osc1 P. Mod G");
   GetParam(kKnob9)->SetShape(1.);
+  GetParam(kKnob10)->InitDouble("O1WMf", 0.001, 0.0, 1.0, 0.001, "Osc1 VF. Mod F");
+  GetParam(kKnob10)->SetShape(1.);
+  GetParam(kKnob11)->InitDouble("O1WMg", 0.001, 0.0, 1.0, 0.001, "Osc1 VF. Mod G");
+  GetParam(kKnob11)->SetShape(1.);
 
   GetParam(kWedgeSwitch1)->InitInt("VOSIMWidthMode", 0, 0, 1, "VOSIM Width Mode");
 
   IGraphics* pGraphics = MakeGraphics(this, kWidth, kHeight);
-  pGraphics->AttachPanelBackground(&COLOR_WHITE);
+  pGraphics->AttachPanelBackground(&COLOR_BLACK);
 
   IBitmap knob = pGraphics->LoadIBitmap(KNOB_ID, KNOB_FN, kKnob1Frames);
 
-  pGraphics->AttachControl(new IKnobMultiControl(this, kKnob1X, kKnob1Y, kKnob1, &knob));
-  pGraphics->AttachControl(new IKnobMultiControl(this, kKnob1X+knob.W, kKnob1Y, kKnob2, &knob));
-  pGraphics->AttachControl(new IKnobMultiControl(this, kKnob1X + knob.W * 2, kKnob1Y, kKnob3, &knob));
-  pGraphics->AttachControl(new IKnobMultiControl(this, kKnob1X + knob.W, kKnob1Y + knob.H / knob.N, kKnob4, &knob));
-
-  pGraphics->AttachControl(new IKnobMultiControl(this, kKnob1X + knob.W * 4, kKnob1Y, kKnob5, &knob));
-  pGraphics->AttachControl(new IKnobMultiControl(this, kKnob1X + knob.W * 5, kKnob1Y, kKnob6, &knob));
-  pGraphics->AttachControl(new IKnobMultiControl(this, kKnob1X + knob.W * 6, kKnob1Y, kKnob7, &knob));
-  pGraphics->AttachControl(new IKnobMultiControl(this, kKnob1X + knob.W * 4, kKnob1Y + 1 * knob.H / knob.N, kKnob10, &knob));
-  pGraphics->AttachControl(new IKnobMultiControl(this, kKnob1X + knob.W * 4, kKnob1Y + 2 * knob.H / knob.N, kKnob11, &knob));
-
-  pGraphics->AttachControl(new IKnobMultiControl(this, kKnob1X + knob.W * 0, kKnob1Y + 4*knob.H / knob.N, kKnob8, &knob));
-  pGraphics->AttachControl(new IKnobMultiControl(this, kKnob1X + knob.W * 0, kKnob1Y + 5*knob.H / knob.N, kKnob9, &knob));
+  attachKnob(pGraphics, this, 0, 0, kKnob1, &knob);
+  attachKnob(pGraphics, this, 0, 1, kKnob2, &knob);
+  attachKnob(pGraphics, this, 0, 3, kKnob3, &knob);
+  attachKnob(pGraphics, this, 0, 2, kKnob4, &knob);
+ 
+  attachKnob(pGraphics, this, 0, 4, kKnob5, &knob);
+  attachKnob(pGraphics, this, 0, 5, kKnob6, &knob);
+  attachKnob(pGraphics, this, 0, 6, kKnob7, &knob);
+  attachKnob(pGraphics, this, 4, 0, kKnob8, &knob);
+  attachKnob(pGraphics, this, 5, 0, kKnob9, &knob);
+  attachKnob(pGraphics, this, 1, 4, kKnob10, &knob);
+  attachKnob(pGraphics, this, 2, 4, kKnob11, &knob);
 
   IBitmap wedgeswitch = pGraphics->LoadIBitmap(WEDGE_SWITCH_2P_ID, WEDGE_SWITCH_2P_FN, 2);
   pGraphics->AttachControl(new ISwitchControl(this, 700, 10, kWedgeSwitch1, &wedgeswitch));
@@ -94,10 +92,6 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   mMIDIReceiver.noteOn.Connect(this, &VOSIMSynth::TriggerNote);
   mMIDIReceiver.noteOff.Connect(this, &VOSIMSynth::ReleaseNote);
 
-  mVoiceStack = new uint8_t[NUM_VOICES];
-  for (uint8_t i = 0; i < NUM_VOICES; i++) {
-	  mVoiceStack[i] = 0;
-  }
   mOsc = new VOSIM[NUM_VOICES];
   mAmpEnv = new Envelope[NUM_VOICES];
   mLFOVWidth.mWaveform = SINE_WAVE;
@@ -128,12 +122,14 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
 					mAmpEnv[i].tick();
 					mOsc[i].modFreq(mLFOPitch.getOutput());
 					mOsc[i].modPFreq(mLFOVWidth.getOutput());
+					mOsc[i].modGain(mAmpEnv[i].mOutput);
 					mOsc[i].applyMods();
 				}
-				mOsc[i].tick();				
-				leftOutput[s] += mOsc[i].getOutput()*mAmpEnv[i].mOutput;
+				mOsc[i].tick();
+				leftOutput[s] += mOsc[i].getOutput();
 			} else {
-				mVoiceStack[i] = 0;
+				mVoiceStack[i][0] = 0;
+				mVoiceStack[i][1] = 0;
 			}
 		}			
 		leftOutput[s] *= 1.0 / NUM_VOICES;
@@ -145,11 +141,13 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
 void VOSIMSynth::TriggerNote(const int noteNumber, const int velocity) {
 	uint8_t i = NUM_VOICES;
 	while (i--) {
-		if (mVoiceStack[i] == 0) {
-			mVoiceStack[i] = noteNumber;
+		if (mVoiceStack[i][0] == 0) {
+			mVoiceStack[i][0] = noteNumber;
+			mVoiceStack[i][1] = velocity;
 			mAmpEnv[i].trigger();
 			mOsc[i].setFreq(mMIDIReceiver.getLastFrequency());
 			mOsc[i].setGain(velocity*0.0078125);
+			mOsc[i].sync();
 			break;
 		}
 	}
@@ -158,7 +156,7 @@ void VOSIMSynth::TriggerNote(const int noteNumber, const int velocity) {
 void VOSIMSynth::ReleaseNote(const int noteNumber, const int velocity) {
 	uint8_t i = NUM_VOICES;
 	while (i--) {
-		if (mVoiceStack[i] == noteNumber) {
+		if (mVoiceStack[i][0] == noteNumber && mVoiceStack[i][1] == velocity) {
 			mAmpEnv[i].release();
 		}
 	}
@@ -176,10 +174,10 @@ void VOSIMSynth::Reset()
   double fs = GetSampleRate();
   while (i--) {
 	  mOsc[i].setFs(fs);
-	  mAmpEnv[i].setFs(fs/MOD_FS_RAT);
+	  mAmpEnv[i].setFs(fs/ (MOD_FS_RAT + 1));
   }
-  mLFOPitch.setFs(fs / MOD_FS_RAT);
-  mLFOVWidth.setFs(fs / MOD_FS_RAT);
+  mLFOPitch.setFs(fs / (MOD_FS_RAT+1));
+  mLFOVWidth.setFs(fs / (MOD_FS_RAT+1));
 }
 
 void VOSIMSynth::OnParamChange(int paramIdx)
@@ -206,7 +204,7 @@ void VOSIMSynth::OnParamChange(int paramIdx)
 		break;
 	case kKnob5:
 		while (n--)
-			mOsc[n].setPFreq(300*pow(2.0, 5*GetParam(kKnob5)->Value()));
+			mOsc[n].setPFreq(300*pow(2.0, 7*GetParam(kKnob5)->Value()));
 		break;
 	case kKnob6:
 		while (n--)
@@ -214,7 +212,7 @@ void VOSIMSynth::OnParamChange(int paramIdx)
 		break;
 	case kKnob7:
 		while (n--)
-			mOsc[n].setDecay(1.0-pow(10,-3*(GetParam(kKnob7)->Value())));
+			mOsc[n].setDecay(pow(10,-3*(GetParam(kKnob7)->Value())));
 		break;
 	case kKnob8:
 		mLFOPitch.setFreq(pow(2, 5 * GetParam(kKnob8)->Value()));
@@ -226,7 +224,7 @@ void VOSIMSynth::OnParamChange(int paramIdx)
 		mLFOVWidth.setFreq(pow(2, 5 * GetParam(kKnob10)->Value()));
 		break;
 	case kKnob11:
-		mLFOVWidth.setGain(pow(2, -12 * (1 - GetParam(kKnob11)->Value())));
+		mLFOVWidth.setGain(pow(2, -1 - 12 * (1 - GetParam(kKnob11)->Value())));
 		break;
 	case kWedgeSwitch1:
 		//while (n--)

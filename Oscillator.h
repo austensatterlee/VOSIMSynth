@@ -2,7 +2,7 @@
 #define __OSCILLATOR
 #include <cstdint>
 
-#define MIN_ENV_PERIOD 0.001
+#define MIN_ENV_PERIOD 0.01
 #define MIN_ENV_SHAPE 0.1
 
 typedef enum {
@@ -19,10 +19,11 @@ protected:
 	double mTargetGain, mGain, mGainMod;
 public:
 	void tick();
+	void sync() { mPhase = 0x10000000; };
 	void setFreq(double freq);
-	void setGain(double gain);
-	void modFreq(double modAmt);
-	void modGain(double modAmt);
+	void setGain(double gain) {mTargetGain = mGain = gain;}
+	void modFreq(double modAmt) { mFreqMod = (mFreqMod+1)*modAmt; };
+	void modGain(double modAmt) { mGainMod *= modAmt; };
 	void applyMods();
 	void setFs(double fs);
 	double getOutput();
@@ -52,7 +53,7 @@ private:
 public:
 	void setDecay(double decay) { mTargetDecay = decay; };
 	void setPFreq(double freq) { mTargetPFreq = freq; refreshPhaseScale(); };
-	void modPFreq(double modAmt) { mPFreqMod += modAmt; };
+	void modPFreq(double modAmt) { mPFreqMod = (mPFreqMod+1)*modAmt; };
 	void setNumber(uint8_t number) { mNumber = number; };
 	void applyMods();
 	void modDecay(double modAmt) { mDecayMod += modAmt; };
