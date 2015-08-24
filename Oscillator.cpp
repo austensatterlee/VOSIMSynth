@@ -12,7 +12,23 @@ void Oscillator::setFreq(double freq) {
 }
 
 void Oscillator::setGain(double gain) {
-	mTargetGain = gain;
+	mTargetGain = mGain = gain;
+}
+
+void Oscillator::modFreq(double modAmt) {
+	mFreqMod += modAmt;
+}
+
+void Oscillator::modGain(double modAmt) {
+	mGainMod *= modAmt;
+}
+
+void Oscillator::applyMods() {
+	mFreq = mTargetFreq*(1 + mFreqMod);
+	mStep = (int32_t)((mFreq / mFs) * 0x7FFFFFFF);
+	mGain = mTargetGain*mGainMod;
+	mFreqMod = 0;
+	mGainMod = 1;
 }
 
 void Oscillator::tick() {
@@ -25,21 +41,38 @@ void Oscillator::setFs(double fs) {
 }
 
 double Oscillator::getOutput() {
-	return mGain*((double)mPhase * (4.656612875245797e-10));
+	switch (mWaveform) {
+	case SAW_WAVE:
+		return mGain*((double)mPhase * (4.656612875245797e-10));
+		break;
+	case SINE_WAVE:
+		return mGain*2*(0.5-VOSIM_PULSE_COS[(uint16_t)(0x1FF*(1+(double)mPhase * (4.656612875245797e-10)))]);
+		break;
+	default:
+		return 0;
+		break;
+	}
+	
 }
 /******************************
 * VOSIM methods
 *
 ******************************/
-void VOSIM::setFreq(double freq) {
-	Oscillator::setFreq(freq);
+void VOSIM::applyMods() {
+	Oscillator::applyMods();
+	mPFreq = mTargetPFreq*(1+mPFreqMod);
+	mDecay = std::fmax(0,std::fmin(1,((mTargetDecay-1)*mDecayMod)+1));
+	mDecayMod = 1;
+	mPFreqMod = 0;
 	refreshPhaseScale();
 }
+
+void VOSIM::refreshPhaseScale() {
+	mPhaseScale = 0.5 * mPFreq / mFreq;
+}
 double VOSIM::getOutput() {
-	//double innerPhase = ((double)mPhase * (4.656612875245797e-10) + 1) * mPhaseScale;
-	double innerPhase = ((double)mPhase * (4.656612875245797e-10) + 1) * (mTargetFreq*0.001250*mPhaseScale);
+	double innerPhase = ((double)mPhase * (4.656612875245797e-10) + 1) * mPhaseScale;
 	uint32_t N = (uint32_t)innerPhase;
-	mGain = mTargetGain;
 	if (!N)
 		mAttenuation = mGain;
 	else if (N != mLastN)

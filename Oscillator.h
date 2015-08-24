@@ -5,26 +5,35 @@
 #define MIN_ENV_PERIOD 0.001
 #define MIN_ENV_SHAPE 0.1
 
+typedef enum {
+	SAW_WAVE=0,
+	SINE_WAVE
+} OSC_MODE;
+
 class Oscillator {
 protected:
 	double mFs;
 	int32_t mPhase;
 	int32_t mStep;
-	double mTargetFreq;
-	double mGain;
-	double mTargetGain;
+	double mTargetFreq, mFreq, mFreqMod;
+	double mTargetGain, mGain, mGainMod;
 public:
 	void tick();
 	void setFreq(double freq);
-	void setFs(double fs);
 	void setGain(double gain);
+	void modFreq(double modAmt);
+	void modGain(double modAmt);
+	void applyMods();
+	void setFs(double fs);
 	double getOutput();
+	OSC_MODE mWaveform;
 	Oscillator() :
+		mWaveform(SAW_WAVE),
 		mFs(44100.0),
-		mTargetFreq(1.0),
+		mTargetFreq(1.0),mFreqMod(0),
 		mPhase(0),
 		mStep(0),
-		mTargetGain(0.0),
+		mTargetGain(0.0),mGainMod(1),
 		mGain(0.0)
 	{
 			setFreq(mTargetFreq);
@@ -33,23 +42,25 @@ public:
 
 class VOSIM : public Oscillator {
 private:
-	void refreshPhaseScale() { mPhaseScale = 2.0 / (mTargetFreq * mWidth); };
-	double mDecay;
-	double mWidth;
+	void refreshPhaseScale();
+	double mTargetDecay,mDecay,mDecayMod;
+	double mTargetPFreq,mPFreq,mPFreqMod;
 	uint8_t mNumber;
 	double mAttenuation;
 	uint8_t mLastN;
 	double mPhaseScale;
 public:
-	void setDecay(double decay) { mDecay = decay; };
-	void setWidth(double width) { mWidth = width; refreshPhaseScale(); };
+	void setDecay(double decay) { mTargetDecay = decay; };
+	void setPFreq(double freq) { mTargetPFreq = freq; refreshPhaseScale(); };
+	void modPFreq(double modAmt) { mPFreqMod += modAmt; };
 	void setNumber(uint8_t number) { mNumber = number; };
-	void setFreq(double freq);
+	void applyMods();
+	void modDecay(double modAmt) { mDecayMod += modAmt; };
 	double getOutput();
 	VOSIM() :
 		Oscillator(),
-		mDecay(0.9),
-		mWidth(0.01),
+		mTargetDecay(0.0),mDecay(0.0),mDecayMod(1.0),
+		mTargetPFreq(0.01),mPFreq(0.0),mPFreqMod(0.0),
 		mNumber(5),
 		mLastN(0),		
 		mAttenuation(1)

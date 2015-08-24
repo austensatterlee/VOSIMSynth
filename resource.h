@@ -56,9 +56,11 @@ instrument determined by PLUG _IS _INST
 
 // Unique IDs for each image resource.
 #define KNOB_ID 101
+#define WEDGE_SWITCH_2P_ID 102
 
 // Image resource locations for this plug.
 #define KNOB_FN "resources/img/knob.png"
+#define WEDGE_SWITCH_2P_FN "resources/img/wedge_switch_2p.png"
 
 // GUI default dimensions
 #define GUI_WIDTH 800
