@@ -17,6 +17,8 @@
 *.xcschememanagement.plist
 *.xcode*
 *.vsp
+*.vspx
+*.psess
 build-*
 ipch/*
 gui/*

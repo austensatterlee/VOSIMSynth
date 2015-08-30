@@ -8,19 +8,23 @@ const int kNumPrograms = 1;
 
 enum EParams
 {
-  kKnob1 = 0,
-  kKnob2,
-  kKnob3,
-  kKnob4,
-  kKnob5,
-  kKnob6,
-  kKnob7,
-  kKnob8,
-  kKnob9,
-  kKnob10,
-  kKnob11,
-  kWedgeSwitch1,
-  kNumParams
+	kKnob1 = 0,
+	kKnob2,
+	kKnob3,
+	kKnob4,
+	kKnob5,
+	kKnob6,
+	kKnob7,
+	kKnob8,
+	kKnob9,
+	kKnob10,
+	kKnob11,
+	kKnob12,
+	kKnob13,
+	kKnob14,
+	kKnob15,
+	kWedgeSwitch1,
+	kNumParams
 };
 
 enum ELayout
@@ -45,22 +49,20 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   GetParam(kKnob2)->SetShape(3.);
   GetParam(kKnob3)->InitDouble("Env1R", 0.1, 0.01, 10.0, 0.01, "Env1 R");
   GetParam(kKnob3)->SetShape(3.);
-  GetParam(kKnob4)->InitDouble("Env1S", -5, -30, 0, 1, "Env1 S");
-  GetParam(kKnob4)->SetShape(1.);
-  GetParam(kKnob5)->InitDouble("O1VF", 0.5, 0, 1, 1./48, "Osc1 VF");
-  GetParam(kKnob5)->SetShape(1.);
-  GetParam(kKnob6)->InitInt("O1N", 5, 1, 48, "Osc1 Number");
+  GetParam(kKnob4)->InitDouble("Env1S", -5, -60, 0, 1, "Env1 S");
+  GetParam(kKnob5)->InitDouble("O1VF", 0.5, 0, 1, 0.001, "Osc1 VF");
+  GetParam(kKnob6)->InitInt("O1N", 1, 1, 64, "Osc1 Number");
   GetParam(kKnob6)->SetShape(2.);
   GetParam(kKnob7)->InitDouble("O1D", 0.001, 0.0, 1.0, 0.001, "Osc1 Decay");
-  GetParam(kKnob7)->SetShape(3.);
+  GetParam(kKnob7)->SetShape(5.);
   GetParam(kKnob8)->InitDouble("O1PMf", 0.001, 0.0, 1.0, 0.001, "Osc1 P. Mod F");
-  GetParam(kKnob8)->SetShape(1.);
   GetParam(kKnob9)->InitDouble("O1PMg", 0.001, 0.0, 1.0, 0.001, "Osc1 P. Mod G");
-  GetParam(kKnob9)->SetShape(1.);
   GetParam(kKnob10)->InitDouble("O1WMf", 0.001, 0.0, 1.0, 0.001, "Osc1 VF. Mod F");
-  GetParam(kKnob10)->SetShape(1.);
   GetParam(kKnob11)->InitDouble("O1WMg", 0.001, 0.0, 1.0, 0.001, "Osc1 VF. Mod G");
-  GetParam(kKnob11)->SetShape(1.);
+  GetParam(kKnob12)->InitDouble("Env1AShp", 0.1, 0.0, 1.0, 0.001, "A Shape");
+  GetParam(kKnob13)->InitDouble("Env1DShp", 0.1, 0.0, 1.0, 0.001, "D Shape");
+  GetParam(kKnob14)->InitDouble("Env1RShp", 0.1, 0.0, 1.0, 0.001, "R Shape");
+  GetParam(kKnob15)->InitDouble("Volume", 0.0, -10.0, 10.0, 1, "Volume");
 
   GetParam(kWedgeSwitch1)->InitInt("VOSIMWidthMode", 0, 0, 1, "VOSIM Width Mode");
 
@@ -72,8 +74,7 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   attachKnob(pGraphics, this, 0, 0, kKnob1, &knob);
   attachKnob(pGraphics, this, 0, 1, kKnob2, &knob);
   attachKnob(pGraphics, this, 0, 3, kKnob3, &knob);
-  attachKnob(pGraphics, this, 0, 2, kKnob4, &knob);
- 
+  attachKnob(pGraphics, this, 0, 2, kKnob4, &knob); 
   attachKnob(pGraphics, this, 0, 4, kKnob5, &knob);
   attachKnob(pGraphics, this, 0, 5, kKnob6, &knob);
   attachKnob(pGraphics, this, 0, 6, kKnob7, &knob);
@@ -81,6 +82,10 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   attachKnob(pGraphics, this, 5, 0, kKnob9, &knob);
   attachKnob(pGraphics, this, 1, 4, kKnob10, &knob);
   attachKnob(pGraphics, this, 2, 4, kKnob11, &knob);
+  attachKnob(pGraphics, this, 1, 0, kKnob12, &knob);
+  attachKnob(pGraphics, this, 1, 1, kKnob13, &knob);
+  attachKnob(pGraphics, this, 1, 3, kKnob14, &knob);
+  attachKnob(pGraphics, this, 0, 7, kKnob15, &knob);
 
   IBitmap wedgeswitch = pGraphics->LoadIBitmap(WEDGE_SWITCH_2P_ID, WEDGE_SWITCH_2P_FN, 2);
   pGraphics->AttachControl(new ISwitchControl(this, 700, 10, kWedgeSwitch1, &wedgeswitch));
@@ -96,6 +101,8 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   mAmpEnv = new Envelope[NUM_VOICES];
   mLFOVWidth.mWaveform = SINE_WAVE;
   mLFOPitch.mWaveform = SINE_WAVE;
+  mVolume = 1.0;
+  mOversampling = 1;
 }
 
 VOSIMSynth::~VOSIMSynth() {}
@@ -105,7 +112,7 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
   // Mutex is already locked for us.
 	double *leftOutput = outputs[0];
 	double *rightOutput = outputs[1];
-	uint8_t i;
+	uint8_t i,j;
 	for (int s = 0; s < nFrames; s++) {
 		mSampleCount++;
 		leftOutput[s] = 0;
@@ -122,11 +129,14 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
 					mAmpEnv[i].tick();
 					mOsc[i].modFreq(mLFOPitch.getOutput());
 					mOsc[i].modPFreq(mLFOVWidth.getOutput());
-					mOsc[i].modGain(mAmpEnv[i].mOutput);
+					mOsc[i].modGain(mAmpEnv[i].mOutput*mVolume);
 					mOsc[i].applyMods();
 				}
-				mOsc[i].tick();
-				leftOutput[s] += mOsc[i].getOutput();
+				j = mOversampling;
+				while (j--) {
+					mOsc[i].tick();
+					leftOutput[s] += mOsc[i].getOutput()/mOversampling;
+				}
 			} else {
 				mVoiceStack[i][0] = 0;
 				mVoiceStack[i][1] = 0;
@@ -141,12 +151,14 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
 void VOSIMSynth::TriggerNote(const int noteNumber, const int velocity) {
 	uint8_t i = NUM_VOICES;
 	while (i--) {
-		if (mVoiceStack[i][0] == 0) {
+		if (mVoiceStack[i][0] == 0 && mVoiceStack[i][1] == 0) {
 			mVoiceStack[i][0] = noteNumber;
 			mVoiceStack[i][1] = velocity;
 			mAmpEnv[i].trigger();
-			mOsc[i].setFreq(mMIDIReceiver.getLastFrequency());
+			mOsc[i].setFreq(noteNumberToFrequency(noteNumber));
 			mOsc[i].setGain(velocity*0.0078125);
+			mOsc[i].modGain(mAmpEnv[i].mOutput);
+			mOsc[i].applyMods();
 			mOsc[i].sync();
 			break;
 		}
@@ -156,7 +168,7 @@ void VOSIMSynth::TriggerNote(const int noteNumber, const int velocity) {
 void VOSIMSynth::ReleaseNote(const int noteNumber, const int velocity) {
 	uint8_t i = NUM_VOICES;
 	while (i--) {
-		if (mVoiceStack[i][0] == noteNumber && mVoiceStack[i][1] == velocity) {
+		if (mVoiceStack[i][0] == noteNumber) {
 			mAmpEnv[i].release();
 		}
 	}
@@ -173,8 +185,8 @@ void VOSIMSynth::Reset()
   uint8_t i = NUM_VOICES;
   double fs = GetSampleRate();
   while (i--) {
-	  mOsc[i].setFs(fs);
-	  mAmpEnv[i].setFs(fs/ (MOD_FS_RAT + 1));
+	  mOsc[i].setFs(fs*mOversampling);
+	  mAmpEnv[i].setFs(fs / (MOD_FS_RAT + 1));
   }
   mLFOPitch.setFs(fs / (MOD_FS_RAT+1));
   mLFOVWidth.setFs(fs / (MOD_FS_RAT+1));
@@ -188,15 +200,15 @@ void VOSIMSynth::OnParamChange(int paramIdx)
   {
     case kKnob1:
 		while (n--)
-			mAmpEnv[n].setPeriod(0, GetParam(kKnob1)->Value(), MIN_ENV_SHAPE);
+			mAmpEnv[n].setPeriod(0, GetParam(kKnob1)->Value(), GetParam(kKnob12)->Value());
 		break;
 	case kKnob2:
 		while (n--)
-			mAmpEnv[n].setPeriod(1, GetParam(kKnob2)->Value(), MIN_ENV_SHAPE);
+			mAmpEnv[n].setPeriod(1, GetParam(kKnob2)->Value(), GetParam(kKnob13)->Value());
 		break;
 	case kKnob3:
 		while (n--)
-			mAmpEnv[n].setPeriod(2, GetParam(kKnob3)->Value(), MIN_ENV_SHAPE);
+			mAmpEnv[n].setPeriod(2, GetParam(kKnob3)->Value(), GetParam(kKnob14)->Value());
 		break;
 	case kKnob4:
 		while (n--)
@@ -204,7 +216,7 @@ void VOSIMSynth::OnParamChange(int paramIdx)
 		break;
 	case kKnob5:
 		while (n--)
-			mOsc[n].setPFreq(300*pow(2.0, 7*GetParam(kKnob5)->Value()));
+			mOsc[n].scalePFreq(GetParam(kKnob5)->Value());
 		break;
 	case kKnob6:
 		while (n--)
@@ -226,9 +238,24 @@ void VOSIMSynth::OnParamChange(int paramIdx)
 	case kKnob11:
 		mLFOVWidth.setGain(pow(2, -1 - 12 * (1 - GetParam(kKnob11)->Value())));
 		break;
+	case kKnob12:
+		while (n--)
+			mAmpEnv[n].setShape(0, GetParam(kKnob12)->Value());
+		break;
+	case kKnob13:
+		while (n--)
+			mAmpEnv[n].setShape(1, GetParam(kKnob13)->Value());
+		break;
+	case kKnob14:
+		while (n--)
+			mAmpEnv[n].setShape(2, GetParam(kKnob14)->Value());
+		break;
+	case kKnob15:
+		mVolume = pow(10.0,0.05*GetParam(kKnob15)->Value());
+		break;
 	case kWedgeSwitch1:
-		//while (n--)
-			//mOsc[n].setWidthMode(GetParam(kWedgeSwitch1)->Value());
+		mOversampling = 1 + GetParam(kWedgeSwitch1)->Value() * 7;
+		Reset();
 		break;
     default:
       break;

@@ -5,7 +5,7 @@
 #include "Oscillator.h"
 #include "MIDIReceiver.h"
 #include <cstdint>
-#define NUM_VOICES 24
+#define NUM_VOICES 16
 #define MOD_FS_RAT 63
 
 class VOSIMSynth : public IPlug
@@ -27,6 +27,8 @@ private:
 	Oscillator mLFOPitch, mLFOVWidth;
 	uint8_t mVoiceStack[NUM_VOICES][2] = { 0 };
 	uint32_t mSampleCount;
+	uint8_t mOversampling;
+	double mVolume;
 };
 
 #endif

@@ -31,10 +31,10 @@ void Oscillator::setFs(double fs) {
 double Oscillator::getOutput() {
 	switch (mWaveform) {
 	case SAW_WAVE:
-		return mGain*((double)mPhase * (4.656612875245797e-10));
+		return mGain*((mPhase * (2.3283064370807974e-10))*2-1);
 		break;
 	case SINE_WAVE:
-		return mGain*2*(0.5-VOSIM_PULSE_COS[(uint16_t)(0x1FF*(1+(double)mPhase * (4.656612875245797e-10)))]);
+		return mGain*2*(0.5-VOSIM_PULSE_COS[(uint16_t)(0xFFF*(mPhase * (2.3283064370807974e-10)))]);
 		break;
 	default:
 		return 0;
@@ -48,23 +48,28 @@ double Oscillator::getOutput() {
 ******************************/
 void VOSIM::applyMods() {
 	Oscillator::applyMods();
-	mPFreq = std::fmax(mFreq,mTargetPFreq*(1+mPFreqMod));
-	mDecay = std::fmax(0,std::fmin(1,((mTargetDecay-1)*mDecayMod)+1));
+	if (mUseRelativeWidth) {
+		mPFreq = (1+64*mTargetPFreq) * mFreq * (1 + mPFreqMod);
+	} else {
+		mPFreq = 1000 * pow(2.0, 1 + 6 * mTargetPFreq) * (1 + mPFreqMod);
+	}
+	mDecay = std::fmin(0.9999,std::fmax(0,std::fmin(1,((mTargetDecay-1)*mDecayMod)+1)));
 	mDecayMod = 1;
 	mPFreqMod = 0;
 	refreshPhaseScale();
 }
 void VOSIM::refreshPhaseScale() {
-	mPhaseScale = 0.5 * mPFreq / mFreq;
+	mPhaseScale = mPFreq / mFreq;
 }
+
 double VOSIM::getOutput() {
-	double innerPhase = ((double)mPhase * (4.656612875245797e-10) + 1) * mPhaseScale;
-	uint32_t N = (uint32_t)innerPhase;
+	double innerPhase = (mPhase * (2.3283064370807974e-10)) * mPhaseScale;
+	double N = floor(innerPhase);
 	if (!N)
 		mAttenuation = mGain;
 	else if (N != mLastN)
 		mAttenuation *= mDecay;
-	uint16_t pulsePhase = 0x3FF*(innerPhase - N);
+	uint32_t pulsePhase = 0xFFF*(innerPhase - N);
 	if (N >= mNumber) {
 		return 0;
 	} else {
@@ -79,10 +84,16 @@ double VOSIM::getOutput() {
  ******************************/
 void Envelope::setPeriod(int segment, double period, double shape) {
 	mTargetPeriod[segment] = period;
-	period = period * mFs;
 	mShape[segment] = shape;
+	period = std::fmax(MIN_ENV_PERIOD, period);
+	period = period * mFs;
+	shape = std::fmax(MIN_ENV_SHAPE, shape);
 	mMult[segment] = exp(-log((abs(mPoint[segment + 1] - mPoint[segment]) + shape) / shape) / period);
 	mBase[segment] = (mPoint[segment+1] - mPoint[segment] + shape)*(1.0 - mMult[segment]);
+}
+
+void Envelope::setShape(int segment, double shape) {
+	setPeriod(segment, mTargetPeriod[segment], shape);
 }
 
 /*
@@ -127,6 +138,7 @@ void Envelope::setFs(double fs) {
 
 void Envelope::trigger() {
 	mCurrSegment = 0;
+	mOutput = mPoint[0];
 	mIsDone = false;
 }
 
@@ -139,7 +151,6 @@ void Envelope::release() {
 void Envelope::tick() {
 	if ((mBase[mCurrSegment]>0 && mOutput >= mPoint[mCurrSegment + 1]) || 
 		(mBase[mCurrSegment]<0 && mOutput <= mPoint[mCurrSegment + 1])) {
-		mOutput = mPoint[mCurrSegment + 1];
 		if (mCurrSegment < mNumSegments - 2) {
 			mCurrSegment++;
 		} else {
