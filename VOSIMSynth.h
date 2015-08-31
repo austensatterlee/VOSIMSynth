@@ -6,7 +6,7 @@
 #include "MIDIReceiver.h"
 #include <cstdint>
 #define NUM_VOICES 16
-#define MOD_FS_RAT 63
+#define MOD_FS_RAT 15
 
 class VOSIMSynth : public IPlug
 {

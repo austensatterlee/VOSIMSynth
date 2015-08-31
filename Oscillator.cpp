@@ -49,15 +49,16 @@ double Oscillator::getOutput() {
 void VOSIM::applyMods() {
 	Oscillator::applyMods();
 	if (mUseRelativeWidth) {
-		mPFreq = (1+64*mTargetPFreq) * mFreq * (1 + mPFreqMod);
+		mPFreq = (mNumber+64*mTargetPFreq) * mFreq * (2 + mPFreqMod);
 	} else {
-		mPFreq = 1000 * pow(2.0, 1 + 6 * mTargetPFreq) * (1 + mPFreqMod);
+		mPFreq = 1000 * pow(2.0, 1 + 3 * mTargetPFreq) * (2 + mPFreqMod);
 	}
 	mDecay = std::fmin(0.9999,std::fmax(0,std::fmin(1,((mTargetDecay-1)*mDecayMod)+1)));
 	mDecayMod = 1;
-	mPFreqMod = 0;
+	mPFreqMod = 0.5;
 	refreshPhaseScale();
 }
+
 void VOSIM::refreshPhaseScale() {
 	mPhaseScale = mPFreq / mFreq;
 }

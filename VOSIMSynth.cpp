@@ -51,8 +51,8 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   GetParam(kKnob3)->SetShape(3.);
   GetParam(kKnob4)->InitDouble("Env1S", -5, -60, 0, 1, "Env1 S");
   GetParam(kKnob5)->InitDouble("O1VF", 0.5, 0, 1, 0.001, "Osc1 VF");
-  GetParam(kKnob6)->InitInt("O1N", 1, 1, 64, "Osc1 Number");
-  GetParam(kKnob6)->SetShape(2.);
+  GetParam(kKnob5)->SetShape(2.);
+  GetParam(kKnob6)->InitInt("O1N", 1, 1, 8, "Osc1 Number");
   GetParam(kKnob7)->InitDouble("O1D", 0.001, 0.0, 1.0, 0.001, "Osc1 Decay");
   GetParam(kKnob7)->SetShape(5.);
   GetParam(kKnob8)->InitDouble("O1PMf", 0.001, 0.0, 1.0, 0.001, "Osc1 P. Mod F");

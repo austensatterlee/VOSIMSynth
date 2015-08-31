@@ -67,7 +67,7 @@ public:
 		mNumber(5),
 		mLastN(0),
 		mAttenuation(1),
-		mUseRelativeWidth(true)
+		mUseRelativeWidth(false)
 	{
 		setFreq(mTargetFreq);
 	};
