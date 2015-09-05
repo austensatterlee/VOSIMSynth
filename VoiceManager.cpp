@@ -61,12 +61,18 @@ double VoiceManager::tick() {
 void Voice::trigger(uint8_t noteNumber, uint8_t velocity)
 {
 	mNote = noteNumber;
-	mVelocity = velocity;
-	mOsc.sync();
+	mVelocity = velocity*0.0078125;
+	mOsc[0].setFreq(noteNumberToFrequency(mNote));
+	mOsc[1].setFreq(noteNumberToFrequency(mNote));
+	mOsc[2].setFreq(noteNumberToFrequency(mNote));
+	mOsc[0].setGain(1.0);
+	mOsc[1].setGain(1.0);
+	mOsc[2].setGain(1.0);
+	mOsc[0].sync();
+	mOsc[1].sync();
+	mOsc[2].sync();
 	mLFOPitch.sync();
 	mAmpEnv.trigger();
-	mOsc.setFreq(noteNumberToFrequency(mNote));
-	mOsc.setGain(velocity*0.0078125);
 	tickMod();
 }
 
@@ -82,7 +88,9 @@ void Voice::reset() {
 
 void Voice::setAudioFs(double fs)
 {
-	mOsc.setFs(fs);
+	mOsc[0].setFs(fs);
+	mOsc[1].setFs(fs);
+	mOsc[2].setFs(fs);
 }
 
 void Voice::setModFs(double fs) {
@@ -92,19 +100,27 @@ void Voice::setModFs(double fs) {
 
 void Voice::tickAudio()
 {
-	mOsc.tick();
+	mOsc[0].tick();
+	mOsc[1].tick();
+	mOsc[2].tick();
 }
 
 void Voice::tickMod() {
 	mAmpEnv.tick();
 	mLFOPitch.tick();
-	mOsc.modGain(mAmpEnv.mOutput);
-	mOsc.modFreq(mLFOPitch.getOutput());
-	mOsc.applyMods();
+
+	mOsc[0].modFreq(mLFOPitch.getOutput());
+	mOsc[0].applyMods();
+
+	mOsc[1].modFreq(mLFOPitch.getOutput());
+	mOsc[1].applyMods();
+
+	mOsc[2].modFreq(mLFOPitch.getOutput());
+	mOsc[2].applyMods();
 }
 
 double Voice::getOutput() {
-	return mOsc.getOutput();
+	return mVelocity*mAmpEnv.getOutput()*(mOsc[0].getOutput()+mOsc[1].getOutput()+mOsc[2].getOutput());
 }
 
 bool Voice::isActive() {

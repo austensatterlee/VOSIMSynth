@@ -23,6 +23,12 @@ enum EParams
 	kKnob13,
 	kKnob14,
 	kKnob15,
+	kKnob16,
+	kKnob17,
+	kKnob18,
+	kKnob19,
+	kKnob20,
+	kKnob21,
 	kWedgeSwitch1,
 	kNumParams
 };
@@ -53,8 +59,7 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   GetParam(kKnob4)->InitDouble("Env1S", 0.8, 0, 1, 0.001, "Env1 S");
   GetParam(kKnob5)->InitDouble("O1VF", 0.5, 0, 1, 0.001, "Osc1 VF");
   GetParam(kKnob5)->SetShape(2.);
-  GetParam(kKnob6)->InitDouble("O1N", 0.5, 0, 0.5, 0.001, "Osc1 Number");
-  GetParam(kKnob6)->SetShape(2.);
+  GetParam(kKnob6)->InitDouble("O1N", 0.25, 0, 0.5, 0.001, "Osc1 Number");
   GetParam(kKnob7)->InitDouble("O1D", 0.001, 0.0, 1.0, 0.001, "Osc1 Decay");
   GetParam(kKnob7)->SetShape(5.);
   GetParam(kKnob8)->InitDouble("O1PMf", 0.001, 0.0, 1.0, 0.001, "Osc1 P. Mod F");
@@ -66,11 +71,25 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   GetParam(kKnob14)->InitDouble("Env1RShp", 0.1, 0.0, 1.0, 0.001, "R Shape");
   GetParam(kKnob15)->InitDouble("Volume", 0.0, -10.0, 10.0, 1, "Volume");
 
-  GetParam(kWedgeSwitch1)->InitInt("VOSIMWidthMode", 0, 0, 1, "VOSIM Width Mode");
+  GetParam(kKnob16)->InitDouble("O2VF", 0.5, 0, 1, 0.001, "Osc2 VF");
+  GetParam(kKnob16)->SetShape(2.);
+  GetParam(kKnob17)->InitDouble("O2N", 0.25, 0, 0.5, 0.001, "Osc2 Number");
+  GetParam(kKnob18)->InitDouble("O2D", 0.001, 0.0, 1.0, 0.001, "Osc2 Decay");
+  GetParam(kKnob18)->SetShape(5.);
+
+  GetParam(kKnob19)->InitDouble("O3VF", 0.5, 0, 1, 0.001, "Osc3 VF");
+  GetParam(kKnob19)->SetShape(2.);
+  GetParam(kKnob20)->InitDouble("O3N", 0.25, 0, 0.5, 0.001, "Osc3 Number");
+  GetParam(kKnob21)->InitDouble("O3D", 0.001, 0.0, 1.0, 0.001, "Osc3 Decay");
+  GetParam(kKnob21)->SetShape(5.);
+
+  GetParam(kWedgeSwitch1)->InitInt("Oversampling", 0, 0, 1, "Oversampling");
 
   IGraphics* pGraphics = MakeGraphics(this, kWidth, kHeight);
   pGraphics->AttachPanelBackground(&COLOR_BLACK);
 
+  IBitmap wedgeswitch2p = pGraphics->LoadIBitmap(WEDGE_SWITCH_2P_ID, WEDGE_SWITCH_2P_FN, 2);
+  IBitmap toggleswitch3p = pGraphics->LoadIBitmap(TOGGLE_SWITCH_3P_ID, TOGGLE_SWITCH_3P_FN, 3);
   IBitmap knob = pGraphics->LoadIBitmap(KNOB_ID, KNOB_FN, kKnob1Frames);
 
   attachKnob(pGraphics, this, 0, 0, kKnob1, &knob);
@@ -82,15 +101,23 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   attachKnob(pGraphics, this, 0, 6, kKnob7, &knob);
   attachKnob(pGraphics, this, 4, 0, kKnob8, &knob);
   attachKnob(pGraphics, this, 5, 0, kKnob9, &knob);
-  attachKnob(pGraphics, this, 1, 4, kKnob10, &knob);
-  attachKnob(pGraphics, this, 2, 4, kKnob11, &knob);
+  //attachKnob(pGraphics, this, 1, 4, kKnob10, &knob);
+  //attachKnob(pGraphics, this, 2, 4, kKnob11, &knob);
   attachKnob(pGraphics, this, 1, 0, kKnob12, &knob);
   attachKnob(pGraphics, this, 1, 1, kKnob13, &knob);
   attachKnob(pGraphics, this, 1, 3, kKnob14, &knob);
   attachKnob(pGraphics, this, 0, 7, kKnob15, &knob);
 
-  IBitmap wedgeswitch = pGraphics->LoadIBitmap(WEDGE_SWITCH_2P_ID, WEDGE_SWITCH_2P_FN, 2);
-  pGraphics->AttachControl(new ISwitchControl(this, 700, 10, kWedgeSwitch1, &wedgeswitch));
+  attachKnob(pGraphics, this, 1, 4, kKnob16, &knob);
+  attachKnob(pGraphics, this, 1, 5, kKnob17, &knob);
+  attachKnob(pGraphics, this, 1, 6, kKnob18, &knob);
+
+  attachKnob(pGraphics, this, 2, 4, kKnob19, &knob);
+  attachKnob(pGraphics, this, 2, 5, kKnob20, &knob);
+  attachKnob(pGraphics, this, 2, 6, kKnob21, &knob);
+
+  pGraphics->AttachControl(new ISwitchControl(this, 700, 10, kWedgeSwitch1, &wedgeswitch2p));
+  //pGraphics->AttachControl(new ISwitchControl(this, 600, 10, kWedgeSwitch1, &toggleswitch3p));
 
   AttachGraphics(pGraphics);
 
@@ -155,15 +182,15 @@ void VOSIMSynth::OnParamChange(int paramIdx)
 		break;
 	case kKnob5:
 		while (n--)
-			mVoiceManager.voices[n].mOsc.scalePFreq(GetParam(kKnob5)->Value());
+			mVoiceManager.voices[n].mOsc[0].scalePFreq(GetParam(kKnob5)->Value());
 		break;
 	case kKnob6:
 		while (n--)
-			mVoiceManager.voices[n].mOsc.setNumber(GetParam(kKnob6)->Value());
+			mVoiceManager.voices[n].mOsc[0].setNumber(GetParam(kKnob6)->Value());
 		break;
 	case kKnob7:
 		while (n--)
-			mVoiceManager.voices[n].mOsc.setDecay(pow(10,-3*(GetParam(kKnob7)->Value())));
+			mVoiceManager.voices[n].mOsc[0].setDecay(pow(10,-3*(GetParam(kKnob7)->Value())));
 		break;
 	case kKnob8:
 		while (n--)
@@ -190,11 +217,35 @@ void VOSIMSynth::OnParamChange(int paramIdx)
 			mVoiceManager.voices[n].mAmpEnv.setShape(2, GetParam(kKnob14)->Value());
 		break;
 	case kKnob15:
-		mVolume = pow(10.0,0.05*GetParam(kKnob15)->Value());
+		mVolume = pow(10.0, 0.05*GetParam(kKnob15)->Value());
 		break;
 	case kWedgeSwitch1:
 		mVoiceManager.mOversampling = 1 + GetParam(kWedgeSwitch1)->Value() * 7;
 		Reset();
+		break;
+	case kKnob16:
+		while (n--)
+			mVoiceManager.voices[n].mOsc[1].scalePFreq(GetParam(kKnob16)->Value());
+		break;
+	case kKnob17:
+		while (n--)
+			mVoiceManager.voices[n].mOsc[1].setNumber(GetParam(kKnob17)->Value());
+		break;
+	case kKnob18:
+		while (n--)
+			mVoiceManager.voices[n].mOsc[1].setDecay(pow(10, -3 * (GetParam(kKnob18)->Value())));
+		break;
+	case kKnob19:
+		while (n--)
+			mVoiceManager.voices[n].mOsc[2].scalePFreq(GetParam(kKnob19)->Value());
+		break;
+	case kKnob20:
+		while (n--)
+			mVoiceManager.voices[n].mOsc[2].setNumber(GetParam(kKnob20)->Value());
+		break;
+	case kKnob21:
+		while (n--)
+			mVoiceManager.voices[n].mOsc[2].setDecay(pow(10, -3 * (GetParam(kKnob21)->Value())));
 		break;
     default:
       break;

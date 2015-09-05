@@ -47,7 +47,8 @@ private:
 	void refreshPhaseScale();
 	double	mTargetDecay,mDecay,mDecayMod;
 	double	mTargetPFreq,mPFreq,mPFreqMod;
-	double	mNumber,mTargetNumber;
+	uint32_t mNumber;
+	double	mTargetNumber;
 	double	mAttenuation;
 	double	mLastN;
 	double	mPhaseScale;
@@ -68,7 +69,7 @@ public:
 		mNumber(5),
 		mLastN(0),
 		mAttenuation(1),
-		mUseRelativeWidth(false)
+		mUseRelativeWidth(true)
 	{
 		setFreq(mTargetFreq);
 	};

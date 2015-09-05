@@ -1,7 +1,7 @@
 #ifndef __VOSIMSYNTH__
 #define __VOSIMSYNTH__
 
-#define NUM_VOICES 16
+#define NUM_VOICES 8
 
 #include <cstdint>
 #include "IPlug_include_in_plug_hdr.h"

@@ -1,6 +1,6 @@
 #include "Oscillator.h"
 
-extern double VOSIM_PULSE_COS[1024];
+extern double VOSIM_PULSE_COS[65536];
 
 /******************************
  * Oscillator methods
@@ -154,8 +154,8 @@ void Envelope::release() {
 }
 
 void Envelope::tick() {
-	if ((mBase[mCurrSegment]>0 && mOutput >= mPoint[mCurrSegment + 1]) || 
-		(mBase[mCurrSegment]<0 && mOutput <= mPoint[mCurrSegment + 1])) {
+	if ((mBase[mCurrSegment]>=0 && mOutput >= mPoint[mCurrSegment + 1]) || 
+		(mBase[mCurrSegment]<=0 && mOutput <= mPoint[mCurrSegment + 1])) {
 		mOutput = mPoint[mCurrSegment + 1];
 		if (mCurrSegment < mNumSegments - 2) {
 			mCurrSegment++;
