@@ -9,6 +9,7 @@
     <ClCompile Include="Oscillator.cpp" />
     <ClCompile Include="tables.cpp" />
     <ClCompile Include="UI.cpp" />
+    <ClCompile Include="VoiceManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="VOSIMSynth.h" />
@@ -21,6 +22,7 @@
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="GallantSignal.h" />
     <ClInclude Include="UI.h" />
+    <ClInclude Include="VoiceManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VOSIMSynth.rc" />

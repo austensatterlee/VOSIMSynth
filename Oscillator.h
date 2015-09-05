@@ -1,6 +1,7 @@
 #ifndef __OSCILLATOR__
-#define __OSCILLATOR
+#define __OSCILLATOR__
 #include <cstdint>
+#include <cmath>
 
 #define MIN_ENV_PERIOD	0.001
 #define MIN_ENV_SHAPE	0.001
@@ -46,7 +47,7 @@ private:
 	void refreshPhaseScale();
 	double	mTargetDecay,mDecay,mDecayMod;
 	double	mTargetPFreq,mPFreq,mPFreqMod;
-	uint8_t mNumber;
+	double	mNumber,mTargetNumber;
 	double	mAttenuation;
 	double	mLastN;
 	double	mPhaseScale;
@@ -56,7 +57,7 @@ public:
 	void scalePFreq(double scale) { mTargetPFreq = scale; };
 	void useRelativeWidth(bool b) { mUseRelativeWidth = b; };
 	void modPFreq(double modAmt) { mPFreqMod = (mPFreqMod+1)*modAmt; };
-	void setNumber(uint8_t number) { mNumber = number; };
+	void setNumber(double number) { mTargetNumber = number; };
 	void applyMods();
 	void modDecay(double modAmt) { mDecayMod += modAmt; };
 	double getOutput();
@@ -99,7 +100,7 @@ public:
 	Envelope(int numsteps = 0) :
 		mFs(44100),
 		mCurrSegment(0),
-		mIsDone(false),
+		mIsDone(true),
 		mOutput(0.0)
 	{
 		mNumSegments = numsteps+3;

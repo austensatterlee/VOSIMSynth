@@ -238,6 +238,7 @@
     <ClInclude Include="..\..\WDL\IPlug\IPlugVST.h" />
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="UI.h" />
+    <ClInclude Include="VoiceManager.h" />
     <ClInclude Include="VOSIMSynth.h" />
     <ClInclude Include="MIDIReceiver.h" />
     <ClInclude Include="Oscillator.h" />
@@ -247,6 +248,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\WDL\IPlug\IPlugVST.cpp" />
     <ClCompile Include="UI.cpp" />
+    <ClCompile Include="VoiceManager.cpp" />
     <ClCompile Include="VOSIMSynth.cpp" />
     <ClCompile Include="MIDIReceiver.cpp" />
     <ClCompile Include="Oscillator.cpp" />

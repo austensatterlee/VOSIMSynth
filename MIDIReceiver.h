@@ -1,11 +1,10 @@
 #ifndef __MIDIRECEIVER__
 #define __MIDIRECEIVER__
+#include <cstdint>
 #include "IPlug_include_in_plug_hdr.h"
 #include "IMidiQueue.h"
 #include "GallantSignal.h"
 using Gallant::Signal2;
-
-inline double noteNumberToFrequency(int noteNumber) { return 440.0 * pow(2.0, (noteNumber - 69.0) / 12.0); }
 
 class MIDIReceiver {
 private:
@@ -16,8 +15,8 @@ private:
 	int mOffset;
 
 public:
-	Signal2<int, int> noteOn;
-	Signal2<int, int> noteOff;
+	Signal2<uint8_t, uint8_t> noteOn;
+	Signal2<uint8_t, uint8_t> noteOff;
 	MIDIReceiver() :
 		mNumKeys(0),
 		mOffset(0) {
