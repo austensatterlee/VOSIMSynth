@@ -36,26 +36,30 @@ void VoiceManager::setNumVoices(uint8_t numVoices)
 
 double VoiceManager::tick() {
 	mSampleCount++;
-	uint8_t i = mNumVoices;
-	uint8_t j;
-	double output = 0;
+	static uint8_t i;
+	static uint8_t j;
+    static double finalOutput, voiceOutput;
+    i = mNumVoices;
+    finalOutput = 0;
 	while (i--) {
 		if (voices[i].isActive()) {
 			if (!(mSampleCount & MOD_FS_RAT)) {
 				voices[i].tickMod();
 			}
+            voiceOutput = 0;
 			j = mOversampling;
 			while (j--) {
 				voices[i].tickAudio();
-				output += voices[i].getOutput()*1.0/mOversampling;
 			}
+            voiceOutput = voices[i].getOutput();
+            finalOutput += voiceOutput;
 		}
 		else {
 			voices[i].reset();
 		}
 	}
-	output = output * 1.0/ mNumVoices;
-	return output;
+    finalOutput = finalOutput * 1.0/ mNumVoices;
+	return finalOutput;
 }
 
 void Voice::trigger(uint8_t noteNumber, uint8_t velocity)
@@ -120,7 +124,7 @@ void Voice::tickMod() {
 }
 
 double Voice::getOutput() {
-	return mVelocity*mAmpEnv.getOutput()*(mOsc[0].getOutput()+mOsc[1].getOutput()+mOsc[2].getOutput());
+	return mVelocity*mAmpEnv.getOutput()*(mOsc[0].getOutput()+mOsc[1].getOutput()+mOsc[2].getOutput())*0.3333333333333333;
 }
 
 bool Voice::isActive() {

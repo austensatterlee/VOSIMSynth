@@ -1,6 +1,8 @@
 #include "Oscillator.h"
 
 extern double VOSIM_PULSE_COS[65536];
+extern double MINBLEP[BLEPSIZE];
+#define LERP(A,B,F) ((B-A)*F+A)
 
 /******************************
  * Oscillator methods
@@ -8,19 +10,35 @@ extern double VOSIM_PULSE_COS[65536];
  ******************************/
 void Oscillator::setFreq(double freq) {
 	mTargetFreq = freq;
-	mStep = (int32_t)((freq / mFs) * 0x7FFFFFFF);
+	mStep = (freq / mFs);
 }
 
 void Oscillator::applyMods() {
-	mFreq = mTargetFreq*(1 + mFreqMod);
-	mStep = (int32_t)((mFreq / mFs) * 0x7FFFFFFF);
-	mGain = mTargetGain*mGainMod;
+    updateMods();
+    resetMods();
+}
+
+void Oscillator::updateMods() {
+    mFreq = mTargetFreq*( 1 + mFreqMod );
+    mStep = ( mFreq / mFs );
+    mGain = mTargetGain*mGainMod;
+}
+
+void Oscillator::resetMods() {      
 	mFreqMod = 0;
 	mGainMod = 1;
 }
 
 void Oscillator::tick() {
 	mPhase += mStep;
+	if (mPhase > 1)
+		mPhase -= 1;
+    if ( nInit ) {
+        mBlepBufInd++;
+        if ( mBlepBufInd >= BLEPBUF )
+            mBlepBufInd = 0;
+        nInit--;
+    }
 }
 
 void Oscillator::setFs(double fs) {
@@ -31,34 +49,62 @@ void Oscillator::setFs(double fs) {
 double Oscillator::getOutput() {
 	switch (mWaveform) {
 	case SAW_WAVE:
-		return mGain*((mPhase * (2.3283064370807974e-10))*2-1);
+		return mGain*(mPhase*2-1);
 		break;
 	case SINE_WAVE:
-		return mGain*2*(0.5-VOSIM_PULSE_COS[(uint32_t)(0xFFFF*(mPhase * (2.3283064370807974e-10)))]);
+		return mGain*2*(0.5-VOSIM_PULSE_COS[(uint32_t)(0xFFFF*mPhase)]);
 		break;
 	default:
 		return 0;
 		break;
-	}
-	
+	}	
 }
+
+void Oscillator::addBlep( double offset, double ampl ) {
+    int i;
+    int lpIn = BLEPOS*offset;
+    int lpOut = mBlepBufInd;
+    int cBlep = BLEPBUF - 1;
+    double frac = BLEPOS*offset - lpIn;
+    double f;
+    for ( i = 0; i < nInit; i++,lpIn+=BLEPOS,lpOut++ ) {
+        if ( lpOut >= cBlep )
+            lpOut = 0;
+        f = LERP( MINBLEP[lpIn], MINBLEP[lpIn + 1], frac );
+        mBlepBuf[lpOut] += ampl*( 1 - f );
+    }
+    for ( ; i < cBlep; i++, lpIn += BLEPOS, lpOut++ ) {
+        if ( lpOut >= cBlep )
+            lpOut = 0;
+        f = LERP( MINBLEP[lpIn], MINBLEP[lpIn + 1], frac );
+        mBlepBuf[lpOut] = ampl*( 1 - f );
+    }
+    nInit = cBlep;
+}
+
 /******************************
 * VOSIM methods
 *
 ******************************/
 void VOSIM::applyMods() {
-	Oscillator::applyMods();
+	Oscillator::updateMods();
+    //mNumber = 0.5*mTargetNumber * mPhaseScale;
+    mNumber = (16 * mTargetNumber);
 	if (mUseRelativeWidth) {
-		mPFreq = (mNumber+64*mTargetPFreq * (1 + mPFreqMod)) * mFreq;
+		mPFreq = (mNumber + mTargetPFreq * (1 + mPFreqMod)) * mFreq;
 	} else {
-		mPFreq = 1000 * pow(2.0, 1 + 4 * mTargetPFreq  * (1 + mPFreqMod));
+		mPFreq = 440 * pow(2.0, 1 + 5 * mTargetPFreq  * (1 + mPFreqMod));
 	}
-	//mPFreq = std::fmax(mPFreq, mFreq);
-	mNumber = std::fmax(mTargetNumber * mPFreq / mFreq,1);
+    //mPFreq = std::fmax(mPFreq, mFreq);
 	mDecay = std::fmin(0.9999,std::fmax(0,std::fmin(1,((mTargetDecay-1)*mDecayMod)+1)));
-	mDecayMod = 1;
-	mPFreqMod = 0;
-	refreshPhaseScale();
+    refreshPhaseScale();
+    resetMods();
+}
+
+void VOSIM::resetMods() {
+    Oscillator::resetMods();
+    mDecayMod = 1;
+    mPFreqMod = 0;
 }
 
 void VOSIM::refreshPhaseScale() {
@@ -66,19 +112,33 @@ void VOSIM::refreshPhaseScale() {
 }
 
 double VOSIM::getOutput() {
-	double innerPhase = (mPhase * (2.3283064370807974e-10)) * mPhaseScale;
-	double N = floor(innerPhase);
+    static uint32_t N, lastN;
+    static double pulsePhase,lastPulsePhase;
+	static double innerPhase;
+    static double vout;
+	innerPhase = mPhase * mPhaseScale;
+	N = std::floor(innerPhase);
+    lastN = std::floor( mLastInnerPhase );
 	if (!N)
 		mAttenuation = mGain;
-	else if (N != mLastN)
+	else if (N != lastN)
 		mAttenuation *= mDecay;
-	uint32_t pulsePhase = 0xFFFF *(innerPhase - N);
-	if (N >= mNumber) {
-		return 0;
-	} else {
-		return mAttenuation*2*VOSIM_PULSE_COS[pulsePhase];
-	}
-	mLastN = N;
+    pulsePhase = ( innerPhase - N );
+    lastPulsePhase = ( mLastInnerPhase - lastN );
+	if (innerPhase >= mNumber) {
+        if ( mLastInnerPhase <= mNumber) {
+            vout = mAttenuation * VOSIM_PULSE_COS[(int)( 0xFFFF * lastPulsePhase )];
+            addBlep( (innerPhase) * mPFreq / (mFs), vout );
+        }
+		vout = 0;
+    } else {   
+        vout = mAttenuation * VOSIM_PULSE_COS[(int)( 0xFFFF * pulsePhase )];
+    }
+    if ( mPhase+mStep >= 1.0 ) {
+        addBlep( mPhase*mFreq / mFs, vout );
+    }
+    mLastInnerPhase = innerPhase;
+    return vout + mBlepBuf[mBlepBufInd];
 }
 
 /******************************

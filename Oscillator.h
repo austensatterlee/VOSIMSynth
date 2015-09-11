@@ -3,8 +3,11 @@
 #include <cstdint>
 #include <cmath>
 
-#define MIN_ENV_PERIOD	0.001
-#define MIN_ENV_SHAPE	0.001
+#define MIN_ENV_PERIOD	0.0001
+#define MIN_ENV_SHAPE	0.01
+#define BLEPBUF         64
+#define BLEPSIZE        8193
+#define BLEPOS          128
 
 typedef enum {
 	SAW_WAVE=0,
@@ -14,18 +17,26 @@ typedef enum {
 class Oscillator {
 protected:
 	double mFs;
-	uint32_t mPhase;
-	int32_t mStep;
+	double mPhase;
+	double mStep;
+	double mPhaseOffset;
 	double mTargetFreq, mFreq, mFreqMod;
 	double mTargetGain, mGain, mGainMod;
+    double mBlepBuf[BLEPBUF];
+    int mBlepBufInd;
+    int nInit;
+    void addBlep( double offset, double ampl );
 public:
 	void tick();
-	void sync() { mPhase = 0x10000000; };
+	void sync() { mPhase = mPhaseOffset; };
 	void setFreq(double freq);
 	void setGain(double gain) { mTargetGain = mGain = gain;}
 	void modFreq(double modAmt) { mFreqMod = (mFreqMod+1)*modAmt; };
 	void modGain(double modAmt) { mGainMod *= modAmt; };
+	void setPhaseOffset(uint32_t phaseOffset) { mPhaseOffset = phaseOffset; };
 	void applyMods();
+    void updateMods();
+    void resetMods();
 	void setFs(double fs);
 	double getOutput();
 	OSC_MODE mWaveform;
@@ -36,30 +47,38 @@ public:
 		mPhase(0),
 		mStep(0),
 		mTargetGain(0.0),mGainMod(1),
-		mGain(0.0)
+		mGain(0.0),
+		mPhaseOffset(0)
 	{
 			setFreq(mTargetFreq);
+			sync();
+            mBlepBufInd = 0;
+            for ( int i = 0; i < BLEPBUF; i++ ) {
+                mBlepBuf[i] = 0;
+            }
+            nInit = 0;
 	};
 };
 
 class VOSIM : public Oscillator {
 private:
 	void refreshPhaseScale();
-	double	mTargetDecay,mDecay,mDecayMod;
-	double	mTargetPFreq,mPFreq,mPFreqMod;
-	uint32_t mNumber;
-	double	mTargetNumber;
-	double	mAttenuation;
-	double	mLastN;
-	double	mPhaseScale;
-	bool	mUseRelativeWidth;
+	double		mTargetDecay,mDecay,mDecayMod;
+	double		mTargetPFreq,mPFreq,mPFreqMod;
+	double		mNumber;
+	double		mTargetNumber;
+	double		mAttenuation;
+	double		mLastInnerPhase;
+	double		mPhaseScale;
+	bool		mUseRelativeWidth;
 public:
-	void setDecay(double decay) { mTargetDecay = decay; };
+    void setDecay( double decay ) { mTargetDecay = decay; };
 	void scalePFreq(double scale) { mTargetPFreq = scale; };
 	void useRelativeWidth(bool b) { mUseRelativeWidth = b; };
 	void modPFreq(double modAmt) { mPFreqMod = (mPFreqMod+1)*modAmt; };
 	void setNumber(double number) { mTargetNumber = number; };
 	void applyMods();
+    void resetMods();
 	void modDecay(double modAmt) { mDecayMod += modAmt; };
 	double getOutput();
 	VOSIM() :
@@ -67,7 +86,7 @@ public:
 		mTargetDecay(0.0),mDecay(0.0),mDecayMod(1.0),
 		mTargetPFreq(0.01),mPFreq(0.0),mPFreqMod(0.0),
 		mNumber(5),
-		mLastN(0),
+        mLastInnerPhase(0),
 		mAttenuation(1),
 		mUseRelativeWidth(true)
 	{

@@ -1,7 +1,7 @@
 #ifndef __VOICEMANAGER__
 #define __VOICEMANAGER__
 
-#define MOD_FS_RAT 31
+#define MOD_FS_RAT 7
 #include "Oscillator.h"
 #include <cmath>
 #include <cstdint>

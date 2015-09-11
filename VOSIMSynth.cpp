@@ -57,10 +57,10 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   GetParam(kKnob3)->InitDouble("Env1R", 0.1, 0.01, 10.0, 0.01, "Env1 R");
   GetParam(kKnob3)->SetShape(3.);
   GetParam(kKnob4)->InitDouble("Env1S", 0.8, 0, 1, 0.001, "Env1 S");
-  GetParam(kKnob5)->InitDouble("O1VF", 0.5, 0, 1, 0.001, "Osc1 VF");
+  GetParam(kKnob5)->InitDouble("O1VF", 0.5, 0, 1, 0.000001, "Osc1 VF");
   GetParam(kKnob5)->SetShape(2.);
-  GetParam(kKnob6)->InitDouble("O1N", 0.25, 0, 0.5, 0.001, "Osc1 Number");
-  GetParam(kKnob7)->InitDouble("O1D", 0.001, 0.0, 1.0, 0.001, "Osc1 Decay");
+  GetParam(kKnob6)->InitDouble("O1N", 0.25, 0, 1, 0.000001, "Osc1 Number");
+  GetParam(kKnob7)->InitDouble("O1D", 0.001, 0.0, 1.0, 0.000001, "Osc1 Decay");
   GetParam(kKnob7)->SetShape(5.);
   GetParam(kKnob8)->InitDouble("O1PMf", 0.001, 0.0, 1.0, 0.001, "Osc1 P. Mod F");
   GetParam(kKnob9)->InitDouble("O1PMg", 0.001, 0.0, 1.0, 0.001, "Osc1 P. Mod G");
@@ -71,16 +71,16 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   GetParam(kKnob14)->InitDouble("Env1RShp", 0.1, 0.0, 1.0, 0.001, "R Shape");
   GetParam(kKnob15)->InitDouble("Volume", 0.0, -10.0, 10.0, 1, "Volume");
 
-  GetParam(kKnob16)->InitDouble("O2VF", 0.5, 0, 1, 0.001, "Osc2 VF");
+  GetParam(kKnob16)->InitDouble("O2VF", 0.5, 0, 1, 0.000001, "Osc2 VF");
   GetParam(kKnob16)->SetShape(2.);
-  GetParam(kKnob17)->InitDouble("O2N", 0.25, 0, 0.5, 0.001, "Osc2 Number");
-  GetParam(kKnob18)->InitDouble("O2D", 0.001, 0.0, 1.0, 0.001, "Osc2 Decay");
+  GetParam(kKnob17)->InitDouble("O2N", 0.25, 0, 1, 0.000001, "Osc2 Number");
+  GetParam(kKnob18)->InitDouble("O2D", 0.001, 0.0, 1.0, 0.000001, "Osc2 Decay");
   GetParam(kKnob18)->SetShape(5.);
 
-  GetParam(kKnob19)->InitDouble("O3VF", 0.5, 0, 1, 0.001, "Osc3 VF");
+  GetParam(kKnob19)->InitDouble("O3VF", 0.5, 0, 1, 0.000001, "Osc3 VF");
   GetParam(kKnob19)->SetShape(2.);
-  GetParam(kKnob20)->InitDouble("O3N", 0.25, 0, 0.5, 0.001, "Osc3 Number");
-  GetParam(kKnob21)->InitDouble("O3D", 0.001, 0.0, 1.0, 0.001, "Osc3 Decay");
+  GetParam(kKnob20)->InitDouble("O3N", 0.25, 0, 1, 0.000001, "Osc3 Number");
+  GetParam(kKnob21)->InitDouble("O3D", 0.001, 0.0, 1.0, 0.000001, "Osc3 Decay");
   GetParam(kKnob21)->SetShape(5.);
 
   GetParam(kWedgeSwitch1)->InitInt("Oversampling", 0, 0, 1, "Oversampling");
@@ -190,7 +190,7 @@ void VOSIMSynth::OnParamChange(int paramIdx)
 		break;
 	case kKnob7:
 		while (n--)
-			mVoiceManager.voices[n].mOsc[0].setDecay(pow(10,-3*(GetParam(kKnob7)->Value())));
+			mVoiceManager.voices[n].mOsc[0].setDecay(pow(10,-1*(GetParam(kKnob7)->Value())));
 		break;
 	case kKnob8:
 		while (n--)
@@ -233,7 +233,7 @@ void VOSIMSynth::OnParamChange(int paramIdx)
 		break;
 	case kKnob18:
 		while (n--)
-			mVoiceManager.voices[n].mOsc[1].setDecay(pow(10, -3 * (GetParam(kKnob18)->Value())));
+			mVoiceManager.voices[n].mOsc[1].setDecay(pow(10, -1 * (GetParam(kKnob18)->Value())));
 		break;
 	case kKnob19:
 		while (n--)
@@ -245,7 +245,7 @@ void VOSIMSynth::OnParamChange(int paramIdx)
 		break;
 	case kKnob21:
 		while (n--)
-			mVoiceManager.voices[n].mOsc[2].setDecay(pow(10, -3 * (GetParam(kKnob21)->Value())));
+			mVoiceManager.voices[n].mOsc[2].setDecay(pow(10, -1 * (GetParam(kKnob21)->Value())));
 		break;
     default:
       break;
