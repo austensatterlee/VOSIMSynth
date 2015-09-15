@@ -23,7 +23,7 @@ void VoiceManager::setFs(double fs)
 {
 	uint8_t i = mNumVoices;
 	while (i--) {
-		voices[i].setAudioFs(fs*mOversampling);
+		voices[i].setAudioFs(fs);
 		voices[i].setModFs(fs/(MOD_FS_RAT+1));
 	}
 }
@@ -46,13 +46,8 @@ double VoiceManager::tick() {
 			if (!(mSampleCount & MOD_FS_RAT)) {
 				voices[i].tickMod();
 			}
-            voiceOutput = 0;
-			j = mOversampling;
-			while (j--) {
-				voices[i].tickAudio();
-			}
-            voiceOutput = voices[i].getOutput();
-            finalOutput += voiceOutput;
+			voices[i].tickAudio();
+            finalOutput += voices[i].getOutput();
 		}
 		else {
 			voices[i].reset();
@@ -69,20 +64,23 @@ void Voice::trigger(uint8_t noteNumber, uint8_t velocity)
 	mOsc[0].setFreq(noteNumberToFrequency(mNote));
 	mOsc[1].setFreq(noteNumberToFrequency(mNote));
 	mOsc[2].setFreq(noteNumberToFrequency(mNote));
-	mOsc[0].setGain(1.0);
-	mOsc[1].setGain(1.0);
-	mOsc[2].setGain(1.0);
 	mOsc[0].sync();
 	mOsc[1].sync();
 	mOsc[2].sync();
 	mLFOPitch.sync();
 	mAmpEnv.trigger();
+    mVFEnv[0].trigger();
+    mVFEnv[1].trigger();
+    mVFEnv[2].trigger();
 	tickMod();
 }
 
 void Voice::release()
 {
 	mAmpEnv.release();
+    mVFEnv[0].release();
+    mVFEnv[1].release();
+    mVFEnv[2].release();
 }
 
 void Voice::reset() {
@@ -100,6 +98,9 @@ void Voice::setAudioFs(double fs)
 void Voice::setModFs(double fs) {
 	mAmpEnv.setFs(fs);
 	mLFOPitch.setFs(fs);
+	mVFEnv[0].setFs(fs);
+	mVFEnv[1].setFs(fs);
+	mVFEnv[2].setFs(fs);
 }
 
 void Voice::tickAudio()
@@ -112,14 +113,20 @@ void Voice::tickAudio()
 void Voice::tickMod() {
 	mAmpEnv.tick();
 	mLFOPitch.tick();
+    mVFEnv[0].tick();
+    mVFEnv[1].tick();
+    mVFEnv[2].tick();
 
 	mOsc[0].modFreq(mLFOPitch.getOutput());
+    mOsc[0].modPFreq( mVFEnv[0].getOutput() - 0.9 );
 	mOsc[0].applyMods();
 
 	mOsc[1].modFreq(mLFOPitch.getOutput());
+    mOsc[1].modPFreq( mVFEnv[1].getOutput() - 0.9 );
 	mOsc[1].applyMods();
 
 	mOsc[2].modFreq(mLFOPitch.getOutput());
+    mOsc[2].modPFreq( mVFEnv[2].getOutput() - 0.9 );
 	mOsc[2].applyMods();
 }
 

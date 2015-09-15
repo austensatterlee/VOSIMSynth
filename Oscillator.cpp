@@ -1,7 +1,5 @@
 #include "Oscillator.h"
 
-extern double VOSIM_PULSE_COS[65536];
-extern double MINBLEP[BLEPSIZE];
 #define LERP(A,B,F) ((B-A)*F+A)
 
 /******************************
@@ -33,7 +31,7 @@ void Oscillator::tick() {
 	mPhase += mStep;
 	if (mPhase > 1)
 		mPhase -= 1;
-    if ( nInit ) {
+    if ( useMinBleps && nInit ) {
         mBlepBufInd++;
         if ( mBlepBufInd >= BLEPBUF )
             mBlepBufInd = 0;
@@ -52,7 +50,7 @@ double Oscillator::getOutput() {
 		return mGain*(mPhase*2-1);
 		break;
 	case SINE_WAVE:
-		return mGain*2*(0.5-VOSIM_PULSE_COS[(uint32_t)(0xFFFF*mPhase)]);
+		return mGain*2*(0.5-VOSIM_PULSE_COS[(int)(VOSIM_PULSE_COS_SIZE*mPhase)]);
 		break;
 	default:
 		return 0;
@@ -88,17 +86,16 @@ void Oscillator::addBlep( double offset, double ampl ) {
 ******************************/
 void VOSIM::applyMods() {
 	Oscillator::updateMods();
-    //mNumber = 0.5*mTargetNumber * mPhaseScale;
-    mNumber = (16 * mTargetNumber);
+	mNumber = (8 * mTargetNumber);
 	if (mUseRelativeWidth) {
-		mPFreq = (mNumber + mTargetPFreq * (1 + mPFreqMod)) * mFreq;
+		mPFreq = (mNumber + 32*mTargetPFreq * (1 + mPFreqMod)) * mFreq;
 	} else {
-		mPFreq = 440 * pow(2.0, 1 + 5 * mTargetPFreq  * (1 + mPFreqMod));
+		mPFreq = 880 * pow(2.0, 3 * mTargetPFreq  * (1 + mPFreqMod));
 	}
-    //mPFreq = std::fmax(mPFreq, mFreq);
+	mPFreq = std::fmin(mPFreq, mFs / 2);
 	mDecay = std::fmin(0.9999,std::fmax(0,std::fmin(1,((mTargetDecay-1)*mDecayMod)+1)));
-    refreshPhaseScale();
     resetMods();
+	refreshPhaseScale();
 }
 
 void VOSIM::resetMods() {
@@ -116,6 +113,8 @@ double VOSIM::getOutput() {
     static double pulsePhase,lastPulsePhase;
 	static double innerPhase;
     static double vout;
+	static int wtindex;
+	static double wtfrac;
 	innerPhase = mPhase * mPhaseScale;
 	N = std::floor(innerPhase);
     lastN = std::floor( mLastInnerPhase );
@@ -126,19 +125,23 @@ double VOSIM::getOutput() {
     pulsePhase = ( innerPhase - N );
     lastPulsePhase = ( mLastInnerPhase - lastN );
 	if (innerPhase >= mNumber) {
-        if ( mLastInnerPhase <= mNumber) {
-            vout = mAttenuation * VOSIM_PULSE_COS[(int)( 0xFFFF * lastPulsePhase )];
+        if (useMinBleps && mLastInnerPhase <= mNumber) {
+			wtindex = ((VOSIM_PULSE_COS_SIZE-1) * lastPulsePhase);
+			wtfrac = ((VOSIM_PULSE_COS_SIZE-1) * lastPulsePhase) - wtindex;
+            vout = mAttenuation * LERP(VOSIM_PULSE_COS[wtindex], VOSIM_PULSE_COS[wtindex + 1], wtfrac);
             addBlep( (innerPhase) * mPFreq / (mFs), vout );
         }
 		vout = 0;
-    } else {   
-        vout = mAttenuation * VOSIM_PULSE_COS[(int)( 0xFFFF * pulsePhase )];
+    } else {
+		wtindex = ((VOSIM_PULSE_COS_SIZE - 1) * pulsePhase);
+		wtfrac = ((VOSIM_PULSE_COS_SIZE - 1) * pulsePhase) - wtindex;
+        vout = mAttenuation * LERP(VOSIM_PULSE_COS[wtindex],VOSIM_PULSE_COS[wtindex+1],wtfrac);
     }
-    if ( mPhase+mStep >= 1.0 ) {
-        addBlep( mPhase*mFreq / mFs, vout );
+    if (useMinBleps && mPhase+mStep >= 1.0 ) {
+        addBlep( (mStep+mPhase-1)*mFreq / mFs, vout );
     }
     mLastInnerPhase = innerPhase;
-    return vout + mBlepBuf[mBlepBufInd];
+	return vout + mBlepBuf[mBlepBufInd];
 }
 
 /******************************
@@ -146,14 +149,18 @@ double VOSIM::getOutput() {
  * 
  ******************************/
 void Envelope::setPeriod(int segment, double period, double shape) {
+    period = std::fmax( MIN_ENV_PERIOD, period );
+    shape = std::fmax( MIN_ENV_SHAPE, shape );
 	mTargetPeriod[segment] = period;
 	mShape[segment] = shape;
-	period = std::fmax(MIN_ENV_PERIOD, period);
-	period = period * mFs;
-	shape = std::fmax(MIN_ENV_SHAPE, shape);
-	if (segment < mNumSegments - 1) {
-		mMult[segment] = exp(-log((abs(mPoint[segment + 1] - mPoint[segment]) + shape) / shape) / period);
-		mBase[segment] = (mPoint[segment + 1] - mPoint[segment] + shape)*(1.0 - mMult[segment]);
+	period = std::floor(2 * period * mFs);
+	double aexpm = std::pow(mMult[segment], period);
+	if (segment <= mNumSegments - 1) {
+		mMult[segment] = mShape[segment];
+		mBase[segment] = (mPoint[segment+1] - aexpm*mPoint[segment])*(1-mMult[segment]) / (1 - aexpm);
+	}
+	else if (segment == mNumSegments - 1) {
+		mBase[segment] = (-aexpm)*(1 - mMult[segment]) / (1 - aexpm);
 	}
 }
 
@@ -209,8 +216,6 @@ void Envelope::trigger() {
 
 void Envelope::release() {
 	mCurrSegment = mNumSegments - 1;
-	mMult[mCurrSegment] = exp(-log((abs(mPoint[mCurrSegment + 1] - mOutput)+ mShape[mCurrSegment]) / mShape[mCurrSegment]) / (mTargetPeriod[mCurrSegment]*mFs));
-	mBase[mCurrSegment] = (mPoint[mCurrSegment + 1] - mOutput + mShape[mCurrSegment])*(1.0 - mMult[mCurrSegment]);
 }
 
 void Envelope::tick() {
@@ -220,6 +225,10 @@ void Envelope::tick() {
 		if (mCurrSegment < mNumSegments - 2) {
 			mCurrSegment++;
 		} else {
+			if (mRepeat && mCurrSegment == mNumSegments - 2) {
+				mCurrSegment = 0;
+				mOutput = mPoint[0];
+			}
 			if (mCurrSegment == mNumSegments - 1) {
 				mIsDone = true;
 			}

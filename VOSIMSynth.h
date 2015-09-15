@@ -8,6 +8,7 @@
 #include "Oscillator.h"
 #include "MIDIReceiver.h"
 #include "VoiceManager.h"
+#include "Filter.h"
 
 class VOSIMSynth : public IPlug
 {
@@ -22,7 +23,9 @@ public:
 private:
 	MIDIReceiver mMIDIReceiver;
 	VoiceManager mVoiceManager;
+	Filter *LP4;
 	double mVolume;
+	int mOversampling;
 };
 
 #endif

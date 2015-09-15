@@ -506,6 +506,7 @@ CALL ..\..\AAX_SDK\Utilities\CreatePackage.bat $(OutDir) ..\..\AAX_SDK\Utilities
     <ClInclude Include="..\..\WDL\IPlug\AAX\AAX_CIPlugParameters.h" />
     <ClInclude Include="..\..\WDL\IPlug\IPlugAAX.h" />
     <ClInclude Include="Delegate.h" />
+    <ClInclude Include="tables.h" />
     <ClInclude Include="VOSIMSynth.h" />
     <ClInclude Include="MIDIReceiver.h" />
     <ClInclude Include="Oscillator.h" />

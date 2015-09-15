@@ -120,6 +120,7 @@
     <ClInclude Include="MIDIReceiver.h" />
     <ClInclude Include="pbSignal.h" />
     <ClInclude Include="Delegate.h" />
+    <ClInclude Include="tables.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VOSIMSynth.rc" />

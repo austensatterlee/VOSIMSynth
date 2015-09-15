@@ -122,6 +122,7 @@
     <ClInclude Include="MIDIReceiver.h" />
     <ClInclude Include="pbSignal.h" />
     <ClInclude Include="Delegate.h" />
+    <ClInclude Include="tables.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\WDL\IPlug\Hosts.cpp">

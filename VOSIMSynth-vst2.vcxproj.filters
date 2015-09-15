@@ -10,6 +10,7 @@
     <ClCompile Include="tables.cpp" />
     <ClCompile Include="UI.cpp" />
     <ClCompile Include="VoiceManager.cpp" />
+    <ClCompile Include="Filter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="VOSIMSynth.h" />
@@ -23,6 +24,8 @@
     <ClInclude Include="GallantSignal.h" />
     <ClInclude Include="UI.h" />
     <ClInclude Include="VoiceManager.h" />
+    <ClInclude Include="tables.h" />
+    <ClInclude Include="Filter.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VOSIMSynth.rc" />

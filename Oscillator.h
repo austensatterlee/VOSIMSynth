@@ -2,12 +2,10 @@
 #define __OSCILLATOR__
 #include <cstdint>
 #include <cmath>
+#include "tables.h"
 
-#define MIN_ENV_PERIOD	0.0001
-#define MIN_ENV_SHAPE	0.01
-#define BLEPBUF         64
-#define BLEPSIZE        8193
-#define BLEPOS          128
+#define MIN_ENV_PERIOD	0.001
+#define MIN_ENV_SHAPE	0.9999999
 
 typedef enum {
 	SAW_WAVE=0,
@@ -25,6 +23,7 @@ protected:
     double mBlepBuf[BLEPBUF];
     int mBlepBufInd;
     int nInit;
+	bool useMinBleps;
     void addBlep( double offset, double ampl );
 public:
 	void tick();
@@ -48,7 +47,8 @@ public:
 		mStep(0),
 		mTargetGain(0.0),mGainMod(1),
 		mGain(0.0),
-		mPhaseOffset(0)
+		mPhaseOffset(0),
+		useMinBleps(false)
 	{
 			setFreq(mTargetFreq);
 			sync();
@@ -99,6 +99,7 @@ private:
 	double mFs;
 	int mNumSegments;
 	int mCurrSegment;
+	bool mRepeat;
 	double *mTargetPeriod;
 	double *mPoint;
 	double *mShape;
@@ -121,7 +122,8 @@ public:
 		mFs(44100),
 		mCurrSegment(0),
 		mIsDone(true),
-		mOutput(0.0)
+		mOutput(0.0),
+		mRepeat(false)
 	{
 		mNumSegments = numsteps+3;
 		mTargetPeriod = new double[mNumSegments];

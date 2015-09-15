@@ -304,6 +304,7 @@ copy /Y "$(TargetPath)".rsr "$(RTAS_PLUGINS_PATH)\$(BINARY_NAME).dpm.rsr"
     <ClInclude Include="..\..\WDL\IPlug\RTAS\ProcessInterface.h" />
     <ClInclude Include="..\..\WDL\IPlug\RTAS\digicode.h" />
     <ClInclude Include="Delegate.h" />
+    <ClInclude Include="tables.h" />
     <ClInclude Include="VOSIMSynth.h" />
     <ClInclude Include="MIDIReceiver.h" />
     <ClInclude Include="Oscillator.h" />

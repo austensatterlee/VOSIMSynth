@@ -1,7 +1,7 @@
 #ifndef __VOICEMANAGER__
 #define __VOICEMANAGER__
 
-#define MOD_FS_RAT 7
+#define MOD_FS_RAT 1
 #include "Oscillator.h"
 #include <cmath>
 #include <cstdint>
@@ -14,6 +14,7 @@ public:
 	uint8_t mNote;
 	double mVelocity;
 	VOSIM mOsc[3];
+    Envelope mVFEnv[3];
 	Envelope mAmpEnv;
 	Oscillator mLFOPitch;
 	void trigger(uint8_t noteNumber, uint8_t velocity);
@@ -39,7 +40,6 @@ class VoiceManager {
 private:
 	uint32_t mSampleCount;
 public:
-	uint8_t mOversampling;
 	uint8_t mNumVoices;
 	Voice *voices;
 	void TriggerNote(uint8_t noteNumber, uint8_t velocity);
@@ -49,8 +49,7 @@ public:
 	double tick();
 	VoiceManager() :
 		mNumVoices(0),
-		mSampleCount(0),
-		mOversampling(1)
+		mSampleCount(0)
 	{
 	};
 };

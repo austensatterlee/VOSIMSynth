@@ -278,6 +278,7 @@
     <ClInclude Include="app_wrapper\app_main.h" />
     <ClInclude Include="app_wrapper\app_resource.h" />
     <ClInclude Include="Delegate.h" />
+    <ClInclude Include="tables.h" />
     <ClInclude Include="VOSIMSynth.h" />
     <ClInclude Include="MIDIReceiver.h" />
     <ClInclude Include="Oscillator.h" />

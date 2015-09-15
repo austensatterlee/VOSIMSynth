@@ -104,15 +104,46 @@ def GenerateSinSquared(n):
     c = 0.5*(1-cos(t*2*pi))
     return c
 
+def SincKernel(M,fc):
+    N = arange(M+1)
+    window = 0.42-0.5*cos(2*pi*N/M)+0.8*cos(4*pi*N/M)
+    wsinc=array([sin(2*pi*fc*(i-M/2))/(i-M/2) if i!=M/2 else 2*pi*fc for i in N])
+    return wsinc*window
+
 def main():
+    mb_points = 16
+    mb_oversamp = 256
+    minblep = GenerateMinBLEP(mb_points,mb_oversamp)
+    ss_points = 65536
+    sinsquaredtable = GenerateSinSquared(ss_points)
+    sk_points = 50
+    sk_fc = 0.49
+    sinckernel = SincKernel(sk_points,sk_fc)
+
+    tableinfo = {
+            'BLEPBUF': int(float(len(minblep))/mb_oversamp),
+            'BLEPSIZE': len(minblep),
+            'BLEPOS': mb_oversamp,
+            'VOSIM_PULSE_COS_SIZE': ss_points,
+            'SINC_KERNEL_SIZE': sk_points+1
+            }
+    tablenames = {
+            'MINBLEP':minblep,
+            'VOSIM_PULSE_COS':sinsquaredtable,
+            'SINC_KERNEL':sinckernel,
+            }
+
     tablestr = ""
-    minblep = GenerateMinBLEP(16,256)
-    sinsquaredtable = GenerateSinSquared(65536)
-    tablestr += MakeTableStr(minblep,'MINBLEP')
-    tablestr += MakeTableStr(sinsquaredtable,'VOSIM_PULSE_COS')
-    fp = open('tables.cpp','w')
-    fp.write(tablestr)
-    fp.close()
+    tableinfostr = '\n'.join(["#define {} {}".format(k,v) for k,v in tableinfo.items()])
+    tableinfostr += '\n'
+    for k in tablenames:
+        tablestr += MakeTableStr(tablenames[k],k)
+        tableinfostr += "extern double {}[{}];\n".format(k,len(tablenames[k]))
+
+    with open('tables.cpp','w') as fp:
+        fp.write(tablestr)
+    with open('tables.h', 'w') as fp:
+        fp.write(tableinfostr)
 
 if __name__=="__main__":
     main()
