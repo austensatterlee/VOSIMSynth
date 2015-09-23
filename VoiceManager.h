@@ -30,7 +30,7 @@ public:
 	Voice() {
 		mNote = 0;
 		mVelocity = 0;
-		mLFOPitch.mWaveform = SINE_WAVE;
+		mLFOPitch.mWaveform = SAW_WAVE;
 		mOsc[0].setGain(1);
 		mOsc[1].setGain(1);
 		mOsc[2].setGain(1);

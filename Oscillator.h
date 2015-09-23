@@ -4,11 +4,11 @@
 #include <cmath>
 #include "tables.h"
 
-#define MIN_ENV_PERIOD	0.001
-#define MIN_ENV_SHAPE	0.01
+#define MIN_ENV_PERIOD	.0001
+#define MIN_ENV_SHAPE	.000000001
 //#define USE_MINBLEPS
 
-
+using namespace std;
 
 typedef enum {
 	SAW_WAVE=0,
@@ -80,8 +80,8 @@ private:
 public:
 	void setDecay( double decay ) { mTargetDecay = decay; };
 	void scalePFreq(double scale) { mTargetPFreq = scale; };
-	void useRelativeWidth(bool b) { mUseRelativeWidth = b; };
-	void modPFreq(double modAmt) { mPFreqMod = (mPFreqMod+1)*modAmt; };
+	void toggleRelativePFreq(bool b) { mUseRelativeWidth = b; };
+	void modPFreq(double modAmt) { mPFreqMod += modAmt; };
 	void setNumber(double number) { mTargetNumber = number; };
 	void applyMods();
 	void resetMods();
@@ -94,7 +94,7 @@ public:
 		mNumber(5),
         mLastInnerPhase(0),
 		mAttenuation(1),
-		mUseRelativeWidth(false)
+		mUseRelativeWidth(true)
 	{
 	};
 };

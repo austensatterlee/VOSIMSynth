@@ -121,15 +121,15 @@ void Voice::tickMod() {
     mVFEnv[2].tick();
 
 	mOsc[0].modFreq(mLFOPitch.getOutput());
-    mOsc[0].modPFreq( mVFEnv[0].getOutput() - 0.9 );
+    mOsc[0].modPFreq( mVFEnv[0].getOutput() );
 	mOsc[0].applyMods();
 
 	mOsc[1].modFreq(mLFOPitch.getOutput());
-    mOsc[1].modPFreq( mVFEnv[1].getOutput() - 0.9 );
+    mOsc[1].modPFreq( mVFEnv[1].getOutput() );
 	mOsc[1].applyMods();
 
 	mOsc[2].modFreq(mLFOPitch.getOutput());
-    mOsc[2].modPFreq( mVFEnv[2].getOutput() - 0.9 );
+    mOsc[2].modPFreq( mVFEnv[2].getOutput() );
 	mOsc[2].applyMods();
 }
 

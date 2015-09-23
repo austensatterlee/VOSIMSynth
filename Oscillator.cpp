@@ -89,11 +89,11 @@ void Oscillator::addBlep( double offset, double ampl ) {
 ******************************/
 void VOSIM::applyMods() {
 	Oscillator::updateMods();
-	mNumber = (4 * mTargetNumber);
+	mNumber = (8 * mTargetNumber);
 	if (mUseRelativeWidth) {
-		mPFreq = (mNumber + 32*mTargetPFreq * (1 + mPFreqMod)) * mFreq;
+		mPFreq = (mNumber + pow(2.0,4 * (mTargetPFreq * mPFreqMod))) * mFreq;
 	} else {
-		mPFreq = 440 * pow(2.0, 4 * mTargetPFreq  * (1 + mPFreqMod));
+		mPFreq = 880 * pow(2.0, 4 * (mTargetPFreq * mPFreqMod));
 	}
 	mPFreq = std::fmin(mPFreq, mFs / 2);
 	mDecay = std::fmin(0.9999,mTargetDecay*mDecayMod);
@@ -160,22 +160,21 @@ void Envelope::setPeriod(int segment, double period, double shape) {
 	/*
 	 * period - length of segment in seconds
 	 * shape - higher shape <=> more linear
-	 * 
-	 * y[k] = f(kT) = a*b^(kT) + c
-	 * y[k+1] = (y[k]-c)*b^T + c
-	 * a = shape
-	 * b = exp( 1/(N*T) * log(1/a+1) )
-	 * c = -a
+	 *
 	 */
-	double b;
+	shape = shape == 0 ? mShape[segment] : shape;
 	mTargetPeriod[segment] = period;
 	mShape[segment] = shape;
-	period = MIN_ENV_PERIOD + 4*period;
-	period = std::floor(period * mFs);
-	shape = MIN_ENV_SHAPE + 4*shape;
-	mBase[segment] = -shape;
-	b = std::exp(std::log(1.0 / shape + 1)*1.0 / (period));
-	mMult[segment] = b;
+
+	period = period + MIN_ENV_PERIOD;
+	shape = shape + MIN_ENV_SHAPE;
+
+	mMult[segment] = exp(-log((1 + shape) / shape) / (mFs*period));
+	if (mPoint[segment + 1] > mPoint[segment]) {
+		mBase[segment] = (mPoint[segment + 1] + shape) * (1 - mMult[segment]);
+	}else {
+		mBase[segment] = (mPoint[segment + 1] - shape) * (1 - mMult[segment]);
+	}
 }
 
 void Envelope::setShape(int segment, double shape) {
@@ -218,11 +217,7 @@ void Envelope::setPoint_dB(int node, double dB) {
 }
 
 double Envelope::getOutput() {
-	if (mCurrSegment == mNumSegments - 1) {
-		return -(1 - mOutput)*(mPoint[mCurrSegment + 1] - mRelpoint) + mPoint[mCurrSegment + 1];
-	} else {
-		return -(1 - mOutput)*(mPoint[mCurrSegment + 1] - mPoint[mCurrSegment]) + mPoint[mCurrSegment+1];
-	}
+	return mOutput;
 }
 
 void Envelope::setFs(double fs) {
@@ -234,34 +229,32 @@ void Envelope::setFs(double fs) {
 
 void Envelope::trigger() {
 	mCurrSegment = 0;
-	mOutput = 0;
+	mOutput = mPoint[0];
 	mGate = 1;
 	mIsDone = false;
 }
 
 void Envelope::release() {
 	mRelpoint = getOutput();
-	mOutput = 0; 
 	mGate = 0;
 	mCurrSegment = mNumSegments - 1;
 }
 
 void Envelope::tick() {
-	if (mOutput>=1.0) {
-		mOutput = 1.0;
+	bool isIncreasing = mPoint[mCurrSegment + 1]>mPoint[mCurrSegment];
+	if ((isIncreasing && mOutput>=mPoint[mCurrSegment+1]) || (!isIncreasing && mOutput<=mPoint[mCurrSegment+1])) {
+		mOutput = mPoint[mCurrSegment + 1];
 		if (mCurrSegment < mNumSegments - 2) {
 			mCurrSegment++;
-			mOutput = 0;
 		} else {
 			if (mRepeat && mCurrSegment == mNumSegments - 2) {
-				mCurrSegment = 0;
-				mOutput = 0;
+				trigger();
 			}
 			if (mCurrSegment == mNumSegments - 1) {
 				mIsDone = true;
 			}
 		}
 	}else{
-		mOutput = mBase[mCurrSegment]+mMult[mCurrSegment]*(mOutput-mBase[mCurrSegment]);
+		mOutput = mBase[mCurrSegment]+mMult[mCurrSegment]*mOutput;
 	}
 }

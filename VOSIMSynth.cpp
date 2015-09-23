@@ -23,6 +23,7 @@ enum EParams
 	kOsc1Num,
 	kOsc1Dec,
     kOsc1Vol,
+	kOsc1FreqMode,
     kEnv2Atk,
     kEnv2Dec,
     kEnv2Rel,
@@ -33,6 +34,7 @@ enum EParams
     kOsc2Num,
     kOsc2Dec,
     kOsc2Vol,
+	kOsc2FreqMode,
     kEnv3Atk,
     kEnv3Dec,
     kEnv3Rel,
@@ -43,6 +45,7 @@ enum EParams
     kOsc3Num,
     kOsc3Dec,
 	kOsc3Vol,
+	kOsc3FreqMode,
     kEnv4Atk,
     kEnv4Dec,
     kEnv4Rel,
@@ -103,20 +106,23 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   GetParam( kOsc1Dec )->InitDouble( "O1D", 0.001, 0.0, 1.0, 0.000001, "Osc1 Decay" );
   GetParam( kOsc1Dec )->SetShape( 5. );
   GetParam( kOsc1Vol )->InitDouble( "O1Vol", 1, 0, 1, 0.001, "Osc1 Vol" );
+  GetParam(kOsc1FreqMode)->InitBool("O1RelFreqMode", false, "Osc1 Freq Mode", "Osc1");
 
   GetParam( kOsc2VF )->InitDouble( "O2VF", 0.5, 0, 1, 0.000001, "Osc2 VF" );
   GetParam( kOsc2VF )->SetShape( 2. );
   GetParam( kOsc2Num )->InitDouble( "O2N", 0.25, 0, 1, 0.000001, "Osc2 Number" );
   GetParam( kOsc2Dec )->InitDouble( "O2D", 0.001, 0.0, 1.0, 0.000001, "Osc2 Decay" );
   GetParam( kOsc2Dec )->SetShape( 5. );
-  GetParam( kOsc2Vol )->InitDouble( "O2Vol", 1, 0, 1, 0.001, "Osc2 Vol" );
+  GetParam( kOsc2Vol )->InitDouble( "O2Vol", 1, 0, 1, 0.001, "Osc2 Vol");
+  GetParam(kOsc2FreqMode)->InitBool("O2RelFreqMode", false, "Osc2 Freq Mode", "Osc2");
 
-  GetParam( kOsc3VF )->InitDouble( "O3VF", 0.5, 0, 1, 0.000001, "Osc3 VF" );
+  GetParam( kOsc3VF )->InitDouble( "O3VF", 0.5, 0, 1, 0.000001, "Osc3 VF", "Osc3" );
   GetParam( kOsc3VF )->SetShape( 2. );
-  GetParam( kOsc3Num )->InitDouble( "O3N", 0.25, 0, 1, 0.000001, "Osc3 Number" );
-  GetParam( kOsc3Dec )->InitDouble( "O3D", 0.001, 0.0, 1.0, 0.000001, "Osc3 Decay" );
+  GetParam( kOsc3Num )->InitDouble( "O3N", 0.25, 0, 1, 0.000001, "Osc3 Number", "Osc3" );
+  GetParam( kOsc3Dec )->InitDouble( "O3D", 0.001, 0.0, 1.0, 0.000001, "Osc3 Decay", "Osc3");
   GetParam( kOsc3Dec )->SetShape( 5. );
-  GetParam( kOsc3Vol )->InitDouble( "O3Vol", 1, 0, 1, 0.001, "Osc3 Vol" );
+  GetParam( kOsc3Vol )->InitDouble( "O3Vol", 1, 0, 1, 0.001, "Osc3 Vol", "Osc3");
+  GetParam(kOsc3FreqMode)->InitBool("O3RelFreqMode", false, "Osc3 Freq Mode", "Osc3");
 
   GetParam(kWedgeSwitch1)->InitInt("Oversampling", 0, 0, 1, "Oversampling");
 
@@ -325,26 +331,14 @@ void VOSIMSynth::OnParamChange(int paramIdx)
 		while (n--)
 			mVoiceManager.voices[n].mOsc[0].setDecay(pow(10,-1*(GetParam(kOsc1Dec)->Value())));
 		break;
-	case kOsc1PMF:
+	case kOsc1FreqMode:
 		while (n--)
-			mVoiceManager.voices[n].mLFOPitch.setFreq(pow(2, 5 * GetParam(kOsc1PMF)->Value()));
-		break;
-	case kOsc1PMG:
-		while (n--)
-			mVoiceManager.voices[n].mLFOPitch.setGain(pow(2, -12*(1-GetParam(kOsc1PMG)->Value())));
+			mVoiceManager.voices[n].mOsc[0].toggleRelativePFreq(GetParam(kOsc1FreqMode)->Value());
 		break;
 	case kOsc1Vol:
         while ( n-- )
             mVoiceManager.voices[n].mOsc[0].setGain( pow( 10.0, -1.5*(1-GetParam( kOsc1Vol )->Value()) ) );
 		break;
-    case kOsc2Vol:
-        while ( n-- )
-            mVoiceManager.voices[n].mOsc[1].setGain( pow( 10.0, -1.5 * (1-GetParam( kOsc2Vol )->Value()) ) );
-        break;
-    case kOsc3Vol:
-        while ( n-- )
-            mVoiceManager.voices[n].mOsc[2].setGain( pow( 10.0, -1.5 * (1-GetParam( kOsc3Vol )->Value()) ) );
-        break;
 	case kOsc2VF:
 		while (n--)
 			mVoiceManager.voices[n].mOsc[1].scalePFreq(GetParam(kOsc2VF)->Value());
@@ -357,6 +351,14 @@ void VOSIMSynth::OnParamChange(int paramIdx)
 		while (n--)
 			mVoiceManager.voices[n].mOsc[1].setDecay(pow(10, -1 * (GetParam(kOsc2Dec)->Value())));
 		break;
+	case kOsc2FreqMode:
+		while (n--)
+			mVoiceManager.voices[n].mOsc[1].toggleRelativePFreq(GetParam(kOsc2FreqMode)->Value());
+		break;
+	case kOsc2Vol:
+		while (n--)
+			mVoiceManager.voices[n].mOsc[1].setGain(pow(10.0, -1.5 * (1 - GetParam(kOsc2Vol)->Value())));
+		break;
 	case kOsc3VF:
 		while (n--)
 			mVoiceManager.voices[n].mOsc[2].scalePFreq(GetParam(kOsc3VF)->Value());
@@ -368,6 +370,22 @@ void VOSIMSynth::OnParamChange(int paramIdx)
 	case kOsc3Dec:
 		while (n--)
 			mVoiceManager.voices[n].mOsc[2].setDecay(pow(10, -1 * (GetParam(kOsc3Dec)->Value())));
+		break;
+	case kOsc3FreqMode:
+		while (n--)
+			mVoiceManager.voices[n].mOsc[2].toggleRelativePFreq(GetParam(kOsc3FreqMode)->Value());
+		break;
+	case kOsc3Vol:
+		while (n--)
+			mVoiceManager.voices[n].mOsc[2].setGain(pow(10.0, -1.5 * (1 - GetParam(kOsc3Vol)->Value())));
+		break;
+	case kOsc1PMF:
+		while (n--)
+			mVoiceManager.voices[n].mLFOPitch.setFreq(pow(2, 5 * GetParam(kOsc1PMF)->Value()));
+		break;
+	case kOsc1PMG:
+		while (n--)
+			mVoiceManager.voices[n].mLFOPitch.setGain(pow(2, -12 * (1 - GetParam(kOsc1PMG)->Value())));
 		break;
     case kWedgeSwitch1:
         mOversampling = 1 + GetParam( kWedgeSwitch1 )->Value() * 5;
