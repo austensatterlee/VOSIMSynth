@@ -31,12 +31,14 @@ void Oscillator::tick() {
 	mPhase += mStep;
 	if (mPhase > 1)
 		mPhase -= 1;
+#ifdef USE_MINBLEPS
     if ( useMinBleps && nInit ) {
         mBlepBufInd++;
         if ( mBlepBufInd >= BLEPBUF )
             mBlepBufInd = 0;
         nInit--;
     }
+#endif
 }
 
 void Oscillator::setFs(double fs) {
@@ -60,18 +62,19 @@ double Oscillator::getOutput() {
 
 void Oscillator::addBlep( double offset, double ampl ) {
     int i;
-    int lpIn = BLEPOS*offset;
+	int blepos = BLEPOS / mOversampling;
+    int lpIn = blepos*offset;
     int lpOut = mBlepBufInd;
     int cBlep = BLEPBUF - 1;
-    double frac = BLEPOS*offset - lpIn;
+    double frac = blepos*offset - lpIn;
     double f;
-    for ( i = 0; i < nInit; i++,lpIn+=BLEPOS,lpOut++ ) {
+    for ( i = 0; i < nInit; i++,lpIn+= blepos,lpOut++ ) {
         if ( lpOut >= cBlep )
             lpOut = 0;
         f = LERP( MINBLEP[lpIn], MINBLEP[lpIn + 1], frac );
         mBlepBuf[lpOut] += ampl*( 1 - f );
     }
-    for ( ; i < cBlep; i++, lpIn += BLEPOS, lpOut++ ) {
+    for ( ; i < cBlep; i++, lpIn += blepos, lpOut++ ) {
         if ( lpOut >= cBlep )
             lpOut = 0;
         f = LERP( MINBLEP[lpIn], MINBLEP[lpIn + 1], frac );
@@ -86,14 +89,14 @@ void Oscillator::addBlep( double offset, double ampl ) {
 ******************************/
 void VOSIM::applyMods() {
 	Oscillator::updateMods();
-	mNumber = (8 * mTargetNumber);
+	mNumber = (4 * mTargetNumber);
 	if (mUseRelativeWidth) {
 		mPFreq = (mNumber + 32*mTargetPFreq * (1 + mPFreqMod)) * mFreq;
 	} else {
-		mPFreq = 880 * pow(2.0, 3 * mTargetPFreq  * (1 + mPFreqMod));
+		mPFreq = 440 * pow(2.0, 4 * mTargetPFreq  * (1 + mPFreqMod));
 	}
 	mPFreq = std::fmin(mPFreq, mFs / 2);
-	mDecay = std::fmin(0.9999,std::fmax(0,std::fmin(1,((mTargetDecay-1)*mDecayMod)+1)));
+	mDecay = std::fmin(0.9999,mTargetDecay*mDecayMod);
     resetMods();
 	refreshPhaseScale();
 }
@@ -109,39 +112,44 @@ void VOSIM::refreshPhaseScale() {
 }
 
 double VOSIM::getOutput() {
-    static uint32_t N, lastN;
-    static double pulsePhase,lastPulsePhase;
-	static double innerPhase;
-    static double vout;
-	static int wtindex;
-	static double wtfrac;
+    int N, lastN;
+    double pulsePhase,lastPulsePhase;
+	double innerPhase;
+    double vout;
+	int wtindex;
+	double wtfrac;
 	innerPhase = mPhase * mPhaseScale;
-	N = std::floor(innerPhase);
-    lastN = std::floor( mLastInnerPhase );
+	N = innerPhase;
+    lastN = mLastInnerPhase;
 	if (!N)
 		mAttenuation = mGain;
 	else if (N != lastN)
 		mAttenuation *= mDecay;
     pulsePhase = ( innerPhase - N );
-    lastPulsePhase = ( mLastInnerPhase - lastN );
 	if (innerPhase >= mNumber) {
+#ifdef USE_MINBLEPS
+		lastPulsePhase = (mLastInnerPhase - lastN);
         if (useMinBleps && mLastInnerPhase <= mNumber) {
 			wtindex = ((VOSIM_PULSE_COS_SIZE-1) * lastPulsePhase);
 			wtfrac = ((VOSIM_PULSE_COS_SIZE-1) * lastPulsePhase) - wtindex;
             vout = mAttenuation * LERP(VOSIM_PULSE_COS[wtindex], VOSIM_PULSE_COS[wtindex + 1], wtfrac);
             addBlep( (innerPhase) * mPFreq / (mFs), vout );
         }
+#endif
 		vout = 0;
     } else {
 		wtindex = ((VOSIM_PULSE_COS_SIZE - 1) * pulsePhase);
 		wtfrac = ((VOSIM_PULSE_COS_SIZE - 1) * pulsePhase) - wtindex;
         vout = mAttenuation * LERP(VOSIM_PULSE_COS[wtindex],VOSIM_PULSE_COS[wtindex+1],wtfrac);
     }
+#ifdef USE_MINBLEPS
     if (useMinBleps && mPhase+mStep >= 1.0 ) {
         addBlep( (mStep+mPhase-1)*mFreq / mFs, vout );
     }
-    mLastInnerPhase = innerPhase;
-	return vout + mBlepBuf[mBlepBufInd];
+	vout += mBlepBuf[mBlepBufInd];
+#endif
+	mLastInnerPhase = innerPhase;
+	return vout;
 }
 
 /******************************
@@ -149,23 +157,35 @@ double VOSIM::getOutput() {
  * 
  ******************************/
 void Envelope::setPeriod(int segment, double period, double shape) {
-    period = std::fmax( MIN_ENV_PERIOD, period );
-    shape = std::fmax( MIN_ENV_SHAPE, shape );
+	/*
+	 * period - length of segment in seconds
+	 * shape - higher shape <=> more linear
+	 * 
+	 * y[k] = f(kT) = a*b^(kT) + c
+	 * y[k+1] = (y[k]-c)*b^T + c
+	 * a = shape
+	 * b = exp( 1/(N*T) * log(1/a+1) )
+	 * c = -a
+	 */
+	double b;
 	mTargetPeriod[segment] = period;
 	mShape[segment] = shape;
-	period = std::floor(2 * period * mFs);
-	double aexpm = std::pow(mMult[segment], period);
-	if (segment <= mNumSegments - 1) {
-		mMult[segment] = mShape[segment];
-		mBase[segment] = (mPoint[segment+1] - aexpm*mPoint[segment])*(1-mMult[segment]) / (1 - aexpm);
-	}
-	else if (segment == mNumSegments - 1) {
-		mBase[segment] = (-aexpm)*(1 - mMult[segment]) / (1 - aexpm);
-	}
+	period = MIN_ENV_PERIOD + 4*period;
+	period = std::floor(period * mFs);
+	shape = MIN_ENV_SHAPE + 4*shape;
+	mBase[segment] = -shape;
+	b = std::exp(std::log(1.0 / shape + 1)*1.0 / (period));
+	mMult[segment] = b;
 }
 
 void Envelope::setShape(int segment, double shape) {
-	setPeriod(segment, mTargetPeriod[segment], shape);
+	if (segment == -1) {
+		for (int i = 0; i < mNumSegments; i++) {
+			setPeriod(i, mTargetPeriod[i], shape);
+		}
+	} else {
+		setPeriod(segment, mTargetPeriod[segment], shape);
+	}
 }
 
 /*
@@ -198,7 +218,11 @@ void Envelope::setPoint_dB(int node, double dB) {
 }
 
 double Envelope::getOutput() {
-	return mOutput;
+	if (mCurrSegment == mNumSegments - 1) {
+		return -(1 - mOutput)*(mPoint[mCurrSegment + 1] - mRelpoint) + mPoint[mCurrSegment + 1];
+	} else {
+		return -(1 - mOutput)*(mPoint[mCurrSegment + 1] - mPoint[mCurrSegment]) + mPoint[mCurrSegment+1];
+	}
 }
 
 void Envelope::setFs(double fs) {
@@ -210,30 +234,34 @@ void Envelope::setFs(double fs) {
 
 void Envelope::trigger() {
 	mCurrSegment = 0;
-	mOutput = mPoint[0];
+	mOutput = 0;
+	mGate = 1;
 	mIsDone = false;
 }
 
 void Envelope::release() {
+	mRelpoint = getOutput();
+	mOutput = 0; 
+	mGate = 0;
 	mCurrSegment = mNumSegments - 1;
 }
 
 void Envelope::tick() {
-	if ((mBase[mCurrSegment]>=0 && mOutput >= mPoint[mCurrSegment + 1]) || 
-		(mBase[mCurrSegment]<=0 && mOutput <= mPoint[mCurrSegment + 1])) {
-		mOutput = mPoint[mCurrSegment + 1];
+	if (mOutput>=1.0) {
+		mOutput = 1.0;
 		if (mCurrSegment < mNumSegments - 2) {
 			mCurrSegment++;
+			mOutput = 0;
 		} else {
 			if (mRepeat && mCurrSegment == mNumSegments - 2) {
 				mCurrSegment = 0;
-				mOutput = mPoint[0];
+				mOutput = 0;
 			}
 			if (mCurrSegment == mNumSegments - 1) {
 				mIsDone = true;
 			}
 		}
 	}else{
-		mOutput = mBase[mCurrSegment]+mMult[mCurrSegment]*mOutput;
+		mOutput = mBase[mCurrSegment]+mMult[mCurrSegment]*(mOutput-mBase[mCurrSegment]);
 	}
 }

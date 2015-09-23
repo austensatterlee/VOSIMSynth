@@ -5,7 +5,10 @@
 #include "tables.h"
 
 #define MIN_ENV_PERIOD	0.001
-#define MIN_ENV_SHAPE	0.9999999
+#define MIN_ENV_SHAPE	0.01
+//#define USE_MINBLEPS
+
+
 
 typedef enum {
 	SAW_WAVE=0,
@@ -21,6 +24,7 @@ protected:
 	double mTargetFreq, mFreq, mFreqMod;
 	double mTargetGain, mGain, mGainMod;
     double mBlepBuf[BLEPBUF];
+	int mOversampling;
     int mBlepBufInd;
     int nInit;
 	bool useMinBleps;
@@ -33,9 +37,10 @@ public:
 	void modFreq(double modAmt) { mFreqMod = (mFreqMod+1)*modAmt; };
 	void modGain(double modAmt) { mGainMod *= modAmt; };
 	void setPhaseOffset(uint32_t phaseOffset) { mPhaseOffset = phaseOffset; };
+	void setOversampling(int oversampling) { mOversampling = oversampling; };
 	void applyMods();
-    void updateMods();
-    void resetMods();
+	void updateMods();
+	void resetMods();
 	void setFs(double fs);
 	double getOutput();
 	OSC_MODE mWaveform;
@@ -48,7 +53,8 @@ public:
 		mTargetGain(0.0),mGainMod(1),
 		mGain(0.0),
 		mPhaseOffset(0),
-		useMinBleps(false)
+		useMinBleps(false),
+		mOversampling(1)
 	{
 			setFreq(mTargetFreq);
 			sync();
@@ -72,13 +78,13 @@ private:
 	double		mPhaseScale;
 	bool		mUseRelativeWidth;
 public:
-    void setDecay( double decay ) { mTargetDecay = decay; };
+	void setDecay( double decay ) { mTargetDecay = decay; };
 	void scalePFreq(double scale) { mTargetPFreq = scale; };
 	void useRelativeWidth(bool b) { mUseRelativeWidth = b; };
 	void modPFreq(double modAmt) { mPFreqMod = (mPFreqMod+1)*modAmt; };
 	void setNumber(double number) { mTargetNumber = number; };
 	void applyMods();
-    void resetMods();
+	void resetMods();
 	void modDecay(double modAmt) { mDecayMod += modAmt; };
 	double getOutput();
 	VOSIM() :
@@ -88,9 +94,8 @@ public:
 		mNumber(5),
         mLastInnerPhase(0),
 		mAttenuation(1),
-		mUseRelativeWidth(true)
+		mUseRelativeWidth(false)
 	{
-		setFreq(mTargetFreq);
 	};
 };
 
@@ -99,19 +104,21 @@ private:
 	double mFs;
 	int mNumSegments;
 	int mCurrSegment;
+	int mGate;
 	bool mRepeat;
 	double *mTargetPeriod;
 	double *mPoint;
 	double *mShape;
 	double *mBase;
 	double *mMult;
+	double mRelpoint;
 	void _setPoint(int segment, double gain);
 public:
 	double	mOutput;
 	bool	mIsDone;
 	void	tick();
 	void	setPeriod(int segment, double period, double shape);
-	void setShape(int segment, double shape);
+	void	setShape(int segment, double shape);
 	void	setPoint_dB(int segment, double dB);
 	void	setPoint(int segment, double gain);
 	void	setFs(double fs);
@@ -123,7 +130,8 @@ public:
 		mCurrSegment(0),
 		mIsDone(true),
 		mOutput(0.0),
-		mRepeat(false)
+		mRepeat(false),
+		mGate(0)
 	{
 		mNumSegments = numsteps+3;
 		mTargetPeriod = new double[mNumSegments];

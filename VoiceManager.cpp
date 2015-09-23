@@ -35,12 +35,9 @@ void VoiceManager::setNumVoices(uint8_t numVoices)
 }
 
 double VoiceManager::tick() {
+	uint8_t i = mNumVoices;
+	double finalOutput = 0;
 	mSampleCount++;
-	static uint8_t i;
-	static uint8_t j;
-    static double finalOutput, voiceOutput;
-    i = mNumVoices;
-    finalOutput = 0;
 	while (i--) {
 		if (voices[i].isActive()) {
 			if (!(mSampleCount & MOD_FS_RAT)) {
@@ -53,7 +50,7 @@ double VoiceManager::tick() {
 			voices[i].reset();
 		}
 	}
-    finalOutput = finalOutput * 1.0/ mNumVoices;
+    finalOutput /= mNumVoices;
 	return finalOutput;
 }
 
@@ -95,6 +92,12 @@ void Voice::setAudioFs(double fs)
 	mOsc[2].setFs(fs);
 }
 
+void Voice::setOversampling(int oversampling) {
+	mOsc[0].setOversampling(oversampling);
+	mOsc[1].setOversampling(oversampling);
+	mOsc[2].setOversampling(oversampling);
+}
+
 void Voice::setModFs(double fs) {
 	mAmpEnv.setFs(fs);
 	mLFOPitch.setFs(fs);
@@ -131,7 +134,12 @@ void Voice::tickMod() {
 }
 
 double Voice::getOutput() {
-	return mVelocity*mAmpEnv.getOutput()*(mOsc[0].getOutput()+mOsc[1].getOutput()+mOsc[2].getOutput())*0.3333333333333333;
+	double output, output1, output2, output3;
+	output1 = mOsc[0].getOutput();
+	output2 = mOsc[1].getOutput();
+	output3 = mOsc[2].getOutput();
+	output = (output1 + output2 + output3)*mVelocity*mAmpEnv.getOutput()*0.3333333333333333;
+	return output;
 }
 
 bool Voice::isActive() {

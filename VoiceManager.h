@@ -19,7 +19,8 @@ public:
 	Oscillator mLFOPitch;
 	void trigger(uint8_t noteNumber, uint8_t velocity);
 	void release();
-	void reset();
+	void reset(); 
+	void setOversampling(int oversampling);
 	void setAudioFs(double fs);
 	void setModFs(double fs);
 	void tickAudio();

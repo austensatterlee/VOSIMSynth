@@ -10,7 +10,7 @@
     <LocalDebuggerAttach>false</LocalDebuggerAttach>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LocalDebuggerCommandArguments>$(TargetPath) /noload /nosave</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>$(TargetPath) /noload /nosave /noexc /noft</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>$(TargetDir)</LocalDebuggerWorkingDirectory>
     <LocalDebuggerCommand>$(VST2_32_HOST_PATH)</LocalDebuggerCommand>

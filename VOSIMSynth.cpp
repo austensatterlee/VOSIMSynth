@@ -8,11 +8,13 @@ const int kNumPrograms = 1;
 
 enum EParams
 {
+	kMainVol = 0,
     // Volume envelope
-	kEnv1Atk = 0,
+	kEnv1Atk,
 	kEnv1Dec,
 	kEnv1Rel,
 	kEnv1Sus,
+	kEnv1Shp,
     // Pitch LFO
     kOsc1PMF,
     kOsc1PMG,
@@ -25,6 +27,7 @@ enum EParams
     kEnv2Dec,
     kEnv2Rel,
     kEnv2Sus,
+	kEnv2Shp,
     // Oscillator 2 params
     kOsc2VF,
     kOsc2Num,
@@ -34,6 +37,7 @@ enum EParams
     kEnv3Dec,
     kEnv3Rel,
     kEnv3Sus,
+	kEnv3Shp,
     // Oscillator 3 params
     kOsc3VF,
     kOsc3Num,
@@ -43,6 +47,7 @@ enum EParams
     kEnv4Dec,
     kEnv4Rel,
     kEnv4Sus,
+	kEnv4Shp,
 	kWedgeSwitch1,
 	kNumParams
 };
@@ -52,9 +57,7 @@ enum ELayout
   kWidth = GUI_WIDTH,
   kHeight = GUI_HEIGHT,
 
-  kKnob1X = 10,
-  kKnob1Y = 10,
-  kKnob1Frames = 60
+  kKnob1Frames = 101
 };
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
@@ -65,25 +68,31 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   TRACE;
 
   //arguments are: name, defaultVal, minVal, maxVal, step, label
-  GetParam( kEnv1Atk )->InitDouble( "Vol A", 0.1, 0.0, 1.0, 0.001, "Vol A" ); GetParam( kEnv1Atk )->SetShape( 3. );
-  GetParam( kEnv1Dec )->InitDouble( "Vol D", 0.5, 0.0, 1.0, 0.001, "Vol D" ); GetParam( kEnv1Dec )->SetShape( 3. );
-  GetParam( kEnv1Rel )->InitDouble( "Vol R", 0.1, 0.0, 1.0, 0.001, "Vol R" ); GetParam( kEnv1Rel )->SetShape( 3. );
+  GetParam(kMainVol)->InitDouble("Main Vol", 0.5, 0.0, 1.0, 0.001, "Main Vol");
+
+  GetParam( kEnv1Atk )->InitDouble( "Vol A", 0.0, 0.0, 1.0, 0.001, "Vol A" ); GetParam( kEnv1Atk )->SetShape( 1 );
+  GetParam( kEnv1Dec )->InitDouble( "Vol D", 0.1, 0.0, 1.0, 0.001, "Vol D" ); GetParam( kEnv1Dec )->SetShape( 1. );
+  GetParam( kEnv1Rel )->InitDouble( "Vol R", 0.0, 0.0, 1.0, 0.001, "Vol R" ); GetParam( kEnv1Rel )->SetShape( 1. );
   GetParam( kEnv1Sus )->InitDouble( "Vol S", 0.8, 0.0, 1.0, 0.001, "Vol S" );
+  GetParam(kEnv1Shp)->InitDouble("Vol Shp", 0.5, 0.0, 1.0, 0.001, "Vol Shp");
 
-  GetParam( kEnv2Atk )->InitDouble( "Osc1 VF A", 0.1, 0.0, 1.0, 0.001, "Osc1 VF A" ); GetParam( kEnv2Atk )->SetShape( 3. );
-  GetParam( kEnv2Dec )->InitDouble( "Osc1 VF D", 0.5, 0.0, 1.0, 0.001, "Osc1 VF D" ); GetParam( kEnv2Dec )->SetShape( 3. );
-  GetParam( kEnv2Rel )->InitDouble( "Osc1 VF R", 0.1, 0.0, 1.0, 0.001, "Osc1 VF R" ); GetParam( kEnv2Rel )->SetShape( 3. );
-  GetParam( kEnv2Sus )->InitDouble( "Osc1 VF S", 0.8, 0.0, 1.0, 0.001, "Osc1 VF S" );
+  GetParam( kEnv2Atk )->InitDouble( "Osc1 VF A", 0.0, 0.0, 1.0, 0.001, "Osc1 VF A" ); GetParam( kEnv2Atk )->SetShape( 1. );
+  GetParam( kEnv2Dec )->InitDouble( "Osc1 VF D", 0.1, 0.0, 1.0, 0.001, "Osc1 VF D" ); GetParam( kEnv2Dec )->SetShape( 1. );
+  GetParam( kEnv2Rel )->InitDouble( "Osc1 VF R", 0.1, 0.0, 1.0, 0.001, "Osc1 VF R" ); GetParam( kEnv2Rel )->SetShape( 1. );
+  GetParam( kEnv2Sus )->InitDouble( "Osc1 VF S", 0.1, 0.0, 1.0, 0.001, "Osc1 VF S" );
+  GetParam(kEnv2Shp)->InitDouble("Osc1 VF Shp", 0.5, 0.0, 1.0, 0.001, "Osc1 VF Shp");
 
-  GetParam( kEnv3Atk )->InitDouble( "Osc2 VF A", 0.1, 0.0, 1.0, 0.001, "Osc2 VF A" ); GetParam( kEnv3Atk )->SetShape( 3. );
-  GetParam( kEnv3Dec )->InitDouble( "Osc2 VF D", 0.5, 0.0, 1.0, 0.001, "Osc2 VF D" ); GetParam( kEnv3Dec )->SetShape( 3. );
-  GetParam( kEnv3Rel )->InitDouble( "Osc2 VF R", 0.1, 0.0, 1.0, 0.001, "Osc2 VF R" ); GetParam( kEnv3Rel )->SetShape( 3. );
-  GetParam( kEnv3Sus )->InitDouble( "Osc2 VF S", 0.8, 0.0, 1.0, 0.001, "Osc2 VF S" );
+  GetParam( kEnv3Atk )->InitDouble( "Osc2 VF A", 0.0, 0.0, 1.0, 0.001, "Osc2 VF A" ); GetParam( kEnv3Atk )->SetShape( 1. );
+  GetParam( kEnv3Dec )->InitDouble( "Osc2 VF D", 0.1, 0.0, 1.0, 0.001, "Osc2 VF D" ); GetParam( kEnv3Dec )->SetShape( 1. );
+  GetParam( kEnv3Rel )->InitDouble( "Osc2 VF R", 0.1, 0.0, 1.0, 0.001, "Osc2 VF R" ); GetParam( kEnv3Rel )->SetShape( 1. );
+  GetParam( kEnv3Sus )->InitDouble( "Osc2 VF S", 0.1, 0.0, 1.0, 0.001, "Osc2 VF S" );
+  GetParam(kEnv3Shp)->InitDouble("Osc2 VF Shp", 0.5, 0.0, 1.0, 0.001, "Osc2 VF Shp");
 
-  GetParam( kEnv4Atk )->InitDouble( "Osc3 VF A", 0.1, 0.0, 1.0, 0.001, "Osc3 VF A" ); GetParam( kEnv4Atk )->SetShape( 3. );
-  GetParam( kEnv4Dec )->InitDouble( "Osc3 VF D", 0.5, 0.0, 1.0, 0.001, "Osc3 VF D" ); GetParam( kEnv4Dec )->SetShape( 3. );
-  GetParam( kEnv4Rel )->InitDouble( "Osc3 VF R", 0.1, 0.0, 1.0, 0.001, "Osc3 VF R" ); GetParam( kEnv4Rel )->SetShape( 3. );
-  GetParam( kEnv4Sus )->InitDouble( "Osc3 VF S", 0.8, 0.0, 1.0, 0.001, "Osc3 VF S" );
+  GetParam( kEnv4Atk )->InitDouble( "Osc3 VF A", 0.0, 0.0, 1.0, 0.001, "Osc3 VF A" ); GetParam( kEnv4Atk )->SetShape( 1. );
+  GetParam( kEnv4Dec )->InitDouble( "Osc3 VF D", 0.1, 0.0, 1.0, 0.001, "Osc3 VF D" ); GetParam( kEnv4Dec )->SetShape( 1. );
+  GetParam( kEnv4Rel )->InitDouble( "Osc3 VF R", 0.1, 0.0, 1.0, 0.001, "Osc3 VF R" ); GetParam( kEnv4Rel )->SetShape( 1. );
+  GetParam( kEnv4Sus )->InitDouble( "Osc3 VF S", 0.1, 0.0, 1.0, 0.001, "Osc3 VF S" );
+  GetParam(kEnv4Shp)->InitDouble("Osc3 VF Shp", 0.5, 0.0, 1.0, 0.001, "Osc3 VF Shp");
 
   GetParam( kOsc1PMF )->InitDouble( "OPMf", 0.001, 0.0, 1.0, 0.001, "Pitch Mod F" );
   GetParam( kOsc1PMG )->InitDouble( "OPMg", 0.001, 0.0, 1.0, 0.001, "Pitch Mod G" );
@@ -118,45 +127,51 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   IBitmap toggleswitch3p = pGraphics->LoadIBitmap(TOGGLE_SWITCH_3P_ID, TOGGLE_SWITCH_3P_FN, 3);
   IBitmap knob = pGraphics->LoadIBitmap(KNOB_ID, KNOB_FN, kKnob1Frames);
 
+  attachKnob(pGraphics, this, 0, 7, kMainVol, &knob);
+
   attachKnob(pGraphics, this, 0, 0, kEnv1Atk, &knob);
   attachKnob(pGraphics, this, 0, 1, kEnv1Dec, &knob);
   attachKnob(pGraphics, this, 0, 3, kEnv1Rel, &knob);
   attachKnob(pGraphics, this, 0, 2, kEnv1Sus, &knob);
+  attachKnob(pGraphics, this, 1, 0, kEnv1Shp, &knob);
 
-  attachKnob( pGraphics, this, 1, 0, kEnv2Atk, &knob );
-  attachKnob( pGraphics, this, 1, 1, kEnv2Dec, &knob );
-  attachKnob( pGraphics, this, 1, 3, kEnv2Rel, &knob );
-  attachKnob( pGraphics, this, 1, 2, kEnv2Sus, &knob );
+  attachKnob( pGraphics, this, 2, 0, kEnv2Atk, &knob );
+  attachKnob( pGraphics, this, 2, 1, kEnv2Dec, &knob );
+  attachKnob( pGraphics, this, 2, 3, kEnv2Rel, &knob );
+  attachKnob( pGraphics, this, 2, 2, kEnv2Sus, &knob );
+  attachKnob(pGraphics, this, 3, 0, kEnv2Shp, &knob);
 
-  attachKnob( pGraphics, this, 2, 0, kEnv3Atk, &knob );
-  attachKnob( pGraphics, this, 2, 1, kEnv3Dec, &knob );
-  attachKnob( pGraphics, this, 2, 3, kEnv3Rel, &knob );
-  attachKnob( pGraphics, this, 2, 2, kEnv3Sus, &knob );
+  attachKnob( pGraphics, this, 4, 0, kEnv3Atk, &knob );
+  attachKnob( pGraphics, this, 4, 1, kEnv3Dec, &knob );
+  attachKnob( pGraphics, this, 4, 3, kEnv3Rel, &knob );
+  attachKnob( pGraphics, this, 4, 2, kEnv3Sus, &knob );
+  attachKnob(pGraphics, this, 5, 0, kEnv3Shp, &knob);
 
-  attachKnob( pGraphics, this, 3, 0, kEnv4Atk, &knob );
-  attachKnob( pGraphics, this, 3, 1, kEnv4Dec, &knob );
-  attachKnob( pGraphics, this, 3, 3, kEnv4Rel, &knob );
-  attachKnob( pGraphics, this, 3, 2, kEnv4Sus, &knob );
+  attachKnob( pGraphics, this, 6, 0, kEnv4Atk, &knob );
+  attachKnob( pGraphics, this, 6, 1, kEnv4Dec, &knob );
+  attachKnob( pGraphics, this, 6, 3, kEnv4Rel, &knob );
+  attachKnob( pGraphics, this, 6, 2, kEnv4Sus, &knob );
+  attachKnob(pGraphics, this, 7, 0, kEnv4Shp, &knob);
 
-  attachKnob(pGraphics, this, 4, 0, kOsc1PMF, &knob);
-  attachKnob(pGraphics, this, 5, 0, kOsc1PMG, &knob);
+  attachKnob(pGraphics, this, 8, 0, kOsc1PMF, &knob);
+  attachKnob(pGraphics, this, 8, 1, kOsc1PMG, &knob);
 
-  attachKnob( pGraphics, this, 1, 4, kOsc1VF, &knob );
-  attachKnob( pGraphics, this, 1, 5, kOsc1Num, &knob );
-  attachKnob( pGraphics, this, 1, 6, kOsc1Dec, &knob );
-  attachKnob( pGraphics, this, 1, 7, kOsc1Vol, &knob );
+  attachKnob( pGraphics, this, 2, 4, kOsc1VF, &knob );
+  attachKnob( pGraphics, this, 2, 5, kOsc1Num, &knob );
+  attachKnob( pGraphics, this, 2, 6, kOsc1Dec, &knob );
+  attachKnob( pGraphics, this, 2, 7, kOsc1Vol, &knob );
 
-  attachKnob(pGraphics, this, 2, 4, kOsc2VF, &knob);
-  attachKnob(pGraphics, this, 2, 5, kOsc2Num, &knob);
-  attachKnob(pGraphics, this, 2, 6, kOsc2Dec, &knob);
-  attachKnob( pGraphics, this, 2, 7, kOsc2Vol, &knob );
+  attachKnob(pGraphics, this, 4, 4, kOsc2VF, &knob);
+  attachKnob(pGraphics, this, 4, 5, kOsc2Num, &knob);
+  attachKnob(pGraphics, this, 4, 6, kOsc2Dec, &knob);
+  attachKnob(pGraphics, this, 4, 7, kOsc2Vol, &knob );
 
-  attachKnob(pGraphics, this, 3, 4, kOsc3VF, &knob);
-  attachKnob(pGraphics, this, 3, 5, kOsc3Num, &knob);
-  attachKnob(pGraphics, this, 3, 6, kOsc3Dec, &knob);
-  attachKnob( pGraphics, this, 3, 7, kOsc3Vol, &knob );
+  attachKnob(pGraphics, this, 6, 4, kOsc3VF, &knob);
+  attachKnob(pGraphics, this, 6, 5, kOsc3Num, &knob);
+  attachKnob(pGraphics, this, 6, 6, kOsc3Dec, &knob);
+  attachKnob(pGraphics, this, 6, 7, kOsc3Vol, &knob );
 
-  pGraphics->AttachControl(new ISwitchControl(this, 700, 10, kWedgeSwitch1, &wedgeswitch2p));
+  //pGraphics->AttachControl(new ISwitchControl(this, 700, 10, kWedgeSwitch1, &wedgeswitch2p));
   //pGraphics->AttachControl(new ISwitchControl(this, 600, 10, kWedgeSwitch1, &toggleswitch3p));
 
   AttachGraphics(pGraphics);
@@ -185,6 +200,7 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
 		j = mOversampling;
 		while (j--) {
 			leftOutput[s] = LP4->getOutput(mVoiceManager.tick());
+			//leftOutput[s] = mVoiceManager.tick();
 		}
 		leftOutput[s] *= mVolume;
 		rightOutput[s] = leftOutput[s];
@@ -200,17 +216,23 @@ void VOSIMSynth::Reset()
 {
   TRACE;
   IMutexLock lock(this);
-  uint8_t i = NUM_VOICES;
   double fs = GetSampleRate()*mOversampling;
+  uint8_t n = mVoiceManager.mNumVoices;
   mVoiceManager.setFs(fs);
+  while (n--) {
+	  mVoiceManager.voices[n].setOversampling(mOversampling);
+  }
 }
 
 void VOSIMSynth::OnParamChange(int paramIdx)
 {
   IMutexLock lock(this);
-  uint8_t n = NUM_VOICES;
+  uint8_t n = mVoiceManager.mNumVoices;
   switch (paramIdx)
   {
+  case kMainVol:
+	  mVolume = GetParam(kMainVol)->Value()*10;
+	  break;
     case kEnv1Atk:
 		while (n--)
 			mVoiceManager.voices[n].mAmpEnv.setPeriod(0, GetParam(kEnv1Atk)->Value(), 0);
@@ -221,11 +243,15 @@ void VOSIMSynth::OnParamChange(int paramIdx)
 		break;
 	case kEnv1Rel:
 		while (n--)
-			mVoiceManager.voices[n].mAmpEnv.setPeriod(2, GetParam(kEnv1Rel)->Value(), 0.5);
+			mVoiceManager.voices[n].mAmpEnv.setPeriod(2, GetParam(kEnv1Rel)->Value(), 0);
 		break;
 	case kEnv1Sus:
 		while (n--)
 			mVoiceManager.voices[n].mAmpEnv.setPoint(1, GetParam(kEnv1Sus)->Value());
+		break;
+	case kEnv1Shp:
+		while (n--)
+			mVoiceManager.voices[n].mAmpEnv.setShape(-1, GetParam(kEnv1Shp)->Value());
 		break;
     case kEnv2Atk:
         while ( n-- )
@@ -237,12 +263,16 @@ void VOSIMSynth::OnParamChange(int paramIdx)
         break;
     case kEnv2Rel:
         while ( n-- )
-            mVoiceManager.voices[n].mVFEnv[0].setPeriod( 2, GetParam( kEnv2Rel )->Value(), 0.5 );
+            mVoiceManager.voices[n].mVFEnv[0].setPeriod( 2, GetParam( kEnv2Rel )->Value(), 0 );
         break;
     case kEnv2Sus:
         while ( n-- )
             mVoiceManager.voices[n].mVFEnv[0].setPoint( 1, GetParam( kEnv2Sus )->Value() );
         break;
+	case kEnv2Shp:
+		while (n--)
+			mVoiceManager.voices[n].mVFEnv[0].setShape(-1, GetParam(kEnv2Shp)->Value());
+		break;
     case kEnv3Atk:
         while ( n-- )
             mVoiceManager.voices[n].mVFEnv[1].setPeriod( 0, GetParam( kEnv3Atk )->Value(), 0 );
@@ -253,12 +283,16 @@ void VOSIMSynth::OnParamChange(int paramIdx)
         break;
     case kEnv3Rel:
         while ( n-- )
-            mVoiceManager.voices[n].mVFEnv[1].setPeriod( 2, GetParam( kEnv3Rel )->Value(), 0.5 );
+            mVoiceManager.voices[n].mVFEnv[1].setPeriod( 2, GetParam( kEnv3Rel )->Value(), 0 );
         break;
     case kEnv3Sus:
         while ( n-- )
             mVoiceManager.voices[n].mVFEnv[1].setPoint( 1, GetParam( kEnv3Sus )->Value() );
         break;
+	case kEnv3Shp:
+		while (n--)
+			mVoiceManager.voices[n].mVFEnv[1].setShape(-1, GetParam(kEnv3Shp)->Value());
+		break;
     case kEnv4Atk:
         while ( n-- )
             mVoiceManager.voices[n].mVFEnv[2].setPeriod( 0, GetParam( kEnv4Atk )->Value(), 0 );
@@ -269,12 +303,16 @@ void VOSIMSynth::OnParamChange(int paramIdx)
         break;
     case kEnv4Rel:
         while ( n-- )
-            mVoiceManager.voices[n].mVFEnv[2].setPeriod( 2, GetParam( kEnv4Rel )->Value(), 0.5 );
+            mVoiceManager.voices[n].mVFEnv[2].setPeriod( 2, GetParam( kEnv4Rel )->Value(), 0 );
         break;
     case kEnv4Sus:
         while ( n-- )
             mVoiceManager.voices[n].mVFEnv[2].setPoint( 1, GetParam( kEnv4Sus )->Value() );
         break;
+	case kEnv4Shp:
+		while (n--)
+			mVoiceManager.voices[n].mVFEnv[2].setShape(-1, GetParam(kEnv4Shp)->Value());
+		break;
 	case kOsc1VF:
 		while (n--)
 			mVoiceManager.voices[n].mOsc[0].scalePFreq(GetParam(kOsc1VF)->Value());
