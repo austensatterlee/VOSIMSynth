@@ -324,6 +324,11 @@ if exist "%programfiles(x86)%" (copy /y "$(TargetPath)" "$(VST3_64_PATH)\VOSIMSy
     <ClInclude Include="..\..\VST3_SDK\public.sdk\source\vst\vstsinglecomponenteffect.h" />
     <ClInclude Include="..\..\WDL\IPlug\IPlugVST3.h" />
     <ClInclude Include="Delegate.h" />
+    <ClInclude Include="Filter.h" />
+    <ClInclude Include="GallantSignal.h" />
+    <ClInclude Include="tables.h" />
+    <ClInclude Include="UI.h" />
+    <ClInclude Include="VoiceManager.h" />
     <ClInclude Include="VOSIMSynth.h" />
     <ClInclude Include="MIDIReceiver.h" />
     <ClInclude Include="Oscillator.h" />
@@ -344,7 +349,10 @@ if exist "%programfiles(x86)%" (copy /y "$(TargetPath)" "$(VST3_64_PATH)\VOSIMSy
     <ClCompile Include="..\..\VST3_SDK\public.sdk\source\vst\vstparameters.cpp" />
     <ClCompile Include="..\..\VST3_SDK\public.sdk\source\vst\vstsinglecomponenteffect.cpp" />
     <ClCompile Include="..\..\WDL\IPlug\IPlugVST3.cpp" />
+    <ClCompile Include="Filter.cpp" />
     <ClCompile Include="tables.cpp" />
+    <ClCompile Include="UI.cpp" />
+    <ClCompile Include="VoiceManager.cpp" />
     <ClCompile Include="VOSIMSynth.cpp" />
     <ClCompile Include="MIDIReceiver.cpp" />
     <ClCompile Include="Oscillator.cpp" />

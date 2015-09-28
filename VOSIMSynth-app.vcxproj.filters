@@ -53,6 +53,9 @@
     <ClInclude Include="pbSignal.h" />
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="tables.h" />
+    <ClInclude Include="VoiceManager.h" />
+    <ClInclude Include="UI.h" />
+    <ClInclude Include="Filter.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\WDL\rtaudiomidi\RtAudio.cpp">
@@ -83,6 +86,9 @@
     <ClCompile Include="Oscillator.cpp" />
     <ClCompile Include="MIDIReceiver.cpp" />
     <ClCompile Include="tables.cpp" />
+    <ClCompile Include="VoiceManager.cpp" />
+    <ClCompile Include="UI.cpp" />
+    <ClCompile Include="Filter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VOSIMSynth.rc" />

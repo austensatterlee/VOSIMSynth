@@ -278,7 +278,10 @@
     <ClInclude Include="app_wrapper\app_main.h" />
     <ClInclude Include="app_wrapper\app_resource.h" />
     <ClInclude Include="Delegate.h" />
+    <ClInclude Include="Filter.h" />
     <ClInclude Include="tables.h" />
+    <ClInclude Include="UI.h" />
+    <ClInclude Include="VoiceManager.h" />
     <ClInclude Include="VOSIMSynth.h" />
     <ClInclude Include="MIDIReceiver.h" />
     <ClInclude Include="Oscillator.h" />
@@ -294,7 +297,10 @@
     <ClCompile Include="..\..\WDL\rtaudiomidi\RtMidi.cpp" />
     <ClCompile Include="app_wrapper\app_dialog.cpp" />
     <ClCompile Include="app_wrapper\app_main.cpp" />
+    <ClCompile Include="Filter.cpp" />
     <ClCompile Include="tables.cpp" />
+    <ClCompile Include="UI.cpp" />
+    <ClCompile Include="VoiceManager.cpp" />
     <ClCompile Include="VOSIMSynth.cpp" />
     <ClCompile Include="MIDIReceiver.cpp" />
     <ClCompile Include="Oscillator.cpp" />

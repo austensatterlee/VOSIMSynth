@@ -223,3 +223,7 @@ Icon?
 .DS_Stor*
 VOSIMSynth.xcodeproj/
 VOSIMSynth-vst2.vcxproj
+installer/
+resources/*
+!resources/img/
+build-win/

@@ -1,5 +1,9 @@
 #define PLUG_MFR "Austen"
+#ifdef _DEBUG
+#define PLUG_NAME "VOSIMSynth-debug"
+#else
 #define PLUG_NAME "VOSIMSynth"
+#endif
 
 #define PLUG_CLASS_NAME VOSIMSynth
 
@@ -56,13 +60,15 @@ instrument determined by PLUG _IS _INST
 
 // Unique IDs for each image resource.
 #define KNOB_ID					101
-#define COLOR_RING_KNOB_ID		102
-#define GREY_KNOB_ID			103
-#define WEDGE_SWITCH_2P_ID		104
-#define TOGGLE_SWITCH_3P_ID		105
+#define PUSH_2P_ID				102
+#define COLOR_RING_KNOB_ID		103
+#define GREY_KNOB_ID			104
+#define WEDGE_SWITCH_2P_ID		105
+#define TOGGLE_SWITCH_3P_ID		106
 
 // Image resource locations for this plug.
 #define KNOB_FN				"resources/img/knob.png"
+#define PUSH_2P_FN			"resources/img/2p_push.png"
 #define COLOR_RING_KNOB_FN	"resources/img/color_ring_knob.png"
 #define GREY_KNOB_FN		"resources/img/grey_knob.png"
 #define WEDGE_SWITCH_2P_FN	"resources/img/wedge_switch_2p.png"

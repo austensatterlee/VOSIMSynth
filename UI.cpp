@@ -3,15 +3,6 @@
 #define X_PAD 15
 #define Y_PAD 10
 
-UI::UI()
-{
-}
-
-
-UI::~UI()
-{
-}
-
 void attachKnob(IGraphics *pGraphics, IPlugBase *pPlug, uint8_t r, uint8_t c, int paramIdx, IBitmap *pBmp) {
 	int x = (pBmp->W+X_PAD)*(c)+X_PAD;
 	int y = (pBmp->frameHeight() + LBL_H + Y_PAD)*(r)+Y_PAD;
@@ -21,5 +12,17 @@ void attachKnob(IGraphics *pGraphics, IPlugBase *pPlug, uint8_t r, uint8_t c, in
 	knobLabel = new ITextControl(pPlug, textrect, &textprops, pPlug->GetParam(paramIdx)->GetLabelForHost());
 
 	pGraphics->AttachControl(new IKnobMultiControl(pPlug, x, y, paramIdx, pBmp));
+	pGraphics->AttachControl(knobLabel);
+}
+
+void attachSwitch(IGraphics *pGraphics, IPlugBase *pPlug, uint8_t r, uint8_t c, int paramIdx, IBitmap *pBmp) {
+	int x = (pBmp->W + X_PAD)*(c)+X_PAD;
+	int y = (pBmp->frameHeight() + LBL_H + Y_PAD)*(r)+Y_PAD;
+	ITextControl* knobLabel;
+	IText textprops(10, &COLOR_YELLOW, "Arial");
+	IRECT textrect = IRECT(x, y + pBmp->frameHeight(), x + pBmp->W, y + pBmp->frameHeight() + LBL_H);
+	knobLabel = new ITextControl(pPlug, textrect, &textprops, pPlug->GetParam(paramIdx)->GetNameForHost());
+
+	pGraphics->AttachControl(new ISwitchControl(pPlug, x, y, paramIdx, pBmp));
 	pGraphics->AttachControl(knobLabel);
 }
