@@ -30,10 +30,10 @@ public:
     }
   };
   ~Filter() {
-    free(YCoefs);
-    free(XCoefs);
-    free(YBuf);
-    free(XBuf);
+    delete[] YCoefs;
+    delete[] XCoefs;
+    delete[] YBuf;
+    delete[] XBuf;
   };
   double mLastOutput;
   double getOutput(double input);

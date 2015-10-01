@@ -4,17 +4,15 @@
  * Oscillator methods
  *
  ******************************/
-void Oscillator::update() {
-  mpPitch();
-  mStep = pitchToFreq(mpPitch.curr) / mFs;
-  mpGain();
-  mpGain.curr = pow(10.0, .05*mpGain.curr);
+void Oscillator::updateParams() {
+  m_pPitch();
+  m_Step = pitchToFreq(m_pPitch.m_curr) / mFs;
 }
 
 void Oscillator::tick() {
-  mPhase += mStep;
-  if (mPhase > 1)
-    mPhase -= 1;
+  m_Phase += m_Step;
+  if (m_Phase > 1)
+    m_Phase -= 1;
 #ifdef USEBLEP
   if (useMinBleps && nInit) {
     mBlepBufInd++;
@@ -25,25 +23,21 @@ void Oscillator::tick() {
 #endif
 }
 
-void Oscillator::setFs(double fs) {
-  mFs = fs;
-}
-
-double Oscillator::getOutput() {
+double Oscillator::process(const double input) {
+  tick();
   double output;
-  switch (mWaveform) {
+  switch (m_Waveform) {
   case SAW_WAVE:
-    output = mpGain.curr*(mPhase * 2 - 1);
+    output = (m_Phase * 2 - 1);
     break;
   case SINE_WAVE:
-    output = mpGain.curr * 2 * (0.5 - VOSIM_PULSE_COS[(int)(VOSIM_PULSE_COS_SIZE*mPhase)]);
+    output = 2 * (0.5 - VOSIM_PULSE_COS[(int)(VOSIM_PULSE_COS_SIZE*m_Phase)]);
     break;
   default:
     output = 0;
     break;
   }
-  mLastOutput = output;
-  return output;
+  return finishProcessing(output);
 }
 #ifdef USEBLEP
 void Oscillator::addBlep(double offset, double ampl) {
@@ -73,41 +67,42 @@ void Oscillator::addBlep(double offset, double ampl) {
 * VOSIM methods
 *
 ******************************/
-void VOSIM::update() {
-  Oscillator::update();
+void VOSIM::updateParams() {
+  Oscillator::updateParams();
   mpNumber();
-  mpNumber.curr = mpNumber.curr * 8;
+  mpNumber.m_curr = mpNumber.m_curr * 8;
   mpPulsePitch();
-  if (mUseRelativeWidth) {
-    mPhaseScale = pitchToFreq(mpPulsePitch.curr/128.0*60 + mpPitch.curr + mpNumber.curr) / (mStep*mFs);
+  if (m_UseRelativeWidth) {
+    mPhaseScale = pitchToFreq(mpPulsePitch.m_curr / 128.0 * 48 + m_pPitch.m_curr) / (m_Step*mFs);
   }
   else {
-    mPhaseScale = pitchToFreq(mpPulsePitch.curr) / (mStep*mFs);
+    mPhaseScale = pitchToFreq(mpPulsePitch.m_curr / 128.0 * 60 + 48) / (m_Step*mFs);
   }
   mpDecay();
-  mpDecay.curr = pow(10, 0.05*mpDecay.curr);
+  mpDecay.m_curr = pow(10, 0.05*mpDecay.m_curr);
 }
 
-double VOSIM::getOutput() {
+double VOSIM::process(const double input) {
+  Oscillator::tick();
   double vout;
-  double pulsePhase = mPhase * mPhaseScale;
+  double pulsePhase = m_Phase * mPhaseScale;
   int N = (int)pulsePhase;
-  int lastN = (int)mLastPulsePhase;
+  int lastN = (int)m_LastPulsePhase;
   if (!N)
-    mCurrPulseGain = 1.0;
+    m_CurrPulseGain = 1.0;
   else if (N != lastN)
-    mCurrPulseGain *= mpDecay.curr;
+    m_CurrPulseGain *= mpDecay.m_curr;
   double wrPulsePhase = (pulsePhase - N);
   int wtindex;
   double wtfrac;
-  if (pulsePhase >= mpNumber.curr) {
+  if (pulsePhase >= mpNumber.m_curr) {
 #ifdef USEBLEP
     double lastWrPulsePhase = (mLastPulsePhase - lastN);
     if (useMinBleps && mLastPulsePhase <= mNumber) {
       wtindex = ((VOSIM_PULSE_COS_SIZE - 1) * lastWrPulsePhase);
       wtfrac = ((VOSIM_PULSE_COS_SIZE - 1) * lastWrPulsePhase) - wtindex;
       vout = mCurrPulseGain * LERP(VOSIM_PULSE_COS[wtindex], VOSIM_PULSE_COS[wtindex + 1], wtfrac);
-      addBlep((pulsePhase)* mpPulseFreq.curr / (mFs), vout);
+      addBlep((pulsePhase)* mpPulseFreq.m_curr / (mFs), vout);
     }
 #endif
     vout = 0;
@@ -116,10 +111,10 @@ double VOSIM::getOutput() {
     wtfrac = (VOSIM_PULSE_COS_SIZE - 1) * wrPulsePhase;
     wtindex = (int)wtfrac;
     wtfrac = wtfrac - wtindex;
-    vout = mCurrPulseGain * LERP(VOSIM_PULSE_COS[wtindex], VOSIM_PULSE_COS[wtindex + 1], wtfrac);
+    vout = m_CurrPulseGain * LERP(VOSIM_PULSE_COS[wtindex], VOSIM_PULSE_COS[wtindex + 1], wtfrac);
   }
-  if (mPhase + mStep >= 1.0) {
-    if (mMaxAmp <= vout) {
+  if (m_Phase + m_Step >= 1.0) {
+    if (m_MaxAmp <= vout) {
 
     }
 #ifdef USEBLEP
@@ -130,12 +125,10 @@ double VOSIM::getOutput() {
 #ifdef USEBLEP
   vout += mBlepBuf[mBlepBufInd];
 #endif
-  mLastPulsePhase = pulsePhase;
-  if (vout>mMaxAmp)
-    mMaxAmp = vout;
-  vout = mpGain.curr * vout;
-  mLastOutput = vout;
-  return vout;
+  m_LastPulsePhase = pulsePhase;
+  if (vout > m_MaxAmp)
+    m_MaxAmp = vout;
+  return finishProcessing(vout);
 }
 
 /******************************
@@ -148,103 +141,93 @@ void Envelope::setPeriod(int segment, double period, double shape) {
    * shape - higher shape <=> more linear
    *
    */
-  shape = shape == 0 ? mShape[segment] : shape;
-  mTargetPeriod[segment] = period;
-  mShape[segment] = shape;
+  shape = shape == 0 ? m_segments[segment].shape : shape;
+  m_segments[segment].period = period;
+  m_segments[segment].shape = shape;
 
-  period = period + MIN_ENV_PERIOD;
-  shape = shape + MIN_ENV_SHAPE;
+  period = 2*period + MIN_ENV_PERIOD;
+  shape = 10*shape + MIN_ENV_SHAPE;
 
-  mMult[segment] = exp(-log((1 + shape) / shape) / (mFs*period));
-  if (mPoint[segment + 1] > mPoint[segment]) {
-    mBase[segment] = (mPoint[segment + 1] + shape) * (1 - mMult[segment]);
+  m_segments[segment].mult = exp(-log((1 + shape) / shape) / (mFs*period));
+  double prev_amp = segment > 0 ? m_segments[segment - 1].target_amp : m_initPoint;
+  if (m_segments[segment].target_amp > prev_amp) {
+    m_segments[segment].base = (m_segments[segment].target_amp + shape) * (1 - m_segments[segment].mult);
   }
   else {
-    mBase[segment] = (mPoint[segment + 1] - shape) * (1 - mMult[segment]);
+    m_segments[segment].base = (m_segments[segment].target_amp - shape) * (1 - m_segments[segment].mult);
   }
 }
 
+/* Sets the shape of the specified segment. Sets the shape of all segments if first argument is -1 */
 void Envelope::setShape(int segment, double shape) {
   if (segment == -1) {
-    for (int i = 0; i < mNumSegments; i++) {
-      setPeriod(i, mTargetPeriod[i], shape);
+    for (int i = 0; i < m_numSegments; i++) {
+      setPeriod(i, m_segments[i].period, shape);
     }
   }
   else {
-    setPeriod(segment, mTargetPeriod[segment], shape);
+    setPeriod(segment, m_segments[segment].period, shape);
   }
 }
 
 /*
- * Sets the gain of the specified node
+ * Sets the end point of the specified segment
  */
-void Envelope::_setPoint(int node, double gain) {
-  mPoint[node] = gain;
-  if (node) {
-    setPeriod(node - 1, mTargetPeriod[node - 1], mShape[node - 1]);
+void Envelope::setPoint(int segment, double target_amp) {
+  m_segments[segment].target_amp = target_amp;
+  if (segment < m_numSegments - 1) {
+    setPeriod(segment + 1, m_segments[segment + 1].period, m_segments[segment + 1].shape);
   }
-  setPeriod(node, mTargetPeriod[node], mShape[node]);
+  setPeriod(segment, m_segments[segment].period, m_segments[segment].shape);
 }
 
-/*
- * Sets the gain of the specified node (ignoring node 0, which should always have a gain of zero)
- */
-void Envelope::setPoint(int node, double gain) {
-  if (node < mNumSegments - 1) {
-    _setPoint(node + 1, gain);
+double Envelope::process(const double input) {
+  double prev_amp = m_currSegment > 0 ? m_segments[m_currSegment - 1].target_amp : m_initPoint;
+  bool isIncreasing = m_segments[m_currSegment].target_amp > prev_amp;
+  double output;
+  if ((isIncreasing && m_lastRawOutput >= m_segments[m_currSegment].target_amp) || (!isIncreasing && m_lastRawOutput <= m_segments[m_currSegment].target_amp)) {
+    output = m_segments[m_currSegment].target_amp;
+    if (m_currSegment < m_numSegments - 2) {
+      m_currSegment++;
+    }
+    else {
+      if (m_isRepeating && m_currSegment == m_numSegments - 2) {
+        trigger();
+      }
+      if (m_currSegment == m_numSegments - 1) {
+        m_isDone = true;
+      }
+    }
   }
-}
-
-/*
- * Same as setPoint, but gain is in decibels.
- */
-void Envelope::setPoint_dB(int node, double dB) {
-  if (node < mNumSegments - 1) {
-    _setPoint(node + 1, pow(10, dB*0.05));
+  else {
+    output = m_segments[m_currSegment].base + m_segments[m_currSegment].mult * m_lastRawOutput;
   }
+  m_lastRawOutput = output;
+  return finishProcessing(output);
 }
 
-double Envelope::getOutput() {
-  return mOutput;
-}
-
-void Envelope::setFs(double fs) {
+void Envelope::setFs(const double fs) {
   mFs = fs;
-  for (int i = 0; i < mNumSegments; i++) {
-    setPeriod(i, mTargetPeriod[i], mShape[i]);
+  for (int i = 0; i < m_numSegments; i++) {
+    setPeriod(i, m_segments[i].period, m_segments[i].shape);
   }
 }
 
 void Envelope::trigger() {
-  mCurrSegment = 0;
-  mOutput = mPoint[0];
-  mGate = 1;
-  mIsDone = false;
+  m_currSegment = 0;
+  m_lastRawOutput = m_initPoint;
+  m_isDone = false;
 }
 
 void Envelope::release() {
-  mRelpoint = getOutput();
-  mGate = 0;
-  mCurrSegment = mNumSegments - 1;
+  m_RelPoint = m_lastRawOutput;
+  m_currSegment = m_numSegments - 1;
 }
 
-void Envelope::tick() {
-  bool isIncreasing = mPoint[mCurrSegment + 1]>mPoint[mCurrSegment];
-  if ((isIncreasing && mOutput >= mPoint[mCurrSegment + 1]) || (!isIncreasing && mOutput <= mPoint[mCurrSegment + 1])) {
-    mOutput = mPoint[mCurrSegment + 1];
-    if (mCurrSegment < mNumSegments - 2) {
-      mCurrSegment++;
-    }
-    else {
-      if (mRepeat && mCurrSegment == mNumSegments - 2) {
-        trigger();
-      }
-      if (mCurrSegment == mNumSegments - 1) {
-        mIsDone = true;
-      }
-    }
+int Envelope::getSamplesPerPeriod() {
+  int approx = 0;
+  for (int i = 0; i < m_numSegments; i++) {
+    approx += m_segments[i].period*mFs;
   }
-  else {
-    mOutput = mBase[mCurrSegment] + mMult[mCurrSegment] * mOutput;
-  }
+  return approx;
 }

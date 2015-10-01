@@ -11,6 +11,7 @@
     <ClCompile Include="UI.cpp" />
     <ClCompile Include="VoiceManager.cpp" />
     <ClCompile Include="VOSIMSynth.cpp" />
+    <ClCompile Include="DSPComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\WDL\IPlug\IPlugVST.h">
@@ -26,6 +27,7 @@
     <ClInclude Include="UI.h" />
     <ClInclude Include="VoiceManager.h" />
     <ClInclude Include="VOSIMSynth.h" />
+    <ClInclude Include="DSPComponent.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="vst2">

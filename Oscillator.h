@@ -2,54 +2,44 @@
 #define __OSCILLATOR__
 #include <cstdint>
 #include <cmath>
+#include <vector>
 #include "tables.h"
+#include "DSPComponent.h"
+#include "GallantSignal.h"
 
 #define MIN_ENV_PERIOD	.0001
-#define MIN_ENV_SHAPE	.000000001
+#define MIN_ENV_SHAPE	.000000000001
 //#define USEBLEPS
 
-#define LERP(A,B,F) (((B)-(A))*(F)+(A))
-inline double pitchToFreq(double pitch) { return 440.0 * pow(2.0, (pitch - 69.0) / 12.0); }
-inline double dbToAmp(double db) { return pow(10, 0.05*db); }
-inline double ampToDb(double amp) { return 20 * log10(amp); }
-
 using namespace std;
+
+
 
 typedef enum OSC_MDOE {
   SAW_WAVE = 0,
   SINE_WAVE
 } OSC_MODE;
 
-template <typename T>
-class Modifiable {
-protected:
+class Oscillator : public DSPComponent<double> {
 public:
-  T base, offset, scale;
-  T curr;
-  Modifiable() :base(0), offset(0), curr(0), scale(1.0) {};
-  void set(T val) {
-    base = val;
+  Oscillator() {
+    m_pPitch.set(1.0);
+#ifdef USEBLEPS
+    memset(mBlepBuf, 0, BLEPBUFSIZE);
+#endif
   };
-  void mod(T val) {
-    offset += val;
-  };
-  void scale(T val) {
-    scale *= val;
-  }
-  const T& operator()(void) {
-    curr = scale*(base + offset);
-    offset = 0.0;
-    scale = 1.0;
-    return curr;
-  };
-};
+  virtual double process(const double input = 0);
+  virtual void updateParams();
+  void sync() { m_Phase = 0; }
+  void setWaveform(OSC_MODE mode) { m_Waveform = mode; };
+  double getSamplesPerPeriod(){ return 1./m_Step; }
 
-class Oscillator {
+  Modifiable<double> m_pPitch;
+  double m_Step = 1;
 protected:
-  double mFs = 44100;
-  double mPhase = 0;
-
-  OSC_MODE mWaveform = SINE_WAVE;
+  virtual void tick();
+  double m_Phase = 0;
+  OSC_MODE m_Waveform = SINE_WAVE;
 
   /* Blep state */
 #ifdef USEBLEPS
@@ -59,100 +49,77 @@ protected:
   int mBlepCurrSize = 0;
   void addBlep(double offset, double ampl);
 #endif
-public:
-  void update();
-  void tick();
-  void sync(){mPhase=0;}
-  void setFs(double fs);
-  void setWaveform(OSC_MODE mode) { mWaveform = mode; };
-  double getOutput();
-
-  Modifiable<double> mpPitch;
-  Modifiable<double> mpGain;
-  double mLastOutput = 0.0;
-  double mStep = 0;
-
-  Oscillator() {
-    mpPitch.set(1.0);
-    mpGain.set(1.0);
-#ifdef USEBLEPS
-    memset(mBlepBuf, 0, BLEPBUFSIZE);
-#endif
-  };
 };
 
 class VOSIM : public Oscillator {
 private:
   /* internal state */
-  double		mCurrPulseGain = 1;
-  double		mLastPulsePhase = 0;
-  double		mPhaseScale = 1;
-  bool		mUseRelativeWidth;
-  double    mMaxAmp = 1.0;
+  double		m_CurrPulseGain = 1;
+  double		m_LastPulsePhase = 0;
+  bool		  m_UseRelativeWidth;
+  double    m_MaxAmp = 1.0;
 public:
   Modifiable<double>	mpDecay;
   Modifiable<double>	mpPulsePitch;
   Modifiable<double>	mpNumber;
-  void update();
-  void toggleRelativePFreq(bool b) { mUseRelativeWidth = b; };
-  double getOutput();
+  virtual double process(const double input = 0);
+  virtual void updateParams();
+  double mPhaseScale = 1;
+  void toggleRelativePFreq(bool b) { m_UseRelativeWidth = b; };
   VOSIM() :
     Oscillator(),
-    mUseRelativeWidth(true) {
+    m_UseRelativeWidth(true) {
     mpDecay.set(1);
     mpPulsePitch.set(1);
     mpNumber.set(1);
   };
 };
 
-class Envelope {
+struct EnvelopeSegment {
+  double period;
+  double target_amp;
+  double shape;
+  double base;
+  double mult;
+};
+
+class Envelope : public DSPComponent<double> {
 private:
-  double mFs;
-  int mNumSegments;
-  int mCurrSegment;
-  int mGate;
-  bool mRepeat;
-  double *mTargetPeriod;
-  double *mPoint;
-  double *mShape;
-  double *mBase;
-  double *mMult;
-  double mRelpoint;
-  void _setPoint(int segment, double gain);
+  vector<EnvelopeSegment> m_segments;
+  double m_initPoint;
+  int m_numSegments;
+  int m_currSegment;
+  bool m_isRepeating;
+  bool	m_isDone;
+  double m_RelPoint;
+  double m_lastRawOutput;
 public:
-  double	mOutput;
-  bool	mIsDone;
-  void	tick();
-  void	setPeriod(int segment, double period, double shape);
+  virtual void setFs(const double fs);
+  const bool isDone() { return m_isDone; };
+  void	setPeriod(const int segment, double period, double shape);
   void	setShape(int segment, double shape);
-  void	setPoint_dB(int segment, double dB);
-  void	setPoint(int segment, double gain);
-  void	setFs(double fs);
+  void	setPoint(int segment, double target_amp);
   void	trigger();
   void	release();
-  double	getOutput();
-  Envelope(int numsteps = 0) :
-    mFs(44100),
-    mCurrSegment(0),
-    mIsDone(true),
-    mOutput(0.0),
-    mRepeat(false),
-    mGate(0) {
-    mNumSegments = numsteps + 3;
-    mTargetPeriod = new double[mNumSegments];
-    mPoint = new double[mNumSegments + 1];
-    mShape = new double[mNumSegments];
-    mBase = new double[mNumSegments];
-    mMult = new double[mNumSegments];
-    for (int i = 0; i < mNumSegments; i++) {
-      mPoint[i] = 1;
-    }
-    for (int i = 0; i < mNumSegments; i++) {
+  int   getSamplesPerPeriod();
+  double process(const double input);
+  Envelope() :
+    m_currSegment(0),
+    m_isDone(true),
+    m_isRepeating(false),
+    m_lastRawOutput(0),
+    m_initPoint(0),
+    m_numSegments(3)
+    {
+    m_segments = vector<EnvelopeSegment>(m_numSegments);
+    // set up a standard ADSR envelope
+    m_initPoint = 0.0;
+    m_segments[0].target_amp = 1.0;
+    m_segments[1].target_amp = 1.0;
+    m_segments[2].target_amp = 0.0;
+    for (int i = 0; i < m_numSegments; i++) {
       setPeriod(i, MIN_ENV_PERIOD, MIN_ENV_SHAPE);
     }
-    _setPoint(0, 0); setPeriod(0, 1, MIN_ENV_SHAPE);
-    _setPoint(1, 1);
-    _setPoint(mNumSegments, 0); setPeriod(mNumSegments - 1, 1, MIN_ENV_SHAPE);
   };
 };
 

@@ -27,7 +27,7 @@ protected:
   vector<double> mBuffer;
   int mBufSize;
   int mBufInd = 0;
-  double mMinY = -0.0;
+  double mMinY = 1.0;
   double mMaxY = 0.0;
   int mPadding = 50;
   IRECT mInnerRect;
@@ -46,18 +46,20 @@ public:
   };
   ~Oscilloscope() {};
 
-  //bool IsDirty() { return true; };
+  bool IsDirty() { return true; };
 
   void setBufSize(int s) {
-    if (s <= 1) {
-      return;
+    if (s < 1)
+      s = 1;
+    if (s > 100000) {
+      s = 100000;
     }
     if (s>mBufSize)
       mBuffer.resize(s);
     mBufSize = s;
     mBufInd = 0;
     mMinY = mMaxY;
-    mMaxY = 0;
+    mMaxY = 0.9*mMinY;
   }
   void input(double y) {
     if (y > mMaxY)
@@ -87,18 +89,16 @@ public:
     /* zero line */
     pGraphics->DrawLine(&gridcolor,mRECT.L, zero,mRECT.W()+mRECT.L, zero);
 
-    snprintf(gridstr, 16, "%.2f", mMaxY);
+    snprintf(gridstr, 16, "%.4f", mMaxY);
     pGraphics->DrawIText(&txtstyle, gridstr,&IRECT(mRECT.L,mRECT.T,mInnerRect.L, mInnerRect.T));
-    snprintf(gridstr, 16, "%.2f", 0);
+    snprintf(gridstr, 16, "%.2f", 0.0);
     pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.L, zero-10, mInnerRect.L, zero+10));
-    snprintf(gridstr, 16, "%.2f", mMinY);
+    snprintf(gridstr, 16, "%.4f", mMinY);
     pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.L, mInnerRect.B, mInnerRect.L, mRECT.B));
-    for (int i = mBufInd + 1, previ = mBufInd, j = 1; i != mBufInd; i++, j++) {
-      if (i >= mBufSize)
-        i = 0;
-      x1 = toScreenX((j - 1)*1. / mBufSize);
+    for (int i = 1, previ = 0, j = 1; i != mBufSize; i++, j++) {
+      x1 = toScreenX((j - 1)*1. / (mBufSize-1));
       y1 = toScreenY(mBuffer[previ]);
-      x2 = toScreenX(j*1. / mBufSize);
+      x2 = toScreenX(j*1. / (mBufSize-1));
       y2 = toScreenY(mBuffer[i]);
       pGraphics->DrawLine(&fgcolor, x1, y1, x2, y2, 0, true);
       previ = i;
