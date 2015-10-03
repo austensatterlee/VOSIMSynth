@@ -1,7 +1,7 @@
 #ifndef __VOSIMSYNTH__
 #define __VOSIMSYNTH__
 
-#define NUM_VOICES 64
+#define NUM_VOICES 128
 
 #include <cstdint>
 #include "IPlug_include_in_plug_hdr.h"
@@ -14,8 +14,13 @@
 class VOSIMSynth : public IPlug {
 public:
   VOSIMSynth(IPlugInstanceInfo instanceInfo);
-  void OnNote(uint8_t pitch, uint8_t vel);
-  ~VOSIMSynth() {};
+  void sendToScope(double);
+  void OnNoteOn(uint8_t pitch, uint8_t vel);
+  void OnNoteOff(uint8_t pitch, uint8_t vel);
+  ~VOSIMSynth() {
+    delete mOscilloscope;
+    delete LP4;
+  };
 
   void Reset();
   void OnParamChange(int paramIdx);
@@ -23,7 +28,6 @@ public:
   void ProcessMidiMsg(IMidiMsg* pMsg);
 private:
   void setGain(double gain) { mOutGain = gain; };
-  void UpdateGraphics();
   MIDIReceiver mMIDIReceiver;
   VoiceManager mVoiceManager;
   Oscilloscope *mOscilloscope;

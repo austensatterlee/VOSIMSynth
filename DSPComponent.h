@@ -24,14 +24,14 @@ public:
   void set(T val) {
     m_base = val;
   };
+  void bias(T val) {
+    m_bias = val;
+  }
   void mod(T val) {
     m_offset += val;
   };
   void scale(T val) {
     m_scale *= val;
-  }
-  void bias(T val) {
-    m_bias += val;
   }
   void setState(MOD_STATE state) {
     m_state = state;
@@ -41,10 +41,12 @@ public:
     if (m_state == ACTIVE) {
       m_offset = 0.0;
       m_scale = 1.0;
-      m_bias = 0.0;
     }
     return m_curr;
   };
+  const T& get() {
+    return m_curr;
+  }
 };
 
 template <class T = double>
@@ -53,7 +55,10 @@ public:
   Modifiable<T> m_pGain = Modifiable<T>(1,ACTIVE);
   Modifiable<T> m_pBias = Modifiable<T>(0,ACTIVE);
   virtual ~DSPComponent() {};
-  virtual void updateParams() {};
+  virtual void updateParams() {
+    m_pGain();
+    m_pBias();
+  };
   virtual T process(const T input) = 0;
   virtual void setFs(const double fs) { mFs = fs; };
 
@@ -61,7 +66,13 @@ public:
   void connectOutputTo(U* obj1, void (V::*func)(T p1)) {
     m_outputs.Connect(obj1, func);
   }
+  template <class U, class V>
+  void disconnectOutputTo(U* obj1, void (V::*func)(T p1)) {
+    m_outputs.Disconnect(obj1, func);
+  }
   virtual T getLastOutput() { return m_lastOutput; };
+  Gallant::Signal0<> triggerOut;
+  virtual int getSamplesPerPeriod() const = 0;
 protected:
   virtual void tick() {};
   virtual const T& finishProcessing(const T& output);
@@ -72,7 +83,7 @@ protected:
 
 template <class T>
 const T& DSPComponent<T>::finishProcessing(const T& output) {
-  m_lastOutput = m_pGain()*output + m_pBias();
+  m_lastOutput = m_pGain.get()*output + m_pBias.get();
   m_outputs.Emit(m_lastOutput);
   return m_lastOutput;
 }
@@ -80,4 +91,11 @@ const T& DSPComponent<T>::finishProcessing(const T& output) {
 inline double pitchToFreq(double pitch) { return 440.0 * std::pow(2.0, (pitch - 69.0) / 12.0); }
 inline double dbToAmp(double db) { return std::pow(10, 0.05*db); }
 inline double ampToDb(double amp) { return 20 * std::log10(amp); }
+inline int gcd(int a, int b) {
+  int c;
+  while (a != 0) {
+    c = a; a = b%a;  b = c;
+  }
+  return b;
+}
 #endif

@@ -30,10 +30,10 @@ public:
   };
   virtual double process(const double input = 0);
   virtual void updateParams();
-  void sync() { m_Phase = 0; }
+  int getSamplesPerPeriod() const { return 1. / m_Step; }
+  void sync() { m_Phase = 0; };
   void setWaveform(OSC_MODE mode) { m_Waveform = mode; };
-  double getSamplesPerPeriod(){ return 1./m_Step; }
-
+  bool isSynced() { return m_Phase == 0; };
   Modifiable<double> m_pPitch;
   double m_Step = 1;
 protected:
@@ -101,7 +101,7 @@ public:
   void	setPoint(int segment, double target_amp);
   void	trigger();
   void	release();
-  int   getSamplesPerPeriod();
+  int   getSamplesPerPeriod() const;
   double process(const double input);
   Envelope() :
     m_currSegment(0),

@@ -5,8 +5,9 @@
  *
  ******************************/
 void Oscillator::updateParams() {
+  DSPComponent::updateParams();
   m_pPitch();
-  m_Step = pitchToFreq(m_pPitch.m_curr) / mFs;
+  m_Step = std::fmin(pitchToFreq(m_pPitch.m_curr) / mFs,0.5);
 }
 
 void Oscillator::tick() {
@@ -70,7 +71,7 @@ void Oscillator::addBlep(double offset, double ampl) {
 void VOSIM::updateParams() {
   Oscillator::updateParams();
   mpNumber();
-  mpNumber.m_curr = mpNumber.m_curr * 8;
+  mpNumber.m_curr = mpNumber.m_curr * 4;
   mpPulsePitch();
   if (m_UseRelativeWidth) {
     mPhaseScale = pitchToFreq(mpPulsePitch.m_curr / 128.0 * 48 + m_pPitch.m_curr) / (m_Step*mFs);
@@ -114,8 +115,9 @@ double VOSIM::process(const double input) {
     vout = m_CurrPulseGain * LERP(VOSIM_PULSE_COS[wtindex], VOSIM_PULSE_COS[wtindex + 1], wtfrac);
   }
   if (m_Phase + m_Step >= 1.0) {
+    triggerOut.Emit();
     if (m_MaxAmp <= vout) {
-
+      
     }
 #ifdef USEBLEP
     if (useMinBleps)
@@ -145,8 +147,8 @@ void Envelope::setPeriod(int segment, double period, double shape) {
   m_segments[segment].period = period;
   m_segments[segment].shape = shape;
 
-  period = 2*period + MIN_ENV_PERIOD;
-  shape = 10*shape + MIN_ENV_SHAPE;
+  period = period + MIN_ENV_PERIOD;
+  shape = LERP(dbToAmp(-60),dbToAmp(60),shape) + MIN_ENV_SHAPE;
 
   m_segments[segment].mult = exp(-log((1 + shape) / shape) / (mFs*period));
   double prev_amp = segment > 0 ? m_segments[segment - 1].target_amp : m_initPoint;
@@ -224,7 +226,7 @@ void Envelope::release() {
   m_currSegment = m_numSegments - 1;
 }
 
-int Envelope::getSamplesPerPeriod() {
+int Envelope::getSamplesPerPeriod() const {
   int approx = 0;
   for (int i = 0; i < m_numSegments; i++) {
     approx += m_segments[i].period*mFs;

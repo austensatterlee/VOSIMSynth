@@ -24,85 +24,112 @@ public:
 
 class Oscilloscope : public IControl {
 protected:
-  vector<double> mBuffer;
-  int mBufSize;
-  int mBufInd = 0;
-  double mMinY = 1.0;
-  double mMaxY = 0.0;
-  int mPadding = 50;
-  IRECT mInnerRect;
+  vector<double> m_Buffer;
+  int m_syncIndex;
+  int m_BufInd;
+  int m_BufSize;
+  double m_currWindowMinY;
+  double m_currWindowMaxY;
+  double m_minY;
+  double m_maxY;
+  int m_Padding;
+  IRECT m_InnerRect;
 
   double toScreenX(double val) {
-    return val*mInnerRect.W() + mInnerRect.L;
+    return val*m_InnerRect.W() + m_InnerRect.L;
   }
   double toScreenY(double val) {
-    return -(val - mMinY) / (mMaxY - mMinY)*mInnerRect.H() + mInnerRect.B;
+    return -(val - m_minY) / (m_maxY - m_minY)*m_InnerRect.H() + m_InnerRect.B;
   }
 public:
-  Oscilloscope(IPlugBase *pPlug, IRECT pR, int bufSize) : IControl(pPlug, pR) {
-    mInnerRect = IRECT(pR.L+mPadding,pR.T+mPadding,pR.R-mPadding,pR.B-mPadding);
-    mBufSize = bufSize;
-    mBuffer = vector<double>(mBufSize, 0.0);
+  Oscilloscope(IPlugBase *pPlug, IRECT pR, int size=1) :
+    IControl(pPlug, pR),
+    m_syncIndex(0),
+    m_BufInd(0),
+    m_currWindowMinY(0),
+    m_currWindowMaxY(1),
+    m_Padding(50)
+  {
+    m_InnerRect = IRECT(pR.L + m_Padding, pR.T + m_Padding, pR.R - m_Padding, pR.B - m_Padding);
+    setBufSize(size);
+    m_Buffer = vector<double>(m_BufSize, 0.0);
   };
   ~Oscilloscope() {};
 
   bool IsDirty() { return true; };
 
-  void setBufSize(int s) {
-    if (s < 1)
-      s = 1;
-    if (s > 100000) {
-      s = 100000;
-    }
-    if (s>mBufSize)
-      mBuffer.resize(s);
-    mBufSize = s;
-    mBufInd = 0;
-    mMinY = mMaxY;
-    mMaxY = 0.9*mMinY;
+  /* ends the current capture window and displays the result */
+  void sync() {
+    m_syncIndex = m_BufInd;
+    m_BufInd = 0;
+    m_minY = m_currWindowMinY;
+    m_maxY = m_currWindowMaxY;
+    m_currWindowMinY = 0;
+    m_currWindowMaxY = 0;
   }
+
+  void setBufSize(int s) {
+      m_Buffer.resize(s);
+      m_Buffer.clear();
+      m_BufSize = s;
+      m_syncIndex = 0;
+      m_BufInd = 0;
+  }
+
   void input(double y) {
-    if (y > mMaxY)
-      mMaxY = y;
-    if (y < mMinY)
-      mMinY = y;
-    mBuffer[mBufInd] = y;
-    mBufInd++;
-    if (mBufInd == mBufSize) {
-      mBufInd = 0;
-      this->SetDirty();
-    }
+    if (y > m_currWindowMaxY)
+      m_currWindowMaxY = y + (y - m_currWindowMaxY);
+    if (y < m_currWindowMinY)
+      m_currWindowMinY = y + (y - m_currWindowMinY);
+    m_BufInd++;
+    if (m_BufInd >= m_BufSize)
+      m_BufInd = 0;
+    else if (m_BufInd >= m_Buffer.size())
+      m_Buffer.push_back(y);
+    else
+      m_Buffer[m_BufInd] = y;
   }
 
   bool Draw(IGraphics *pGraphics) {
-    if (mBufInd == 0)
-      return true;
+    if (!m_BufInd || !m_BufSize)
+      return false;
     IColor fgcolor(255, 255, 255, 255);
     IColor gridcolor(150, 255, 25, 25);
     IColor bgcolor(150, 25, 25, 255);
     IText  txtstyle(&gridcolor);
-    char gridstr[16];
+    pGraphics->DrawRect(&bgcolor, &m_InnerRect);
+    /* zero line */
+    double zero = toScreenY(0);
+    pGraphics->DrawLine(&gridcolor, mRECT.L, zero, mRECT.W() + mRECT.L, zero);
+
+    char gridstr[128];
+    snprintf(gridstr, 16, "%.4f", m_maxY);
+    pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.L, mRECT.T, m_InnerRect.L, m_InnerRect.T));
+    snprintf(gridstr, 16, "%.2f", 0.0);
+    pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.L, zero - 10, m_InnerRect.L, zero + 10));
+    snprintf(gridstr, 16, "%.4f", m_minY);
+    pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.L, m_InnerRect.B, m_InnerRect.L, mRECT.B));
+    sprintf(gridstr, "sync: %d, curr ind: %d\nbuf size:%d/%d", m_syncIndex, m_BufInd, m_BufSize, m_Buffer.size());
+    pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.R-200, mRECT.T, mRECT.R, mRECT.B));
     double x1, y1;
     double x2, y2;
-    double zero = toScreenY(0);
-    pGraphics->DrawRect(&bgcolor, &mInnerRect);
-    /* zero line */
-    pGraphics->DrawLine(&gridcolor,mRECT.L, zero,mRECT.W()+mRECT.L, zero);
-
-    snprintf(gridstr, 16, "%.4f", mMaxY);
-    pGraphics->DrawIText(&txtstyle, gridstr,&IRECT(mRECT.L,mRECT.T,mInnerRect.L, mInnerRect.T));
-    snprintf(gridstr, 16, "%.2f", 0.0);
-    pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.L, zero-10, mInnerRect.L, zero+10));
-    snprintf(gridstr, 16, "%.4f", mMinY);
-    pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.L, mInnerRect.B, mInnerRect.L, mRECT.B));
-    for (int i = 1, previ = 0, j = 1; i != mBufSize; i++, j++) {
-      x1 = toScreenX((j - 1)*1. / (mBufSize-1));
-      y1 = toScreenY(mBuffer[previ]);
-      x2 = toScreenX(j*1. / (mBufSize-1));
-      y2 = toScreenY(mBuffer[i]);
+    int i = 1;
+    int previ = i-1 < 0 ? m_BufSize-1 : i-1;
+    for (int j=1; j < m_BufSize-1; j++, i++) {
+      if(i >= m_BufSize-1)
+        i=0;
+      x1 = toScreenX((j - 1) * 1. / (m_BufSize - 1));
+      x2 = toScreenX(j * 1. / (m_BufSize - 1));
+      y1 = toScreenY(m_Buffer[previ]);
+      y2 = toScreenY(m_Buffer[i]);
       pGraphics->DrawLine(&fgcolor, x1, y1, x2, y2, 0, true);
       previ = i;
     }
+    /*x1 = toScreenX((m_BufInd-1)*1. / (m_BufSize - 1));
+    x2 = toScreenX(m_BufInd*1. / (m_BufSize - 1));
+    y1 = toScreenY(m_Buffer[m_BufInd-1]);
+    y2 = toScreenY(m_Buffer[m_BufInd]);
+    pGraphics->DrawLine(&fgcolor, x1, y1, x2, y2, 0, true);*/
     return true;
   }
 

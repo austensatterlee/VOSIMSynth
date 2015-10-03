@@ -22,6 +22,7 @@ enum EParams {
   kGlobalPMF,
   kGlobalPMG,
   // Oscillator 1 params
+  kOsc1Tune,
   kOsc1VF,
   kOsc1Num,
   kOsc1Dec,
@@ -34,6 +35,7 @@ enum EParams {
   kEnv2Sus,
   kEnv2Shp,
   // Oscillator 2 params
+  kOsc2Tune,
   kOsc2VF,
   kOsc2Num,
   kOsc2Dec,
@@ -46,6 +48,7 @@ enum EParams {
   kEnv3Sus,
   kEnv3Shp,
   // Oscillator 3 params
+  kOsc3Tune,
   kOsc3VF,
   kOsc3Num,
   kOsc3Dec,
@@ -63,8 +66,8 @@ enum EParams {
 enum ELayout {
   kWidth = GUI_WIDTH,
   kHeight = GUI_HEIGHT,
-
-  kKnob1Frames = 101
+  kColorKnobFrames = 27,
+  kNumberedKnobFrames = 101
 };
 
 
@@ -143,18 +146,21 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   GetParam(kGlobalPMF)->InitDouble("OPMf", 0.001, 0.0, 1.0, 0.001, "Pitch Mod F");
   GetParam(kGlobalPMG)->InitDouble("OPMg", 0.001, 0.0, 1.0, 0.001, "Pitch Mod G");
 
+  GetParam(kOsc1Tune)->InitInt("O1Tune", 0, -36., 36., "Osc1 Tune");
   GetParam(kOsc1VF)->InitDouble("O1VF", 0.5, 0, 1, 0.000001, "Osc1 VF");
   GetParam(kOsc1Num)->InitDouble("O1N", 0.25, 0, 1, 0.000001, "Osc1 Number");
   GetParam(kOsc1Dec)->InitDouble("O1D", 0.001, 0.0, 1.0, 0.000001, "Osc1 Decay");
   GetParam(kOsc1Vol)->InitDouble("O1Vol", 1, 0, 1, 0.001, "Osc1 Vol");
   GetParam(kOsc1FreqMode)->InitBool("O1RelFreq", true, "Osc1 Freq Mode", "Osc1");
 
+  GetParam(kOsc2Tune)->InitInt("O2Tune", 0.0, -36., 36., "Osc2 Tune");
   GetParam(kOsc2VF)->InitDouble("O2VF", 0.5, 0, 1, 0.000001, "Osc2 VF");
   GetParam(kOsc2Num)->InitDouble("O2N", 0.25, 0, 1, 0.000001, "Osc2 Number");
   GetParam(kOsc2Dec)->InitDouble("O2D", 0.001, 0.0, 1.0, 0.000001, "Osc2 Decay");
   GetParam(kOsc2Vol)->InitDouble("O2Vol", 1, 0, 1, 0.001, "Osc2 Vol");
   GetParam(kOsc2FreqMode)->InitBool("O2RelFreq", true, "Osc2 Freq Mode", "Osc2");
 
+  GetParam(kOsc3Tune)->InitInt("O3Tune", 0.0, -36., 36., "Osc3 Tune");
   GetParam(kOsc3VF)->InitDouble("O3VF", 0.5, 0, 1, 0.000001, "Osc3 VF", "Osc3");
   GetParam(kOsc3Num)->InitDouble("O3N", 0.25, 0, 1, 0.000001, "Osc3 Number", "Osc3");
   GetParam(kOsc3Dec)->InitDouble("O3D", 0.001, 0.0, 1.0, 0.000001, "Osc3 Decay", "Osc3");
@@ -167,61 +173,65 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 
   //IBitmap wedgeswitch2p = pGraphics->LoadIBitmap(WEDGE_SWITCH_2P_ID, WEDGE_SWITCH_2P_FN, 2);
   IBitmap push2p = pGraphics->LoadIBitmap(PUSH_2P_ID, PUSH_2P_FN, 2);
+  IBitmap colorKnob = pGraphics->LoadIBitmap(COLOR_RING_KNOB_ID, COLOR_RING_KNOB_FN, kColorKnobFrames);
   //IBitmap toggleswitch3p = pGraphics->LoadIBitmap(TOGGLE_SWITCH_3P_ID, TOGGLE_SWITCH_3P_FN, 3);
-  IBitmap knob = pGraphics->LoadIBitmap(KNOB_ID, KNOB_FN, kKnob1Frames);
+  IBitmap numberedKnob = pGraphics->LoadIBitmap(KNOB_ID, KNOB_FN, kNumberedKnobFrames);
 
-  attachKnob(pGraphics, this, 0, 8, kMainVol, &knob);
+  attachKnob(pGraphics, this, 0, 8, kMainVol, &numberedKnob);
 
-  attachKnob(pGraphics, this, 0, 1, kEnv1Atk, &knob);
-  attachKnob(pGraphics, this, 0, 2, kEnv1Dec, &knob);
-  attachKnob(pGraphics, this, 0, 4, kEnv1Rel, &knob);
-  attachKnob(pGraphics, this, 0, 3, kEnv1Sus, &knob);
-  attachKnob(pGraphics, this, 0, 0, kEnv1Shp, &knob);
+  attachKnob(pGraphics, this, 0, 1, kEnv1Atk, &numberedKnob);
+  attachKnob(pGraphics, this, 0, 2, kEnv1Dec, &numberedKnob);
+  attachKnob(pGraphics, this, 0, 4, kEnv1Rel, &numberedKnob);
+  attachKnob(pGraphics, this, 0, 3, kEnv1Sus, &numberedKnob);
+  attachKnob(pGraphics, this, 0, 0, kEnv1Shp, &numberedKnob);
 
-  attachKnob(pGraphics, this, 5, 0, kEnv2Int, &knob);
-  attachKnob(pGraphics, this, 1, 1, kEnv2Atk, &knob);
-  attachKnob(pGraphics, this, 1, 2, kEnv2Dec, &knob);
-  attachKnob(pGraphics, this, 1, 4, kEnv2Rel, &knob);
-  attachKnob(pGraphics, this, 1, 3, kEnv2Sus, &knob);
-  attachKnob(pGraphics, this, 1, 0, kEnv2Shp, &knob);
+  attachKnob(pGraphics, this, 5, 0, kEnv2Int, &numberedKnob);
+  attachKnob(pGraphics, this, 1, 1, kEnv2Atk, &numberedKnob);
+  attachKnob(pGraphics, this, 1, 2, kEnv2Dec, &numberedKnob);
+  attachKnob(pGraphics, this, 1, 4, kEnv2Rel, &numberedKnob);
+  attachKnob(pGraphics, this, 1, 3, kEnv2Sus, &numberedKnob);
+  attachKnob(pGraphics, this, 1, 0, kEnv2Shp, &numberedKnob);
 
-  attachKnob(pGraphics, this, 5, 1, kEnv3Int, &knob);
-  attachKnob(pGraphics, this, 2, 1, kEnv3Atk, &knob);
-  attachKnob(pGraphics, this, 2, 2, kEnv3Dec, &knob);
-  attachKnob(pGraphics, this, 2, 4, kEnv3Rel, &knob);
-  attachKnob(pGraphics, this, 2, 3, kEnv3Sus, &knob);
-  attachKnob(pGraphics, this, 2, 0, kEnv3Shp, &knob);
+  attachKnob(pGraphics, this, 5, 1, kEnv3Int, &numberedKnob);
+  attachKnob(pGraphics, this, 2, 1, kEnv3Atk, &numberedKnob);
+  attachKnob(pGraphics, this, 2, 2, kEnv3Dec, &numberedKnob);
+  attachKnob(pGraphics, this, 2, 4, kEnv3Rel, &numberedKnob);
+  attachKnob(pGraphics, this, 2, 3, kEnv3Sus, &numberedKnob);
+  attachKnob(pGraphics, this, 2, 0, kEnv3Shp, &numberedKnob);
 
-  attachKnob(pGraphics, this, 5, 2, kEnv4Int, &knob);
-  attachKnob(pGraphics, this, 3, 1, kEnv4Atk, &knob);
-  attachKnob(pGraphics, this, 3, 2, kEnv4Dec, &knob);
-  attachKnob(pGraphics, this, 3, 4, kEnv4Rel, &knob);
-  attachKnob(pGraphics, this, 3, 3, kEnv4Sus, &knob);
-  attachKnob(pGraphics, this, 3, 0, kEnv4Shp, &knob);
+  attachKnob(pGraphics, this, 5, 2, kEnv4Int, &numberedKnob);
+  attachKnob(pGraphics, this, 3, 1, kEnv4Atk, &numberedKnob);
+  attachKnob(pGraphics, this, 3, 2, kEnv4Dec, &numberedKnob);
+  attachKnob(pGraphics, this, 3, 4, kEnv4Rel, &numberedKnob);
+  attachKnob(pGraphics, this, 3, 3, kEnv4Sus, &numberedKnob);
+  attachKnob(pGraphics, this, 3, 0, kEnv4Shp, &numberedKnob);
 
-  attachKnob(pGraphics, this, 0, 9, kGlobalPMF, &knob);
-  attachKnob(pGraphics, this, 0, 10, kGlobalPMG, &knob);
+  attachKnob(pGraphics, this, 0, 9, kGlobalPMF, &numberedKnob);
+  attachKnob(pGraphics, this, 0, 10, kGlobalPMG, &numberedKnob);
 
-  attachKnob(pGraphics, this, 1, 5, kOsc1VF, &knob);
-  attachKnob(pGraphics, this, 1, 6, kOsc1Num, &knob);
-  attachKnob(pGraphics, this, 1, 7, kOsc1Dec, &knob);
-  attachKnob(pGraphics, this, 1, 8, kOsc1Vol, &knob);
+  attachKnob(pGraphics, this, 4, 0, kOsc1Tune, &colorKnob);
+  attachKnob(pGraphics, this, 1, 5, kOsc1VF, &numberedKnob);
+  attachKnob(pGraphics, this, 1, 6, kOsc1Num, &numberedKnob);
+  attachKnob(pGraphics, this, 1, 7, kOsc1Dec, &numberedKnob);
+  attachKnob(pGraphics, this, 1, 8, kOsc1Vol, &numberedKnob);
   attachSwitch(pGraphics, this, 1, 9, kOsc1FreqMode, &push2p);
 
 
-  attachKnob(pGraphics, this, 2, 5, kOsc2VF, &knob);
-  attachKnob(pGraphics, this, 2, 6, kOsc2Num, &knob);
-  attachKnob(pGraphics, this, 2, 7, kOsc2Dec, &knob);
-  attachKnob(pGraphics, this, 2, 8, kOsc2Vol, &knob);
+  attachKnob(pGraphics, this, 4, 1, kOsc2Tune, &colorKnob);
+  attachKnob(pGraphics, this, 2, 5, kOsc2VF, &numberedKnob);
+  attachKnob(pGraphics, this, 2, 6, kOsc2Num, &numberedKnob);
+  attachKnob(pGraphics, this, 2, 7, kOsc2Dec, &numberedKnob);
+  attachKnob(pGraphics, this, 2, 8, kOsc2Vol, &numberedKnob);
   attachSwitch(pGraphics, this, 2, 9, kOsc2FreqMode, &push2p);
 
-  attachKnob(pGraphics, this, 3, 5, kOsc3VF, &knob);
-  attachKnob(pGraphics, this, 3, 6, kOsc3Num, &knob);
-  attachKnob(pGraphics, this, 3, 7, kOsc3Dec, &knob);
-  attachKnob(pGraphics, this, 3, 8, kOsc3Vol, &knob);
+  attachKnob(pGraphics, this, 4, 2, kOsc3Tune, &colorKnob);
+  attachKnob(pGraphics, this, 3, 5, kOsc3VF, &numberedKnob);
+  attachKnob(pGraphics, this, 3, 6, kOsc3Num, &numberedKnob);
+  attachKnob(pGraphics, this, 3, 7, kOsc3Dec, &numberedKnob);
+  attachKnob(pGraphics, this, 3, 8, kOsc3Vol, &numberedKnob);
   attachSwitch(pGraphics, this, 3, 9, kOsc3FreqMode, &push2p);
 
-  mOscilloscope = new Oscilloscope(this, IRECT(10, 310, 800 - 10, 600 - 10), 1);
+  mOscilloscope = new Oscilloscope(this, IRECT(10, 310, 800 - 10, 600 - 10));
   pGraphics->AttachControl(mOscilloscope);
 
   AttachGraphics(pGraphics);
@@ -229,25 +239,30 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   //MakePreset("preset 1", ... );
   MakeDefaultPreset((char *) "-", kNumPrograms);
   mVoiceManager.setNumVoices(NUM_VOICES);
-  mMIDIReceiver.noteOn.Connect(this, &VOSIMSynth::OnNote);
-  mMIDIReceiver.noteOff.Connect(&mVoiceManager, &VoiceManager::ReleaseNote);
+  mMIDIReceiver.noteOn.Connect(this, &VOSIMSynth::OnNoteOn);
+  mMIDIReceiver.noteOff.Connect(this, &VOSIMSynth::OnNoteOff);
   double xcoefs[7] = { 4.760635e-1, 2.856281, 7.140952, 9.521270, 7.140952, 2.856281, 4.760635e-1 };
   double ycoefs[6] = { -4.522403, -8.676844, -9.007512, -5.328429, -1.702543, -2.303303e-1 };
   LP4 = new Filter(xcoefs, ycoefs, 7, 6);
 }
 
-void VOSIMSynth::OnNote(uint8_t pitch, uint8_t vel) {
-  mVoiceManager.TriggerNote(pitch, vel);
-  //Envelope &o = (mVoiceManager.mVoiceStack.front()->mVFEnv[0]);
-  Oscillator &myosc = mVoiceManager.mVoiceStack.front()->mOsc[0];
-  mOscilloscope->setBufSize(myosc.getSamplesPerPeriod());
+void VOSIMSynth::sendToScope(double input) {
+  mOscilloscope->input(mLastOutput);
 }
 
-void VOSIMSynth::UpdateGraphics() {
-  if (!mVoiceManager.mVoiceStack.empty()) {
-    Envelope& o = (mVoiceManager.mVoiceStack.front()->mVFEnv[0]);
-    mOscilloscope->input(mLastOutput);
-  }
+void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel) {
+  Voice& v = mVoiceManager.TriggerNote(pitch, vel);
+  Oscillator &myosc = v.mOsc[0];
+  mOscilloscope->setBufSize(myosc.getSamplesPerPeriod());  
+  myosc.connectOutputTo(this,&VOSIMSynth::sendToScope);
+  myosc.triggerOut.Connect(mOscilloscope,&Oscilloscope::sync);
+}
+
+void VOSIMSynth::OnNoteOff(uint8_t pitch, uint8_t vel) {
+  Voice& v = mVoiceManager.ReleaseNote(pitch, vel);
+  Oscillator &myosc = v.mOsc[0];
+  myosc.disconnectOutputTo(this, &VOSIMSynth::sendToScope);
+  myosc.triggerOut.Disconnect(mOscilloscope, &Oscilloscope::sync);
 }
 
 void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) {
@@ -257,11 +272,11 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
   for (int s = 0; s < nFrames; s++) {
     leftOutput[s] = 0;
     mMIDIReceiver.advance();
-    leftOutput[s] = LP4->getOutput(mVoiceManager.tick());
+    mVoiceManager.updateParams();
+    leftOutput[s] = LP4->getOutput(mVoiceManager.process());
     leftOutput[s] *= mOutGain;
     rightOutput[s] = leftOutput[s];
     mLastOutput = leftOutput[s];
-    UpdateGraphics();
   }
 
   mMIDIReceiver.Flush(nFrames);
@@ -280,7 +295,7 @@ void VOSIMSynth::Reset() {
 
 void VOSIMSynth::OnParamChange(int paramIdx) {
   IMutexLock lock(this);
-  uint8_t n = mVoiceManager.mNumVoices;
+  uint8_t n = mVoiceManager.getNumVoices();
   switch (paramIdx) {
   case kMainVol:
     mOutGain = pow(10, 0.05*LERP(-18, 36, GetParam(kMainVol)->Value()));
@@ -288,174 +303,188 @@ void VOSIMSynth::OnParamChange(int paramIdx) {
     /* Env 1 */
   case kEnv1Atk:
     while (n--)
-      mVoiceManager.mVoices[n].mAmpEnv.setPeriod(0, GetParam(kEnv1Atk)->Value(), 0);
+      mVoiceManager.m_voices[n].mAmpEnv.setPeriod(0, GetParam(kEnv1Atk)->Value(), 0);
     break;
   case kEnv1Dec:
     while (n--)
-      mVoiceManager.mVoices[n].mAmpEnv.setPeriod(1, GetParam(kEnv1Dec)->Value(), 0);
+      mVoiceManager.m_voices[n].mAmpEnv.setPeriod(1, GetParam(kEnv1Dec)->Value(), 0);
     break;
   case kEnv1Rel:
     while (n--)
-      mVoiceManager.mVoices[n].mAmpEnv.setPeriod(2, GetParam(kEnv1Rel)->Value(), 0);
+      mVoiceManager.m_voices[n].mAmpEnv.setPeriod(2, GetParam(kEnv1Rel)->Value(), 0);
     break;
   case kEnv1Sus:
     while (n--)
-      mVoiceManager.mVoices[n].mAmpEnv.setPoint(1, GetParam(kEnv1Sus)->Value());
+      mVoiceManager.m_voices[n].mAmpEnv.setPoint(1, GetParam(kEnv1Sus)->Value());
     break;
   case kEnv1Shp:
     while (n--)
-      mVoiceManager.mVoices[n].mAmpEnv.setShape(-1, GetParam(kEnv1Shp)->Value());
+      mVoiceManager.m_voices[n].mAmpEnv.setShape(-1, GetParam(kEnv1Shp)->Value());
     break;
     /* Env 2 */
   case kEnv2Int:
     while (n--)
-      mVoiceManager.mVoices[n].mVFEnv[0].m_pGain.set(127 *GetParam(kEnv2Int)->Value());
+      mVoiceManager.m_voices[n].mVFEnv[0].m_pGain.set(127 *GetParam(kEnv2Int)->Value());
     break;
   case kEnv2Atk:
     while (n--)
-      mVoiceManager.mVoices[n].mVFEnv[0].setPeriod(0, GetParam(kEnv2Atk)->Value(), 0);
+      mVoiceManager.m_voices[n].mVFEnv[0].setPeriod(0, GetParam(kEnv2Atk)->Value(), 0);
     break;
   case kEnv2Dec:
     while (n--)
-      mVoiceManager.mVoices[n].mVFEnv[0].setPeriod(1, GetParam(kEnv2Dec)->Value(), 0);
+      mVoiceManager.m_voices[n].mVFEnv[0].setPeriod(1, GetParam(kEnv2Dec)->Value(), 0);
     break;
   case kEnv2Rel:
     while (n--)
-      mVoiceManager.mVoices[n].mVFEnv[0].setPeriod(2, GetParam(kEnv2Rel)->Value(), 0);
+      mVoiceManager.m_voices[n].mVFEnv[0].setPeriod(2, GetParam(kEnv2Rel)->Value(), 0);
     break;
   case kEnv2Sus:
     while (n--)
-      mVoiceManager.mVoices[n].mVFEnv[0].setPoint(1, GetParam(kEnv2Sus)->Value());
+      mVoiceManager.m_voices[n].mVFEnv[0].setPoint(1, GetParam(kEnv2Sus)->Value());
     break;
   case kEnv2Shp:
     while (n--)
-      mVoiceManager.mVoices[n].mVFEnv[0].setShape(-1, GetParam(kEnv2Shp)->Value());
+      mVoiceManager.m_voices[n].mVFEnv[0].setShape(-1, GetParam(kEnv2Shp)->Value());
     break;
     /* Env 3*/
   case kEnv3Int:
     while (n--)
-      mVoiceManager.mVoices[n].mVFEnv[1].m_pGain.set(127*GetParam(kEnv3Int)->Value());
+      mVoiceManager.m_voices[n].mVFEnv[1].m_pGain.set(127*GetParam(kEnv3Int)->Value());
     break;
   case kEnv3Atk:
     while (n--)
-      mVoiceManager.mVoices[n].mVFEnv[1].setPeriod(0, GetParam(kEnv3Atk)->Value(), 0);
+      mVoiceManager.m_voices[n].mVFEnv[1].setPeriod(0, GetParam(kEnv3Atk)->Value(), 0);
     break;
   case kEnv3Dec:
     while (n--)
-      mVoiceManager.mVoices[n].mVFEnv[1].setPeriod(1, GetParam(kEnv3Dec)->Value(), 0);
+      mVoiceManager.m_voices[n].mVFEnv[1].setPeriod(1, GetParam(kEnv3Dec)->Value(), 0);
     break;
   case kEnv3Rel:
     while (n--)
-      mVoiceManager.mVoices[n].mVFEnv[1].setPeriod(2, GetParam(kEnv3Rel)->Value(), 0);
+      mVoiceManager.m_voices[n].mVFEnv[1].setPeriod(2, GetParam(kEnv3Rel)->Value(), 0);
     break;
   case kEnv3Sus:
     while (n--)
-      mVoiceManager.mVoices[n].mVFEnv[1].setPoint(1, GetParam(kEnv3Sus)->Value());
+      mVoiceManager.m_voices[n].mVFEnv[1].setPoint(1, GetParam(kEnv3Sus)->Value());
     break;
   case kEnv3Shp:
     while (n--)
-      mVoiceManager.mVoices[n].mVFEnv[1].setShape(-1, GetParam(kEnv3Shp)->Value());
+      mVoiceManager.m_voices[n].mVFEnv[1].setShape(-1, GetParam(kEnv3Shp)->Value());
     break;
     /* Env 4 */ 
   case kEnv4Int:
     while (n--)
-      mVoiceManager.mVoices[n].mVFEnv[2].m_pGain.set(127 * GetParam(kEnv4Int)->Value());
+      mVoiceManager.m_voices[n].mVFEnv[2].m_pGain.set(127 * GetParam(kEnv4Int)->Value());
     break;
   case kEnv4Atk:
     while (n--)
-      mVoiceManager.mVoices[n].mVFEnv[2].setPeriod(0, GetParam(kEnv4Atk)->Value(), 0);
+      mVoiceManager.m_voices[n].mVFEnv[2].setPeriod(0, GetParam(kEnv4Atk)->Value(), 0);
     break;
   case kEnv4Dec:
     while (n--)
-      mVoiceManager.mVoices[n].mVFEnv[2].setPeriod(1, GetParam(kEnv4Dec)->Value(), 0);
+      mVoiceManager.m_voices[n].mVFEnv[2].setPeriod(1, GetParam(kEnv4Dec)->Value(), 0);
     break;
   case kEnv4Rel:
     while (n--)
-      mVoiceManager.mVoices[n].mVFEnv[2].setPeriod(2, GetParam(kEnv4Rel)->Value(), 0);
+      mVoiceManager.m_voices[n].mVFEnv[2].setPeriod(2, GetParam(kEnv4Rel)->Value(), 0);
     break;
   case kEnv4Sus:
     while (n--)
-      mVoiceManager.mVoices[n].mVFEnv[2].setPoint(1, GetParam(kEnv4Sus)->Value());
+      mVoiceManager.m_voices[n].mVFEnv[2].setPoint(1, GetParam(kEnv4Sus)->Value());
     break;
   case kEnv4Shp:
     while (n--)
-      mVoiceManager.mVoices[n].mVFEnv[2].setShape(-1, GetParam(kEnv4Shp)->Value());
+      mVoiceManager.m_voices[n].mVFEnv[2].setShape(-1, GetParam(kEnv4Shp)->Value());
     break;
 
     /* Osc 1 */
+  case kOsc1Tune:
+    while (n--)
+      mVoiceManager.m_voices[n].mOsc[0].m_pPitch.bias(1 * GetParam(kOsc1Tune)->Value());
+    break;
   case kOsc1VF:
     while (n--)
-      mVoiceManager.mVoices[n].mOsc[0].mpPulsePitch.set(127 * GetParam(kOsc1VF)->Value());
+      mVoiceManager.m_voices[n].mOsc[0].mpPulsePitch.set(127 * GetParam(kOsc1VF)->Value());
     break;
   case kOsc1Num:
     while (n--)
-      mVoiceManager.mVoices[n].mOsc[0].mpNumber.set(GetParam(kOsc1Num)->Value());
+      mVoiceManager.m_voices[n].mOsc[0].mpNumber.set(GetParam(kOsc1Num)->Value());
     break;
   case kOsc1Dec:
     while (n--)
-      mVoiceManager.mVoices[n].mOsc[0].mpDecay.set(LERP(0, -12, GetParam(kOsc1Dec)->Value()));
+      mVoiceManager.m_voices[n].mOsc[0].mpDecay.set(LERP(0, -12, GetParam(kOsc1Dec)->Value()));
     break;
   case kOsc1FreqMode:
     while (n--)
-      mVoiceManager.mVoices[n].mOsc[0].toggleRelativePFreq(GetParam(kOsc1FreqMode)->Value());
+      mVoiceManager.m_voices[n].mOsc[0].toggleRelativePFreq(GetParam(kOsc1FreqMode)->Value());
     break;
   case kOsc1Vol:
     while (n--)
-      mVoiceManager.mVoices[n].mOsc[0].m_pGain.set(dbToAmp(LERP(-60, 6, GetParam(kOsc1Vol)->Value())));
+      mVoiceManager.m_voices[n].mOsc[0].m_pGain.set(dbToAmp(LERP(-60, 6, GetParam(kOsc1Vol)->Value())));
     break;
 
-    /* Osc 2 */
+    /* Osc 2 */ 
+  case kOsc2Tune:
+      while (n--)
+        mVoiceManager.m_voices[n].mOsc[1].m_pPitch.bias(1 * GetParam(kOsc2Tune)->Value());
+      break;
   case kOsc2VF:
     while (n--)
-      mVoiceManager.mVoices[n].mOsc[1].mpPulsePitch.set(127 * GetParam(kOsc2VF)->Value());
+      mVoiceManager.m_voices[n].mOsc[1].mpPulsePitch.set(127 * GetParam(kOsc2VF)->Value());
     break;
   case kOsc2Num:
     while (n--)
-      mVoiceManager.mVoices[n].mOsc[1].mpNumber.set(GetParam(kOsc2Num)->Value());
+      mVoiceManager.m_voices[n].mOsc[1].mpNumber.set(GetParam(kOsc2Num)->Value());
     break;
   case kOsc2Dec:
     while (n--)
-      mVoiceManager.mVoices[n].mOsc[1].mpDecay.set(LERP(0, -12, GetParam(kOsc2Dec)->Value()));
+      mVoiceManager.m_voices[n].mOsc[1].mpDecay.set(LERP(0, -12, GetParam(kOsc2Dec)->Value()));
     break;
   case kOsc2FreqMode:
     while (n--)
-      mVoiceManager.mVoices[n].mOsc[1].toggleRelativePFreq(GetParam(kOsc2FreqMode)->Value());
+      mVoiceManager.m_voices[n].mOsc[1].toggleRelativePFreq(GetParam(kOsc2FreqMode)->Value());
     break;
   case kOsc2Vol:
     while (n--)
-      mVoiceManager.mVoices[n].mOsc[1].m_pGain.set(dbToAmp(LERP(-60, 12, GetParam(kOsc2Vol)->Value())));
+      mVoiceManager.m_voices[n].mOsc[1].m_pGain.set(dbToAmp(LERP(-60, 12, GetParam(kOsc2Vol)->Value())));
     break;
 
     /* Osc 3 */
+  case kOsc3Tune:
+    while (n--)
+      mVoiceManager.m_voices[n].mOsc[2].m_pPitch.bias(1 * GetParam(kOsc3Tune)->Value());
+    break;
   case kOsc3VF:
     while (n--)
-      mVoiceManager.mVoices[n].mOsc[2].mpPulsePitch.set(127 * GetParam(kOsc3VF)->Value());
+      mVoiceManager.m_voices[n].mOsc[2].mpPulsePitch.set(127 * GetParam(kOsc3VF)->Value());
     break;
   case kOsc3Num:
     while (n--)
-      mVoiceManager.mVoices[n].mOsc[2].mpNumber.set(GetParam(kOsc3Num)->Value());
+      mVoiceManager.m_voices[n].mOsc[2].mpNumber.set(GetParam(kOsc3Num)->Value());
     break;
   case kOsc3Dec:
     while (n--)
-      mVoiceManager.mVoices[n].mOsc[2].mpDecay.set(LERP(0, -12, GetParam(kOsc3Dec)->Value()));
+      mVoiceManager.m_voices[n].mOsc[2].mpDecay.set(LERP(0, -12, GetParam(kOsc3Dec)->Value()));
     break;
   case kOsc3FreqMode:
     while (n--)
-      mVoiceManager.mVoices[n].mOsc[2].toggleRelativePFreq(GetParam(kOsc3FreqMode)->Value());
+      mVoiceManager.m_voices[n].mOsc[2].toggleRelativePFreq(GetParam(kOsc3FreqMode)->Value());
     break;
   case kOsc3Vol:
     while (n--)
-      mVoiceManager.mVoices[n].mOsc[2].m_pGain.set(dbToAmp(LERP(-60, 12, GetParam(kOsc3Vol)->Value())));
+      mVoiceManager.m_voices[n].mOsc[2].m_pGain.set(dbToAmp(LERP(-60, 12, GetParam(kOsc3Vol)->Value())));
     break;
 
     /* Global Pitch LFO */
   case kGlobalPMF:
     while (n--)
-      mVoiceManager.mVoices[n].mLFOPitch.m_pPitch.set(72 * GetParam(kGlobalPMF)->Value() - 48);
+      mVoiceManager.m_voices[n].mLFOPitch.m_pPitch.set(LERP(-64,64,GetParam(kGlobalPMF)->Value()));
     break;
   case kGlobalPMG:
     while (n--)
-      mVoiceManager.mVoices[n].mLFOPitch.m_pGain.set(dbToAmp(LERP(-36, 22, GetParam(kGlobalPMG)->Value())));
+      // ampToDb(LERP(1/(2*nOctaves), 2*nOctaves, x))-ampToDb(1./(2*nOctaves))
+      //mVoiceManager.m_voices[n].mLFOPitch.m_pGain.set(ampToDb(LERP(1./2, 2, GetParam(kGlobalPMG)->Value()))-ampToDb(1./2));
+      mVoiceManager.m_voices[n].mLFOPitch.m_pGain.set(LERP(0,24, GetParam(kGlobalPMG)->Value()));
     break;
   default:
     break;
