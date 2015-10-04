@@ -20,7 +20,6 @@ public:
   Oscillator mLFOPitch;
   void trigger(uint8_t noteNumber, uint8_t velocity);
   void release();
-  void reset();
   void setAudioFs(double fs);
   void setModFs(double fs);
   void updateParams();
@@ -45,7 +44,7 @@ public:
   };
 };
 
-class VoiceManager : public DSPComponent<double> {
+class VoiceManager {
 private:
   uint32_t mSampleCount;
   uint8_t m_numVoices;
@@ -56,12 +55,15 @@ public:
   vector<Voice> m_voices;
   Voice& TriggerNote(uint8_t noteNumber, uint8_t velocity);
   Voice& ReleaseNote(uint8_t noteNumber, uint8_t velocity);
+  Voice& getLowestVoice() const;
+  Voice& getNewestVoice() const;
+  Voice& getOldestVoice() const;
+  Voice& getHighestVoice() const;
   void setFs(double fs);
   void setNumVoices(int numVoices);
   int getNumVoices() const {return m_numVoices;};
+  int getNumActiveVoices() const {return m_activeVoiceStack.size();};
   double process(double input=0);
-  Voice* getLowestVoice() const;
-  int getSamplesPerPeriod() const;
   
   VoiceManager() :
     m_numVoices(1),

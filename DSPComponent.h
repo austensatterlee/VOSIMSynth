@@ -33,10 +33,11 @@ public:
   void scale(T val) {
     m_scale *= val;
   }
-  void setState(MOD_STATE state) {
+  const T& operator()(MOD_STATE state) {
     m_state = state;
+    return (*this)();
   }
-  const T& operator()() {
+  const T& operator()(){
     m_curr = m_scale*(m_base + m_offset) + m_bias;
     if (m_state == ACTIVE) {
       m_offset = 0.0;
@@ -55,10 +56,13 @@ public:
   Modifiable<T> m_pGain = Modifiable<T>(1,ACTIVE);
   Modifiable<T> m_pBias = Modifiable<T>(0,ACTIVE);
   virtual ~DSPComponent() {};
-  virtual void updateParams() {
-    m_pGain();
-    m_pBias();
+  virtual void updateParams(MOD_STATE state=ACTIVE) {
+    m_pGain(state);
+    m_pBias(state);
   };
+  virtual void freezeParams() {
+    updateParams(FROZEN);
+  }
   virtual T process(const T input) = 0;
   virtual void setFs(const double fs) { mFs = fs; };
 

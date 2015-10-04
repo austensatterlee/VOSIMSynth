@@ -1,6 +1,6 @@
 #include "Filter.h"
 
-double Filter::getOutput(double input) {
+double Filter::process(double input) {
   XBuf[xBufInd] = input;
   YBuf[yBufInd] = 0.0;
   double *output = &YBuf[yBufInd];
@@ -21,6 +21,5 @@ double Filter::getOutput(double input) {
   yBufInd++;
   if (yBufInd == numYCoefs+1)
     yBufInd = 0;
-  mLastOutput = *output;
-  return *output;
+  return finishProcessing(*output);
 }

@@ -7,7 +7,7 @@
 void Oscillator::updateParams() {
   DSPComponent::updateParams();
   m_pPitch();
-  m_Step = std::fmin(pitchToFreq(m_pPitch.m_curr) / mFs,0.5);
+  m_Step = std::fmin(pitchToFreq(m_pPitch.m_curr) / mFs, 0.5);
 }
 
 void Oscillator::tick() {
@@ -37,6 +37,9 @@ double Oscillator::process(const double input) {
   default:
     output = 0;
     break;
+  }
+  if (isSynced()) {
+    triggerOut();
   }
   return finishProcessing(output);
 }
@@ -74,10 +77,10 @@ void VOSIM::updateParams() {
   mpNumber.m_curr = mpNumber.m_curr * 4;
   mpPulsePitch();
   if (m_UseRelativeWidth) {
-    mPhaseScale = pitchToFreq(mpPulsePitch.m_curr / 128.0 * 48 + m_pPitch.m_curr) / (m_Step*mFs);
+    mPhaseScale = pitchToFreq(mpPulsePitch.m_curr / 128.0 * (120 - m_pPitch.m_curr - (mpNumber.m_curr - 1) * 12) + m_pPitch.m_curr + (mpNumber.m_curr - 1) * 12) / (m_Step*mFs);
   }
   else {
-    mPhaseScale = pitchToFreq(mpPulsePitch.m_curr / 128.0 * 60 + 48) / (m_Step*mFs);
+    mPhaseScale = pitchToFreq(mpPulsePitch.m_curr / 128.0 * (80 - mpNumber.m_curr * 12) + mpNumber.m_curr * 12 + 40) / (m_Step*mFs);
   }
   mpDecay();
   mpDecay.m_curr = pow(10, 0.05*mpDecay.m_curr);
@@ -114,10 +117,10 @@ double VOSIM::process(const double input) {
     wtfrac = wtfrac - wtindex;
     vout = m_CurrPulseGain * LERP(VOSIM_PULSE_COS[wtindex], VOSIM_PULSE_COS[wtindex + 1], wtfrac);
   }
-  if (m_Phase + m_Step >= 1.0) {
-    triggerOut.Emit();
+  if (isSynced()) {
+    triggerOut();
     if (m_MaxAmp <= vout) {
-      
+
     }
 #ifdef USEBLEP
     if (useMinBleps)
@@ -148,7 +151,7 @@ void Envelope::setPeriod(int segment, double period, double shape) {
   m_segments[segment].shape = shape;
 
   period = period + MIN_ENV_PERIOD;
-  shape = LERP(dbToAmp(-60),dbToAmp(60),shape) + MIN_ENV_SHAPE;
+  shape = LERP(dbToAmp(-240), dbToAmp(0), shape) + MIN_ENV_SHAPE;
 
   m_segments[segment].mult = exp(-log((1 + shape) / shape) / (mFs*period));
   double prev_amp = segment > 0 ? m_segments[segment - 1].target_amp : m_initPoint;

@@ -222,8 +222,11 @@ _Pvt_Extensions
 Icon?
 .DS_Stor*
 VOSIMSynth.xcodeproj/
-VOSIMSynth-vst2.vcxproj
+*.xcconfig
+*.vcxproj
 installer/
 resources/*
 !resources/img/
 build-win/
+*plist
+*pdf

@@ -33,7 +33,7 @@ public:
   int getSamplesPerPeriod() const { return 1. / m_Step; }
   void sync() { m_Phase = 0; };
   void setWaveform(OSC_MODE mode) { m_Waveform = mode; };
-  bool isSynced() { return m_Phase == 0; };
+  bool isSynced() const { return m_Phase + m_Step >= 1.0; };
   Modifiable<double> m_pPitch;
   double m_Step = 1;
 protected:

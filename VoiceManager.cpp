@@ -3,8 +3,8 @@
 Voice& VoiceManager::TriggerNote(uint8_t noteNumber, uint8_t velocity) {
   Voice* v;
   if(m_idleVoiceStack.empty()){
-    v = m_activeVoiceStack.front();
-    m_activeVoiceStack.pop_front();
+    v = m_activeVoiceStack.back();
+    m_activeVoiceStack.pop_back();
     m_voiceMap[v->mNote].remove(v);
   }
   else {
@@ -44,35 +44,46 @@ void VoiceManager::setNumVoices(int numVoices) {
 double VoiceManager::process(double input) {
   double finalOutput = 0;
   mSampleCount++;
-  bool isSynced;
   for (list<Voice*>::iterator v = m_activeVoiceStack.begin(); v != m_activeVoiceStack.end();) {
     if ((*v)->isActive()) {
       if (!(mSampleCount & MOD_FS_RAT)) {
         (*v)->updateParams();
-        updateParams();
       }
-      isSynced &= (*v)->isSynced();
       finalOutput += (*v)->process();
       v++;
     }
     else {
       m_voiceMap[(*v)->mNote].pop_back();
+      if(m_voiceMap[(*v)->mNote].empty())
+        m_voiceMap.erase((*v)->mNote);
       m_idleVoiceStack.push_front(*v);
       v = m_activeVoiceStack.erase(v++);
     }
   }
   finalOutput /= m_numVoices;
-  return finishProcessing(finalOutput);
+  return finalOutput;
 }
 
-Voice* VoiceManager::getLowestVoice() const {
-  Voice* v = m_voiceMap.begin()->second.front();
-  return v;
+Voice& VoiceManager::getLowestVoice() const {
+  /*map<int, list<Voice*>>::const_iterator v;
+  for (v = m_voiceMap.begin(); v != m_voiceMap.end(); v++) {
+    if (!(*v).second.empty())
+      break;
+  }
+  return *(*v).second.front();*/
+  return *(*m_voiceMap.begin()).second.front();
 }
 
-int VoiceManager::getSamplesPerPeriod() const{
-  Voice* v = getLowestVoice();
-  return v->getSamplesPerPeriod();
+Voice & VoiceManager::getNewestVoice() const {
+  return *m_activeVoiceStack.back();
+}
+
+Voice & VoiceManager::getOldestVoice() const {
+  return *m_activeVoiceStack.front();
+}
+
+Voice & VoiceManager::getHighestVoice() const {
+  return *(*m_voiceMap.end()).second.front();
 }
 
 void Voice::trigger(uint8_t noteNumber, uint8_t velocity) {
@@ -89,7 +100,7 @@ void Voice::trigger(uint8_t noteNumber, uint8_t velocity) {
 }
 
 bool Voice::isSynced() {
-  return mOsc[0].isSynced() & mOsc[1].isSynced() & mOsc[2].isSynced();
+  return mOsc[0].isSynced() && mOsc[1].isSynced() && mOsc[2].isSynced();
 }
 
 void Voice::release() {
@@ -100,6 +111,7 @@ void Voice::release() {
 }
 
 void Voice::setAudioFs(double fs) {
+  setFs(fs);
   mOsc[0].setFs(fs);
   mOsc[1].setFs(fs);
   mOsc[2].setFs(fs);
@@ -118,12 +130,12 @@ void Voice::updateParams() {
   mVFEnv[0].process(0);
   mVFEnv[1].process(0);
   mVFEnv[2].process(0);
+  mLFOPitch.process(0);
+  mAmpEnv.process(mVelocity);
   mVFEnv[0].updateParams();
   mVFEnv[1].updateParams();
   mVFEnv[2].updateParams();
-  mLFOPitch.process(0);
   mLFOPitch.updateParams();
-  mAmpEnv.process(mVelocity);
   mAmpEnv.updateParams();
   mOsc[0].updateParams();
   mOsc[1].updateParams();
@@ -136,14 +148,14 @@ double Voice::process(double input) {
   output2 = mOsc[1].process(0);
   output3 = mOsc[2].process(0);
   output = (output1 + output2 + output3)*mVelocity;
-  return output;
+  if(isSynced())
+    triggerOut();
+  return finishProcessing(output);
 }
 
 int Voice::getSamplesPerPeriod() const {
-  int period1 = mOsc[0].getSamplesPerPeriod();
-  int period2 = mOsc[1].getSamplesPerPeriod();
-  int period3 = mOsc[2].getSamplesPerPeriod();
-  return gcd(gcd(period1,period2),period3);
+  int max_period = fmax(mOsc[0].getSamplesPerPeriod(),fmax(mOsc[1].getSamplesPerPeriod(),mOsc[2].getSamplesPerPeriod()));
+  return max_period;
 }
 
 bool Voice::isActive() {

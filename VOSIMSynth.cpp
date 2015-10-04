@@ -231,7 +231,8 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   attachKnob(pGraphics, this, 3, 8, kOsc3Vol, &numberedKnob);
   attachSwitch(pGraphics, this, 3, 9, kOsc3FreqMode, &push2p);
 
-  mOscilloscope = new Oscilloscope(this, IRECT(10, 310, 800 - 10, 600 - 10));
+  mOscilloscope = new Oscilloscope(this, IRECT(10, 310, 800 - 10, 600 - 10), 1000);
+  mOscilloscope->setNumDisplayPeriods(2);
   pGraphics->AttachControl(mOscilloscope);
 
   AttachGraphics(pGraphics);
@@ -246,23 +247,15 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   LP4 = new Filter(xcoefs, ycoefs, 7, 6);
 }
 
-void VOSIMSynth::sendToScope(double input) {
-  mOscilloscope->input(mLastOutput);
-}
-
 void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel) {
-  Voice& v = mVoiceManager.TriggerNote(pitch, vel);
-  Oscillator &myosc = v.mOsc[0];
-  mOscilloscope->setBufSize(myosc.getSamplesPerPeriod());  
-  myosc.connectOutputTo(this,&VOSIMSynth::sendToScope);
-  myosc.triggerOut.Connect(mOscilloscope,&Oscilloscope::sync);
+  mVoiceManager.TriggerNote(pitch, vel);
+  Voice& v = mVoiceManager.getLowestVoice();
+  mOscilloscope->connectTrigger(&v);
+  mOscilloscope->connectInput(LP4);
 }
 
 void VOSIMSynth::OnNoteOff(uint8_t pitch, uint8_t vel) {
   Voice& v = mVoiceManager.ReleaseNote(pitch, vel);
-  Oscillator &myosc = v.mOsc[0];
-  myosc.disconnectOutputTo(this, &VOSIMSynth::sendToScope);
-  myosc.triggerOut.Disconnect(mOscilloscope, &Oscilloscope::sync);
 }
 
 void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) {
@@ -272,9 +265,7 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
   for (int s = 0; s < nFrames; s++) {
     leftOutput[s] = 0;
     mMIDIReceiver.advance();
-    mVoiceManager.updateParams();
-    leftOutput[s] = LP4->getOutput(mVoiceManager.process());
-    leftOutput[s] *= mOutGain;
+    leftOutput[s] = LP4->process(mVoiceManager.process());
     rightOutput[s] = leftOutput[s];
     mLastOutput = leftOutput[s];
   }
@@ -298,7 +289,8 @@ void VOSIMSynth::OnParamChange(int paramIdx) {
   uint8_t n = mVoiceManager.getNumVoices();
   switch (paramIdx) {
   case kMainVol:
-    mOutGain = pow(10, 0.05*LERP(-18, 36, GetParam(kMainVol)->Value()));
+    LP4->m_pGain.set(pow(10, 0.05*LERP(-18, 36, GetParam(kMainVol)->Value())));
+    LP4->freezeParams();
     break;
     /* Env 1 */
   case kEnv1Atk:
@@ -484,7 +476,7 @@ void VOSIMSynth::OnParamChange(int paramIdx) {
     while (n--)
       // ampToDb(LERP(1/(2*nOctaves), 2*nOctaves, x))-ampToDb(1./(2*nOctaves))
       //mVoiceManager.m_voices[n].mLFOPitch.m_pGain.set(ampToDb(LERP(1./2, 2, GetParam(kGlobalPMG)->Value()))-ampToDb(1./2));
-      mVoiceManager.m_voices[n].mLFOPitch.m_pGain.set(LERP(0,24, GetParam(kGlobalPMG)->Value()));
+      mVoiceManager.m_voices[n].mLFOPitch.m_pGain.set(LERP(0,12, GetParam(kGlobalPMG)->Value()));
     break;
   default:
     break;

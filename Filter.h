@@ -1,9 +1,10 @@
-#ifndef __FILTER_H__
-#define __FILTER_H_
+#ifndef __FILTER__
+#define __FILTER__
 #include <cstring>
 #include <cstdlib>
+#include "DSPComponent.h"
 using namespace std;
-class Filter {
+class Filter : public DSPComponent<double>{
 protected:
   int numYCoefs,numXCoefs;
   double *YCoefs,*XCoefs;
@@ -11,6 +12,7 @@ protected:
   int xBufInd,yBufInd;
 public:
   Filter(double *X, double *Y, int nX, int nY) {
+    freezeParams();
     xBufInd = 0;
     yBufInd = 0;
     numXCoefs = nX;
@@ -35,7 +37,7 @@ public:
     delete[] YBuf;
     delete[] XBuf;
   };
-  double mLastOutput;
-  double getOutput(double input);
+  double process(double input);
+  int getSamplesPerPeriod() const { return std::fmax(numYCoefs,numXCoefs); };
 };
 #endif

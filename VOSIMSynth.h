@@ -14,7 +14,6 @@
 class VOSIMSynth : public IPlug {
 public:
   VOSIMSynth(IPlugInstanceInfo instanceInfo);
-  void sendToScope(double);
   void OnNoteOn(uint8_t pitch, uint8_t vel);
   void OnNoteOff(uint8_t pitch, uint8_t vel);
   ~VOSIMSynth() {
