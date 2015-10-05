@@ -80,7 +80,7 @@ void VOSIM::updateParams() {
     mPhaseScale = pitchToFreq(mpPulsePitch.m_curr / 128.0 * (120 - m_pPitch.m_curr - (mpNumber.m_curr - 1) * 12) + m_pPitch.m_curr + (mpNumber.m_curr - 1) * 12) / (m_Step*mFs);
   }
   else {
-    mPhaseScale = pitchToFreq(mpPulsePitch.m_curr / 128.0 * (80 - mpNumber.m_curr * 12) + mpNumber.m_curr * 12 + 40) / (m_Step*mFs);
+    mPhaseScale = pitchToFreq(mpPulsePitch.m_curr / 128.0 * (100) + 20) / (m_Step*mFs);
   }
   mpDecay();
   mpDecay.m_curr = pow(10, 0.05*mpDecay.m_curr);

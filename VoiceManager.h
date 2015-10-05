@@ -25,7 +25,7 @@ public:
   void updateParams();
   bool isActive();
   bool isSynced();
-  double process(double input = 0);
+  double process(const double input = 0);
   int getSamplesPerPeriod() const;
   Voice() {
     mNote = 0;
@@ -42,6 +42,12 @@ public:
     mLFOPitch.connectOutputTo(&mOsc[1].m_pPitch, &Modifiable<double>::mod);
     mLFOPitch.connectOutputTo(&mOsc[2].m_pPitch, &Modifiable<double>::mod);
   };
+  Voice(const Voice& v) :
+  Voice() {
+    mNote = v.mNote;
+  }
+  ~Voice() {
+  }
 };
 
 class VoiceManager {
@@ -49,12 +55,12 @@ private:
   uint32_t mSampleCount;
   uint8_t m_numVoices;
 public:
-  map<int,list<Voice*>> m_voiceMap;
+  map<int,list<Voice*> > m_voiceMap;
   list<Voice*> m_activeVoiceStack;
   list<Voice*> m_idleVoiceStack;
   vector<Voice> m_voices;
   Voice& TriggerNote(uint8_t noteNumber, uint8_t velocity);
-  Voice& ReleaseNote(uint8_t noteNumber, uint8_t velocity);
+  void ReleaseNote(uint8_t noteNumber, uint8_t velocity);
   Voice& getLowestVoice() const;
   Voice& getNewestVoice() const;
   Voice& getOldestVoice() const;

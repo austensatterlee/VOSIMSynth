@@ -37,7 +37,7 @@ public:
     delete[] YBuf;
     delete[] XBuf;
   };
-  double process(double input);
+  double process(const double input);
   int getSamplesPerPeriod() const { return std::fmax(numYCoefs,numXCoefs); };
 };
 #endif

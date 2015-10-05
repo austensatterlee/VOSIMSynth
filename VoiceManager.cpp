@@ -5,22 +5,25 @@ Voice& VoiceManager::TriggerNote(uint8_t noteNumber, uint8_t velocity) {
   if(m_idleVoiceStack.empty()){
     v = m_activeVoiceStack.back();
     m_activeVoiceStack.pop_back();
-    m_voiceMap[v->mNote].remove(v);
+    m_idleVoiceStack.push_front(v);
+    ReleaseNote(noteNumber,velocity);
   }
-  else {
-    v = m_idleVoiceStack.front();
-    m_idleVoiceStack.pop_front();
-  }
+  v = m_idleVoiceStack.front();
+  m_idleVoiceStack.pop_front();  
   v->trigger(noteNumber, velocity);
   m_activeVoiceStack.push_front(v);
   m_voiceMap[noteNumber].push_front(v);    
   return *v;
 }
 
-Voice& VoiceManager::ReleaseNote(uint8_t noteNumber, uint8_t velocity) {
-  Voice *v = m_voiceMap[noteNumber].front();
-  v->release();
-  return *v;
+void VoiceManager::ReleaseNote(uint8_t noteNumber, uint8_t velocity) {
+  if(!m_voiceMap[noteNumber].empty()){
+    for (list<Voice*>::iterator v = m_voiceMap[noteNumber].begin(); v != m_voiceMap[noteNumber].end();) {
+      (*v)->release();
+      v = m_voiceMap[noteNumber].erase(v++);
+    }
+    m_voiceMap.erase(noteNumber);
+  }
 }
 
 void VoiceManager::setFs(double fs) {
@@ -36,6 +39,7 @@ void VoiceManager::setNumVoices(int numVoices) {
   m_voices.resize(m_numVoices);
   m_activeVoiceStack.clear();
   m_idleVoiceStack.clear();
+  m_voiceMap.clear();
   for (vector<Voice>::iterator v = m_voices.begin(); v != m_voices.end(); v++) {
     m_idleVoiceStack.push_front(&(*v));
   }
@@ -53,14 +57,11 @@ double VoiceManager::process(double input) {
       v++;
     }
     else {
-      m_voiceMap[(*v)->mNote].pop_back();
-      if(m_voiceMap[(*v)->mNote].empty())
-        m_voiceMap.erase((*v)->mNote);
       m_idleVoiceStack.push_front(*v);
       v = m_activeVoiceStack.erase(v++);
     }
   }
-  finalOutput /= m_numVoices;
+  finalOutput /= (double)m_numVoices;
   return finalOutput;
 }
 

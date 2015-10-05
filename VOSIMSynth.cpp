@@ -104,7 +104,10 @@ private:
 };
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
-  : IPLUG_CTOR(kNumParams, kNumPrograms, instanceInfo) {
+  : 
+  IPLUG_CTOR(kNumParams, kNumPrograms, instanceInfo),
+  mOscilloscope(this, IRECT(10, 310, 800 - 10, 600 - 10), 1000)
+   {
   TRACE;
 
   //const ParamProp realParams[kNumParams] = {
@@ -146,21 +149,21 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   GetParam(kGlobalPMF)->InitDouble("OPMf", 0.001, 0.0, 1.0, 0.001, "Pitch Mod F");
   GetParam(kGlobalPMG)->InitDouble("OPMg", 0.001, 0.0, 1.0, 0.001, "Pitch Mod G");
 
-  GetParam(kOsc1Tune)->InitInt("O1Tune", 0, -36., 36., "Osc1 Tune");
+  GetParam(kOsc1Tune)->InitInt("O1Tune", 0, -12, 12, "Osc1 Tune");
   GetParam(kOsc1VF)->InitDouble("O1VF", 0.5, 0, 1, 0.000001, "Osc1 VF");
   GetParam(kOsc1Num)->InitDouble("O1N", 0.25, 0, 1, 0.000001, "Osc1 Number");
   GetParam(kOsc1Dec)->InitDouble("O1D", 0.001, 0.0, 1.0, 0.000001, "Osc1 Decay");
   GetParam(kOsc1Vol)->InitDouble("O1Vol", 1, 0, 1, 0.001, "Osc1 Vol");
   GetParam(kOsc1FreqMode)->InitBool("O1RelFreq", true, "Osc1 Freq Mode", "Osc1");
 
-  GetParam(kOsc2Tune)->InitInt("O2Tune", 0.0, -36., 36., "Osc2 Tune");
+  GetParam(kOsc2Tune)->InitInt("O2Tune", 0.0, -12, 12, "Osc2 Tune");
   GetParam(kOsc2VF)->InitDouble("O2VF", 0.5, 0, 1, 0.000001, "Osc2 VF");
   GetParam(kOsc2Num)->InitDouble("O2N", 0.25, 0, 1, 0.000001, "Osc2 Number");
   GetParam(kOsc2Dec)->InitDouble("O2D", 0.001, 0.0, 1.0, 0.000001, "Osc2 Decay");
   GetParam(kOsc2Vol)->InitDouble("O2Vol", 1, 0, 1, 0.001, "Osc2 Vol");
   GetParam(kOsc2FreqMode)->InitBool("O2RelFreq", true, "Osc2 Freq Mode", "Osc2");
 
-  GetParam(kOsc3Tune)->InitInt("O3Tune", 0.0, -36., 36., "Osc3 Tune");
+  GetParam(kOsc3Tune)->InitInt("O3Tune", 0.0, -12, 12, "Osc3 Tune");
   GetParam(kOsc3VF)->InitDouble("O3VF", 0.5, 0, 1, 0.000001, "Osc3 VF", "Osc3");
   GetParam(kOsc3Num)->InitDouble("O3N", 0.25, 0, 1, 0.000001, "Osc3 Number", "Osc3");
   GetParam(kOsc3Dec)->InitDouble("O3D", 0.001, 0.0, 1.0, 0.000001, "Osc3 Decay", "Osc3");
@@ -231,9 +234,8 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   attachKnob(pGraphics, this, 3, 8, kOsc3Vol, &numberedKnob);
   attachSwitch(pGraphics, this, 3, 9, kOsc3FreqMode, &push2p);
 
-  mOscilloscope = new Oscilloscope(this, IRECT(10, 310, 800 - 10, 600 - 10), 1000);
-  mOscilloscope->setNumDisplayPeriods(2);
-  pGraphics->AttachControl(mOscilloscope);
+  mOscilloscope.setNumDisplayPeriods(2);
+  pGraphics->AttachControl(&mOscilloscope);
 
   AttachGraphics(pGraphics);
 
@@ -248,14 +250,16 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 }
 
 void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel) {
+  IMutexLock lock(this);
   mVoiceManager.TriggerNote(pitch, vel);
   Voice& v = mVoiceManager.getLowestVoice();
-  mOscilloscope->connectTrigger(&v);
-  mOscilloscope->connectInput(LP4);
+  mOscilloscope.connectTrigger(&v);
+  mOscilloscope.connectInput(&v);
 }
 
 void VOSIMSynth::OnNoteOff(uint8_t pitch, uint8_t vel) {
-  Voice& v = mVoiceManager.ReleaseNote(pitch, vel);
+  IMutexLock lock(this);
+  mVoiceManager.ReleaseNote(pitch, vel);
 }
 
 void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) {
@@ -274,6 +278,7 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
 }
 
 void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg) {
+  IMutexLock lock(this);
   mMIDIReceiver.onMessageReceived(pMsg);
 }
 
@@ -289,7 +294,7 @@ void VOSIMSynth::OnParamChange(int paramIdx) {
   uint8_t n = mVoiceManager.getNumVoices();
   switch (paramIdx) {
   case kMainVol:
-    LP4->m_pGain.set(pow(10, 0.05*LERP(-18, 36, GetParam(kMainVol)->Value())));
+    LP4->m_pGain.set(pow(10, 0.05*LERP(-36, 36, GetParam(kMainVol)->Value())));
     LP4->freezeParams();
     break;
     /* Env 1 */
@@ -412,7 +417,7 @@ void VOSIMSynth::OnParamChange(int paramIdx) {
     break;
   case kOsc1Vol:
     while (n--)
-      mVoiceManager.m_voices[n].mOsc[0].m_pGain.set(dbToAmp(LERP(-60, 6, GetParam(kOsc1Vol)->Value())));
+      mVoiceManager.m_voices[n].mOsc[0].m_pGain.set(dbToAmp(LERP(-60, 0, GetParam(kOsc1Vol)->Value())));
     break;
 
     /* Osc 2 */ 
@@ -438,7 +443,7 @@ void VOSIMSynth::OnParamChange(int paramIdx) {
     break;
   case kOsc2Vol:
     while (n--)
-      mVoiceManager.m_voices[n].mOsc[1].m_pGain.set(dbToAmp(LERP(-60, 12, GetParam(kOsc2Vol)->Value())));
+      mVoiceManager.m_voices[n].mOsc[1].m_pGain.set(dbToAmp(LERP(-60, 0, GetParam(kOsc2Vol)->Value())));
     break;
 
     /* Osc 3 */
@@ -464,7 +469,7 @@ void VOSIMSynth::OnParamChange(int paramIdx) {
     break;
   case kOsc3Vol:
     while (n--)
-      mVoiceManager.m_voices[n].mOsc[2].m_pGain.set(dbToAmp(LERP(-60, 12, GetParam(kOsc3Vol)->Value())));
+      mVoiceManager.m_voices[n].mOsc[2].m_pGain.set(dbToAmp(LERP(-60, 0, GetParam(kOsc3Vol)->Value())));
     break;
 
     /* Global Pitch LFO */
