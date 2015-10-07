@@ -73,17 +73,29 @@ void Oscillator::addBlep(double offset, double ampl) {
 ******************************/
 void VOSIM::updateParams() {
   Oscillator::updateParams();
+  mpNumber.scale(4);
   mpNumber();
-  mpNumber.m_curr = mpNumber.m_curr * 4;
   mpPulsePitch();
   if (m_UseRelativeWidth) {
-    mPhaseScale = pitchToFreq(mpPulsePitch.m_curr / 128.0 * (120 - m_pPitch.m_curr - (mpNumber.m_curr - 1) * 12) + m_pPitch.m_curr + (mpNumber.m_curr - 1) * 12) / (m_Step*mFs);
+    mPhaseScale = pitchToFreq(mpPulsePitch.m_curr / 128.0 * (108 - m_pPitch.m_curr) + m_pPitch.m_curr) / (m_Step*mFs);
   }
   else {
-    mPhaseScale = pitchToFreq(mpPulsePitch.m_curr / 128.0 * (100) + 20) / (m_Step*mFs);
+    mPhaseScale = pitchToFreq(mpPulsePitch.m_curr / 128.0 * (96-69) + 69) / (m_Step*mFs);
+  }
+  // add compensation for phase scales < 0.5 (i.e. won't be able to reach pulse peak)
+  m_CompensationGain = 1.0;
+  if (mPhaseScale < 0.5 && mpNumber.m_curr >= mPhaseScale) {
+    double lastvalue = lut_vosimpulse.getlinear(mPhaseScale);
+    if(lastvalue)
+      m_CompensationGain = (1. / lastvalue);
+  }
+  else if (mpNumber.m_curr < 0.5) {
+    double lastvalue = lut_vosimpulse.getlinear(mpNumber.m_curr);
+    if (lastvalue)
+      m_CompensationGain = (1. / lastvalue);
   }
   mpDecay();
-  mpDecay.m_curr = pow(10, 0.05*mpDecay.m_curr);
+  mpDecay.m_curr = pow(10, 0.05*mpDecay.m_curr);  
 }
 
 double VOSIM::process(const double input) {
@@ -97,12 +109,12 @@ double VOSIM::process(const double input) {
   else if (N != lastN)
     m_CurrPulseGain *= mpDecay.m_curr;
   double wrPulsePhase = (pulsePhase - N);
-  int wtindex;
-  double wtfrac;
   if (pulsePhase >= mpNumber.m_curr) {
 #ifdef USEBLEP
     double lastWrPulsePhase = (mLastPulsePhase - lastN);
     if (useMinBleps && mLastPulsePhase <= mNumber) {
+      int wtindex;
+      double wtfrac;
       wtindex = ((VOSIM_PULSE_COS_SIZE - 1) * lastWrPulsePhase);
       wtfrac = ((VOSIM_PULSE_COS_SIZE - 1) * lastWrPulsePhase) - wtindex;
       vout = mCurrPulseGain * LERP(VOSIM_PULSE_COS[wtindex], VOSIM_PULSE_COS[wtindex + 1], wtfrac);
@@ -112,16 +124,10 @@ double VOSIM::process(const double input) {
     vout = 0;
   }
   else {
-    wtfrac = (VOSIM_PULSE_COS_SIZE - 1) * wrPulsePhase;
-    wtindex = (int)wtfrac;
-    wtfrac = wtfrac - wtindex;
-    vout = m_CurrPulseGain * LERP(VOSIM_PULSE_COS[wtindex], VOSIM_PULSE_COS[wtindex + 1], wtfrac);
+    vout = m_CurrPulseGain*m_CompensationGain*lut_vosimpulse.getlinear(wrPulsePhase);
   }
   if (isSynced()) {
     triggerOut();
-    if (m_MaxAmp <= vout) {
-
-    }
 #ifdef USEBLEP
     if (useMinBleps)
       addBlep((mStep + mPhase - 1)*mFreq / mFs, vout);
@@ -131,8 +137,6 @@ double VOSIM::process(const double input) {
   vout += mBlepBuf[mBlepBufInd];
 #endif
   m_LastPulsePhase = pulsePhase;
-  if (vout > m_MaxAmp)
-    m_MaxAmp = vout;
   return finishProcessing(vout);
 }
 
@@ -230,9 +234,9 @@ void Envelope::release() {
 }
 
 int Envelope::getSamplesPerPeriod() const {
-  int approx = 0;
+  double approx = 0;
   for (int i = 0; i < m_numSegments; i++) {
     approx += m_segments[i].period*mFs;
   }
-  return approx;
+  return (int)approx;
 }

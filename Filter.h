@@ -1,8 +1,8 @@
 #ifndef __FILTER__
 #define __FILTER__
+#include "DSPComponent.h"
 #include <cstring>
 #include <cstdlib>
-#include "DSPComponent.h"
 using namespace std;
 class Filter : public DSPComponent<double>{
 protected:
@@ -11,7 +11,7 @@ protected:
   double *YBuf,*XBuf;
   int xBufInd,yBufInd;
 public:
-  Filter(double *X, double *Y, int nX, int nY) {
+  Filter(const double *X, const double *Y, const int nX, const int nY) {
     freezeParams();
     xBufInd = 0;
     yBufInd = 0;

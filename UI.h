@@ -47,7 +47,7 @@ protected:
     return -(val - m_minY) / (m_maxY - m_minY)*m_InnerRect.H() + m_InnerRect.B;
   }
 public:
-  Oscilloscope(IPlugBase *pPlug, IRECT pR, int size=1) :
+  Oscilloscope(IPlugBase *pPlug, IRECT pR, int size = 1) :
     IControl(pPlug, pR),
     m_syncIndex(0),
     m_BufInd(0),
@@ -55,8 +55,7 @@ public:
     m_currWindowMaxY(1),
     m_Padding(50),
     m_displayPeriods(1),
-    m_isActive(false)
-  {
+    m_isActive(false) {
     m_InnerRect = IRECT(pR.L + m_Padding, pR.T + m_Padding, pR.R - m_Padding, pR.B - m_Padding);
     setBufSize(size);
     m_Buffer = vector<double>(m_BufSize, 0.0);
@@ -71,27 +70,51 @@ public:
 
   /* ends the current capture window and displays the result */
   void sync() {
+    if (!m_isActive)
+      return;
     m_syncIndex = m_BufInd;
-    //m_BufInd = 0;
     m_minY = m_currWindowMinY;
     m_maxY = m_currWindowMaxY;
+    m_currWindowMinY = 0;
+    m_currWindowMaxY = 0;
+    SetDirty();
   }
 
+  void input(double y) {
+    if (!m_isActive)
+      return;
+    //m_minY = 0.99*(m_minY)+0.01*m_currWindowMinY;
+    //m_maxY = 0.99*(m_maxY)+0.01*m_currWindowMaxY;
+    if (y > m_currWindowMaxY)
+      m_currWindowMaxY = y + (y - m_currWindowMaxY);
+    if (y < m_currWindowMinY)
+      m_currWindowMinY = y + (y - m_currWindowMinY);
+    m_BufInd++;
+    if (m_BufInd >= m_BufSize) {
+      m_BufInd = 0;
+    }
+    else if (m_BufInd >= m_Buffer.size())
+      m_Buffer.push_back(y);
+    else
+      m_Buffer[m_BufInd] = y;
+  }
+
+
   void setBufSize(int s) {
-      if(m_Buffer.size()<s)
-        m_Buffer.resize(s);
-      m_BufSize = s;
-      while (m_BufInd > m_BufSize) {
-        m_BufInd -= m_BufSize;
-      }
-      while (m_syncIndex > m_BufSize) {
-        m_syncIndex -= m_BufSize;
-      }
+    if (m_Buffer.size() < s)
+      m_Buffer.resize(s);
+    m_BufSize = s;
+    while (m_BufInd > m_BufSize) {
+      m_BufInd -= m_BufSize;
+    }
+    while (m_syncIndex > m_BufSize) {
+      m_syncIndex -= m_BufSize;
+    }
   }
 
   void connectInput(DSPComponent<double>* comp) {
     if (m_currInput) {
-      m_currInput->disconnectOutputTo(this,&Oscilloscope::input);
+      m_currInput->disconnectOutputTo(this, &Oscilloscope::input);
     }
     m_currInput = comp;
     m_currInput->connectOutputTo(this, &Oscilloscope::input);
@@ -105,33 +128,15 @@ public:
     m_currTriggerSrc->triggerOut.Connect(this, &Oscilloscope::sync);
   }
 
-  void input(double y) {
-    if (y > m_currWindowMaxY)
-      m_currWindowMaxY = y + (y - m_currWindowMaxY);
-    if (y < m_currWindowMinY)
-      m_currWindowMinY = y + (y - m_currWindowMinY);
-    m_BufInd++;
-    if (m_BufInd >= m_BufSize){
-      m_BufInd = 0;
-      m_currWindowMinY = 0.99*(m_currWindowMinY)-0.001*1;
-      m_currWindowMaxY = 0.99*(m_currWindowMaxY)+0.001*1;
-      SetDirty();
-    }
-    else if (m_BufInd >= m_Buffer.size())
-      m_Buffer.push_back(y);
-    else
-      m_Buffer[m_BufInd] = y;
-  }
-
   void OnMouseUp(int x, int y, IMouseMod* pMod) {
     m_isActive ^= true;
   }
 
   bool Draw(IGraphics *pGraphics) {
-    if(m_currInput==NULL)
+    if (m_currTriggerSrc == NULL || !m_isActive)
       return false;
     if (m_BufSize != m_displayPeriods*m_currTriggerSrc->getSamplesPerPeriod()) {
-      setBufSize(m_displayPeriods*m_currTriggerSrc->getSamplesPerPeriod() );
+      setBufSize(m_displayPeriods*m_currTriggerSrc->getSamplesPerPeriod());
     }
     IColor fgcolor(255, 255, 255, 255);
     IColor gridcolor(150, 255, 25, 25);
@@ -149,13 +154,13 @@ public:
     pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.L, zero - 10, m_InnerRect.L, zero + 10));
     snprintf(gridstr, 16, "%.4f", m_minY);
     pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.L, m_InnerRect.B, m_InnerRect.L, mRECT.B));
-    sprintf(gridstr, "Displaying %d periods\nBuffer size: %d\nInput frequency: %.2f Hz\nSync: %d", m_displayPeriods, m_BufSize, GetPlug()->GetSampleRate()/m_currTriggerSrc->getSamplesPerPeriod(),m_syncIndex);
-    pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.R-200, mRECT.T, mRECT.R, mRECT.B));
+    sprintf(gridstr, "Displaying %d periods\nBuffer size: %d\nInput frequency: %.2f Hz\nSync: %d", m_displayPeriods, m_BufSize, GetPlug()->GetSampleRate() / m_currTriggerSrc->getSamplesPerPeriod(), m_syncIndex);
+    pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.R - 200, mRECT.T, mRECT.R, mRECT.B));
     double x1, y1;
     double x2, y2;
-    int i = m_syncIndex;
-    int previ = i-1 < 0 ? m_BufSize-1 : i-1;
-    for (int j=1; j < m_BufSize-1; j++) {
+    int i = m_syncIndex+1 >= m_BufSize ? 0 : m_syncIndex + 1;
+    int previ = i - 1 < 0 ? m_BufSize - 1 : i - 1;
+    for (int j = 1; j < m_BufSize - 1; j++) {
       x1 = toScreenX((j - 1) * 1. / (m_BufSize - 1));
       x2 = toScreenX(j * 1. / (m_BufSize - 1));
       y1 = toScreenY(m_Buffer[previ]);

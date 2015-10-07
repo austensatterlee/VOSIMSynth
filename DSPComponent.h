@@ -2,7 +2,9 @@
 #define __DSPCOMPONENT__
 
 #include "GallantSignal.h"
-
+#include <unordered_map>
+#include <list>
+using namespace std;
 #define LERP(A,B,F) (((B)-(A))*(F)+(A))
 
 enum MOD_STATE {
@@ -22,6 +24,9 @@ public:
   T m_curr = 0;
   Modifiable(MOD_STATE state = ACTIVE) :m_base(0), m_state(state) {};
   Modifiable(T base, MOD_STATE state = ACTIVE) :m_base(base), m_state(state) {};
+  virtual ~Modifiable() {
+
+  }
   void set(T val) {
     m_base = val;
   };
@@ -41,8 +46,8 @@ public:
     m_state = state;
     return (*this)();
   }
-  const T& operator()(){
-    m_curr = m_scale*m_base + m_sidechain*(m_offset) + m_bias;
+  const T& operator()() {
+    m_curr = m_scale*m_base + m_sidechain*(m_offset)+m_bias;
     if (m_state == ACTIVE) {
       m_offset = 0.0;
       m_scale = 1.0;

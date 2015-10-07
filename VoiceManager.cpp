@@ -2,22 +2,22 @@
 
 Voice& VoiceManager::TriggerNote(uint8_t noteNumber, uint8_t velocity) {
   Voice* v;
-  if(m_idleVoiceStack.empty()){
+  if (m_idleVoiceStack.empty()) {
     v = m_activeVoiceStack.back();
     m_activeVoiceStack.pop_back();
     m_idleVoiceStack.push_front(v);
-    ReleaseNote(noteNumber,velocity);
+    ReleaseNote(noteNumber, velocity);
   }
   v = m_idleVoiceStack.front();
-  m_idleVoiceStack.pop_front();  
+  m_idleVoiceStack.pop_front();
   v->trigger(noteNumber, velocity);
   m_activeVoiceStack.push_front(v);
-  m_voiceMap[noteNumber].push_front(v);    
+  m_voiceMap[noteNumber].push_front(v);
   return *v;
 }
 
 void VoiceManager::ReleaseNote(uint8_t noteNumber, uint8_t velocity) {
-  if(!m_voiceMap[noteNumber].empty()){
+  if (!m_voiceMap[noteNumber].empty()) {
     for (list<Voice*>::iterator v = m_voiceMap[noteNumber].begin(); v != m_voiceMap[noteNumber].end();) {
       (*v)->release();
       v = m_voiceMap[noteNumber].erase(v++);
@@ -35,6 +35,8 @@ void VoiceManager::setFs(double fs) {
 }
 
 void VoiceManager::setNumVoices(int numVoices) {
+  if (numVoices<1)
+    numVoices = 1;
   m_numVoices = numVoices;
   m_voices.resize(m_numVoices);
   m_activeVoiceStack.clear();
@@ -61,7 +63,6 @@ double VoiceManager::process(double input) {
       v = m_activeVoiceStack.erase(v++);
     }
   }
-  finalOutput /= (double)m_numVoices;
   return finalOutput;
 }
 
@@ -76,11 +77,11 @@ Voice& VoiceManager::getLowestVoice() const {
 }
 
 Voice & VoiceManager::getNewestVoice() const {
-  return *m_activeVoiceStack.back();
+  return *m_activeVoiceStack.front();
 }
 
 Voice & VoiceManager::getOldestVoice() const {
-  return *m_activeVoiceStack.front();
+  return *m_activeVoiceStack.back();
 }
 
 Voice & VoiceManager::getHighestVoice() const {

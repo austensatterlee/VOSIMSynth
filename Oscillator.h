@@ -22,7 +22,9 @@ typedef enum OSC_MDOE {
 
 class Oscillator : public DSPComponent<double> {
 public:
-  Oscillator() {
+  Oscillator() :
+    DSPComponent() 
+  {
     m_pPitch.set(1.0);
 #ifdef USEBLEPS
     memset(mBlepBuf, 0, BLEPBUFSIZE);
@@ -34,11 +36,12 @@ public:
   void sync() { m_Phase = 0; };
   void setWaveform(OSC_MODE mode) { m_Waveform = mode; };
   bool isSynced() const { return m_Phase + m_Step >= 1.0; };
+  double getPhase() const { return m_Phase; };
   Modifiable<double> m_pPitch;
-  double m_Step = 1;
 protected:
   virtual void tick();
   double m_Phase = 0;
+  double m_Step = 1;
   OSC_MODE m_Waveform = SINE_WAVE;
 
   /* Blep state */
@@ -57,7 +60,7 @@ private:
   double		m_CurrPulseGain = 1;
   double		m_LastPulsePhase = 0;
   bool		  m_UseRelativeWidth;
-  double    m_MaxAmp = 1.0;
+  double    m_CompensationGain = 1.0;
 public:
   Modifiable<double>	mpDecay;
   Modifiable<double>	mpPulsePitch;
@@ -96,7 +99,7 @@ private:
 public:
   virtual void setFs(const double fs);
   const bool isDone() { return m_isDone; };
-  void	setPeriod(const int segment, double period, double shape);
+  void	setPeriod(const int segment, double period, double shape=0);
   void	setShape(int segment, double shape);
   void	setPoint(int segment, double target_amp);
   void	trigger();
@@ -104,13 +107,13 @@ public:
   int   getSamplesPerPeriod() const;
   double process(const double input);
   Envelope() :
+    DSPComponent(),
     m_currSegment(0),
     m_isDone(true),
     m_isRepeating(false),
     m_lastRawOutput(0),
     m_initPoint(0),
-    m_numSegments(3)
-    {
+    m_numSegments(3) {
     m_segments = vector<EnvelopeSegment>(m_numSegments);
     // set up a standard ADSR envelope
     m_initPoint = 0.0;

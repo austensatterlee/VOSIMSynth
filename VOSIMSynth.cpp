@@ -82,32 +82,32 @@ private:
 /*
 A parameter describes the values that a piece of memory can assume, and it provides a way to map the range (0,1) onto a new memory value.
 Each parameter needs to know its target memory location, its initial value, and a function y_[n+1]=f(x,y[n]), where x is a double in (0,1).
- */
+*/
 template <class T>
 class TypedParamProp : public ParamProp {
 public:
-  TypedParamProp(const char *name, const T defVal, T &target, const T(*modify)(T, T)) :
+
+  TypedParamProp(const char *name, const T defVal, Modifiable<T>& parent, const T(*modify)(T, T)) :
     ParamProp(name),
-    mDefault(defVal),
-    mTarget(target),
-    mModify(modify) {
+    m_default(defVal),
+    m_parent(parent),
+    m_modify(modify) {
     if (is_integral<T>::value)
-      mStep = 1;
+      m_step = 1;
     else
-      mStep = 1E-3;
+      m_step = 1E-3;
   };
 private:
-  const T mDefault;
-  const T mStep;
-  T &mTarget;
-  const T(*mModify)(T, T);
+  const T m_default;
+  const T m_step;
+  Modifiable<T>& m_parent;
+  const T(*m_modify)(T, T);
 };
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
-  : 
+  :
   IPLUG_CTOR(kNumParams, kNumPrograms, instanceInfo),
-  mOscilloscope(this, IRECT(10, 310, 800 - 10, 600 - 10), 1000)
-   {
+  mOscilloscope(this, IRECT(10, 310, 800 - 10, 600 - 10), 1000) {
   TRACE;
 
   //const ParamProp realParams[kNumParams] = {
@@ -156,7 +156,7 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   GetParam(kOsc1Vol)->InitDouble("O1Vol", 1, 0, 1, 0.001, "Osc1 Vol");
   GetParam(kOsc1FreqMode)->InitBool("O1RelFreq", true, "Osc1 Freq Mode", "Osc1");
 
-  GetParam(kOsc2Tune)->InitInt("O2Tune", 0.0, -12, 12, "Osc2 Tune");
+  GetParam(kOsc2Tune)->InitInt("O2Tune", 0, -12, 12, "Osc2 Tune");
   GetParam(kOsc2VF)->InitDouble("O2VF", 0.5, 0, 1, 0.000001, "Osc2 VF");
   GetParam(kOsc2Num)->InitDouble("O2N", 0.25, 0, 1, 0.000001, "Osc2 Number");
   GetParam(kOsc2Dec)->InitDouble("O2D", 0.001, 0.0, 1.0, 0.000001, "Osc2 Decay");
@@ -244,17 +244,14 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   mVoiceManager.setNumVoices(NUM_VOICES);
   mMIDIReceiver.noteOn.Connect(this, &VOSIMSynth::OnNoteOn);
   mMIDIReceiver.noteOff.Connect(this, &VOSIMSynth::OnNoteOff);
-  double xcoefs[7] = { 4.760635e-1, 2.856281, 7.140952, 9.521270, 7.140952, 2.856281, 4.760635e-1 };
-  double ycoefs[6] = { -4.522403, -8.676844, -9.007512, -5.328429, -1.702543, -2.303303e-1 };
-  LP4 = new Filter(xcoefs, ycoefs, 7, 6);
 }
 
 void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel) {
   IMutexLock lock(this);
   mVoiceManager.TriggerNote(pitch, vel);
-  Voice& v = mVoiceManager.getLowestVoice();
+  Voice& v = mVoiceManager.getNewestVoice();
   mOscilloscope.connectTrigger(&v);
-  mOscilloscope.connectInput(&v);
+  //mOscilloscope.connectInput(&v);
 }
 
 void VOSIMSynth::OnNoteOff(uint8_t pitch, uint8_t vel) {
@@ -269,9 +266,11 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
   for (int s = 0; s < nFrames; s++) {
     leftOutput[s] = 0;
     mMIDIReceiver.advance();
-    leftOutput[s] = LP4->process(mVoiceManager.process());
+    leftOutput[s] = mOutGain*mVoiceManager.process();
     rightOutput[s] = leftOutput[s];
     mLastOutput = leftOutput[s];
+    if (mVoiceManager.getNumActiveVoices())
+      mOscilloscope.input(mLastOutput);
   }
 
   mMIDIReceiver.Flush(nFrames);

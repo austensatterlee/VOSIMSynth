@@ -3,7 +3,6 @@
 
 #define NUM_VOICES 64
 
-#include <cstdint>
 #include "IPlug_include_in_plug_hdr.h"
 #include "Oscillator.h"
 #include "MIDIReceiver.h"
@@ -17,7 +16,6 @@ public:
   void OnNoteOn(uint8_t pitch, uint8_t vel);
   void OnNoteOff(uint8_t pitch, uint8_t vel);
   ~VOSIMSynth() {
-    delete LP4;
   };
 
   void Reset();
@@ -29,7 +27,6 @@ private:
   MIDIReceiver mMIDIReceiver;
   VoiceManager mVoiceManager;
   Oscilloscope mOscilloscope;
-  Filter *LP4;
   double mOutGain = 1.0;
   double mLastOutput = 0.0;
 };
