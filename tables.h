@@ -1,35 +1,35 @@
 #ifndef __TABLES__
 #define __TABLES__
-#define VOSIM_PULSE_COS_SIZE 65536
-#define BLEPOS 256
-#define BLEPBUFSIZE 32
-#define BLEPSIZE 8193
-#define SINC_KERNEL_SIZE 51
-#define PITCH_TABLE_SIZE 128
+#define LERP(A,B,F) (((B)-(A))*(F)+(A))
 
+//todo: add oversampling and bias info to the LookupTable class so that it can still be accessed with a double between some arbitrary min and max.
 
 class LookupTable {
 public:
-  LookupTable() :
-    m_table(nullptr),
-    m_size(0) {}
-  LookupTable(const double* table, int size) :
+  LookupTable(const double* table, int size, double input_min=0, double input_max=1) :
     m_table(table),
-    m_size(size) {}
+    m_size(size)
+    {
+      m_norm_bias = input_min;
+      m_norm_scale = 1./(input_max-input_min);
+    }
+  LookupTable() :
+    LookupTable(nullptr,0,0,1)
+    {}
   double getlinear(const double phase) const;
 private:
   int m_size;
+  double m_norm_bias;
+  double m_norm_scale;
   const double* m_table;
 };
 
+/*::automated::*/
+extern const double PITCH_TABLE[256];
+extern const double VOSIM_PULSE_COS[65536];
 
-extern const double SINC_KERNEL[SINC_KERNEL_SIZE];
-extern const double MINBLEP[BLEPSIZE];
-extern const double VOSIM_PULSE_COS[VOSIM_PULSE_COS_SIZE];
-extern const double PITCH_TABLE[PITCH_TABLE_SIZE];
+const LookupTable lut_pitch_table(PITCH_TABLE, 256, -1, 1);
+const LookupTable lut_vosim_pulse_cos(VOSIM_PULSE_COS, 65536);
 
-const LookupTable lut_sinckernel(SINC_KERNEL, SINC_KERNEL_SIZE);
-const LookupTable lut_minblep(MINBLEP, BLEPSIZE);
-const LookupTable lut_vosimpulse(VOSIM_PULSE_COS, VOSIM_PULSE_COS_SIZE);
-const LookupTable lut_pitchtable(PITCH_TABLE, PITCH_TABLE_SIZE);
+/*::/automated::*/
 #endif

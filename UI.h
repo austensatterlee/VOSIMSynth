@@ -54,7 +54,7 @@ public:
     m_minY(0),
     m_maxY(1),
     m_currWindowMinY(0),
-    m_currWindowMaxY(1),
+    m_currWindowMaxY(0),
     m_Padding(50),
     m_displayPeriods(1),
     m_isActive(false) {
@@ -66,10 +66,6 @@ public:
 
   bool IsDirty() { return m_isActive && mDirty; };
 
-  void setNumDisplayPeriods(int displayPeriods) {
-    m_displayPeriods = displayPeriods;
-  }
-
   /* ends the current capture window and displays the result */
   void sync() {
     if (!m_isActive)
@@ -78,6 +74,8 @@ public:
       setBufSize(m_displayPeriods*m_currTriggerSrc->getSamplesPerPeriod());
     }
     m_syncIndex = m_BufInd;
+    m_currWindowMaxY = 0.99*m_currWindowMaxY;
+    m_currWindowMinY = 0.99*m_currWindowMinY;
   }
 
   void input(double y) {
@@ -134,6 +132,12 @@ public:
 
   void OnMouseUp(int x, int y, IMouseMod* pMod) {
     m_isActive ^= true;
+  }
+
+  void OnMouseWheel(int x, int y, IMouseMod* pMod, int d) {
+    m_displayPeriods = m_displayPeriods+d;
+    if(m_displayPeriods<=0)
+      m_displayPeriods = 1;
   }
 
   bool Draw(IGraphics *pGraphics) {

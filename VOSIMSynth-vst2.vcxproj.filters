@@ -29,7 +29,6 @@
     <ClInclude Include="VoiceManager.h" />
     <ClInclude Include="VOSIMSynth.h" />
     <ClInclude Include="DSPComponent.h" />
-    <ClInclude Include="Header.h" />
     <ClInclude Include="DSPMath.h" />
   </ItemGroup>
   <ItemGroup>
@@ -39,5 +38,8 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VOSIMSynth.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
 </Project>

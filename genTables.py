@@ -1,4 +1,5 @@
 from numpy import *
+import re
 
 def MakeTableStr(table,name,ctype="const double"):
     rows = int(sqrt(table.size))
@@ -110,47 +111,48 @@ def SincKernel(M,fc):
     wsinc=array([sin(2*pi*fc*(i-M/2))/(i-M/2) if i!=M/2 else 2*pi*fc for i in N])
     return wsinc*window
 
-def PitchTable():
-    n = arange(0,128)
+def PitchTable(notestart=0,notefinish=128):
+    n = arange(notestart,notefinish)
     return 440*2**((n-69.)/12.)
 
+def rewriteAutomatedSection(full_text,replacement_text):
+    block_pattern = re.compile("/\*::(?P<tag>.*?)::\*/ *?\n(?P<block>.*)\n/\*::/(?P=tag)::\*/",re.DOTALL);
+    match = block_pattern.search(full_text)
+    if not match:
+        return full_text
+    return re.sub(re.escape(match.groupdict()["block"]), replacement_text, full_text)
+
 def main():
-    mb_points = 16
-    mb_oversamp = 256
-    minblep = GenerateMinBLEP(mb_points,mb_oversamp)
     ss_points = 65536
     sinsquaredtable = GenerateSinSquared(ss_points)
     sk_points = 50
     sk_fc = 0.49
     sinckernel = SincKernel(sk_points,sk_fc)
-    pitchtable = PitchTable()
+    pitchtable = PitchTable(-128,128)
 
-    tableinfo = {
-            'BLEPBUF': int(float(len(minblep))/mb_oversamp),
-            'BLEPSIZE': len(minblep),
-            'BLEPOS': mb_oversamp,
-            'VOSIM_PULSE_COS_SIZE': ss_points,
-            'SINC_KERNEL_SIZE': sk_points+1,
-            'PITCH_TABLE_SIZE': 128,
-            }
-    tablenames = {
-            'MINBLEP':minblep,
-            'VOSIM_PULSE_COS':sinsquaredtable,
-            'SINC_KERNEL':sinckernel,
-            'PITCH_TABLE':pitchtable,
+    key_order = ['size','input_min','input_max']
+    tables = {
+            'VOSIM_PULSE_COS':dict(data=sinsquaredtable,size=ss_points),
+            'PITCH_TABLE':dict(data=pitchtable,size=len(pitchtable),input_min=-1,input_max=1)
             }
 
-    tablestr = ""
-    tableinfostr = '\n'.join(["#define {} {}".format(k,v) for k,v in tableinfo.items()])
-    tableinfostr += '\n'
-    for k in tablenames:
-        tablestr += MakeTableStr(tablenames[k],k)
-        tableinfostr += "extern double {}[{}];\n".format(k,len(tablenames[k]))
+    tabledata_def = ""
+    tabledata_decl = ""
+    tableobj_def = ""
+    # tableinfostr = '\n'.join(["#define {} {}".format(k,v) for k,v in tableinfo.items()])
+    # tableinfostr += '\n'
+    for name,struct in tables.items():
+        tabledata_def += MakeTableStr(tables[name]['data'],name)
+        tabledata_decl += "extern const double {}[{}];\n".format(name,len(tables[name]['data']))
+        tableargs = "{}, ".format(name)+", ".join(["{}".format(struct[k]) for k in key_order if k!='data' and k in struct])
+        tableobj_def += "const LookupTable lut_{}({});\n".format(name.lower(),tableargs);
 
     with open('table_data.cpp','w') as fp:
-        fp.write(tablestr)
-    # with open('tables.h', 'w') as fp:
-        # fp.write(tableinfostr)
+        fp.write("#include \"tables.h\"\n")
+        fp.write(tabledata_def)
+    header_text = open('tables.h','r').read()
+    with open('tables.h', 'w') as fp:
+        fp.write(rewriteAutomatedSection(header_text, tabledata_decl+'\n'+tableobj_def))
 
 if __name__=="__main__":
     main()

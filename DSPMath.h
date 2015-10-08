@@ -12,7 +12,12 @@ inline int gcd(int a, int b) {
   return b;
 }
 
-inline double pitchToFreq(double pitch) { return lut_pitchtable.getlinear(std::fmin(127,std::fmax(pitch,0)) / 128.0); }
+inline double pitchToFreq(double pitch) { 
+  double freq = lut_pitch_table.getlinear(pitch / 128.0);
+  if(freq==0)
+    freq=1;
+  return freq;
+ }
 inline double dbToAmp(double db) { return std::pow(10, 0.05*db); }
 inline double ampToDb(double amp) { return 20 * std::log10(amp); }
 #endif

@@ -59,16 +59,18 @@ private:
   bool		  m_UseRelativeWidth;
   double    m_CompensationGain = 1.0;
 public:
+  double    m_PhaseScale = 1;
   Modifiable<double>	mpDecay;
   Modifiable<double>	mpPulsePitch;
   Modifiable<double>	mpNumber;
+  double getPulsePhase(){ return m_Phase*m_PhaseScale; };
   virtual double process(const double input = 0);
   virtual void updateParams();
-  double mPhaseScale = 1;
   void toggleRelativePFreq(bool b) { m_UseRelativeWidth = b; };
   VOSIM() :
     Oscillator(),
-    m_UseRelativeWidth(true) {
+    m_UseRelativeWidth(true)
+  {
     mpDecay.set(1);
     mpPulsePitch.set(1);
     mpNumber.set(1);

@@ -3,8 +3,8 @@
 Voice& VoiceManager::TriggerNote(uint8_t noteNumber, uint8_t velocity) {
   Voice* v;
   if (m_idleVoiceStack.empty()) {
-    v = m_activeVoiceStack.back();
-    m_activeVoiceStack.pop_back();
+    v = &getLowestVoice();
+    m_activeVoiceStack.remove(v);
     m_idleVoiceStack.push_front(v);
     ReleaseNote(noteNumber, velocity);
   }

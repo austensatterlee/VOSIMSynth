@@ -6,7 +6,7 @@
  ******************************/
 void Oscillator::updateParams() {
   m_pPitch();
-  m_Step = std::fmin(pitchToFreq(m_pPitch.m_curr) / mFs, 0.5);
+  m_Step = pitchToFreq(m_pPitch.m_curr) / mFs;
 }
 
 void Oscillator::tick() {
@@ -32,7 +32,7 @@ double Oscillator::process(const double input) {
     output = (m_Phase * 2 - 1);
     break;
   case SINE_WAVE:
-    output = 2 * (0.5 - VOSIM_PULSE_COS[(int)(VOSIM_PULSE_COS_SIZE*m_Phase)]);
+    output = 2 * (0.5 - lut_vosim_pulse_cos.getlinear(m_Phase));
     break;
   default:
     output = 0;
@@ -73,24 +73,24 @@ void Oscillator::addBlep(double offset, double ampl) {
 ******************************/
 void VOSIM::updateParams() {
   Oscillator::updateParams();
-  mpNumber.scale(4);
   mpNumber();
+  mpNumber.m_curr *= 4;
   mpPulsePitch();
   if (m_UseRelativeWidth) {
-    mPhaseScale = pitchToFreq(mpPulsePitch.m_curr / 128.0 * (108 - m_pPitch.m_curr) + m_pPitch.m_curr) / (m_Step*mFs);
+    m_PhaseScale = pitchToFreq(mpPulsePitch.m_curr / 128.0 * (108 - m_pPitch.m_curr - 12*mpNumber.m_curr) + m_pPitch.m_curr + 12*mpNumber.m_curr) / (m_Step*mFs);
   }
   else {
-    mPhaseScale = pitchToFreq(mpPulsePitch.m_curr / 128.0 * (96-69) + 69) / (m_Step*mFs);
+    m_PhaseScale = pitchToFreq(mpPulsePitch.m_curr / 128.0 * (96-69) + 69) / (m_Step*mFs);
   }
   // add compensation for phase scales < 0.5 (i.e. won't be able to reach pulse peak)
   m_CompensationGain = 1.0;
-  if (mPhaseScale < 0.5 && mpNumber.m_curr >= mPhaseScale) {
-    double lastvalue = lut_vosimpulse.getlinear(mPhaseScale);
+  if (m_PhaseScale < 0.5 && mpNumber.m_curr >= m_PhaseScale) {
+    double lastvalue = lut_vosim_pulse_cos.getlinear(m_PhaseScale);
     if(lastvalue)
       m_CompensationGain = (1. / lastvalue);
   }
   else if (mpNumber.m_curr < 0.5) {
-    double lastvalue = lut_vosimpulse.getlinear(mpNumber.m_curr);
+    double lastvalue = lut_vosim_pulse_cos.getlinear(mpNumber.m_curr);
     if (lastvalue)
       m_CompensationGain = (1. / lastvalue);
   }
@@ -101,7 +101,7 @@ double VOSIM::process(const double input) {
   Oscillator::tick();
   updateParams();
   double vout;
-  double pulsePhase = m_Phase * mPhaseScale;
+  double pulsePhase = m_Phase * m_PhaseScale;
   int N = (int)pulsePhase;
   int lastN = (int)m_LastPulsePhase;
   if (!N)
@@ -124,7 +124,7 @@ double VOSIM::process(const double input) {
     vout = 0;
   }
   else {
-    vout = m_CurrPulseGain*m_CompensationGain*lut_vosimpulse.getlinear(wrPulsePhase);
+    vout = m_CurrPulseGain*m_CompensationGain*lut_vosim_pulse_cos.getlinear(wrPulsePhase);
   }
   if (isSynced()) {
     triggerOut();

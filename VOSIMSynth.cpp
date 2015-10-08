@@ -234,7 +234,6 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   attachKnob(pGraphics, this, 3, 8, kOsc3Vol, &numberedKnob);
   attachSwitch(pGraphics, this, 3, 9, kOsc3FreqMode, &push2p);
 
-  mOscilloscope.setNumDisplayPeriods(4);
   pGraphics->AttachControl(&mOscilloscope);
 
   AttachGraphics(pGraphics);
@@ -272,8 +271,11 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
     leftOutput[s] = mOutGain*mVoiceManager.process();
     rightOutput[s] = leftOutput[s];
     mLastOutput = leftOutput[s];
-    if (mVoiceManager.getNumActiveVoices())
+    if (mVoiceManager.getNumActiveVoices()){
+      //Voice& v = mVoiceManager.getLowestVoice();
+      //mOscilloscope.input(std::fmod(v.mOsc[0].getPulsePhase(),1));
       mOscilloscope.input(mLastOutput);
+    }
   }
 
   mMIDIReceiver.Flush(nFrames);
@@ -322,7 +324,7 @@ void VOSIMSynth::OnParamChange(int paramIdx) {
     /* Env 2 */
   case kEnv2Int:
     while (n--)
-      mVoiceManager.m_voices[n].mVFEnv[0].m_pGain.set(127 *GetParam(kEnv2Int)->Value());
+      mVoiceManager.m_voices[n].mVFEnv[0].m_pGain.set(64 *GetParam(kEnv2Int)->Value());
     break;
   case kEnv2Atk:
     while (n--)
@@ -347,7 +349,7 @@ void VOSIMSynth::OnParamChange(int paramIdx) {
     /* Env 3*/
   case kEnv3Int:
     while (n--)
-      mVoiceManager.m_voices[n].mVFEnv[1].m_pGain.set(127*GetParam(kEnv3Int)->Value());
+      mVoiceManager.m_voices[n].mVFEnv[1].m_pGain.set(64 *GetParam(kEnv3Int)->Value());
     break;
   case kEnv3Atk:
     while (n--)
@@ -372,7 +374,7 @@ void VOSIMSynth::OnParamChange(int paramIdx) {
     /* Env 4 */ 
   case kEnv4Int:
     while (n--)
-      mVoiceManager.m_voices[n].mVFEnv[2].m_pGain.set(127 * GetParam(kEnv4Int)->Value());
+      mVoiceManager.m_voices[n].mVFEnv[2].m_pGain.set(64 * GetParam(kEnv4Int)->Value());
     break;
   case kEnv4Atk:
     while (n--)
@@ -476,7 +478,7 @@ void VOSIMSynth::OnParamChange(int paramIdx) {
     /* Global Pitch LFO */
   case kGlobalPMF:
     while (n--)
-      mVoiceManager.m_voices[n].mLFOPitch.m_pPitch.set(LERP(-30,6,GetParam(kGlobalPMF)->Value()));
+      mVoiceManager.m_voices[n].mLFOPitch.m_pPitch.set(LERP(-64,0,GetParam(kGlobalPMF)->Value()));
     break;
   case kGlobalPMG:
     while (n--)
