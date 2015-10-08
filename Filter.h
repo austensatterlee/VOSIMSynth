@@ -3,6 +3,10 @@
 #include "DSPComponent.h"
 #include <cstring>
 #include <cstdlib>
+#define AA_FILTER_SIZE 6
+const double AA_FILTER_X[1 + AA_FILTER_SIZE] = { 4.760635e-1, 2.856281, 7.140952, 9.521270, 7.140952, 2.856281, 4.760635e-1 };
+const double AA_FILTER_Y[AA_FILTER_SIZE] = { -4.522403, -8.676844, -9.007512, -5.328429, -1.702543, -2.303303e-1 };
+
 using namespace std;
 class Filter : public DSPComponent<double>{
 protected:
@@ -11,8 +15,8 @@ protected:
   double *YBuf,*XBuf;
   int xBufInd,yBufInd;
 public:
-  Filter(const double *X, const double *Y, const int nX, const int nY) {
-    freezeParams();
+  Filter(const double *X, const double *Y, const int nX, const int nY)
+  {
     xBufInd = 0;
     yBufInd = 0;
     numXCoefs = nX;

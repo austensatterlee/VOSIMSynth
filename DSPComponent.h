@@ -2,10 +2,10 @@
 #define __DSPCOMPONENT__
 
 #include "GallantSignal.h"
+#include "DSPMath.h"
 #include <unordered_map>
 #include <list>
 using namespace std;
-#define LERP(A,B,F) (((B)-(A))*(F)+(A))
 
 enum MOD_STATE {
   FROZEN = 0,
@@ -65,13 +65,6 @@ class DSPComponent {
 public:
   Modifiable<T> m_pGain = Modifiable<T>(1,ACTIVE);
   Modifiable<T> m_pBias = Modifiable<T>(0,ACTIVE);
-  virtual void updateParams(MOD_STATE state=ACTIVE) {
-    m_pGain(state);
-    m_pBias(state);
-  };
-  void freezeParams() {
-    updateParams(FROZEN);
-  }
   virtual T process(const T input) = 0;
   void setFs(const double fs) { mFs = fs; };
 
@@ -87,7 +80,6 @@ public:
   Gallant::Signal0<> triggerOut;
   virtual int getSamplesPerPeriod() const = 0;
 protected:
-  virtual void tick() {};
   const T& finishProcessing(const T& output);
   Gallant::Signal1<T> m_outputs;
   double mFs;
@@ -96,19 +88,8 @@ protected:
 
 template <class T>
 const T& DSPComponent<T>::finishProcessing(const T& output) {
-  m_lastOutput = m_pGain.get()*output + m_pBias.get();
+  m_lastOutput = m_pGain()*output + m_pBias();
   m_outputs.Emit(m_lastOutput);
   return m_lastOutput;
-}
-
-inline double pitchToFreq(double pitch) { return 440.0 * std::pow(2.0, (pitch - 69.0) / 12.0); }
-inline double dbToAmp(double db) { return std::pow(10, 0.05*db); }
-inline double ampToDb(double amp) { return 20 * std::log10(amp); }
-inline int gcd(int a, int b) {
-  int c;
-  while (a != 0) {
-    c = a; a = b%a;  b = c;
-  }
-  return b;
 }
 #endif

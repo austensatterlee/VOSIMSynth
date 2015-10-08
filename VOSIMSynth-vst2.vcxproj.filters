@@ -7,11 +7,12 @@
     <ClCompile Include="Filter.cpp" />
     <ClCompile Include="MIDIReceiver.cpp" />
     <ClCompile Include="Oscillator.cpp" />
-    <ClCompile Include="tables.cpp" />
     <ClCompile Include="UI.cpp" />
     <ClCompile Include="VoiceManager.cpp" />
     <ClCompile Include="VOSIMSynth.cpp" />
     <ClCompile Include="DSPComponent.cpp" />
+    <ClCompile Include="tables.cpp" />
+    <ClCompile Include="table_data.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\WDL\IPlug\IPlugVST.h">
@@ -28,6 +29,8 @@
     <ClInclude Include="VoiceManager.h" />
     <ClInclude Include="VOSIMSynth.h" />
     <ClInclude Include="DSPComponent.h" />
+    <ClInclude Include="Header.h" />
+    <ClInclude Include="DSPMath.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="vst2">

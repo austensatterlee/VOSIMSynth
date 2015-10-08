@@ -234,7 +234,7 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   attachKnob(pGraphics, this, 3, 8, kOsc3Vol, &numberedKnob);
   attachSwitch(pGraphics, this, 3, 9, kOsc3FreqMode, &push2p);
 
-  mOscilloscope.setNumDisplayPeriods(2);
+  mOscilloscope.setNumDisplayPeriods(4);
   pGraphics->AttachControl(&mOscilloscope);
 
   AttachGraphics(pGraphics);
@@ -249,14 +249,17 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel) {
   IMutexLock lock(this);
   mVoiceManager.TriggerNote(pitch, vel);
-  Voice& v = mVoiceManager.getNewestVoice();
+  Voice& v = mVoiceManager.getLowestVoice();
   mOscilloscope.connectTrigger(&v);
-  //mOscilloscope.connectInput(&v);
 }
 
 void VOSIMSynth::OnNoteOff(uint8_t pitch, uint8_t vel) {
   IMutexLock lock(this);
   mVoiceManager.ReleaseNote(pitch, vel);
+  if(mVoiceManager.getNumActiveVoices()){
+    Voice& v = mVoiceManager.getLowestVoice();
+    mOscilloscope.connectTrigger(&v);
+  }
 }
 
 void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) {
@@ -293,8 +296,7 @@ void VOSIMSynth::OnParamChange(int paramIdx) {
   uint8_t n = mVoiceManager.getNumVoices();
   switch (paramIdx) {
   case kMainVol:
-    LP4->m_pGain.set(pow(10, 0.05*LERP(-36, 36, GetParam(kMainVol)->Value())));
-    LP4->freezeParams();
+    mOutGain = dbToAmp(LERP(ampToDb(1./n), 0, GetParam(kMainVol)->Value()));
     break;
     /* Env 1 */
   case kEnv1Atk:
@@ -408,7 +410,7 @@ void VOSIMSynth::OnParamChange(int paramIdx) {
     break;
   case kOsc1Dec:
     while (n--)
-      mVoiceManager.m_voices[n].mOsc[0].mpDecay.set(LERP(0, -12, GetParam(kOsc1Dec)->Value()));
+      mVoiceManager.m_voices[n].mOsc[0].mpDecay.set(dbToAmp(LERP(0, -12, GetParam(kOsc1Dec)->Value())));
     break;
   case kOsc1FreqMode:
     while (n--)
@@ -416,7 +418,7 @@ void VOSIMSynth::OnParamChange(int paramIdx) {
     break;
   case kOsc1Vol:
     while (n--)
-      mVoiceManager.m_voices[n].mOsc[0].m_pGain.set(dbToAmp(LERP(-60, 0, GetParam(kOsc1Vol)->Value())));
+      mVoiceManager.m_voices[n].mOsc[0].m_pGain.set(GetParam(kOsc1Vol)->Value());
     break;
 
     /* Osc 2 */ 
@@ -434,7 +436,7 @@ void VOSIMSynth::OnParamChange(int paramIdx) {
     break;
   case kOsc2Dec:
     while (n--)
-      mVoiceManager.m_voices[n].mOsc[1].mpDecay.set(LERP(0, -12, GetParam(kOsc2Dec)->Value()));
+      mVoiceManager.m_voices[n].mOsc[1].mpDecay.set(dbToAmp(LERP(0, -12, GetParam(kOsc2Dec)->Value())));
     break;
   case kOsc2FreqMode:
     while (n--)
@@ -442,7 +444,7 @@ void VOSIMSynth::OnParamChange(int paramIdx) {
     break;
   case kOsc2Vol:
     while (n--)
-      mVoiceManager.m_voices[n].mOsc[1].m_pGain.set(dbToAmp(LERP(-60, 0, GetParam(kOsc2Vol)->Value())));
+      mVoiceManager.m_voices[n].mOsc[1].m_pGain.set(GetParam(kOsc2Vol)->Value());
     break;
 
     /* Osc 3 */
@@ -460,7 +462,7 @@ void VOSIMSynth::OnParamChange(int paramIdx) {
     break;
   case kOsc3Dec:
     while (n--)
-      mVoiceManager.m_voices[n].mOsc[2].mpDecay.set(LERP(0, -12, GetParam(kOsc3Dec)->Value()));
+      mVoiceManager.m_voices[n].mOsc[2].mpDecay.set(dbToAmp(LERP(0, -12, GetParam(kOsc3Dec)->Value())));
     break;
   case kOsc3FreqMode:
     while (n--)
@@ -468,19 +470,19 @@ void VOSIMSynth::OnParamChange(int paramIdx) {
     break;
   case kOsc3Vol:
     while (n--)
-      mVoiceManager.m_voices[n].mOsc[2].m_pGain.set(dbToAmp(LERP(-60, 0, GetParam(kOsc3Vol)->Value())));
+      mVoiceManager.m_voices[n].mOsc[2].m_pGain.set(GetParam(kOsc3Vol)->Value());
     break;
 
     /* Global Pitch LFO */
   case kGlobalPMF:
     while (n--)
-      mVoiceManager.m_voices[n].mLFOPitch.m_pPitch.set(LERP(-64,64,GetParam(kGlobalPMF)->Value()));
+      mVoiceManager.m_voices[n].mLFOPitch.m_pPitch.set(LERP(-30,6,GetParam(kGlobalPMF)->Value()));
     break;
   case kGlobalPMG:
     while (n--)
       // ampToDb(LERP(1/(2*nOctaves), 2*nOctaves, x))-ampToDb(1./(2*nOctaves))
       //mVoiceManager.m_voices[n].mLFOPitch.m_pGain.set(ampToDb(LERP(1./2, 2, GetParam(kGlobalPMG)->Value()))-ampToDb(1./2));
-      mVoiceManager.m_voices[n].mLFOPitch.m_pGain.set(LERP(0,12, GetParam(kGlobalPMG)->Value()));
+      mVoiceManager.m_voices[n].mLFOPitch.m_pGain.set(LERP(0,0.1, GetParam(kGlobalPMG)->Value()));
     break;
   default:
     break;

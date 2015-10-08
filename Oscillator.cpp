@@ -5,7 +5,6 @@
  *
  ******************************/
 void Oscillator::updateParams() {
-  DSPComponent::updateParams();
   m_pPitch();
   m_Step = std::fmin(pitchToFreq(m_pPitch.m_curr) / mFs, 0.5);
 }
@@ -26,6 +25,7 @@ void Oscillator::tick() {
 
 double Oscillator::process(const double input) {
   tick();
+  updateParams();
   double output;
   switch (m_Waveform) {
   case SAW_WAVE:
@@ -95,11 +95,11 @@ void VOSIM::updateParams() {
       m_CompensationGain = (1. / lastvalue);
   }
   mpDecay();
-  mpDecay.m_curr = pow(10, 0.05*mpDecay.m_curr);  
 }
 
 double VOSIM::process(const double input) {
   Oscillator::tick();
+  updateParams();
   double vout;
   double pulsePhase = m_Phase * mPhaseScale;
   int N = (int)pulsePhase;

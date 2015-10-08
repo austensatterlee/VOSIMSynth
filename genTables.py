@@ -1,6 +1,6 @@
 from numpy import *
 
-def MakeTableStr(table,name,ctype="double"):
+def MakeTableStr(table,name,ctype="const double"):
     rows = int(sqrt(table.size))
     cols = int(ceil(sqrt(table.size)))
     showstr = "{} {}[{}] = {{\n".format(ctype,name,table.size)
@@ -110,6 +110,10 @@ def SincKernel(M,fc):
     wsinc=array([sin(2*pi*fc*(i-M/2))/(i-M/2) if i!=M/2 else 2*pi*fc for i in N])
     return wsinc*window
 
+def PitchTable():
+    n = arange(0,128)
+    return 440*2**((n-69.)/12.)
+
 def main():
     mb_points = 16
     mb_oversamp = 256
@@ -119,18 +123,21 @@ def main():
     sk_points = 50
     sk_fc = 0.49
     sinckernel = SincKernel(sk_points,sk_fc)
+    pitchtable = PitchTable()
 
     tableinfo = {
             'BLEPBUF': int(float(len(minblep))/mb_oversamp),
             'BLEPSIZE': len(minblep),
             'BLEPOS': mb_oversamp,
             'VOSIM_PULSE_COS_SIZE': ss_points,
-            'SINC_KERNEL_SIZE': sk_points+1
+            'SINC_KERNEL_SIZE': sk_points+1,
+            'PITCH_TABLE_SIZE': 128,
             }
     tablenames = {
             'MINBLEP':minblep,
             'VOSIM_PULSE_COS':sinsquaredtable,
             'SINC_KERNEL':sinckernel,
+            'PITCH_TABLE':pitchtable,
             }
 
     tablestr = ""
@@ -140,10 +147,10 @@ def main():
         tablestr += MakeTableStr(tablenames[k],k)
         tableinfostr += "extern double {}[{}];\n".format(k,len(tablenames[k]))
 
-    with open('tables.cpp','w') as fp:
+    with open('table_data.cpp','w') as fp:
         fp.write(tablestr)
-    with open('tables.h', 'w') as fp:
-        fp.write(tableinfostr)
+    # with open('tables.h', 'w') as fp:
+        # fp.write(tableinfostr)
 
 if __name__=="__main__":
     main()

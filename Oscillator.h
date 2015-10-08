@@ -13,8 +13,6 @@
 
 using namespace std;
 
-
-
 typedef enum OSC_MDOE {
   SAW_WAVE = 0,
   SINE_WAVE
@@ -22,8 +20,7 @@ typedef enum OSC_MDOE {
 
 class Oscillator : public DSPComponent<double> {
 public:
-  Oscillator() :
-    DSPComponent() 
+  Oscillator()
   {
     m_pPitch.set(1.0);
 #ifdef USEBLEPS
@@ -107,7 +104,6 @@ public:
   int   getSamplesPerPeriod() const;
   double process(const double input);
   Envelope() :
-    DSPComponent(),
     m_currSegment(0),
     m_isDone(true),
     m_isRepeating(false),

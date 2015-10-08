@@ -67,24 +67,32 @@ double VoiceManager::process(double input) {
 }
 
 Voice& VoiceManager::getLowestVoice() const {
-  /*map<int, list<Voice*>>::const_iterator v;
-  for (v = m_voiceMap.begin(); v != m_voiceMap.end(); v++) {
-    if (!(*v).second.empty())
-      break;
+ 
+  if(m_voiceMap.size()){
+    return *(*m_voiceMap.begin()).second.front();
   }
-  return *(*v).second.front();*/
-  return *(*m_voiceMap.begin()).second.front();
+  else if(m_activeVoiceStack.size()){
+    int minnote = -1;
+    Voice* minvoice;
+    for (auto it = m_activeVoiceStack.begin(); it != m_activeVoiceStack.end(); it++) {
+      if (minnote < (*it)->mNote || minnote == -1) {
+        minvoice = *it;
+        minnote = minvoice->mNote;
+      }
+    }
+    return *minvoice;
+  }
 }
 
-Voice & VoiceManager::getNewestVoice() const {
+Voice& VoiceManager::getNewestVoice() const {
   return *m_activeVoiceStack.front();
 }
 
-Voice & VoiceManager::getOldestVoice() const {
+Voice& VoiceManager::getOldestVoice() const {
   return *m_activeVoiceStack.back();
 }
 
-Voice & VoiceManager::getHighestVoice() const {
+Voice& VoiceManager::getHighestVoice() const {
   return *(*m_voiceMap.end()).second.front();
 }
 
@@ -128,28 +136,24 @@ void Voice::setModFs(double fs) {
 }
 
 void Voice::updateParams() {
-  DSPComponent::updateParams();
   mVFEnv[0].process(0);
   mVFEnv[1].process(0);
   mVFEnv[2].process(0);
   mLFOPitch.process(0);
   mAmpEnv.process(mVelocity);
-  mVFEnv[0].updateParams();
-  mVFEnv[1].updateParams();
-  mVFEnv[2].updateParams();
-  mLFOPitch.updateParams();
-  mAmpEnv.updateParams();
-  mOsc[0].updateParams();
-  mOsc[1].updateParams();
-  mOsc[2].updateParams();
 }
 
 double Voice::process(double input) {
+  updateParams();
   double output, output1, output2, output3;
   output1 = mOsc[0].process(0);
   output2 = mOsc[1].process(0);
   output3 = mOsc[2].process(0);
-  output = (output1 + output2 + output3)*mVelocity;
+  output = (output1 + output2 + output3);
+  double gain = (mOsc[0].m_pGain.get() + mOsc[1].m_pGain.get() + mOsc[2].m_pGain.get());
+  if (gain)
+    output /= gain;
+  output = m_LP4->process(output);
   if(isSynced())
     triggerOut();
   return finishProcessing(output);

@@ -51,6 +51,8 @@ public:
     IControl(pPlug, pR),
     m_syncIndex(0),
     m_BufInd(0),
+    m_minY(0),
+    m_maxY(1),
     m_currWindowMinY(0),
     m_currWindowMaxY(1),
     m_Padding(50),
@@ -72,23 +74,24 @@ public:
   void sync() {
     if (!m_isActive)
       return;
+    if (m_BufSize != m_displayPeriods*m_currTriggerSrc->getSamplesPerPeriod()) {
+      setBufSize(m_displayPeriods*m_currTriggerSrc->getSamplesPerPeriod());
+    }
     m_syncIndex = m_BufInd;
-    m_minY = m_currWindowMinY;
-    m_maxY = m_currWindowMaxY;
-    m_currWindowMinY = 0;
-    m_currWindowMaxY = 0;
-    SetDirty();
   }
 
   void input(double y) {
     if (!m_isActive)
-      return;
-    //m_minY = 0.99*(m_minY)+0.01*m_currWindowMinY;
-    //m_maxY = 0.99*(m_maxY)+0.01*m_currWindowMaxY;
-    if (y > m_currWindowMaxY)
-      m_currWindowMaxY = y + (y - m_currWindowMaxY);
-    if (y < m_currWindowMinY)
-      m_currWindowMinY = y + (y - m_currWindowMinY);
+      return;    
+    if (y > m_currWindowMaxY){
+      m_maxY = y;
+      m_currWindowMaxY = m_maxY;
+    }
+    if (y < m_currWindowMinY){
+      m_minY = y;
+      m_currWindowMinY = m_minY;
+    }
+
     m_BufInd++;
     if (m_BufInd >= m_BufSize) {
       m_BufInd = 0;
@@ -97,6 +100,7 @@ public:
       m_Buffer.push_back(y);
     else
       m_Buffer[m_BufInd] = y;
+    SetDirty();
   }
 
 
@@ -135,9 +139,6 @@ public:
   bool Draw(IGraphics *pGraphics) {
     if (m_currTriggerSrc == NULL || !m_isActive)
       return false;
-    if (m_BufSize != m_displayPeriods*m_currTriggerSrc->getSamplesPerPeriod()) {
-      setBufSize(m_displayPeriods*m_currTriggerSrc->getSamplesPerPeriod());
-    }
     IColor fgcolor(255, 255, 255, 255);
     IColor gridcolor(150, 255, 25, 25);
     IColor bgcolor(150, 25, 25, 255);

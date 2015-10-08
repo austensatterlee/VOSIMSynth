@@ -1,7 +1,7 @@
 #ifndef __VOSIMSYNTH__
 #define __VOSIMSYNTH__
 
-#define NUM_VOICES 64
+#define NUM_VOICES 16
 
 #include "IPlug_include_in_plug_hdr.h"
 #include "Oscillator.h"

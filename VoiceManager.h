@@ -22,7 +22,7 @@ public:
   Envelope mVFEnv[3];
   Envelope mAmpEnv;
   Oscillator mLFOPitch;
-  Filter *LP4;
+  Filter *m_LP4;
   void trigger(uint8_t noteNumber, uint8_t velocity);
   void release();
   void setAudioFs(double fs);
@@ -34,7 +34,7 @@ public:
   int getSamplesPerPeriod() const;
   Voice() :
     DSPComponent() {
-    LP4 = new Filter(AA_FILTER_X, AA_FILTER_Y, AA_FILTER_SIZE + 1, AA_FILTER_SIZE);
+    m_LP4 = new Filter(AA_FILTER_X, AA_FILTER_Y, AA_FILTER_SIZE + 1, AA_FILTER_SIZE);
     mNote = 0;
     mOsc[0].m_pGain.set(0);
     mOsc[1].m_pGain.set(0);
@@ -42,9 +42,7 @@ public:
     mVFEnv[0].connectOutputTo(&mOsc[0].mpPulsePitch, &Modifiable<double>::mod);
     mVFEnv[1].connectOutputTo(&mOsc[1].mpPulsePitch, &Modifiable<double>::mod);
     mVFEnv[2].connectOutputTo(&mOsc[2].mpPulsePitch, &Modifiable<double>::mod);
-    mAmpEnv.connectOutputTo(&mOsc[0].m_pGain, &Modifiable<double>::scale);
-    mAmpEnv.connectOutputTo(&mOsc[1].m_pGain, &Modifiable<double>::scale);
-    mAmpEnv.connectOutputTo(&mOsc[2].m_pGain, &Modifiable<double>::scale);
+    mAmpEnv.connectOutputTo(&m_LP4->m_pGain, &Modifiable<double>::scale);
     mLFOPitch.connectOutputTo(&mOsc[0].m_pPitch, &Modifiable<double>::mod);
     mLFOPitch.connectOutputTo(&mOsc[1].m_pPitch, &Modifiable<double>::mod);
     mLFOPitch.connectOutputTo(&mOsc[2].m_pPitch, &Modifiable<double>::mod);
@@ -55,10 +53,10 @@ public:
   Voice(const Voice& v) :
     Voice() {
     mNote = v.mNote;
-    LP4 = new Filter(AA_FILTER_X, AA_FILTER_Y, AA_FILTER_SIZE + 1, AA_FILTER_SIZE);
+    m_LP4 = new Filter(AA_FILTER_X, AA_FILTER_Y, AA_FILTER_SIZE + 1, AA_FILTER_SIZE);
   }
   ~Voice() {
-    delete LP4; 
+    delete m_LP4; 
   }
 };
 
