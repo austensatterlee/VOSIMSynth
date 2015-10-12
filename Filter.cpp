@@ -21,5 +21,5 @@ double Filter::process(double input) {
   yBufInd++;
   if (yBufInd == numYCoefs+1)
     yBufInd = 0;
-  return finishProcessing(*output);
+  return *output;
 }

@@ -1,67 +1,76 @@
 
+/*
 #ifndef __VOICEMANAGER__
 #define __VOICEMANAGER__
 
 #define MOD_FS_RAT 0
 #include "Oscillator.h"
 #include "Filter.h"
+#include "Unit.h"
 #include <cmath>
 #include <cstdint>
 #include <string>
 #include <list>
 #include <vector>
 #include <map>
-#include <unordered_map>
-#include <functional>
 
-class Voice : public DSPComponent<double> {
+struct ModMessageTemplate
+{
+  string m_cname;
+  string m_pname;
+  MOD_ACTION m_action;
+  ModMessageTemplate(string cname, string pname, MOD_ACTION action)
+  {
+    m_cname = cname;
+    m_pname = pname;
+    m_action = action;
+  }
+};
+
+class Voice : public Unit
+{
 public:
   uint8_t mNote;
   double mVelocity;
-  VOSIM mOsc[3];
-  Envelope mVFEnv[3];
-  Envelope mAmpEnv;
-  Oscillator mLFOPitch;
-  Filter *m_LP4;
+  void add_component(string name, Unit& component);
+  void add_connection(string cname_from, string cname_to, string target_pname, MOD_ACTION action);
+  void modifyParameter(string cname, string pname, MOD_ACTION action, double value);
+  void modifyParameter(string pname, MOD_ACTION action, double value);
   void trigger(uint8_t noteNumber, uint8_t velocity);
   void release();
-  void setAudioFs(double fs);
-  void setModFs(double fs);
-  void updateParams();
+  void setFs(double fs);
   bool isActive();
   bool isSynced();
   double process(const double input = 0);
   int getSamplesPerPeriod() const;
   Voice() :
-    DSPComponent() {
-    m_LP4 = new Filter(AA_FILTER_X, AA_FILTER_Y, AA_FILTER_SIZE + 1, AA_FILTER_SIZE);
+    Unit()
+  {
     mNote = 0;
-    mOsc[0].m_pGain.set(0);
-    mOsc[1].m_pGain.set(0);
-    mOsc[2].m_pGain.set(0);    
-    mVFEnv[0].connectOutputTo(&mOsc[0].mpPulsePitch, &Modifiable<double>::mod);
-    mVFEnv[1].connectOutputTo(&mOsc[1].mpPulsePitch, &Modifiable<double>::mod);
-    mVFEnv[2].connectOutputTo(&mOsc[2].mpPulsePitch, &Modifiable<double>::mod);
-    mAmpEnv.connectOutputTo(&m_LP4->m_pGain, &Modifiable<double>::scale);
-    mLFOPitch.connectOutputTo(&mOsc[0].m_pPitch, &Modifiable<double>::mod);
-    mLFOPitch.connectOutputTo(&mOsc[1].m_pPitch, &Modifiable<double>::mod);
-    mLFOPitch.connectOutputTo(&mOsc[2].m_pPitch, &Modifiable<double>::mod);
-    // connect sum of oscillators to LP4 filter
-    // connect LP4 filter to voice output
-    updateParams();
+    mVelocity = 0;
   };
   Voice(const Voice& v) :
-    Voice() {
+    Unit(v)
+  {
     mNote = v.mNote;
-    m_LP4 = new Filter(AA_FILTER_X, AA_FILTER_Y, AA_FILTER_SIZE + 1, AA_FILTER_SIZE);
+    mVelocity = v.mVelocity;
+    std::copy(v.m_params.begin(), v.m_params.end(), m_params);
+    for (auto it = v.m_components.begin(); it != v.m_components.end(); it++)
+    {
+      m_components[it] =
+    }
   }
-  ~Voice() {
-    delete m_LP4; 
-  }
+  ~Voice()
+  {}
+protected:
+  map<string, Unit*> m_components;
+  map<string, list<ModMessageTemplate>> m_connections;
+  bool m_isActive = false;
 };
 
 
-class VoiceManager {
+class VoiceManager
+{
 private:
   uint32_t mSampleCount;
   uint8_t m_numVoices;
@@ -69,7 +78,7 @@ public:
   map<int, list<Voice*> > m_voiceMap;
   list<Voice*> m_activeVoiceStack;
   list<Voice*> m_idleVoiceStack;
-  vector<Voice> m_voices;  
+  vector<Voice> m_voices;
   Voice& TriggerNote(uint8_t noteNumber, uint8_t velocity);
   void ReleaseNote(uint8_t noteNumber, uint8_t velocity);
   Voice& getLowestVoice() const;
@@ -77,17 +86,21 @@ public:
   Voice& getOldestVoice() const;
   Voice& getHighestVoice() const;
   void setFs(double fs);
-  void setNumVoices(int numVoices);
   int getNumVoices() const { return m_numVoices; };
   int getNumActiveVoices() const { return m_activeVoiceStack.size(); };
   double process(double input = 0);
+  void modifyParameter(string cname, string pname, MOD_ACTION action, double val);
+  void modifyParameter(string pname, MOD_ACTION action, double val);
+  void setVoice(Voice& v, int numVoices);
 
   VoiceManager() :
     m_numVoices(1),
-    mSampleCount(0) {
-    setNumVoices(m_numVoices);
+    mSampleCount(0)
+  {
+    setVoice(Voice(), m_numVoices);
   };
   ~VoiceManager() {}
 };
 
 #endif
+*/

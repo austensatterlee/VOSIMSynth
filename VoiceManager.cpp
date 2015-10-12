@@ -1,3 +1,4 @@
+/*
 #include "VoiceManager.h"
 
 Voice& VoiceManager::TriggerNote(uint8_t noteNumber, uint8_t velocity) {
@@ -29,16 +30,16 @@ void VoiceManager::ReleaseNote(uint8_t noteNumber, uint8_t velocity) {
 void VoiceManager::setFs(double fs) {
   uint8_t i = m_numVoices;
   while (i--) {
-    m_voices[i].setAudioFs(fs);
-    m_voices[i].setModFs(fs / (MOD_FS_RAT + 1));
+    m_voices[i].setFs(fs)
   }
 }
 
-void VoiceManager::setNumVoices(int numVoices) {
+void VoiceManager::setVoice(Voice& v, int numVoices) {
   if (numVoices<1)
     numVoices = 1;
   m_numVoices = numVoices;
   m_voices.resize(m_numVoices);
+  std:fill(m_voices.begin(),m_voices.end(),v);
   m_activeVoiceStack.clear();
   m_idleVoiceStack.clear();
   m_voiceMap.clear();
@@ -52,9 +53,6 @@ double VoiceManager::process(double input) {
   mSampleCount++;
   for (list<Voice*>::iterator v = m_activeVoiceStack.begin(); v != m_activeVoiceStack.end();) {
     if ((*v)->isActive()) {
-      if (!(mSampleCount & MOD_FS_RAT)) {
-        (*v)->updateParams();
-      }
       finalOutput += (*v)->process();
       v++;
     }
@@ -66,7 +64,25 @@ double VoiceManager::process(double input) {
   return finalOutput;
 }
 
-Voice& VoiceManager::getLowestVoice() const {
+void VoiceManager::modifyParameter(string cname, string pname, MOD_ACTION action, double val)
+{
+  for (vector<Voice>::iterator v = m_voices.begin(); v != m_voices.end(); v++)
+  {
+    (*v).modifyParameter(cname,pname,action,val);
+  }
+}
+
+void VoiceManager::modifyParameter(string pname, MOD_ACTION action, double val)
+{
+
+  for (vector<Voice>::iterator v = m_voices.begin(); v != m_voices.end(); v++)
+  {
+    (*v).modifyParameter(pname, action, val);
+  }
+}
+
+Voice& VoiceManager::getLowestVoice() const
+{
  
   if(m_voiceMap.size()){
     return *(*m_voiceMap.begin()).second.front();
@@ -96,74 +112,82 @@ Voice& VoiceManager::getHighestVoice() const {
   return *(*m_voiceMap.end()).second.front();
 }
 
-void Voice::trigger(uint8_t noteNumber, uint8_t velocity) {
+void Voice::add_component(string name, Unit& component)
+{
+  m_components[name] = component;
+}
+
+void Voice::add_connection(string cname_from, string cname_to, string target_pname, MOD_ACTION action)
+{
+  m_components[cname_from].connectOutputTo(&m_components[cname_to], target_pname, action);
+  m_connections[cname_to].push_back({cname_from,target_pname,action});
+}
+
+void Voice::modifyParameter(string pname, MOD_ACTION action, double val)
+{
+  for (auto it = m_components.begin(); it != m_components.end(); it++)
+  {
+    if (m_components[it].m_params.find(pname) != m_components[it].m_params.end())
+    {
+      m_components[it].modifyParameter(pname, action, val);
+    }
+  }
+}
+
+void Voice::modifyParameter(string cname, string pname, MOD_ACTION action, double val)
+{
+  m_components[cname].modifyParameter(pname, action, val);
+}
+
+void Voice::trigger(uint8_t noteNumber, uint8_t velocity)
+{
   mNote = noteNumber;
   mVelocity = velocity*0.0078125;
-  mOsc[0].m_pPitch.set(mNote);mOsc[0].sync();
-  mOsc[1].m_pPitch.set(mNote);mOsc[1].sync();
-  mOsc[2].m_pPitch.set(mNote);mOsc[2].sync();
-  mLFOPitch.sync();
-  mAmpEnv.trigger();
-  mVFEnv[0].trigger();
-  mVFEnv[1].trigger();
-  mVFEnv[2].trigger();
+  modifyParameter("pitch",SET,mNote);
+  // todo
 }
 
 bool Voice::isSynced() {
-  return mOsc[0].isSynced() && mOsc[1].isSynced() && mOsc[2].isSynced();
+  bool res = true;
+  for (auto it = m_components.begin(); it != m_components.end(); it++)
+  {
+    if (m_components[it].m_params.find("pitch") != m_components[it].m_params.end())
+    {
+      res &= m_components[it].isSynced();
+    }
+  }
 }
 
 void Voice::release() {
-  mAmpEnv.release();
-  mVFEnv[0].release();
-  mVFEnv[1].release();
-  mVFEnv[2].release();
+  for (auto it = m_components.begin(); it != m_components.end(); it++)
+  {
+    m_components[it].release();
+  }
 }
 
-void Voice::setAudioFs(double fs) {
-  setFs(fs);
-  mOsc[0].setFs(fs);
-  mOsc[1].setFs(fs);
-  mOsc[2].setFs(fs);
-}
-
-void Voice::setModFs(double fs) {
-  mAmpEnv.setFs(fs);
-  mLFOPitch.setFs(fs);
-  mVFEnv[0].setFs(fs);
-  mVFEnv[1].setFs(fs);
-  mVFEnv[2].setFs(fs);
-}
-
-void Voice::updateParams() {
-  mVFEnv[0].process(0);
-  mVFEnv[1].process(0);
-  mVFEnv[2].process(0);
-  mLFOPitch.process(0);
-  mAmpEnv.process(mVelocity);
+void Voice::setFs(double fs) {
+  for (auto it = m_components.begin(); it != m_components.end(); it++)
+  {
+    m_components[it].setFs(fs);
+  }
 }
 
 double Voice::process(double input) {
-  updateParams();
-  double output, output1, output2, output3;
-  output1 = mOsc[0].process(0);
-  output2 = mOsc[1].process(0);
-  output3 = mOsc[2].process(0);
-  output = (output1 + output2 + output3);
-  double gain = (mOsc[0].m_pGain.get() + mOsc[1].m_pGain.get() + mOsc[2].m_pGain.get());
-  if (gain)
-    output /= gain;
-  output = m_LP4->process(output);
+  for (auto it = m_components.begin(); it != m_components.end(); it++)
+  {
+    m_components[it].process();
+  }
   if(isSynced())
-    triggerOut();
-  return finishProcessing(output);
+    syncOut();
+  return finishProcessing();
 }
 
 int Voice::getSamplesPerPeriod() const {
-  int max_period = fmax(mOsc[0].getSamplesPerPeriod(),fmax(mOsc[1].getSamplesPerPeriod(),mOsc[2].getSamplesPerPeriod()));
+  int max_period = 0;
   return max_period;
 }
 
 bool Voice::isActive() {
-  return !mAmpEnv.isDone();
+  return m_isActive;
 }
+*/

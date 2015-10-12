@@ -4,36 +4,117 @@
     <ClCompile Include="..\..\WDL\IPlug\IPlugVST.cpp">
       <Filter>vst2</Filter>
     </ClCompile>
-    <ClCompile Include="Filter.cpp" />
     <ClCompile Include="MIDIReceiver.cpp" />
-    <ClCompile Include="Oscillator.cpp" />
-    <ClCompile Include="UI.cpp" />
-    <ClCompile Include="VoiceManager.cpp" />
     <ClCompile Include="VOSIMSynth.cpp" />
-    <ClCompile Include="DSPComponent.cpp" />
     <ClCompile Include="tables.cpp" />
     <ClCompile Include="table_data.cpp" />
+    <ClCompile Include="UI.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Oscilloscope.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Oscillator.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Filter.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="VoiceManager.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="EnvelopeEditor.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Envelope.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="VosimOscillator.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Unit.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Parameter.cpp" />
+    <ClCompile Include="Circuit.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\WDL\IPlug\IPlugVST.h">
       <Filter>vst2</Filter>
     </ClInclude>
     <ClInclude Include="Delegate.h" />
-    <ClInclude Include="Filter.h" />
     <ClInclude Include="GallantSignal.h" />
     <ClInclude Include="MIDIReceiver.h" />
-    <ClInclude Include="Oscillator.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="tables.h" />
-    <ClInclude Include="UI.h" />
-    <ClInclude Include="VoiceManager.h" />
     <ClInclude Include="VOSIMSynth.h" />
-    <ClInclude Include="DSPComponent.h" />
     <ClInclude Include="DSPMath.h" />
+    <ClInclude Include="UI.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Oscilloscope.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="VoiceManager.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="EnvelopeEditor.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="NDPoint.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Envelope.h">
+      <Filter>Components\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="Oscillator.h">
+      <Filter>Components\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="VosimOscillator.h">
+      <Filter>Components\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="Filter.h">
+      <Filter>Components\Unary</Filter>
+    </ClInclude>
+    <ClInclude Include="Parameter.h">
+      <Filter>Components\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Connection.h">
+      <Filter>Components\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceUnit.h">
+      <Filter>Components\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="SinkUnit.h">
+      <Filter>Components\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Unit.h">
+      <Filter>Components\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Circuit.h">
+      <Filter>Components\Interfaces</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="vst2">
       <UniqueIdentifier>{ea16de74-9d15-4c60-ba09-d0924088d3e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{442b2f8c-f311-4a57-8103-df15c82a3a77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components">
+      <UniqueIdentifier>{926ccf49-734a-4aa8-a9a6-26a07ffbb17e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Interfaces">
+      <UniqueIdentifier>{8a597ae8-2206-4859-8196-e4f8bc81246f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Generators">
+      <UniqueIdentifier>{8ac3ded4-ed95-4934-b1cf-4ee9755edc77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Unary">
+      <UniqueIdentifier>{0769711b-5c1c-4bb4-952e-95a3d7dfd75d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

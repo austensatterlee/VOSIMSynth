@@ -4,11 +4,13 @@
 #define NUM_VOICES 16
 
 #include "IPlug_include_in_plug_hdr.h"
-#include "Oscillator.h"
 #include "MIDIReceiver.h"
 #include "VoiceManager.h"
+#include "Circuit.h"
 #include "Filter.h"
 #include "UI.h"
+#include "Oscilloscope.h"
+#include "EnvelopeEditor.h"
 
 class VOSIMSynth : public IPlug {
 public:
@@ -24,9 +26,10 @@ public:
   void ProcessMidiMsg(IMidiMsg* pMsg);
 private:
   void setGain(double gain) { mOutGain = gain; };
-  MIDIReceiver mMIDIReceiver;
-  VoiceManager mVoiceManager;
-  Oscilloscope mOscilloscope;
+  MIDIReceiver m_MIDIReceiver;
+  Oscilloscope m_Oscilloscope;
+  EnvelopeEditor m_EnvEditor;
+  Circuit m_circuit;
   double mOutGain = 1.0;
   double mLastOutput = 0.0;
 };

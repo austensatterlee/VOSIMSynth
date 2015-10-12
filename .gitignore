@@ -223,10 +223,10 @@ Icon?
 .DS_Stor*
 VOSIMSynth.xcodeproj/
 *.xcconfig
-*.vcxproj
 installer/
 resources/*
 !resources/img/
 build-win/
-*plist
-*pdf
+*.plist
+*.pdf
+*.pyc
