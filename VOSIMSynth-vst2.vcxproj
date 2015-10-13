@@ -185,6 +185,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -260,7 +261,7 @@
     <ClInclude Include="Filter.h" />
     <ClInclude Include="Oscilloscope.h" />
     <ClInclude Include="NDPoint.h" />
-    <ClInclude Include="Parameter.h" />
+    <ClInclude Include="UnitParameter.h" />
     <ClInclude Include="tables.h" />
     <ClInclude Include="UI.h" />
     <ClInclude Include="VoiceManager.h" />
@@ -275,7 +276,7 @@
     <ClCompile Include="..\..\WDL\IPlug\IPlugVST.cpp" />
     <ClCompile Include="Circuit.cpp" />
     <ClCompile Include="Instrument.cpp" />
-    <ClCompile Include="Parameter.cpp" />
+    <ClCompile Include="UnitParameter.cpp" />
     <ClCompile Include="Unit.cpp" />
     <ClCompile Include="Envelope.cpp" />
     <ClCompile Include="EnvelopeEditor.cpp" />

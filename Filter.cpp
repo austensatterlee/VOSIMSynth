@@ -1,5 +1,6 @@
 #include "Filter.h"
-
+namespace syn
+{
 double Filter::process(double input) {
   XBuf[xBufInd] = input;
   YBuf[yBufInd] = 0.0;
@@ -22,4 +23,5 @@ double Filter::process(double input) {
   if (yBufInd == numYCoefs+1)
     yBufInd = 0;
   return *output;
+}
 }

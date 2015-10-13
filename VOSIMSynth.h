@@ -12,6 +12,14 @@
 #include "UI.h"
 #include "Oscilloscope.h"
 #include "EnvelopeEditor.h"
+#include "IControl.h"
+#include "resource.h"
+#include "UI.h"
+#include "Envelope.h"
+#include "Oscillator.h"
+#include "VosimOscillator.h"
+
+using namespace syn;
 
 class VOSIMSynth : public IPlug {
 public:

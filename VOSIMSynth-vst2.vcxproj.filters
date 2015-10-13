@@ -4,21 +4,12 @@
     <ClCompile Include="..\..\WDL\IPlug\IPlugVST.cpp">
       <Filter>vst2</Filter>
     </ClCompile>
-    <ClCompile Include="MIDIReceiver.cpp" />
     <ClCompile Include="VOSIMSynth.cpp" />
-    <ClCompile Include="tables.cpp" />
-    <ClCompile Include="table_data.cpp" />
     <ClCompile Include="UI.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="Oscilloscope.cpp">
       <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="Oscillator.cpp">
-      <Filter>Components</Filter>
-    </ClCompile>
-    <ClCompile Include="Filter.cpp">
-      <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="VoiceManager.cpp">
       <Filter>Components</Filter>
@@ -26,34 +17,46 @@
     <ClCompile Include="EnvelopeEditor.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="Envelope.cpp">
-      <Filter>Components</Filter>
+    <ClCompile Include="MIDIReceiver.cpp">
+      <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="VosimOscillator.cpp">
-      <Filter>Components</Filter>
+    <ClCompile Include="UnitParameter.cpp">
+      <Filter>Components\Interfaces</Filter>
     </ClCompile>
-    <ClCompile Include="Parameter.cpp" />
-    <ClCompile Include="Circuit.cpp">
-      <Filter>Components</Filter>
-    </ClCompile>
-    <ClCompile Include="Instrument.cpp">
-      <Filter>Components</Filter>
+    <ClCompile Include="Oscillator.cpp">
+      <Filter>Components\Generators</Filter>
     </ClCompile>
     <ClCompile Include="Unit.cpp">
-      <Filter>Components</Filter>
+      <Filter>Components\Interfaces\Atomic</Filter>
+    </ClCompile>
+    <ClCompile Include="VosimOscillator.cpp">
+      <Filter>Components\Generators</Filter>
+    </ClCompile>
+    <ClCompile Include="Instrument.cpp">
+      <Filter>Components\Interfaces\Composite</Filter>
+    </ClCompile>
+    <ClCompile Include="Circuit.cpp">
+      <Filter>Components\Interfaces\Composite</Filter>
+    </ClCompile>
+    <ClCompile Include="Envelope.cpp">
+      <Filter>Components\Generators</Filter>
+    </ClCompile>
+    <ClCompile Include="Filter.cpp">
+      <Filter>Components\Unary</Filter>
+    </ClCompile>
+    <ClCompile Include="tables.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="table_data.cpp">
+      <Filter>Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\WDL\IPlug\IPlugVST.h">
       <Filter>vst2</Filter>
     </ClInclude>
-    <ClInclude Include="Delegate.h" />
-    <ClInclude Include="GallantSignal.h" />
-    <ClInclude Include="MIDIReceiver.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="tables.h" />
     <ClInclude Include="VOSIMSynth.h" />
-    <ClInclude Include="DSPMath.h" />
     <ClInclude Include="UI.h">
       <Filter>UI</Filter>
     </ClInclude>
@@ -78,9 +81,6 @@
     <ClInclude Include="VosimOscillator.h">
       <Filter>Components\Generators</Filter>
     </ClInclude>
-    <ClInclude Include="Parameter.h">
-      <Filter>Components\Interfaces</Filter>
-    </ClInclude>
     <ClInclude Include="Circuit.h">
       <Filter>Components\Interfaces\Composite</Filter>
     </ClInclude>
@@ -101,6 +101,24 @@
     </ClInclude>
     <ClInclude Include="Connection.h">
       <Filter>Components\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="UnitParameter.h">
+      <Filter>Components\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="DSPMath.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="GallantSignal.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Delegate.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="MIDIReceiver.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="tables.h">
+      <Filter>Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -127,6 +145,9 @@
     </Filter>
     <Filter Include="Components\Interfaces\Composite">
       <UniqueIdentifier>{12c963f3-4d04-4efc-9214-35098e35df6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{7008aa44-48bc-4a10-a2fb-9da5e9bf8a97}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

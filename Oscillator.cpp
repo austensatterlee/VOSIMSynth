@@ -1,13 +1,22 @@
 #include "Oscillator.h"
 
+namespace syn{
+void Oscillator::noteOn(int pitch, int vel)
+{
+  modifyParameter("pitch",SET,pitch);
+}
+
+void Oscillator::noteOff(int pitch, int vel)
+{
+
+}
+
 /******************************
  * Oscillator methods
  *
  ******************************/
 double Oscillator::process()
 {
-  if(!isActive())
-    return 0.0;
   m_Step = pitchToFreq(getParam("pitch")) / m_Fs;
   m_Phase += m_Step;
   if (m_Phase > 1)
@@ -33,6 +42,8 @@ double Oscillator::process()
     output = 0;
     break;
   }
+  if(isSynced())
+    m_extSyncPort.Emit();
   return output;
 }
 #ifdef USEBLEP
@@ -58,4 +69,6 @@ void Oscillator::addBlep(double offset, double ampl) {
   }
   mBlepCurrSize = cBlep;
 }
+
 #endif
+}

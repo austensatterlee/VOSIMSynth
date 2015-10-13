@@ -1,11 +1,5 @@
 #include "VOSIMSynth.h"
 #include "IPlug_include_in_plug_src.h"
-#include "IControl.h"
-#include "resource.h"
-#include "UI.h"
-#include "Envelope.h"
-#include "Oscillator.h"
-#include "VosimOscillator.h"
 #include <cmath>
 #include <ctime>
 
@@ -73,40 +67,6 @@ enum ELayout {
   kNumberedKnobFrames = 101
 };
 
-
-class ParamProp {
-public:
-  ParamProp(const char *name)
-    : mName(name) {};
-private:
-  const char *mName;
-};
-
-/*
-A parameter describes the values that a piece of memory can assume, and it provides a way to map the range (0,1) onto a new memory value.
-Each parameter needs to know its target memory location, its initial value, and a function y_[n+1]=f(x,y[n]), where x is a double in (0,1).
-*/
-template <class T>
-class TypedParamProp : public ParamProp {
-public:
-
-  TypedParamProp(const char *name, const T defVal, Parameter& parent, const T(*modify)(T, T)) :
-    ParamProp(name),
-    m_default(defVal),
-    m_parent(parent),
-    m_modify(modify) {
-    if (is_integral<T>::value)
-      m_step = 1;
-    else
-      m_step = 1E-3;
-  };
-private:
-  const T m_default;
-  const T m_step;
-  Parameter& m_parent;
-  const T(*m_modify)(T, T);
-};
-
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   :
   IPLUG_CTOR(kNumParams, kNumPrograms, instanceInfo),
@@ -146,10 +106,14 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 
   m_instr.setSink("sum", new AccumulatingSink());
   m_instr.addSource("vosc", new VosimOscillator());
+  m_instr.addSource("env", new Envelope());
   m_instr.addConnection(new Connection("vosc", "sum", "output", ADD));
+  m_instr.addConnection(new Connection("env", "vosc", "gain", SCALE));
   m_MIDIReceiver.sendControlChange.Connect(&m_instr,&Instrument::sendMIDICC);
   m_MIDIReceiver.noteOn.Connect(this, &VOSIMSynth::OnNoteOn);
   m_MIDIReceiver.noteOff.Connect(this, &VOSIMSynth::OnNoteOff);
+  m_Oscilloscope.connectInput(m_instr.getUnit("env"));
+  m_Oscilloscope.connectTrigger(m_instr.getSourceUnit("env"));
 }
 
 void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel) {

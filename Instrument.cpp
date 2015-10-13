@@ -1,24 +1,27 @@
 #include "Instrument.h"
-
-void Instrument::addSource(string name, SourceUnit* unit)
+namespace syn
 {
-  addUnit(name, unit);
-  m_sourceUnits.push_back(unit);
-}
-
-
-void Instrument::noteOn(int pitch, int vel)
-{
-  for (auto it : m_sourceUnits)
+	
+	void Instrument::addSource(string name, SourceUnit* unit)
+	{
+	  addUnit(name, unit);
+	  m_sourceUnits[name] = unit;
+	}
+	
+	
+	void Instrument::noteOn(int pitch, int vel)
+	{
+	  for (SourceUnitMap::iterator it = m_sourceUnits.begin() ; it!=m_sourceUnits.end();it++)
+	  {
+	    it->second->noteOn(pitch, vel);
+	  }
+	}
+	
+	void Instrument::noteOff(int pitch, int vel)
   {
-    (*it).noteOn(pitch, vel);
-  }
-}
-
-void Instrument::noteOff(int pitch, int vel)
-{
-  for (auto it : m_sourceUnits)
-  {
-    (*it).noteOff(pitch, vel);
-  }
+    for (SourceUnitMap::iterator it = m_sourceUnits.begin(); it != m_sourceUnits.end(); it++)
+    {
+      it->second->noteOff(pitch, vel);
+    }
+	}
 }

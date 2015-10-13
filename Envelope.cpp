@@ -3,8 +3,9 @@
 * Envelope methods
 *
 ******************************/
-
-Envelope::Envelope() :
+namespace syn
+{
+Envelope::Envelope() : SourceUnit(),
   m_currSegment(0),
   m_isDone(true),
   m_isRepeating(false),
@@ -79,7 +80,7 @@ void Envelope::setPoint(int segment, double target_amp)
   setPeriod(segment, m_segments[segment].period, m_segments[segment].shape);
 }
 
-double Envelope::process(const double input)
+double Envelope::process()
 {
   double prev_amp = m_currSegment > 0 ? m_segments[m_currSegment - 1].target_amp : m_initPoint;
   bool isIncreasing = m_segments[m_currSegment].target_amp > prev_amp;
@@ -125,6 +126,7 @@ void Envelope::noteOn(int pitch, int vel)
   m_currSegment = 0;
   m_lastRawOutput = m_initPoint;
   m_isDone = false;
+  m_extSyncPort.Emit();
 }
 
 void Envelope::noteOff(int pitch, int vel)
@@ -141,4 +143,5 @@ int Envelope::getSamplesPerPeriod() const
     approx += m_segments[i].period*m_Fs;
   }
   return (int)approx;
+}
 }

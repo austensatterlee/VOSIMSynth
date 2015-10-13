@@ -1,21 +1,25 @@
 #pragma once
 #include "Circuit.h"
 #include "Connection.h"
-#include <vector>
+#include <unordered_map>
 
 
-using std::vector;
-
-class Instrument :
-  public Circuit
+using std::unordered_map;
+namespace syn
 {
-public:
-  Instrument(){};
-  virtual ~Instrument(){};
+  class Instrument :
+    public Circuit
+  {
+  public:
+    Instrument() {};
+    virtual ~Instrument() {};
 
-  void addSource(string name, SourceUnit* unit);
-  void noteOn(int pitch, int vel);
-  void noteOff(int pitch, int vel);
-protected:
-  vector<SourceUnit*> m_sourceUnits;
-};
+    void addSource(string name, SourceUnit* unit);
+    SourceUnit* getSourceUnit(string name){return m_sourceUnits[name];};
+    void noteOn(int pitch, int vel);
+    void noteOff(int pitch, int vel);
+  protected:
+    typedef unordered_map<string, SourceUnit*> SourceUnitMap;
+    SourceUnitMap m_sourceUnits;
+  };
+}

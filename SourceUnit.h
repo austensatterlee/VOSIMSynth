@@ -1,33 +1,32 @@
 #ifndef __SourceUnit__
 #define __SourceUnit__
-
-
 #include "Unit.h"
-class SourceUnit :
-  public Unit
-{
-public:
-  SourceUnit()
-  {
-    addParams({ "gain" });
-    modifyParameter("gain", SET, 0.0);
-  }
-  virtual ~SourceUnit() {};
-  void noteOn(int pitch, int vel)
-  {
-    modifyParameter("gain", SET, vel/127.0);
-    modifyParameter("pitch", SET, pitch);
-  };
-  void noteOff(int pitch, int vel) {
-    modifyParameter("gain", SET, 0.0);
-  };
-private:
-  virtual double finishProcessing(double);
-};
+#include "GallantSignal.h"
 
-inline double SourceUnit::finishProcessing(double o)
+using Gallant::Signal0;
+
+namespace syn
 {
-  return getParam("gain")*o;
+	class SourceUnit :
+	  public Unit
+	{
+	public:
+    SourceUnit()
+    {
+      addParam("gain",new UnitParameter(1.0));
+    }
+	  virtual ~SourceUnit() {};
+	  virtual void noteOn(int pitch, int vel)
+	  {
+	  };
+	  virtual void noteOff(int pitch, int vel) {
+	  };
+    virtual int getSamplesPerPeriod() const
+    {
+      return m_Fs;
+    };
+	  Signal0<> m_extSyncPort;
+	};
 }
 
 #endif // __SourceUnit__
