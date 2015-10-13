@@ -6,7 +6,7 @@
  ******************************/
 double Oscillator::process()
 {
-  if (!isActive())
+  if(!isActive())
     return 0.0;
   m_Step = pitchToFreq(getParam("pitch")) / m_Fs;
   m_Phase += m_Step;

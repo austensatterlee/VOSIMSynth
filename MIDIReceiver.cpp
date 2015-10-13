@@ -24,12 +24,16 @@ void MIDIReceiver::advance() {
         noteOn(noteNumber, velocity);
       }
     }
-    else {
+    else if (status == IMidiMsg::kNoteOff) {
       if (mKeyStatus[noteNumber] == true) {
         mKeyStatus[noteNumber] = false;
         mNumKeys -= 1;
         noteOff(noteNumber, velocity);
       }
+    }
+    else if (status == IMidiMsg::kControlChange)
+    {
+      sendControlChange(midiMessage);
     }
     mMidiQueue.Remove();
   }

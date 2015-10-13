@@ -5,6 +5,7 @@
 #include "IMidiQueue.h"
 #include "GallantSignal.h"
 using Gallant::Signal2;
+using Gallant::Signal1;
 
 class MIDIReceiver {
 private:
@@ -17,6 +18,7 @@ private:
 public:
 	Signal2<uint8_t, uint8_t> noteOn;
 	Signal2<uint8_t, uint8_t> noteOff;
+  Signal1<IMidiMsg*> sendControlChange;
 	MIDIReceiver() :
 		mNumKeys(0),
 		mOffset(0) {

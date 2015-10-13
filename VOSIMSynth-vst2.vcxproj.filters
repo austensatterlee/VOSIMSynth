@@ -32,11 +32,14 @@
     <ClCompile Include="VosimOscillator.cpp">
       <Filter>Components</Filter>
     </ClCompile>
-    <ClCompile Include="Unit.cpp">
-      <Filter>Components</Filter>
-    </ClCompile>
     <ClCompile Include="Parameter.cpp" />
     <ClCompile Include="Circuit.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Instrument.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Unit.cpp">
       <Filter>Components</Filter>
     </ClCompile>
   </ItemGroup>
@@ -75,25 +78,28 @@
     <ClInclude Include="VosimOscillator.h">
       <Filter>Components\Generators</Filter>
     </ClInclude>
-    <ClInclude Include="Filter.h">
-      <Filter>Components\Unary</Filter>
-    </ClInclude>
     <ClInclude Include="Parameter.h">
       <Filter>Components\Interfaces</Filter>
     </ClInclude>
-    <ClInclude Include="Connection.h">
-      <Filter>Components\Interfaces</Filter>
-    </ClInclude>
-    <ClInclude Include="SourceUnit.h">
-      <Filter>Components\Interfaces</Filter>
+    <ClInclude Include="Circuit.h">
+      <Filter>Components\Interfaces\Composite</Filter>
     </ClInclude>
     <ClInclude Include="SinkUnit.h">
-      <Filter>Components\Interfaces</Filter>
+      <Filter>Components\Interfaces\Atomic</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceUnit.h">
+      <Filter>Components\Interfaces\Atomic</Filter>
     </ClInclude>
     <ClInclude Include="Unit.h">
-      <Filter>Components\Interfaces</Filter>
+      <Filter>Components\Interfaces\Atomic</Filter>
     </ClInclude>
-    <ClInclude Include="Circuit.h">
+    <ClInclude Include="Instrument.h">
+      <Filter>Components\Interfaces\Composite</Filter>
+    </ClInclude>
+    <ClInclude Include="Filter.h">
+      <Filter>Components\Unary</Filter>
+    </ClInclude>
+    <ClInclude Include="Connection.h">
       <Filter>Components\Interfaces</Filter>
     </ClInclude>
   </ItemGroup>
@@ -116,11 +122,14 @@
     <Filter Include="Components\Unary">
       <UniqueIdentifier>{0769711b-5c1c-4bb4-952e-95a3d7dfd75d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Components\Interfaces\Atomic">
+      <UniqueIdentifier>{9adec8b2-e07b-4368-90f2-ddc3dc67927c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Interfaces\Composite">
+      <UniqueIdentifier>{12c963f3-4d04-4efc-9214-35098e35df6f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VOSIMSynth.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ClassDiagram.cd" />
   </ItemGroup>
 </Project>

@@ -24,8 +24,8 @@ public:
   void	setPeriod(const int segment, double period, double shape = 0);
   void	setShape(int segment, double shape);
   void	setPoint(int segment, double target_amp);
-  virtual void	trigger();
-  virtual void	release();
+  virtual void noteOn(int pitch, int vel);
+  virtual void noteOff(int pitch, int vel);
   int   getSamplesPerPeriod() const;
 protected:
   double process(const double input);
@@ -38,5 +38,6 @@ private:
   bool	m_isDone;
   double m_RelPoint;
   double m_lastRawOutput;
+  double finishProcessing(double o){return o;}
 };
 #endif // __Envelope__

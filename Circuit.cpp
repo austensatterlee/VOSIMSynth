@@ -10,7 +10,7 @@ Circuit::Circuit()
 
 Circuit::Circuit(const Circuit & c)
 {
-
+  throw("Not Implemented");
 }
 
 
@@ -49,32 +49,15 @@ void Circuit::setSink(string name, SinkUnit* unit)
   m_sinkName = name;
 }
 
-void Circuit::setSource(string name, SourceUnit* unit)
+void Circuit::modifyParameter(string uname, string pname, MOD_ACTION action, double val)
 {
-  m_units[name] = unit;
-  m_sourceUnit = unit;
-  m_sourceName= name;
-}
-
-void Circuit::modUnitParam(string uname, string pname, MOD_ACTION action, double val)
-{
-  m_units[uname]->modifyParameter(pname,action,val);
+  m_units[uname]->modifyParameter(pname, action, val);
 }
 
 void Circuit::addConnection(Connection* connection)
 {
   m_forwardConnections[connection->m_sourcename].push_front(connection);
   m_backwardConnections[connection->m_targetname].push_front(connection);
-}
-
-void Circuit::trigger()
-{
-  m_sourceUnit->trigger();
-}
-
-void Circuit::release()
-{
-  m_sourceUnit->release();
 }
 
 double Circuit::tick()
@@ -86,9 +69,9 @@ double Circuit::tick()
     string currUnitName = dependencyQueue.back();
     dependencyQueue.pop_back();
     processQueue.push_front(currUnitName);
-    if(m_backwardConnections.find(currUnitName)==m_backwardConnections.end())
+    if (m_backwardConnections.find(currUnitName) == m_backwardConnections.end())
       continue;
-    for (list<Connection*>::iterator it = m_backwardConnections[currUnitName].begin(); it!=m_backwardConnections[currUnitName].end(); it++)
+    for (list<Connection*>::iterator it = m_backwardConnections[currUnitName].begin(); it != m_backwardConnections[currUnitName].end(); it++)
     {
       string sourceName = (*it)->m_sourcename;
       dependencyQueue.push_back(sourceName);
@@ -115,5 +98,20 @@ void Circuit::setFs(double fs)
   for (auto it : m_units)
   {
     it.second->setFs(fs);
+  }
+}
+
+void Circuit::addMIDIConnection(MIDIConnection* midiConnection)
+{
+  m_midiConnections[midiConnection->m_ccMessage].push_back(midiConnection);
+}
+
+void Circuit::sendMIDICC(IMidiMsg *midimsg)
+{
+  IMidiMsg::EControlChangeMsg cc = midimsg->ControlChangeIdx();
+  double val = midimsg->ControlChange(cc);
+  for (auto it : m_midiConnections[cc])
+  {
+    modifyParameter((*it).m_targetname, (*it).m_paramname, (*it).m_action, val);
   }
 }

@@ -25,11 +25,21 @@ Unit::~Unit()
 }
 
 
-void Unit::addParams(const list<string> paramNames)
+void Unit::addParams(const list<tuple<string, Parameter>> paramtuples)
 {
-  for (string pname : paramNames)
+  for (tuple<string,Parameter> ptuple : paramtuples)
   {
-    m_params[pname] = Parameter();
+    string name = std::get<0>(ptuple);
+    Parameter& param = std::get<1>(ptuple);
+    m_params[name] = param;
+  }
+}
+
+void Unit::addParams(const list<string> paramnames)
+{
+  for (string name : paramnames)
+  {
+    m_params[name] = Parameter();
   }
 }
 
@@ -37,13 +47,18 @@ double Unit::tick()
 {
   beginProcessing();
   m_lastOutput = process();
-  return m_lastOutput;
+  return finishProcessing(m_lastOutput);
 }
 
-void Unit::beginProcessing()
+inline void Unit::beginProcessing()
 {
-  for (auto it = m_params.begin(); it != m_params.end(); it++)
+  for (auto& p : m_params)
   {
-    it->second.tick();
+    p.second.tick();
   }
+}
+
+inline double Unit::finishProcessing(double o)
+{
+  return o;
 }

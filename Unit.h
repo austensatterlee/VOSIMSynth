@@ -5,7 +5,7 @@
 #include "Connection.h"
 #include <map>
 #include <list>
-using namespace std;
+#include <tuple>
 
 
 class Unit
@@ -18,18 +18,20 @@ public:
   void setFs(const double fs) { m_Fs = fs; };
   double getLastOutput() const { return m_lastOutput; };
   void modifyParameter(const string pname, const MOD_ACTION action, double val);
-  double getParam(const string pname) const
+  double getParam(string pname)
   {
-    return m_params.at(pname).get();
+    return m_params[pname].get();
   }
 protected:
   virtual double process() {return 0.0;};
-  void addParams(const list<string> paramNames);
+  void addParams(const list<tuple<string,Parameter>>);
+  void addParams(const list<string> paramnames);
   map<string, Parameter> m_params;
   double m_Fs;
 private:
   double m_lastOutput;
-  void finishProcessing();
+  virtual double finishProcessing(double);
   void beginProcessing();
 };
+
 #endif

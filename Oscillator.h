@@ -10,18 +10,17 @@
 
 using namespace std;
 
-typedef enum OSC_MDOE {
+enum OSC_MODE
+{
   SAW_WAVE = 0,
   SINE_WAVE
-} OSC_MODE;
+} ;
 
 class Oscillator : public SourceUnit {
 public:
   Oscillator() :
-  SourceUnit(),
-  m_isActive(false)
+  SourceUnit()
   {
-  addParams({"pitch"});
 #ifdef USEBLEPS
     memset(mBlepBuf, 0, BLEPBUFSIZE);
 #endif
@@ -31,13 +30,10 @@ public:
   void setWaveform(OSC_MODE mode) { m_Waveform = mode; };
   bool isSynced() const { return m_Phase + m_Step >= 1.0; };
   double getPhase() const { return m_Phase; };
-  virtual void trigger() { m_isActive = true; };
-  virtual void release() { m_isActive = false; };
-  bool isActive() const { return m_isActive; };
+  bool isActive() { return getParam("gain")!=0; };
 protected:
   double m_Phase = 0;
   double m_Step = 1;
-  bool m_isActive;
   virtual double process();
 private:
   OSC_MODE m_Waveform = SINE_WAVE;

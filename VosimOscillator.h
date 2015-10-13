@@ -22,6 +22,8 @@ public:
   {
     addParams({"decay","pulsepitch","number"});
     m_params["number"].mod(SET,1.0);
+    m_params["decay"].mod(SET, 0.5);
+    m_params["pulsepitch"].mod(SET, 24);
   };
 };
 

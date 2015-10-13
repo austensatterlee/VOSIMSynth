@@ -443,10 +443,10 @@ struct SimplifyMemFunc<SINGLE_MEMFUNCPTR_SIZE + 2*sizeof(int) >
 
 #if (_MSC_VER <1300)
 
-// Nasty hack for Microsoft Visual C++ 6.0
+// Nasty hack for Microsoft and Intel (IA32 and Itanium)
 // unknown_inheritance classes go here
-// There is a compiler bug in MSVC6 which generates incorrect code in this case!!
-template <>
+// This is probably the ugliest bit of code I've ever written. Look at the casts!
+// There is a compiler bug in MSVC6 which prevents it from using this code.template <>
 struct SimplifyMemFunc<SINGLE_MEMFUNCPTR_SIZE + 3*sizeof(int) >
 {
 	template <class X, class XFuncType, class GenericMemFuncType>

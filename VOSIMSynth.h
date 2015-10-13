@@ -6,7 +6,8 @@
 #include "IPlug_include_in_plug_hdr.h"
 #include "MIDIReceiver.h"
 #include "VoiceManager.h"
-#include "Circuit.h"
+#include "Instrument.h"
+#include "Connection.h"
 #include "Filter.h"
 #include "UI.h"
 #include "Oscilloscope.h"
@@ -29,7 +30,7 @@ private:
   MIDIReceiver m_MIDIReceiver;
   Oscilloscope m_Oscilloscope;
   EnvelopeEditor m_EnvEditor;
-  Circuit m_circuit;
+  Instrument m_instr;
   double mOutGain = 1.0;
   double mLastOutput = 0.0;
 };

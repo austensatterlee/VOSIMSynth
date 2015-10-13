@@ -7,6 +7,8 @@
 
 double VosimOscillator::process()
 {
+  if (!isActive())
+    return
   Oscillator::process();
   double number = getParam("number") * 4;
   if (m_UseRelativeWidth)

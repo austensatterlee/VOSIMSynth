@@ -11,7 +11,7 @@
 using std::list;
 using std::map;
 
-class Circuit
+class Circuit : public Unit
 {
 public:
   Circuit();
@@ -19,21 +19,19 @@ public:
   virtual ~Circuit();
   void addUnit(string name, Unit* unit);
   void setSink(string name, SinkUnit* unit);
-  void setSource(string name, SourceUnit* unit);
-  void modUnitParam(string uname, string pname, MOD_ACTION action, double val);
   void addConnection(Connection* connection);
-  void trigger();
-  void release();
+  void modifyParameter(string uname, string pname, MOD_ACTION action, double val);
+  void addMIDIConnection(MIDIConnection* CC);
+  void sendMIDICC(IMidiMsg *midimsg);
   double tick();
   void setFs(double fs);
 protected:
   map<string,Unit*> m_units;
   map<string, list<Connection*>> m_forwardConnections;
   map<string, list<Connection*>> m_backwardConnections;
+  map<IMidiMsg::EControlChangeMsg, list<MIDIConnection*>> m_midiConnections;
   string m_sinkName;
-  string m_sourceName;
   SinkUnit* m_sinkUnit;
-  SourceUnit* m_sourceUnit;
 };
 
 #endif // __Circuit__

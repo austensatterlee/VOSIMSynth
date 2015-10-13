@@ -95,7 +95,7 @@ double Envelope::process(const double input)
     {
       if (m_isRepeating && m_currSegment == m_numSegments - 2)
       {
-        trigger();
+        noteOn(0,0);
       }
       if (m_currSegment == m_numSegments - 1)
       {
@@ -120,14 +120,14 @@ void Envelope::setFs(const double fs)
   }
 }
 
-void Envelope::trigger()
+void Envelope::noteOn(int pitch, int vel)
 {
   m_currSegment = 0;
   m_lastRawOutput = m_initPoint;
   m_isDone = false;
 }
 
-void Envelope::release()
+void Envelope::noteOff(int pitch, int vel)
 {
   m_RelPoint = m_lastRawOutput;
   m_currSegment = m_numSegments - 1;

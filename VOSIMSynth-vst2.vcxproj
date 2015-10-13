@@ -250,6 +250,7 @@
     <ClInclude Include="Circuit.h" />
     <ClInclude Include="Connection.h" />
     <ClInclude Include="Delegate.h" />
+    <ClInclude Include="Instrument.h" />
     <ClInclude Include="SinkUnit.h" />
     <ClInclude Include="SourceUnit.h" />
     <ClInclude Include="Unit.h" />
@@ -273,6 +274,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\WDL\IPlug\IPlugVST.cpp" />
     <ClCompile Include="Circuit.cpp" />
+    <ClCompile Include="Instrument.cpp" />
     <ClCompile Include="Parameter.cpp" />
     <ClCompile Include="Unit.cpp" />
     <ClCompile Include="Envelope.cpp" />
@@ -290,9 +292,6 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VOSIMSynth.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ClassDiagram.cd" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

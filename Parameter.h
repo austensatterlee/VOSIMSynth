@@ -55,7 +55,7 @@ public:
   {
     return m_isDirty;
   }
-  const double& get() const
+  double get() const
   {
     return m_curr;
   }

@@ -143,24 +143,23 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 
   //MakePreset("preset 1", ... );
   MakeDefaultPreset((char *) "-", kNumPrograms);
-    
+
+  m_instr.setSink("sum", new AccumulatingSink());
+  m_instr.addSource("vosc", new VosimOscillator());
+  m_instr.addConnection(new Connection("vosc", "sum", "output", ADD));
+  m_MIDIReceiver.sendControlChange.Connect(&m_instr,&Instrument::sendMIDICC);
   m_MIDIReceiver.noteOn.Connect(this, &VOSIMSynth::OnNoteOn);
   m_MIDIReceiver.noteOff.Connect(this, &VOSIMSynth::OnNoteOff);
-
-  m_circuit.setSink("sum", new AccumulatingSink());
-  m_circuit.setSource("vosc", new VosimOscillator());
-  m_circuit.addConnection(new Connection("vosc","sum","output",ADD));
 }
 
 void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel) {
   IMutexLock lock(this);
-  m_circuit.trigger();
-  m_circuit.modUnitParam("vosc","pitch",SET,pitch);
+  m_instr.noteOn(pitch,vel);
 }
 
 void VOSIMSynth::OnNoteOff(uint8_t pitch, uint8_t vel) {
   IMutexLock lock(this);
-  m_circuit.release();
+  m_instr.noteOff(pitch, vel);
 }
 
 void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) {
@@ -170,7 +169,7 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
   for (int s = 0; s < nFrames; s++) {
     leftOutput[s] = 0;
     m_MIDIReceiver.advance();
-    leftOutput[s] = mOutGain*m_circuit.tick();
+    leftOutput[s] = mOutGain*m_instr.tick();
     rightOutput[s] = leftOutput[s];
     mLastOutput = leftOutput[s];
     m_Oscilloscope.input(mLastOutput);    
@@ -188,7 +187,7 @@ void VOSIMSynth::Reset() {
   TRACE;
   IMutexLock lock(this);
   double fs = GetSampleRate();
-  m_circuit.setFs(fs);
+  m_instr.setFs(fs);
 }
 
 void VOSIMSynth::OnParamChange(int paramIdx) {
