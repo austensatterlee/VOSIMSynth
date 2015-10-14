@@ -2,65 +2,20 @@
 #include "IPlug_include_in_plug_src.h"
 #include <cmath>
 #include <ctime>
+#include <tuple>
 
 using namespace std;
+#define O_U "vosc"
 
 const int kNumPrograms = 1;
 
-enum EParams {
+enum EParams
+{
   kMainVol = 0,
-  // Volume envelope
-  kEnv1Atk,
-  kEnv1Dec,
-  kEnv1Rel,
-  kEnv1Sus,
-  kEnv1Shp,
-  // Pitch LFO
-  kGlobalPMF,
-  kGlobalPMG,
-  // Oscillator 1 params
-  kOsc1Tune,
-  kOsc1VF,
-  kOsc1Num,
-  kOsc1Dec,
-  kOsc1Vol,
-  kOsc1FreqMode,
-  kEnv2Int,
-  kEnv2Atk,
-  kEnv2Dec,
-  kEnv2Rel,
-  kEnv2Sus,
-  kEnv2Shp,
-  // Oscillator 2 params
-  kOsc2Tune,
-  kOsc2VF,
-  kOsc2Num,
-  kOsc2Dec,
-  kOsc2Vol,
-  kOsc2FreqMode,
-  kEnv3Int,
-  kEnv3Atk,
-  kEnv3Dec,
-  kEnv3Rel,
-  kEnv3Sus,
-  kEnv3Shp,
-  // Oscillator 3 params
-  kOsc3Tune,
-  kOsc3VF,
-  kOsc3Num,
-  kOsc3Dec,
-  kOsc3Vol,
-  kOsc3FreqMode,
-  kEnv4Int,
-  kEnv4Atk,
-  kEnv4Dec,
-  kEnv4Rel,
-  kEnv4Sus,
-  kEnv4Shp,
-  kNumParams
 };
 
-enum ELayout {
+enum ELayout
+{
   kWidth = GUI_WIDTH,
   kHeight = GUI_HEIGHT,
   kColorKnobFrames = 27,
@@ -69,10 +24,10 @@ enum ELayout {
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   :
-  IPLUG_CTOR(kNumParams, kNumPrograms, instanceInfo),
+  IPLUG_CTOR(256, kNumPrograms, instanceInfo),
   m_Oscilloscope(this, IRECT(10, 310, 800 - 10, 600 - 10), 1000),
-  m_EnvEditor(this, IRECT(600,10,800-10,90),4)  
-  {
+  m_EnvEditor(this, IRECT(600, 10, 800 - 10, 90), 4)
+{
   TRACE;
 
   //const ParamProp realParams[kNumParams] = {
@@ -83,6 +38,15 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 
   //arguments are: name, defaultVal, minVal, maxVal, step, label
   GetParam(kMainVol)->InitDouble("Main Vol", 0.5, 0.0, 1.0, 0.001, "Main Vol");
+  //MakePreset("preset 1", ... );
+  MakeDefaultPreset((char *) "-", kNumPrograms);
+
+  makeInstrument();
+  makeGraphics();
+}
+
+void VOSIMSynth::makeGraphics()
+{
 
 
   IGraphics* pGraphics = MakeGraphics(this, kWidth, kHeight);
@@ -94,80 +58,130 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   //IBitmap toggleswitch3p = pGraphics->LoadIBitmap(TOGGLE_SWITCH_3P_ID, TOGGLE_SWITCH_3P_FN, 3);
   IBitmap numberedKnob = pGraphics->LoadIBitmap(KNOB_ID, KNOB_FN, kNumberedKnobFrames);
 
-  attachKnob(pGraphics, this, 0, 8, kMainVol, &numberedKnob);
+  //attachKnob(pGraphics, this, 0, 0, kMainVol, &numberedKnob);
 
   pGraphics->AttachControl(&m_Oscilloscope);
   pGraphics->AttachControl(&m_EnvEditor);
 
+  vector<tuple<string, string>> pnames = m_instr->getParameterNames();
+  int i = 0;
+  for (tuple<string, string> splitname : pnames)
+  {
+    string name = get<0>(splitname) + "," + get<1>(splitname);
+    GetParam(i)->InitDouble(get<1>(splitname).c_str(), 0, 0, 1, 1E-3, name.c_str(), get<0>(splitname).c_str());
+    attachKnob(pGraphics, this, i * 2 / 8, (i * 2) % 8, i, &numberedKnob);
+    i++;
+  }
+  m_numParameters = i;
+
   AttachGraphics(pGraphics);
+}
 
-  //MakePreset("preset 1", ... );
-  MakeDefaultPreset((char *) "-", kNumPrograms);
-
+void VOSIMSynth::makeInstrument()
+{
   Envelope* env = new Envelope();
-  env->setPeriod(0,0.1,1);
-  env->setPeriod(2,1,1);
-  m_instr.addSource("env", env);
-  m_instr.addUnit("vosc", new Oscillator());
-  m_instr.addUnit("summer",new AccumulatingUnit());
-  m_instr.addConnection(new Connection("env", "vosc", "pitch", SCALE));
-  m_instr.addConnection(new Connection("env", "vosc", "gain", SCALE));
-  m_instr.addConnection(new Connection{ "vosc","summer","input",ADD});
-  m_instr.setSink("summer");
-  // m_MIDIReceiver.sendControlChange.Connect(&m_instr,&Instrument::sendMIDICC);
+  env->setPeriod(0, 0.1, 1);
+  env->setPeriod(2, 1, 1);
+  m_instr = new Instrument();
+  m_instr->addSource("env", env);
+  m_instr->addSource("vosc", new VosimOscillator());
+  m_instr->addUnit("summer", new AccumulatingUnit());
+  m_instr->addUnit("modwheel", new AccumulatingUnit());
+  m_instr->addConnection(new Connection("env", "vosc", "pitch", ADD));
+  m_instr->addConnection(new Connection("env", "vosc", "gain", SCALE));
+  m_instr->addConnection(new Connection{ "vosc","summer","input",ADD });
+  m_instr->addConnection(new Connection{ "modwheel","vosc","pitch", SC });
+  m_instr->modifyParameter("modwheel", "gain", SET, 12.0);
+  m_instr->addMIDIConnection(new MIDIConnection{ IMidiMsg::EControlChangeMsg::kModWheel,"modwheel","input",SET });
+  m_instr->setSink("summer");
+
+  m_voiceManager.setInstrument(m_instr);
+  m_voiceManager.setMaxVoices(16);
+  m_voiceManager.m_onDyingVoice.Connect(this, &VOSIMSynth::OnDyingVoice);
+
   m_MIDIReceiver.noteOn.Connect(this, &VOSIMSynth::OnNoteOn);
   m_MIDIReceiver.noteOff.Connect(this, &VOSIMSynth::OnNoteOff);
-  m_voiceManager.setInstrument(&m_instr);
-  m_voiceManager.setMaxVoices(3);
-
+  m_MIDIReceiver.sendControlChange.Connect(&m_voiceManager, &VoiceManager::sendMIDICC);
 }
 
-void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel) {
+void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel)
+{
   IMutexLock lock(this);
-  m_voiceManager.noteOn(pitch,vel);
+  m_voiceManager.noteOn(pitch, vel);
+  Instrument* vnew = m_voiceManager.getNewestVoice();
+  if (vnew)
+  {
+    m_Oscilloscope.connectInput(vnew->getSourceUnit(O_U));
+    m_Oscilloscope.connectTrigger(vnew->getSourceUnit(O_U));
+  }
 }
 
-void VOSIMSynth::OnNoteOff(uint8_t pitch, uint8_t vel) {
+void VOSIMSynth::OnNoteOff(uint8_t pitch, uint8_t vel)
+{
   IMutexLock lock(this);
-  m_voiceManager.noteOff(pitch, vel);
+  Instrument* vold = m_voiceManager.noteOff(pitch, vel);
+  //m_Oscilloscope.disconnectInput(vold->getSourceUnit(O_U));
+  //m_Oscilloscope.disconnectTrigger(vold->getSourceUnit(O_U));
+  //Instrument* vnew = m_voiceManager.getNewestVoice();
+  //if (vnew)
+  //{
+  //  m_Oscilloscope.connectInput(vnew->getSourceUnit(O_U));
+  //  m_Oscilloscope.connectTrigger(vnew->getSourceUnit(O_U));
+  //}
 }
 
-void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) {
+void VOSIMSynth::OnDyingVoice(Instrument* dying)
+{
+  m_Oscilloscope.disconnectInput(dying->getSourceUnit(O_U));
+  m_Oscilloscope.disconnectTrigger(dying->getSourceUnit(O_U));
+  Instrument* vnew = m_voiceManager.getNewestVoice();
+  if (vnew)
+  {
+    m_Oscilloscope.connectInput(vnew->getSourceUnit(O_U));
+    m_Oscilloscope.connectTrigger(vnew->getSourceUnit(O_U));
+  }
+}
+
+void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames)
+{
   // Mutex is already locked for us.
   double *leftOutput = outputs[0];
   double *rightOutput = outputs[1];
-  for (int s = 0; s < nFrames; s++) {
+  for (int s = 0; s < nFrames; s++)
+  {
     leftOutput[s] = 0;
     m_MIDIReceiver.advance();
-    leftOutput[s] = mOutGain*m_voiceManager.tick();
+    leftOutput[s] = m_voiceManager.tick();
     rightOutput[s] = leftOutput[s];
     mLastOutput = leftOutput[s];
-    m_Oscilloscope.input(mLastOutput);    
   }
 
   m_MIDIReceiver.Flush(nFrames);
 }
 
-void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg) {
+void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg)
+{
   IMutexLock lock(this);
   m_MIDIReceiver.onMessageReceived(pMsg);
 }
 
-void VOSIMSynth::Reset() {
+void VOSIMSynth::Reset()
+{
   TRACE;
   IMutexLock lock(this);
   double fs = GetSampleRate();
   m_voiceManager.setFs(fs);
 }
 
-void VOSIMSynth::OnParamChange(int paramIdx) {
+void VOSIMSynth::OnParamChange(int paramIdx)
+{
   IMutexLock lock(this);
   int n = m_voiceManager.getMaxVoices();
-  switch (paramIdx) {
-  case kMainVol:
-    mOutGain = dbToAmp(LERP(ampToDb(1./n), 0, GetParam(kMainVol)->Value()));
-    break;
-  default:
-    break;
+  
+  if (paramIdx < m_numParameters)
+  {
+    string pname = GetParam(paramIdx)->GetNameForHost();
+    string uname = GetParam(paramIdx)->GetParamGroupForHost();
+    m_voiceManager.modifyParameter(uname, pname, SET, GetParam(paramIdx)->Value());
   }
 }

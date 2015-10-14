@@ -29,7 +29,7 @@ namespace syn
     void	setPoint(int segment, double target_amp);
     virtual void noteOn(int pitch, int vel);
     virtual void noteOff(int pitch, int vel);
-    virtual Unit* clone() const { return new Envelope(*this); };
+    virtual Unit* cloneImpl() const { return new Envelope(*this); };
     int   getSamplesPerPeriod() const;
   protected:
     virtual double process();

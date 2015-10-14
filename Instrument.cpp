@@ -69,6 +69,8 @@ namespace syn
         instr->addMIDIConnection(mc->clone());
       }
     }
+    instr->m_isGraphDirty = m_isGraphDirty;
+    instr->m_processQueue = m_processQueue;
     return instr;
   }
 

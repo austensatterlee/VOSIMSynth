@@ -57,6 +57,23 @@ namespace syn
     m_units[uname]->modifyParameter(pname, action, val);
   }
 
+  vector<tuple<string,string>> Circuit::getParameterNames() const
+{
+    vector<tuple<string,string>> all_pnames;
+    for (UnitMap::const_iterator it = m_units.begin(); it != m_units.end(); it++)
+    {
+      vector<string> pnames = it->second->getParameterNames();
+      for (string pname : pnames)
+      {
+        if(!getUnit(it->first)->m_params[pname]->isRequired()){
+          tuple<string,string> nametup{it->first,pname};
+          all_pnames.push_back(nametup);
+          }
+      }
+    }
+    return all_pnames;
+  }
+
   void Circuit::addConnection(Connection* connection)
   {
     string targetname = connection->m_targetname;
@@ -151,6 +168,8 @@ namespace syn
         circ->addMIDIConnection(mc->clone());
       }
     }
+    circ->m_isGraphDirty = m_isGraphDirty;
+    circ->m_processQueue = m_processQueue;
     return circ;
   }
 

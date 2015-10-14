@@ -21,7 +21,7 @@ namespace syn
 
   inline bool Oscilloscope::IsDirty()
   {
-    return m_isActive && mDirty;
+    return m_currTriggerSrc && m_currInput && m_isActive && mDirty;
   }
 
   inline void Oscilloscope::setPeriod(int nsamp)
@@ -31,17 +31,24 @@ namespace syn
 
   void Oscilloscope::sync()
   {
-    if (m_isActive)
+    if (m_isActive && m_currTriggerSrc)
     {
       m_syncIndex = m_BufInd;
       m_currWindowMaxY = 0.99*m_currWindowMaxY;
       m_currWindowMinY = 0.99*m_currWindowMinY;
+
+
+      if (getPeriod() != m_currTriggerSrc->getSamplesPerPeriod())
+      {
+        setPeriod(m_currTriggerSrc->getSamplesPerPeriod());
+      }
+      SetDirty();
     }
   }
 
   void Oscilloscope::input(double y)
   {
-    if (m_isActive)
+    if (m_isActive && m_currInput)
     {
       if (y > m_currWindowMaxY)
       {
@@ -63,7 +70,6 @@ namespace syn
         m_Buffer.push_back(y);
       else
         m_Buffer[m_BufInd] = y;
-      SetDirty();
     }
   }
 
@@ -82,26 +88,54 @@ namespace syn
     }
   }
 
-  void Oscilloscope::connectInput(Unit* comp)
+  void Oscilloscope::disconnectInput()
   {
     if (m_currInput)
     {
-      // disconnect
       m_currInput->m_extOutPort.Disconnect(this, &Oscilloscope::input);
     }
+    m_currInput = nullptr;
+  }
+
+  void Oscilloscope::disconnectTrigger()
+  {
+    if (m_currTriggerSrc)
+    {
+      m_currTriggerSrc->m_extSyncPort.Disconnect(this, &Oscilloscope::sync);
+    }
+    m_currTriggerSrc = nullptr;
+  }
+
+  void Oscilloscope::disconnectInput(SourceUnit* srccomp)
+  {
+    if (m_currInput && m_currInput==srccomp)
+    {
+      m_currInput->m_extOutPort.Disconnect(this, &Oscilloscope::input);
+    }
+    m_currInput = nullptr;
+  }
+
+  void Oscilloscope::disconnectTrigger(SourceUnit* srccomp)
+  {
+    if (m_currTriggerSrc && m_currInput == srccomp)
+    {
+      m_currTriggerSrc->m_extSyncPort.Disconnect(this, &Oscilloscope::sync);
+    }
+    m_currTriggerSrc = nullptr;
+  }
+
+  void Oscilloscope::connectInput(SourceUnit* srccomp)
+  {
     // connect 
-    comp->m_extOutPort.Connect(this, &Oscilloscope::input);
-    m_currInput = comp;
+    disconnectInput();
+    srccomp->m_extOutPort.Connect(this, &Oscilloscope::input);
+    m_currInput = srccomp;
   }
 
   void Oscilloscope::connectTrigger(SourceUnit* srccomp)
   {
-    if (m_currTriggerSrc)
-    {
-      // disconnect
-      m_currTriggerSrc->m_extSyncPort.Disconnect(this, &Oscilloscope::sync);
-    }
     // connect
+    disconnectTrigger();
     srccomp->m_extSyncPort.Connect(this, &Oscilloscope::sync);
     m_currTriggerSrc = srccomp;
   }
@@ -120,12 +154,8 @@ namespace syn
 
   bool Oscilloscope::Draw(IGraphics *pGraphics)
   {
-    if (m_currTriggerSrc == NULL || !m_isActive)
+    if (!m_currTriggerSrc || !m_currInput || !m_isActive)
       return false;
-    if (getPeriod() != m_currTriggerSrc->getSamplesPerPeriod())
-    {
-      setPeriod(m_currTriggerSrc->getSamplesPerPeriod());
-    }
     IColor fgcolor(255, 255, 255, 255);
     IColor gridcolor(150, 255, 25, 25);
     IColor bgcolor(150, 25, 25, 255);

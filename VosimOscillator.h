@@ -21,7 +21,7 @@ namespace syn
     double  getPulsePhase() { return m_Phase*m_PhaseScale; };
     virtual double process();
     void toggleRelativePFreq(bool b) { m_UseRelativeWidth = b; };
-    virtual Unit* clone() const { return new VosimOscillator(); };
+    virtual Unit* cloneImpl() const { return new VosimOscillator(); };
   private:
     /* internal state */
     double		m_CurrPulseGain = 1;

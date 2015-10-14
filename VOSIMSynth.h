@@ -24,9 +24,13 @@ using namespace syn;
 class VOSIMSynth : public IPlug {
 public:
   VOSIMSynth(IPlugInstanceInfo instanceInfo);
+  void makeGraphics();
+  void makeInstrument();
   void OnNoteOn(uint8_t pitch, uint8_t vel);
   void OnNoteOff(uint8_t pitch, uint8_t vel);
-  ~VOSIMSynth() {
+  void OnDyingVoice(Instrument* dying);
+  ~VOSIMSynth()
+  {
   };
 
   void Reset();
@@ -34,13 +38,12 @@ public:
   void ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames);
   void ProcessMidiMsg(IMidiMsg* pMsg);
 private:
-  void setGain(double gain) { mOutGain = gain; };
   MIDIReceiver m_MIDIReceiver;
   VoiceManager m_voiceManager;
   Oscilloscope m_Oscilloscope;
   EnvelopeEditor m_EnvEditor;
-  Instrument m_instr;
-  double mOutGain = 1.0;
+  Instrument* m_instr;
+  int m_numParameters;
   double mLastOutput = 0.0;
 };
 

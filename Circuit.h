@@ -7,12 +7,15 @@
 #include <list>
 #include <map>
 #include <deque>
+#include <tuple>
+
 
 namespace syn
 {
   using std::list;
   using std::map;
   using std::deque;
+  using std::tuple;
 
   class Circuit
   {
@@ -40,8 +43,10 @@ namespace syn
      * \sa IMidiMsg
      * \sa addMIDIConnection
      */
+    vector<tuple<string,string>> getParameterNames() const;
     void sendMIDICC(IMidiMsg *midimsg);
     Unit* getUnit(string name) { return m_units[name]; };
+    Unit* getUnit(string name) const { return m_units.at(name); };
     double tick();
     void setFs(double fs);
     virtual Circuit* clone();

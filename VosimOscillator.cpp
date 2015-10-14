@@ -9,15 +9,15 @@ namespace syn
 	
 	double VosimOscillator::process()
 {
-	  Oscillator::process();
-	  double number = getParam("number") * 4;
+	  Oscillator::tick_phase();
+	  double number = getParam("number") * 8;
 	  if (m_UseRelativeWidth)
 	  {
-	    m_PhaseScale = pitchToFreq(getParam("pulsepitch") / 128.0 * (108 - getParam("pitch") - 12 * (number - 1)) + getParam("pitch") + 12 * (number - 1)) / (m_Step*m_Fs);
+	    m_PhaseScale = pitchToFreq(getParam("pulsepitch") * (108 - getParam("pitch") - 12 * (number - 1)) + getParam("pitch") + 12 * (number - 1)) / (m_Step*m_Fs);
 	  }
 	  else
 	  {
-	    m_PhaseScale = pitchToFreq(getParam("pulsepitch") / 128.0 * (96 - 69) + 69) / (m_Step*m_Fs);
+	    m_PhaseScale = pitchToFreq(getParam("pulsepitch") * (96 - 69) + 69) / (m_Step*m_Fs);
 	  }
 	  // add compensation for phase scales < 0.5 (i.e. won't be able to reach pulse peak)
 	  m_CompensationGain = 1.0;
@@ -66,8 +66,8 @@ namespace syn
 	    vout = m_CurrPulseGain*m_CompensationGain*tableval;
 	  }
 	  if (isSynced())
-	  {
-	    m_extSyncPort.Emit();
+    {
+      m_extSyncPort.Emit();
 	#ifdef USEBLEP
 	    if (useMinBleps)
 	      addBlep((mStep + mPhase - 1)*mFreq / m_Fs, vout);

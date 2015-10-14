@@ -21,7 +21,6 @@ namespace syn
     friend class Circuit;
   public:
     Unit();
-    Unit(const Unit& u);
     virtual ~Unit();
     double tick();
     void setFs(const double fs) { m_Fs = fs; };
@@ -30,8 +29,9 @@ namespace syn
     bool hasParameter(string name){ return m_params.find(name)!=m_params.end(); };
     double getParam(string pname) { return m_params[pname]->get(); };
     double getParam(string pname) const { return m_params.at(pname)->get(); };
+    vector<string> getParameterNames() const;
     Circuit& getParent() const { return *parent; };
-    virtual Unit* clone() const = 0;
+    Unit* clone() const;
     Signal1<double> m_extOutPort;
   protected:
     typedef unordered_map<string, UnitParameter*> UnitParameterMap;
@@ -43,9 +43,11 @@ namespace syn
     double m_Fs;
     double m_lastOutput;
   private:
+    virtual Unit* cloneImpl() const = 0;
     void beginProcessing();
-    virtual double finishProcessing(double o){
-      return o;
+    virtual double finishProcessing(double o)
+    {
+      return o*getParam("gain");
     };
   };
 
@@ -59,12 +61,13 @@ namespace syn
       addParam(new UnitParameter{"input", 0.0,true});
     }
     virtual ~AccumulatingUnit() {};
-    virtual Unit* clone() const { return new AccumulatingUnit(); };
   protected:
     virtual double process()
     {
       return getParam("input");
     }
+  private:
+    virtual Unit* cloneImpl() const { return new AccumulatingUnit(); };
   };
 }
 #endif

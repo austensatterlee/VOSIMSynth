@@ -35,11 +35,12 @@ namespace syn
     double getPhase() const { return m_Phase; };
     virtual void noteOn(int pitch, int vel);
     virtual void noteOff(int pitch, int vel);
-    virtual Unit* clone() const { return new Oscillator(); };
+    virtual Unit* cloneImpl() const { return new Oscillator(); };
   protected:
     double m_Phase = 0;
     double m_Step = 1;
     virtual double process();
+    virtual void tick_phase();
   private:
     OSC_MODE m_Waveform = SINE_WAVE;
 

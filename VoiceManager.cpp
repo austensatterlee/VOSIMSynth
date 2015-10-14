@@ -1,11 +1,11 @@
 #include "VoiceManager.h"
 namespace syn
 {
-  Instrument* VoiceManager::createVoice(int note,int vel)
+  Instrument* VoiceManager::createVoice(int note, int vel)
   {
     m_voiceStack.push_back(m_instrument->clone());
     m_voiceMap[note].push_back(m_voiceStack.back());
-    m_voiceStack.back()->noteOn(note,vel);
+    m_voiceStack.back()->noteOn(note, vel);
     m_numVoices++;
     return m_voiceStack.back();
   }
@@ -16,6 +16,7 @@ namespace syn
     m_voiceMap.begin()->second.pop_back();
     m_voiceStack.remove(v);
     m_numVoices--;
+    m_onDyingVoice.Emit(v);
     delete v;
   }
 
@@ -24,6 +25,7 @@ namespace syn
     m_voiceMap[v->getNote()].remove(v);
     m_voiceStack.remove(v);
     m_numVoices--;
+    m_onDyingVoice.Emit(v);
     delete v;
   }
 
@@ -41,24 +43,25 @@ namespace syn
     }
     else
     {
-      v = createVoice(noteNumber,velocity);
+      v = createVoice(noteNumber, velocity);
     }
     return v;
   }
 
-  void VoiceManager::noteOff(uint8_t noteNumber, uint8_t velocity)
+  Instrument* VoiceManager::noteOff(uint8_t noteNumber, uint8_t velocity)
   {
-    if (m_voiceMap.find(noteNumber)!=m_voiceMap.end() && !m_voiceMap[noteNumber].empty())
+    Instrument* v;
+    if (m_voiceMap.find(noteNumber) != m_voiceMap.end() && !m_voiceMap[noteNumber].empty())
     {
-      for (VoiceList::iterator v = m_voiceMap[noteNumber].begin(); v != m_voiceMap[noteNumber].end();v++)
-      {
-        (*v)->noteOff(noteNumber, velocity);
-      }
+      v = m_voiceMap[noteNumber].back();
+      v->noteOff(noteNumber, velocity);
     }
+    return v;
   }
 
   void VoiceManager::setFs(double fs)
   {
+    m_instrument->setFs(fs);
     for (VoiceList::iterator v = m_voiceStack.begin(); v != m_voiceStack.end(); v++)
     {
       (*v)->setFs(fs);
@@ -105,52 +108,77 @@ namespace syn
 
   void VoiceManager::modifyParameter(string uname, string pname, MOD_ACTION action, double val)
   {
+    m_instrument->modifyParameter(uname, pname, action, val);
     for (VoiceList::iterator v = m_voiceStack.begin(); v != m_voiceStack.end(); v++)
     {
       (*v)->modifyParameter(uname, pname, action, val);
     }
   }
 
+  void VoiceManager::sendMIDICC(IMidiMsg* msg)
+  {
+    m_instrument->sendMIDICC(msg);
+    for (VoiceList::iterator v = m_voiceStack.begin(); v != m_voiceStack.end(); v++)
+    {
+      (*v)->sendMIDICC(msg);
+    }
+  }
+
   Instrument* VoiceManager::getLowestVoice() const
-{
+  {
 
     if (m_numVoices)
     {
       VoiceMap::const_iterator it;
-      for( it = m_voiceMap.begin(); it->second.empty(); it++);
-      return it->second.back();
+      for (it = m_voiceMap.begin(); it != m_voiceMap.end(); it++)
+      {
+        if (!it->second.empty() && it->second.back()->isActive())
+        {
+          return it->second.back();
+        }
+      }
     }
-    else
-    {
-      return m_instrument;
-    }
+    return nullptr;
   }
 
   Instrument* VoiceManager::getNewestVoice() const
-{
-    if (m_numVoices)
-      return m_voiceStack.front();
-    else
-      return m_instrument;
+  {
+    if (m_numVoices){
+      for (VoiceList::const_reverse_iterator it = m_voiceStack.rbegin(); it!=m_voiceStack.rend();it++)
+      {
+        if((*it)->isActive())
+          return *it;
+      }
+    }
+    return nullptr;
   }
 
   Instrument* VoiceManager::getOldestVoice() const
-{
+  {
     if (m_numVoices)
-      return m_voiceStack.back();
-    else
-      return m_instrument;
+    {
+      for (VoiceList::const_iterator it = m_voiceStack.begin(); it != m_voiceStack.end(); it++)
+      {
+        if ((*it)->isActive())
+          return *it;
+      }
+    }
+    return nullptr;
   }
 
   Instrument* VoiceManager::getHighestVoice() const
-{
-  if (m_numVoices)
   {
-    VoiceMap::const_iterator it;
-    for (it = m_voiceMap.end(); it->second.empty(); it--);
-    return it->second.back();
-  }
-    else
-      return m_instrument;
+    if (m_numVoices)
+    {
+      VoiceMap::const_reverse_iterator it;
+      for (it = m_voiceMap.rbegin(); it != m_voiceMap.rend(); it++)
+      {
+        if (!it->second.empty() && it->second.back()->isActive())
+        {
+          return it->second.back();
+        }
+      }
+    }
+    return nullptr;
   }
 }

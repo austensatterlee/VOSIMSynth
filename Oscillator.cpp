@@ -17,19 +17,7 @@ void Oscillator::noteOff(int pitch, int vel)
  ******************************/
 double Oscillator::process()
 {
-  m_Step = pitchToFreq(getParam("pitch")) / m_Fs;
-  m_Phase += m_Step;
-  if (m_Phase > 1)
-    m_Phase -= 1;
-#ifdef USEBLEP
-  if (useMinBleps && nInit) {
-    mBlepBufInd++;
-    if (mBlepBufInd >= BLEPBUF)
-      mBlepBufInd = 0;
-    nInit--;
-  }
-#endif
-
+  tick_phase();
   double output;
   switch (m_Waveform) {
   case SAW_WAVE:
@@ -46,6 +34,25 @@ double Oscillator::process()
     m_extSyncPort.Emit();
   return output*getParam("gain");
 }
+
+void Oscillator::tick_phase()
+{
+  m_Step = pitchToFreq(getParam("pitch")) / m_Fs;
+  m_Phase += m_Step;
+  if (m_Phase > 1)
+    m_Phase -= 1;
+#ifdef USEBLEP
+  if (useMinBleps && nInit)
+  {
+    mBlepBufInd++;
+    if (mBlepBufInd >= BLEPBUF)
+      mBlepBufInd = 0;
+    nInit--;
+  }
+#endif
+
+}
+
 #ifdef USEBLEP
 void Oscillator::addBlep(double offset, double ampl) {
   int i;

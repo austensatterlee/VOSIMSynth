@@ -29,7 +29,7 @@ namespace syn
 
   public:
     Instrument* noteOn(uint8_t noteNumber, uint8_t velocity);
-    void noteOff(uint8_t noteNumber, uint8_t velocity);
+    Instrument* noteOff(uint8_t noteNumber, uint8_t velocity);
     Instrument* getLowestVoice() const;
     Instrument* getNewestVoice() const;
     Instrument* getOldestVoice() const;
@@ -38,9 +38,11 @@ namespace syn
     int getNumVoices() const { return m_numVoices; };
     int getMaxVoices(){return m_maxVoices;};
     void modifyParameter(string uname, string pname, MOD_ACTION action, double val);
+    void sendMIDICC(IMidiMsg* msg);
     void setInstrument(Instrument* v);
     void setMaxVoices(int max);
     double tick();
+    Signal1<Instrument*> m_onDyingVoice;
 
     VoiceManager() :
       m_numVoices(0),

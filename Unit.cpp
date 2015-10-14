@@ -6,21 +6,32 @@ namespace syn
 	  m_params[pname]->mod(action, val);
 	}
 	
-	Unit::Unit() :
+  vector<string> Unit::getParameterNames() const
+  {
+    vector<string> pnames;
+    for(UnitParameterMap::const_iterator it = m_params.begin(); it!=m_params.end(); it++){
+      pnames.push_back(it->first);
+    }
+    return pnames;
+  }
+
+  Unit* Unit::clone() const
+  {
+    Unit* u = cloneImpl();
+    for (UnitParameterMap::const_iterator it = m_params.cbegin(); it != m_params.cend(); it++)
+    {
+      u->addParam(new UnitParameter(*(it->second)));
+    }
+    u->m_Fs = m_Fs;
+    u->m_lastOutput = m_lastOutput;
+    return u;
+  }
+
+  Unit::Unit() :
 	  m_Fs(44100.0),
 	  m_lastOutput(0.0)
-	{
-	}
-	
-	Unit::Unit(const Unit& u) :
-	  Unit()
-	{
-	  for (UnitParameterMap::const_iterator it = u.m_params.cbegin(); it != u.m_params.cend(); it++)
-	  {
-	    m_params[it->first] = new UnitParameter(*(it->second));
-	  }
-	  m_Fs = u.m_Fs;
-	  m_lastOutput = u.m_lastOutput;
+  {
+    addParam(new UnitParameter("gain", 1.0));
 	}
 	
 	Unit::~Unit()

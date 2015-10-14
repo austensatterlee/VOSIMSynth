@@ -49,7 +49,7 @@ namespace syn
       delete[] XBuf;
     };
     virtual double process();
-    virtual Unit* clone() const {return new Filter(XCoefs,YCoefs,numXCoefs,numYCoefs); };
+    virtual Unit* cloneImpl() const {return new Filter(XCoefs,YCoefs,numXCoefs,numYCoefs); };
   };
 }
 #endif
