@@ -8,7 +8,7 @@ namespace syn
 {
 	
 	double VosimOscillator::process()
-	{
+{
 	  Oscillator::process();
 	  double number = getParam("number") * 4;
 	  if (m_UseRelativeWidth)

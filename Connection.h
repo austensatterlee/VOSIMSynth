@@ -27,6 +27,10 @@ namespace syn
       m_paramname = targetpname;
       m_action = action;
     }
+    Connection* clone()
+    {
+      return new Connection(m_sourcename,m_targetname,m_paramname,m_action);
+    }
     bool operator==(const Connection& mm)
     {
       return (m_targetname == mm.m_targetname && m_paramname == mm.m_paramname && m_action == mm.m_action);
@@ -46,9 +50,13 @@ namespace syn
       m_paramname = targetpname;
       m_action = action;
     }
-    bool operator==(const Connection& mm)
+    bool operator==(const MIDIConnection& mm)
     {
       return (m_targetname == mm.m_targetname && m_paramname == mm.m_paramname && m_action == mm.m_action);
+    }
+    MIDIConnection* clone()
+    {
+      return new MIDIConnection(m_ccMessage, m_targetname, m_paramname, m_action);
     }
   };
 }

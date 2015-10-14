@@ -104,26 +104,32 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   //MakePreset("preset 1", ... );
   MakeDefaultPreset((char *) "-", kNumPrograms);
 
-  m_instr.setSink("sum", new AccumulatingSink());
-  m_instr.addSource("vosc", new VosimOscillator());
-  m_instr.addSource("env", new Envelope());
-  m_instr.addConnection(new Connection("vosc", "sum", "output", ADD));
+  Envelope* env = new Envelope();
+  env->setPeriod(0,0.1,1);
+  env->setPeriod(2,1,1);
+  m_instr.addSource("env", env);
+  m_instr.addUnit("vosc", new Oscillator());
+  m_instr.addUnit("summer",new AccumulatingUnit());
+  m_instr.addConnection(new Connection("env", "vosc", "pitch", SCALE));
   m_instr.addConnection(new Connection("env", "vosc", "gain", SCALE));
-  m_MIDIReceiver.sendControlChange.Connect(&m_instr,&Instrument::sendMIDICC);
+  m_instr.addConnection(new Connection{ "vosc","summer","input",ADD});
+  m_instr.setSink("summer");
+  // m_MIDIReceiver.sendControlChange.Connect(&m_instr,&Instrument::sendMIDICC);
   m_MIDIReceiver.noteOn.Connect(this, &VOSIMSynth::OnNoteOn);
   m_MIDIReceiver.noteOff.Connect(this, &VOSIMSynth::OnNoteOff);
-  m_Oscilloscope.connectInput(m_instr.getUnit("env"));
-  m_Oscilloscope.connectTrigger(m_instr.getSourceUnit("env"));
+  m_voiceManager.setInstrument(&m_instr);
+  m_voiceManager.setMaxVoices(3);
+
 }
 
 void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel) {
   IMutexLock lock(this);
-  m_instr.noteOn(pitch,vel);
+  m_voiceManager.noteOn(pitch,vel);
 }
 
 void VOSIMSynth::OnNoteOff(uint8_t pitch, uint8_t vel) {
   IMutexLock lock(this);
-  m_instr.noteOff(pitch, vel);
+  m_voiceManager.noteOff(pitch, vel);
 }
 
 void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) {
@@ -133,7 +139,7 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
   for (int s = 0; s < nFrames; s++) {
     leftOutput[s] = 0;
     m_MIDIReceiver.advance();
-    leftOutput[s] = mOutGain*m_instr.tick();
+    leftOutput[s] = mOutGain*m_voiceManager.tick();
     rightOutput[s] = leftOutput[s];
     mLastOutput = leftOutput[s];
     m_Oscilloscope.input(mLastOutput);    
@@ -151,12 +157,12 @@ void VOSIMSynth::Reset() {
   TRACE;
   IMutexLock lock(this);
   double fs = GetSampleRate();
-  m_instr.setFs(fs);
+  m_voiceManager.setFs(fs);
 }
 
 void VOSIMSynth::OnParamChange(int paramIdx) {
   IMutexLock lock(this);
-  int n = 1;
+  int n = m_voiceManager.getMaxVoices();
   switch (paramIdx) {
   case kMainVol:
     mOutGain = dbToAmp(LERP(ampToDb(1./n), 0, GetParam(kMainVol)->Value()));

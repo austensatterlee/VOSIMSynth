@@ -24,7 +24,7 @@ namespace syn
     return m_isActive && mDirty;
   }
 
-  void Oscilloscope::setPeriod(int nsamp)
+  inline void Oscilloscope::setPeriod(int nsamp)
   {
     setBufSize(m_displayPeriods*nsamp);
   }

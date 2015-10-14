@@ -18,8 +18,9 @@ namespace syn
     double *YBuf, *XBuf;
     int xBufInd, yBufInd;
   public:
-    Filter(const double *X, const double *Y, const int nX, const int nY)
+    Filter(const double *X, const double *Y, const int nX, const int nY) : Unit()
     {
+      addParam(new UnitParameter{"input",0.0,true});
       xBufInd = 0;
       yBufInd = 0;
       numXCoefs = nX;
@@ -47,7 +48,8 @@ namespace syn
       delete[] YBuf;
       delete[] XBuf;
     };
-    double process(const double input);
+    virtual double process();
+    virtual Unit* clone() const {return new Filter(XCoefs,YCoefs,numXCoefs,numYCoefs); };
   };
 }
 #endif

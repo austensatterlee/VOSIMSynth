@@ -10,6 +10,9 @@ namespace syn
     m_scale = p.m_scale;
     m_sidechain = p.m_sidechain;
     m_state = p.m_state;
+    m_isRequired = p.m_isRequired;
+    m_isDirty = p.m_isDirty;
+    m_name = p.m_name;
   }
 
   void UnitParameter::tick()
@@ -18,6 +21,7 @@ namespace syn
     if (m_state == ACTIVE)
     {
       m_offset = 0.0;
+      m_bias = 0.0;
       m_scale = 1.0;
       m_sidechain = 1.0;
     }

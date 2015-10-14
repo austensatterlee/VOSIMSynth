@@ -1,18 +1,17 @@
 #include "Circuit.h"
+#include <stdexcept>
 #include <vector>
-#include <deque>
+#include <algorithm>
+#include <unordered_set>
+
 
 using std::vector;
 using std::deque;
+using std::unordered_set;
 namespace syn
 {
   Circuit::Circuit()
   {}
-
-  Circuit::Circuit(const Circuit & c)
-  {
-    throw("Not Implemented");
-  }
 
 
   Circuit::~Circuit()
@@ -26,28 +25,30 @@ namespace syn
     // Delete connections
     for (auto it = m_forwardConnections.begin(); it != m_forwardConnections.end(); it++)
     {
-      list<Connection*>* l = &((*it).second);
-      while (!l->empty())
+      list<Connection*>& l = (*it).second;
+      while (!l.empty())
       {
-        delete l->back();
-        l->pop_back();
+        delete l.back();
+        l.pop_back();
       }
-      delete l;
     }
     m_forwardConnections.clear();
     m_backwardConnections.clear();
   }
 
-  void Circuit::addUnit(string name, Unit* unit)
+  bool Circuit::addUnit(string name, Unit* unit)
   {
-    m_units[name] = unit;
-    unit->parent = this;
+    if (m_units.find(name) == m_units.end())
+    {
+      m_units[name] = unit;
+      unit->parent = this;
+      return true;
+    }
+    return false;
   }
 
-  void Circuit::setSink(string name, SinkUnit* unit)
+  void Circuit::setSink(string name)
   {
-    addUnit(name, unit);
-    m_sinkUnit = unit;
     m_sinkName = name;
   }
 
@@ -58,41 +59,62 @@ namespace syn
 
   void Circuit::addConnection(Connection* connection)
   {
-    m_forwardConnections[connection->m_sourcename].push_front(connection);
-    m_backwardConnections[connection->m_targetname].push_front(connection);
+    string targetname = connection->m_targetname;
+    string sourcename = connection->m_sourcename;
+    if (!hasUnit(targetname) || !hasUnit(sourcename))
+      throw std::invalid_argument("Either source or target name not found inside circuit!");
+    if (!getUnit(targetname)->hasParameter(connection->m_paramname))
+      throw std::invalid_argument("Target unit has no parameter with that name");
+    list<Connection*>& fl = m_forwardConnections[sourcename];
+    list<Connection*>& bl = m_backwardConnections[sourcename];
+    if (std::find(fl.begin(), fl.end(), connection) == fl.end()) // connection not in forward list (and thus not in backward list)
+    {
+      m_forwardConnections[connection->m_sourcename].push_front(connection);
+      m_backwardConnections[connection->m_targetname].push_front(connection);
+      m_isGraphDirty = true;
+    }
   }
 
   double Circuit::tick()
   {
-    vector<string> dependencyQueue({ m_sinkName });
-    deque<string> processQueue;
-    while (!dependencyQueue.empty())
+    if (m_isGraphDirty)
     {
-      string currUnitName = dependencyQueue.back();
-      dependencyQueue.pop_back();
-      processQueue.push_front(currUnitName);
-      if (m_backwardConnections.find(currUnitName) == m_backwardConnections.end())
-        continue;
-      for (list<Connection*>::iterator it = m_backwardConnections[currUnitName].begin(); it != m_backwardConnections[currUnitName].end(); it++)
+      unordered_set<string> closed_set;
+      vector<string> dependencyQueue({ m_sinkName });
+      deque<string>& processQueue = m_processQueue;
+      processQueue.clear();
+      while (!dependencyQueue.empty())
       {
-        string sourceName = (*it)->m_sourcename;
-        dependencyQueue.push_back(sourceName);
+        string currUnitName = dependencyQueue.back();
+        dependencyQueue.pop_back();
+        processQueue.push_front(currUnitName);
+        if (m_backwardConnections.find(currUnitName) == m_backwardConnections.end())
+          continue;
+        for (list<Connection*>::iterator it = m_backwardConnections[currUnitName].begin(); it != m_backwardConnections[currUnitName].end(); it++)
+        {
+          string sourceName = (*it)->m_sourcename;
+          if (closed_set.find(sourceName) == closed_set.end())
+          {
+            dependencyQueue.push_back(sourceName);
+            closed_set.insert(sourceName);
+          }
+        }
       }
+      m_isGraphDirty = false;
     }
 
-    while (!processQueue.empty())
+    for (string currUnitName : m_processQueue)
     {
-      string currUnitName = processQueue.front();
-      processQueue.pop_front();
-      m_units[currUnitName]->tick();
-      for (auto const &it : m_forwardConnections[currUnitName])
+      Unit* source = m_units[currUnitName];
+      source->tick();
+      for (Connection* c : m_forwardConnections[currUnitName])
       {
-        Unit* target = m_units[it->m_targetname];
-        target->modifyParameter(it->m_paramname, it->m_action, m_units[currUnitName]->getLastOutput());
+        Unit* target = m_units[c->m_targetname];
+        target->modifyParameter(c->m_paramname, c->m_action, source->getLastOutput());
       }
     }
-
-    return m_sinkUnit->getLastOutput();
+    Unit* sink = getUnit(m_sinkName);
+    return sink->getLastOutput();
   }
 
   void Circuit::setFs(double fs)
@@ -101,6 +123,40 @@ namespace syn
     {
       it.second->setFs(fs);
     }
+  }
+
+  Circuit* Circuit::clone()
+  {
+    Circuit* circ = new Circuit();
+    // Clone units 
+    for (auto it = m_units.begin(); it != m_units.end(); it++)
+    {
+      circ->addUnit(it->first, it->second->clone());
+    }
+    circ->setSink(m_sinkName);
+    // Clone connections
+    for (auto it = m_forwardConnections.begin(); it != m_forwardConnections.end(); it++)
+    {
+      list<Connection*>& l = ((*it).second);
+      for (Connection* c : l)
+      {
+        circ->addConnection(c->clone());
+      }
+    }
+    for (auto it = m_midiConnections.begin(); it != m_midiConnections.end(); it++)
+    {
+      list<MIDIConnection*>& l = ((*it).second);
+      for (MIDIConnection* mc : l)
+      {
+        circ->addMIDIConnection(mc->clone());
+      }
+    }
+    return circ;
+  }
+
+  bool Circuit::hasUnit(string name)
+  {
+    return m_units.find(name) != m_units.end();
   }
 
   void Circuit::addMIDIConnection(MIDIConnection* midiConnection)

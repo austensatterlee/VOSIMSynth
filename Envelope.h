@@ -3,8 +3,8 @@
 #include "SourceUnit.h"
 #include <vector>
 
-#define MIN_ENV_PERIOD	.0001
-#define MIN_ENV_SHAPE	.000000000001
+#define MIN_ENV_PERIOD	.01
+#define MIN_ENV_SHAPE	.0000001
 namespace syn
 {
   struct EnvelopeSegment
@@ -19,14 +19,17 @@ namespace syn
   class Envelope : public SourceUnit
   {
   public:
-    Envelope();
+    Envelope(int numSegments);
+    Envelope() : Envelope(3) {};
+    Envelope(const Envelope& env);
     virtual void setFs(const double fs);
-    const bool isDone() { return m_isDone; };
+    bool isActive() const { return !m_isDone; };
     void	setPeriod(const int segment, double period, double shape = 0);
     void	setShape(int segment, double shape);
     void	setPoint(int segment, double target_amp);
     virtual void noteOn(int pitch, int vel);
     virtual void noteOff(int pitch, int vel);
+    virtual Unit* clone() const { return new Envelope(*this); };
     int   getSamplesPerPeriod() const;
   protected:
     virtual double process();

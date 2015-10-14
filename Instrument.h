@@ -2,7 +2,8 @@
 #include "Circuit.h"
 #include "Connection.h"
 #include <unordered_map>
-
+#include <functional>
+#include <numeric>
 
 using std::unordered_map;
 namespace syn
@@ -11,15 +12,20 @@ namespace syn
     public Circuit
   {
   public:
-    Instrument() {};
+    Instrument() : m_isActive(false), m_note(-1) {};
     virtual ~Instrument() {};
 
     void addSource(string name, SourceUnit* unit);
-    SourceUnit* getSourceUnit(string name){return m_sourceUnits[name];};
-    void noteOn(int pitch, int vel);
-    void noteOff(int pitch, int vel);
+    SourceUnit* getSourceUnit(string name) { return m_soUnits[name]; };
+    void noteOn(int note, int vel);
+    void noteOff(int note, int vel);
+    bool isActive() const;
+    int getNote() const { return m_note; }
+    virtual Instrument* clone();
   protected:
     typedef unordered_map<string, SourceUnit*> SourceUnitMap;
-    SourceUnitMap m_sourceUnits;
+    SourceUnitMap m_soUnits;
+    bool m_isActive;
+    int m_note;
   };
 }

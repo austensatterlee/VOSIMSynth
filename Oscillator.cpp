@@ -44,7 +44,7 @@ double Oscillator::process()
   }
   if(isSynced())
     m_extSyncPort.Emit();
-  return output;
+  return output*getParam("gain");
 }
 #ifdef USEBLEP
 void Oscillator::addBlep(double offset, double ampl) {

@@ -152,6 +152,7 @@
       <PreprocessToFile>false</PreprocessToFile>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -252,7 +253,6 @@
     <ClInclude Include="Connection.h" />
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="Instrument.h" />
-    <ClInclude Include="SinkUnit.h" />
     <ClInclude Include="SourceUnit.h" />
     <ClInclude Include="Unit.h" />
     <ClInclude Include="DSPMath.h" />

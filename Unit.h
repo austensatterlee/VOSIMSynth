@@ -11,43 +11,60 @@
 using Gallant::Signal1;
 using std::tuple;
 using std::unordered_map;
-using std::vector;
-
+using std::vector; 
 namespace syn
 {
-  class Circuit;
+  class Circuit; // forward decl.
+
   class Unit
   {
+    friend class Circuit;
   public:
     Unit();
     Unit(const Unit& u);
     virtual ~Unit();
     double tick();
     void setFs(const double fs) { m_Fs = fs; };
-    double getLastOutput() const { return m_lastOutput; };
+    double getLastOutput() { return m_lastOutput; };
     void modifyParameter(const string pname, const MOD_ACTION action, double val);
-    double getParam(string pname)
-    {
-      return m_params[pname]->get();
-    }
-    Circuit& getParent() const
-    {
-      return *parent;
-    }
+    bool hasParameter(string name){ return m_params.find(name)!=m_params.end(); };
+    double getParam(string pname) { return m_params[pname]->get(); };
+    double getParam(string pname) const { return m_params.at(pname)->get(); };
+    Circuit& getParent() const { return *parent; };
+    virtual Unit* clone() const = 0;
     Signal1<double> m_extOutPort;
   protected:
     typedef unordered_map<string, UnitParameter*> UnitParameterMap;
-    friend class Circuit;
-
-    virtual double process() { return 0.0; };
-    void addParam(string name, UnitParameter* param);
+    virtual double process() = 0;
+    void addParam(UnitParameter* param);
     void addParams(const vector<string> paramnames);
     UnitParameterMap m_params;
-    double m_Fs;
     Circuit* parent;
-  private:
+    double m_Fs;
     double m_lastOutput;
+  private:
     void beginProcessing();
+    virtual double finishProcessing(double o){
+      return o;
+    };
+  };
+
+  /*
+   * MISC UTILITY UNITS
+   */
+  class AccumulatingUnit : public Unit
+  {
+  public:
+    AccumulatingUnit() : Unit() {
+      addParam(new UnitParameter{"input", 0.0,true});
+    }
+    virtual ~AccumulatingUnit() {};
+    virtual Unit* clone() const { return new AccumulatingUnit(); };
+  protected:
+    virtual double process()
+    {
+      return getParam("input");
+    }
   };
 }
 #endif

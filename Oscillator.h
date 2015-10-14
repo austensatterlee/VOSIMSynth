@@ -22,7 +22,7 @@ namespace syn
   public:
     Oscillator() : SourceUnit()
     {
-      addParam("pitch", new UnitParameter());
+      addParam(new UnitParameter("pitch"));
 #ifdef USEBLEPS
       memset(mBlepBuf, 0, BLEPBUFSIZE);
 #endif
@@ -31,9 +31,11 @@ namespace syn
     void sync() { m_Phase = 0; };
     void setWaveform(OSC_MODE mode) { m_Waveform = mode; };
     bool isSynced() const { return m_Phase + m_Step >= 1.0; };
+    virtual bool isActive() const { return getParam("gain")!=0; };
     double getPhase() const { return m_Phase; };
     virtual void noteOn(int pitch, int vel);
     virtual void noteOff(int pitch, int vel);
+    virtual Unit* clone() const { return new Oscillator(); };
   protected:
     double m_Phase = 0;
     double m_Step = 1;

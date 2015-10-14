@@ -1,5 +1,7 @@
 #ifndef __Parameter__
 #define __Parameter__
+#include <string>
+using std::string;
 namespace syn
 {
   enum PARAM_STATE
@@ -7,6 +9,7 @@ namespace syn
     FROZEN = 0,
     ACTIVE
   };
+
   enum MOD_ACTION
   {
     SET = 0,
@@ -25,7 +28,9 @@ namespace syn
     double m_scale = 1.0;
     double m_sidechain = 1.0;
     PARAM_STATE m_state;
+    bool m_isRequired;
     bool m_isDirty;
+    string m_name;
     void set(double val)
     {
       m_base = val;
@@ -48,13 +53,26 @@ namespace syn
     };
   public:
     double m_curr = 0;
-    UnitParameter(PARAM_STATE state = ACTIVE) :m_base(0), m_isDirty(false), m_state(state) {};
-    UnitParameter(double base, PARAM_STATE state = ACTIVE) :m_base(base), m_isDirty(false), m_state(state) {};
+    UnitParameter(string name, double base = 0.0, bool isRequired = false, PARAM_STATE state = ACTIVE) :
+      m_name(name),
+      m_base(base),
+      m_isRequired(isRequired),
+      m_isDirty(false),
+      m_state(state)
+    {};
     UnitParameter(const UnitParameter& p);
     virtual ~UnitParameter() {};
     bool isDirty() const
     {
       return m_isDirty;
+    }
+    bool isRequired() const
+    {
+      return m_isRequired;
+    }
+    string getName() const
+    {
+      return m_name;
     }
     double get() const
     {
@@ -63,6 +81,7 @@ namespace syn
     void tick(PARAM_STATE state);
     void tick();
     void mod(MOD_ACTION action, double val);
+    
 
   };
 }

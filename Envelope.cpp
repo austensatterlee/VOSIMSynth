@@ -5,24 +5,35 @@
 ******************************/
 namespace syn
 {
-Envelope::Envelope() : SourceUnit(),
-  m_currSegment(0),
-  m_isDone(true),
-  m_isRepeating(false),
-  m_lastRawOutput(0),
-  m_initPoint(0),
-  m_numSegments(3)
-{
-  m_segments = vector<EnvelopeSegment>(m_numSegments);
-  // set up a standard ADSR envelope
-  m_initPoint = 0.0;
-  m_segments[0].target_amp = 1.0;
-  m_segments[1].target_amp = 1.0;
-  m_segments[2].target_amp = 0.0;
-  for (int i = 0; i < m_numSegments; i++)
+  Envelope::Envelope(int numSegments) : SourceUnit(),
+    m_currSegment(0),
+    m_isDone(true),
+    m_isRepeating(false),
+    m_lastRawOutput(0),
+    m_initPoint(0),
+    m_numSegments(numSegments)
   {
-    setPeriod(i, MIN_ENV_PERIOD, MIN_ENV_SHAPE);
+    m_segments = vector<EnvelopeSegment>(m_numSegments);
+    // set up a standard ADSR envelope
+    m_initPoint = 0.0;
+    m_segments[0].target_amp = 1.0;
+    m_segments[1].target_amp = 1.0;
+    m_segments[2].target_amp = 0.0;
+    for (int i = 0; i < m_numSegments; i++)
+    {
+      setPeriod(i, MIN_ENV_PERIOD, MIN_ENV_SHAPE);
+    }
   }
+
+Envelope::Envelope(const Envelope& env) : Envelope()
+{
+  m_numSegments = env.m_numSegments;
+  m_segments = env.m_segments;
+  m_currSegment = env.m_currSegment;
+  m_initPoint = env.m_initPoint;
+  m_isDone = env.m_isDone;
+  m_isRepeating = env.m_isRepeating;
+  m_lastRawOutput = env.m_lastRawOutput;
 }
 
 void Envelope::setPeriod(int segment, double period, double shape)

@@ -10,7 +10,6 @@ namespace syn
 	  m_Fs(44100.0),
 	  m_lastOutput(0.0)
 	{
-	
 	}
 	
 	Unit::Unit(const Unit& u) :
@@ -33,25 +32,26 @@ namespace syn
 	}
 	
 	
-	void Unit::addParam(string name, UnitParameter* param)
+	void Unit::addParam(UnitParameter* param)
 	{
-	  m_params[name] = param;
+	  m_params[param->getName()] = param;
 	}
 	
 	void Unit::addParams(const vector<string> paramnames)
 	{
 	  for (string name : paramnames)
 	  {
-	    m_params[name] = new UnitParameter();
+	    m_params[name] = new UnitParameter(name);
 	  }
 	}
 	
 	double Unit::tick()
 	{
 	  beginProcessing();
-	  m_lastOutput = process();
-	  m_extOutPort.Emit(m_lastOutput);
-	  return m_lastOutput;
+    double output = process();
+    m_lastOutput = finishProcessing(output);
+    m_extOutPort.Emit(m_lastOutput);
+    return m_lastOutput;
 	}
 	
 	inline void Unit::beginProcessing()

@@ -1,8 +1,9 @@
 #include "Filter.h"
 namespace syn
 {
-double Filter::process(double input) {
-  XBuf[xBufInd] = input;
+double Filter::process()
+{
+  XBuf[xBufInd] = getParam("input");
   YBuf[yBufInd] = 0.0;
   double *output = &YBuf[yBufInd];
   int i,j;

@@ -21,22 +21,22 @@
       <Filter>Utils</Filter>
     </ClCompile>
     <ClCompile Include="UnitParameter.cpp">
-      <Filter>Components\Interfaces</Filter>
+      <Filter>Interfaces</Filter>
     </ClCompile>
     <ClCompile Include="Oscillator.cpp">
       <Filter>Components\Generators</Filter>
     </ClCompile>
     <ClCompile Include="Unit.cpp">
-      <Filter>Components\Interfaces\Atomic</Filter>
+      <Filter>Interfaces\Atomic</Filter>
     </ClCompile>
     <ClCompile Include="VosimOscillator.cpp">
       <Filter>Components\Generators</Filter>
     </ClCompile>
     <ClCompile Include="Instrument.cpp">
-      <Filter>Components\Interfaces\Composite</Filter>
+      <Filter>Interfaces\Composite</Filter>
     </ClCompile>
     <ClCompile Include="Circuit.cpp">
-      <Filter>Components\Interfaces\Composite</Filter>
+      <Filter>Interfaces\Composite</Filter>
     </ClCompile>
     <ClCompile Include="Envelope.cpp">
       <Filter>Components\Generators</Filter>
@@ -82,28 +82,25 @@
       <Filter>Components\Generators</Filter>
     </ClInclude>
     <ClInclude Include="Circuit.h">
-      <Filter>Components\Interfaces\Composite</Filter>
-    </ClInclude>
-    <ClInclude Include="SinkUnit.h">
-      <Filter>Components\Interfaces\Atomic</Filter>
+      <Filter>Interfaces\Composite</Filter>
     </ClInclude>
     <ClInclude Include="SourceUnit.h">
-      <Filter>Components\Interfaces\Atomic</Filter>
+      <Filter>Interfaces\Atomic</Filter>
     </ClInclude>
     <ClInclude Include="Unit.h">
-      <Filter>Components\Interfaces\Atomic</Filter>
+      <Filter>Interfaces\Atomic</Filter>
     </ClInclude>
     <ClInclude Include="Instrument.h">
-      <Filter>Components\Interfaces\Composite</Filter>
+      <Filter>Interfaces\Composite</Filter>
     </ClInclude>
     <ClInclude Include="Filter.h">
       <Filter>Components\Unary</Filter>
     </ClInclude>
     <ClInclude Include="Connection.h">
-      <Filter>Components\Interfaces</Filter>
+      <Filter>Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="UnitParameter.h">
-      <Filter>Components\Interfaces</Filter>
+      <Filter>Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="DSPMath.h">
       <Filter>Utils</Filter>
@@ -131,23 +128,23 @@
     <Filter Include="Components">
       <UniqueIdentifier>{926ccf49-734a-4aa8-a9a6-26a07ffbb17e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Components\Interfaces">
-      <UniqueIdentifier>{8a597ae8-2206-4859-8196-e4f8bc81246f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Components\Generators">
       <UniqueIdentifier>{8ac3ded4-ed95-4934-b1cf-4ee9755edc77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{7008aa44-48bc-4a10-a2fb-9da5e9bf8a97}</UniqueIdentifier>
     </Filter>
     <Filter Include="Components\Unary">
       <UniqueIdentifier>{0769711b-5c1c-4bb4-952e-95a3d7dfd75d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Components\Interfaces\Atomic">
+    <Filter Include="Interfaces">
+      <UniqueIdentifier>{8a597ae8-2206-4859-8196-e4f8bc81246f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Interfaces\Atomic">
       <UniqueIdentifier>{9adec8b2-e07b-4368-90f2-ddc3dc67927c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Components\Interfaces\Composite">
+    <Filter Include="Interfaces\Composite">
       <UniqueIdentifier>{12c963f3-4d04-4efc-9214-35098e35df6f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Utils">
-      <UniqueIdentifier>{7008aa44-48bc-4a10-a2fb-9da5e9bf8a97}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

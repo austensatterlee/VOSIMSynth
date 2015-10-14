@@ -13,7 +13,7 @@ namespace syn
 	public:
     SourceUnit()
     {
-      addParam("gain",new UnitParameter(1.0));
+      addParam(new UnitParameter("gain", 1.0));
     }
 	  virtual ~SourceUnit() {};
 	  virtual void noteOn(int pitch, int vel)
@@ -25,6 +25,11 @@ namespace syn
     {
       return m_Fs;
     };
+    virtual double finishProcessing(double o)
+    {
+      return o*getParam("gain");
+    }
+    virtual bool isActive() const = 0;
 	  Signal0<> m_extSyncPort;
 	};
 }

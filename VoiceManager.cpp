@@ -1,193 +1,156 @@
-/*
 #include "VoiceManager.h"
-
-Voice& VoiceManager::TriggerNote(uint8_t noteNumber, uint8_t velocity) {
-  Voice* v;
-  if (m_idleVoiceStack.empty()) {
-    v = &getLowestVoice();
-    m_activeVoiceStack.remove(v);
-    m_idleVoiceStack.push_front(v);
-    ReleaseNote(noteNumber, velocity);
-  }
-  v = m_idleVoiceStack.front();
-  m_idleVoiceStack.pop_front();
-  v->trigger(noteNumber, velocity);
-  m_activeVoiceStack.push_front(v);
-  m_voiceMap[noteNumber].push_front(v);
-  return *v;
-}
-
-void VoiceManager::ReleaseNote(uint8_t noteNumber, uint8_t velocity) {
-  if (!m_voiceMap[noteNumber].empty()) {
-    for (list<Voice*>::iterator v = m_voiceMap[noteNumber].begin(); v != m_voiceMap[noteNumber].end();) {
-      (*v)->release();
-      v = m_voiceMap[noteNumber].erase(v++);
-    }
-    m_voiceMap.erase(noteNumber);
-  }
-}
-
-void VoiceManager::setFs(double fs) {
-  uint8_t i = m_numVoices;
-  while (i--) {
-    m_voices[i].setFs(fs)
-  }
-}
-
-void VoiceManager::setVoice(Voice& v, int numVoices) {
-  if (numVoices<1)
-    numVoices = 1;
-  m_numVoices = numVoices;
-  m_voices.resize(m_numVoices);
-  std:fill(m_voices.begin(),m_voices.end(),v);
-  m_activeVoiceStack.clear();
-  m_idleVoiceStack.clear();
-  m_voiceMap.clear();
-  for (vector<Voice>::iterator v = m_voices.begin(); v != m_voices.end(); v++) {
-    m_idleVoiceStack.push_front(&(*v));
-  }
-}
-
-double VoiceManager::process(double input) {
-  double finalOutput = 0;
-  mSampleCount++;
-  for (list<Voice*>::iterator v = m_activeVoiceStack.begin(); v != m_activeVoiceStack.end();) {
-    if ((*v)->isActive()) {
-      finalOutput += (*v)->process();
-      v++;
-    }
-    else {
-      m_idleVoiceStack.push_front(*v);
-      v = m_activeVoiceStack.erase(v++);
-    }
-  }
-  return finalOutput;
-}
-
-void VoiceManager::modifyParameter(string cname, string pname, MOD_ACTION action, double val)
+namespace syn
 {
-  for (vector<Voice>::iterator v = m_voices.begin(); v != m_voices.end(); v++)
+  Instrument* VoiceManager::createVoice(int note,int vel)
   {
-    (*v).modifyParameter(cname,pname,action,val);
+    m_voiceStack.push_back(m_instrument->clone());
+    m_voiceMap[note].push_back(m_voiceStack.back());
+    m_voiceStack.back()->noteOn(note,vel);
+    m_numVoices++;
+    return m_voiceStack.back();
   }
-}
 
-void VoiceManager::modifyParameter(string pname, MOD_ACTION action, double val)
-{
-
-  for (vector<Voice>::iterator v = m_voices.begin(); v != m_voices.end(); v++)
+  void VoiceManager::deleteVoice()
   {
-    (*v).modifyParameter(pname, action, val);
+    Instrument* v = m_voiceMap.begin()->second.back();
+    m_voiceMap.begin()->second.pop_back();
+    m_voiceStack.remove(v);
+    m_numVoices--;
+    delete v;
   }
-}
 
-Voice& VoiceManager::getLowestVoice() const
-{
- 
-  if(m_voiceMap.size()){
-    return *(*m_voiceMap.begin()).second.front();
+  void VoiceManager::deleteVoice(Instrument* v)
+  {
+    m_voiceMap[v->getNote()].remove(v);
+    m_voiceStack.remove(v);
+    m_numVoices--;
+    delete v;
   }
-  else if(m_activeVoiceStack.size()){
-    int minnote = -1;
-    Voice* minvoice;
-    for (auto it = m_activeVoiceStack.begin(); it != m_activeVoiceStack.end(); it++) {
-      if (minnote < (*it)->mNote || minnote == -1) {
-        minvoice = *it;
-        minnote = minvoice->mNote;
+
+  Instrument* VoiceManager::noteOn(uint8_t noteNumber, uint8_t velocity)
+  {
+    Instrument* v;
+    if (m_numVoices == m_maxVoices)
+    {
+      v = getLowestVoice();
+      m_voiceMap[v->getNote()].remove(v);
+      m_voiceStack.remove(v);
+      v->noteOn(noteNumber, velocity);
+      m_voiceStack.push_back(v);
+      m_voiceMap[noteNumber].push_back(v);
+    }
+    else
+    {
+      v = createVoice(noteNumber,velocity);
+    }
+    return v;
+  }
+
+  void VoiceManager::noteOff(uint8_t noteNumber, uint8_t velocity)
+  {
+    if (m_voiceMap.find(noteNumber)!=m_voiceMap.end() && !m_voiceMap[noteNumber].empty())
+    {
+      for (VoiceList::iterator v = m_voiceMap[noteNumber].begin(); v != m_voiceMap[noteNumber].end();v++)
+      {
+        (*v)->noteOff(noteNumber, velocity);
       }
     }
-    return *minvoice;
   }
-}
 
-Voice& VoiceManager::getNewestVoice() const {
-  return *m_activeVoiceStack.front();
-}
-
-Voice& VoiceManager::getOldestVoice() const {
-  return *m_activeVoiceStack.back();
-}
-
-Voice& VoiceManager::getHighestVoice() const {
-  return *(*m_voiceMap.end()).second.front();
-}
-
-void Voice::add_component(string name, Unit& component)
-{
-  m_components[name] = component;
-}
-
-void Voice::add_connection(string cname_from, string cname_to, string target_pname, MOD_ACTION action)
-{
-  m_components[cname_from].connectOutputTo(&m_components[cname_to], target_pname, action);
-  m_connections[cname_to].push_back({cname_from,target_pname,action});
-}
-
-void Voice::modifyParameter(string pname, MOD_ACTION action, double val)
-{
-  for (auto it = m_components.begin(); it != m_components.end(); it++)
+  void VoiceManager::setFs(double fs)
   {
-    if (m_components[it].m_params.find(pname) != m_components[it].m_params.end())
+    for (VoiceList::iterator v = m_voiceStack.begin(); v != m_voiceStack.end(); v++)
     {
-      m_components[it].modifyParameter(pname, action, val);
+      (*v)->setFs(fs);
     }
   }
-}
 
-void Voice::modifyParameter(string cname, string pname, MOD_ACTION action, double val)
-{
-  m_components[cname].modifyParameter(pname, action, val);
-}
-
-void Voice::trigger(uint8_t noteNumber, uint8_t velocity)
-{
-  mNote = noteNumber;
-  mVelocity = velocity*0.0078125;
-  modifyParameter("pitch",SET,mNote);
-  // todo
-}
-
-bool Voice::isSynced() {
-  bool res = true;
-  for (auto it = m_components.begin(); it != m_components.end(); it++)
+  void VoiceManager::setInstrument(Instrument* v)
   {
-    if (m_components[it].m_params.find("pitch") != m_components[it].m_params.end())
+    while (m_numVoices > 1)
     {
-      res &= m_components[it].isSynced();
+      deleteVoice();
+    }
+    m_instrument = v;
+  }
+
+  void VoiceManager::setMaxVoices(int max)
+  {
+    m_maxVoices = max;
+    while (m_numVoices > max)
+    {
+      deleteVoice();
     }
   }
-}
 
-void Voice::release() {
-  for (auto it = m_components.begin(); it != m_components.end(); it++)
+  double VoiceManager::tick()
   {
-    m_components[it].release();
+    double finalOutput = 0;
+    mSampleCount++;
+
+    for (VoiceList::iterator v = m_voiceStack.begin(); v != m_voiceStack.end();)
+    {
+      if ((*v)->isActive())
+      {
+        finalOutput += (*v)->tick();
+        v++;
+      }
+      else
+      {
+        deleteVoice(*(v++));
+      }
+    }
+    return finalOutput;
+  }
+
+  void VoiceManager::modifyParameter(string uname, string pname, MOD_ACTION action, double val)
+  {
+    for (VoiceList::iterator v = m_voiceStack.begin(); v != m_voiceStack.end(); v++)
+    {
+      (*v)->modifyParameter(uname, pname, action, val);
+    }
+  }
+
+  Instrument* VoiceManager::getLowestVoice() const
+{
+
+    if (m_numVoices)
+    {
+      VoiceMap::const_iterator it;
+      for( it = m_voiceMap.begin(); it->second.empty(); it++);
+      return it->second.back();
+    }
+    else
+    {
+      return m_instrument;
+    }
+  }
+
+  Instrument* VoiceManager::getNewestVoice() const
+{
+    if (m_numVoices)
+      return m_voiceStack.front();
+    else
+      return m_instrument;
+  }
+
+  Instrument* VoiceManager::getOldestVoice() const
+{
+    if (m_numVoices)
+      return m_voiceStack.back();
+    else
+      return m_instrument;
+  }
+
+  Instrument* VoiceManager::getHighestVoice() const
+{
+  if (m_numVoices)
+  {
+    VoiceMap::const_iterator it;
+    for (it = m_voiceMap.end(); it->second.empty(); it--);
+    return it->second.back();
+  }
+    else
+      return m_instrument;
   }
 }
-
-void Voice::setFs(double fs) {
-  for (auto it = m_components.begin(); it != m_components.end(); it++)
-  {
-    m_components[it].setFs(fs);
-  }
-}
-
-double Voice::process(double input) {
-  for (auto it = m_components.begin(); it != m_components.end(); it++)
-  {
-    m_components[it].process();
-  }
-  if(isSynced())
-    syncOut();
-  return finishProcessing();
-}
-
-int Voice::getSamplesPerPeriod() const {
-  int max_period = 0;
-  return max_period;
-}
-
-bool Voice::isActive() {
-  return m_isActive;
-}
-*/

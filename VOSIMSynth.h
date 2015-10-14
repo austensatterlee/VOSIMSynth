@@ -36,6 +36,7 @@ public:
 private:
   void setGain(double gain) { mOutGain = gain; };
   MIDIReceiver m_MIDIReceiver;
+  VoiceManager m_voiceManager;
   Oscilloscope m_Oscilloscope;
   EnvelopeEditor m_EnvEditor;
   Instrument m_instr;
