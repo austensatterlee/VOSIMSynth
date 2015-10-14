@@ -10,7 +10,6 @@
     <ClCompile Include="UI.cpp" />
     <ClCompile Include="VoiceManager.cpp" />
     <ClCompile Include="VOSIMSynth.cpp" />
-    <ClCompile Include="DSPComponent.cpp" />
     <ClCompile Include="tables.cpp" />
     <ClCompile Include="table_data.cpp" />
   </ItemGroup>
@@ -40,6 +39,6 @@
     <ResourceCompile Include="VOSIMSynth.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ClassDiagram.cd" />
+    <None Include="genTables.py" />
   </ItemGroup>
 </Project>

@@ -7,7 +7,7 @@
 #include "Oscillator.h"
 #include "MIDIReceiver.h"
 #include "VoiceManager.h"
-#include "Filter.h"
+#include "EnvelopeEditor.h"
 #include "UI.h"
 
 class VOSIMSynth : public IPlug {
@@ -27,6 +27,7 @@ private:
   MIDIReceiver mMIDIReceiver;
   VoiceManager mVoiceManager;
   Oscilloscope mOscilloscope;
+  EnvelopeEditor mEnvelopeEditor;
   double mOutGain = 1.0;
   double mLastOutput = 0.0;
 };
