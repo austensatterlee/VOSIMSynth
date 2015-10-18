@@ -11,7 +11,8 @@ namespace syn
 	  public Unit
 	{
 	public:
-    SourceUnit()
+    SourceUnit(string name) :
+    Unit(name)
     {
     }
 	  virtual ~SourceUnit() {};

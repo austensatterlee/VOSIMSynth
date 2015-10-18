@@ -19,8 +19,8 @@ namespace syn
   class Envelope : public SourceUnit
   {
   public:
-    Envelope(int numSegments);
-    Envelope() : Envelope(3) {};
+    Envelope(string name, int numSegments);
+    Envelope(string name) : Envelope(name,3) {};
     Envelope(const Envelope& env);
     virtual void setFs(const double fs);
     bool isActive() const { return !m_isDone; };
@@ -29,11 +29,11 @@ namespace syn
     void	setPoint(int segment, double target_amp);
     virtual void noteOn(int pitch, int vel);
     virtual void noteOff(int pitch, int vel);
-    virtual Unit* cloneImpl() const { return new Envelope(*this); };
     int   getSamplesPerPeriod() const;
   protected:
     virtual double process();
   private:
+    virtual Unit* cloneImpl() const { return new Envelope(*this); };
     vector<EnvelopeSegment> m_segments;
     double m_initPoint;
     int m_numSegments;

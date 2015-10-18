@@ -11,32 +11,23 @@
     <ClCompile Include="Oscilloscope.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="VoiceManager.cpp">
-      <Filter>Components</Filter>
-    </ClCompile>
     <ClCompile Include="EnvelopeEditor.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="MIDIReceiver.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="UnitParameter.cpp">
-      <Filter>Interfaces</Filter>
-    </ClCompile>
     <ClCompile Include="Oscillator.cpp">
       <Filter>Components\Generators</Filter>
-    </ClCompile>
-    <ClCompile Include="Unit.cpp">
-      <Filter>Interfaces\Atomic</Filter>
     </ClCompile>
     <ClCompile Include="VosimOscillator.cpp">
       <Filter>Components\Generators</Filter>
     </ClCompile>
     <ClCompile Include="Instrument.cpp">
-      <Filter>Interfaces\Composite</Filter>
+      <Filter>Components\Composite</Filter>
     </ClCompile>
     <ClCompile Include="Circuit.cpp">
-      <Filter>Interfaces\Composite</Filter>
+      <Filter>Components\Composite</Filter>
     </ClCompile>
     <ClCompile Include="Envelope.cpp">
       <Filter>Components\Generators</Filter>
@@ -50,6 +41,15 @@
     <ClCompile Include="table_data.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
+    <ClCompile Include="Unit.cpp">
+      <Filter>Components\Atomic</Filter>
+    </ClCompile>
+    <ClCompile Include="VoiceManager.cpp">
+      <Filter>Components\Composite</Filter>
+    </ClCompile>
+    <ClCompile Include="UnitParameter.cpp">
+      <Filter>Components\Connectors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\WDL\IPlug\IPlugVST.h">
@@ -62,9 +62,6 @@
     </ClInclude>
     <ClInclude Include="Oscilloscope.h">
       <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="VoiceManager.h">
-      <Filter>Components</Filter>
     </ClInclude>
     <ClInclude Include="EnvelopeEditor.h">
       <Filter>UI</Filter>
@@ -82,25 +79,16 @@
       <Filter>Components\Generators</Filter>
     </ClInclude>
     <ClInclude Include="Circuit.h">
-      <Filter>Interfaces\Composite</Filter>
+      <Filter>Components\Composite</Filter>
     </ClInclude>
     <ClInclude Include="SourceUnit.h">
-      <Filter>Interfaces\Atomic</Filter>
-    </ClInclude>
-    <ClInclude Include="Unit.h">
-      <Filter>Interfaces\Atomic</Filter>
+      <Filter>Components\Atomic</Filter>
     </ClInclude>
     <ClInclude Include="Instrument.h">
-      <Filter>Interfaces\Composite</Filter>
+      <Filter>Components\Composite</Filter>
     </ClInclude>
     <ClInclude Include="Filter.h">
       <Filter>Components\Unary</Filter>
-    </ClInclude>
-    <ClInclude Include="Connection.h">
-      <Filter>Interfaces</Filter>
-    </ClInclude>
-    <ClInclude Include="UnitParameter.h">
-      <Filter>Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="DSPMath.h">
       <Filter>Utils</Filter>
@@ -116,6 +104,18 @@
     </ClInclude>
     <ClInclude Include="tables.h">
       <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Unit.h">
+      <Filter>Components\Atomic</Filter>
+    </ClInclude>
+    <ClInclude Include="VoiceManager.h">
+      <Filter>Components\Composite</Filter>
+    </ClInclude>
+    <ClInclude Include="Connection.h">
+      <Filter>Components\Connectors</Filter>
+    </ClInclude>
+    <ClInclude Include="UnitParameter.h">
+      <Filter>Components\Connectors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -137,14 +137,14 @@
     <Filter Include="Components\Unary">
       <UniqueIdentifier>{0769711b-5c1c-4bb4-952e-95a3d7dfd75d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Interfaces">
-      <UniqueIdentifier>{8a597ae8-2206-4859-8196-e4f8bc81246f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Interfaces\Atomic">
+    <Filter Include="Components\Atomic">
       <UniqueIdentifier>{9adec8b2-e07b-4368-90f2-ddc3dc67927c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Interfaces\Composite">
+    <Filter Include="Components\Composite">
       <UniqueIdentifier>{12c963f3-4d04-4efc-9214-35098e35df6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Connectors">
+      <UniqueIdentifier>{c76d2338-29ea-47c0-8300-bac21f148db8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

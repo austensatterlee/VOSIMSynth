@@ -1,16 +1,17 @@
 #include "Unit.h"
 namespace syn
 {
-	void Unit::modifyParameter(const string pname, const MOD_ACTION action, double val)
+	void Unit::modifyParameter(int portid, double val, MOD_ACTION action)
 	{
-	  m_params[pname]->mod(action, val);
+	  m_params[portid].mod(action, val);
 	}
 	
   vector<string> Unit::getParameterNames() const
   {
-    vector<string> pnames;
-    for(UnitParameterMap::const_iterator it = m_params.begin(); it!=m_params.end(); it++){
-      pnames.push_back(it->first);
+    vector<string> pnames; 
+    for (int i = 0; i < m_params.size(); i++)
+    {
+      pnames.push_back(m_params[i].getName());
     }
     return pnames;
   }
@@ -18,44 +19,31 @@ namespace syn
   Unit* Unit::clone() const
   {
     Unit* u = cloneImpl();
-    for (UnitParameterMap::const_iterator it = m_params.cbegin(); it != m_params.cend(); it++)
-    {
-      u->addParam(new UnitParameter(*(it->second)));
-    }
+    u->m_name = m_name;
     u->m_Fs = m_Fs;
     u->m_lastOutput = m_lastOutput;
+    u->m_params = m_params;
+    u->m_parammap = m_parammap;
     return u;
   }
 
-  Unit::Unit() :
-	  m_Fs(44100.0),
-	  m_lastOutput(0.0)
+  void Unit::addParam(UnitParameter& param)
   {
-    addParam(new UnitParameter("gain", 1.0));
+    m_parammap[param.getName()] = m_params.size();
+    m_params.push_back(param);
+  }
+
+  Unit::Unit(string name) :
+	  m_Fs(44100.0),
+	  m_lastOutput(0.0),
+    m_name(name)
+  {
 	}
-	
-	Unit::~Unit()
+
+  Unit::~Unit()
 	{
-	  for (UnitParameterMap::iterator it = m_params.begin(); it != m_params.end(); it++)
-	  {
-	    delete it->second;
-	  }
 	}
-	
-	
-	void Unit::addParam(UnitParameter* param)
-	{
-	  m_params[param->getName()] = param;
-	}
-	
-	void Unit::addParams(const vector<string> paramnames)
-	{
-	  for (string name : paramnames)
-	  {
-	    m_params[name] = new UnitParameter(name);
-	  }
-	}
-	
+
 	double Unit::tick()
 	{
 	  beginProcessing();
@@ -67,9 +55,15 @@ namespace syn
 	
 	inline void Unit::beginProcessing()
 	{
-	  for (UnitParameterMap::iterator it = m_params.begin(); it != m_params.end(); it++)
+	  for (int i=0;i<m_params.size();i++)
 	  {
-	   it->second->tick();
+	   m_params[i].tick();
 	  }
 	}
+
+  int Unit::getParamId(string name)
+  {
+    return m_parammap.at(name);
+  }
+
 }

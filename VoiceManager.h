@@ -37,8 +37,8 @@ namespace syn
     void setFs(double fs);
     int getNumVoices() const { return m_numVoices; };
     int getMaxVoices(){return m_maxVoices;};
-    void modifyParameter(string uname, string pname, MOD_ACTION action, double val);
-    void sendMIDICC(IMidiMsg* msg);
+    void modifyParameter(int uid, int pid, double val, MOD_ACTION action);
+    void sendMIDICC(IMidiMsg& msg);
     void setInstrument(Instrument* v);
     void setMaxVoices(int max);
     double tick();

@@ -3,7 +3,7 @@ namespace syn
 {
   Instrument* VoiceManager::createVoice(int note, int vel)
   {
-    m_voiceStack.push_back(m_instrument->clone());
+    m_voiceStack.push_back((Instrument*)m_instrument->clone());
     m_voiceMap[note].push_back(m_voiceStack.back());
     m_voiceStack.back()->noteOn(note, vel);
     m_numVoices++;
@@ -106,16 +106,16 @@ namespace syn
     return finalOutput;
   }
 
-  void VoiceManager::modifyParameter(string uname, string pname, MOD_ACTION action, double val)
+  void VoiceManager::modifyParameter(int uid, int pid, double val, MOD_ACTION action)
   {
-    m_instrument->modifyParameter(uname, pname, action, val);
+    m_instrument->modifyParameter(uid, pid, val, action);
     for (VoiceList::iterator v = m_voiceStack.begin(); v != m_voiceStack.end(); v++)
     {
-      (*v)->modifyParameter(uname, pname, action, val);
+      (*v)->modifyParameter(uid, pid, val, action);
     }
   }
 
-  void VoiceManager::sendMIDICC(IMidiMsg* msg)
+  void VoiceManager::sendMIDICC(IMidiMsg& msg)
   {
     m_instrument->sendMIDICC(msg);
     for (VoiceList::iterator v = m_voiceStack.begin(); v != m_voiceStack.end(); v++)

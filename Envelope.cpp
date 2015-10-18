@@ -5,7 +5,7 @@
 ******************************/
 namespace syn
 {
-  Envelope::Envelope(int numSegments) : SourceUnit(),
+  Envelope::Envelope(string name,int numSegments) : SourceUnit(name),
     m_currSegment(0),
     m_isDone(true),
     m_isRepeating(false),
@@ -16,18 +16,18 @@ namespace syn
     m_segments = vector<EnvelopeSegment>(m_numSegments);
     // set up a standard ADSR envelope
     m_initPoint = 0.0;
-    m_segments[0].target_amp = 1.0;
-    m_segments[1].target_amp = 1.0;
-    m_segments[2].target_amp = 0.0;
+    for(int i=0;i<numSegments-1;i++){
+      m_segments[i].target_amp = 1.0;
+    }
+    m_segments[numSegments-1].target_amp = 0.0;
     for (int i = 0; i < m_numSegments; i++)
     {
       setPeriod(i, MIN_ENV_PERIOD, MIN_ENV_SHAPE);
     }
   }
 
-Envelope::Envelope(const Envelope& env) : Envelope()
+Envelope::Envelope(const Envelope& env) : Envelope(env.m_name,env.m_numSegments)
 {
-  m_numSegments = env.m_numSegments;
   m_segments = env.m_segments;
   m_currSegment = env.m_currSegment;
   m_initPoint = env.m_initPoint;

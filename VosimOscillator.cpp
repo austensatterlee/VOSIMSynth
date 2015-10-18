@@ -7,17 +7,26 @@
 namespace syn
 {
 	
-	double VosimOscillator::process()
+  VosimOscillator::VosimOscillator(const VosimOscillator& vosc) :
+    Oscillator(vosc)
+  {
+    m_UseRelativeWidth = vosc.m_UseRelativeWidth;
+    m_CurrPulseGain = vosc.m_Step;
+    m_PhaseScale = vosc.m_PhaseScale;
+    m_LastPulsePhase = vosc.m_LastPulsePhase;
+  }
+
+  double VosimOscillator::process()
 {
 	  Oscillator::tick_phase();
-	  double number = getParam("number") * 8;
+	  double number = readParam(4) * 8;
 	  if (m_UseRelativeWidth)
 	  {
-	    m_PhaseScale = pitchToFreq(getParam("pulsepitch") * (108 - getParam("pitch") - 12 * (number - 1)) + getParam("pitch") + 12 * (number - 1)) / (m_Step*m_Fs);
+	    m_PhaseScale = pitchToFreq(readParam(3) * (108 - readParam(1) - 12 * (number - 1)) + readParam(1) + 12 * (number - 1)) / (m_Step*m_Fs);
 	  }
 	  else
 	  {
-	    m_PhaseScale = pitchToFreq(getParam("pulsepitch") * (96 - 69) + 69) / (m_Step*m_Fs);
+	    m_PhaseScale = pitchToFreq(readParam(3) * (96 - 69) + 69) / (m_Step*m_Fs);
 	  }
 	  // add compensation for phase scales < 0.5 (i.e. won't be able to reach pulse peak)
 	  m_CompensationGain = 1.0;
@@ -41,7 +50,7 @@ namespace syn
 	  if (!N)
 	    m_CurrPulseGain = 1.0;
 	  else if (N != lastN)
-	    m_CurrPulseGain *= getParam("decay");
+	    m_CurrPulseGain *= readParam(2);
 	  double wrPulsePhase = (pulsePhase - N);
 	  if (pulsePhase >= number)
 	  {

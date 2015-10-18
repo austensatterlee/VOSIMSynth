@@ -23,7 +23,7 @@ namespace syn
     int m_Padding;
     bool m_isActive;
     IRECT m_InnerRect;
-    SourceUnit* m_currInput = nullptr;
+    Unit* m_currInput = nullptr;
     SourceUnit* m_currTriggerSrc = nullptr;
 
     double toScreenX(double val)
@@ -45,11 +45,11 @@ namespace syn
     void input(double y);
     void setBufSize(int s);
     void disconnectInput();
-    void disconnectTrigger(SourceUnit* srccomp);
-    void disconnectInput(SourceUnit* srccomp);
+    void disconnectTrigger(SourceUnit& srccomp);
+    void disconnectInput(Unit& srccomp);
     void disconnectTrigger();
-    void connectInput(SourceUnit* comp);
-    void connectTrigger(SourceUnit* comp);
+    void connectInput(Unit& comp);
+    void connectTrigger(SourceUnit& comp);
     void OnMouseUp(int x, int y, IMouseMod* pMod);
     void OnMouseWheel(int x, int y, IMouseMod* pMod, int d);
     bool Draw(IGraphics *pGraphics);

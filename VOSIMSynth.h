@@ -43,6 +43,7 @@ private:
   Oscilloscope m_Oscilloscope;
   EnvelopeEditor m_EnvEditor;
   Instrument* m_instr;
+  vector<pair<int,int>> m_hostParamMap;
   int m_numParameters;
   double mLastOutput = 0.0;
 };

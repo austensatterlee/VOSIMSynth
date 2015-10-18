@@ -106,38 +106,38 @@ namespace syn
     m_currTriggerSrc = nullptr;
   }
 
-  void Oscilloscope::disconnectInput(SourceUnit* srccomp)
+  void Oscilloscope::disconnectInput(Unit& srccomp)
   {
-    if (m_currInput && m_currInput==srccomp)
+    if (m_currInput && m_currInput==&srccomp)
     {
       m_currInput->m_extOutPort.Disconnect(this, &Oscilloscope::input);
     }
     m_currInput = nullptr;
   }
 
-  void Oscilloscope::disconnectTrigger(SourceUnit* srccomp)
+  void Oscilloscope::disconnectTrigger(SourceUnit& srccomp)
   {
-    if (m_currTriggerSrc && m_currInput == srccomp)
+    if (m_currTriggerSrc && m_currInput == &srccomp)
     {
       m_currTriggerSrc->m_extSyncPort.Disconnect(this, &Oscilloscope::sync);
     }
     m_currTriggerSrc = nullptr;
   }
 
-  void Oscilloscope::connectInput(SourceUnit* srccomp)
+  void Oscilloscope::connectInput(Unit& comp)
   {
     // connect 
     disconnectInput();
-    srccomp->m_extOutPort.Connect(this, &Oscilloscope::input);
-    m_currInput = srccomp;
+    comp.m_extOutPort.Connect(this, &Oscilloscope::input);
+    m_currInput = &comp;
   }
 
-  void Oscilloscope::connectTrigger(SourceUnit* srccomp)
+  void Oscilloscope::connectTrigger(SourceUnit& comp)
   {
     // connect
     disconnectTrigger();
-    srccomp->m_extSyncPort.Connect(this, &Oscilloscope::sync);
-    m_currTriggerSrc = srccomp;
+    comp.m_extSyncPort.Connect(this, &Oscilloscope::sync);
+    m_currTriggerSrc = &comp;
   }
 
   void Oscilloscope::OnMouseUp(int x, int y, IMouseMod* pMod)

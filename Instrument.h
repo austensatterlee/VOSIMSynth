@@ -15,17 +15,18 @@ namespace syn
     Instrument() : m_isActive(false), m_note(-1) {};
     virtual ~Instrument() {};
 
-    void addSource(string name, SourceUnit* unit);
-    SourceUnit* getSourceUnit(string name) { return m_soUnits[name]; };
+    void addSource(SourceUnit* unit);
+    SourceUnit& getSourceUnit(string name) { return *(SourceUnit*)m_units[m_unitmap[name]]; };
     void noteOn(int note, int vel);
     void noteOff(int note, int vel);
     bool isActive() const;
     int getNote() const { return m_note; }
-    virtual Instrument* clone();
   protected:
-    typedef unordered_map<string, SourceUnit*> SourceUnitMap;
-    SourceUnitMap m_soUnits;
+    typedef vector<int> SourceVec;
+    SourceVec m_sourcemap;
     bool m_isActive;
     int m_note;
+  private:
+    virtual Circuit* cloneImpl() const;
   };
 }

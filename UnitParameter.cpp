@@ -10,7 +10,7 @@ namespace syn
     m_scale = p.m_scale;
     m_sidechain = p.m_sidechain;
     m_state = p.m_state;
-    m_isRequired = p.m_isRequired;
+    m_isHidden = p.m_isHidden;
     m_isDirty = p.m_isDirty;
     m_name = p.m_name;
   }

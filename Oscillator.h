@@ -20,22 +20,23 @@ namespace syn
   class Oscillator : public SourceUnit
   {
   public:
-    Oscillator() : SourceUnit()
+    Oscillator(string name) : SourceUnit(name)
     {
-      addParam(new UnitParameter("pitch"));
+      addParam(UnitParameter("gain", 1));
+      addParam(UnitParameter("pitch", 0, true));
 #ifdef USEBLEPS
       memset(mBlepBuf, 0, BLEPBUFSIZE);
 #endif
     };
+    Oscillator(const Oscillator& osc);
     virtual int getSamplesPerPeriod() const { return 1. / m_Step; }
     void sync() { m_Phase = 0; };
     void setWaveform(OSC_MODE mode) { m_Waveform = mode; };
     bool isSynced() const { return m_Phase + m_Step >= 1.0; };
-    virtual bool isActive() const { return getParam("gain")!=0; };
+    virtual bool isActive() const { return readParam(0)!=0; };
     double getPhase() const { return m_Phase; };
     virtual void noteOn(int pitch, int vel);
     virtual void noteOff(int pitch, int vel);
-    virtual Unit* cloneImpl() const { return new Oscillator(); };
   protected:
     double m_Phase = 0;
     double m_Step = 1;
@@ -43,6 +44,8 @@ namespace syn
     virtual void tick_phase();
   private:
     OSC_MODE m_Waveform = SINE_WAVE;
+    virtual Unit* cloneImpl() const { return new Oscillator(*this); };
+    virtual double finishProcessing(double o){ return o*readParam(0); }
 
     /* Blep state */
 #ifdef USEBLEPS

@@ -11,53 +11,40 @@ namespace syn
    *
    * \brief Represents a connection between the output of one Unit and a parameter of another Unit.
    *
-   * \author austen
-   * \date October 2015
    */
   struct Connection
   {
-    string m_sourcename;
-    string m_targetname;
-    string m_paramname;
+    int m_sourceid;
+    int m_targetid;
+    int m_targetport;
     MOD_ACTION m_action;
-    Connection(string sourcename, string targetname, string targetpname, MOD_ACTION action)
+
+    Connection(int sourceid, int targetid, int targetport, MOD_ACTION action) :
+      m_sourceid(sourceid),
+      m_targetid(targetid),
+      m_targetport(targetport),
+      m_action(action)
+    {}
+    Connection(const Connection& c)
     {
-      m_sourcename = sourcename;
-      m_targetname = targetname;
-      m_paramname = targetpname;
-      m_action = action;
+      m_sourceid = c.m_sourceid;
+      m_targetid = c.m_targetid;
+      m_targetport = c.m_targetport;
+      m_action = c.m_action;
     }
-    Connection* clone()
+    bool operator==(const Connection& c)
     {
-      return new Connection(m_sourcename,m_targetname,m_paramname,m_action);
-    }
-    bool operator==(const Connection& mm)
-    {
-      return (m_targetname == mm.m_targetname && m_paramname == mm.m_paramname && m_action == mm.m_action);
+      return c.m_sourceid==m_sourceid && c.m_targetid==m_targetid && c.m_targetport == m_targetport && c.m_action==m_action;
     }
   };
 
-  struct MIDIConnection
+  struct MIDIConnection :public Connection
   {
-    IMidiMsg::EControlChangeMsg m_ccMessage;
-    string m_targetname;
-    string m_paramname;
-    MOD_ACTION m_action;
-    MIDIConnection(IMidiMsg::EControlChangeMsg cc, string targetname, string targetpname, MOD_ACTION action)
-    {
-      m_ccMessage = cc;
-      m_targetname = targetname;
-      m_paramname = targetpname;
-      m_action = action;
-    }
-    bool operator==(const MIDIConnection& mm)
-    {
-      return (m_targetname == mm.m_targetname && m_paramname == mm.m_paramname && m_action == mm.m_action);
-    }
-    MIDIConnection* clone()
-    {
-      return new MIDIConnection(m_ccMessage, m_targetname, m_paramname, m_action);
-    }
+    IMidiMsg::EControlChangeMsg m_sourceid;
+    MIDIConnection(IMidiMsg::EControlChangeMsg cc, int targetid, int targetport, MOD_ACTION action) :
+      Connection(cc,targetid,targetport,action),
+      m_sourceid(cc)
+    {}
   };
 }
 #endif // __Connection__

@@ -218,7 +218,12 @@ FakesAssemblies/
 **/*.Server/ModelManifest.xml
 _Pvt_Extensions
 
+# Doxygen
+html/*
+latex/*
+
 # Custom
+*.bak
 Icon?
 .DS_Stor*
 VOSIMSynth.xcodeproj/

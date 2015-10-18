@@ -28,7 +28,7 @@ namespace syn
     double m_scale = 1.0;
     double m_sidechain = 1.0;
     PARAM_STATE m_state;
-    bool m_isRequired;
+    bool m_isHidden;
     bool m_isDirty;
     string m_name;
     void set(double val)
@@ -53,12 +53,13 @@ namespace syn
     };
   public:
     double m_curr = 0;
-    UnitParameter(string name, double base = 0.0, bool isRequired = false, PARAM_STATE state = ACTIVE) :
+    UnitParameter(string name, double base = 0.0, bool m_isHidden = false, PARAM_STATE state = ACTIVE) :
       m_name(name),
       m_base(base),
-      m_isRequired(isRequired),
+      m_isHidden(m_isHidden),
       m_isDirty(false),
-      m_state(state)
+      m_state(state),
+      m_curr(0)
     {};
     UnitParameter(const UnitParameter& p);
     virtual ~UnitParameter() {};
@@ -66,9 +67,13 @@ namespace syn
     {
       return m_isDirty;
     }
-    bool isRequired() const
+    bool isHidden() const
     {
-      return m_isRequired;
+      return m_isHidden;
+    }
+    double getBase() const
+    {
+      return m_base;
     }
     string getName() const
     {

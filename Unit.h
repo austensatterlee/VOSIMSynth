@@ -11,7 +11,10 @@
 using Gallant::Signal1;
 using std::tuple;
 using std::unordered_map;
-using std::vector; 
+using std::vector;
+
+typedef  unordered_map<string, int> IDMap; //!< string<->integral id translation map 
+
 namespace syn
 {
   class Circuit; // forward decl.
@@ -20,25 +23,38 @@ namespace syn
   {
     friend class Circuit;
   public:
-    Unit();
+    Unit(string name);
+    Unit(const Unit& u);
     virtual ~Unit();
+    /*!
+     * \brief Runs the unit for a single tick. Afterwards, the result is retrievable with getLastOutput().
+     */
     double tick();
     void setFs(const double fs) { m_Fs = fs; };
     double getLastOutput() { return m_lastOutput; };
-    void modifyParameter(const string pname, const MOD_ACTION action, double val);
-    bool hasParameter(string name){ return m_params.find(name)!=m_params.end(); };
-    double getParam(string pname) { return m_params[pname]->get(); };
-    double getParam(string pname) const { return m_params.at(pname)->get(); };
+    /*! 
+     *\brief Modifies the value of the parameter associated with portid. Primarily used by Circuit to process connections.
+     *
+     */
+    void modifyParameter(int portid, double val, MOD_ACTION action);
+    bool hasParameter(string name){ return m_parammap.find(name)!=m_parammap.end(); };
+    double readParam(string pname) const { return m_params[m_parammap.at(pname)].get(); };
+    double readParam(int id) const { return m_params[id].get(); };
+    UnitParameter& getParam(string pname) { return m_params[m_parammap.at(pname)]; }
+    UnitParameter& getParam(int pid) { return m_params[pid]; }
     vector<string> getParameterNames() const;
+    int getParamId(string name);
     Circuit& getParent() const { return *parent; };
+    const string getName() const { return m_name; }
     Unit* clone() const;
     Signal1<double> m_extOutPort;
   protected:
-    typedef unordered_map<string, UnitParameter*> UnitParameterMap;
+    typedef vector<UnitParameter> ParamVec;
     virtual double process() = 0;
-    void addParam(UnitParameter* param);
-    void addParams(const vector<string> paramnames);
-    UnitParameterMap m_params;
+    void addParam(UnitParameter& param);
+    ParamVec m_params;
+    IDMap m_parammap;
+    string m_name;
     Circuit* parent;
     double m_Fs;
     double m_lastOutput;
@@ -47,7 +63,7 @@ namespace syn
     void beginProcessing();
     virtual double finishProcessing(double o)
     {
-      return o*getParam("gain");
+      return o;
     };
   };
 
@@ -57,17 +73,17 @@ namespace syn
   class AccumulatingUnit : public Unit
   {
   public:
-    AccumulatingUnit() : Unit() {
-      addParam(new UnitParameter{"input", 0.0,true});
+    AccumulatingUnit(string name) : Unit(name) {
+      addParam(UnitParameter{"input", 0.0,true});
     }
     virtual ~AccumulatingUnit() {};
   protected:
     virtual double process()
     {
-      return getParam("input");
+      return readParam(0);
     }
   private:
-    virtual Unit* cloneImpl() const { return new AccumulatingUnit(); };
+    virtual Unit* cloneImpl() const { return new AccumulatingUnit(getName()); };
   };
 }
 #endif

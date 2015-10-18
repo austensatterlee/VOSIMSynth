@@ -8,22 +8,22 @@ namespace syn
   class VosimOscillator : public Oscillator
   {
   public:
-    VosimOscillator() :
-      Oscillator(),
+    VosimOscillator(string name) :
+      Oscillator(name),
       m_UseRelativeWidth(true)
     {
-      addParams({ "decay","pulsepitch","number" });
-      m_params["number"]->mod(SET, 1.0);
-      m_params["decay"]->mod(SET, 0.5);
-      m_params["pulsepitch"]->mod(SET, 24);
+      addParam(UnitParameter("decay",1.0));
+      addParam(UnitParameter("pulsepitch",0.5));
+      addParam(UnitParameter("number",1));
     };
+    VosimOscillator(const VosimOscillator& vosc);
     double    m_PhaseScale = 1;
     double  getPulsePhase() { return m_Phase*m_PhaseScale; };
     virtual double process();
     void toggleRelativePFreq(bool b) { m_UseRelativeWidth = b; };
-    virtual Unit* cloneImpl() const { return new VosimOscillator(); };
   private:
     /* internal state */
+    virtual Unit* cloneImpl() const { return new VosimOscillator(*this); };
     double		m_CurrPulseGain = 1;
     double		m_LastPulsePhase = 0;
     bool		  m_UseRelativeWidth;

@@ -17,51 +17,62 @@ namespace syn
   using std::deque;
   using std::tuple;
 
+
   class Circuit
   {
   public:
     Circuit();
     virtual ~Circuit();
-    bool addUnit(string name, Unit* unit);
-    void setSink(string name);
+    bool addUnit(Unit* unit);
+    void setSink(int id);
     /*!
      * \brief Specify a connection from one unit's output to another unit's parameter.
      * \sa Connection
      */
-    void addConnection(Connection* connection);
-    void addMIDIConnection(MIDIConnection* CC);
+    void addConnection(Connection& c);
+    void addMIDIConnection(MIDIConnection& c);
     /*!
      * \brief Modify a Unit's parameter
-     * \param uname Unit name
-     * \param pname Parameter name
+     * \param uid Unit name/id
+     * \param param Parameter name/id
      * \param action A MOD_ACTION specifying how the modification should be applied
-     * \param val The value used to perform the actual modification     *
+     * \param val The value used to perform the actual modification     
      */
-    void modifyParameter(string uname, string pname, MOD_ACTION action, double val);
+    void modifyParameter(int uid, int param, double val, MOD_ACTION action);
+    void modifyParameter(string uname, string param, double val, MOD_ACTION action);
+
     /*!
-     * \brief Trigger a CC event that will be routed to internal components as specified by previous calls to ::addMIDIConnection.
-     * \sa IMidiMsg
-     * \sa addMIDIConnection
-     */
-    vector<tuple<string,string>> getParameterNames() const;
-    void sendMIDICC(IMidiMsg *midimsg);
-    Unit* getUnit(string name) { return m_units[name]; };
-    Unit* getUnit(string name) const { return m_units.at(name); };
+    * \brief Trigger a CC event that will be routed to internal components as specified by previous calls to ::addMIDIConnection.
+    * \sa IMidiMsg
+    * \sa addMIDIConnection
+    */
+    void sendMIDICC(const IMidiMsg& midimsg);
+    vector<tuple<string, string>> getParameterNames() const;
+    Unit& getUnit(string name) { return *m_units[m_unitmap[name]]; };
+    const Unit& getUnit(string name) const { return *m_units.at(m_unitmap.at(name)); };
+    Unit& getUnit(int id) { return *m_units[id]; };
+    const Unit& getUnit(int id) const { return *m_units.at(id); };
+    int getUnitId(string name);
     double tick();
     void setFs(double fs);
-    virtual Circuit* clone();
+    Circuit* clone();
     bool hasUnit(string name);
+    bool hasUnit(int uid);
   protected:
-    typedef  map<string, Unit*> UnitMap;
-    typedef  map<string, list<Connection*>> ConnectionMap;
-    typedef  map<IMidiMsg::EControlChangeMsg, list<MIDIConnection*>> MIDIConnectionMap;
-    UnitMap m_units;
-    ConnectionMap m_forwardConnections;
-    ConnectionMap m_backwardConnections;
+    typedef  vector<Unit*> UnitVec;
+    typedef  vector<vector<Connection>> ConnVec;
+    typedef  unordered_map<IMidiMsg::EControlChangeMsg, vector<MIDIConnection>> MIDIConnectionMap;
+    UnitVec m_units;
+    ConnVec m_forwardConnections;
+    ConnVec m_backwardConnections;
     MIDIConnectionMap m_midiConnections;
-    deque<string> m_processQueue; //!< cache storage for the linearized version of unit dependencies
-    string m_sinkName;
+    IDMap m_unitmap;
+    deque<int> m_processQueue; //!< cache storage for the linearized version of unit dependencies
     bool m_isGraphDirty = true; //!< indicates whether or not the graph's linearization should be recomputed
+    int m_sinkId;
+  private:
+    void refreshProcQueue();
+    virtual Circuit* cloneImpl() const { return new Circuit(); };
   };
 };
 #endif // __Circuit__

@@ -1,9 +1,18 @@
 #include "Oscillator.h"
 
 namespace syn{
-void Oscillator::noteOn(int pitch, int vel)
+
+  Oscillator::Oscillator(const Oscillator& osc) :
+  Oscillator(osc.m_name)
+  {
+    m_Phase = osc.m_Phase;
+    m_Step = osc.m_Step;
+    m_Waveform = m_Waveform;
+  }
+
+  void Oscillator::noteOn(int pitch, int vel)
 {
-  modifyParameter("pitch",SET,pitch);
+  modifyParameter(1,pitch,SET);
 }
 
 void Oscillator::noteOff(int pitch, int vel)
@@ -32,12 +41,12 @@ double Oscillator::process()
   }
   if(isSynced())
     m_extSyncPort.Emit();
-  return output*getParam("gain");
+  return output*readParam(0);
 }
 
 void Oscillator::tick_phase()
 {
-  m_Step = pitchToFreq(getParam("pitch")) / m_Fs;
+  m_Step = pitchToFreq(readParam(1)) / m_Fs;
   m_Phase += m_Step;
   if (m_Phase > 1)
     m_Phase -= 1;

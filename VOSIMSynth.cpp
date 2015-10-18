@@ -5,7 +5,8 @@
 #include <tuple>
 
 using namespace std;
-#define O_U "vosc"
+#define O_TU "osc1"
+#define O_U "filt"
 
 const int kNumPrograms = 1;
 
@@ -68,8 +69,13 @@ void VOSIMSynth::makeGraphics()
   for (tuple<string, string> splitname : pnames)
   {
     string name = get<0>(splitname) + "," + get<1>(splitname);
-    GetParam(i)->InitDouble(get<1>(splitname).c_str(), 0, 0, 1, 1E-3, name.c_str(), get<0>(splitname).c_str());
+    int ownerid = m_instr->getUnitId(get<0>(splitname));
+    Unit& owner = m_instr->getUnit(ownerid);
+    int paramid = owner.getParamId(get<1>(splitname));
+    UnitParameter& param = owner.getParam(paramid);
+    GetParam(i)->InitDouble(get<1>(splitname).c_str(), param.getBase(), 0, 1, 1E-3, name.c_str(), get<0>(splitname).c_str());
     attachKnob(pGraphics, this, i * 2 / 8, (i * 2) % 8, i, &numberedKnob);
+    m_hostParamMap.push_back(make_pair(ownerid, paramid));
     i++;
   }
   m_numParameters = i;
@@ -79,21 +85,29 @@ void VOSIMSynth::makeGraphics()
 
 void VOSIMSynth::makeInstrument()
 {
-  Envelope* env = new Envelope();
+  Envelope* env = new Envelope("env");
+  VosimOscillator* osc1 = new VosimOscillator("osc1");
+  VosimOscillator* osc2 = new VosimOscillator("osc2");
+  VosimOscillator* osc3 = new VosimOscillator("osc3");
+  AccumulatingUnit* acc = new AccumulatingUnit("acc");
+  Filter<AA_FILTER_SIZE+1,AA_FILTER_SIZE>* filt = new Filter<AA_FILTER_SIZE + 1, AA_FILTER_SIZE>("filt", AA_FILTER_X, AA_FILTER_Y);
   env->setPeriod(0, 0.1, 1);
   env->setPeriod(2, 1, 1);
   m_instr = new Instrument();
-  m_instr->addSource("env", env);
-  m_instr->addSource("vosc", new VosimOscillator());
-  m_instr->addUnit("summer", new AccumulatingUnit());
-  m_instr->addUnit("modwheel", new AccumulatingUnit());
-  m_instr->addConnection(new Connection("env", "vosc", "pitch", ADD));
-  m_instr->addConnection(new Connection("env", "vosc", "gain", SCALE));
-  m_instr->addConnection(new Connection{ "vosc","summer","input",ADD });
-  m_instr->addConnection(new Connection{ "modwheel","vosc","pitch", SC });
-  m_instr->modifyParameter("modwheel", "gain", SET, 12.0);
-  m_instr->addMIDIConnection(new MIDIConnection{ IMidiMsg::EControlChangeMsg::kModWheel,"modwheel","input",SET });
-  m_instr->setSink("summer");
+  m_instr->addSource(env);
+  m_instr->addSource(osc1);
+  m_instr->addSource(osc2);
+  m_instr->addSource(osc3);
+  m_instr->addUnit(acc);
+  m_instr->addUnit(filt);
+  m_instr->addConnection(Connection(0, 1, 0, SCALE));
+  m_instr->addConnection(Connection(0, 2, 0, SCALE));
+  m_instr->addConnection(Connection(0, 3, 0, SCALE));
+  m_instr->addConnection(Connection(1, 4, 0, ADD));
+  m_instr->addConnection(Connection(2, 4, 0, ADD));
+  m_instr->addConnection(Connection(3, 4, 0, ADD));
+  m_instr->addConnection(Connection(4, 5, 0, ADD));
+  m_instr->setSink(5);
 
   m_voiceManager.setInstrument(m_instr);
   m_voiceManager.setMaxVoices(16);
@@ -101,7 +115,7 @@ void VOSIMSynth::makeInstrument()
 
   m_MIDIReceiver.noteOn.Connect(this, &VOSIMSynth::OnNoteOn);
   m_MIDIReceiver.noteOff.Connect(this, &VOSIMSynth::OnNoteOff);
-  m_MIDIReceiver.sendControlChange.Connect(&m_voiceManager, &VoiceManager::sendMIDICC);
+  //m_MIDIReceiver.sendControlChange.Connect(&m_voiceManager, &VoiceManager::sendMIDICC);
 }
 
 void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel)
@@ -111,8 +125,8 @@ void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel)
   Instrument* vnew = m_voiceManager.getNewestVoice();
   if (vnew)
   {
-    m_Oscilloscope.connectInput(vnew->getSourceUnit(O_U));
-    m_Oscilloscope.connectTrigger(vnew->getSourceUnit(O_U));
+    m_Oscilloscope.connectInput(vnew->getUnit(O_U));
+    m_Oscilloscope.connectTrigger(vnew->getSourceUnit(O_TU));
   }
 }
 
@@ -120,25 +134,17 @@ void VOSIMSynth::OnNoteOff(uint8_t pitch, uint8_t vel)
 {
   IMutexLock lock(this);
   Instrument* vold = m_voiceManager.noteOff(pitch, vel);
-  //m_Oscilloscope.disconnectInput(vold->getSourceUnit(O_U));
-  //m_Oscilloscope.disconnectTrigger(vold->getSourceUnit(O_U));
-  //Instrument* vnew = m_voiceManager.getNewestVoice();
-  //if (vnew)
-  //{
-  //  m_Oscilloscope.connectInput(vnew->getSourceUnit(O_U));
-  //  m_Oscilloscope.connectTrigger(vnew->getSourceUnit(O_U));
-  //}
 }
 
 void VOSIMSynth::OnDyingVoice(Instrument* dying)
 {
-  m_Oscilloscope.disconnectInput(dying->getSourceUnit(O_U));
-  m_Oscilloscope.disconnectTrigger(dying->getSourceUnit(O_U));
+  m_Oscilloscope.disconnectInput(dying->getUnit(O_U));
+  m_Oscilloscope.disconnectTrigger(dying->getSourceUnit(O_TU));
   Instrument* vnew = m_voiceManager.getNewestVoice();
   if (vnew)
   {
-    m_Oscilloscope.connectInput(vnew->getSourceUnit(O_U));
-    m_Oscilloscope.connectTrigger(vnew->getSourceUnit(O_U));
+    m_Oscilloscope.connectInput(vnew->getUnit(O_U));
+    m_Oscilloscope.connectTrigger(vnew->getSourceUnit(O_TU));
   }
 }
 
@@ -180,8 +186,8 @@ void VOSIMSynth::OnParamChange(int paramIdx)
   
   if (paramIdx < m_numParameters)
   {
-    string pname = GetParam(paramIdx)->GetNameForHost();
-    string uname = GetParam(paramIdx)->GetParamGroupForHost();
-    m_voiceManager.modifyParameter(uname, pname, SET, GetParam(paramIdx)->Value());
+    int uid = m_hostParamMap[paramIdx].first;
+    int pid = m_hostParamMap[paramIdx].second;
+    m_voiceManager.modifyParameter(uid, pid, GetParam(paramIdx)->Value(), SET);
   }
 }
