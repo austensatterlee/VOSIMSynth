@@ -12,7 +12,8 @@ namespace syn{
 
   void Oscillator::noteOn(int pitch, int vel)
 {
-  modifyParameter(1,pitch,SET);
+  modifyParameter(1,pitch,BIAS);
+  modifyParameter(0,vel/255.0,SET);
 }
 
 void Oscillator::noteOff(int pitch, int vel)

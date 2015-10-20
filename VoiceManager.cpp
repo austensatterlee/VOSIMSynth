@@ -41,22 +41,22 @@ namespace syn
       m_voiceStack.push_back(v);
       m_voiceMap[noteNumber].push_back(v);
     }
-    else
+    else if(m_numVoices>=0)
     {
       v = createVoice(noteNumber, velocity);
-    }
+    }    
     return v;
   }
 
-  Instrument* VoiceManager::noteOff(uint8_t noteNumber, uint8_t velocity)
+  void VoiceManager::noteOff(uint8_t noteNumber, uint8_t velocity)
   {
-    Instrument* v;
     if (m_voiceMap.find(noteNumber) != m_voiceMap.end() && !m_voiceMap[noteNumber].empty())
     {
-      v = m_voiceMap[noteNumber].back();
-      v->noteOff(noteNumber, velocity);
+      for (VoiceList::iterator v = m_voiceMap[noteNumber].begin(); v != m_voiceMap[noteNumber].end(); v++)
+      {
+        (*v)->noteOff(noteNumber, velocity);
+      }
     }
-    return v;
   }
 
   void VoiceManager::setFs(double fs)
@@ -70,11 +70,12 @@ namespace syn
 
   void VoiceManager::setInstrument(Instrument* v)
   {
-    while (m_numVoices > 1)
+    while (m_numVoices > 0)
     {
       deleteVoice();
     }
     m_instrument = v;
+    m_instrument->tick();
   }
 
   void VoiceManager::setMaxVoices(int max)
@@ -109,6 +110,7 @@ namespace syn
   void VoiceManager::modifyParameter(int uid, int pid, double val, MOD_ACTION action)
   {
     m_instrument->modifyParameter(uid, pid, val, action);
+    m_instrument->tick();
     for (VoiceList::iterator v = m_voiceStack.begin(); v != m_voiceStack.end(); v++)
     {
       (*v)->modifyParameter(uid, pid, val, action);

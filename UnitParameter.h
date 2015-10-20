@@ -19,6 +19,7 @@ namespace syn
     SC
   };
 
+  
   class UnitParameter
   {
   protected:
@@ -30,7 +31,11 @@ namespace syn
     PARAM_STATE m_state;
     bool m_isHidden;
     bool m_isDirty;
+    bool m_clamp;
     string m_name;
+    double m_min;
+    double m_max;
+
     void set(double val)
     {
       m_base = val;
@@ -53,14 +58,23 @@ namespace syn
     };
   public:
     double m_curr = 0;
-    UnitParameter(string name, double base = 0.0, bool m_isHidden = false, PARAM_STATE state = ACTIVE) :
+    UnitParameter(string name, double base, double min, double max, bool m_isHidden = false, PARAM_STATE state = ACTIVE) :
       m_name(name),
       m_base(base),
+      m_min(min),
+      m_max(max),
       m_isHidden(m_isHidden),
       m_isDirty(false),
       m_state(state),
       m_curr(0)
-    {};
+    {
+      if (m_max <= m_min)
+      {
+        m_clamp = false;
+        m_min = 0;
+        m_max = 1;
+      }
+    };
     UnitParameter(const UnitParameter& p);
     virtual ~UnitParameter() {};
     bool isDirty() const
@@ -83,10 +97,16 @@ namespace syn
     {
       return m_curr;
     }
+    void setHidden(bool ishidden = true)
+    {
+      m_isHidden = ishidden;
+    }
+    
     void tick(PARAM_STATE state);
     void tick();
     void mod(MOD_ACTION action, double val);
-    
+    double getMin(){return m_min;}
+    double getMax(){return m_max;}
 
   };
 }

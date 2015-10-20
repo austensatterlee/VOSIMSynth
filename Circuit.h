@@ -24,12 +24,14 @@ namespace syn
     Circuit();
     virtual ~Circuit();
     bool addUnit(Unit* unit);
-    void setSink(int id);
+    void setSinkId(int id);
+    void setSinkName(string name);
     /*!
      * \brief Specify a connection from one unit's output to another unit's parameter.
      * \sa Connection
      */
     void addConnection(Connection& c);
+    void addConnection(string srcname, string targetname, string pname, MOD_ACTION action);
     void addMIDIConnection(MIDIConnection& c);
     /*!
      * \brief Modify a Unit's parameter

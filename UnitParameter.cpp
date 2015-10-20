@@ -5,6 +5,9 @@ namespace syn
   {
     m_base = p.m_base;
     m_bias = p.m_bias;
+    m_min = p.m_min;
+    m_max = p.m_max;
+    m_clamp = p.m_clamp;    
     m_curr = p.m_curr;
     m_offset = p.m_offset;
     m_scale = p.m_scale;
@@ -18,10 +21,17 @@ namespace syn
   void UnitParameter::tick()
   {
     m_curr = m_scale*m_base + m_sidechain*(m_offset)+m_bias;
+    
+    if(m_clamp){
+      if(m_curr>m_max)
+        m_curr = m_max;
+      else if(m_curr<m_min)
+        m_curr = m_min;
+    }
+
     if (m_state == ACTIVE)
     {
       m_offset = 0.0;
-      m_bias = 0.0;
       m_scale = 1.0;
       m_sidechain = 1.0;
     }

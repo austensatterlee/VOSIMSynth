@@ -29,11 +29,12 @@ namespace syn
 
   public:
     Instrument* noteOn(uint8_t noteNumber, uint8_t velocity);
-    Instrument* noteOff(uint8_t noteNumber, uint8_t velocity);
+    void noteOff(uint8_t noteNumber, uint8_t velocity);
     Instrument* getLowestVoice() const;
     Instrument* getNewestVoice() const;
     Instrument* getOldestVoice() const;
     Instrument* getHighestVoice() const;
+    Instrument* getProtoInstrument() const {return m_instrument;};
     void setFs(double fs);
     int getNumVoices() const { return m_numVoices; };
     int getMaxVoices(){return m_maxVoices;};

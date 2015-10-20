@@ -12,10 +12,11 @@ namespace syn
     public Circuit
   {
   public:
-    Instrument() : m_isActive(false), m_note(-1) {};
+    Instrument() : m_isActive(false), m_note(-1), m_primarySrcId(-1) {};
     virtual ~Instrument() {};
 
     void addSource(SourceUnit* unit);
+    void setPrimarySource(string name);
     SourceUnit& getSourceUnit(string name) { return *(SourceUnit*)m_units[m_unitmap[name]]; };
     void noteOn(int note, int vel);
     void noteOff(int note, int vel);
@@ -26,6 +27,7 @@ namespace syn
     SourceVec m_sourcemap;
     bool m_isActive;
     int m_note;
+    int m_primarySrcId;
   private:
     virtual Circuit* cloneImpl() const;
   };

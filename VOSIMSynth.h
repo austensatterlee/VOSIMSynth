@@ -41,7 +41,6 @@ private:
   MIDIReceiver m_MIDIReceiver;
   VoiceManager m_voiceManager;
   Oscilloscope m_Oscilloscope;
-  EnvelopeEditor m_EnvEditor;
   Instrument* m_instr;
   vector<pair<int,int>> m_hostParamMap;
   int m_numParameters;

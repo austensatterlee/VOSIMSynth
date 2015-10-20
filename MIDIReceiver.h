@@ -18,7 +18,7 @@ private:
 public:
 	Signal2<uint8_t, uint8_t> noteOn;
 	Signal2<uint8_t, uint8_t> noteOff;
-  Signal1<IMidiMsg*> sendControlChange;
+  Signal1<IMidiMsg&> sendControlChange;
 	MIDIReceiver() :
 		mNumKeys(0),
 		mOffset(0) {

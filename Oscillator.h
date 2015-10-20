@@ -22,8 +22,8 @@ namespace syn
   public:
     Oscillator(string name) : SourceUnit(name)
     {
-      addParam(UnitParameter("gain", 1));
-      addParam(UnitParameter("pitch", 0, true));
+      addParam(UnitParameter("gain", 1, 0.0, 1.0));
+      addParam(UnitParameter("pitch", 0, -128.0, 128.0, true));
 #ifdef USEBLEPS
       memset(mBlepBuf, 0, BLEPBUFSIZE);
 #endif

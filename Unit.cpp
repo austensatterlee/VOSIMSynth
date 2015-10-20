@@ -5,7 +5,7 @@ namespace syn
 	{
 	  m_params[portid].mod(action, val);
 	}
-	
+
   vector<string> Unit::getParameterNames() const
   {
     vector<string> pnames; 

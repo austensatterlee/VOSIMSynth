@@ -149,7 +149,9 @@ def main():
 
     with open('table_data.cpp','w') as fp:
         fp.write("#include \"tables.h\"\n")
+        fp.write("namespace syn {\n")
         fp.write(tabledata_def)
+        fp.write("\n}\n")
     header_text = open('tables.h','r').read()
     with open('tables.h', 'w') as fp:
         fp.write(rewriteAutomatedSection(header_text, tabledata_decl+'\n'+tableobj_def))

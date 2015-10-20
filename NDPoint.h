@@ -74,7 +74,7 @@ namespace syn
     }
     NDPoint<ND> operator-(double a_num) const
     {
-      int newpos[ND];
+      double newpos[ND];
       for (int i = 0; i < ND; i++)
       {
         newpos[i] = m_pvec[i] - a_num;
@@ -191,6 +191,10 @@ namespace syn
       }
       return true;
     }
+    double& operator[](const int& index)
+    {
+      return m_pvec[index];
+    }  
     const double& operator[](const int& index) const
     {
       return m_pvec[index];

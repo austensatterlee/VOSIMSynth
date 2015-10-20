@@ -74,13 +74,14 @@ namespace syn
   {
   public:
     AccumulatingUnit(string name) : Unit(name) {
-      addParam(UnitParameter{"input", 0.0,true});
+      addParam(UnitParameter{ "input", 0.0, 0.0, 0.0, true });
+      addParam(UnitParameter{ "gain", 1.0, 0.0, 1.0 });
     }
     virtual ~AccumulatingUnit() {};
   protected:
     virtual double process()
     {
-      return readParam(0);
+      return readParam(0)*readParam(1);
     }
   private:
     virtual Unit* cloneImpl() const { return new AccumulatingUnit(getName()); };

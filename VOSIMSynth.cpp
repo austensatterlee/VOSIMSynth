@@ -6,7 +6,7 @@
 
 using namespace std;
 #define O_TU "osc1"
-#define O_U "filt"
+#define O_U "master"
 
 const int kNumPrograms = 1;
 
@@ -26,8 +26,7 @@ enum ELayout
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   :
   IPLUG_CTOR(256, kNumPrograms, instanceInfo),
-  m_Oscilloscope(this, IRECT(10, 310, 800 - 10, 600 - 10), 1000),
-  m_EnvEditor(this, IRECT(600, 10, 800 - 10, 90), 4)
+  m_Oscilloscope(this, IRECT(10, 610, 790, 800), 1000)
 {
   TRACE;
 
@@ -48,8 +47,6 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 
 void VOSIMSynth::makeGraphics()
 {
-
-
   IGraphics* pGraphics = MakeGraphics(this, kWidth, kHeight);
   pGraphics->AttachPanelBackground(&COLOR_BLACK);
 
@@ -61,8 +58,21 @@ void VOSIMSynth::makeGraphics()
 
   //attachKnob(pGraphics, this, 0, 0, kMainVol, &numberedKnob);
 
+  EnvelopeEditor* m_EnvEditor1 = new EnvelopeEditor{ this, IRECT(500, 10, 800 - 10, 150), 10, 0, 1 };
+  EnvelopeEditor* m_EnvEditor2 = new EnvelopeEditor{ this, IRECT(500, 160, 800 - 10, 300), 10, -1, 1 };
+  EnvelopeEditor* m_EnvEditor3 = new EnvelopeEditor{ this, IRECT(500, 310, 800 - 10, 450), 10, -1, 1 };
+  EnvelopeEditor* m_EnvEditor4 = new EnvelopeEditor{ this, IRECT(500, 460, 800 - 10, 600), 10, -1, 1 };
+
+  m_EnvEditor1->setEnvelope(&m_voiceManager, "ampenv");
+  m_EnvEditor2->setEnvelope(&m_voiceManager, "penv1");
+  m_EnvEditor3->setEnvelope(&m_voiceManager, "penv2");
+  m_EnvEditor4->setEnvelope(&m_voiceManager, "penv3");
+
   pGraphics->AttachControl(&m_Oscilloscope);
-  pGraphics->AttachControl(&m_EnvEditor);
+  pGraphics->AttachControl(m_EnvEditor1);
+  pGraphics->AttachControl(m_EnvEditor2);
+  pGraphics->AttachControl(m_EnvEditor3);
+  pGraphics->AttachControl(m_EnvEditor4);
 
   vector<tuple<string, string>> pnames = m_instr->getParameterNames();
   int i = 0;
@@ -73,49 +83,57 @@ void VOSIMSynth::makeGraphics()
     Unit& owner = m_instr->getUnit(ownerid);
     int paramid = owner.getParamId(get<1>(splitname));
     UnitParameter& param = owner.getParam(paramid);
-    GetParam(i)->InitDouble(get<1>(splitname).c_str(), param.getBase(), 0, 1, 1E-3, name.c_str(), get<0>(splitname).c_str());
+    GetParam(i)->InitDouble(get<1>(splitname).c_str(), param.getBase(), param.getMin(), param.getMax(), 1E-3, name.c_str(), get<0>(splitname).c_str());
     attachKnob(pGraphics, this, i * 2 / 8, (i * 2) % 8, i, &numberedKnob);
     m_hostParamMap.push_back(make_pair(ownerid, paramid));
     i++;
   }
   m_numParameters = i;
-
   AttachGraphics(pGraphics);
 }
 
 void VOSIMSynth::makeInstrument()
 {
-  Envelope* env = new Envelope("env");
+  Envelope* env = new Envelope("ampenv");
+  Envelope* penv1 = new Envelope("penv1");
+  Envelope* penv2 = new Envelope("penv2");
+  Envelope* penv3 = new Envelope("penv3");
   VosimOscillator* osc1 = new VosimOscillator("osc1");
   VosimOscillator* osc2 = new VosimOscillator("osc2");
   VosimOscillator* osc3 = new VosimOscillator("osc3");
-  AccumulatingUnit* acc = new AccumulatingUnit("acc");
-  Filter<AA_FILTER_SIZE+1,AA_FILTER_SIZE>* filt = new Filter<AA_FILTER_SIZE + 1, AA_FILTER_SIZE>("filt", AA_FILTER_X, AA_FILTER_Y);
-  env->setPeriod(0, 0.1, 1);
-  env->setPeriod(2, 1, 1);
+  AccumulatingUnit* acc = new AccumulatingUnit("master");
+  Filter<AA_FILTER_SIZE + 1, AA_FILTER_SIZE>* filt1 = new Filter<AA_FILTER_SIZE + 1, AA_FILTER_SIZE>("filt1", AA_FILTER_X, AA_FILTER_Y);
+  
   m_instr = new Instrument();
   m_instr->addSource(env);
+  m_instr->addSource(penv1);
+  m_instr->addSource(penv2);
+  m_instr->addSource(penv3);
   m_instr->addSource(osc1);
   m_instr->addSource(osc2);
   m_instr->addSource(osc3);
+  m_instr->addUnit(filt1);
   m_instr->addUnit(acc);
-  m_instr->addUnit(filt);
-  m_instr->addConnection(Connection(0, 1, 0, SCALE));
-  m_instr->addConnection(Connection(0, 2, 0, SCALE));
-  m_instr->addConnection(Connection(0, 3, 0, SCALE));
-  m_instr->addConnection(Connection(1, 4, 0, ADD));
-  m_instr->addConnection(Connection(2, 4, 0, ADD));
-  m_instr->addConnection(Connection(3, 4, 0, ADD));
-  m_instr->addConnection(Connection(4, 5, 0, ADD));
-  m_instr->setSink(5);
+  m_instr->addConnection("ampenv", "master", "gain", SCALE);
+  m_instr->addConnection("penv1", "osc1", "pulsepitch", ADD);
+  m_instr->addConnection("penv2", "osc2", "pulsepitch", ADD);
+  m_instr->addConnection("penv3", "osc3", "pulsepitch", ADD);
+  m_instr->addConnection("osc1", "master", "input", ADD);
+  m_instr->addConnection("osc2", "master", "input", ADD);
+  m_instr->addConnection("osc3", "master", "input", ADD);
+  m_instr->addConnection("master", "filt1", "input", ADD);
+
+  m_instr->setSinkName("filt1");
+  m_instr->setPrimarySource("ampenv");
 
   m_voiceManager.setInstrument(m_instr);
-  m_voiceManager.setMaxVoices(16);
+  m_voiceManager.setMaxVoices(8);
+  m_instr->getUnit("master").modifyParameter(1, 1. / m_voiceManager.getMaxVoices(), SET);
   m_voiceManager.m_onDyingVoice.Connect(this, &VOSIMSynth::OnDyingVoice);
 
   m_MIDIReceiver.noteOn.Connect(this, &VOSIMSynth::OnNoteOn);
   m_MIDIReceiver.noteOff.Connect(this, &VOSIMSynth::OnNoteOff);
-  //m_MIDIReceiver.sendControlChange.Connect(&m_voiceManager, &VoiceManager::sendMIDICC);
+  m_MIDIReceiver.sendControlChange.Connect(&m_voiceManager, &VoiceManager::sendMIDICC);
 }
 
 void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel)
@@ -133,7 +151,7 @@ void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel)
 void VOSIMSynth::OnNoteOff(uint8_t pitch, uint8_t vel)
 {
   IMutexLock lock(this);
-  Instrument* vold = m_voiceManager.noteOff(pitch, vel);
+  m_voiceManager.noteOff(pitch, vel);
 }
 
 void VOSIMSynth::OnDyingVoice(Instrument* dying)
@@ -161,7 +179,6 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
     rightOutput[s] = leftOutput[s];
     mLastOutput = leftOutput[s];
   }
-
   m_MIDIReceiver.Flush(nFrames);
 }
 
@@ -183,7 +200,7 @@ void VOSIMSynth::OnParamChange(int paramIdx)
 {
   IMutexLock lock(this);
   int n = m_voiceManager.getMaxVoices();
-  
+
   if (paramIdx < m_numParameters)
   {
     int uid = m_hostParamMap[paramIdx].first;

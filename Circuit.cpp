@@ -39,9 +39,15 @@ namespace syn
     return false;
   }
 
-  void Circuit::setSink(int id)
+  void Circuit::setSinkId(int id)
   {
     m_sinkId = id;
+    m_isGraphDirty = true;
+  }
+
+  void Circuit::setSinkName(string name)
+  {
+    m_sinkId = getUnitId(name);
     m_isGraphDirty = true;
   }
 
@@ -77,6 +83,24 @@ namespace syn
 
   void Circuit::addConnection(Connection& c)
   {
+    if (!hasUnit(c.m_sourceid) || !hasUnit(c.m_targetid))
+      throw std::invalid_argument("Either source or target name not found inside circuit!");
+    vector<Connection>& fl = m_forwardConnections[c.m_sourceid];
+    if (std::find(fl.begin(), fl.end(), c) == fl.end()) // connection not in forward list (and thus not in backward list)
+    {
+      vector<Connection>& bl = m_backwardConnections[c.m_targetid];
+      fl.push_back(c);
+      bl.push_back(c);
+      m_isGraphDirty = true;
+    }
+  }
+
+  void Circuit::addConnection(string srcname, string targetname, string pname, MOD_ACTION action)
+  {
+    int sourceid = getUnitId(srcname);
+    int targetid = getUnitId(targetname);
+    int paramid = getUnit(targetid).getParamId(pname);
+    Connection c{sourceid,targetid,paramid,action};
     if (!hasUnit(c.m_sourceid) || !hasUnit(c.m_targetid))
       throw std::invalid_argument("Either source or target name not found inside circuit!");
     vector<Connection>& fl = m_forwardConnections[c.m_sourceid];
@@ -154,7 +178,7 @@ namespace syn
     {
       circ->addUnit(m_units[currUnitId]->clone());
     }
-    circ->setSink(m_sinkId);
+    circ->setSinkId(m_sinkId);
 
     // Clone connections
     for(int i=0; i < m_forwardConnections.size(); i++)

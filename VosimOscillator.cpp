@@ -19,7 +19,7 @@ namespace syn
   double VosimOscillator::process()
 {
 	  Oscillator::tick_phase();
-	  double number = readParam(4) * 8;
+	  double number = readParam(4);
 	  if (m_UseRelativeWidth)
 	  {
 	    m_PhaseScale = pitchToFreq(readParam(3) * (108 - readParam(1) - 12 * (number - 1)) + readParam(1) + 12 * (number - 1)) / (m_Step*m_Fs);

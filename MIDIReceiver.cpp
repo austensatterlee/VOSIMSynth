@@ -1,29 +1,36 @@
 #include "MIDIReceiver.h"
 
-void MIDIReceiver::onMessageReceived(IMidiMsg* midiMessage) {
+void MIDIReceiver::onMessageReceived(IMidiMsg* midiMessage)
+{
   IMidiMsg::EStatusMsg status = midiMessage->StatusMsg();
   // We're only interested in Note On/Off messages (not CC, pitch, etc.)
-  mMidiQueue.Add(midiMessage);
+  if (status == IMidiMsg::kControlChange || status == IMidiMsg::kNoteOn || status == IMidiMsg::kNoteOff)
+    mMidiQueue.Add(midiMessage);
 }
 
-void MIDIReceiver::advance() {
-  while (!mMidiQueue.Empty()) {
+void MIDIReceiver::advance()
+{
+  while (!mMidiQueue.Empty())
+  {
     IMidiMsg* midiMessage = mMidiQueue.Peek();
     if (midiMessage->mOffset > mOffset) break;
 
     IMidiMsg::EStatusMsg status = midiMessage->StatusMsg();
-    int noteNumber = midiMessage->NoteNumber();
-    int velocity = midiMessage->Velocity();
-    // There are only note on/off messages in the queue, see ::OnMessageReceived
-    if (status == IMidiMsg::kNoteOn && velocity) {
-      if (mKeyStatus[noteNumber] == false) {
-        mKeyStatus[noteNumber] = true;
-        mNumKeys += 1;
-        noteOn(noteNumber, velocity);
+    if (status == IMidiMsg::kNoteOff || status == IMidiMsg::kNoteOn)
+    {
+      int noteNumber = midiMessage->NoteNumber();
+      int velocity = midiMessage->Velocity();
+      if (status == IMidiMsg::kNoteOn && velocity>0)
+      {
+        if (mKeyStatus[noteNumber] == false)
+        {
+          mKeyStatus[noteNumber] = true;
+          mNumKeys += 1;
+          noteOn(noteNumber, velocity);
+        }
       }
-    }
-    else if (status == IMidiMsg::kNoteOff) {
-      if (mKeyStatus[noteNumber] == true) {
+      else
+      {
         mKeyStatus[noteNumber] = false;
         mNumKeys -= 1;
         noteOff(noteNumber, velocity);
@@ -31,7 +38,7 @@ void MIDIReceiver::advance() {
     }
     else if (status == IMidiMsg::kControlChange)
     {
-      sendControlChange(midiMessage);
+      sendControlChange(*midiMessage);
     }
     mMidiQueue.Remove();
   }
