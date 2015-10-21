@@ -61,6 +61,11 @@ namespace syn
     m_units[uid]->modifyParameter(portid, val, action);
   }
 
+  double Circuit::readParam(int uid, int param)
+  {
+    return m_units[uid]->readParam(param);
+  }
+
   vector<tuple<string, string>> Circuit::getParameterNames() const
   {
     vector<tuple<string, string>> all_pnames;

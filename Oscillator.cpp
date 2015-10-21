@@ -12,8 +12,8 @@ namespace syn{
 
   void Oscillator::noteOn(int pitch, int vel)
 {
-  modifyParameter(1,pitch,BIAS);
-  modifyParameter(0,vel/255.0,SET);
+  modifyParameter(1,pitch,SET);
+  m_velocity = vel/255.0; /// \todo user and noteon must both be able to scale the gain and have it last for multiple sample
 }
 
 void Oscillator::noteOff(int pitch, int vel)
@@ -42,12 +42,15 @@ double Oscillator::process()
   }
   if(isSynced())
     m_extSyncPort.Emit();
-  return output*readParam(0);
+  return output;
 }
 
 void Oscillator::tick_phase()
 {
-  m_Step = pitchToFreq(readParam(1)) / m_Fs;
+  if(getParam(1).wasDirty() || getParam(2).wasDirty()){
+    m_Step = pitchToFreq(readParam(1) + readParam(2)) / m_Fs;
+  }
+  
   m_Phase += m_Step;
   if (m_Phase > 1)
     m_Phase -= 1;

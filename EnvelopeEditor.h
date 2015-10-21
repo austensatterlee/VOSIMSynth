@@ -24,6 +24,7 @@ namespace syn
     NDPoint<2> m_ltpt; // left, top coords
     NDPoint<2> m_whpt; // width, height
     NDPoint<2> m_lastMouse;
+    IMouseMod m_lastMouseMod;
     int m_lastSelectedIdx;
     VoiceManager* m_voiceManager;
     int m_targetEnvId;
@@ -44,7 +45,9 @@ namespace syn
     EnvelopeEditor(IPlugBase *pPlug, IRECT pR, double maxTimeScale, double minAmpScale, double maxAmpScale, int numpoints=2);
     virtual ~EnvelopeEditor();
     void OnMouseDrag(int x, int y, int dX, int dY, IMouseMod* pMod);
+    
     void OnMouseUp(int x, int y, IMouseMod * pMod);
+    void OnMouseDblClick(int x, int y, IMouseMod* pMod);
     void OnMouseWheel(int x, int y, IMouseMod* pMod, int d);
     bool Draw(IGraphics* pGraphics);
     bool IsDirty();

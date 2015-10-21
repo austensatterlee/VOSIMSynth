@@ -24,7 +24,6 @@ namespace syn
     friend class Circuit;
   public:
     Unit(string name);
-    Unit(const Unit& u);
     virtual ~Unit();
     /*!
      * \brief Runs the unit for a single tick. Afterwards, the result is retrievable with getLastOutput().
@@ -74,8 +73,8 @@ namespace syn
   {
   public:
     AccumulatingUnit(string name) : Unit(name) {
-      addParam(UnitParameter{ "input", 0.0, 0.0, 0.0, true });
-      addParam(UnitParameter{ "gain", 1.0, 0.0, 1.0 });
+      addParam(UnitParameter{ "input", 0.0, 0.0, 0.0, DOUBLE_TYPE });
+      addParam(UnitParameter{ "gain", 1.0, 0.0, 1.0, DOUBLE_TYPE, false });
     }
     virtual ~AccumulatingUnit() {};
   protected:

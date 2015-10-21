@@ -24,7 +24,7 @@ namespace syn
       XCoefs(X),
       YCoefs(Y)
     {
-      addParam(UnitParameter{ "input",0,0,0,true });
+      addParam(UnitParameter{ "input",0,0,0,DOUBLE_TYPE,true });
       xBufInd = 0;
       yBufInd = 0;
       // XCoefs = (double*)malloc(sizeof(double)*numXCoefs);

@@ -7,7 +7,7 @@ namespace syn
   {
     m_sourcemap.push_back(m_units.size());
     if(m_primarySrcId==-1)
-      m_primarySrcId = *m_sourcemap.end();
+      m_primarySrcId = m_sourcemap.back();
     addUnit(unit);
   }
 

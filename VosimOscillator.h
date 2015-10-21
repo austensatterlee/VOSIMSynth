@@ -12,9 +12,9 @@ namespace syn
       Oscillator(name),
       m_UseRelativeWidth(true)
     {
-      addParam(UnitParameter("decay",1.0,0,1));
-      addParam(UnitParameter("pulsepitch",0.5,0,1));
-      addParam(UnitParameter("number",1,0,4));
+      addParam(UnitParameter("decay",1.0,0,1,DOUBLE_TYPE,false));
+      addParam(UnitParameter("pulsepitch",0.5,0,1, DOUBLE_TYPE,false));
+      addParam(UnitParameter("number",1,0,4, DOUBLE_TYPE,false));
     };
     VosimOscillator(const VosimOscillator& vosc);
     double    m_PhaseScale = 1;

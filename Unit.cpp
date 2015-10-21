@@ -1,10 +1,10 @@
 #include "Unit.h"
 namespace syn
 {
-	void Unit::modifyParameter(int portid, double val, MOD_ACTION action)
-	{
-	  m_params[portid].mod(action, val);
-	}
+  void Unit::modifyParameter(int portid, double val, MOD_ACTION action)
+  {
+    m_params[portid].mod(action, val);
+  }
 
   vector<string> Unit::getParameterNames() const
   {
@@ -34,32 +34,32 @@ namespace syn
   }
 
   Unit::Unit(string name) :
-	  m_Fs(44100.0),
-	  m_lastOutput(0.0),
+    m_Fs(44100.0),
+    m_lastOutput(0.0),
     m_name(name)
   {
-	}
+  }
 
   Unit::~Unit()
-	{
-	}
+  {
+  }
 
-	double Unit::tick()
-	{
-	  beginProcessing();
+  double Unit::tick()
+  {
+    beginProcessing();
     double output = process();
     m_lastOutput = finishProcessing(output);
     m_extOutPort.Emit(m_lastOutput);
     return m_lastOutput;
-	}
-	
-	inline void Unit::beginProcessing()
-	{
-	  for (int i=0;i<m_params.size();i++)
-	  {
-	   m_params[i].tick();
-	  }
-	}
+  }
+  
+  inline void Unit::beginProcessing()
+  {
+    for (int i=0;i<m_params.size();i++)
+    {
+     m_params[i].tick();
+    }
+  }
 
   int Unit::getParamId(string name)
   {

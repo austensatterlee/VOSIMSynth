@@ -42,6 +42,7 @@ namespace syn
      */
     void modifyParameter(int uid, int param, double val, MOD_ACTION action);
     void modifyParameter(string uname, string param, double val, MOD_ACTION action);
+    double readParam(int uid, int param);    
 
     /*!
     * \brief Trigger a CC event that will be routed to internal components as specified by previous calls to ::addMIDIConnection.

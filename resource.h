@@ -1,8 +1,8 @@
 #define PLUG_MFR "Austen"
 #ifdef _DEBUG
-#define PLUG_NAME "VOSIMSynth-debug"
+#define PLUG_NAME "VOSIMSynth-Modular-debug"
 #else
-#define PLUG_NAME "VOSIMSynth"
+#define PLUG_NAME "VOSIMSynth-Modular"
 #endif
 
 #define PLUG_CLASS_NAME VOSIMSynth

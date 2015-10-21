@@ -6,7 +6,7 @@
 
 using namespace std;
 #define O_TU "osc1"
-#define O_U "master"
+#define O_U "filt1"
 
 const int kNumPrograms = 1;
 
@@ -58,10 +58,10 @@ void VOSIMSynth::makeGraphics()
 
   //attachKnob(pGraphics, this, 0, 0, kMainVol, &numberedKnob);
 
-  EnvelopeEditor* m_EnvEditor1 = new EnvelopeEditor{ this, IRECT(500, 10, 800 - 10, 150), 10, 0, 1 };
-  EnvelopeEditor* m_EnvEditor2 = new EnvelopeEditor{ this, IRECT(500, 160, 800 - 10, 300), 10, -1, 1 };
-  EnvelopeEditor* m_EnvEditor3 = new EnvelopeEditor{ this, IRECT(500, 310, 800 - 10, 450), 10, -1, 1 };
-  EnvelopeEditor* m_EnvEditor4 = new EnvelopeEditor{ this, IRECT(500, 460, 800 - 10, 600), 10, -1, 1 };
+  EnvelopeEditor* m_EnvEditor1 = new EnvelopeEditor( this, IRECT(500, 10, 800 - 10, 150), 10, 0, 1 );
+  EnvelopeEditor* m_EnvEditor2 = new EnvelopeEditor( this, IRECT(500, 160, 800 - 10, 300), 10, -1.0, 1.0 );
+  EnvelopeEditor* m_EnvEditor3 = new EnvelopeEditor( this, IRECT(500, 310, 800 - 10, 450), 10, -1.0, 1.0 );
+  EnvelopeEditor* m_EnvEditor4 = new EnvelopeEditor( this, IRECT(500, 460, 800 - 10, 600), 10, -1.0, 1.0 );
 
   m_EnvEditor1->setEnvelope(&m_voiceManager, "ampenv");
   m_EnvEditor2->setEnvelope(&m_voiceManager, "penv1");
@@ -103,7 +103,8 @@ void VOSIMSynth::makeInstrument()
   VosimOscillator* osc3 = new VosimOscillator("osc3");
   AccumulatingUnit* acc = new AccumulatingUnit("master");
   Filter<AA_FILTER_SIZE + 1, AA_FILTER_SIZE>* filt1 = new Filter<AA_FILTER_SIZE + 1, AA_FILTER_SIZE>("filt1", AA_FILTER_X, AA_FILTER_Y);
-  
+  Filter<AA_FILTER_SIZE + 1, AA_FILTER_SIZE>* filt2 = new Filter<AA_FILTER_SIZE + 1, AA_FILTER_SIZE>("filt2", AA_FILTER_X, AA_FILTER_Y);
+
   m_instr = new Instrument();
   m_instr->addSource(env);
   m_instr->addSource(penv1);
@@ -113,7 +114,9 @@ void VOSIMSynth::makeInstrument()
   m_instr->addSource(osc2);
   m_instr->addSource(osc3);
   m_instr->addUnit(filt1);
+  m_instr->addUnit(filt2);
   m_instr->addUnit(acc);
+  m_instr->addConnection("ampenv", "filt2", "input", SCALE);
   m_instr->addConnection("ampenv", "master", "gain", SCALE);
   m_instr->addConnection("penv1", "osc1", "pulsepitch", ADD);
   m_instr->addConnection("penv2", "osc2", "pulsepitch", ADD);
@@ -127,7 +130,7 @@ void VOSIMSynth::makeInstrument()
   m_instr->setPrimarySource("ampenv");
 
   m_voiceManager.setInstrument(m_instr);
-  m_voiceManager.setMaxVoices(8);
+  m_voiceManager.setMaxVoices(16);
   m_instr->getUnit("master").modifyParameter(1, 1. / m_voiceManager.getMaxVoices(), SET);
   m_voiceManager.m_onDyingVoice.Connect(this, &VOSIMSynth::OnDyingVoice);
 

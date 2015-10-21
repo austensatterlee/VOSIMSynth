@@ -20,10 +20,12 @@ namespace syn
   class Oscillator : public SourceUnit
   {
   public:
-    Oscillator(string name) : SourceUnit(name)
+    Oscillator(string name) : SourceUnit(name), 
+    m_velocity(1.0)
     {
-      addParam(UnitParameter("gain", 1, 0.0, 1.0));
-      addParam(UnitParameter("pitch", 0, -128.0, 128.0, true));
+      addParam(UnitParameter("gain", 1, 0.0, 1.0, DOUBLE_TYPE, false));
+      addParam(UnitParameter("pitch", 0, -128.0, 128.0, DOUBLE_TYPE));
+      addParam(UnitParameter("semitones", 0, -12, 12, DOUBLE_TYPE, false));
 #ifdef USEBLEPS
       memset(mBlepBuf, 0, BLEPBUFSIZE);
 #endif
@@ -43,9 +45,10 @@ namespace syn
     virtual double process();
     virtual void tick_phase();
   private:
+    double m_velocity;
     OSC_MODE m_Waveform = SINE_WAVE;
     virtual Unit* cloneImpl() const { return new Oscillator(*this); };
-    virtual double finishProcessing(double o){ return o*readParam(0); }
+    virtual double finishProcessing(double o){ return m_velocity*readParam(0)*o; }
 
     /* Blep state */
 #ifdef USEBLEPS

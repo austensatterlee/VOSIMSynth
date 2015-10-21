@@ -10,30 +10,30 @@ namespace syn
   Envelope::Envelope(string name, int numSegments) : SourceUnit(name),
     m_currSegment(0),
     m_isDone(true),
-    m_isRepeating(false),
-    m_lastRawOutput(0),
     m_initPoint(0),
-    m_numSegments(numSegments)
+    m_numSegments(numSegments),
+    m_phase(0)
   {
     m_segments = vector<EnvelopeSegment>(m_numSegments);
     // set up a standard ADSR envelope
-    m_initPoint = 0.0;
     ostringstream paramname;
     int i;
+    addParam(UnitParameter("loopstart", -1, -1, m_numSegments - 1, INT_TYPE));
+    addParam(UnitParameter("loopend", -1, -1, m_numSegments - 1, INT_TYPE));
     for (i = 0; i < numSegments; i++)
     {
       paramname.str(""); paramname.clear();
       paramname << "period" << i;
-      addParam(UnitParameter(paramname.str(), 0.5, MIN_ENV_PERIOD, 10.0, true));
+      addParam(UnitParameter(paramname.str(), 0.5, MIN_ENV_PERIOD, 10.0, DOUBLE_TYPE));
       paramname.str(""); paramname.clear();
       paramname << "shape" << i;
-      addParam(UnitParameter(paramname.str(), 0.5, MIN_ENV_SHAPE, 1.0, true));
+      addParam(UnitParameter(paramname.str(), 1.0, MIN_ENV_SHAPE, 1.0, DOUBLE_TYPE));
       paramname.str(""); paramname.clear();
       paramname << "target" << i;
-      if(i==numSegments-1)
-        addParam(UnitParameter(paramname.str(), 0.0, 0.0, 0.0, true));
+      if (i == numSegments - 1)
+        addParam(UnitParameter(paramname.str(), 0.0, 0.0, 0.0, DOUBLE_TYPE));
       else
-        addParam(UnitParameter(paramname.str(), 1.0, 0.0, 0.0, true));        
+        addParam(UnitParameter(paramname.str(), 1.0, 0.0, 0.0, DOUBLE_TYPE));
     }
   }
 
@@ -43,129 +43,86 @@ namespace syn
     m_currSegment = env.m_currSegment;
     m_initPoint = env.m_initPoint;
     m_isDone = env.m_isDone;
-    m_isRepeating = env.m_isRepeating;
-    m_lastRawOutput = env.m_lastRawOutput;
+    m_phase = m_phase;
   }
 
-  void Envelope::refreshPeriod(int segment, double period, double shape)
+  void Envelope::updateSegment(int segment)
   {
-    /*
-    * period - length of segment in seconds
-    * shape - higher shape <=> more linear
-    *
-    */
-    shape = shape == 0 ? m_segments[segment].shape : shape;
-    m_segments[segment].period = period;
-    m_segments[segment].shape = shape;
-
-    period = period + MIN_ENV_PERIOD;
-    shape = LERP(dbToAmp(-240), dbToAmp(0), shape) + MIN_ENV_SHAPE;
-
-    m_segments[segment].mult = exp(-log((1 + shape) / shape) / (m_Fs*period));
-    double prev_amp = segment > 0 ? m_segments[segment - 1].target_amp : m_initPoint;
-    if (m_segments[segment].target_amp > prev_amp)
-    {
-      m_segments[segment].base = (m_segments[segment].target_amp + shape) * (1 - m_segments[segment].mult);
+    m_segments[segment].shape = getShape(segment);
+    m_segments[segment].target_amp = getPoint(segment);
+    if(m_segments[segment].period!=getPeriod(segment)){
+      m_segments[segment].period = getPeriod(segment);
+      m_segments[segment].step = 1. / (m_Fs*m_segments[segment].period);
     }
-    else
-    {
-      m_segments[segment].base = (m_segments[segment].target_amp - shape) * (1 - m_segments[segment].mult);
-    }
-  }
-
-  /* Sets the shape of the specified segment. Sets the shape of all segments if first argument is -1 */
-  void Envelope::refreshShape(int segment, double shape)
-  {
-    if (segment == -1)
-    {
-      for (int i = 0; i < m_numSegments; i++)
+    if(m_phase==0){
+      if (segment == 0)
       {
-        refreshPeriod(i, m_segments[i].period, shape);
+        m_segments[segment].prev_amp = m_initPoint;
+      }
+      else if (segment == m_numSegments - 1)
+      {
+        m_segments[segment].prev_amp = m_lastOutput;
+      }
+      else
+      {
+        m_segments[segment].prev_amp = getPoint(segment - 1);
       }
     }
-    else
-    {
-      refreshPeriod(segment, m_segments[segment].period, shape);
-    }
-  }
-
-  /*
-  * Sets the end point of the specified segment
-  */
-  void Envelope::refreshPoint(int segment, double target_amp)
-  {
-    m_segments[segment].target_amp = target_amp;
-    if (segment < m_numSegments - 1)
-    {
-      refreshPeriod(segment + 1, m_segments[segment + 1].period, m_segments[segment + 1].shape);
-    }
-    refreshPeriod(segment, m_segments[segment].period, m_segments[segment].shape);
+    m_segments[segment].is_increasing = m_segments[segment].target_amp > m_segments[segment].prev_amp;
   }
 
   double Envelope::process()
   {
-    for (int i = 0; i < m_numSegments; i++)
+    updateSegment(m_currSegment);
+    const EnvelopeSegment& currseg = m_segments[m_currSegment];
+    if (m_phase >= 1 || \
+        (currseg.is_increasing && m_lastOutput>=currseg.target_amp) || \
+        (!currseg.is_increasing && m_lastOutput<=currseg.target_amp))
     {
-      int j=i*3;
-      if (readParam(j) != m_segments[i].period || readParam(j + 1) != m_segments[i].shape || readParam(j + 2) != m_segments[i].target_amp)
-      {
-        m_segments[i].period = readParam(j);
-        m_segments[i].shape = readParam(j + 1);
-        m_segments[i].target_amp = readParam(j + 2);
-        refreshPeriod(i,m_segments[i].period,m_segments[i].shape);
+      if (m_currSegment + 1 == (int)readParam(1))
+      { // check if we have reached a loop point
+        setSegment((int)readParam(0));
+        m_extSyncPort.Emit();
       }
-    }
-    double prev_amp = m_currSegment > 0 ? m_segments[m_currSegment - 1].target_amp : m_initPoint;
-    bool isIncreasing = m_segments[m_currSegment].target_amp > prev_amp;
-    double output;
-    if ((isIncreasing && m_lastRawOutput >= m_segments[m_currSegment].target_amp) || (!isIncreasing && m_lastRawOutput <= m_segments[m_currSegment].target_amp))
-    {
-      output = m_segments[m_currSegment].target_amp;
-      if (m_currSegment < m_numSegments - 2)
-      {
-        m_currSegment++;
+      else if (m_currSegment < m_numSegments - 2)
+      { // check if we have reached the sustain point
+        setSegment(m_currSegment+1);
       }
-      else
-      {
-        if (m_isRepeating && m_currSegment == m_numSegments - 2)
-        {
-          noteOn(0, 0);
-        }
-        if (m_currSegment == m_numSegments - 1)
-        {
-          m_isDone = true;
-          m_extSyncPort.Emit();
-        }
+      else if (m_currSegment == m_numSegments - 1)
+      { // check if we have fully decayed
+        m_isDone = true;
+        m_extSyncPort.Emit();
       }
     }
     else
     {
-      output = m_segments[m_currSegment].base + m_segments[m_currSegment].mult * m_lastRawOutput;
+      m_phase += m_segments[m_currSegment].step;
     }
-    m_lastRawOutput = output;
+    double output = LERP(m_segments[m_currSegment].prev_amp, m_segments[m_currSegment].target_amp, m_phase);
+    if (isinf(output))
+    {
+      output=0;
+    }
     return output;
   }
 
-  void Envelope::setFs(const double fs)
+  void Envelope::setSegment(int seg)
   {
-    m_Fs = fs;
-    for (int i = 0; i < m_numSegments; i++)
-    {
-      refreshPeriod(i, m_segments[i].period, m_segments[i].shape);
-    }
+    if (seg < 0)
+      seg = 0;
+    m_currSegment = seg;
+    m_isDone = false;
+    m_phase = 0.0;
   }
 
   void Envelope::noteOn(int pitch, int vel)
   {
-    m_currSegment = 0;
-    m_lastRawOutput = m_initPoint;
-    m_isDone = false;
+    setSegment(0);
   }
 
   void Envelope::noteOff(int pitch, int vel)
   {
-    m_RelPoint = m_lastRawOutput;
-    m_currSegment = m_numSegments - 1;
+    setSegment(m_numSegments-1);
   }
 
   int Envelope::getSamplesPerPeriod() const

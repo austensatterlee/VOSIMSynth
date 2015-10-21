@@ -4,19 +4,19 @@
 using std::string;
 namespace syn
 {
-  enum PARAM_STATE
-  {
-    FROZEN = 0,
-    ACTIVE
-  };
 
   enum MOD_ACTION
   {
     SET = 0,
-    BIAS,
     ADD,
-    SCALE,
-    SC
+    SCALE
+  };
+
+  enum PARAM_TYPE
+  {
+    DOUBLE_TYPE = 0,
+    INT_TYPE,
+    BOOL_TYPE
   };
 
   
@@ -25,12 +25,11 @@ namespace syn
   protected:
     double m_base;
     double m_offset = 0;
-    double m_bias = 0;
     double m_scale = 1.0;
-    double m_sidechain = 1.0;
-    PARAM_STATE m_state;
+    PARAM_TYPE m_type;
     bool m_isHidden;
     bool m_isDirty;
+    bool m_wasDirty;
     bool m_clamp;
     string m_name;
     double m_min;
@@ -40,10 +39,6 @@ namespace syn
     {
       m_base = val;
     };
-    void bias(double val)
-    {
-      m_bias = val;
-    }
     void add(double val)
     {
       m_offset += val;
@@ -51,22 +46,19 @@ namespace syn
     void scale(double val)
     {
       m_scale *= val;
-    }
-    void sc(double val)
-    {
-      m_sidechain *= val;
     };
   public:
     double m_curr = 0;
-    UnitParameter(string name, double base, double min, double max, bool m_isHidden = false, PARAM_STATE state = ACTIVE) :
+    UnitParameter(string name, double base, double min, double max, PARAM_TYPE type=DOUBLE_TYPE, bool m_isHidden = true) :
       m_name(name),
       m_base(base),
       m_min(min),
       m_max(max),
       m_isHidden(m_isHidden),
-      m_isDirty(false),
-      m_state(state),
-      m_curr(0)
+      m_isDirty(true),
+      m_wasDirty(true),
+      m_curr(0),
+      m_type(type)
     {
       if (m_max <= m_min)
       {
@@ -74,12 +66,20 @@ namespace syn
         m_min = 0;
         m_max = 1;
       }
+      else
+      {
+        m_clamp = true;
+      }
     };
     UnitParameter(const UnitParameter& p);
     virtual ~UnitParameter() {};
     bool isDirty() const
     {
       return m_isDirty;
+    }
+    bool wasDirty() const
+    {
+      return m_wasDirty;
     }
     bool isHidden() const
     {
@@ -102,11 +102,10 @@ namespace syn
       m_isHidden = ishidden;
     }
     
-    void tick(PARAM_STATE state);
     void tick();
     void mod(MOD_ACTION action, double val);
-    double getMin(){return m_min;}
-    double getMax(){return m_max;}
+    double getMin() const{return m_min;}
+    double getMax() const{return m_max;}
 
   };
 }

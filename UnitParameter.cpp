@@ -4,15 +4,13 @@ namespace syn
   UnitParameter::UnitParameter(const UnitParameter& p)
   {
     m_base = p.m_base;
-    m_bias = p.m_bias;
     m_min = p.m_min;
     m_max = p.m_max;
-    m_clamp = p.m_clamp;    
+    m_clamp = p.m_clamp;
+    m_type = p.m_type;
     m_curr = p.m_curr;
     m_offset = p.m_offset;
     m_scale = p.m_scale;
-    m_sidechain = p.m_sidechain;
-    m_state = p.m_state;
     m_isHidden = p.m_isHidden;
     m_isDirty = p.m_isDirty;
     m_name = p.m_name;
@@ -20,30 +18,23 @@ namespace syn
 
   void UnitParameter::tick()
   {
-    m_curr = m_scale*m_base + m_sidechain*(m_offset)+m_bias;
-    
-    if(m_clamp){
-      if(m_curr>m_max)
-        m_curr = m_max;
-      else if(m_curr<m_min)
-        m_curr = m_min;
-    }
-
-    if (m_state == ACTIVE)
+    m_wasDirty = !m_isDirty;
+    if (m_isDirty)
     {
-      m_offset = 0.0;
-      m_scale = 1.0;
-      m_sidechain = 1.0;
-    }
-    m_isDirty = false;
-  }
+      m_curr = (m_scale*(m_base + m_offset));
 
-  void UnitParameter::tick(PARAM_STATE state)
-  {
-    PARAM_STATE oldstate = m_state;
-    m_state = state;
-    tick();
-    m_state = oldstate;
+      if (m_clamp)
+      {
+        if (m_curr > m_max){
+          m_curr = m_max;
+        }else if (m_curr < m_min){
+          m_curr = m_min;
+        }
+      }
+      m_scale = 1.0;
+      m_offset = 0.0;
+      m_isDirty = false;      
+    }
   }
 
   void UnitParameter::mod(MOD_ACTION action, double val)
@@ -52,10 +43,6 @@ namespace syn
     {
       set(val);
     }
-    else if (action == BIAS)
-    {
-      bias(val);
-    }
     else if (action == ADD)
     {
       add(val);
@@ -63,10 +50,6 @@ namespace syn
     else if (action == SCALE)
     {
       scale(val);
-    }
-    else if (action == SC)
-    {
-      sc(val);
     }
     m_isDirty = true;
   }
