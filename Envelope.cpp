@@ -46,6 +46,15 @@ namespace syn
     m_phase = m_phase;
   }
 
+  void Envelope::setFs(double fs)
+  {
+    m_Fs = fs;
+    for (int i = 0; i < m_numSegments; i++)
+    {
+      updateSegment(i);
+    }
+  }
+
   void Envelope::updateSegment(int segment)
   {
     m_segments[segment].shape = getShape(segment);

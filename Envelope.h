@@ -23,6 +23,7 @@ namespace syn
     Envelope(string name, int numSegments);
     Envelope(string name) : Envelope(name, 3) {};
     Envelope(const Envelope& env);
+    void setFs(double fs);
     bool isActive() const { return !m_isDone; };
     void setSegment(int starting_segment); //!< Restarts the envelope beginning at the specified segment
     virtual void noteOn(int pitch, int vel);

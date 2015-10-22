@@ -12,7 +12,8 @@ namespace syn
     public Circuit
   {
   public:
-    Instrument() : m_isActive(false), m_note(-1), m_primarySrcId(-1) {};
+    Instrument() : m_note(-1), m_primarySrcId(-1) {};
+    Instrument(const Instrument& instr);
     virtual ~Instrument() {};
 
     void addSource(SourceUnit* unit);
@@ -25,7 +26,6 @@ namespace syn
   protected:
     typedef vector<int> SourceVec;
     SourceVec m_sourcemap;
-    bool m_isActive;
     int m_note;
     int m_primarySrcId;
   private:

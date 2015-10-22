@@ -75,11 +75,8 @@ namespace syn
       vector<string> pnames = (*it)->getParameterNames();
       for (string pname : pnames)
       {
-        if (!(*it)->getParam(pname).isHidden())
-        {
-          tuple<string, string> nametup{ (*it)->getName(),pname };
-          all_pnames.push_back(nametup);
-        }
+        tuple<string, string> nametup{ (*it)->getName(),pname };
+        all_pnames.push_back(nametup);
       }
       id++;
     }
@@ -218,6 +215,14 @@ namespace syn
 
   void Circuit::addMIDIConnection(MIDIConnection& c)
   {
+    m_midiConnections[c.m_sourceid].push_back(c);
+  }
+
+  void Circuit::addMIDIConnection(IMidiMsg::EControlChangeMsg cc, string targetname, string pname, MOD_ACTION action)
+  {
+    int targetid = getUnitId(targetname);
+    int targetport = m_units[targetid]->getParamId(pname);
+    MIDIConnection c{cc, targetid, targetport, action};
     m_midiConnections[c.m_sourceid].push_back(c);
   }
 

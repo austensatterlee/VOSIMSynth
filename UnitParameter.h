@@ -63,7 +63,7 @@ namespace syn
       if (m_max <= m_min)
       {
         m_clamp = false;
-        m_min = 0;
+        m_min = -1;
         m_max = 1;
       }
       else

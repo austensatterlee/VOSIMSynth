@@ -3,8 +3,9 @@
 #include <cmath>
 namespace syn
 {
-  EnvelopeEditor::EnvelopeEditor(IPlugBase *pPlug, IRECT pR, const double maxTimeScale, const double minAmpScale, const double maxAmpScale, const int numpoints) :
+  EnvelopeEditor::EnvelopeEditor(VOSIMSynth *pPlug, IRECT pR, const double maxTimeScale, const double minAmpScale, const double maxAmpScale, const int numpoints) :
     IControl(pPlug, pR),
+    m_VOSIMPlug(pPlug),
     m_points(numpoints),
     m_timeScale(1.0),
     m_ampScale((maxAmpScale + minAmpScale) / 2.0),
@@ -148,24 +149,28 @@ namespace syn
 
     if (pMod->C)
     {
-      if (m_lastSelectedIdx != m_voiceManager->getProtoInstrument()->readParam(m_targetEnvId, 0))
+      if (m_lastSelectedIdx != m_VOSIMPlug->GetInstrParameter(m_targetEnvId, 0))
       {
-        m_voiceManager->modifyParameter(m_targetEnvId, 0, m_lastSelectedIdx, SET);
+        //m_voiceManager->modifyParameter(m_targetEnvId, 0, m_lastSelectedIdx, SET);
+        m_VOSIMPlug->SetInstrParameter(m_targetEnvId, 0, m_lastSelectedIdx);
       }
       else
       {
-        m_voiceManager->modifyParameter(m_targetEnvId, 0, -1, SET);
+        //m_voiceManager->modifyParameter(m_targetEnvId, 0, -1, SET);
+        m_VOSIMPlug->SetInstrParameter(m_targetEnvId, 0, -1);
       }
     }
     else
     {
-      if (m_lastSelectedIdx != m_voiceManager->getProtoInstrument()->readParam(m_targetEnvId, 1))
+      if (m_lastSelectedIdx != m_VOSIMPlug->GetInstrParameter(m_targetEnvId, 1))
       {
-        m_voiceManager->modifyParameter(m_targetEnvId, 1, m_lastSelectedIdx, SET);
+        //m_voiceManager->modifyParameter(m_targetEnvId, 1, m_lastSelectedIdx, SET);
+        m_VOSIMPlug->SetInstrParameter(m_targetEnvId, 1, m_lastSelectedIdx);
       }
       else
       {
-        m_voiceManager->modifyParameter(m_targetEnvId, 1, -1, SET);
+        //m_voiceManager->modifyParameter(m_targetEnvId, 1, -1, SET);
+        m_VOSIMPlug->SetInstrParameter(m_targetEnvId, 1, -1);
       }
     }
     
@@ -287,8 +292,9 @@ namespace syn
       double xtotal = 0;
       for (int i = 0; i < env->getNumSegments(); i++)
       {
-        xtotal += env->getPeriod(i);
-        m_points[i + 1] = NDPoint<2>{ xtotal , env->getPoint(i) };
+        xtotal += m_VOSIMPlug->GetInstrParameter(m_targetEnvId, env->getPeriodId(i));
+        double amp = m_VOSIMPlug->GetInstrParameter(m_targetEnvId, env->getPointId(i));
+        m_points[i + 1] = NDPoint<2>{ xtotal , amp };
       }
       xtotal = std::ceil(xtotal);
       m_timeScale = xtotal;
@@ -323,6 +329,7 @@ namespace syn
     m_voiceManager = vm;
     m_targetEnvId = vm->getProtoInstrument()->getUnitId(targetEnvName);
     resyncPoints();
+    resyncEnvelope();
   }
 
   void EnvelopeEditor::resyncEnvelope()
@@ -333,10 +340,12 @@ namespace syn
       for (int seg = 0; seg < m_points.size() - 1; seg++)
       {
         // set point
-        m_voiceManager->modifyParameter(m_targetEnvId, env->getPointId(seg), m_ampScale*m_points[seg + 1][1], SET);
+        //m_voiceManager->modifyParameter(m_targetEnvId, env->getPointId(seg), m_ampScale*m_points[seg + 1][1], SET);
+        m_VOSIMPlug->SetInstrParameter(m_targetEnvId, env->getPointId(seg), m_ampScale*m_points[seg + 1][1]);
         // set period
         double newperiod = m_timeScale*(m_points[seg + 1][0] - m_points[seg][0]);
-        m_voiceManager->modifyParameter(m_targetEnvId, env->getPeriodId(seg), newperiod, SET);
+        //m_voiceManager->modifyParameter(m_targetEnvId, env->getPeriodId(seg), newperiod, SET);
+        m_VOSIMPlug->SetInstrParameter(m_targetEnvId, env->getPeriodId(seg), newperiod);
       }
     }
     IControl::SetDirty();

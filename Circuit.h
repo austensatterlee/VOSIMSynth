@@ -33,6 +33,7 @@ namespace syn
     void addConnection(Connection& c);
     void addConnection(string srcname, string targetname, string pname, MOD_ACTION action);
     void addMIDIConnection(MIDIConnection& c);
+    void addMIDIConnection(IMidiMsg::EControlChangeMsg msg, string targetname, string pname, MOD_ACTION action);
     /*!
      * \brief Modify a Unit's parameter
      * \param uid Unit name/id
@@ -46,10 +47,11 @@ namespace syn
 
     /*!
     * \brief Trigger a CC event that will be routed to internal components as specified by previous calls to ::addMIDIConnection.
-    * \sa IMidiMsg
-    * \sa addMIDIConnection
+    * \see IMidiMsg
+    * \see addMIDIConnection
     */
     void sendMIDICC(const IMidiMsg& midimsg);
+
     vector<tuple<string, string>> getParameterNames() const;
     Unit& getUnit(string name) { return *m_units[m_unitmap[name]]; };
     const Unit& getUnit(string name) const { return *m_units.at(m_unitmap.at(name)); };

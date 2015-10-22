@@ -3,6 +3,13 @@
 namespace syn
 {
 
+  Instrument::Instrument(const Instrument& instr)
+  {
+    m_sourcemap = instr.m_sourcemap;
+    m_primarySrcId = instr.m_primarySrcId;
+    m_note = instr.m_note;
+  }
+
   void Instrument::addSource(SourceUnit* unit)
   {
     m_sourcemap.push_back(m_units.size());
@@ -22,7 +29,6 @@ namespace syn
   void Instrument::noteOn(int pitch, int vel)
   {
     m_note = pitch;
-    m_isActive = true;
     for (int i = 0; i < m_sourcemap.size(); i++)
     {
       ((SourceUnit*)m_units[m_sourcemap[i]])->noteOn(pitch, vel);
@@ -31,7 +37,6 @@ namespace syn
 
   void Instrument::noteOff(int pitch, int vel)
   {
-    m_isActive = false;
     for (int i = 0; i < m_sourcemap.size(); i++)
     {
       ((SourceUnit*)m_units[m_sourcemap[i]])->noteOff(pitch, vel);
@@ -45,11 +50,7 @@ namespace syn
 
   Circuit* Instrument::cloneImpl() const
   {
-    Instrument* instr = new Instrument();
-    instr->m_sourcemap = m_sourcemap;
-    instr->m_primarySrcId = m_primarySrcId;
-    instr->m_isActive = m_isActive;
-    instr->m_note = m_note;
+    Instrument* instr = new Instrument(*this);
     return instr;
   }
 

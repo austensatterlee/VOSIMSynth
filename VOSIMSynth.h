@@ -1,7 +1,6 @@
 #ifndef __VOSIMSYNTH__
 #define __VOSIMSYNTH__
 
-#define NUM_VOICES 16
 
 #include "IPlug_include_in_plug_hdr.h"
 #include "MIDIReceiver.h"
@@ -11,7 +10,6 @@
 #include "Filter.h"
 #include "UI.h"
 #include "Oscilloscope.h"
-#include "EnvelopeEditor.h"
 #include "IControl.h"
 #include "resource.h"
 #include "UI.h"
@@ -37,12 +35,16 @@ public:
   void OnParamChange(int paramIdx);
   void ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames);
   void ProcessMidiMsg(IMidiMsg* pMsg);
+  void SetInstrParameter(int unitid, int paramid, double value);
+  double GetInstrParameter(int unitid, int paramid);
 private:
   MIDIReceiver m_MIDIReceiver;
   VoiceManager m_voiceManager;
   Oscilloscope m_Oscilloscope;
   Instrument* m_instr;
-  vector<pair<int,int>> m_hostParamMap;
+  vector<pair<int, int>> m_hostParamMap;
+  unordered_map<int,unordered_map<int,int>> m_invHostParamMap;
+  IGraphics* pGraphics;
   int m_numParameters;
   double mLastOutput = 0.0;
 };

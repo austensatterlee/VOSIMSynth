@@ -1,5 +1,6 @@
 #include "VOSIMSynth.h"
 #include "IPlug_include_in_plug_src.h"
+#include "EnvelopeEditor.h"
 #include <cmath>
 #include <ctime>
 #include <tuple>
@@ -47,7 +48,8 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 
 void VOSIMSynth::makeGraphics()
 {
-  IGraphics* pGraphics = MakeGraphics(this, kWidth, kHeight);
+
+  pGraphics = MakeGraphics(this, kWidth, kHeight);
   pGraphics->AttachPanelBackground(&COLOR_BLACK);
 
   //IBitmap wedgeswitch2p = pGraphics->LoadIBitmap(WEDGE_SWITCH_2P_ID, WEDGE_SWITCH_2P_FN, 2);
@@ -55,6 +57,30 @@ void VOSIMSynth::makeGraphics()
   IBitmap colorKnob = pGraphics->LoadIBitmap(COLOR_RING_KNOB_ID, COLOR_RING_KNOB_FN, kColorKnobFrames);
   //IBitmap toggleswitch3p = pGraphics->LoadIBitmap(TOGGLE_SWITCH_3P_ID, TOGGLE_SWITCH_3P_FN, 3);
   IBitmap numberedKnob = pGraphics->LoadIBitmap(KNOB_ID, KNOB_FN, kNumberedKnobFrames);
+
+  // add parameters from instrument
+  vector<tuple<string, string>> pnames = m_instr->getParameterNames();
+  int i = 0;
+  int j = 0;
+  for (tuple<string, string> splitname : pnames)
+  {
+    string name = get<0>(splitname) + "," + get<1>(splitname);
+    int ownerid = m_instr->getUnitId(get<0>(splitname));
+    Unit& owner = m_instr->getUnit(ownerid);
+    int paramid = owner.getParamId(get<1>(splitname));
+    UnitParameter& param = owner.getParam(paramid);
+
+    GetParam(i)->InitDouble(get<1>(splitname).c_str(), param.getBase(), param.getMin(), param.getMax(), 1E-3, name.c_str(), get<0>(splitname).c_str());
+    if (!param.isHidden())
+    {
+      attachKnob(pGraphics, this, j * 2 / 8, (j * 2) % 8, i, &numberedKnob);
+      j++;
+    }
+    m_hostParamMap.push_back(make_pair(ownerid, paramid));
+    m_invHostParamMap[ownerid][paramid] = i;
+    i++;
+  }
+  m_numParameters = i;
 
   //attachKnob(pGraphics, this, 0, 0, kMainVol, &numberedKnob);
 
@@ -74,21 +100,6 @@ void VOSIMSynth::makeGraphics()
   pGraphics->AttachControl(m_EnvEditor3);
   pGraphics->AttachControl(m_EnvEditor4);
 
-  vector<tuple<string, string>> pnames = m_instr->getParameterNames();
-  int i = 0;
-  for (tuple<string, string> splitname : pnames)
-  {
-    string name = get<0>(splitname) + "," + get<1>(splitname);
-    int ownerid = m_instr->getUnitId(get<0>(splitname));
-    Unit& owner = m_instr->getUnit(ownerid);
-    int paramid = owner.getParamId(get<1>(splitname));
-    UnitParameter& param = owner.getParam(paramid);
-    GetParam(i)->InitDouble(get<1>(splitname).c_str(), param.getBase(), param.getMin(), param.getMax(), 1E-3, name.c_str(), get<0>(splitname).c_str());
-    attachKnob(pGraphics, this, i * 2 / 8, (i * 2) % 8, i, &numberedKnob);
-    m_hostParamMap.push_back(make_pair(ownerid, paramid));
-    i++;
-  }
-  m_numParameters = i;
   AttachGraphics(pGraphics);
 }
 
@@ -129,8 +140,7 @@ void VOSIMSynth::makeInstrument()
   m_instr->setSinkName("filt1");
   m_instr->setPrimarySource("ampenv");
 
-  m_voiceManager.setInstrument(m_instr);
-  m_voiceManager.setMaxVoices(16);
+  m_voiceManager.setMaxVoices(16,m_instr);
   m_instr->getUnit("master").modifyParameter(1, 1. / m_voiceManager.getMaxVoices(), SET);
   m_voiceManager.m_onDyingVoice.Connect(this, &VOSIMSynth::OnDyingVoice);
 
@@ -189,6 +199,20 @@ void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg)
 {
   IMutexLock lock(this);
   m_MIDIReceiver.onMessageReceived(pMsg);
+}
+
+void VOSIMSynth::SetInstrParameter(int unitid, int paramid, double value)
+{
+  int paramidx = m_invHostParamMap[unitid][paramid];
+  GetParam(paramidx)->Set(value);  
+  this->SetParameterFromGUI(paramidx,GetParam(paramidx)->GetNormalized());
+  m_voiceManager.modifyParameter(unitid,paramid,GetParam(paramidx)->Value(),SET);
+}
+
+double VOSIMSynth::GetInstrParameter(int unitid, int paramid)
+{
+  int paramidx = m_invHostParamMap[unitid][paramid];
+  return GetParam(paramidx)->Value();
 }
 
 void VOSIMSynth::Reset()
