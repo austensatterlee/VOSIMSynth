@@ -328,6 +328,11 @@ namespace syn
     if (m_voiceManager)
     {
       m_targetEnvId = vm->getProtoInstrument()->getUnitId(targetEnvName);
+      vector<string> paramnames = vm->getProtoInstrument()->getUnit(m_targetEnvId).getParameterNames();
+      for (int i = 0; i < paramnames.size(); i++)
+      {
+        vm->getProtoInstrument()->getUnit(m_targetEnvId).getParam(paramnames[i]).setController(this);
+      }
       resyncPoints();
       resyncEnvelope();
     }

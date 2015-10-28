@@ -5,8 +5,10 @@
 #include "SourceUnit.h"
 #include "GallantSignal.h"
 #include <vector>
+#include <deque>
 
 using std::vector;
+using std::deque;
 using Gallant::Signal1;
 
 namespace syn
@@ -26,11 +28,13 @@ namespace syn
     double m_minY, m_maxY;
     int m_Padding;
     bool m_isActive;
+    bool m_usePeriodEstimate;
     IRECT m_InnerRect;
     Unit* m_currInput = nullptr;
     SourceUnit* m_currTriggerSrc = nullptr;
     TransformFunc* m_transformFunc = nullptr;
-
+    int m_numSamplesInPeriod;
+    deque<int> m_syncIndexQueue;
     double toScreenX(double val)
     {
       return val*m_InnerRect.W() + m_InnerRect.L;
@@ -47,7 +51,7 @@ namespace syn
     bool IsDirty();
     void setPeriod(int nsamp);
     int getPeriod() { return m_BufSize / m_displayPeriods; };
-    void sync(); //!< automatically called if a trigger source is set
+    void sync(bool isSynced); //!< automatically called if a trigger source is set
     void input(double y); //!< automatically called if an input source is set
     void setTransformFunc(TransformFunc* f) { m_transformFunc = f; };
     void disconnectInput();
@@ -59,6 +63,7 @@ namespace syn
     void OnMouseUp(int x, int y, IMouseMod* pMod);
     void OnMouseWheel(int x, int y, IMouseMod* pMod, int d);
     bool Draw(IGraphics *pGraphics);
+    bool usePeriodEstimate(bool b=true){m_usePeriodEstimate=b;}
 
     /**
     * Computes the DFT for real inputbuf and stores the magnitude spectrum (dB) in outputbuf.

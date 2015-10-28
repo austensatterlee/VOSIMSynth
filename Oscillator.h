@@ -36,16 +36,15 @@ namespace syn
   protected:
     double m_Phase = 0;
     double m_Step = 1;
+    double m_velocity;
     UnitParameter& m_gain;
     UnitParameter& m_pitch;
     UnitParameter& m_pitchshift;
     virtual double process();
     virtual void tick_phase();
   private:
-    double m_velocity;
     OSC_MODE m_Waveform = SINE_WAVE;
     virtual Unit* cloneImpl() const { return new Oscillator(*this); };
-    virtual double finishProcessing(double o) { return m_velocity*m_gain*o; }
   };
 }
 #endif

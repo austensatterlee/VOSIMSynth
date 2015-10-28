@@ -341,6 +341,7 @@
     <ClCompile Include="Oscilloscope.cpp" />
     <ClCompile Include="tables.cpp" />
     <ClCompile Include="UI.cpp" />
+    <ClCompile Include="UnitParameter.cpp" />
     <ClCompile Include="VoiceManager.cpp" />
     <ClCompile Include="VosimOscillator.cpp" />
     <ClCompile Include="VOSIMSynth.cpp" />

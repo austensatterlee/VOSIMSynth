@@ -114,7 +114,8 @@ namespace syn
   {
     double finalOutput = 0;
     mSampleCount++;
-    for (VoiceList::iterator v = m_voiceStack.begin(); v != m_voiceStack.end();)
+    vector<int> garbage_list;
+    for (VoiceList::const_iterator v = m_voiceStack.begin(); v != m_voiceStack.end();v++)
     {
       if (m_allVoices[*v]->isActive())
       {
@@ -124,14 +125,15 @@ namespace syn
         {
           buf[i] += voiceOutput[i];
         }
-        v++;
       }
       else
-      {        
-        int vind = *v;
-        v++;
-        makeIdle(vind);
+      {      
+        garbage_list.push_back(*v);
       }
+    }
+    for (int i = 0; i < garbage_list.size(); i++)
+    {
+      makeIdle(garbage_list[i]);
     }
   }
 
@@ -166,7 +168,7 @@ namespace syn
         }
       }
     }
-    return -1;
+    return 0;
   }
 
 
@@ -179,7 +181,7 @@ namespace syn
           return *it;
       }
     }
-    return -1;
+    return 0;
   }
 
   int VoiceManager::getOldestVoiceInd() const
@@ -192,7 +194,7 @@ namespace syn
           return *it;
       }
     }
-    return -1;
+    return 0;
   }
 
   int VoiceManager::getHighestVoiceInd() const
@@ -208,6 +210,6 @@ namespace syn
         }
       }
     }
-    return -1;
+    return 0;
   }
 }

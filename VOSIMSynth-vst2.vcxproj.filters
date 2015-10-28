@@ -50,6 +50,9 @@
     <ClCompile Include="OscilloscopeTransforms.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
+    <ClCompile Include="UnitParameter.cpp">
+      <Filter>Components\Connectors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\WDL\IPlug\IPlugVST.h">

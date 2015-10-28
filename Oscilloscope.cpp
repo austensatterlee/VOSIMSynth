@@ -12,7 +12,8 @@ namespace syn
     m_displayPeriods(1),
     m_isActive(false),
     m_currSyncDelay(0),
-    m_syncDelayEst(0)
+    m_syncDelayEst(1),
+    m_usePeriodEstimate(false)
   {
     m_InnerRect = IRECT(pR.L + m_Padding, pR.T + m_Padding, pR.R - m_Padding, pR.B - m_Padding);
     setBufSize(size);
@@ -26,39 +27,43 @@ namespace syn
 
   inline void Oscilloscope::setPeriod(int nsamp)
   {
-    setBufSize(m_displayPeriods*nsamp);
+    m_numSamplesInPeriod = nsamp;
+    setBufSize(m_displayPeriods*nsamp * 2);
   }
 
-  void Oscilloscope::sync()
+  void Oscilloscope::sync(bool isSynced)
   {
     if (m_isActive)
     {
-      m_syncDelayEst += 0.9*((double)m_currSyncDelay - m_syncDelayEst);
-      m_currSyncDelay = 0;  
-      m_periodCount++;
-      if (m_periodCount >= m_displayPeriods)
+      m_currSyncDelay++;
+      if (isSynced)
       {
-        m_periodCount = 0;
-        m_BufInd = 0;
+        m_periodCount++;
+        if (m_periodCount >= m_displayPeriods)
+        {
+          m_syncDelayEst += 0.05*((double)m_currSyncDelay - m_syncDelayEst);
+          m_periodCount = 0;
+          m_syncIndexQueue.push_back(m_currSyncDelay);
+          m_currSyncDelay = 0;
 
-        if (m_currTriggerSrc && getPeriod() != m_currTriggerSrc->getSamplesPerPeriod())
-        {
-          setPeriod(m_currTriggerSrc->getSamplesPerPeriod());
-        }
-        else if (!m_currTriggerSrc && getPeriod() != (int)m_syncDelayEst)
-        {
-          setPeriod(m_syncDelayEst);
-        }
-        if (!m_transformFunc)
-        {
-          m_transformFunc = Oscilloscope::passthruTransform;
-        }
-        double windowMinY, windowMaxY;
-        m_transformFunc(m_inputBuffer, m_outputBuffer, windowMinY, windowMaxY);
-        m_minY += 1.1*(1.5*windowMinY - m_minY);
-        m_maxY += 1.1*(1.5*windowMaxY - m_maxY);
+          if (!m_usePeriodEstimate && m_currTriggerSrc && getPeriod() != m_currTriggerSrc->getSamplesPerPeriod())
+          {
+            setPeriod(m_currTriggerSrc->getSamplesPerPeriod());
+          }
+          else if (m_usePeriodEstimate && m_BufSize != (int)m_syncDelayEst)
+          {
+            setPeriod((int)m_syncDelayEst / m_displayPeriods);
+          }
 
-        SetDirty();
+          if (!m_transformFunc)
+          {
+            m_transformFunc = Oscilloscope::passthruTransform;
+          }
+          double windowMinY, windowMaxY;
+          m_transformFunc(m_inputBuffer, m_outputBuffer, windowMinY, windowMaxY);
+          m_minY += 1.1*(1.5*windowMinY - m_minY);
+          m_maxY += 1.1*(1.5*windowMaxY - m_maxY);
+        }
       }
     }
   }
@@ -67,19 +72,24 @@ namespace syn
   {
     if (m_isActive)
     {
-      m_currSyncDelay++;
       m_BufInd++;
       if (m_BufInd >= m_BufSize)
       {
         m_BufInd = 0;
       }
       m_inputBuffer[m_BufInd] = y;
+      if (m_syncIndexQueue.size() && m_syncIndexQueue.front() == m_BufInd)
+      {
+        m_BufInd = 0;
+        m_syncIndexQueue.pop_front();
+        SetDirty();
+      }
     }
   }
 
   void Oscilloscope::setBufSize(int s)
   {
-    if (m_inputBuffer.size() != s)
+    if (s > 0 && m_inputBuffer.size() != s)
       m_inputBuffer.resize(s, 0);
     m_BufSize = s;
     while (m_BufInd > m_BufSize)
@@ -93,6 +103,7 @@ namespace syn
     if (m_currInput)
     {
       m_currInput->m_extOutPort.Disconnect(this, &Oscilloscope::input);
+      m_syncIndexQueue.clear();
     }
     m_currInput = nullptr;
   }
@@ -102,6 +113,7 @@ namespace syn
     if (m_currTriggerSrc)
     {
       m_currTriggerSrc->m_extSyncPort.Disconnect(this, &Oscilloscope::sync);
+      m_syncIndexQueue.clear();
     }
     m_currTriggerSrc = nullptr;
   }
@@ -110,18 +122,16 @@ namespace syn
   {
     if (m_currInput && m_currInput == &srccomp)
     {
-      m_currInput->m_extOutPort.Disconnect(this, &Oscilloscope::input);
+      disconnectInput();
     }
-    m_currInput = nullptr;
   }
 
   void Oscilloscope::disconnectTrigger(SourceUnit& srccomp)
   {
     if (m_currTriggerSrc && m_currTriggerSrc == &srccomp)
     {
-      m_currTriggerSrc->m_extSyncPort.Disconnect(this, &Oscilloscope::sync);
+      disconnectTrigger();
     }
-    m_currTriggerSrc = nullptr;
   }
 
   void Oscilloscope::connectInput(Unit& comp)
@@ -131,6 +141,7 @@ namespace syn
     comp.m_extOutPort.Connect(this, &Oscilloscope::input);
     m_currInput = &comp;
     m_BufInd = 0;
+    m_currSyncDelay = 0;
     m_periodCount = 0;
   }
 
@@ -141,6 +152,7 @@ namespace syn
     comp.m_extSyncPort.Connect(this, &Oscilloscope::sync);
     m_currTriggerSrc = &comp;
     m_BufInd = 0;
+    m_currSyncDelay = 0;
     m_periodCount = 0;
   }
 
@@ -151,6 +163,7 @@ namespace syn
 
   void Oscilloscope::OnMouseWheel(int x, int y, IMouseMod* pMod, int d)
   {
+    m_syncIndexQueue.clear();
     m_displayPeriods = m_displayPeriods + d;
     if (m_displayPeriods <= 0)
       m_displayPeriods = 1;
@@ -178,15 +191,16 @@ namespace syn
     snprintf(gridstr, 32, "%.4f", m_minY);
     pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.L + 10, m_InnerRect.B, m_InnerRect.L, mRECT.B));
     sprintf(gridstr, "Displaying %d periods\nBuffer size: %d (in) %d (out)\nInput frequency: %.2f Hz\nSync: %d", \
-      m_displayPeriods, m_BufSize, m_outputBuffer.size(), GetPlug()->GetSampleRate() / m_BufSize * m_displayPeriods, (int)m_syncDelayEst);
+      m_displayPeriods, m_BufSize, m_outputBuffer.size(), GetPlug()->GetSampleRate() / m_numSamplesInPeriod, m_numSamplesInPeriod);
     pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.R - 200, mRECT.T, mRECT.R, mRECT.B));
     double x1, y1;
     double x2, y2;
 
-    for (int j = 1; j < m_outputBuffer.size(); j += 1)
+    int bufReadLen = m_displayPeriods*m_numSamplesInPeriod;
+    for (int j = 1; j < bufReadLen; j += 1)
     {
-      x1 = toScreenX((j - 1) * 1. / (m_outputBuffer.size()));
-      x2 = toScreenX((j)* 1. / (m_outputBuffer.size()));
+      x1 = toScreenX((j - 1) * 1. / (bufReadLen));
+      x2 = toScreenX((j)* 1. / (bufReadLen));
       y1 = toScreenY(m_outputBuffer[j - 1]);
       y2 = toScreenY(m_outputBuffer[j]);
       cval.R = 255 * (1 - (y2 - m_InnerRect.T) / m_InnerRect.H());

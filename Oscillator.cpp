@@ -40,9 +40,7 @@ double Oscillator::process()
     output = 0;
     break;
   }
-  if(isSynced())
-    m_extSyncPort.Emit();
-  return output;
+  return m_velocity*m_gain*output;
 }
 
 /**
@@ -56,6 +54,11 @@ void Oscillator::tick_phase()
   m_Phase += m_Step;
   if (m_Phase > 1)
     m_Phase -= 1;
+
+  if (isSynced())
+  {
+    m_isSynced = true;
+  }
 }
 
 }

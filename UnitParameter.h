@@ -2,6 +2,8 @@
 #define __Parameter__
 
 #include <string>
+#include "IControl.h"
+
 using std::string;
 namespace syn
 {
@@ -29,16 +31,17 @@ namespace syn
     double m_currValue;
     double m_min, m_max;
     PARAM_TYPE m_type;
-
+    const IControl* m_controller;
   public:
     UnitParameter(string name, int id, PARAM_TYPE ptype, double min, double max) :
       m_name(name),
       m_id(id),
       m_type(ptype),
       m_min(min),
-      m_max(max)
+      m_max(max),
+      m_controller(nullptr)
     {
-      mod(0.5*(m_max+m_min),SET);
+      mod(0.5*(m_max + m_min), SET);
     }
     UnitParameter() : UnitParameter("uninitialized", -1, DOUBLE_TYPE, 0, 0)
     {}
@@ -49,26 +52,8 @@ namespace syn
     }
     virtual ~UnitParameter() {};
 
-    bool operator== (const UnitParameter& p) const
-    {
-      return m_id == p.m_id && m_name == p.m_name && m_type == p.m_type && m_min == p.m_min && m_max == p.m_max;
-    }
-    virtual void mod(double amt, MOD_ACTION action)
-    {
-      if (action == SET)
-      {
-        m_baseValue = amt;
-        m_currValue = m_baseValue;
-      }
-      else if (action == ADD)
-      {
-        m_currValue += amt;
-      }
-      else if (action == SCALE)
-      {
-        m_currValue *= amt;
-      }
-    }
+    bool operator== (const UnitParameter& p) const;
+    virtual void mod(double amt, MOD_ACTION action);
     operator double() const { return m_currValue; }
     /**
      * \brief Prepare the parameter for the next sample by resetting to the base value
@@ -80,9 +65,12 @@ namespace syn
 
     const string getName() const { return m_name; };
     const int getId() const { return m_id; };
-    double getBase() { return m_baseValue; }
-    double getMin() { return m_min; }
-    double getMax() { return m_max; }
+    double getBase() const { return m_baseValue; }
+    double getMin() const { return m_min; }
+    double getMax() const { return m_max; }
+    const IControl* getController() { return m_controller; }
+    void setController(const IControl* controller);
+    void unsetController(const IControl* controller);
     UnitParameter* clone() const
     {
       UnitParameter* other = cloneImpl();
@@ -93,6 +81,7 @@ namespace syn
       other->m_max = m_max;
       other->m_min = m_min;
       other->m_type = m_type;
+      other->m_controller = m_controller;
       return other;
     }
   private:

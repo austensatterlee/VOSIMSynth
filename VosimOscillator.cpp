@@ -67,11 +67,7 @@ namespace syn
       _ASSERT(1. / m_CompensationGain > tableval);
       vout = m_CurrPulseGain*m_CompensationGain*tableval;
     }
-    if (isSynced())
-    {
-      m_extSyncPort.Emit();
-    }
     m_LastPulsePhase = pulsePhase;
-    return vout;
+    return m_velocity*m_gain*vout;
   }
 }

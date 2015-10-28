@@ -15,8 +15,8 @@
 #include <cstring>
 
 using namespace std;
-#define O_TU "osc1"
-#define O_U "filt1"
+#define O_TU "osc0"
+#define O_U "master"
 
 
 const int kNumPrograms = 1;
@@ -72,7 +72,6 @@ void VOSIMSynth::makeGraphics()
   // add parameters from instrument
   vector<tuple<string, string>> pnames = m_instr->getParameterNames();
   int i = 0;
-  int j = 0;
   for (tuple<string, string> splitname : pnames)
   {
     string name = get<0>(splitname) + "," + get<1>(splitname);
@@ -82,10 +81,7 @@ void VOSIMSynth::makeGraphics()
     UnitParameter& param = owner.getParam(paramid);
 
     GetParam(i)->InitDouble(get<1>(splitname).c_str(), param.getBase(), param.getMin(), param.getMax(), 1E-3, name.c_str(), get<0>(splitname).c_str());
-
-    attachKnob(pGraphics, this, j * 2 / 8, (j * 2) % 8, i, &numberedKnob);
-    j++;
-
+  
     m_hostParamMap.push_back(make_pair(ownerid, paramid));
     m_invHostParamMap[ownerid][paramid] = i;
     i++;
@@ -96,16 +92,29 @@ void VOSIMSynth::makeGraphics()
 
   EnvelopeEditor* m_EnvEditor1 = new EnvelopeEditor(this, &m_voiceManager, "ampenv", IRECT(500, 10, 800 - 10, 150), 10, 0, 1);
   EnvelopeEditor* m_EnvEditor2 = new EnvelopeEditor(this, &m_voiceManager, "penv1", IRECT(500, 160, 800 - 10, 300), 10, -1.0, 1.0);
-  //EnvelopeEditor* m_EnvEditor3 = new EnvelopeEditor(this, &m_voiceManager, "penv2", IRECT(500, 310, 800 - 10, 450), 10, -1.0, 1.0);
+  EnvelopeEditor* m_EnvEditor3 = new EnvelopeEditor(this, &m_voiceManager, "penv2", IRECT(500, 310, 800 - 10, 450), 10, -1.0, 1.0);
   //EnvelopeEditor* m_EnvEditor4 = new EnvelopeEditor(this, &m_voiceManager, "penv3", IRECT(500, 460, 800 - 10, 600), 10, -1.0, 1.0);
 
   pGraphics->AttachControl(&m_Oscilloscope);
   pGraphics->AttachControl(m_EnvEditor1);
   pGraphics->AttachControl(m_EnvEditor2);
-  //pGraphics->AttachControl(m_EnvEditor3);
+  pGraphics->AttachControl(m_EnvEditor3);
   //pGraphics->AttachControl(m_EnvEditor4);
 
+  //m_Oscilloscope.setTransformFunc(Oscilloscope::magnitudeTransform);
   m_Oscilloscope.setTransformFunc(Oscilloscope::passthruTransform);
+
+  int j = 0;
+  for (int i = 0; i < m_hostParamMap.size(); i++)
+  {
+    UnitParameter& param = m_instr->getUnit(m_hostParamMap[i].first).getParam(m_hostParamMap[i].second);
+    if (!param.getController())
+    {
+      attachKnob(pGraphics, this, j * 2 / 8, (j * 2) % 8, i, &numberedKnob);
+      j++;
+    }
+  }
+
   AttachGraphics(pGraphics);
 }
 
@@ -113,21 +122,24 @@ void VOSIMSynth::makeInstrument()
 {
   Envelope* env = new Envelope("ampenv");
   Envelope* penv1 = new Envelope("penv1");
-  Oscillator* osc1 = new VosimOscillator("osc1");
+  Envelope* penv2 = new Envelope("penv2");
   Oscillator* osc0 = new Oscillator("osc0");
+  Oscillator* osc1 = new VosimOscillator("osc1");
   osc0->setWaveform(SAW_WAVE);
   AccumulatingUnit* acc = new AccumulatingUnit("master");
   Filter<AA_FILTER_SIZE + 1, AA_FILTER_SIZE>* filt1 = new Filter<AA_FILTER_SIZE + 1, AA_FILTER_SIZE>("filt1", AA_FILTER_X, AA_FILTER_Y);
- 
+
   m_instr = new Instrument();
   m_instr->addSource(env);
   m_instr->addSource(penv1);
-  m_instr->addSource(osc1);
+  m_instr->addSource(penv2);
   m_instr->addSource(osc0);
+  m_instr->addSource(osc1);
   m_instr->addUnit(filt1);
   m_instr->addUnit(acc);
   m_instr->addConnection("ampenv", "master", "gain", SCALE);
   m_instr->addConnection("penv1", "osc1", "pulsepitch", ADD);
+  m_instr->addConnection("penv2", "osc1", "number", ADD);
   m_instr->addConnection("osc0", "master", "input", ADD);
   m_instr->addConnection("osc1", "master", "input", ADD);
   m_instr->addConnection("master", "filt1", "input", ADD);
@@ -145,8 +157,7 @@ void VOSIMSynth::makeInstrument()
 }
 
 void VOSIMSynth::unitTickHook(double input)
-{
-}
+{}
 
 void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel)
 {
@@ -168,8 +179,6 @@ void VOSIMSynth::OnNoteOff(uint8_t pitch, uint8_t vel)
 
 void VOSIMSynth::OnDyingVoice(Instrument* dying)
 {
-  m_Oscilloscope.disconnectInput(dying->getUnit(O_U));
-  m_Oscilloscope.disconnectTrigger(dying->getSourceUnit(O_TU));
   Instrument* vnew = m_voiceManager.getNewestVoice();
   if (vnew)
   {
@@ -207,9 +216,8 @@ void VOSIMSynth::SetInstrParameter(int unitid, int paramid, double value)
 {
   int paramidx = m_invHostParamMap[unitid][paramid];
   GetParam(paramidx)->Set(value);
-  InformHostOfParamChange(paramidx, value);
+  InformHostOfParamChange(paramidx, GetParam(paramidx)->GetNormalized());
   OnParamChange(paramidx);
-  m_voiceManager.modifyParameter(unitid, paramid, GetParam(paramidx)->Value(), SET);
 }
 
 double VOSIMSynth::GetInstrParameter(int unitid, int paramid)

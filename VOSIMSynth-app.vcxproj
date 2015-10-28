@@ -328,6 +328,7 @@
     <ClCompile Include="table_data.cpp" />
     <ClCompile Include="UI.cpp" />
     <ClCompile Include="Unit.cpp" />
+    <ClCompile Include="UnitParameter.cpp" />
     <ClCompile Include="VoiceManager.cpp" />
     <ClCompile Include="VosimOscillator.cpp" />
     <ClCompile Include="VOSIMSynth.cpp" />

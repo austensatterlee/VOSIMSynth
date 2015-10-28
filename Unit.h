@@ -61,22 +61,22 @@ namespace syn
     Signal1<double> m_extOutPort;
   protected:
     typedef vector<UnitParameter*> ParamVec;
-    virtual double process() = 0;
-    UnitParameter& addParam(string name, int id, PARAM_TYPE ptype, double min, double max);
-    UnitParameter& addParam(string name, PARAM_TYPE ptype, double min, double max);
     ParamVec m_params;
     IDMap m_parammap;
     string m_name;
     Circuit* parent;
     double m_Fs;
     vector<double> m_output;
-  private:
-    void tickParams(vector<Connection*>& connections);
-    virtual Unit* cloneImpl() const = 0;
+    virtual double process() = 0;
+    UnitParameter& addParam(string name, int id, PARAM_TYPE ptype, double min, double max);
+    UnitParameter& addParam(string name, PARAM_TYPE ptype, double min, double max);
     virtual double finishProcessing(double o)
     {
       return o;
     };
+  private:
+    void tickParams(vector<Connection*>& connections);
+    virtual Unit* cloneImpl() const = 0;
   };
 
   /*

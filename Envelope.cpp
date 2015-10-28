@@ -103,7 +103,7 @@ namespace syn
       if (m_currSegment + 1 == (int)readParam(1))
       { // check if we have reached a loop point
         setSegment((int)readParam(0));
-        m_extSyncPort.Emit();
+        m_isSynced = true;
       }
       else if (m_currSegment < m_numSegments - 2)
       { // check if we have reached the sustain point
@@ -112,7 +112,7 @@ namespace syn
       else if (m_currSegment == m_numSegments - 1)
       { // check if we have fully decayed
         m_isDone = true;
-        m_extSyncPort.Emit();
+        m_isSynced = true;
       }
     }
     else
