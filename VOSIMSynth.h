@@ -1,29 +1,23 @@
 #ifndef __VOSIMSYNTH__
 #define __VOSIMSYNTH__
 
-
 #include "IPlug_include_in_plug_hdr.h"
+#include "resource.h"
 #include "MIDIReceiver.h"
 #include "VoiceManager.h"
 #include "Instrument.h"
-#include "Connection.h"
-#include "Filter.h"
-#include "UI.h"
 #include "Oscilloscope.h"
-#include "IControl.h"
-#include "resource.h"
-#include "UI.h"
-#include "Envelope.h"
-#include "Oscillator.h"
-#include "VosimOscillator.h"
+#include <vector>
 
 using namespace syn;
+using namespace std;
 
 class VOSIMSynth : public IPlug {
 public:
   VOSIMSynth(IPlugInstanceInfo instanceInfo);
   void makeGraphics();
   void makeInstrument();
+  void unitTickHook(double input);
   void OnNoteOn(uint8_t pitch, uint8_t vel);
   void OnNoteOff(uint8_t pitch, uint8_t vel);
   void OnDyingVoice(Instrument* dying);
@@ -46,7 +40,7 @@ private:
   unordered_map<int,unordered_map<int,int>> m_invHostParamMap;
   IGraphics* pGraphics;
   int m_numParameters;
-  double mLastOutput = 0.0;
+  unsigned int m_sampleCount;
 };
 
 #endif

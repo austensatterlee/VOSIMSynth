@@ -13,7 +13,11 @@ namespace syn
   {
   public:
     Instrument() : m_note(-1), m_primarySrcId(-1) {};
-    Instrument(const Instrument& instr);
+    Instrument(const Instrument& instr) :
+      m_sourcemap(instr.m_sourcemap),
+      m_primarySrcId(instr.m_primarySrcId),
+      m_note(instr.m_note)
+    {}
     virtual ~Instrument() {};
 
     void addSource(SourceUnit* unit);

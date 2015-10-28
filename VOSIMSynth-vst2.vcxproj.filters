@@ -47,8 +47,8 @@
     <ClCompile Include="VoiceManager.cpp">
       <Filter>Components\Composite</Filter>
     </ClCompile>
-    <ClCompile Include="UnitParameter.cpp">
-      <Filter>Components\Connectors</Filter>
+    <ClCompile Include="OscilloscopeTransforms.cpp">
+      <Filter>Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

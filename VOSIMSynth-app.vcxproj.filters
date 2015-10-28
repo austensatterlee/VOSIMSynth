@@ -10,6 +10,30 @@
     <Filter Include="app\ASIO_SDK">
       <UniqueIdentifier>{b91b9db4-5584-4959-a395-7394ba3cf5a3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{3f4b1097-126c-45a1-9566-7e153980207d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{8a97cec2-798f-4da9-ac48-6ba7cd37a6e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components">
+      <UniqueIdentifier>{6fd4ade1-4bfc-42ee-9111-d947f86d5329}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Generators">
+      <UniqueIdentifier>{991e3e5e-52c4-4eba-97ba-5b039e75eb6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Unary">
+      <UniqueIdentifier>{d6ad17d6-17e4-4e7a-ab2e-588d79166981}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Atomic">
+      <UniqueIdentifier>{75534c9b-228d-4c22-9bd7-6ca4b4a9c33f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Composite">
+      <UniqueIdentifier>{70598cf0-8f0b-4f24-bcde-18d6b140879c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Connectors">
+      <UniqueIdentifier>{99a9473b-2c42-4ff1-af5c-d8ff5844483f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\WDL\rtaudiomidi\RtAudio.h">
@@ -48,15 +72,66 @@
       <Filter>app</Filter>
     </ClInclude>
     <ClInclude Include="app_wrapper\app_resource.h" />
-    <ClInclude Include="Oscillator.h" />
-    <ClInclude Include="MIDIReceiver.h" />
-    <ClInclude Include="pbSignal.h" />
-    <ClInclude Include="Delegate.h" />
-    <ClInclude Include="tables.h" />
-    <ClInclude Include="VoiceManager.h" />
-    <ClInclude Include="UI.h" />
-    <ClInclude Include="Filter.h" />
-    <ClInclude Include="Envelope.h" />
+    <ClInclude Include="EnvelopeEditor.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Oscilloscope.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="NDPoint.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Delegate.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="DSPMath.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="tables.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="MIDIReceiver.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="GallantSignal.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Envelope.h">
+      <Filter>Components\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="VosimOscillator.h">
+      <Filter>Components\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="Oscillator.h">
+      <Filter>Components\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="Filter.h">
+      <Filter>Components\Unary</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceUnit.h">
+      <Filter>Components\Atomic</Filter>
+    </ClInclude>
+    <ClInclude Include="Unit.h">
+      <Filter>Components\Atomic</Filter>
+    </ClInclude>
+    <ClInclude Include="Circuit.h">
+      <Filter>Components\Composite</Filter>
+    </ClInclude>
+    <ClInclude Include="Instrument.h">
+      <Filter>Components\Composite</Filter>
+    </ClInclude>
+    <ClInclude Include="VoiceManager.h">
+      <Filter>Components\Composite</Filter>
+    </ClInclude>
+    <ClInclude Include="Connection.h">
+      <Filter>Components\Connectors</Filter>
+    </ClInclude>
+    <ClInclude Include="UnitParameter.h">
+      <Filter>Components\Connectors</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\WDL\rtaudiomidi\RtAudio.cpp">
@@ -84,12 +159,51 @@
     <ClCompile Include="..\..\WDL\IPlug\IPlugStandalone.cpp">
       <Filter>app</Filter>
     </ClCompile>
-    <ClCompile Include="Oscillator.cpp" />
-    <ClCompile Include="MIDIReceiver.cpp" />
-    <ClCompile Include="tables.cpp" />
-    <ClCompile Include="VoiceManager.cpp" />
-    <ClCompile Include="UI.cpp" />
-    <ClCompile Include="Filter.cpp" />
+    <ClCompile Include="EnvelopeEditor.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Oscilloscope.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="OscilloscopeTransforms.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="tables.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="MIDIReceiver.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="table_data.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Envelope.cpp">
+      <Filter>Components\Generators</Filter>
+    </ClCompile>
+    <ClCompile Include="VosimOscillator.cpp">
+      <Filter>Components\Generators</Filter>
+    </ClCompile>
+    <ClCompile Include="Oscillator.cpp">
+      <Filter>Components\Generators</Filter>
+    </ClCompile>
+    <ClCompile Include="Filter.cpp">
+      <Filter>Components\Unary</Filter>
+    </ClCompile>
+    <ClCompile Include="Unit.cpp">
+      <Filter>Components\Atomic</Filter>
+    </ClCompile>
+    <ClCompile Include="Circuit.cpp">
+      <Filter>Components\Composite</Filter>
+    </ClCompile>
+    <ClCompile Include="Instrument.cpp">
+      <Filter>Components\Composite</Filter>
+    </ClCompile>
+    <ClCompile Include="VoiceManager.cpp">
+      <Filter>Components\Composite</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VOSIMSynth.rc" />

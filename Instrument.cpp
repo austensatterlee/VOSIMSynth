@@ -3,13 +3,6 @@
 namespace syn
 {
 
-  Instrument::Instrument(const Instrument& instr)
-  {
-    m_sourcemap = instr.m_sourcemap;
-    m_primarySrcId = instr.m_primarySrcId;
-    m_note = instr.m_note;
-  }
-
   void Instrument::addSource(SourceUnit* unit)
   {
     m_sourcemap.push_back(m_units.size());

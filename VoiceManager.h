@@ -50,11 +50,11 @@ namespace syn
     int getMaxVoices(){return m_maxVoices;};
     void modifyParameter(int uid, int pid, double val, MOD_ACTION action);
     void sendMIDICC(IMidiMsg& msg);
-    double tick();
+    void tick(double* buf, size_t nsamples);
     Signal1<Instrument*> m_onDyingVoice;
 
     VoiceManager() :
-      m_numVoices(1),
+      m_numVoices(0),
       mSampleCount(0)
     {
     };

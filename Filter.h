@@ -18,13 +18,14 @@ namespace syn
     const double (&YCoefs)[nY];
     double *YBuf, *XBuf;
     int xBufInd, yBufInd;
+    UnitParameter& m_input;
   public:
     Filter(string name, const double(&X)[nX], const double(&Y)[nY]) :
       Unit(name),
       XCoefs(X),
-      YCoefs(Y)
+      YCoefs(Y),
+      m_input(addParam("input",DOUBLE_TYPE, -1, 1))
     {
-      addParam(UnitParameter{ "input",0,0,0,DOUBLE_TYPE,true });
       xBufInd = 0;
       yBufInd = 0;
       // XCoefs = (double*)malloc(sizeof(double)*numXCoefs);
@@ -49,6 +50,7 @@ namespace syn
       delete[] YBuf;
       delete[] XBuf;
     };
+    void reset(){ memset(YBuf,0,(nY+1)*sizeof(double)); memset(XBuf,0,(nX)*sizeof(double)); xBufInd=0; yBufInd=0; };
   protected:
     virtual double process();
   private:

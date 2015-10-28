@@ -235,3 +235,4 @@ build-win/
 *.plist
 *.pdf
 *.pyc
+doc/

@@ -3,10 +3,9 @@
 #include <cmath>
 namespace syn
 {
-  EnvelopeEditor::EnvelopeEditor(VOSIMSynth *pPlug, IRECT pR, const double maxTimeScale, const double minAmpScale, const double maxAmpScale, const int numpoints) :
+  EnvelopeEditor::EnvelopeEditor(VOSIMSynth *pPlug, VoiceManager* vm, string envname, IRECT pR, const double maxTimeScale, const double minAmpScale, const double maxAmpScale) :
     IControl(pPlug, pR),
     m_VOSIMPlug(pPlug),
-    m_points(numpoints),
     m_timeScale(1.0),
     m_ampScale((maxAmpScale + minAmpScale) / 2.0),
     m_maxTimeScale(maxTimeScale),
@@ -16,16 +15,13 @@ namespace syn
     m_lastMouseMod(0),
     m_lastMouse(0, 0),
     m_isMouseDown(false),
-    m_lastSelectedIdx(0)
+    m_lastSelectedIdx(-1)
   {
     m_InnerRect = IRECT(pR.L + m_Padding, pR.T + m_Padding, pR.R - m_Padding, pR.B - m_Padding);
-    double xspacing = 1.0 / (m_points.size() + 1);
-    for (int i = 0; i < m_points.size(); i++)
-    {
-      m_points[i] = NDPoint<2>{ (double)(i + 1)*xspacing, 0.5 };
-    }
     m_ltpt = NDPoint<2>((double)m_InnerRect.L, (double)m_InnerRect.T);
     m_whpt = NDPoint<2>((double)m_InnerRect.W(), (double)m_InnerRect.H());
+
+    setEnvelope(vm, envname);
   }
 
   EnvelopeEditor::~EnvelopeEditor()
@@ -38,7 +34,7 @@ namespace syn
 
     double min_dist = -1;
     int min_pt_idx;
-    for (int i = 1; i < m_points.size(); i++)
+    for (int i = 0; i < m_points.size(); i++)
     {
       NDPoint<2>& pt = m_points[i];
       double curr_dist = mousept.distFrom(pt);
@@ -49,6 +45,17 @@ namespace syn
       }
     }
     return min_pt_idx;
+  }
+
+  void EnvelopeEditor::insertPointFromScreen(const NDPoint<2>& screenpt)
+  {
+    int afterIndex = getSelected(screenpt[0], screenpt[1]);
+    NDPoint<2> modelpt = toModel(screenpt);
+    m_points.insert(m_points.begin() + afterIndex, modelpt);
+
+    Envelope* env = (Envelope*)(&m_voiceManager->getProtoInstrument()->getUnit(m_targetEnvId));
+
+    resyncEnvelope();
   }
 
   NDPoint<2>& EnvelopeEditor::getPoint(int index)
@@ -82,37 +89,30 @@ namespace syn
       m_lastSelectedIdx = getSelected(mouse_pt[0], mouse_pt[1]);
       m_isMouseDown = true;
     }
-    if (!m_lastSelectedIdx)
+    if (m_lastSelectedIdx <= 0)
     {
-      return;
+      m_lastSelectedIdx = 1;
     }
 
     mouse_pt = toModel(mouse_pt);
     // Clamp point to stay between its neighbors
     NDPoint<2> bottomleftBound{ m_points[m_lastSelectedIdx - 1][0], 0.0 };
     NDPoint<2> toprightBound;
-    if (m_lastSelectedIdx != m_points.size() - 1)
+    if (m_lastSelectedIdx == m_points.size() - 1)
     {
-      toprightBound = NDPoint<2>{ m_points[m_lastSelectedIdx + 1][0], 1.0 };
+      toprightBound = NDPoint<2>{ 1.0, 1.0 };
     }
     else
     {
-      toprightBound = NDPoint<2>{ 1.0, 1.0 };
+      toprightBound = NDPoint<2>{ m_points[m_lastSelectedIdx + 1][0], 1.0 };
     }
     mouse_pt.clamp(bottomleftBound, toprightBound);
     m_lastMouse = mouse_pt;
     m_lastMouseMod = *pMod;
 
-    // Ensure release target stays at 0.0
-    NDPoint<2> oldpoint = m_points[m_lastSelectedIdx];
-    //if (m_lastSelectedIdx != m_points.size() - 1)
-    //{
+    NDPoint<2>& oldpoint = m_points[m_lastSelectedIdx];
     m_points[m_lastSelectedIdx] = m_lastMouse;
-    //}
-    //else
-    //{
-    //  m_points[m_lastSelectedIdx][0] = m_lastMouse[0];
-    //}
+
     // Check that moving the point doesn't push any other points off the grid before applying
     NDPoint<2> diff = (m_points[m_lastSelectedIdx] - oldpoint)*getUnitv<2>(0);
     if (pMod->S)
@@ -136,8 +136,7 @@ namespace syn
   void EnvelopeEditor::OnMouseUp(int x, int y, IMouseMod * pMod)
   {
     m_isMouseDown = false;
-    m_lastSelectedIdx = 0;
-    IControl::SetDirty();
+    m_lastSelectedIdx = -1;
   }
 
   void EnvelopeEditor::OnMouseDblClick(int x, int y, IMouseMod* pMod)
@@ -151,12 +150,10 @@ namespace syn
     {
       if (m_lastSelectedIdx != m_VOSIMPlug->GetInstrParameter(m_targetEnvId, 0))
       {
-        //m_voiceManager->modifyParameter(m_targetEnvId, 0, m_lastSelectedIdx, SET);
         m_VOSIMPlug->SetInstrParameter(m_targetEnvId, 0, m_lastSelectedIdx);
       }
       else
       {
-        //m_voiceManager->modifyParameter(m_targetEnvId, 0, -1, SET);
         m_VOSIMPlug->SetInstrParameter(m_targetEnvId, 0, -1);
       }
     }
@@ -164,16 +161,14 @@ namespace syn
     {
       if (m_lastSelectedIdx != m_VOSIMPlug->GetInstrParameter(m_targetEnvId, 1))
       {
-        //m_voiceManager->modifyParameter(m_targetEnvId, 1, m_lastSelectedIdx, SET);
         m_VOSIMPlug->SetInstrParameter(m_targetEnvId, 1, m_lastSelectedIdx);
       }
       else
       {
-        //m_voiceManager->modifyParameter(m_targetEnvId, 1, -1, SET);
         m_VOSIMPlug->SetInstrParameter(m_targetEnvId, 1, -1);
       }
     }
-    
+    resyncEnvelope();
   }
 
   void EnvelopeEditor::OnMouseWheel(int x, int y, IMouseMod* pMod, int d)
@@ -208,7 +203,6 @@ namespace syn
         m_timeScale -= modamt;
     }
     resyncEnvelope();
-    IControl::SetDirty();
   }
 
   bool EnvelopeEditor::Draw(IGraphics* pGraphics)
@@ -236,14 +230,16 @@ namespace syn
     IColor* currColor;
 
     pGraphics->DrawRect(&bgcolor1, &m_InnerRect);
-    for (int i = 1; i < m_points.size(); i++)
+    for (int i = 0; i < m_points.size(); i++)
     {
       double ptsize = 3;
-      screenpt1 = toScreen(m_points[i - 1]);
       screenpt2 = toScreen(m_points[i]);
-
-      pGraphics->DrawLine(&fgcolor1, screenpt1[0], screenpt1[1], screenpt2[0], screenpt2[1], 0, true);
-      if (m_lastSelectedIdx && i == m_lastSelectedIdx)
+      if (i > 0)
+      {
+        screenpt1 = toScreen(m_points[i - 1]);
+        pGraphics->DrawLine(&fgcolor1, screenpt1[0], screenpt1[1], screenpt2[0], screenpt2[1], 0, true);
+      }
+      if (i == m_lastSelectedIdx)
       {
         currColor = &hicolor;
       }
@@ -263,20 +259,22 @@ namespace syn
         }
       }
       pGraphics->FillCircle(currColor, screenpt2[0], screenpt2[1], ptsize, 0, true);
-      currPeriod = env->getPeriod(i - 1);
-      cumuPeriod += currPeriod;
-      sprintf(strbuffer, "%.2f", currPeriod);
-      pGraphics->DrawIText(&fgtxtstyle, strbuffer, &IRECT(screenpt2[0], mRECT.B - 10 - 10, mRECT.R, mRECT.B));
-      sprintf(strbuffer, "%.2f", cumuPeriod);
-      pGraphics->DrawIText(&bgtxtstyle, strbuffer, &IRECT(screenpt2[0], mRECT.B - 10, mRECT.R, mRECT.B));
-      pGraphics->DrawLine(&gridcolor, screenpt2[0], mRECT.B - m_Padding, screenpt2[0], screenpt2[1], 0, true);
-      if (i == env->readParam(0))
-      {
-        pGraphics->DrawIText(&fgtxtstyle, "S", &IRECT(screenpt2[0] - 15, screenpt2[1] - 10, mRECT.R, mRECT.B));
-      }
-      if (i == env->readParam(1))
-      {
-        pGraphics->DrawIText(&fgtxtstyle, "E", &IRECT(screenpt2[0] + 5, screenpt2[1] - 10, mRECT.R, mRECT.B));
+      if(i>0){
+        currPeriod = env->getPeriod(i-1);
+        cumuPeriod += currPeriod;
+        sprintf(strbuffer, "%.2f", currPeriod);
+        pGraphics->DrawIText(&fgtxtstyle, strbuffer, &IRECT(screenpt2[0], mRECT.B - 10 - 10, mRECT.R, mRECT.B));
+        sprintf(strbuffer, "%.2f", cumuPeriod);
+        pGraphics->DrawIText(&bgtxtstyle, strbuffer, &IRECT(screenpt2[0], mRECT.B - 10, mRECT.R, mRECT.B));
+        pGraphics->DrawLine(&gridcolor, screenpt2[0], mRECT.B - m_Padding, screenpt2[0], screenpt2[1], 0, true);
+        if (i == env->readParam(0))
+        {
+          pGraphics->DrawIText(&fgtxtstyle, "S", &IRECT(screenpt2[0] - 15, screenpt2[1] - 10, mRECT.R, mRECT.B));
+        }
+        if (i == env->readParam(1))
+        {
+          pGraphics->DrawIText(&fgtxtstyle, "E", &IRECT(screenpt2[0] + 5, screenpt2[1] - 10, mRECT.R, mRECT.B));
+        }
       }
     }
     return true;
@@ -284,7 +282,7 @@ namespace syn
 
   void EnvelopeEditor::resyncPoints()
   {
-    if (m_voiceManager)
+    if (m_voiceManager && !m_isMouseDown)
     {
       Envelope* env = (Envelope*)(&m_voiceManager->getProtoInstrument()->getUnit(m_targetEnvId));
       m_points.resize(env->getNumSegments() + 1);
@@ -300,7 +298,7 @@ namespace syn
       m_timeScale = xtotal;
       for (int i = 0; i < env->getNumSegments(); i++)
       {
-        m_points[i + 1][0] /= xtotal;
+        m_points[i + 1][0] /= m_timeScale;
       }
       SetDirty();
     }
@@ -321,15 +319,18 @@ namespace syn
 
   bool EnvelopeEditor::IsDirty()
   {
-    return mDirty;
+    return true;
   }
 
   void EnvelopeEditor::setEnvelope(VoiceManager* vm, string targetEnvName)
   {
     m_voiceManager = vm;
-    m_targetEnvId = vm->getProtoInstrument()->getUnitId(targetEnvName);
-    resyncPoints();
-    resyncEnvelope();
+    if (m_voiceManager)
+    {
+      m_targetEnvId = vm->getProtoInstrument()->getUnitId(targetEnvName);
+      resyncPoints();
+      resyncEnvelope();
+    }
   }
 
   void EnvelopeEditor::resyncEnvelope()
@@ -337,6 +338,7 @@ namespace syn
     if (m_voiceManager)
     {
       Envelope* env = (Envelope*)(&m_voiceManager->getProtoInstrument()->getUnit(m_targetEnvId));
+
       for (int seg = 0; seg < m_points.size() - 1; seg++)
       {
         // set point
@@ -347,8 +349,8 @@ namespace syn
         //m_voiceManager->modifyParameter(m_targetEnvId, env->getPeriodId(seg), newperiod, SET);
         m_VOSIMPlug->SetInstrParameter(m_targetEnvId, env->getPeriodId(seg), newperiod);
       }
+      SetDirty();
     }
-    IControl::SetDirty();
   }
 
 }

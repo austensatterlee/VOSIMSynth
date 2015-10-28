@@ -10,12 +10,11 @@ namespace syn
   public:
     VosimOscillator(string name) :
       Oscillator(name),
-      m_UseRelativeWidth(true)
-    {
-      addParam(UnitParameter("decay",1.0,0,1,DOUBLE_TYPE,false));
-      addParam(UnitParameter("pulsepitch",0.5,0,1, DOUBLE_TYPE,false));
-      addParam(UnitParameter("number",1,0,4, DOUBLE_TYPE,false));
-    };
+      m_UseRelativeWidth(true),
+      m_decay(addParam("decay", DOUBLE_TYPE, 0, 1)),
+      m_ppitch(addParam("pulsepitch", DOUBLE_TYPE, 0, 1)),
+      m_number(addParam("number", DOUBLE_TYPE, 0, 4))
+    {};
     VosimOscillator(const VosimOscillator& vosc);
     double    m_PhaseScale = 1;
     double  getPulsePhase() { return m_Phase*m_PhaseScale; };
@@ -28,6 +27,9 @@ namespace syn
     double		m_LastPulsePhase = 0;
     bool		  m_UseRelativeWidth;
     double    m_CompensationGain = 1.0;
+    UnitParameter& m_decay;
+    UnitParameter& m_ppitch;
+    UnitParameter& m_number;
   };
 }
 

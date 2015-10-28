@@ -7,6 +7,10 @@
 using Gallant::Signal2;
 using Gallant::Signal1;
 
+/**
+ * \brief Midi queue handler 
+ * \todo Integrate this into Circuit so messages can be communicated to Units mid-buffer
+ */
 class MIDIReceiver {
 private:
 	IMidiQueue mMidiQueue;

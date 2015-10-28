@@ -32,6 +32,7 @@ namespace syn
     int m_targetEnvId;
     bool m_isMouseDown;
     int getSelected(double x, double y);
+    void insertPointFromScreen(const NDPoint<2>& screenpt); //<! doesn't work
     NDPoint<2>& getPoint(int index);
     NDPoint<2> toScreen(const NDPoint<2>& a_pt) const;
     NDPoint<2> toModel(const NDPoint<2>& a_pt) const;
@@ -44,10 +45,9 @@ namespace syn
      */
     void renormalizePoints();
   public:
-    EnvelopeEditor(VOSIMSynth *pPlug, IRECT pR, double maxTimeScale, double minAmpScale, double maxAmpScale, int numpoints = 2);
+    EnvelopeEditor(VOSIMSynth *pPlug, VoiceManager* vm, string envname, IRECT pR, const double maxTimeScale, const double minAmpScale, const double maxAmpScale);
     virtual ~EnvelopeEditor();
     void OnMouseDrag(int x, int y, int dX, int dY, IMouseMod* pMod);
-
     void OnMouseUp(int x, int y, IMouseMod * pMod);
     void OnMouseDblClick(int x, int y, IMouseMod* pMod);
     void OnMouseWheel(int x, int y, IMouseMod* pMod, int d);
@@ -55,6 +55,9 @@ namespace syn
     bool IsDirty();
     void setEnvelope(VoiceManager* vm, string targetEnvName);
     void setTimeScale(double timescale) { m_timeScale = timescale; resyncPoints(); };
+    /**
+     * \brief Sets the parameters of the connected envelope to match the editor
+     */
     void resyncEnvelope();
   };
 }

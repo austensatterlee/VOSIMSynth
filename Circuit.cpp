@@ -10,33 +10,48 @@ using std::deque;
 using std::unordered_set;
 namespace syn
 {
-  Circuit::Circuit()
-  {}
-
 
   Circuit::~Circuit()
   {
     // Delete units
-    for (auto it = m_units.begin(); it != m_units.end(); it++)
+    for (int i = 0; i<m_units.size(); i++)
     {
-      delete (*it);
+      delete m_units[i];
+      // Delete connections
+      for (int j = 0; j < m_forwardConnections[i].size(); j++)
+      {
+        delete m_forwardConnections[i][j];
+      }
     }
   }
 
-  bool Circuit::addUnit(Unit* unit)
+  bool Circuit::addUnit(Unit* unit, int uid)
   {
-
     if (m_unitmap.find(unit->getName()) == m_unitmap.end())
     {
-      m_forwardConnections.push_back(vector<Connection>());
-      m_backwardConnections.push_back(vector<Connection>());
-      m_unitmap[unit->getName()] = m_units.size();
-      m_units.push_back(unit);
+      m_forwardConnections.push_back(vector<Connection*>());
+      m_backwardConnections.push_back(vector<Connection*>());
+      
+      m_unitmap[unit->getName()] = uid;
+      while (uid >= m_units.size())
+      {
+        m_units.push_back({0});
+      }
+      m_units[uid]=unit;
       unit->parent = this;
       m_isGraphDirty = true;
       return true;
     }
     return false;
+  }
+
+  bool Circuit::addUnit(Unit* unit)
+  {
+    while (m_nextUid < m_units.size() && m_units[m_nextUid])
+    {
+      m_nextUid++;
+    }
+    return addUnit(unit, m_nextUid);
   }
 
   void Circuit::setSinkId(int id)
@@ -83,14 +98,14 @@ namespace syn
     return all_pnames;
   }
 
-  void Circuit::addConnection(Connection& c)
+  void Circuit::addConnection(Connection* c)
   {
-    if (!hasUnit(c.m_sourceid) || !hasUnit(c.m_targetid))
+    if (!hasUnit(c->m_sourceid) || !hasUnit(c->m_targetid))
       throw std::invalid_argument("Either source or target name not found inside circuit!");
-    vector<Connection>& fl = m_forwardConnections[c.m_sourceid];
+    vector<Connection*>& fl = m_forwardConnections[c->m_sourceid];
     if (std::find(fl.begin(), fl.end(), c) == fl.end()) // connection not in forward list (and thus not in backward list)
     {
-      vector<Connection>& bl = m_backwardConnections[c.m_targetid];
+      vector<Connection*>& bl = m_backwardConnections[c->m_targetid];
       fl.push_back(c);
       bl.push_back(c);
       m_isGraphDirty = true;
@@ -102,17 +117,8 @@ namespace syn
     int sourceid = getUnitId(srcname);
     int targetid = getUnitId(targetname);
     int paramid = getUnit(targetid).getParamId(pname);
-    Connection c{sourceid,targetid,paramid,action};
-    if (!hasUnit(c.m_sourceid) || !hasUnit(c.m_targetid))
-      throw std::invalid_argument("Either source or target name not found inside circuit!");
-    vector<Connection>& fl = m_forwardConnections[c.m_sourceid];
-    if (std::find(fl.begin(), fl.end(), c) == fl.end()) // connection not in forward list (and thus not in backward list)
-    {
-      vector<Connection>& bl = m_backwardConnections[c.m_targetid];
-      fl.push_back(c);
-      bl.push_back(c);
-      m_isGraphDirty = true;
-    }
+    Connection* c = new Connection(sourceid,targetid,paramid,action);
+    addConnection(c);
   }
 
   void Circuit::refreshProcQueue()
@@ -130,7 +136,7 @@ namespace syn
         continue;
       for (int i = 0; i < m_backwardConnections[currUnit].size(); i++)
       {
-        int sourceid = m_backwardConnections[currUnit][i].m_sourceid;
+        int sourceid = m_backwardConnections[currUnit][i]->m_sourceid;
         if (closed_set.find(sourceid) == closed_set.end())
         {
           dependencyQueue.push_back(sourceid);
@@ -140,9 +146,8 @@ namespace syn
     }
   }
 
-  double Circuit::tick()
+  void Circuit::tick(size_t nsamples)
   {
-
     if (m_isGraphDirty)
     {
       refreshProcQueue();
@@ -152,15 +157,13 @@ namespace syn
     for (int currUnitId : m_processQueue)
     {
       Unit& source = *m_units[currUnitId];
-      source.tick();
-      for (Connection& c : m_forwardConnections[currUnitId])
+      source.tick(nsamples, m_backwardConnections[currUnitId]);
+      for (Connection* c : m_forwardConnections[currUnitId])
       {
-        m_units[c.m_targetid]->modifyParameter(c.m_targetport, source.getLastOutput(), c.m_action);
+        c->push(source.getLastOutputBuffer().data(),source.getLastOutputBuffer().size());
       }
     }
-    return  m_units[m_sinkId]->getLastOutput();
   }
-
 
   void Circuit::setFs(double fs)
   {
@@ -187,7 +190,7 @@ namespace syn
     {
       for (int j = 0; j < m_forwardConnections[i].size(); j++)
       {
-        circ->addConnection(Connection(m_forwardConnections[i][j]));
+        circ->addConnection(new Connection(*m_forwardConnections[i][j]));
       }
     }
     for (MIDIConnectionMap::iterator it = m_midiConnections.begin(); it != m_midiConnections.end(); it++)
@@ -200,6 +203,7 @@ namespace syn
     }
     circ->m_isGraphDirty = m_isGraphDirty;
     circ->m_processQueue = m_processQueue;
+    circ->m_nextUid = m_nextUid;
     return circ;
   }
 
