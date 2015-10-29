@@ -38,13 +38,13 @@ namespace syn
       }
       i++;
     }
-    return -1;
+    return 0;
   }
 
   Instrument* VoiceManager::noteOn(uint8_t noteNumber, uint8_t velocity)
   {
     Instrument* v;
-    if (m_numVoices == m_maxVoices)
+    if (m_numVoices == m_maxVoices-1)
     {
       int vind = getOldestVoiceInd();
       v = m_allVoices[vind];
