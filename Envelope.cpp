@@ -16,6 +16,8 @@ namespace syn
     m_loopStart(addParam("loopstart",INT_TYPE, 0, numSegments)),
     m_loopEnd(addParam("loopend",INT_TYPE, 0, numSegments))
   {
+    m_loopStart.mod(-1, SET);
+    m_loopEnd.mod(-1, SET);
     // set up a standard ADSR envelope
     ostringstream paramname;
     int i;

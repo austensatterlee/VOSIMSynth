@@ -36,7 +36,7 @@ namespace syn
   {
   public:
     Envelope(string name, int numSegments);
-    Envelope(string name) : Envelope(name, 3) {};
+    Envelope(string name) : Envelope(name, 4) {};
     Envelope(const Envelope& env);
     virtual ~Envelope();
 

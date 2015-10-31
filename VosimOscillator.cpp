@@ -19,15 +19,15 @@ namespace syn
   double VosimOscillator::process()
   {
     Oscillator::tick_phase();
-    double number = m_number;
+    double number = m_number*4;
     if (m_UseRelativeWidth)
     {
-      m_PhaseScale = pitchToFreq(m_ppitch * (108 - m_pitch - m_pitchshift - 12 * (number - 1)) + 12 * (number - 1) + m_pitchshift + m_pitch) / (m_Step*m_Fs);
+      m_PhaseScale = pitchToFreq(m_ppitch * (128-m_pitch-m_pitchshift - 12 * (number - 1)) + m_pitch + m_pitchshift + 12 * (number - 1)) / (m_Step*m_Fs);
     }
     else
     {
       // user selects pitch within octave (0-12), osc freq selects which octave?
-      m_PhaseScale = pitchToFreq(m_ppitch * (108 + 12 * (number - 1))) / (m_Step*m_Fs);
+      m_PhaseScale = pitchToFreq(m_ppitch * (128)) / (m_Step*m_Fs);
     }
     // add compensation for phase scales < 0.5 (i.e. won't be able to reach pulse peak)
     m_CompensationGain = 1.0;

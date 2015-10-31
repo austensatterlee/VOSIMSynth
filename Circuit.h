@@ -46,7 +46,7 @@ namespace syn
      */
     void addConnection(string srcname, string targetname, string pname, MOD_ACTION action);
     void addConnection(Connection* c);
-    void addMIDIConnection(MIDIConnection& c);
+    void addMIDIConnection(MIDIConnection* c);
     void addMIDIConnection(IMidiMsg::EControlChangeMsg msg, string targetname, string pname, MOD_ACTION action);
     /**
      * \brief Manually modify a Unit's parameter
@@ -69,23 +69,25 @@ namespace syn
     /**
      * \brief Generate the requested number of samples. The result can be retrieved using getLastOutputBuffer()
      */
-    void tick(size_t nsamples);
+    void tick();
     void setFs(double fs);
     bool hasUnit(string name);
     bool hasUnit(int uid);
-    const vector<double>& getLastOutputBuffer() const { return m_units[m_sinkId]->getLastOutputBuffer(); };
+    double getLastOutput() const { return m_units[m_sinkId]->getLastOutput(); };
   protected:
     typedef  vector<Unit*> UnitVec;
     typedef  vector<vector<Connection*>> ConnVec;
-    typedef  unordered_map<IMidiMsg::EControlChangeMsg, vector<MIDIConnection>> MIDIConnectionMap;
+    typedef  unordered_map<IMidiMsg::EControlChangeMsg, vector<MIDIConnection*>> MIDIConnectionMap;
     UnitVec m_units;
     ConnVec m_forwardConnections;
     ConnVec m_backwardConnections;
-    MIDIConnectionMap m_midiConnections;
+    unordered_map<int, vector<MIDIConnection*>> m_midiConnections;
+    MIDIConnectionMap m_midiConnectionMap;
     IDMap m_unitmap;
     deque<int> m_processQueue; //!< cache storage for the linearized version of unit dependencies
     bool m_isGraphDirty = true; //!< indicates whether or not the graph's linearization should be recomputed
     int m_sinkId;
+    void tickParams(int unitid);
   private:
     void refreshProcQueue();
     virtual Circuit* cloneImpl() const { return new Circuit(); };

@@ -3,7 +3,7 @@ namespace syn
 {
   Instrument* VoiceManager::createVoice(int note, int vel)
   {
-    int vind = findIdleVoice();        
+    int vind = findIdleVoice();
     m_voiceStack.push_back(vind);
     m_voiceMap[note].push_back(vind);
     m_allVoices[vind]->noteOn(note, vel);
@@ -31,9 +31,10 @@ namespace syn
   int VoiceManager::findIdleVoice() const
   {
     int i = 0;
-    while(i<m_allVoices.size())
+    while (i < m_allVoices.size())
     {
-      if(!m_allVoices[i]->isActive()){
+      if (!m_allVoices[i]->isActive())
+      {
         return i;
       }
       i++;
@@ -41,10 +42,10 @@ namespace syn
     return 0;
   }
 
-  Instrument* VoiceManager::noteOn(uint8_t noteNumber, uint8_t velocity)
+  void VoiceManager::noteOn(uint8_t noteNumber, uint8_t velocity)
   {
     Instrument* v;
-    if (m_numVoices == m_maxVoices-1)
+    if (m_numVoices == m_maxVoices - 1)
     {
       int vind = getOldestVoiceInd();
       v = m_allVoices[vind];
@@ -54,11 +55,10 @@ namespace syn
       m_voiceStack.push_back(vind);
       m_voiceMap[noteNumber].push_back(vind);
     }
-    else if(m_numVoices>=0)
+    else if (m_numVoices >= 0)
     {
       v = createVoice(noteNumber, velocity);
-    }    
-    return v;
+    }
   }
 
   void VoiceManager::noteOff(uint8_t noteNumber, uint8_t velocity)
@@ -90,7 +90,7 @@ namespace syn
     {
       makeIdle();
     }
-    while (m_allVoices.size()>max)
+    while (m_allVoices.size() > max)
     {
       delete m_allVoices.back();
       m_allVoices.pop_back();
@@ -98,7 +98,7 @@ namespace syn
 
     m_instrument = v;
 
-    for (int i=0; i < m_allVoices.size(); i++)
+    for (int i = 0; i < m_allVoices.size(); i++)
     {
       delete m_allVoices[i];
       m_allVoices[i] = (Instrument*)m_instrument->clone();
@@ -110,24 +110,20 @@ namespace syn
     }
   }
 
-  void VoiceManager::tick(double* buf, size_t nsamples)
+  double VoiceManager::tick()
   {
     double finalOutput = 0;
     mSampleCount++;
     vector<int> garbage_list;
-    for (VoiceList::const_iterator v = m_voiceStack.begin(); v != m_voiceStack.end();v++)
+    for (VoiceList::const_iterator v = m_voiceStack.begin(); v != m_voiceStack.end(); v++)
     {
       if (m_allVoices[*v]->isActive())
       {
-        m_allVoices[*v]->tick(nsamples);
-        const vector<double>& voiceOutput = m_allVoices[*v]->getLastOutputBuffer();
-        for (int i = 0; i < nsamples; i++)
-        {
-          buf[i] += voiceOutput[i];
-        }
+        m_allVoices[*v]->tick();
+        finalOutput += m_allVoices[*v]->getLastOutput();
       }
       else
-      {      
+      {
         garbage_list.push_back(*v);
       }
     }
@@ -135,12 +131,13 @@ namespace syn
     {
       makeIdle(garbage_list[i]);
     }
+    return finalOutput;
   }
 
   void VoiceManager::modifyParameter(int uid, int pid, double val, MOD_ACTION action)
   {
     m_instrument->modifyParameter(uid, pid, val, action);
-    for (int i=0;i<m_allVoices.size();i++)
+    for (int i = 0; i < m_allVoices.size(); i++)
     {
       m_allVoices[i]->modifyParameter(uid, pid, val, action);
     }
@@ -174,10 +171,11 @@ namespace syn
 
   int VoiceManager::getNewestVoiceInd() const
   {
-    if (m_numVoices){
-      for (VoiceList::const_reverse_iterator it = m_voiceStack.rbegin(); it!=m_voiceStack.rend();it++)
+    if (m_numVoices)
+    {
+      for (VoiceList::const_reverse_iterator it = m_voiceStack.rbegin(); it != m_voiceStack.rend(); it++)
       {
-        if(m_allVoices[*it]->isActive())
+        if (m_allVoices[*it]->isActive())
           return *it;
       }
     }

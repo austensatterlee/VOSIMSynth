@@ -173,10 +173,10 @@ namespace syn
 
   void EnvelopeEditor::OnMouseWheel(int x, int y, IMouseMod* pMod, int d)
   {
-    const double amp_mod_step = (m_maxAmpScale - m_minAmpScale) / 10.0;
-    const double amp_mod_step_fine = amp_mod_step / 10.0;
-    const double tc_mod_step = m_maxTimeScale / 10.0;
-    const double tc_mod_step_fine = tc_mod_step / 10.0;
+    const double amp_mod_step = (m_maxAmpScale - m_minAmpScale) / 20.0;
+    const double amp_mod_step_fine = amp_mod_step / 20.0;
+    const double tc_mod_step = m_maxTimeScale / 20.0;
+    const double tc_mod_step_fine = tc_mod_step / 20.0;
     double modamt;
     if (pMod->C)
     {

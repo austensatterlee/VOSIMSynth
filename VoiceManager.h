@@ -32,7 +32,7 @@ namespace syn
     void makeIdle(int vind);
 
   public:
-    Instrument* noteOn(uint8_t noteNumber, uint8_t velocity);
+    void noteOn(uint8_t noteNumber, uint8_t velocity);
     void noteOff(uint8_t noteNumber, uint8_t velocity);
     Instrument* getLowestVoice(){ int ind = getLowestVoiceInd(); return ind>=0 ? m_allVoices[ind] : nullptr; };
     Instrument* getNewestVoice() { int ind = getNewestVoiceInd(); return ind >= 0 ? m_allVoices[ind] : nullptr; };
@@ -50,7 +50,7 @@ namespace syn
     int getMaxVoices(){return m_maxVoices;};
     void modifyParameter(int uid, int pid, double val, MOD_ACTION action);
     void sendMIDICC(IMidiMsg& msg);
-    void tick(double* buf, size_t nsamples);
+    double tick();
     Signal1<Instrument*> m_onDyingVoice;
 
     VoiceManager() :

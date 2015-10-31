@@ -32,14 +32,16 @@ namespace syn
     double m_min, m_max;
     PARAM_TYPE m_type;
     const IControl* m_controller;
+    bool m_isHidden;
   public:
-    UnitParameter(string name, int id, PARAM_TYPE ptype, double min, double max) :
+    UnitParameter(string name, int id, PARAM_TYPE ptype, double min, double max, bool isHidden=false) :
       m_name(name),
       m_id(id),
       m_type(ptype),
       m_min(min),
       m_max(max),
-      m_controller(nullptr)
+      m_controller(nullptr),
+      m_isHidden(isHidden)
     {
       mod(0.5*(m_max + m_min), SET);
     }
@@ -68,9 +70,12 @@ namespace syn
     double getBase() const { return m_baseValue; }
     double getMin() const { return m_min; }
     double getMax() const { return m_max; }
-    const IControl* getController() { return m_controller; }
+    const IControl* getController() const { return m_controller; }
+    bool hasController() const { return m_controller!=nullptr; }
+    bool isHidden() const {return m_isHidden; }
     void setController(const IControl* controller);
     void unsetController(const IControl* controller);
+    PARAM_TYPE getType() const {return m_type; }
     UnitParameter* clone() const
     {
       UnitParameter* other = cloneImpl();

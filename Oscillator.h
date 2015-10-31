@@ -21,7 +21,7 @@ namespace syn
     Oscillator(string name) : SourceUnit(name),
       m_velocity(1.0),
       m_gain(addParam("gain", DOUBLE_TYPE, 0, 1)),
-      m_pitch(addParam("pitch", DOUBLE_TYPE, 0, 128)),
+      m_pitch(addParam("pitch", DOUBLE_TYPE, 0, 128, true)),
       m_pitchshift(addParam("semitones", DOUBLE_TYPE, -12, 12))
     {};
     Oscillator(const Oscillator& osc);

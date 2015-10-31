@@ -37,11 +37,10 @@ namespace syn
     /*!
      * \brief Runs the unit for the specified number of ticks. The result is accessed via getLastOutputBuffer().
      */
-    void tick(size_t nsamples, vector<Connection*>& connections);
+    void tick();
     void setFs(const double fs) { m_Fs = fs; };
     double getFs() const { return m_Fs; };
-    double getLastOutput() const { return m_output.size() ? m_output.back() : 0; };
-    const vector<double>& getLastOutputBuffer() const { return m_output; };
+    double getLastOutput() const { return m_output; };
     /*!
      *\brief Modifies the value of the parameter associated with portid.
      *       Primarily used by Circuit to process connections.
@@ -66,16 +65,15 @@ namespace syn
     string m_name;
     Circuit* parent;
     double m_Fs;
-    vector<double> m_output;
+    double m_output;
     virtual double process() = 0;
-    UnitParameter& addParam(string name, int id, PARAM_TYPE ptype, double min, double max);
-    UnitParameter& addParam(string name, PARAM_TYPE ptype, double min, double max);
+    UnitParameter& addParam(string name, int id, PARAM_TYPE ptype, double min, double max, bool isHidden=false);
+    UnitParameter& addParam(string name, PARAM_TYPE ptype, double min, double max, bool isHidden=false);
     virtual double finishProcessing(double o)
     {
       return o;
     };
   private:
-    void tickParams(vector<Connection*>& connections);
     virtual Unit* cloneImpl() const = 0;
   };
 
@@ -86,7 +84,7 @@ namespace syn
   {
   public:
     AccumulatingUnit(string name) : Unit(name),
-      m_input(addParam("input", DOUBLE_TYPE, -1, 1)),
+      m_input(addParam("input", DOUBLE_TYPE, -1, 1, true)),
       m_gain(addParam("gain", DOUBLE_TYPE, 0, 1))
     {}
     AccumulatingUnit(const AccumulatingUnit& other) : AccumulatingUnit(other.m_name)

@@ -12,6 +12,7 @@ namespace syn{
 
   void Oscillator::noteOn(int pitch, int vel)
 {
+  sync();
   m_pitch.mod(pitch,SET);
   m_velocity = vel/255.0; /// \todo user and noteon must both be able to scale the gain and have it last for multiple sample
 }

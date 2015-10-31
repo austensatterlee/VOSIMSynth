@@ -24,7 +24,7 @@ namespace syn
       Unit(name),
       XCoefs(X),
       YCoefs(Y),
-      m_input(addParam("input",DOUBLE_TYPE, -1, 1))
+      m_input(addParam("input",DOUBLE_TYPE, -1, 1, true))
     {
       xBufInd = 0;
       yBufInd = 0;

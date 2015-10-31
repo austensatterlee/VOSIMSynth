@@ -18,9 +18,8 @@ namespace syn
    */
   class Connection
   {
-  private:
-    deque<double> m_buf; //<! transfer buffer
   public:
+    deque<double> m_buf; //<! transfer buffer
     const int m_sourceid;
     const int m_targetid;
     const int m_targetport;
@@ -56,19 +55,19 @@ namespace syn
       m_targetid == c.m_targetid && m_action==c.m_action;
     }
 
-    double pull()
+    virtual double pull()
     {
       double next = m_buf.back();
       m_buf.pop_back();
       return next;
     }
 
-    void push(double next)
+    virtual void push(double next)
     {
       m_buf.push_front(next);
     }
 
-    void push(const double* next, size_t nsamples)
+    virtual void push(const double* next, size_t nsamples)
     {
       while (nsamples--)
       {
@@ -90,7 +89,21 @@ namespace syn
     MIDIConnection(IMidiMsg::EControlChangeMsg cc, int targetid, int targetport, MOD_ACTION action) :
       Connection(cc, targetid, targetport, action),
       m_sourceid(cc)
-    {}
+    {      
+      m_buf.push_back(0.0);
+    }
+
+    virtual double pull()
+    {
+      double next = m_buf.back();
+      return next;
+    }
+
+    virtual void push(double next)
+    {
+      m_buf.clear();
+      m_buf.push_front(next);
+    }
   };
 }
 #endif // __Connection__
