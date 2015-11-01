@@ -12,7 +12,10 @@ namespace syn
   enum OSC_MODE
   {
     SAW_WAVE = 0,
-    SINE_WAVE
+    SINE_WAVE,
+    TRI_WAVE,
+    SQUARE_WAVE,
+    NUM_OSC_MODES
   };
 
   class Oscillator : public SourceUnit
@@ -22,12 +25,18 @@ namespace syn
       m_velocity(1.0),
       m_gain(addParam("gain", DOUBLE_TYPE, 0, 1)),
       m_pitch(addParam("pitch", DOUBLE_TYPE, 0, 128, true)),
-      m_pitchshift(addParam("semitones", DOUBLE_TYPE, -12, 12))
+      m_pitchshift(addParam("pitchshift", DOUBLE_TYPE, -1, 1))
     {};
-    Oscillator(const Oscillator& osc);
+    Oscillator(const Oscillator& osc) :
+      Oscillator(osc.m_name)
+    {
+      m_Phase = osc.m_Phase;
+      m_Step = osc.m_Step;
+      m_velocity = osc.m_velocity;
+      m_maxPitchShift = osc.m_maxPitchShift;
+    }
     virtual int getSamplesPerPeriod() const { return 1. / m_Step; }
     void sync() { m_Phase = 0; };
-    void setWaveform(OSC_MODE mode) { m_Waveform = mode; };
     bool isSynced() const { return m_Phase + m_Step >= 1.0; };
     virtual bool isActive() const { return readParam(0) != 0; };
     double getPhase() const { return m_Phase; };
@@ -37,14 +46,46 @@ namespace syn
     double m_Phase = 0;
     double m_Step = 1;
     double m_velocity;
+    double m_maxPitchShift = 12;
     UnitParameter& m_gain;
     UnitParameter& m_pitch;
     UnitParameter& m_pitchshift;
-    virtual double process();
+    virtual double process() = 0;
     virtual void tick_phase();
-  private:
-    OSC_MODE m_Waveform = SINE_WAVE;
-    virtual Unit* cloneImpl() const { return new Oscillator(*this); };
   };
-}
+
+  class BasicOscillator : public Oscillator
+  {
+    public:
+    BasicOscillator(string name) : Oscillator(name),
+      m_waveform(addParam("waveform", INT_TYPE, 0, NUM_OSC_MODES))
+    {};
+    BasicOscillator(const BasicOscillator& other) : BasicOscillator(other.m_name)
+    {};
+  protected:
+    UnitParameter& m_waveform;
+    virtual double process();
+  private:
+    virtual Unit* cloneImpl() const { return new BasicOscillator(*this); };
+  };
+
+  class LFOOscillator : public BasicOscillator
+  {
+  public:
+    LFOOscillator(string name) : BasicOscillator(name)
+    {
+      m_pitch.mod(-12, SET); 
+      m_maxPitchShift = 36;
+    }
+
+    LFOOscillator(const LFOOscillator& other) : LFOOscillator(other.m_name)
+    {};
+    virtual void noteOn(int pitch, int vel)
+    {
+      sync();
+    }
+  private:
+    virtual Unit* cloneImpl() const { return new LFOOscillator(*this); };
+  };
+};
 #endif

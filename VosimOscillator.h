@@ -13,7 +13,7 @@ namespace syn
       m_decay(addParam("decay", DOUBLE_TYPE, 0, 1)),
       m_ppitch(addParam("pulsepitch", DOUBLE_TYPE, 0, 1)),
       m_number(addParam("number", DOUBLE_TYPE, 0, 1)),
-      m_UseRelativeWidth(addParam("relative", BOOL_TYPE, 0, 1))
+      m_relativeamt(addParam("relative", DOUBLE_TYPE, 0, 1))
     {};
     VosimOscillator(const VosimOscillator& vosc);
     double    m_PhaseScale = 1;
@@ -25,7 +25,7 @@ namespace syn
     double		m_CurrPulseGain = 1;
     double		m_LastPulsePhase = 0;
     double    m_CompensationGain = 1.0;
-    UnitParameter& m_UseRelativeWidth;
+    UnitParameter& m_relativeamt;
     UnitParameter& m_decay;
     UnitParameter& m_ppitch;
     UnitParameter& m_number;

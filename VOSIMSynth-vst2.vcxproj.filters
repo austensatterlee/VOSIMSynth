@@ -150,4 +150,13 @@
   <ItemGroup>
     <ResourceCompile Include="VOSIMSynth.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="FodyWeavers.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\..\..\..\clibs\fftw-3.3.4-dll32\libfftw3-3.lib" />
+  </ItemGroup>
 </Project>

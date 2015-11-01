@@ -70,6 +70,8 @@ namespace syn
     double getBase() const { return m_baseValue; }
     double getMin() const { return m_min; }
     double getMax() const { return m_max; }
+    void setMin(double min) { m_min = min; }
+    void setMax(double max) { m_max = max; }
     const IControl* getController() const { return m_controller; }
     bool hasController() const { return m_controller!=nullptr; }
     bool isHidden() const {return m_isHidden; }

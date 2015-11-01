@@ -63,7 +63,7 @@ namespace syn
     void OnMouseUp(int x, int y, IMouseMod* pMod);
     void OnMouseWheel(int x, int y, IMouseMod* pMod, int d);
     bool Draw(IGraphics *pGraphics);
-    bool usePeriodEstimate(bool b=true){m_usePeriodEstimate=b;}
+    void usePeriodEstimate(bool b=true){m_usePeriodEstimate=b;}
 
     /**
     * Computes the DFT for real inputbuf and stores the magnitude spectrum (dB) in outputbuf.

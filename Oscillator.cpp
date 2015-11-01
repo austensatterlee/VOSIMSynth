@@ -2,15 +2,13 @@
 
 namespace syn{
 
-  Oscillator::Oscillator(const Oscillator& osc) :
-  Oscillator(osc.m_name)
-  {
-    m_Phase = osc.m_Phase;
-    m_Step = osc.m_Step;
-    m_Waveform = osc.m_Waveform;
-  }
 
-  void Oscillator::noteOn(int pitch, int vel)
+  /******************************
+  * Oscillator methods
+  *
+  ******************************/
+
+void Oscillator::noteOn(int pitch, int vel)
 {
   sync();
   m_pitch.mod(pitch,SET);
@@ -22,20 +20,22 @@ void Oscillator::noteOff(int pitch, int vel)
 
 }
 
-/******************************
- * Oscillator methods
- *
- ******************************/
-double Oscillator::process()
+double BasicOscillator::process()
 {
   tick_phase();
   double output;
-  switch (m_Waveform) {
+  switch ((int)m_waveform) {
   case SAW_WAVE:
     output = (m_Phase * 2 - 1);
     break;
   case SINE_WAVE:
     output = 2 * (0.5 - lut_vosim_pulse_cos.getlinear(m_Phase));
+    break;
+  case TRI_WAVE:
+    output = m_Phase<=0.5 ? 4*m_Phase-1 : -4*(m_Phase-0.5)+1;
+    break;
+  case SQUARE_WAVE:
+    output = m_Phase<=0.5 ? -1 : 1;
     break;
   default:
     output = 0;
@@ -50,7 +50,7 @@ double Oscillator::process()
  */
 void Oscillator::tick_phase()
 {
-  m_Step = pitchToFreq(m_pitch + m_pitchshift) / m_Fs;  
+  m_Step = pitchToFreq(m_pitch + m_maxPitchShift*m_pitchshift) / m_Fs;  
   
   m_Phase += m_Step;
   if (m_Phase > 1)

@@ -16,7 +16,7 @@
 
 using namespace std;
 #define O_TU "osc0"
-#define O_U "master"
+#define O_U "filt1"
 
 
 const int kNumPrograms = 1;
@@ -53,7 +53,7 @@ void VOSIMSynth::makeGraphics()
 {
 
   pGraphics = MakeGraphics(this, kWidth, kHeight);
-  pGraphics->AttachPanelBackground(&COLOR_BLACK);
+  pGraphics->AttachPanelBackground(&IColor(255,0,5,0));
 
   //IBitmap wedgeswitch2p = pGraphics->LoadIBitmap(WEDGE_SWITCH_2P_ID, WEDGE_SWITCH_2P_FN, 2);
   IBitmap push2p = pGraphics->LoadIBitmap(PUSH_2P_ID, PUSH_2P_FN, 2);
@@ -73,11 +73,11 @@ void VOSIMSynth::makeGraphics()
     UnitParameter& param = owner.getParam(paramid);
 
     if(param.getType()==DOUBLE_TYPE){
-      GetParam(i)->InitDouble(get<1>(splitname).c_str(), param.getBase(), param.getMin(), param.getMax(), 1E-3, name.c_str(), get<0>(splitname).c_str());
+      GetParam(i)->InitDouble(get<1>(splitname).c_str(), param.getBase(), param.getMin(), param.getMax(), 1E-3, name.c_str(), name.c_str());
     }
     else if (param.getType() == INT_TYPE)
     {
-      GetParam(i)->InitInt(get<1>(splitname).c_str(), param.getBase(), param.getMin(), param.getMax(), name.c_str(), get<0>(splitname).c_str());
+      GetParam(i)->InitInt(get<1>(splitname).c_str(), param.getBase(), param.getMin(), param.getMax(), name.c_str(), name.c_str());
     }
     else if (param.getType() == BOOL_TYPE)
     {
@@ -102,8 +102,9 @@ void VOSIMSynth::makeGraphics()
   pGraphics->AttachControl(m_EnvEditor4);
 
   m_Oscilloscope.setTransformFunc(Oscilloscope::magnitudeTransform);
+  m_Oscilloscope.usePeriodEstimate(true);
   //m_Oscilloscope.setTransformFunc(Oscilloscope::passthruTransform);
-
+  
   int j = 0;
   i=0;
   for (; i < m_hostParamMap.size(); i++)
@@ -126,7 +127,7 @@ void VOSIMSynth::makeGraphics()
       }
       j++;
     }
-  }
+  }  
 
   AttachGraphics(pGraphics);
 }
@@ -137,11 +138,13 @@ void VOSIMSynth::makeInstrument()
   Envelope* penv1 = new Envelope("penv1");
   Envelope* penv2 = new Envelope("penv2");
   Envelope* penv3 = new Envelope("penv3");
-  Oscillator* osc0 = new Oscillator("osc0");
+  LFOOscillator* lfo0 = new LFOOscillator("lfo0");
+  lfo0->getParam("waveform").mod(SQUARE_WAVE,SET);
+  Oscillator* osc0 = new BasicOscillator("osc0");
+  osc0->getParam("waveform").mod(TRI_WAVE,SET);
   Oscillator* osc1 = new VosimOscillator("osc1");
   Oscillator* osc2 = new VosimOscillator("osc2");
   Oscillator* osc3 = new VosimOscillator("osc3");
-  osc0->setWaveform(SAW_WAVE);
   AccumulatingUnit* acc = new AccumulatingUnit("master");
   Filter<AA_FILTER_SIZE + 1, AA_FILTER_SIZE>* filt1 = new Filter<AA_FILTER_SIZE + 1, AA_FILTER_SIZE>("filt1", AA_FILTER_X, AA_FILTER_Y);
 
@@ -154,18 +157,23 @@ void VOSIMSynth::makeInstrument()
   m_instr->addSource(osc1);
   m_instr->addSource(osc2);
   m_instr->addSource(osc3);
+  m_instr->addSource(lfo0);
   m_instr->addUnit(filt1);
   m_instr->addUnit(acc);
   m_instr->addConnection("ampenv", "master", "gain", SCALE);
   m_instr->addConnection("penv1", "osc1", "pulsepitch", ADD);
   m_instr->addConnection("penv2", "osc2", "pulsepitch", ADD);
   m_instr->addConnection("penv3", "osc3", "pulsepitch", ADD);
+  m_instr->addConnection("lfo0", "osc0", "pitchshift", ADD);
+  m_instr->addConnection("lfo0", "osc1", "pitchshift", ADD);
+  m_instr->addConnection("lfo0", "osc2", "pitchshift", ADD);
+  m_instr->addConnection("lfo0", "osc3", "pitchshift", ADD);
   m_instr->addConnection("osc0", "master", "input", ADD);
   m_instr->addConnection("osc1", "master", "input", ADD);
   m_instr->addConnection("osc2", "master", "input", ADD);
   m_instr->addConnection("osc3", "master", "input", ADD);
   m_instr->addConnection("master", "filt1", "input", ADD);
-  m_instr->addMIDIConnection(IMidiMsg::EControlChangeMsg::kModWheel,"osc0","semitones",ADD);
+  m_instr->addMIDIConnection(IMidiMsg::EControlChangeMsg::kModWheel,"osc0","pitchshift",ADD);
 
   m_instr->setSinkName("filt1");
   m_instr->setPrimarySource("ampenv");
