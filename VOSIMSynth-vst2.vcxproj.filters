@@ -29,9 +29,6 @@
     <ClCompile Include="table_data.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="Unit.cpp">
-      <Filter>Components\Atomic</Filter>
-    </ClCompile>
     <ClCompile Include="VoiceManager.cpp">
       <Filter>Components\Composite</Filter>
     </ClCompile>
@@ -51,6 +48,9 @@
       <Filter>Components\Units</Filter>
     </ClCompile>
     <ClCompile Include="Envelope.cpp">
+      <Filter>Components\Units</Filter>
+    </ClCompile>
+    <ClCompile Include="Unit.cpp">
       <Filter>Components\Units</Filter>
     </ClCompile>
   </ItemGroup>
@@ -75,9 +75,6 @@
     <ClInclude Include="Circuit.h">
       <Filter>Components\Composite</Filter>
     </ClInclude>
-    <ClInclude Include="SourceUnit.h">
-      <Filter>Components\Atomic</Filter>
-    </ClInclude>
     <ClInclude Include="Instrument.h">
       <Filter>Components\Composite</Filter>
     </ClInclude>
@@ -95,9 +92,6 @@
     </ClInclude>
     <ClInclude Include="tables.h">
       <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Unit.h">
-      <Filter>Components\Atomic</Filter>
     </ClInclude>
     <ClInclude Include="VoiceManager.h">
       <Filter>Components\Composite</Filter>
@@ -120,6 +114,12 @@
     <ClInclude Include="VosimOscillator.h">
       <Filter>Components\Units</Filter>
     </ClInclude>
+    <ClInclude Include="SourceUnit.h">
+      <Filter>Components\Units</Filter>
+    </ClInclude>
+    <ClInclude Include="Unit.h">
+      <Filter>Components\Units</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="vst2">
@@ -134,9 +134,6 @@
     <Filter Include="Utils">
       <UniqueIdentifier>{7008aa44-48bc-4a10-a2fb-9da5e9bf8a97}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Components\Atomic">
-      <UniqueIdentifier>{9adec8b2-e07b-4368-90f2-ddc3dc67927c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Components\Composite">
       <UniqueIdentifier>{12c963f3-4d04-4efc-9214-35098e35df6f}</UniqueIdentifier>
     </Filter>
@@ -149,12 +146,6 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VOSIMSynth.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Xml Include="FodyWeavers.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\..\..\..\..\clibs\fftw-3.3.4-dll32\libfftw3-3.lib" />

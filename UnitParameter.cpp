@@ -2,23 +2,27 @@
 
 bool syn::UnitParameter::operator==(const UnitParameter& p) const
 {
-  return m_id == p.m_id && m_name == p.m_name && m_type == p.m_type && m_min == p.m_min && m_max == p.m_max && m_controller==p.m_controller;
+  return m_id == p.m_id && m_name == p.m_name && m_type == p.m_type &&\
+         m_min == p.m_min && m_max == p.m_max && m_controller==p.m_controller;
 }
 
 void syn::UnitParameter::mod(double amt, MOD_ACTION action)
 {
-  if (action == SET)
+  if (action == SET && amt!=m_baseValue)
   {
     m_baseValue = amt;
     m_currValue = m_baseValue;
+    m_isDirty = true;
   }
-  else if (action == ADD)
+  else if (action == ADD && amt!=0)
   {
     m_currValue += amt;
+    m_isDirty = true;
   }
-  else if (action == SCALE)
+  else if (action == SCALE && amt!=1)
   {
     m_currValue *= amt;
+    m_isDirty = true;
   }
 }
 

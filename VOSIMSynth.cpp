@@ -15,7 +15,7 @@
 #include <cstring>
 
 using namespace std;
-#define O_TU "osc0"
+#define O_TU "vosc2"
 #define O_U "filt1"
 
 
@@ -90,10 +90,10 @@ void VOSIMSynth::makeGraphics()
   }
   m_numParameters = i;
 
-  EnvelopeEditor* m_EnvEditor1 = new EnvelopeEditor(this, &m_voiceManager, "penv1", IRECT(500, 10, 800 - 10, 150), 10, -1.0, 1.0);
-  EnvelopeEditor* m_EnvEditor2 = new EnvelopeEditor(this, &m_voiceManager, "penv2", IRECT(500, 160, 800 - 10, 300), 10, -1.0, 1.0);
-  EnvelopeEditor* m_EnvEditor3 = new EnvelopeEditor(this, &m_voiceManager, "penv3", IRECT(500, 310, 800 - 10, 450), 10, -1.0, 1.0);
-  EnvelopeEditor* m_EnvEditor4 = new EnvelopeEditor(this, &m_voiceManager, "ampenv", IRECT(200, 310, 500 - 10, 450), 10, 0, 1);
+  EnvelopeEditor* m_EnvEditor1 = new EnvelopeEditor(this, &m_voiceManager, "ampenv1", IRECT(500, 10, 800 - 10, 150), 10, -1.0, 1.0);
+  EnvelopeEditor* m_EnvEditor2 = new EnvelopeEditor(this, &m_voiceManager, "ampenv2", IRECT(500, 160, 800 - 10, 300), 10, -1.0, 1.0);
+  EnvelopeEditor* m_EnvEditor3 = new EnvelopeEditor(this, &m_voiceManager, "vampenv", IRECT(500, 310, 800 - 10, 450), 10, -1.0, 1.0);
+  EnvelopeEditor* m_EnvEditor4 = new EnvelopeEditor(this, &m_voiceManager, "vrateenv", IRECT(200, 310, 500 - 10, 450), 10, 0, 1);
 
   pGraphics->AttachControl(&m_Oscilloscope);
   pGraphics->AttachControl(m_EnvEditor1);
@@ -102,7 +102,8 @@ void VOSIMSynth::makeGraphics()
   pGraphics->AttachControl(m_EnvEditor4);
 
   m_Oscilloscope.setTransformFunc(Oscilloscope::magnitudeTransform);
-  m_Oscilloscope.usePeriodEstimate(true);
+  m_Oscilloscope.usePeriodEstimate(false);
+  m_Oscilloscope.setDefaultBufSize(128);
   //m_Oscilloscope.setTransformFunc(Oscilloscope::passthruTransform);
   
   int j = 0;
@@ -134,56 +135,46 @@ void VOSIMSynth::makeGraphics()
 
 void VOSIMSynth::makeInstrument()
 {
-  Envelope* env = new Envelope("ampenv");
-  Envelope* penv1 = new Envelope("penv1");
-  Envelope* penv2 = new Envelope("penv2");
-  Envelope* penv3 = new Envelope("penv3");
+  Envelope* env1 = new Envelope("ampenv1");
+  Envelope* env2 = new Envelope("ampenv2");
+  Envelope* env3 = new Envelope("vampenv");
+  Envelope* env4 = new Envelope("vrateenv");
   LFOOscillator* lfo0 = new LFOOscillator("lfo0");
-  lfo0->getParam("waveform").mod(SQUARE_WAVE,SET);
-  Oscillator* osc0 = new BasicOscillator("osc0");
-  osc0->getParam("waveform").mod(TRI_WAVE,SET);
-  Oscillator* osc1 = new VosimOscillator("osc1");
-  Oscillator* osc2 = new VosimOscillator("osc2");
-  Oscillator* osc3 = new VosimOscillator("osc3");
+  lfo0->getParam("waveform").mod(SQUARE_WAVE, SET);
+  Oscillator* vosc1 = new VosimOscillator("vosc1");
+  Oscillator* vosc2 = new VosimOscillator("vosc2");
   AccumulatingUnit* acc = new AccumulatingUnit("master");
   Filter<AA_FILTER_SIZE + 1, AA_FILTER_SIZE>* filt1 = new Filter<AA_FILTER_SIZE + 1, AA_FILTER_SIZE>("filt1", AA_FILTER_X, AA_FILTER_Y);
 
   m_instr = new Instrument();
-  m_instr->addSource(env);
-  m_instr->addSource(penv1);
-  m_instr->addSource(penv2);
-  m_instr->addSource(penv3);
-  m_instr->addSource(osc0);
-  m_instr->addSource(osc1);
-  m_instr->addSource(osc2);
-  m_instr->addSource(osc3);
+  m_instr->addSource(env1);
+  m_instr->addSource(env2);
+  m_instr->addSource(env3);
+  m_instr->addSource(env4);
   m_instr->addSource(lfo0);
+  m_instr->addSource(vosc1);
+  m_instr->addSource(vosc2);
   m_instr->addUnit(filt1);
   m_instr->addUnit(acc);
-  m_instr->addConnection("ampenv", "master", "gain", SCALE);
-  m_instr->addConnection("penv1", "osc1", "pulsepitch", ADD);
-  m_instr->addConnection("penv2", "osc2", "pulsepitch", ADD);
-  m_instr->addConnection("penv3", "osc3", "pulsepitch", ADD);
-  m_instr->addConnection("lfo0", "osc0", "pitchshift", ADD);
-  m_instr->addConnection("lfo0", "osc1", "pitchshift", ADD);
-  m_instr->addConnection("lfo0", "osc2", "pitchshift", ADD);
-  m_instr->addConnection("lfo0", "osc3", "pitchshift", ADD);
-  m_instr->addConnection("osc0", "master", "input", ADD);
-  m_instr->addConnection("osc1", "master", "input", ADD);
-  m_instr->addConnection("osc2", "master", "input", ADD);
-  m_instr->addConnection("osc3", "master", "input", ADD);
+  m_instr->addConnection("ampenv1", "vosc1", "gain", SCALE);
+  m_instr->addConnection("ampenv2", "vosc2", "gain", SCALE);
+  m_instr->addConnection("vampenv", "lfo0", "gain", SCALE);
+  m_instr->addConnection("vrateenv", "lfo0", "pitchshift", ADD);
+  m_instr->addConnection("lfo0", "vosc2", "pitchshift", ADD);
+  m_instr->addConnection("vosc1", "vosc2", "phaseshift", ADD);
+  m_instr->addConnection("vosc2", "master", "input", ADD);
   m_instr->addConnection("master", "filt1", "input", ADD);
-  m_instr->addMIDIConnection(IMidiMsg::EControlChangeMsg::kModWheel,"osc0","pitchshift",ADD);
+  m_instr->addMIDIConnection(IMidiMsg::EControlChangeMsg::kModWheel,"lfo0","gain",SCALE);
 
   m_instr->setSinkName("filt1");
-  m_instr->setPrimarySource("ampenv");
+  m_instr->setPrimarySource("ampenv2");
 
   m_voiceManager.setMaxVoices(8, m_instr);
   m_instr->getUnit("master").modifyParameter(1, 1. / m_voiceManager.getMaxVoices(), SET);
   m_voiceManager.m_onDyingVoice.Connect(this, &VOSIMSynth::OnDyingVoice);
 
   m_MIDIReceiver.noteOn.Connect(this, &VOSIMSynth::OnNoteOn);
-  m_MIDIReceiver.noteOff.Connect(this, &VOSIMSynth::OnNoteOff);
+  m_MIDIReceiver.noteOff.Connect(&m_voiceManager, &VoiceManager::noteOff);
   m_MIDIReceiver.sendControlChange.Connect(&m_voiceManager, &VoiceManager::sendMIDICC);
 }
 
@@ -199,11 +190,6 @@ void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel)
     m_Oscilloscope.connectInput(vnew->getUnit(O_U));
     m_Oscilloscope.connectTrigger(vnew->getSourceUnit(O_TU));
   }
-}
-
-void VOSIMSynth::OnNoteOff(uint8_t pitch, uint8_t vel)
-{
-  m_voiceManager.noteOff(pitch, vel);
 }
 
 void VOSIMSynth::OnDyingVoice(Instrument* dying)

@@ -13,9 +13,12 @@ namespace syn
     m_maxAmpScale(maxAmpScale),
     m_Padding(25),
     m_lastMouseMod(0),
-    m_lastMouse(0, 0),
+    m_lastMouse(0.0, 0.0),
     m_isMouseDown(false),
-    m_lastSelectedIdx(-1)
+    m_lastSelectedIdx(-1),
+    m_selectionTolerance(0.1),
+    m_ampScaleRect(mRECT.L, mRECT.T + 10, mRECT.L + 100, mRECT.T + 25),
+    m_timeScaleRect(mRECT.L + 100, mRECT.T + 10, mRECT.L + 200, mRECT.T + 25)
   {
     m_InnerRect = IRECT(pR.L + m_Padding, pR.T + m_Padding, pR.R - m_Padding, pR.B - m_Padding);
     m_ltpt = NDPoint<2>((double)m_InnerRect.L, (double)m_InnerRect.T);
@@ -38,13 +41,21 @@ namespace syn
     {
       NDPoint<2>& pt = m_points[i];
       double curr_dist = mousept.distFrom(pt);
+
       if (curr_dist < min_dist || min_dist == -1)
       {
         min_dist = curr_dist;
         min_pt_idx = i;
       }
     }
-    return min_pt_idx;
+    if (min_dist < m_selectionTolerance)
+    {
+      return min_pt_idx;
+    }
+    else
+    {
+      return -1;
+    }
   }
 
   void EnvelopeEditor::insertPointFromScreen(const NDPoint<2>& screenpt)
@@ -91,7 +102,7 @@ namespace syn
     }
     if (m_lastSelectedIdx <= 0)
     {
-      m_lastSelectedIdx = 1;
+      return;
     }
 
     mouse_pt = toModel(mouse_pt);
@@ -106,23 +117,34 @@ namespace syn
     {
       toprightBound = NDPoint<2>{ m_points[m_lastSelectedIdx + 1][0], 1.0 };
     }
-    mouse_pt.clamp(bottomleftBound, toprightBound);
-    m_lastMouse = mouse_pt;
-    m_lastMouseMod = *pMod;
 
-    NDPoint<2>& oldpoint = m_points[m_lastSelectedIdx];
-    m_points[m_lastSelectedIdx] = m_lastMouse;
+    NDPoint<2> oldpoint = m_points[m_lastSelectedIdx];
+    NDPoint<2> diff;
+    if (m_lastMouse[0] == 0 && m_lastMouse[1] == 0)
+    {
+      diff = NDPoint<2>{ 0.,0. };
+    }
+    else
+    {
+      diff = (mouse_pt - m_lastMouse);
+    }
+
+    if (pMod->S)
+    {
+      diff = diff*(1./2);
+    }
+    m_points[m_lastSelectedIdx] += diff;
+    m_points[m_lastSelectedIdx].clamp(bottomleftBound, toprightBound);
 
     // Check that moving the point doesn't push any other points off the grid before applying
-    NDPoint<2> diff = (m_points[m_lastSelectedIdx] - oldpoint)*getUnitv<2>(0);
-    if (pMod->S)
+    if (pMod->C)
     {
       if ((m_points.back() + diff)[0] <= 1.0)
       {
         // Push all points to the right to maintain segment lengths
         for (int i = m_lastSelectedIdx + 1; i < m_points.size(); i++)
         {
-          m_points[i] += diff;
+          m_points[i] += diff*getUnitv<2>(0);
         }
       }
       else
@@ -130,6 +152,8 @@ namespace syn
         m_points[m_lastSelectedIdx][0] = oldpoint[0];
       }
     }
+    m_lastMouse = mouse_pt;
+    m_lastMouseMod = *pMod;
     resyncEnvelope();
   }
 
@@ -137,6 +161,7 @@ namespace syn
   {
     m_isMouseDown = false;
     m_lastSelectedIdx = -1;
+    m_lastMouse = NDPoint<2>{0.0,0.0};
   }
 
   void EnvelopeEditor::OnMouseDblClick(int x, int y, IMouseMod* pMod)
@@ -178,7 +203,7 @@ namespace syn
     const double tc_mod_step = m_maxTimeScale / 20.0;
     const double tc_mod_step_fine = tc_mod_step / 20.0;
     double modamt;
-    if (pMod->C)
+    if (m_ampScaleRect.Contains(x, y))
     {
       if (pMod->S)
         modamt = d * amp_mod_step_fine;
@@ -190,7 +215,7 @@ namespace syn
       else if (m_ampScale < m_minAmpScale)
         m_ampScale = m_minAmpScale;
     }
-    else
+    else if (m_timeScaleRect.Contains(x, y))
     {
       if (pMod->S)
         modamt = d * tc_mod_step_fine;
@@ -207,12 +232,12 @@ namespace syn
 
   bool EnvelopeEditor::Draw(IGraphics* pGraphics)
   {
-    IColor fgcolor1(255, 200, 200, 200);
-    IColor hicolor(220, 220, 250, 200);
-    IColor gridcolor(200, 100, 100, 100);
-    IColor bgcolor1(255, 50, 50, 75);
+    IColor fgcolor1(255, 247, 185, 195);
+    IColor hicolor(255, 173, 163, 210);
+    IColor gridcolor(255, 173, 163, 210);
+    IColor bgcolor1(255, 19, 12, 45);
     IColor bgcolor2(255, 50, 50, 75);
-    IColor fgcolor2(255, 255, 180, 180);
+    IColor fgcolor2(255, 67, 54, 115);
     IColor fgcolor3(255, 180, 180, 255);
     IText  fgtxtstyle(10, &fgcolor1, 0, IText::kStyleNormal, IText::kAlignNear);
     IText  bgtxtstyle(10, &gridcolor, 0, IText::kStyleItalic, IText::kAlignNear);
@@ -223,8 +248,10 @@ namespace syn
     string envname = m_voiceManager->getProtoInstrument()->getUnit(m_targetEnvId).getName();
     sprintf(strbuffer, "%s", envname.c_str());
     pGraphics->DrawIText(&fgtxtstyle, strbuffer, &mRECT);
-    sprintf(strbuffer, "Time scale: %.2f, Amp scale: %.2f", m_timeScale, m_ampScale);
-    pGraphics->DrawIText(&fgtxtstyle, strbuffer, &IRECT(mRECT.L, mRECT.T + 10, mRECT.R, mRECT.B));
+    sprintf(strbuffer, "Time scale: %.2f", m_timeScale);
+    pGraphics->DrawIText(&fgtxtstyle, strbuffer, &m_timeScaleRect);
+    sprintf(strbuffer, "Amp scale: %.2f", m_ampScale);
+    pGraphics->DrawIText(&fgtxtstyle, strbuffer, &m_ampScaleRect);
     double cumuPeriod = 0;
     double currPeriod = 0;
     IColor* currColor;
@@ -259,8 +286,9 @@ namespace syn
         }
       }
       pGraphics->FillCircle(currColor, screenpt2[0], screenpt2[1], ptsize, 0, true);
-      if(i>0){
-        currPeriod = env->getPeriod(i-1);
+      if (i > 0)
+      {
+        currPeriod = env->getPeriod(i - 1);
         cumuPeriod += currPeriod;
         sprintf(strbuffer, "%.2f", currPeriod);
         pGraphics->DrawIText(&fgtxtstyle, strbuffer, &IRECT(screenpt2[0], mRECT.B - 10 - 10, mRECT.R, mRECT.B));

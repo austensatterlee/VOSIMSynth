@@ -3,7 +3,7 @@
 #include "SourceUnit.h"
 #include <vector>
 
-#define MIN_ENV_PERIOD	.01
+#define MIN_ENV_PERIOD	.001
 #define MIN_ENV_SHAPE	.0000001
 namespace syn
 {
@@ -13,13 +13,25 @@ namespace syn
   {
   protected:
     Envelope* m_parent;
-    int m_period;
-    int m_target_amp;
-    int m_shape;
+    int m_period_id;
+    int m_target_amp_id;
+    int m_shape_id;
   public:
-    EnvelopeSegment(Envelope* parent, int pid, int taid, int sid);
-    EnvelopeSegment();
-    EnvelopeSegment(const EnvelopeSegment& other);
+
+    EnvelopeSegment::EnvelopeSegment(Envelope* parent, int pid, int taid, int sid) :
+      m_parent(parent),
+      m_period_id(pid),
+      m_target_amp_id(taid),
+      m_shape_id(sid),
+      prev_amp(0),
+      step(0),
+      is_increasing(false)
+    {};
+    EnvelopeSegment::EnvelopeSegment() :EnvelopeSegment(nullptr, 0, 0, 0)
+    {};
+    EnvelopeSegment::EnvelopeSegment(const EnvelopeSegment& other) :
+      EnvelopeSegment(other.m_parent, other.m_period_id, other.m_target_amp_id, other.m_shape_id)
+    {};
     EnvelopeSegment& operator=(const EnvelopeSegment& other);
     UnitParameter& period();
     UnitParameter& period() const;

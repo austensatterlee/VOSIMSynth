@@ -26,16 +26,16 @@ double BasicOscillator::process()
   double output;
   switch ((int)m_waveform) {
   case SAW_WAVE:
-    output = (m_Phase * 2 - 1);
+    output = (m_basePhase * 2 - 1);
     break;
   case SINE_WAVE:
-    output = 2 * (0.5 - lut_vosim_pulse_cos.getlinear(m_Phase));
+    output = 2 * (0.5 - lut_vosim_pulse_cos.getlinear(m_phase));
     break;
   case TRI_WAVE:
-    output = m_Phase<=0.5 ? 4*m_Phase-1 : -4*(m_Phase-0.5)+1;
+    output = m_phase <=0.5 ? 4* m_phase -1 : -4*(m_phase -0.5)+1;
     break;
   case SQUARE_WAVE:
-    output = m_Phase<=0.5 ? -1 : 1;
+    output = m_phase <=0.5 ? -1 : 1;
     break;
   default:
     output = 0;
@@ -50,12 +50,18 @@ double BasicOscillator::process()
  */
 void Oscillator::tick_phase()
 {
-  m_Step = pitchToFreq(m_pitch + m_maxPitchShift*m_pitchshift) / m_Fs;  
+  if(m_pitch.isDirty() || m_pitchshift.isDirty()){
+    m_Step = pitchToFreq(m_pitch + m_maxPitchShift*m_pitchshift) / m_Fs;  
+  }
   
-  m_Phase += m_Step;
-  if (m_Phase > 1)
-    m_Phase -= 1;
-
+  m_basePhase += m_Step;
+  if (m_basePhase > 1)
+    m_basePhase -= 1;
+  m_phase = m_basePhase + m_phaseshift;
+  if (m_phase > 1)
+    m_phase -= 1;
+  if (m_phase < 0)
+    m_phase += 1;
   if (isSynced())
   {
     m_isSynced = true;

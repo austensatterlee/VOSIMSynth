@@ -40,6 +40,7 @@ namespace syn
     {
       m_forwardConnections.push_back(vector<Connection*>());
       m_backwardConnections.push_back(vector<Connection*>());
+      m_midiConnections.push_back(vector<MIDIConnection*>());
       
       m_unitmap[unit->getName()] = uid;
       while (uid >= m_units.size())

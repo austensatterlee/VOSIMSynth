@@ -18,10 +18,13 @@ namespace syn
   double VosimOscillator::process()
   {
     Oscillator::tick_phase();
-    double number = m_number*4;
-    double pulseshift = (m_pitch + m_pitchshift + 12 * (number - 1))*m_relativeamt;
-    m_PhaseScale = pitchToFreq(m_ppitch * (128- pulseshift) + pulseshift) / (m_Step*m_Fs);
-    
+    double number = m_number * 4;
+    if (m_number.isDirty() || m_pitch.isDirty() || m_pitchshift.isDirty() || m_ppitch.isDirty() || m_relativeamt.isDirty())
+    {
+      double pulseshift = (m_pitch + m_pitchshift + 12 * (number - 1))*m_relativeamt;
+      m_PhaseScale = pitchToFreq(m_ppitch * (128 - pulseshift) + pulseshift) / (m_Step*m_Fs);
+    }
+
     // add compensation for phase scales < 0.5 (i.e. won't be able to reach pulse peak)
     m_CompensationGain = 1.0;
     if (m_PhaseScale < 0.5)
@@ -38,7 +41,7 @@ namespace syn
     }
 
     double vout;
-    double pulsePhase = m_Phase * m_PhaseScale;
+    double pulsePhase = m_phase * m_PhaseScale;
     int N = (int)pulsePhase;
     int lastN = (int)m_LastPulsePhase;
     if (!N)

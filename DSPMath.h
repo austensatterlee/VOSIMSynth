@@ -21,12 +21,12 @@ namespace syn
 
   inline double pitchToFreq(double pitch)
   {
-    double freq = lut_pitch_table.getlinear(pitch / 128.0);
+    double freq = lut_pitch_table.getlinear(pitch*0.0078125);
     if (freq == 0)
       freq = 1;
     return freq;
   }
-  inline double dbToAmp(double db) { return std::pow(10, 0.05*db); }
-  inline double ampToDb(double amp) { return 20 * std::log10(amp); }
+  inline double db2amp(double db) { return std::pow(10, 0.05*db); }
+  inline double amp2db(double a) { return 20 * std::log10(a); }
 }
 #endif

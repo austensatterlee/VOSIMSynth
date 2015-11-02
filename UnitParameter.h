@@ -25,23 +25,29 @@ namespace syn
   class UnitParameter
   {
   protected:
+    typedef double(*ParamTransformFunc)(double);
     string m_name;
     int m_id;
     double m_baseValue;
     double m_currValue;
+    double m_transformedValue;
     double m_min, m_max;
     PARAM_TYPE m_type;
     const IControl* m_controller;
     bool m_isHidden;
+    bool m_isDirty;
+    ParamTransformFunc m_transform_func;
   public:
-    UnitParameter(string name, int id, PARAM_TYPE ptype, double min, double max, bool isHidden=false) :
+    UnitParameter(string name, int id, PARAM_TYPE ptype, double min, double max, bool isHidden = false) :
       m_name(name),
       m_id(id),
       m_type(ptype),
       m_min(min),
       m_max(max),
       m_controller(nullptr),
-      m_isHidden(isHidden)
+      m_isHidden(isHidden),
+      m_transform_func(nullptr),
+      m_isDirty(true)
     {
       mod(0.5*(m_max + m_min), SET);
     }
@@ -51,18 +57,35 @@ namespace syn
       UnitParameter(other.m_name, other.m_id, other.m_type, other.m_min, other.m_max)
     {
       mod(other.m_baseValue, SET);
+      setTransformFunc(other.m_transform_func);
     }
     virtual ~UnitParameter() {};
 
     bool operator== (const UnitParameter& p) const;
     virtual void mod(double amt, MOD_ACTION action);
-    operator double() const { return m_currValue; }
+    operator double()
+    {
+      if (m_isDirty)
+      {
+        if (m_transform_func!=nullptr)
+        {
+          m_transformedValue = m_transform_func(m_currValue);
+        }
+        else
+        {
+          m_transformedValue = m_currValue;
+        }
+        m_isDirty = false;
+      }
+      return m_transformedValue;
+    }
     /**
      * \brief Prepare the parameter for the next sample by resetting to the base value
      */
     void reset()
     {
       m_currValue = m_baseValue;
+      m_isDirty = true;
     }
 
     const string getName() const { return m_name; };
@@ -73,11 +96,13 @@ namespace syn
     void setMin(double min) { m_min = min; }
     void setMax(double max) { m_max = max; }
     const IControl* getController() const { return m_controller; }
-    bool hasController() const { return m_controller!=nullptr; }
-    bool isHidden() const {return m_isHidden; }
+    bool hasController() const { return m_controller != nullptr; }
+    void setTransformFunc(ParamTransformFunc func) { m_transform_func = func; }
+    bool isHidden() const { return m_isHidden; }
+    bool isDirty() const { return m_isDirty; }
     void setController(const IControl* controller);
     void unsetController(const IControl* controller);
-    PARAM_TYPE getType() const {return m_type; }
+    PARAM_TYPE getType() const { return m_type; }
     UnitParameter* clone() const
     {
       UnitParameter* other = cloneImpl();
@@ -89,6 +114,9 @@ namespace syn
       other->m_min = m_min;
       other->m_type = m_type;
       other->m_controller = m_controller;
+      other->m_transform_func = m_transform_func;
+      other->m_transformedValue = m_transformedValue;
+      other->m_isDirty = m_isDirty;
       return other;
     }
   private:

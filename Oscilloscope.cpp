@@ -13,22 +13,12 @@ namespace syn
     m_isActive(false),
     m_currSyncDelay(0),
     m_syncDelayEst(1),
-    m_usePeriodEstimate(false)
+    m_usePeriodEstimate(true),
+    m_defaultBufSize(1)
   {
     m_InnerRect = IRECT(pR.L + m_Padding, pR.T + m_Padding, pR.R - m_Padding, pR.B - m_Padding);
     setBufSize(size);
     m_inputBuffer = vector<double>(m_BufSize, 0.0);
-  }
-
-  inline bool Oscilloscope::IsDirty()
-  {
-    return m_isActive && mDirty;
-  }
-
-  inline void Oscilloscope::setPeriod(int nsamp)
-  {
-    m_numSamplesInPeriod = nsamp;
-    setBufSize(m_displayPeriods*nsamp * 2);
   }
 
   void Oscilloscope::sync(bool isSynced)
@@ -36,23 +26,30 @@ namespace syn
     if (m_isActive)
     {
       m_currSyncDelay++;
-      if (isSynced)
+      if ((isSynced && m_usePeriodEstimate) || (m_currSyncDelay + 1 >= getPeriod() && !m_usePeriodEstimate))
       {
         m_periodCount++;
         if (m_periodCount >= m_displayPeriods)
         {
-          m_syncDelayEst += 0.05*((double)m_currSyncDelay - m_syncDelayEst);
+          m_syncDelayEst += 0.10*((double)m_currSyncDelay - m_syncDelayEst);
           m_periodCount = 0;
-          m_syncIndexQueue.push_back(m_currSyncDelay);
           m_currSyncDelay = 0;
 
-          if (!m_usePeriodEstimate && m_currTriggerSrc && getPeriod() != m_currTriggerSrc->getSamplesPerPeriod())
+          if (m_usePeriodEstimate)
           {
-            setPeriod(m_currTriggerSrc->getSamplesPerPeriod());
+            if (getPeriod() != (int)m_syncDelayEst / m_displayPeriods * 2)
+            {
+              setPeriod((int)m_syncDelayEst / m_displayPeriods * 2);
+            }
+            m_syncIndexQueue.push_back((int)m_syncDelayEst);
           }
-          else if (m_usePeriodEstimate && m_BufSize != (int)m_syncDelayEst)
+          else
           {
-            setPeriod((int)m_syncDelayEst / m_displayPeriods);
+            if (!m_usePeriodEstimate && getPeriod() != (int)m_defaultBufSize)
+            {
+              setPeriod(m_defaultBufSize);
+            }
+            m_syncIndexQueue.push_back(getPeriod()-1);
           }
 
           if (!m_transformFunc)
@@ -80,7 +77,6 @@ namespace syn
       m_inputBuffer[m_BufInd] = y;
       if (m_syncIndexQueue.size() && m_syncIndexQueue.front() == m_BufInd)
       {
-        m_BufInd = 0;
         m_syncIndexQueue.pop_front();
         SetDirty();
       }
@@ -159,14 +155,28 @@ namespace syn
   void Oscilloscope::OnMouseUp(int x, int y, IMouseMod* pMod)
   {
     m_isActive ^= true;
+    m_syncIndexQueue.clear();
+    m_BufInd = 0;
+    m_currSyncDelay = 0;
+    m_periodCount = 0;
   }
 
   void Oscilloscope::OnMouseWheel(int x, int y, IMouseMod* pMod, int d)
   {
     m_syncIndexQueue.clear();
-    m_displayPeriods = m_displayPeriods + d;
-    if (m_displayPeriods <= 0)
-      m_displayPeriods = 1;
+    int change = 0;
+    if (d > 0)
+    {
+      change = 1;
+    }
+    else if (d < 0)
+    {
+      change=-1;
+    }
+    if(m_displayPeriods+d > 0 && getPeriod()<8192){
+      m_displayPeriods = m_displayPeriods + change;
+    }
+    
   }
 
   bool Oscilloscope::Draw(IGraphics *pGraphics)
@@ -196,7 +206,7 @@ namespace syn
     double x1, y1;
     double x2, y2;
 
-    int bufReadLen = m_displayPeriods*m_numSamplesInPeriod;
+    int bufReadLen = m_outputBuffer.size();
     for (int j = 1; j < bufReadLen; j += 1)
     {
       x1 = toScreenX((j - 1) * 1. / (bufReadLen));

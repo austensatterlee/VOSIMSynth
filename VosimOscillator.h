@@ -17,7 +17,7 @@ namespace syn
     {};
     VosimOscillator(const VosimOscillator& vosc);
     double    m_PhaseScale = 1;
-    double  getPulsePhase() { return m_Phase*m_PhaseScale; };
+    double  getPulsePhase() { return m_basePhase*m_PhaseScale; };
     virtual double process();
   private:
     /* internal state */

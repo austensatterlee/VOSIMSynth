@@ -15,6 +15,7 @@ namespace syn
     {
       m_norm_bias = input_min;
       m_norm_scale = 1. / (input_max - input_min);
+      m_normalizePhase = (m_norm_bias!=0 && m_norm_scale!=1);
     }
     LookupTable() :
       LookupTable(nullptr, 0, 0, 1)
@@ -22,6 +23,7 @@ namespace syn
     double getlinear(const double phase) const;
   private:
     int m_size;
+    bool m_normalizePhase;
     double m_norm_bias;
     double m_norm_scale;
     const double* m_table;

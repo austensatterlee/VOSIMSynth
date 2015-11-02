@@ -31,7 +31,7 @@ namespace syn
       paramname.str(""); paramname.clear();
       paramname << "target" << i;
       target = addParam(paramname.str(), DOUBLE_TYPE, -1.0, 1.0).getId();
-      if (i == 0 || i == numSegments - 1)
+      if (i == numSegments - 1)
       {
         getParam(target).mod(0.0, SET);
       }
@@ -75,7 +75,9 @@ namespace syn
 
   void Envelope::updateSegment(int segment)
   {
-    m_segments[segment]->step = 1. / (m_Fs*(m_segments[segment]->period()));
+    if(m_segments[segment]->period().isDirty()){
+      m_segments[segment]->step = 1. / (m_Fs*(m_segments[segment]->period()));
+    }
     if(m_phase==0){
       if (segment == 0)
       {
@@ -161,36 +163,13 @@ namespace syn
       *this = other;
     }
     return *this;
-  }
-
-  EnvelopeSegment::EnvelopeSegment(const EnvelopeSegment& other) :
-    EnvelopeSegment(other.m_parent, other.m_period, other.m_target_amp, other.m_shape)
-  {
-
-  }
-
-  EnvelopeSegment::EnvelopeSegment() :EnvelopeSegment(nullptr, 0, 0, 0)
-  {
-
-  }
-
-  EnvelopeSegment::EnvelopeSegment(Envelope* parent, int pid, int taid, int sid) :
-    m_parent(parent),
-    m_period(pid),
-    m_target_amp(taid),
-    m_shape(sid),
-    prev_amp(0),
-    step(0),
-    is_increasing(false)
-  {
-
-  }
+  } 
 
   UnitParameter& EnvelopeSegment::period()
   {
     if (m_parent)
     {
-      return m_parent->getParam(m_period);
+      return m_parent->getParam(m_period_id);
     }
   }
 
@@ -198,7 +177,7 @@ namespace syn
   {
     if (m_parent)
     {
-      return m_parent->getParam(m_period);
+      return m_parent->getParam(m_period_id);
     }
   }
 
@@ -206,7 +185,7 @@ namespace syn
   {
     if (m_parent)
     {
-      return m_parent->getParam(m_target_amp);
+      return m_parent->getParam(m_target_amp_id);
     }
   }
 
@@ -214,7 +193,7 @@ namespace syn
   {
     if (m_parent)
     {
-      return m_parent->getParam(m_target_amp);
+      return m_parent->getParam(m_target_amp_id);
     }
   }
 
@@ -222,7 +201,7 @@ namespace syn
   {
     if (m_parent)
     {
-      return m_parent->getParam(m_shape);
+      return m_parent->getParam(m_shape_id);
     }
   }
 
@@ -230,7 +209,7 @@ namespace syn
   {
     if (m_parent)
     {
-      return m_parent->getParam(m_shape);
+      return m_parent->getParam(m_shape_id);
     }
   }
 

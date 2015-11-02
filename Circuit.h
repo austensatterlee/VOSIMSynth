@@ -81,7 +81,7 @@ namespace syn
     UnitVec m_units;
     ConnVec m_forwardConnections;
     ConnVec m_backwardConnections;
-    unordered_map<int, vector<MIDIConnection*>> m_midiConnections;
+    vector<vector<MIDIConnection*>> m_midiConnections;
     MIDIConnectionMap m_midiConnectionMap;
     IDMap m_unitmap;
     deque<int> m_processQueue; //!< cache storage for the linearized version of unit dependencies

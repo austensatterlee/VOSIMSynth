@@ -35,6 +35,7 @@ namespace syn
     TransformFunc* m_transformFunc = nullptr;
     int m_numSamplesInPeriod;
     deque<int> m_syncIndexQueue;
+    int m_defaultBufSize;
     double toScreenX(double val)
     {
       return val*m_InnerRect.W() + m_InnerRect.L;
@@ -48,9 +49,12 @@ namespace syn
     Oscilloscope(IPlugBase *pPlug, IRECT pR, int size = 1);
     ~Oscilloscope() {};
 
-    bool IsDirty();
-    void setPeriod(int nsamp);
-    int getPeriod() { return m_BufSize / m_displayPeriods; };
+
+
+    bool IsDirty() { return m_isActive && mDirty; }
+    void setPeriod(int nsamp) { m_numSamplesInPeriod = nsamp; setBufSize(m_displayPeriods*nsamp); }
+    int getPeriod() { return m_BufSize / m_displayPeriods; }
+    void setDefaultBufSize(int nsamp) { m_defaultBufSize = nsamp; }
     void sync(bool isSynced); //!< automatically called if a trigger source is set
     void input(double y); //!< automatically called if an input source is set
     void setTransformFunc(TransformFunc* f) { m_transformFunc = f; };
@@ -63,7 +67,7 @@ namespace syn
     void OnMouseUp(int x, int y, IMouseMod* pMod);
     void OnMouseWheel(int x, int y, IMouseMod* pMod, int d);
     bool Draw(IGraphics *pGraphics);
-    void usePeriodEstimate(bool b=true){m_usePeriodEstimate=b;}
+    void usePeriodEstimate(bool b = true) { m_usePeriodEstimate = b; }
 
     /**
     * Computes the DFT for real inputbuf and stores the magnitude spectrum (dB) in outputbuf.

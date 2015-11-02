@@ -19,7 +19,6 @@ public:
   void makeInstrument();
   void unitTickHook(double input);
   void OnNoteOn(uint8_t pitch, uint8_t vel);
-  void OnNoteOff(uint8_t pitch, uint8_t vel);
   void OnDyingVoice(Instrument* dying);
   ~VOSIMSynth()
   {

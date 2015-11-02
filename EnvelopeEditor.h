@@ -31,6 +31,9 @@ namespace syn
     VoiceManager* m_voiceManager;
     int m_targetEnvId;
     bool m_isMouseDown;
+    double m_selectionTolerance;
+    IRECT m_ampScaleRect;
+    IRECT m_timeScaleRect;
     int getSelected(double x, double y);
     void insertPointFromScreen(const NDPoint<2>& screenpt); //<! doesn't work
     NDPoint<2>& getPoint(int index);
