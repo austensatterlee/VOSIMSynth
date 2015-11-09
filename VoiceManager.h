@@ -24,11 +24,12 @@ namespace syn
     int m_maxVoices;
     VoiceMap m_voiceMap;
     VoiceList m_voiceStack;
+    VoiceList m_idleVoiceStack;
     vector<Instrument*> m_allVoices;
     Instrument* m_instrument;
-    Instrument* createVoice(int note,int vel);
+    int createVoice(int note,int vel);
     void makeIdle();
-    int findIdleVoice() const;
+    int findIdleVoice();
     void makeIdle(int vind);
 
   public:

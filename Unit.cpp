@@ -1,4 +1,8 @@
 #include "Unit.h"
+#include <array>
+
+using namespace std;
+
 namespace syn
 {
   void Unit::modifyParameter(int portid, double val, MOD_ACTION action)
@@ -28,17 +32,25 @@ namespace syn
 
   UnitParameter& Unit::addParam(string name, int id, PARAM_TYPE ptype,double min, double max, bool isHidden)
   {
-
     m_parammap[name] = id;
     if (m_params.size() <= id)
       m_params.resize(id + 1);
-    m_params[id] = new UnitParameter(name, id, ptype, min, max, isHidden);
+    m_params[id] = new UnitParameter(this,name, id, ptype, min, max, isHidden);
     return *m_params[id];
   }
 
   UnitParameter& Unit::addParam(string name, PARAM_TYPE ptype, double min, double max, bool isHidden)
   {
     return addParam(name, m_params.size(), ptype, min, max, isHidden);
+  }
+
+  UnitParameter& Unit::addEnumParam(string name, const vector<string> choice_names)
+  {
+    UnitParameter& param = addParam(name,ENUM_TYPE,0, choice_names.size(),false);
+    for(int i=0;i<choice_names.size();i++){
+      param.addValueName(i, choice_names[i]);
+    }
+    return param;
   }
 
   Unit::Unit(string name) :
@@ -58,9 +70,9 @@ namespace syn
 
   void Unit::tick()
   {
-    m_output = process();
-    m_output = finishProcessing(m_output);
-    m_extOutPort.Emit(m_output);
+    beginProcessing();
+    process();
+    finishProcessing();
     for (int i = 0; i < m_params.size(); i++)
     {
       m_params[i]->reset();

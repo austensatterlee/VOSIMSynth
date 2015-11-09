@@ -1,5 +1,6 @@
 from numpy import *
 import re
+import os
 
 def MakeTableStr(table,name,ctype="const double"):
     rows = int(sqrt(table.size))
@@ -61,9 +62,38 @@ def MinimumPhase(n,realCepstrum):
     freq = exp(fft.fft(realTime))
     realTime = real(fft.ifft(freq))
 
-
     minimumPhase = realTime
     return minimumPhase
+
+def GenerateBLSaw(n):
+    """ Generate band limited sawtooth wave """
+    # Alt method
+    # k=arange(n)
+    # fs = float64(n)
+    # blbuf = zeros(n)
+
+    # for harmonic in xrange(1,int(fs/2)):
+        # blbuf+=(1./harmonic)*sin(2*pi*harmonic*(k/fs))
+    # return -2/pi*blbuf
+    k = arange(0,n)
+    fs = float64(n)
+    f0 = 1./fs
+    phases = k*f0
+    blbuf = zeros(n)
+    h=1
+    while (f0*h<0.5):
+        blbuf += 2./(2+sqrt(2.))/h*cos(f0*h*2*pi)*sin(f0*k*h*2*pi)
+        h+=1
+    return -blbuf
+
+def GenerateBlit(n):
+    k=arange(n)
+    fs = float64(n)
+    blbuf = zeros(n)
+
+    for harmonic in xrange(1,int(fs/2)):
+        blbuf+=cos(2*pi*harmonic*(k/fs))
+    return blbuf/int(fs/2)
 
 def GenerateMinBLEP(nZeroCrossings, nOverSampling):
     n = (nZeroCrossings * 2 * nOverSampling) + 1
@@ -111,29 +141,35 @@ def SincKernel(M,fc):
     wsinc=array([sin(2*pi*fc*(i-M/2))/(i-M/2) if i!=M/2 else 2*pi*fc for i in N])
     return wsinc*window
 
-def PitchTable(notestart=0,notefinish=128):
-    n = arange(notestart,notefinish)
-    return 440*2**((n-69.)/12.)
+def PitchTable(n,notestart=0,notefinish=128):
+    N = linspace(notestart,notefinish,n)
+    return 440*2**((N-69.)/12.)
 
 def rewriteAutomatedSection(full_text,replacement_text):
-    block_pattern = re.compile("/\*::(?P<tag>.*?)::\*/ *?\n(?P<block>.*)\n/\*::/(?P=tag)::\*/",re.DOTALL);
+    block_pattern = re.compile(
+            " */\\*::(?P<tag>.*?)::\\*/.*?\n *(?P<block>.*)\n */\\*::/(?P=tag)::\\*/",
+            re.DOTALL);
     match = block_pattern.search(full_text)
     if not match:
         return full_text
     return re.sub(re.escape(match.groupdict()["block"]), replacement_text, full_text)
 
-def main():
+def main(pargs):
+    v = pargs.verbose
+
     ss_points = 65536
     sinsquaredtable = GenerateSinSquared(ss_points)
-    sk_points = 50
-    sk_fc = 0.49
+    sk_points = 5
+    sk_fc = 0.5
     sinckernel = SincKernel(sk_points,sk_fc)
-    pitchtable = PitchTable(-128,128)
+    pitchtable = PitchTable(65536,-128,128)
+    blsaw = GenerateBLSaw(1024)
 
-    key_order = ['size','input_min','input_max']
+    key_order = ['size','input_min','input_max', 'isPeriodic']
     tables = {
             'VOSIM_PULSE_COS':dict(data=sinsquaredtable,size=ss_points),
-            'PITCH_TABLE':dict(data=pitchtable,size=len(pitchtable),input_min=-1,input_max=1)
+            'PITCH_TABLE':dict(data=pitchtable,size=len(pitchtable),input_min=-1,input_max=1,isPeriodic=False),
+            'BL_SAW':dict(data=blsaw,size=len(blsaw))
             }
 
     tabledata_def = ""
@@ -144,17 +180,61 @@ def main():
     for name,struct in tables.items():
         tabledata_def += MakeTableStr(tables[name]['data'],name)
         tabledata_decl += "extern const double {}[{}];\n".format(name,len(tables[name]['data']))
-        tableargs = "{}, ".format(name)+", ".join(["{}".format(struct[k]) for k in key_order if k!='data' and k in struct])
-        tableobj_def += "const LookupTable lut_{}({});\n".format(name.lower(),tableargs);
 
+        currargs = []
+        for k in key_order:
+            if k not in struct:
+                continue
+            if k=="data":
+                continue
+            val = struct[k]
+            if type(val)==bool:
+                val = "true" if val else "false"
+            currargs.append("{}".format(val))
+        tableargs = "{}, ".format(name)+", ".join(currargs)
+        tableobj_currdef = "const LookupTable lut_{}({});\n".format(name.lower(),tableargs);
+        tableobj_def += tableobj_currdef
+        if v:
+            print tableobj_currdef
+
+    if os.path.isfile("table_data.cpp"):
+        if v:
+            print "Backing up old table_data.cpp..."
+        old_table_data = open('table_data.cpp','r').read()
+        with open('table_data.cpp.bk','w') as fp:
+            fp.write(old_table_data)
+
+    if v:
+        print "Writing new table_data.cpp..."
     with open('table_data.cpp','w') as fp:
         fp.write("#include \"tables.h\"\n")
         fp.write("namespace syn {\n")
         fp.write(tabledata_def)
         fp.write("\n}\n")
-    header_text = open('tables.h','r').read()
+
+    if os.path.isfile("tables.h"):
+        if v:
+            print "Backing up old tables.h..."
+        header_text = open('tables.h','r').read()
+        with open('tables.h.bk','w') as fp:
+            fp.write(header_text)
+    if v:
+        print "Writing new tables.h..."
     with open('tables.h', 'w') as fp:
         fp.write(rewriteAutomatedSection(header_text, tabledata_decl+'\n'+tableobj_def))
 
 if __name__=="__main__":
-    main()
+    import argparse as ap
+    psr = ap.ArgumentParser()
+    psr.add_argument("-v","--verbose",action="store_true")
+    pargs = psr.parse_args()
+
+    main(pargs)
+
+"""Tools"""
+def magspec(signal,fs=None):
+    from matplotlib import pyplot as plt
+    k = arange(len(signal)/2)
+    fs = fs or 1./len(signal)
+    freqs = k*fs
+    plt.plot( freqs, 20*log10(abs(fft.fft(signal))[k] ))

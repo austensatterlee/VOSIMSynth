@@ -236,3 +236,4 @@ build-win/
 *.pdf
 *.pyc
 doc/
+*.bk

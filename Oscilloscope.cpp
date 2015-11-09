@@ -1,116 +1,114 @@
 #include "Oscilloscope.h"
 #include "SourceUnit.h"
+#include "UI.h"
+
 namespace syn
 {
-  Oscilloscope::Oscilloscope(IPlugBase * pPlug, IRECT pR, int size) :
+  Oscilloscope::Oscilloscope(IPlugBase * pPlug, IRECT pR) :
     IControl(pPlug, pR),
     m_periodCount(0),
     m_BufInd(0),
     m_minY(0),
     m_maxY(1),
-    m_Padding(50),
+    m_Padding(25),
     m_displayPeriods(1),
     m_isActive(false),
     m_currSyncDelay(0),
-    m_syncDelayEst(1),
-    m_usePeriodEstimate(true),
-    m_defaultBufSize(1)
+    m_syncDelayEst(1)
   {
-    m_InnerRect = IRECT(pR.L + m_Padding, pR.T + m_Padding, pR.R - m_Padding, pR.B - m_Padding);
-    setBufSize(size);
-    m_inputBuffer = vector<double>(m_BufSize, 0.0);
-  }
+    m_InnerRect = pR.GetPadded(-m_Padding);
 
-  void Oscilloscope::sync(bool isSynced)
-  {
-    if (m_isActive)
+    /* Build context menu */
+    for (int i = 0; i < OSCILLOSCOPE_CONFIGS.size(); i++)
     {
-      m_currSyncDelay++;
-      if ((isSynced && m_usePeriodEstimate) || (m_currSyncDelay + 1 >= getPeriod() && !m_usePeriodEstimate))
-      {
-        m_periodCount++;
-        if (m_periodCount >= m_displayPeriods)
-        {
-          m_syncDelayEst += 0.10*((double)m_currSyncDelay - m_syncDelayEst);
-          m_periodCount = 0;
-          m_currSyncDelay = 0;
-
-          if (m_usePeriodEstimate)
-          {
-            if (getPeriod() != (int)m_syncDelayEst / m_displayPeriods * 2)
-            {
-              setPeriod((int)m_syncDelayEst / m_displayPeriods * 2);
-            }
-            m_syncIndexQueue.push_back((int)m_syncDelayEst);
-          }
-          else
-          {
-            if (!m_usePeriodEstimate && getPeriod() != (int)m_defaultBufSize)
-            {
-              setPeriod(m_defaultBufSize);
-            }
-            m_syncIndexQueue.push_back(getPeriod()-1);
-          }
-
-          if (!m_transformFunc)
-          {
-            m_transformFunc = Oscilloscope::passthruTransform;
-          }
-          double windowMinY, windowMaxY;
-          m_transformFunc(m_inputBuffer, m_outputBuffer, windowMinY, windowMaxY);
-          m_minY += 1.1*(1.5*windowMinY - m_minY);
-          m_maxY += 1.1*(1.5*windowMaxY - m_maxY);
-        }
-      }
+      const OscilloscopeConfig* currconf = &OSCILLOSCOPE_CONFIGS[i];
+      m_menu.AddItem(currconf->name.c_str(), i);
     }
+    m_config = &OSCILLOSCOPE_CONFIGS[0];
+    m_menu.CheckItemAlone(0);
   }
 
-  void Oscilloscope::input(double y)
+  void Oscilloscope::setConfig(OscilloscopeConfig* config)
   {
-    if (m_isActive)
+    WDL_MutexLock lock(&m_mutex);
+    m_config = config;
+    m_minY = 1.0;
+    m_maxY = -1.0;
+  }
+
+  void Oscilloscope::process()
+  {
+    if (m_isActive && m_currInput && m_inputBuffer.size())
     {
+      WDL_MutexLock lock(&m_mutex);
       m_BufInd++;
       if (m_BufInd >= m_BufSize)
       {
         m_BufInd = 0;
       }
-      m_inputBuffer[m_BufInd] = y;
-      if (m_syncIndexQueue.size() && m_syncIndexQueue.front() == m_BufInd)
+      m_inputBuffer[m_BufInd] = m_currInput->getLastOutput();
+
+      int period = getPeriod();
+      m_currSyncDelay++;
+      if ((m_currTriggerSrc && m_currTriggerSrc->isSynced()) || (!m_currTriggerSrc && m_currSyncDelay >= m_config->defaultBufSize))
       {
-        m_syncIndexQueue.pop_front();
-        SetDirty();
+        m_periodCount++;
+        // push wrapped sync offset to display queue
+        int wrapped_syncDelay = m_currSyncDelay;
+        while (wrapped_syncDelay >= period)
+        {
+          wrapped_syncDelay -= period;
+        }
+
+        int period = getPeriod();
+        if (m_config->useAutoSync)
+        {
+          if (period != (int)(m_syncDelayEst / m_displayPeriods))
+          {
+            setPeriod((int)(m_syncDelayEst / m_displayPeriods));
+          }
+        }
+        else
+        {
+          if (period != (int)m_config->defaultBufSize)
+          {
+            setPeriod(m_config->defaultBufSize);
+          }
+        }
+
+        if (m_periodCount >= m_displayPeriods)
+        {
+          m_syncDelayEst += 0.1*((double)m_currSyncDelay - m_syncDelayEst);
+          m_periodCount = 0;
+          m_currSyncDelay = 0;
+          m_BufInd = 0;
+          SetDirty();
+        }
       }
     }
   }
 
   void Oscilloscope::setBufSize(int s)
   {
-    if (s > 0 && m_inputBuffer.size() != s)
-      m_inputBuffer.resize(s, 0);
-    m_BufSize = s;
-    while (m_BufInd > m_BufSize)
+    if (s > 0)
     {
-      m_BufInd -= m_BufSize;
+      m_inputBuffer.resize(s);
+
+      m_BufSize = s;
+      while (m_BufInd > s)
+      {
+        m_BufInd -= s;
+      }
     }
   }
 
   void Oscilloscope::disconnectInput()
   {
-    if (m_currInput)
-    {
-      m_currInput->m_extOutPort.Disconnect(this, &Oscilloscope::input);
-      m_syncIndexQueue.clear();
-    }
     m_currInput = nullptr;
   }
 
   void Oscilloscope::disconnectTrigger()
   {
-    if (m_currTriggerSrc)
-    {
-      m_currTriggerSrc->m_extSyncPort.Disconnect(this, &Oscilloscope::sync);
-      m_syncIndexQueue.clear();
-    }
     m_currTriggerSrc = nullptr;
   }
 
@@ -134,7 +132,7 @@ namespace syn
   {
     // connect 
     disconnectInput();
-    comp.m_extOutPort.Connect(this, &Oscilloscope::input);
+    m_syncIndexQueue.clear();
     m_currInput = &comp;
     m_BufInd = 0;
     m_currSyncDelay = 0;
@@ -145,7 +143,7 @@ namespace syn
   {
     // connect
     disconnectTrigger();
-    comp.m_extSyncPort.Connect(this, &Oscilloscope::sync);
+    m_syncIndexQueue.clear();
     m_currTriggerSrc = &comp;
     m_BufInd = 0;
     m_currSyncDelay = 0;
@@ -154,8 +152,31 @@ namespace syn
 
   void Oscilloscope::OnMouseUp(int x, int y, IMouseMod* pMod)
   {
-    m_isActive ^= true;
-    m_syncIndexQueue.clear();
+
+  }
+
+  void Oscilloscope::OnMouseDown(int x, int y, IMouseMod* pMod)
+  {
+    if (pMod->L)
+    {
+      m_isActive ^= true;
+      if (m_isActive)
+      {
+        m_config->outputbuf.resize(m_config->defaultBufSize);
+        m_inputBuffer.resize(m_config->defaultBufSize);
+      }
+    }
+    else if (pMod->R)
+    {
+      IPopupMenu* selectedMenu = mPlug->GetGUI()->CreateIPopupMenu(&m_menu, x, y);
+      if (selectedMenu == &m_menu)
+      {
+        int itemChosen = selectedMenu->GetChosenItemIdx();
+        setConfig(&OSCILLOSCOPE_CONFIGS[itemChosen]);
+        selectedMenu->CheckItemAlone(itemChosen);
+        DBGMSG("item chosen, main menu %i\n", itemChosen);
+      }
+    }
     m_BufInd = 0;
     m_currSyncDelay = 0;
     m_periodCount = 0;
@@ -163,7 +184,6 @@ namespace syn
 
   void Oscilloscope::OnMouseWheel(int x, int y, IMouseMod* pMod, int d)
   {
-    m_syncIndexQueue.clear();
     int change = 0;
     if (d > 0)
     {
@@ -171,53 +191,96 @@ namespace syn
     }
     else if (d < 0)
     {
-      change=-1;
+      change = -1;
     }
-    if(m_displayPeriods+d > 0 && getPeriod()<8192){
+    if (m_displayPeriods + d > 0)
+    {
+      WDL_MutexLock lock(&m_mutex);
       m_displayPeriods = m_displayPeriods + change;
+      m_syncIndexQueue.clear();
     }
-    
+  }
+
+  int Oscilloscope::getBufReadLength()
+  {
+    int bufReadLen;
+    if (m_config->useAutoSync)
+    {
+      bufReadLen = getPeriod()*m_displayPeriods;
+      if(bufReadLen > m_config->outputbuf.size())
+        bufReadLen = m_config->outputbuf.size();
+    }
+    else
+    {
+      bufReadLen = m_config->outputbuf.size();
+    }
+    return bufReadLen;
   }
 
   bool Oscilloscope::Draw(IGraphics *pGraphics)
   {
+    WDL_MutexLock lock(&m_mutex);
+
+    pGraphics->DrawRect(&pt2color(palette[2] - getUnitv<4>(0)*40.0), &m_InnerRect);
     if (!m_isActive)
+    {
+      pGraphics->DrawRect(&pt2color(palette[2] - getUnitv<4>(0)*40.0), &mRECT);
       return false;
-    IColor fgcolor(255, 255, 255, 255);
-    IColor gridcolor(150, 255, 25, 25);
-    IColor bgcolor(150, 25, 25, 255);
-    IColor cval(255 * m_InnerRect.W() / m_outputBuffer.size(), 0, 0, 0);
-    IText  txtstyle(&gridcolor);
-    pGraphics->DrawRect(&bgcolor, &m_InnerRect);
+    }
+    IText  txtstyle(12, &pt2color(palette[4]), "Helvetica", IText::kStyleNormal, IText::kAlignNear, 0, IText::kQualityClearType, &pt2color(palette[1]), &pt2color(palette[3]));
+    IText txtstylecenter(txtstyle); txtstylecenter.mAlign = IText::kAlignCenter;
+    NDPoint<4> bgcolor = palette[1] - getUnitv<4>(0)*127.0;
+    pGraphics->FillIRect(&pt2color(bgcolor), &m_InnerRect);
+    IColor cval = pt2color(getOnes<4>()*255.0 - bgcolor);
     /* zero line */
     double zero = toScreenY(0);
-    pGraphics->DrawLine(&gridcolor, mRECT.L, zero, mRECT.W() + mRECT.L, zero);
+    pGraphics->DrawLine(&pt2color(palette[1]), mRECT.L, zero, mRECT.W() + mRECT.L, zero);
 
     char gridstr[128];
     snprintf(gridstr, 32, "%.4f", m_maxY);
-    pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.L, mRECT.T, m_InnerRect.L, m_InnerRect.T));
-    snprintf(gridstr, 32, "%.2f", 0.0);
+    pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(m_InnerRect.L - 10, m_InnerRect.T, m_InnerRect.L, m_InnerRect.T + 10));
+    snprintf(gridstr, 32, "%.2f %s", 0.0, m_config->yunits.c_str());
     pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.L, zero - 10, m_InnerRect.L, zero + 10));
     snprintf(gridstr, 32, "%.4f", m_minY);
-    pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.L + 10, m_InnerRect.B, m_InnerRect.L, mRECT.B));
-    sprintf(gridstr, "Displaying %d periods\nBuffer size: %d (in) %d (out)\nInput frequency: %.2f Hz\nSync: %d", \
-      m_displayPeriods, m_BufSize, m_outputBuffer.size(), GetPlug()->GetSampleRate() / m_numSamplesInPeriod, m_numSamplesInPeriod);
-    pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.R - 200, mRECT.T, mRECT.R, mRECT.B));
+    pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(m_InnerRect.L - 10, m_InnerRect.B - 10, m_InnerRect.L, m_InnerRect.B));
+    sprintf(gridstr, "Displaying %d periods | Buffer size: %d (in) %d (out) | Input frequency: %.2f Hz", \
+      m_displayPeriods, m_BufSize, m_config->outputbuf.size(), GetPlug()->GetSampleRate() / m_syncDelayEst * m_displayPeriods);
+    pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.L, mRECT.T, mRECT.R, mRECT.B));
+    sprintf(gridstr, m_config->xunits.c_str());
+    pGraphics->DrawIText(&txtstylecenter, gridstr, &IRECT(mRECT.L, m_InnerRect.B + 10, mRECT.R, mRECT.B));
     double x1, y1;
     double x2, y2;
 
-    int bufReadLen = m_outputBuffer.size();
-    for (int j = 1; j < bufReadLen; j += 1)
+    if (m_inputBuffer.empty())
+      return false;
+    m_config->doTransform(mPlug, m_inputBuffer);
+    double minY = m_config->outputbuf[m_config->argmin];
+    double maxY = m_config->outputbuf[m_config->argmax];
+    if (minY < m_minY) m_minY = minY;
+    if (maxY > m_maxY) m_maxY = maxY;
+
+    int bufreadlen = getBufReadLength();
+    int numxticks = 10;
+    double xtickdist = m_InnerRect.W() / (double)numxticks;
+    int lastxtick = 0;
+    for (int j = 1; j < bufreadlen; j += 1, bufreadlen = getBufReadLength())
     {
-      x1 = toScreenX((j - 1) * 1. / (bufReadLen));
-      x2 = toScreenX((j)* 1. / (bufReadLen));
-      y1 = toScreenY(m_outputBuffer[j - 1]);
-      y2 = toScreenY(m_outputBuffer[j]);
-      cval.R = 255 * (1 - (y2 - m_InnerRect.T) / m_InnerRect.H());
-      cval.B = 255 * (1 - abs(y2 - y1) / m_InnerRect.H());
-      cval.B = 255 * (1 - abs(-y2 + y1) / m_InnerRect.H());
-      pGraphics->DrawLine(&cval, x2, m_InnerRect.B, x2, y2);
-      pGraphics->DrawLine(&fgcolor, x1, y1, x2, y2, 0, true);
+      x1 = toScreenX(m_config->xaxisticks[j - 1]);
+      x2 = toScreenX(m_config->xaxisticks[j]);
+      y1 = toScreenY(m_config->outputbuf[j - 1]);
+      y2 = toScreenY(m_config->outputbuf[j]);
+      cval.A = 255;// - 25* bufreadlen /m_InnerRect.W();
+      cval.R *= (1 - (y2 - m_InnerRect.T) / m_InnerRect.H());
+      cval.G *= 1;
+      cval.B *= (1 - abs(y1 - y2) / m_InnerRect.H());
+      //pGraphics->DrawLine(&cval, x2, m_InnerRect.B, x2, y2);
+      pGraphics->DrawLine(&cval, x1, y1, x2, y2, 0, true);
+      if (j == 1 || x2 - lastxtick >= xtickdist)
+      {
+        snprintf(gridstr, 128, "%s", m_config->xaxislbls[j].c_str());
+        pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(x2, m_InnerRect.B, x2 + 10, m_InnerRect.B + 10));
+        lastxtick = x2;
+      }
     }
     return true;
   }

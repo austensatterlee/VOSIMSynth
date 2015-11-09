@@ -60,7 +60,7 @@ namespace syn
     */
     void sendMIDICC(const IMidiMsg& midimsg);
 
-    vector<tuple<string, string>> getParameterNames() const;
+    vector<tuple<string, string>> getParameterNames();
     Unit& getUnit(string name) { return *m_units[m_unitmap[name]]; };
     const Unit& getUnit(string name) const { return *m_units.at(m_unitmap.at(name)); };
     Unit& getUnit(int id) { return *m_units[id]; };

@@ -74,7 +74,7 @@ namespace syn
   protected:
     void	updateSegment(const int segment); //!< Updates the EnvelopeSegment to reflect the values in m_params 
 
-    virtual double process();
+    virtual void process();
   private:
     virtual Unit* cloneImpl() const { return new Envelope(*this); };
     vector<EnvelopeSegment*> m_segments;
@@ -86,6 +86,7 @@ namespace syn
     bool	m_isDone;
     double m_RelPoint;
     double m_phase;
+    bool m_fsIsDirty;
   };
 }
 #endif // __Envelope__

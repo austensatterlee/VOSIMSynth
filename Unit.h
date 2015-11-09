@@ -1,8 +1,8 @@
 #ifndef __UNIT__
 #define __UNIT__
-#include "DSPMath.h"
-#include "UnitParameter.h"
 #include "Connection.h"
+#include "UnitParameter.h"
+#include "DSPMath.h"
 #include "GallantSignal.h"
 #include <unordered_map>
 #include <vector>
@@ -13,7 +13,7 @@ using std::tuple;
 using std::unordered_map;
 using std::vector;
 
-typedef  unordered_map<string, int> IDMap; //!< string<->integral id translation map 
+typedef  unordered_map<string, int> IDMap; //!< string->integral id translation map 
 
 namespace syn
 {
@@ -38,7 +38,7 @@ namespace syn
      * \brief Runs the unit for the specified number of ticks. The result is accessed via getLastOutputBuffer().
      */
     void tick();
-    void setFs(const double fs) { m_Fs = fs; };
+    virtual void setFs(const double fs) { m_Fs = fs; };
     double getFs() const { return m_Fs; };
     double getLastOutput() const { return m_output; };
     /*!
@@ -57,7 +57,6 @@ namespace syn
     Circuit& getParent() const { return *parent; };
     const string getName() const { return m_name; }
     Unit* clone() const;
-    Signal1<double> m_extOutPort;
   protected:
     typedef vector<UnitParameter*> ParamVec;
     ParamVec m_params;
@@ -66,13 +65,12 @@ namespace syn
     Circuit* parent;
     double m_Fs;
     double m_output;
-    virtual double process() = 0;
+    virtual void process() = 0; //<! should add its result to m_output
     UnitParameter& addParam(string name, int id, PARAM_TYPE ptype, double min, double max, bool isHidden=false);
-    UnitParameter& addParam(string name, PARAM_TYPE ptype, double min, double max, bool isHidden=false);
-    virtual double finishProcessing(double o)
-    {
-      return o;
-    };
+    UnitParameter& addParam(string name, PARAM_TYPE ptype, double min, double max, bool isHidden = false);
+    UnitParameter& addEnumParam(string name, const vector<string> choice_names);
+    virtual void beginProcessing() {};
+    virtual void finishProcessing(){}; //<! Should modify m_output. This allows parent classes to apply common processing to child class outputs.
   private:
     virtual Unit* cloneImpl() const = 0;
   };
@@ -91,9 +89,9 @@ namespace syn
     {}
     virtual ~AccumulatingUnit() {};
   protected:
-    virtual double process()
+    virtual void process()
     {
-      return m_input*m_gain;
+      m_output = m_input*m_gain;
     }
   private:
     UnitParameter& m_input;

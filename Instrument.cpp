@@ -6,8 +6,8 @@ namespace syn
   void Instrument::addSource(SourceUnit* unit)
   {
     m_sourcemap.push_back(m_units.size());
-    if(m_primarySrcId==-1)
-      m_primarySrcId = m_sourcemap.back();
+    if(m_primarySrcVec.empty())
+      m_primarySrcVec.push_back(m_sourcemap.back());
     addUnit(unit);
   }
 
@@ -15,9 +15,16 @@ namespace syn
   {
     int srcid = getUnitId(name);
     assert(std::find(m_sourcemap.begin(),m_sourcemap.end(),srcid)!=m_sourcemap.end());
-    m_primarySrcId = srcid;
+    m_primarySrcVec.clear();
+    m_primarySrcVec.push_back(srcid);
   }
 
+  void Instrument::addPrimarySource(string name)
+  {
+    int srcid = getUnitId(name);
+    assert(std::find(m_sourcemap.begin(), m_sourcemap.end(), srcid) != m_sourcemap.end());
+    m_primarySrcVec.push_back(srcid);
+  }
 
   void Instrument::noteOn(int pitch, int vel)
   {
@@ -38,7 +45,10 @@ namespace syn
 
   bool Instrument::isActive() const
   {
-    return ((SourceUnit*)m_units[m_primarySrcId])->isActive();
+    for(int i=0;i<m_primarySrcVec.size();i++){
+      if(((SourceUnit*)m_units[m_primarySrcVec[i]])->isActive()) return true;
+    }
+    return false;
   }
 
   Circuit* Instrument::cloneImpl() const

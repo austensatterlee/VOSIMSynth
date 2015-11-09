@@ -91,27 +91,32 @@ namespace syn
     return m_units[uid]->readParam(param);
   }
 
-  vector<tuple<string, string>> Circuit::getParameterNames() const
+  vector<tuple<string, string>> Circuit::getParameterNames()
   {
     vector<tuple<string, string>> all_pnames;
-    int id = 0;
-    for (UnitVec::const_iterator it = m_units.begin(); it != m_units.end(); it++)
+    if (m_isGraphDirty)
     {
-      vector<string> pnames = (*it)->getParameterNames();
+      refreshProcQueue();
+    }
+    for (int i=0;i<m_processQueue.size();i++)
+    {
+      Unit* unit = m_units[m_processQueue[i]];
+      vector<string> pnames = unit->getParameterNames();
       for (string pname : pnames)
       {
-        tuple<string, string> nametup{ (*it)->getName(),pname };
+        tuple<string, string> nametup{ unit->getName(),pname };
         all_pnames.push_back(nametup);
       }
-      id++;
     }
     return all_pnames;
   }
 
   void Circuit::addConnection(Connection* c)
   {
-    if (!hasUnit(c->m_sourceid) || !hasUnit(c->m_targetid))
+    if (!hasUnit(c->m_sourceid) || !hasUnit(c->m_targetid)){
       throw std::invalid_argument("Either source or target name not found inside circuit!");
+      DBGMSG("Error connecting source (%d) and target (%d) inside circuit!", c->m_sourceid, c->m_targetid);
+    }
     vector<Connection*>& fl = m_forwardConnections[c->m_sourceid];
     if (std::find(fl.begin(), fl.end(), c) == fl.end()) // connection not in forward list (and thus not in backward list)
     {
@@ -277,6 +282,11 @@ namespace syn
 
   int Circuit::getUnitId(string name)
   {
+    if (m_unitmap.find(name) == m_unitmap.end())
+    {
+      throw std::invalid_argument("Unit ("+name+") not found in circuit.");
+      DBGMSG("Unit (%s) not found in circuit.",name);
+    }
     return m_unitmap.at(name);
   }
 }

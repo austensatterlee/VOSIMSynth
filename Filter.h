@@ -52,7 +52,7 @@ namespace syn
     };
     void reset(){ memset(YBuf,0,(nY+1)*sizeof(double)); memset(XBuf,0,(nX)*sizeof(double)); xBufInd=0; yBufInd=0; };
   protected:
-    virtual double process();
+    virtual void process();
   private:
     virtual Unit* cloneImpl() const { return new Filter(*this); };
   };
@@ -65,7 +65,7 @@ namespace syn
   }
 
   template <size_t nX, size_t nY>
-  double Filter<nX, nY>::process()
+  void Filter<nX, nY>::process()
   {
     XBuf[xBufInd] = readParam(0);
     YBuf[yBufInd] = 0.0;
@@ -89,7 +89,7 @@ namespace syn
     yBufInd++;
     if (yBufInd == nY + 1)
       yBufInd = 0;
-    return *output;
+    m_output = *output;
   }
 }
 #endif

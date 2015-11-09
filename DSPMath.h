@@ -3,6 +3,8 @@
 #include <cmath>
 #include <vector>
 #include "tables.h"
+#include "db2val.h"
+
 #define LERP(A,B,F) (((B)-(A))*(F)+(A))
 #define INVLERP(A,B,X) (((X)-(A))/((B)-(A)))
 
@@ -26,7 +28,5 @@ namespace syn
       freq = 1;
     return freq;
   }
-  inline double db2amp(double db) { return std::pow(10, 0.05*db); }
-  inline double amp2db(double a) { return 20 * std::log10(a); }
 }
 #endif

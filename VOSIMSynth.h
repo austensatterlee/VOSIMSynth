@@ -17,7 +17,7 @@ public:
   VOSIMSynth(IPlugInstanceInfo instanceInfo);
   void makeGraphics();
   void makeInstrument();
-  void unitTickHook(double input);
+  void unitTickHook(double process);
   void OnNoteOn(uint8_t pitch, uint8_t vel);
   void OnDyingVoice(Instrument* dying);
   ~VOSIMSynth()
@@ -33,7 +33,7 @@ public:
 private:
   MIDIReceiver m_MIDIReceiver;
   VoiceManager m_voiceManager;
-  Oscilloscope m_Oscilloscope;
+  Oscilloscope* m_Oscilloscope;
   Instrument* m_instr;
   vector<pair<int, int>> m_hostParamMap;
   unordered_map<int,unordered_map<int,int>> m_invHostParamMap;

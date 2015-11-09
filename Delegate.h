@@ -173,8 +173,8 @@ namespace detail {	// we'll hide the implementation details in a nested namespac
 // anything nasty.
 // Usage is identical to static_cast<>
 template <class OutputClass, class InputClass>
-inline OutputClass implicit_cast(InputClass input){
-	return input;
+inline OutputClass implicit_cast(InputClass process){
+	return process;
 }
 
 //		horrible_cast< >
@@ -194,14 +194,14 @@ union horrible_union{
 };
 
 template <class OutputClass, class InputClass>
-inline OutputClass horrible_cast(const InputClass input){
+inline OutputClass horrible_cast(const InputClass process){
 	horrible_union<OutputClass, InputClass> u;
 	// Cause a compile-time error if in, out and u are not the same size.
 	// If the compile fails here, it means the compiler has peculiar
 	// unions which would prevent the cast from working.
 	typedef int ERROR_CantUseHorrible_cast[sizeof(InputClass)==sizeof(u)
 		&& sizeof(InputClass)==sizeof(OutputClass) ? 1 : -1];
-	u.in = input;
+	u.in = process;
 	return u.out;
 }
 

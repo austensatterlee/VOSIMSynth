@@ -1,33 +1,34 @@
 #include "UI.h"
 #include "UnitParameter.h"
-#define LBL_H 10
-#define X_PAD 15
-#define Y_PAD 10
 namespace syn
 {
-  void attachKnob(IGraphics *pGraphics, IPlugBase *pPlug, uint8_t r, uint8_t c, int paramIdx, string name, IBitmap *pBmp)
-  {
-    int x = (pBmp->W + X_PAD)*(c)+X_PAD;
-    int y = (pBmp->frameHeight() + LBL_H + Y_PAD)*(r)+Y_PAD;
-    ITextControl* knobLabel;
-    IText textprops(10, &COLOR_YELLOW, "Arial");
-    IRECT textrect = IRECT(x, y + pBmp->frameHeight(), x + pBmp->W, y + pBmp->frameHeight() + LBL_H);
-    knobLabel = new ITextControl(pPlug, textrect, &textprops, name.c_str());
 
-    pGraphics->AttachControl(new IKnobMultiControl(pPlug, x, y, paramIdx, pBmp));
-    pGraphics->AttachControl(knobLabel);
+  IRECT Grid::place(const IRECT& size, int direction)
+  {
+    int reqRows = std::ceil(size.H() / (double)m_cellsize);
+    int reqCols = std::ceil(size.W() / (double)m_cellsize);
+    int i = 0;
+    int j = 0;
+    while (i < m_rows)
+    {
+      while (j < m_cols)
+      {
+        Cell& cell = m_cells[i][j];
+        if (cell.freecols >= reqCols && cell.freerows >= reqRows)
+        {
+          cell.freecols -= reqCols;
+          cell.freerows -= reqRows;          
+        }
+        j += cell.freecols;        
+      }
+      i++;
+    }
+    return IRECT(0,0,0,0);
   }
 
-  void attachSwitch(IGraphics *pGraphics, IPlugBase *pPlug, uint8_t r, uint8_t c, int paramIdx, string name, IBitmap *pBmp)
+  void Grid::unplace(IRECT position)
   {
-    int x = (pBmp->W + X_PAD)*(c)+X_PAD;
-    int y = (pBmp->frameHeight() + LBL_H + Y_PAD)*(r)+Y_PAD;
-    ITextControl* knobLabel;
-    IText textprops(10, &COLOR_YELLOW, "Arial");
-    IRECT textrect = IRECT(x, y + pBmp->frameHeight(), x + pBmp->W, y + pBmp->frameHeight() + LBL_H);
-    knobLabel = new ITextControl(pPlug, textrect, &textprops, name.c_str());
 
-    pGraphics->AttachControl(new ISwitchControl(pPlug, x, y, paramIdx, pBmp));
-    pGraphics->AttachControl(knobLabel);
   }
+
 }

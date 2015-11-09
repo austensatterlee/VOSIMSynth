@@ -1,14 +1,15 @@
 #include "VoiceManager.h"
 namespace syn
 {
-  Instrument* VoiceManager::createVoice(int note, int vel)
+  int VoiceManager::createVoice(int note, int vel)
   {
     int vind = findIdleVoice();
+    m_idleVoiceStack.remove(vind);
     m_voiceStack.push_back(vind);
     m_voiceMap[note].push_back(vind);
     m_allVoices[vind]->noteOn(note, vel);
     m_numVoices++;
-    return m_allVoices[vind];
+    return vind;
   }
 
   void VoiceManager::makeIdle()
@@ -18,6 +19,7 @@ namespace syn
     m_voiceMap.begin()->second.pop_back();
     m_voiceStack.remove(vind);
     m_onDyingVoice.Emit(m_allVoices[vind]);
+    m_idleVoiceStack.push_front(vind);
   }
 
   void VoiceManager::makeIdle(int vind)
@@ -26,28 +28,23 @@ namespace syn
     m_voiceMap[m_allVoices[vind]->getNote()].remove(vind);
     m_voiceStack.remove(vind);
     m_onDyingVoice.Emit(m_allVoices[vind]);
+    m_idleVoiceStack.push_front(vind);
   }
 
-  int VoiceManager::findIdleVoice() const
+  int VoiceManager::findIdleVoice()
   {
-    int i = 0;
-    while (i < m_allVoices.size())
-    {
-      if (!m_allVoices[i]->isActive())
-      {
-        return i;
-      }
-      i++;
-    }
-    return 0;
+    int vind = m_idleVoiceStack.front();
+    m_idleVoiceStack.pop_front();
+    return vind;
   }
 
   void VoiceManager::noteOn(uint8_t noteNumber, uint8_t velocity)
   {
-    Instrument* v;
     if (m_numVoices == m_maxVoices - 1)
     {
+      Instrument* v;
       int vind = getOldestVoiceInd();
+      m_idleVoiceStack.remove(vind);
       v = m_allVoices[vind];
       m_voiceMap[v->getNote()].remove(vind);
       m_voiceStack.remove(vind);
@@ -57,7 +54,7 @@ namespace syn
     }
     else if (m_numVoices >= 0)
     {
-      v = createVoice(noteNumber, velocity);
+      createVoice(noteNumber, velocity);
     }
   }
 
@@ -86,12 +83,10 @@ namespace syn
     if (max < 1)
       max = 1;
     m_maxVoices = max;
-    while (m_numVoices > 1)
-    {
-      makeIdle();
-    }
     while (m_allVoices.size() > max)
     {
+      makeIdle(m_allVoices.size() - 1);
+      m_idleVoiceStack.pop_front();
       delete m_allVoices.back();
       m_allVoices.pop_back();
     }
@@ -102,12 +97,15 @@ namespace syn
     {
       delete m_allVoices[i];
       m_allVoices[i] = (Instrument*)m_instrument->clone();
+      makeIdle(i);
     }
 
     while (m_allVoices.size() < max)
     {
       m_allVoices.push_back((Instrument*)m_instrument->clone());
+      makeIdle(m_allVoices.size()-1);
     }
+    m_numVoices = 0;
   }
 
   double VoiceManager::tick()

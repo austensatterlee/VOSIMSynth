@@ -7,96 +7,70 @@ using namespace std;
 
 namespace syn
 {
-  void Oscilloscope::magnitudeTransform(const std::vector<double>& inputbuf, std::vector<double>& outputbuf, double& minout, double& maxout)
+  void magnitudeTransform(OscilloscopeConfig& oscconfig, IPlugBase* pPlug, const std::vector<double>& inputbuf)
   {
     int N = inputbuf.size();
-    int halfN = N / 2 + 1;
-    if (outputbuf.size() != halfN)
-      outputbuf.resize(halfN, 0.0);
-    double* input = (double*)fftw_malloc(sizeof(double) * N);
-    fftw_complex* out = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * halfN);
-    fftw_plan p = fftw_plan_dft_r2c_1d(N, input, out, FFTW_ESTIMATE);
-
-    int i;
-    memset(input, 0, sizeof(double)*N);
-    for (i = 0; i + inputbuf.size() <= N; i += inputbuf.size())
-    {
-      memcpy(input + i, inputbuf.data(), sizeof(double)*inputbuf.size());
+    int halfN = N / 2;
+    if (oscconfig.outputbuf.size() != halfN){
+      oscconfig.outputbuf.resize(halfN, 0.0);
+      oscconfig.xaxisticks.resize(halfN, 0.0);
+      oscconfig.xaxislbls.resize(halfN);
     }
+    double* process = (double*)fftw_malloc(sizeof(double) * N);
+    fftw_complex* out = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * (halfN+1));
+    fftw_plan p = fftw_plan_dft_r2c_1d(N, process, out, FFTW_ESTIMATE);
 
-    fftw_execute(p);
-
-    maxout = 0;
-    minout = 0;
-    for (i = 0; i < halfN - 1; i++)
-    {
-      outputbuf[i] = outputbuf[i] + 0.05 * (20 * log10(sqrt(out[i + 1][0] * out[i + 1][0] + out[i + 1][1] * out[i + 1][1])) - outputbuf[i]);
-      if (isinf(outputbuf[i]))
-      {
-        outputbuf[i] = -1;
-      }
-      if (outputbuf[i] > maxout)
-        maxout = outputbuf[i];
-      else if (outputbuf[i] < minout)
-        minout = outputbuf[i];
-    }
-    fftw_destroy_plan(p);
-    fftw_free(input);
-    fftw_free(out);
-  }
-
-  void Oscilloscope::inverseTransform(const std::vector<double>& inputbuf, std::vector<double>& outputbuf, double& minout, double& maxout){
-    int N = inputbuf.size();
-    int twoN = N * 2 - 1;
-    if (outputbuf.size() != twoN)
-      outputbuf.resize(twoN, 0.0);
-    fftw_complex* input = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * N);
-    double* out = (double*)fftw_malloc(sizeof(double) * twoN);
-    fftw_plan p = fftw_plan_dft_c2r_1d(twoN, input, out, FFTW_ESTIMATE);
-
-    int i;
-    memset(input, 0, sizeof(double)*N);
-    for (i = 0; i + inputbuf.size() <= N; i += inputbuf.size())
-    {
-      memcpy(input + i, inputbuf.data(), sizeof(double)*inputbuf.size());
-    }
-
-    fftw_execute(p);
-
-    maxout = 0;
-    minout = 0;
-    for (i = 0; i < twoN; i++)
-    {
-      outputbuf[i] = out[i];
-      if (isinf(outputbuf[i]))
-      {
-        outputbuf[i] = -1;
-      }
-      if (outputbuf[i] > maxout)
-        maxout = outputbuf[i];
-      else if (outputbuf[i] < minout)
-        minout = outputbuf[i];
-    }
-    fftw_destroy_plan(p);
-    fftw_free(input);
-    fftw_free(out);
-  }
-
-  void Oscilloscope::passthruTransform(const std::vector<double>& inputbuf, std::vector<double>& outputbuf, double& minout, double& maxout)
-  {
-    int N = inputbuf.size();
-    if (outputbuf.size() != N)
-      outputbuf.resize(N);
+    memcpy(process, inputbuf.data(), sizeof(double)*N);
     
-    maxout = 0;
-    minout = 0;
+
+    fftw_execute(p);
+
+    oscconfig.argmax = -1;
+    oscconfig.argmin = -1;
+    char lblbuf[64];
+    for (int k = 1; k < halfN+1; k++)
+    {
+      int i = k-1;
+      oscconfig.outputbuf[i] = oscconfig.outputbuf[i] + 0.1*(20 * log10(sqrt(out[k][0] * out[k][0] + out[k][1] * out[k][1])) - oscconfig.outputbuf[i]);
+      oscconfig.xaxisticks[i] = log10((k/(double)halfN)*pPlug->GetSampleRate());
+      snprintf(lblbuf,64,"%g", (k / (double)N)*pPlug->GetSampleRate() );
+      oscconfig.xaxislbls[i] = string(lblbuf);
+      if (isinf(oscconfig.outputbuf[i]))
+      {
+        oscconfig.outputbuf[i] = -1;
+      }
+      if (oscconfig.argmax == -1 || oscconfig.outputbuf[i] > oscconfig.outputbuf[oscconfig.argmax])
+        oscconfig.argmax = i;
+      else if (oscconfig.argmin == -1 || oscconfig.outputbuf[i] < oscconfig.outputbuf[oscconfig.argmin])
+        oscconfig.argmin = i;
+    }
+    fftw_destroy_plan(p);
+    fftw_free(process);
+    fftw_free(out);
+  }
+
+  void passthruTransform(OscilloscopeConfig& oscconfig, IPlugBase* pPlug, const std::vector<double>& inputbuf)
+  {
+    int N = inputbuf.size();
+    if (oscconfig.outputbuf.size() != N){
+      oscconfig.outputbuf.resize(N, 0.0);
+      oscconfig.xaxisticks.resize(N, 0.0);
+      oscconfig.xaxislbls.resize(N);
+    }
+    
+    oscconfig.argmax = -1;
+    oscconfig.argmin = -1;
+    char lblbuf[64];
     for (int i = 0; i < N; i++)
     {
-      outputbuf[i] = inputbuf[i];
-      if(outputbuf[i]>maxout)
-        maxout = outputbuf[i];
-      else if(outputbuf[i]<minout)
-        minout = outputbuf[i];
+      oscconfig.outputbuf[i] = inputbuf[i];
+      oscconfig.xaxisticks[i] = i/(double)N*pPlug->GetSampleRate();
+      snprintf(lblbuf, 64, "%f", i/pPlug->GetSampleRate());
+      oscconfig.xaxislbls[i] = string(lblbuf);
+      if (oscconfig.argmax == -1 || oscconfig.outputbuf[i] > oscconfig.outputbuf[oscconfig.argmax])
+        oscconfig.argmax = i;
+      else if (oscconfig.argmin == -1 || oscconfig.outputbuf[i] < oscconfig.outputbuf[oscconfig.argmin])
+        oscconfig.argmin = i;
     }
   }
 }

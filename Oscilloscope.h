@@ -6,80 +6,109 @@
 #include "GallantSignal.h"
 #include <vector>
 #include <deque>
+#include <array>
+
 
 using std::vector;
 using std::deque;
+using std::array;
 using Gallant::Signal1;
 
 namespace syn
 {
+ 
+  struct OscilloscopeConfig;
+  typedef void (TransformFunc)(OscilloscopeConfig& oscconfig, IPlugBase* pPlug, const vector<double>& process);
+  struct OscilloscopeConfig
+  {
+    const string name;
+    const TransformFunc* transform;
+    const bool useAutoSync;
+    const int defaultBufSize;
+    string xunits;
+    string yunits;
+    int argmin,argmax;
+    vector<double> xaxisticks;
+    vector<string> xaxislbls;
+    vector<double> yaxisticks;
+    vector<string> yaxislbls;    
+    vector<double> outputbuf;
+    void doTransform(IPlugBase* pPlug, const vector<double>& process)
+    {
+      transform(*this,pPlug,process);
+    }
+  };
+
   class Oscilloscope : public IControl
   {
-    typedef void (TransformFunc)(const vector<double>&, vector<double>&, double&, double&);
+  private:
+    WDL_Mutex m_mutex;
   protected:
-    vector<double> m_inputBuffer;
-    vector<double> m_outputBuffer;
-    int m_currSyncDelay;
+    IRECT m_InnerRect;
+    SourceUnit* m_currTriggerSrc = nullptr;
+    Unit* m_currInput = nullptr;
+    bool m_isActive;
+    deque<int> m_syncIndexQueue;
+    double m_minY, m_maxY;
     double m_syncDelayEst;
-    int m_periodCount;
     int m_BufInd;
     int m_BufSize;
-    int m_displayPeriods;
-    double m_minY, m_maxY;
     int m_Padding;
-    bool m_isActive;
-    bool m_usePeriodEstimate;
-    IRECT m_InnerRect;
-    Unit* m_currInput = nullptr;
-    SourceUnit* m_currTriggerSrc = nullptr;
-    TransformFunc* m_transformFunc = nullptr;
-    int m_numSamplesInPeriod;
-    deque<int> m_syncIndexQueue;
-    int m_defaultBufSize;
+    int m_currSyncDelay;
+    int m_displayPeriods;
+    int m_periodCount;
+    OscilloscopeConfig* m_config;
+    vector<double> m_inputBuffer;
+    IPopupMenu m_menu;
     double toScreenX(double val)
     {
-      return val*m_InnerRect.W() + m_InnerRect.L;
+      int bufreadlength = getBufReadLength();
+      double normalxval = (val - m_config->xaxisticks.front()) / (m_config->xaxisticks.back() - m_config->xaxisticks.front());
+      return  normalxval*m_InnerRect.W() + m_InnerRect.L;
     };
     double toScreenY(double val)
     {
-      return -(val - m_minY) / (m_maxY - m_minY)*m_InnerRect.H() + m_InnerRect.B;
+      double normalyval = (val - m_minY) / (m_maxY - m_minY);
+      return m_InnerRect.B - m_InnerRect.H()*normalyval;
     }
     void setBufSize(int s);
+    int getBufReadLength();
   public:
-    Oscilloscope(IPlugBase *pPlug, IRECT pR, int size = 1);
+    Oscilloscope(IPlugBase *pPlug, IRECT pR);
     ~Oscilloscope() {};
 
-
-
+    bool Draw(IGraphics *pGraphics);
     bool IsDirty() { return m_isActive && mDirty; }
-    void setPeriod(int nsamp) { m_numSamplesInPeriod = nsamp; setBufSize(m_displayPeriods*nsamp); }
-    int getPeriod() { return m_BufSize / m_displayPeriods; }
-    void setDefaultBufSize(int nsamp) { m_defaultBufSize = nsamp; }
-    void sync(bool isSynced); //!< automatically called if a trigger source is set
-    void input(double y); //!< automatically called if an input source is set
-    void setTransformFunc(TransformFunc* f) { m_transformFunc = f; };
-    void disconnectInput();
-    void disconnectTrigger(SourceUnit& srccomp);
-    void disconnectInput(Unit& srccomp);
-    void disconnectTrigger();
+    int getPeriod() { return m_BufSize/m_displayPeriods; }
+    void OnMouseWheel(int x, int y, IMouseMod* pMod, int d);
     void connectInput(Unit& comp);
     void connectTrigger(SourceUnit& comp);
     void OnMouseUp(int x, int y, IMouseMod* pMod);
-    void OnMouseWheel(int x, int y, IMouseMod* pMod, int d);
-    bool Draw(IGraphics *pGraphics);
-    void usePeriodEstimate(bool b = true) { m_usePeriodEstimate = b; }
-
-    /**
-    * Computes the DFT for real inputbuf and stores the magnitude spectrum (dB) in outputbuf.
-    * Can be passed to an Oscilloscope's Oscilloscope::setTransformFunc method.
-    * \param inputbuf input vector
-    * \param outputbuf output vector ( resized automatically to inputbuf.size()/2+1 )
-    * \param minout the minimum magnitude will be stored here
-    * \param maxout the maximum magnitude will be stored here
-    */
-    static void magnitudeTransform(const std::vector<double>& inputbuf, std::vector<double>& outputbuf, double& minout, double& maxout);
-    static void inverseTransform(const std::vector<double>& inputbuf, std::vector<double>& outputbuf, double& minout, double& maxout);
-    static void passthruTransform(const std::vector<double>& inputbuf, std::vector<double>& outputbuf, double& minout, double& maxout);
+    void OnMouseDown(int x, int y, IMouseMod* pMod);
+    void disconnectInput();
+    void disconnectInput(Unit& srccomp);
+    void disconnectTrigger();
+    void disconnectTrigger(SourceUnit& srccomp);
+    void process();
+    void setPeriod(int nsamp) { 
+      while (m_displayPeriods*nsamp > 8192)
+      {
+        m_displayPeriods-=1;
+      }
+      setBufSize(m_displayPeriods*nsamp); 
+    }
+    void setConfig(OscilloscopeConfig* config);
   };
+
+  /**
+  * Computes the DFT for real inputbuf and stores the magnitude spectrum (dB) in outputbuf.
+  */
+  TransformFunc magnitudeTransform;
+  TransformFunc inverseTransform;
+  TransformFunc passthruTransform;
+  static array<OscilloscopeConfig,2> OSCILLOSCOPE_CONFIGS = {{
+    { "Spectral Magnitude", magnitudeTransform, true, 256, "Hz", "dB" },
+    { "Time Domain", passthruTransform, true, 1, "seconds", "" }
+  }};
 }
 #endif

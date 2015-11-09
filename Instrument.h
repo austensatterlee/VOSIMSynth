@@ -12,16 +12,17 @@ namespace syn
     public Circuit
   {
   public:
-    Instrument() : m_note(-1), m_primarySrcId(-1) {};
+    Instrument() : m_note(-1) {};
     Instrument(const Instrument& instr) :
       m_sourcemap(instr.m_sourcemap),
-      m_primarySrcId(instr.m_primarySrcId),
+      m_primarySrcVec(instr.m_primarySrcVec),
       m_note(instr.m_note)
     {}
     virtual ~Instrument() {};
 
     void addSource(SourceUnit* unit);
     void setPrimarySource(string name);
+    void addPrimarySource(string name);
     SourceUnit& getSourceUnit(string name) { return *(SourceUnit*)m_units[m_unitmap[name]]; };
     void noteOn(int note, int vel);
     void noteOff(int note, int vel);
@@ -31,7 +32,7 @@ namespace syn
     typedef vector<int> SourceVec;
     SourceVec m_sourcemap;
     int m_note;
-    int m_primarySrcId;
+    SourceVec m_primarySrcVec;
   private:
     virtual Circuit* cloneImpl() const;
   };

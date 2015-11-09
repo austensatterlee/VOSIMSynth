@@ -67,15 +67,17 @@ namespace syn
   void Envelope::setFs(double fs)
   {
     m_Fs = fs;
+    m_fsIsDirty = true;
     for (int i = 0; i < m_numSegments; i++)
     {
       updateSegment(i);
     }
+    m_fsIsDirty = false;
   }
 
   void Envelope::updateSegment(int segment)
   {
-    if(m_segments[segment]->period().isDirty()){
+    if(m_segments[segment]->period().isDirty() || m_fsIsDirty){
       m_segments[segment]->step = 1. / (m_Fs*(m_segments[segment]->period()));
     }
     if(m_phase==0){
@@ -95,8 +97,8 @@ namespace syn
     m_segments[segment]->is_increasing = m_segments[segment]->target_amp() > m_segments[segment]->prev_amp;
   }
 
-  double Envelope::process()
-  {
+  void Envelope::process()
+{
     updateSegment(m_currSegment);
     EnvelopeSegment& currseg = *m_segments[m_currSegment];
     bool hasHitSetpoint = (currseg.is_increasing && getLastOutput() >= currseg.target_amp()) || \
@@ -123,8 +125,7 @@ namespace syn
     {
       m_phase += m_segments[m_currSegment]->step;
     }
-    double output = LERP(m_segments[m_currSegment]->prev_amp, m_segments[m_currSegment]->target_amp(), m_phase);
-    return output;
+    m_output = LERP(m_segments[m_currSegment]->prev_amp, m_segments[m_currSegment]->target_amp(), m_phase);
   }
 
   void Envelope::setSegment(int seg)
