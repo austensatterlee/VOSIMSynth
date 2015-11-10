@@ -96,9 +96,6 @@
     <ClInclude Include="VoiceManager.h">
       <Filter>Components\Composite</Filter>
     </ClInclude>
-    <ClInclude Include="Connection.h">
-      <Filter>Components\Connectors</Filter>
-    </ClInclude>
     <ClInclude Include="UnitParameter.h">
       <Filter>Components\Connectors</Filter>
     </ClInclude>
@@ -118,6 +115,9 @@
       <Filter>Components\Units</Filter>
     </ClInclude>
     <ClInclude Include="Unit.h">
+      <Filter>Components\Units</Filter>
+    </ClInclude>
+    <ClInclude Include="RandomOscillator.h">
       <Filter>Components\Units</Filter>
     </ClInclude>
   </ItemGroup>

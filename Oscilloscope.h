@@ -90,7 +90,8 @@ namespace syn
     void disconnectTrigger();
     void disconnectTrigger(SourceUnit& srccomp);
     void process();
-    void setPeriod(int nsamp) { 
+    void setPeriod(int nsamp) {
+      WDL_MutexLock lock(&m_mutex);
       while (m_displayPeriods*nsamp > 8192)
       {
         m_displayPeriods-=1;
@@ -107,7 +108,7 @@ namespace syn
   TransformFunc inverseTransform;
   TransformFunc passthruTransform;
   static array<OscilloscopeConfig,2> OSCILLOSCOPE_CONFIGS = {{
-    { "Spectral Magnitude", magnitudeTransform, true, 256, "Hz", "dB" },
+    { "Spectral Magnitude", magnitudeTransform, false, 256, "Hz", "dB" },
     { "Time Domain", passthruTransform, true, 1, "seconds", "" }
   }};
 }

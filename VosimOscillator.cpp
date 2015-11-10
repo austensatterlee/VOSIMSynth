@@ -16,41 +16,28 @@ namespace syn
     m_unwrapped_pulse_phase = vosc.m_unwrapped_pulse_phase;
   }
 
-  void VosimOscillator::tick_pulse_phase()
-  {
-    double number = m_number;
-    double pitch = m_pitchshift;
-    double pitchshift = m_pitchshift;
-    double pulse_pitch = m_ppitch;
-    m_pulse_step = m_Step*(number + 2 * pulse_pitch);
-    m_last_pulse_phase = m_pulse_phase;
-    m_pulse_phase += m_pulse_step;
-    if (m_pulse_phase >= 1)
-    {
-      m_pulse_phase -= 1;
-      m_curr_pulse_gain *= m_decay;
-    }
-    m_unwrapped_pulse_phase += m_pulse_step;
-  }
-
-  void VosimOscillator::process()
+ void VosimOscillator::process(int bufind)
   {
     Oscillator::tick_phase();
-    if (m_isSynced)
+    m_pulse_step = m_Step*(m_number + 4 * m_ppitch);
+    m_unwrapped_pulse_phase = m_phase / m_Step * m_pulse_step;
+    if (m_unwrapped_pulse_phase < 1)
     {
-      m_pulse_phase = m_phase;
-      m_unwrapped_pulse_phase = m_pulse_phase;
       m_curr_pulse_gain = 1.0;
     }
     if (m_unwrapped_pulse_phase >= m_number)
     {
-      m_output = 0;
+      m_output[bufind] = 0;
     }
     else
     {
-      tick_pulse_phase();
+      m_last_pulse_phase = m_pulse_phase;
+      m_pulse_phase = m_unwrapped_pulse_phase - (int)m_unwrapped_pulse_phase;
+      if(m_last_pulse_phase > m_pulse_phase){
+        m_curr_pulse_gain*=m_decay;
+      }
       double tableval = lut_vosim_pulse_cos.getlinear(m_pulse_phase);
-      m_output = m_gain*m_velocity*m_curr_pulse_gain*tableval;
+      m_output[bufind] = m_gain*m_velocity*m_curr_pulse_gain*tableval;
     }
   }
 

@@ -65,7 +65,7 @@ namespace syn
     {
       oscconfig.outputbuf[i] = inputbuf[i];
       oscconfig.xaxisticks[i] = i/(double)N*pPlug->GetSampleRate();
-      snprintf(lblbuf, 64, "%f", i/pPlug->GetSampleRate());
+      snprintf(lblbuf, 64, "%f", i/(double)pPlug->GetSampleRate());
       oscconfig.xaxislbls[i] = string(lblbuf);
       if (oscconfig.argmax == -1 || oscconfig.outputbuf[i] > oscconfig.outputbuf[oscconfig.argmax])
         oscconfig.argmax = i;

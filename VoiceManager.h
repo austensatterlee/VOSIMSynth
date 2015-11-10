@@ -19,7 +19,6 @@ namespace syn
   protected:
     typedef list<int> VoiceList;
     typedef map<int, VoiceList> VoiceMap;
-    uint64_t mSampleCount;
     int m_numVoices;
     int m_maxVoices;
     VoiceMap m_voiceMap;
@@ -46,17 +45,16 @@ namespace syn
 
     Instrument* getProtoInstrument() const {return m_instrument;};
     void setFs(double fs);
+    void setBufSize(size_t bufsize);
     void setMaxVoices(int max, Instrument* v);
     int getNumVoices() const { return m_numVoices; };
     int getMaxVoices(){return m_maxVoices;};
     void modifyParameter(int uid, int pid, double val, MOD_ACTION action);
-    void sendMIDICC(IMidiMsg& msg);
-    double tick();
+    void tick(double* buf, size_t bufsize);
     Signal1<Instrument*> m_onDyingVoice;
 
     VoiceManager() :
-      m_numVoices(0),
-      mSampleCount(0)
+      m_numVoices(0)
     {
     };
     ~VoiceManager() {}

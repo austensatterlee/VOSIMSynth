@@ -97,7 +97,7 @@ namespace syn
     m_segments[segment]->is_increasing = m_segments[segment]->target_amp() > m_segments[segment]->prev_amp;
   }
 
-  void Envelope::process()
+  void Envelope::process(int bufind)
 {
     updateSegment(m_currSegment);
     EnvelopeSegment& currseg = *m_segments[m_currSegment];
@@ -125,7 +125,7 @@ namespace syn
     {
       m_phase += m_segments[m_currSegment]->step;
     }
-    m_output = LERP(m_segments[m_currSegment]->prev_amp, m_segments[m_currSegment]->target_amp(), m_phase);
+    m_output[bufind] = LERP(m_segments[m_currSegment]->prev_amp, m_segments[m_currSegment]->target_amp(), m_phase);
   }
 
   void Envelope::setSegment(int seg)

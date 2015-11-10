@@ -30,7 +30,7 @@ namespace syn
       m_velocity(1.0),
       m_gain(addParam("gain", DOUBLE_TYPE, 0, 1)),
       m_pitch(addParam("pitch", DOUBLE_TYPE, 0, 128, true)),
-      m_pitchshift(addParam("pitchshift", DOUBLE_TYPE, -1, 1)),
+      m_pitchshift(addParam("pitchshift", DOUBLE_TYPE, -12, 12)),
       m_phaseshift(addParam("phaseshift", DOUBLE_TYPE, -0.5, 0.5)),
       m_portamento(addParam("portamento", DOUBLE_TYPE, 0, 1, true))
     {
@@ -44,30 +44,26 @@ namespace syn
       m_basePhase = osc.m_basePhase;
       m_Step = osc.m_Step;
       m_velocity = osc.m_velocity;
-      m_maxPitchShift = osc.m_maxPitchShift;
       m_phase = osc.m_phase;
     }
-    int getSamplesPerPeriod() const { return 1. / m_Step; }
+    virtual int getSamplesPerPeriod() const { return 1. / m_Step; }
     virtual void sync() { m_basePhase = 0; };
-    bool isActive() const { return readParam(0) != 0; };
-    double getPhase() const { return m_phase; };
+    bool isActive() const { return m_gain != 0; };
     virtual void noteOn(int pitch, int vel);
-    virtual void noteOff(int pitch, int vel) {};
+    virtual void noteOff(int pitch, int vel){};
     virtual void setFs(double fs);
+    UnitParameter& m_portamento;
+    UnitParameter& m_gain;
+    UnitParameter& m_pitch;
+    UnitParameter& m_pitchshift;
+    UnitParameter& m_phaseshift;
   protected:
     double m_basePhase = 0;
     double m_phase = 0;
     double m_Step;
     double m_targetStep;
     double m_velocity;
-    double m_maxPitchShift = 12;
-    UnitParameter& m_portamento;
-    UnitParameter& m_gain;
-    UnitParameter& m_pitch;
-    UnitParameter& m_pitchshift;
-    UnitParameter& m_phaseshift;
     void updateSyncStatus() { m_isSynced = m_phase < m_Step; };
-    virtual void process() = 0;
     virtual void tick_phase();
   };
 
@@ -79,9 +75,9 @@ namespace syn
     {};
     BasicOscillator(const BasicOscillator& other) : BasicOscillator(other.m_name)
     {};
-  protected:
     UnitParameter& m_waveform;
-    virtual void process();
+  protected:
+    virtual void process(int bufind);
   private:
     virtual Unit* cloneImpl() const { return new BasicOscillator(*this); };
   };
@@ -92,7 +88,8 @@ namespace syn
     LFOOscillator(string name) : BasicOscillator(name)
     {
       m_pitch.mod(-12, SET); 
-      m_maxPitchShift = 24;
+      m_pitchshift.setMax(24);
+      m_pitchshift.setMin(-24);
     }
 
     LFOOscillator(const LFOOscillator& other) : LFOOscillator(other.m_name)

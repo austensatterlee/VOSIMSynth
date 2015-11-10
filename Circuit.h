@@ -2,8 +2,8 @@
 #define __Circuit__
 
 #include "Unit.h"
-#include "Connection.h"
 #include "SourceUnit.h"
+#include "UnitParameter.h"
 #include <list>
 #include <map>
 #include <deque>
@@ -17,6 +17,17 @@ namespace syn
   using std::deque;
   using std::tuple;
 
+  struct ConnectionMetadata
+  {
+    int srcid;
+    int targetid;
+    int portid;
+    MOD_ACTION action;
+    bool operator==(const ConnectionMetadata& other)
+    {
+      return other.srcid==srcid && other.targetid==targetid && other.portid==portid && other.action==action;
+    }
+  };
 
   /**
   * \class Circuit
@@ -32,7 +43,8 @@ namespace syn
   {
   public:
     Circuit() :
-      m_nextUid(0)
+      m_nextUid(0),
+      m_bufsize(1)
     {}
     virtual ~Circuit();
     Circuit* clone();
@@ -45,20 +57,13 @@ namespace syn
      * \sa Connection
      */
     void addConnection(string srcname, string targetname, string pname, MOD_ACTION action);
-    void addConnection(Connection* c);
-    void addMIDIConnection(MIDIConnection* c);
-    void addMIDIConnection(IMidiMsg::EControlChangeMsg msg, string targetname, string pname, MOD_ACTION action);
+    void addConnection(ConnectionMetadata c);
     /**
      * \brief Manually modify a Unit's parameter
      */
     void modifyParameter(int uid, int param, double val, MOD_ACTION action);
     void modifyParameter(string uname, string param, double val, MOD_ACTION action);
     double readParam(int uid, int param);
-
-    /**
-    * \brief Trigger a CC event that will be routed to internal components as specified by previous calls to ::addMIDIConnection.
-    */
-    void sendMIDICC(const IMidiMsg& midimsg);
 
     vector<tuple<string, string>> getParameterNames();
     Unit& getUnit(string name) { return *m_units[m_unitmap[name]]; };
@@ -71,23 +76,23 @@ namespace syn
      */
     void tick();
     void setFs(double fs);
+    void setBufSize(size_t bufsize);
+    size_t getBufSize(){ return m_bufsize; }
     bool hasUnit(string name);
     bool hasUnit(int uid);
     double getLastOutput() const { return m_units[m_sinkId]->getLastOutput(); };
+    const vector<double>& getLastOutputBuffer() const { return m_units[m_sinkId]->getLastOutputBuffer(); };
   protected:
     typedef  vector<Unit*> UnitVec;
-    typedef  vector<vector<Connection*>> ConnVec;
-    typedef  unordered_map<IMidiMsg::EControlChangeMsg, vector<MIDIConnection*>> MIDIConnectionMap;
+    typedef  vector<vector<ConnectionMetadata>> ConnVec;
     UnitVec m_units;
     ConnVec m_forwardConnections;
     ConnVec m_backwardConnections;
-    vector<vector<MIDIConnection*>> m_midiConnections;
-    MIDIConnectionMap m_midiConnectionMap;
     IDMap m_unitmap;
     deque<int> m_processQueue; //!< cache storage for the linearized version of unit dependencies
     bool m_isGraphDirty = true; //!< indicates whether or not the graph's linearization should be recomputed
     int m_sinkId;
-    void tickParams(int unitid);
+    size_t m_bufsize;
   private:
     void refreshProcQueue();
     virtual Circuit* cloneImpl() const { return new Circuit(); };

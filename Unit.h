@@ -1,6 +1,5 @@
 #ifndef __UNIT__
 #define __UNIT__
-#include "Connection.h"
 #include "UnitParameter.h"
 #include "DSPMath.h"
 #include "GallantSignal.h"
@@ -38,13 +37,13 @@ namespace syn
      * \brief Runs the unit for the specified number of ticks. The result is accessed via getLastOutputBuffer().
      */
     void tick();
-    virtual void setFs(const double fs) { m_Fs = fs; };
+    virtual void setFs(double fs) { m_Fs = fs; };
     double getFs() const { return m_Fs; };
-    double getLastOutput() const { return m_output; };
+    const vector<double>& getLastOutputBuffer() const { return m_output; };
+    double getLastOutput() const { return m_output[m_bufind]; };
+    void resizeOutputBuffer(size_t newbufsize){ m_output.resize(newbufsize); }
     /*!
      *\brief Modifies the value of the parameter associated with portid.
-     *       Primarily used by Circuit to process connections.
-     *
      */
     void modifyParameter(int portid, double val, MOD_ACTION action);
     bool hasParameter(string name) { return m_parammap.find(name) != m_parammap.end(); };
@@ -54,7 +53,7 @@ namespace syn
     UnitParameter& getParam(int pid) { return *m_params[pid]; }
     vector<string> getParameterNames() const;
     int getParamId(string name);
-    Circuit& getParent() const { return *parent; };
+    Circuit& getParent() const { return *m_parent; };
     const string getName() const { return m_name; }
     Unit* clone() const;
   protected:
@@ -62,17 +61,19 @@ namespace syn
     ParamVec m_params;
     IDMap m_parammap;
     string m_name;
-    Circuit* parent;
+    Circuit* m_parent;
     double m_Fs;
-    double m_output;
-    virtual void process() = 0; //<! should add its result to m_output
-    UnitParameter& addParam(string name, int id, PARAM_TYPE ptype, double min, double max, bool isHidden=false);
-    UnitParameter& addParam(string name, PARAM_TYPE ptype, double min, double max, bool isHidden = false);
+    vector<double> m_output;
+    virtual void process(int bufind) = 0; //<! should add its result to m_output[bufind]
+    UnitParameter& addParam(string name, int id, PARAM_TYPE ptype, const double min, const double max, const bool isHidden=false);
+    UnitParameter& addParam(string name, PARAM_TYPE ptype, const double min, const double max, const bool isHidden=false);
     UnitParameter& addEnumParam(string name, const vector<string> choice_names);
-    virtual void beginProcessing() {};
-    virtual void finishProcessing(){}; //<! Should modify m_output. This allows parent classes to apply common processing to child class outputs.
+    
   private:
+    int m_bufind;
     virtual Unit* cloneImpl() const = 0;
+    virtual void beginProcessing() {};
+    virtual void finishProcessing() {}; //<! Allows parent classes to apply common processing to child class outputs.
   };
 
   /*
@@ -89,9 +90,9 @@ namespace syn
     {}
     virtual ~AccumulatingUnit() {};
   protected:
-    virtual void process()
+    virtual void process(int bufind)
     {
-      m_output = m_input*m_gain;
+      m_output[bufind] = m_input*m_gain;
     }
   private:
     UnitParameter& m_input;

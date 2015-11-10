@@ -15,12 +15,9 @@ namespace syn
       Unit(name)
     {};
     virtual ~SourceUnit() {};
-    virtual void noteOn(int pitch, int vel) {};
-    virtual void noteOff(int pitch, int vel) {};
-    virtual int getSamplesPerPeriod() const
-    {
-      return m_Fs;
-    };
+    virtual void noteOn(int pitch, int vel) = 0;
+    virtual void noteOff(int pitch, int vel) = 0;
+    virtual int getSamplesPerPeriod() const = 0;
     virtual bool isActive() const = 0;
     bool isSynced() const {return m_isSynced;};
   protected:

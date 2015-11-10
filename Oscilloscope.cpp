@@ -41,48 +41,52 @@ namespace syn
     if (m_isActive && m_currInput && m_inputBuffer.size())
     {
       WDL_MutexLock lock(&m_mutex);
-      m_BufInd++;
-      if (m_BufInd >= m_BufSize)
+      const vector<double>& srcbuffer = m_currInput->getLastOutputBuffer();
+      for (int i = 0; i < srcbuffer.size(); i++)
       {
-        m_BufInd = 0;
-      }
-      m_inputBuffer[m_BufInd] = m_currInput->getLastOutput();
-
-      int period = getPeriod();
-      m_currSyncDelay++;
-      if ((m_currTriggerSrc && m_currTriggerSrc->isSynced()) || (!m_currTriggerSrc && m_currSyncDelay >= m_config->defaultBufSize))
-      {
-        m_periodCount++;
-        // push wrapped sync offset to display queue
-        int wrapped_syncDelay = m_currSyncDelay;
-        while (wrapped_syncDelay >= period)
+        m_BufInd++;
+        if (m_BufInd >= m_BufSize)
         {
-          wrapped_syncDelay -= period;
+          m_BufInd = 0;
         }
+        m_inputBuffer[m_BufInd] = srcbuffer[i];
 
         int period = getPeriod();
-        if (m_config->useAutoSync)
+        m_currSyncDelay++;
+        if ((m_currTriggerSrc && m_currTriggerSrc->isSynced()) || (!m_currTriggerSrc && m_currSyncDelay >= m_config->defaultBufSize))
         {
-          if (period != (int)(m_syncDelayEst / m_displayPeriods))
+          m_periodCount++;
+          // push wrapped sync offset to display queue
+          int wrapped_syncDelay = m_currSyncDelay;
+          while (wrapped_syncDelay >= period)
           {
-            setPeriod((int)(m_syncDelayEst / m_displayPeriods));
+            wrapped_syncDelay -= period;
           }
-        }
-        else
-        {
-          if (period != (int)m_config->defaultBufSize)
-          {
-            setPeriod(m_config->defaultBufSize);
-          }
-        }
 
-        if (m_periodCount >= m_displayPeriods)
-        {
-          m_syncDelayEst += 0.1*((double)m_currSyncDelay - m_syncDelayEst);
-          m_periodCount = 0;
-          m_currSyncDelay = 0;
-          m_BufInd = 0;
-          SetDirty();
+          int period = getPeriod();
+          if (m_config->useAutoSync)
+          {
+            if (period != (int)(m_syncDelayEst / m_displayPeriods))
+            {
+              setPeriod((int)(m_syncDelayEst / m_displayPeriods));
+            }
+          }
+          else
+          {
+            if (period != (int)m_config->defaultBufSize)
+            {
+              setPeriod(m_config->defaultBufSize);
+            }
+          }
+
+          if (m_periodCount >= m_displayPeriods)
+          {
+            m_syncDelayEst += 0.1*((double)m_currSyncDelay - m_syncDelayEst);
+            m_periodCount = 0;
+            m_currSyncDelay = 0;
+            m_BufInd = 0;
+            SetDirty();
+          }
         }
       }
     }
@@ -207,7 +211,7 @@ namespace syn
     if (m_config->useAutoSync)
     {
       bufReadLen = getPeriod()*m_displayPeriods;
-      if(bufReadLen > m_config->outputbuf.size())
+      if (bufReadLen > m_config->outputbuf.size())
         bufReadLen = m_config->outputbuf.size();
     }
     else
@@ -254,10 +258,13 @@ namespace syn
     if (m_inputBuffer.empty())
       return false;
     m_config->doTransform(mPlug, m_inputBuffer);
-    double minY = m_config->outputbuf[m_config->argmin];
-    double maxY = m_config->outputbuf[m_config->argmax];
-    if (minY < m_minY) m_minY = minY;
-    if (maxY > m_maxY) m_maxY = maxY;
+    if (m_config->argmin > 0 && m_config->argmax > 0)
+    {
+      double minY = m_config->outputbuf[m_config->argmin];
+      double maxY = m_config->outputbuf[m_config->argmax];
+      if (minY < m_minY) m_minY = minY;
+      if (maxY > m_maxY) m_maxY = maxY;
+    }
 
     int bufreadlen = getBufReadLength();
     int numxticks = 10;

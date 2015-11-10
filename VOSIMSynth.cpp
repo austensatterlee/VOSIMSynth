@@ -15,7 +15,7 @@
 #include <cstring>
 
 using namespace std;
-#define O_TU "osc1"
+#define O_TU "bosc0"
 #define O_U "master"
 
 
@@ -83,7 +83,7 @@ void VOSIMSynth::makeGraphics()
   EnvelopeEditor* m_EnvEditor1 = new EnvelopeEditor(this, &m_voiceManager, "ampenv1", IRECT(500, 10, 800 - 10, 150), 10, -1.0, 1.0, 1);
   EnvelopeEditor* m_EnvEditor2 = new EnvelopeEditor(this, &m_voiceManager, "ampenv2", IRECT(500, 160, 800 - 10, 300), 10, -1.0, 1.0, 1);
   EnvelopeEditor* m_EnvEditor3 = new EnvelopeEditor(this, &m_voiceManager, "pulseenv1", IRECT(500, 310, 800 - 10, 450), 10, -1.0, 1.0, 1);
-  EnvelopeEditor* m_EnvEditor4 = new EnvelopeEditor(this, &m_voiceManager, "pulseenv2", IRECT(500, 460, 800 - 10, 600), 10, -1, 1, 1);
+  EnvelopeEditor* m_EnvEditor4 = new EnvelopeEditor(this, &m_voiceManager, "decayenv1", IRECT(500, 460, 800 - 10, 600), 10, -1, 1, 1);
  
   pGraphics->AttachControl(m_Oscilloscope);
   pGraphics->AttachControl(m_EnvEditor1);
@@ -124,10 +124,10 @@ void VOSIMSynth::makeInstrument()
   Envelope* env1 = new Envelope("ampenv1");
   Envelope* env2 = new Envelope("ampenv2");
   Envelope* env3 = new Envelope("pulseenv1");
-  Envelope* env4 = new Envelope("pulseenv2");
-  Oscillator* bosc0 = new BasicOscillator("bosc0");
+  Envelope* env4 = new Envelope("decayenv1");
+  VosimChoir* vchoir0 = new VosimChoir("vchoir0",7);
   Oscillator* osc0 = new VosimOscillator("osc0");
-  Oscillator* osc1 = new VosimOscillator("osc1");
+  Oscillator* bosc0 = new BasicOscillator("bosc0");
   AccumulatingUnit* acc = new AccumulatingUnit("master");
   Filter<AA_FILTER_SIZE+1, AA_FILTER_SIZE>* filt1 = new Filter<AA_FILTER_SIZE+1, AA_FILTER_SIZE>("filt1",AA_FILTER_X, AA_FILTER_Y);
 
@@ -136,20 +136,17 @@ void VOSIMSynth::makeInstrument()
   m_instr->addSource(env2);
   m_instr->addSource(env3);
   m_instr->addSource(env4);
+  m_instr->addSource(vchoir0);
   m_instr->addSource(bosc0);
-  m_instr->addSource(osc0);
-  m_instr->addSource(osc1);
   m_instr->addUnit(acc);
   m_instr->addUnit(filt1);
   m_instr->addConnection("ampenv1", "bosc0", "gain", SCALE);
-  m_instr->addConnection("ampenv1", "osc0", "gain", SCALE);
-  m_instr->addConnection("ampenv2", "osc1", "gain", SCALE);
-  m_instr->addConnection("pulseenv1", "osc0", "pulsepitch", ADD);
-  m_instr->addConnection("pulseenv2", "osc1", "pulsepitch", ADD);
+  m_instr->addConnection("ampenv2", "vchoir0", "gain", SCALE);
+  m_instr->addConnection("pulseenv1", "vchoir0", "pulsepitch", ADD);
+  m_instr->addConnection("decayenv1", "vchoir0", "decay", SCALE);
+  m_instr->addConnection("vchoir0", "master", "input", ADD);
   m_instr->addConnection("bosc0", "master", "input", ADD);
-  m_instr->addConnection("osc0", "master", "input", ADD);
-  m_instr->addConnection("osc1", "master", "input", ADD);
-  //m_instr->addConnection("master", "filt1", "input", ADD);
+  m_instr->addConnection("master", "filt1", "input", ADD);
 
   m_instr->setSinkName("master");
   m_instr->setPrimarySource("ampenv1");
@@ -161,7 +158,6 @@ void VOSIMSynth::makeInstrument()
 
   m_MIDIReceiver.noteOn.Connect(this, &VOSIMSynth::OnNoteOn);
   m_MIDIReceiver.noteOff.Connect(&m_voiceManager, &VoiceManager::noteOff);
-  m_MIDIReceiver.sendControlChange.Connect(&m_voiceManager, &VoiceManager::sendMIDICC);
 }
 
 void VOSIMSynth::unitTickHook(double process)
@@ -193,13 +189,15 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
   // Mutex is already locked for us.
   double *leftOutput = outputs[0];
   double *rightOutput = outputs[1];
+  memset(leftOutput,0,nFrames*sizeof(double));
   for (int s = 0; s < nFrames; s++)
   {
     m_MIDIReceiver.advance();
-    leftOutput[s] = rightOutput[s] = m_voiceManager.tick();
-    m_Oscilloscope->process();
     m_sampleCount++;
   }
+  m_voiceManager.tick(leftOutput,nFrames);
+  memcpy(rightOutput,leftOutput,nFrames*sizeof(double));
+  m_Oscilloscope->process();
   m_MIDIReceiver.Flush(nFrames);
 }
 
@@ -228,6 +226,7 @@ void VOSIMSynth::Reset()
   IMutexLock lock(this);
   double fs = GetSampleRate();
   m_MIDIReceiver.Resize(GetBlockSize());
+  m_voiceManager.setBufSize(GetBlockSize());
   m_voiceManager.setFs(fs);
 }
 

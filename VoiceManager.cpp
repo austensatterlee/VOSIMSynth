@@ -78,6 +78,15 @@ namespace syn
     }
   }
 
+  void VoiceManager::setBufSize(size_t bufsize)
+  {
+    for (int i = 0; i < m_allVoices.size(); i++)
+    {
+      if(m_allVoices[i]->getBufSize()!=bufsize)
+        m_allVoices[i]->setBufSize(bufsize);
+    }
+  }
+
   void VoiceManager::setMaxVoices(int max, Instrument* v)
   {
     if (max < 1)
@@ -108,17 +117,20 @@ namespace syn
     m_numVoices = 0;
   }
 
-  double VoiceManager::tick()
+  void VoiceManager::tick(double* buf, size_t bufsize)
   {
-    double finalOutput = 0;
-    mSampleCount++;
     vector<int> garbage_list;
     for (VoiceList::const_iterator v = m_voiceStack.begin(); v != m_voiceStack.end(); v++)
     {
-      if (m_allVoices[*v]->isActive())
+      Instrument* voice = m_allVoices[*v];
+      if (voice->isActive())
       {
-        m_allVoices[*v]->tick();
-        finalOutput += m_allVoices[*v]->getLastOutput();
+        voice->tick();
+        assert(bufsize==voice->getBufSize());
+        const vector<double>& voicebuf = voice->getLastOutputBuffer();
+        for(int i=0;i<voice->getBufSize();i++){
+          buf[i] += voicebuf[i];
+        }
       }
       else
       {
@@ -129,7 +141,6 @@ namespace syn
     {
       makeIdle(garbage_list[i]);
     }
-    return finalOutput;
   }
 
   void VoiceManager::modifyParameter(int uid, int pid, double val, MOD_ACTION action)
@@ -138,15 +149,6 @@ namespace syn
     for (int i = 0; i < m_allVoices.size(); i++)
     {
       m_allVoices[i]->modifyParameter(uid, pid, val, action);
-    }
-  }
-
-  void VoiceManager::sendMIDICC(IMidiMsg& msg)
-  {
-    m_instrument->sendMIDICC(msg);
-    for (int i = 0; i < m_allVoices.size(); i++)
-    {
-      m_allVoices[i]->sendMIDICC(msg);
     }
   }
 

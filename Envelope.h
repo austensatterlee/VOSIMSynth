@@ -52,7 +52,7 @@ namespace syn
     Envelope(const Envelope& env);
     virtual ~Envelope();
 
-    void setFs(double fs);
+    virtual void setFs(double fs);
     bool isActive() const { return !m_isDone; };
     void setSegment(int starting_segment); //!< Restarts the envelope beginning at the specified segment
     virtual void noteOn(int pitch, int vel);
@@ -74,7 +74,7 @@ namespace syn
   protected:
     void	updateSegment(const int segment); //!< Updates the EnvelopeSegment to reflect the values in m_params 
 
-    virtual void process();
+    virtual void process(int bufind);
   private:
     virtual Unit* cloneImpl() const { return new Envelope(*this); };
     vector<EnvelopeSegment*> m_segments;

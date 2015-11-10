@@ -4,10 +4,12 @@
 #include "IControl.h"
 #include "IParam.h"
 #include <string>
+#include <vector>
 #include <unordered_map>
 
 using std::string;
 using std::unordered_map;
+using std::vector;
 
 namespace syn
 {
@@ -26,6 +28,17 @@ namespace syn
     BOOL_TYPE,
     ENUM_TYPE
   };
+
+  struct Connection
+  {
+    const vector<double>* srcbuffer;
+    MOD_ACTION action;
+    bool operator==(const Connection& other)
+    {
+      return srcbuffer==other.srcbuffer && action==other.action;
+    }
+  };
+
   class Unit;
   class UnitParameter
   {
@@ -42,7 +55,8 @@ namespace syn
     const IControl* m_controller;
     bool m_isHidden;
     bool m_needsUpdate;
-    unordered_map<double,string> m_valueNames;
+    unordered_map<double, string> m_valueNames;
+    vector<Connection> m_connections;
     ParamTransformFunc m_transform_func;
   public:
     UnitParameter(Unit* parent, string name, int id, PARAM_TYPE ptype, double min, double max, bool ishidden = false) :
@@ -54,7 +68,8 @@ namespace syn
       m_max(max),
       m_controller(nullptr),
       m_isHidden(ishidden),
-      m_transform_func(nullptr)
+      m_transform_func(nullptr),
+      m_connections(0)
     {
       mod(0.5*(m_max + m_min), SET);
     }
@@ -100,6 +115,18 @@ namespace syn
     bool hasController() const { return m_controller != nullptr; }
     void setTransformFunc(ParamTransformFunc func) { m_transform_func = func; }
     bool isHidden() const { return m_isHidden; }
+    void addConnection(const vector<double>* srcbuffer, MOD_ACTION action)
+    {
+      m_connections.push_back({ srcbuffer,action });
+    }
+    void pull(int bufind)
+    {
+      reset();
+      for (int i = 0; i < m_connections.size(); i++)
+      {
+        mod((*m_connections[i].srcbuffer)[bufind], m_connections[i].action);
+      }
+    }
     bool isDirty()
     {
       bool isdirty = m_currValue != m_lastValue;

@@ -17,20 +17,6 @@ namespace syn
     for (int i = 0; i<m_units.size(); i++)
     {
       delete m_units[i];
-      // Delete connections
-      for (int j = 0; j < m_forwardConnections[i].size(); j++)
-      {
-        delete m_forwardConnections[i][j];
-      }
-    }
-    // delete midi connections
-    for (MIDIConnectionMap::iterator it = m_midiConnectionMap.begin(); it != m_midiConnectionMap.end(); it++)
-    {
-      vector<MIDIConnection*>& l = it->second;
-      for (MIDIConnection* mc : l)
-      {
-        delete mc;
-      }
     }
   }
 
@@ -38,9 +24,8 @@ namespace syn
   {
     if (m_unitmap.find(unit->getName()) == m_unitmap.end())
     {
-      m_forwardConnections.push_back(vector<Connection*>());
-      m_backwardConnections.push_back(vector<Connection*>());
-      m_midiConnections.push_back(vector<MIDIConnection*>());
+      m_forwardConnections.push_back(vector<ConnectionMetadata>());
+      m_backwardConnections.push_back(vector<ConnectionMetadata>());
       
       m_unitmap[unit->getName()] = uid;
       while (uid >= m_units.size())
@@ -48,7 +33,8 @@ namespace syn
         m_units.push_back({0});
       }
       m_units[uid]=unit;
-      unit->parent = this;
+      unit->m_parent = this;
+      unit->resizeOutputBuffer(m_bufsize);
       m_isGraphDirty = true;
       return true;
     }
@@ -111,18 +97,19 @@ namespace syn
     return all_pnames;
   }
 
-  void Circuit::addConnection(Connection* c)
+  void Circuit::addConnection(ConnectionMetadata c)
   {
-    if (!hasUnit(c->m_sourceid) || !hasUnit(c->m_targetid)){
+    if (!hasUnit(c.srcid) || !hasUnit(c.targetid)){
       throw std::invalid_argument("Either source or target name not found inside circuit!");
-      DBGMSG("Error connecting source (%d) and target (%d) inside circuit!", c->m_sourceid, c->m_targetid);
+      DBGMSG("Error connecting source (%d) and target (%d) inside circuit!", c.srcid, c.targetid);
     }
-    vector<Connection*>& fl = m_forwardConnections[c->m_sourceid];
+    vector<ConnectionMetadata>& fl = m_forwardConnections[c.srcid];
     if (std::find(fl.begin(), fl.end(), c) == fl.end()) // connection not in forward list (and thus not in backward list)
     {
-      vector<Connection*>& bl = m_backwardConnections[c->m_targetid];
+      vector<ConnectionMetadata>& bl = m_backwardConnections[c.targetid];
       fl.push_back(c);
       bl.push_back(c);
+      m_units[c.targetid]->m_params[c.portid]->addConnection(&(m_units[c.srcid]->getLastOutputBuffer()),c.action);
       m_isGraphDirty = true;
     }
   }
@@ -132,8 +119,7 @@ namespace syn
     int sourceid = getUnitId(srcname);
     int targetid = getUnitId(targetname);
     int paramid = getUnit(targetid).getParamId(pname);
-    Connection* c = new Connection(sourceid,targetid,paramid,action);
-    addConnection(c);
+    addConnection({sourceid,targetid,paramid,action});
   }
 
   void Circuit::refreshProcQueue()
@@ -151,10 +137,10 @@ namespace syn
         continue;
       for (int i = 0; i < m_backwardConnections[currUnit].size(); i++)
       {
-        int sourceid = m_backwardConnections[currUnit][i]->m_sourceid;
+        int sourceid = m_backwardConnections[currUnit][i].srcid;
         if (closed_set.find(sourceid) == closed_set.end())
         {
-          dependencyQueue.push_back(sourceid);
+          dependencyQueue.push_front(sourceid);
           closed_set.insert(sourceid);
         }
       }
@@ -172,34 +158,7 @@ namespace syn
     for (int currUnitId : m_processQueue)
     {
       Unit& source = *m_units[currUnitId];
-      tickParams(currUnitId);
       source.tick();
-      for (Connection* c : m_forwardConnections[currUnitId])
-      {
-        c->push(source.getLastOutput());
-      }
-    }
-  }
-
-
-
-  void Circuit::tickParams(int unitid)
-  {
-    Unit& unit = getUnit(unitid);
-    vector<Connection*>& connections = m_backwardConnections[unitid];
-    vector<MIDIConnection*>& midiconnections = m_midiConnections[unitid];
-    for (int i = 0; i < midiconnections.size(); i++)
-    {
-      double amt = midiconnections[i]->pull();
-      unit.m_params[midiconnections[i]->m_targetport]->mod(amt, midiconnections[i]->m_action);
-    }
-    for (int i = 0; i < connections.size(); i++)
-    {
-      if (!connections[i]->isEmpty())
-      {
-        double amt = connections[i]->pull();
-        unit.m_params[connections[i]->m_targetport]->mod(amt, connections[i]->m_action);
-      }
     }
   }
 
@@ -211,10 +170,19 @@ namespace syn
     }
   }
 
+  void Circuit::setBufSize(size_t bufsize)
+  {
+    m_bufsize = bufsize;
+    for (int i = 0; i < m_units.size(); i++)
+    {
+      m_units[i]->resizeOutputBuffer(bufsize);
+    }
+  }
+
   Circuit* Circuit::clone()
   {
-
     Circuit* circ = (Circuit*)cloneImpl();
+    circ->m_bufsize = m_bufsize;
 
     // Clone units 
     for (int currUnitId=0;currUnitId<m_units.size();currUnitId++)
@@ -228,15 +196,7 @@ namespace syn
     {
       for (int j = 0; j < m_forwardConnections[i].size(); j++)
       {
-        circ->addConnection(new Connection(*m_forwardConnections[i][j]));
-      }
-    }
-    for (MIDIConnectionMap::iterator it = m_midiConnectionMap.begin(); it != m_midiConnectionMap.end(); it++)
-    {
-      vector<MIDIConnection*>& l = it->second;
-      for (MIDIConnection* mc : l)
-      {
-        circ->addMIDIConnection(new MIDIConnection(*mc));
+        circ->addConnection(m_forwardConnections[i][j]);
       }
     }
     circ->m_isGraphDirty = m_isGraphDirty;
@@ -253,31 +213,6 @@ namespace syn
   bool Circuit::hasUnit(int uid)
   {
     return m_units.size() >= uid;
-  }
-
-  void Circuit::addMIDIConnection(MIDIConnection* c)
-  {
-    m_midiConnectionMap[c->m_sourceid].push_back(c);
-    m_midiConnections[c->m_targetid].push_back(c);
-  }
-
-  void Circuit::addMIDIConnection(IMidiMsg::EControlChangeMsg cc, string targetname, string pname, MOD_ACTION action)
-  {
-    int targetid = getUnitId(targetname);
-    int targetport = m_units[targetid]->getParamId(pname);
-    MIDIConnection* c = new MIDIConnection{cc, targetid, targetport, action};
-    addMIDIConnection(c);
-  }
-
-  void Circuit::sendMIDICC(const IMidiMsg& midimsg)
-  {
-    IMidiMsg::EControlChangeMsg cc = midimsg.ControlChangeIdx();
-    double val = midimsg.ControlChange(cc);
-    vector<MIDIConnection*>& connections = m_midiConnectionMap[cc];
-    for (int i = 0; i < connections.size(); i++)
-    {
-      connections[i]->push(val);
-    }
   }
 
   int Circuit::getUnitId(string name)

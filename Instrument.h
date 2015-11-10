@@ -1,6 +1,5 @@
 #pragma once
 #include "Circuit.h"
-#include "Connection.h"
 #include <unordered_map>
 #include <functional>
 #include <numeric>
