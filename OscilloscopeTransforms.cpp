@@ -31,7 +31,7 @@ namespace syn
     for (int k = 1; k < halfN+1; k++)
     {
       int i = k-1;
-      oscconfig.outputbuf[i] = oscconfig.outputbuf[i] + 0.1*(20 * log10(sqrt(out[k][0] * out[k][0] + out[k][1] * out[k][1])) - oscconfig.outputbuf[i]);
+      oscconfig.outputbuf[i] = oscconfig.outputbuf[i] + 0.7*(20 * log10(sqrt(out[k][0] * out[k][0] + out[k][1] * out[k][1])) - oscconfig.outputbuf[i]);
       oscconfig.xaxisticks[i] = log10((k/(double)halfN)*pPlug->GetSampleRate());
       snprintf(lblbuf,64,"%g", (k / (double)N)*pPlug->GetSampleRate() );
       oscconfig.xaxislbls[i] = string(lblbuf);

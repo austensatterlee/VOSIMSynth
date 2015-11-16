@@ -91,7 +91,7 @@ namespace syn
       }
       else
       {
-        m_segments[segment]->prev_amp = getPoint(segment - 1);
+        m_segments[segment]->prev_amp = getPos(segment - 1);
       }
     }
     m_segments[segment]->is_increasing = m_segments[segment]->target_amp() > m_segments[segment]->prev_amp;
@@ -172,6 +172,10 @@ namespace syn
     {
       return m_parent->getParam(m_period_id);
     }
+    else
+    {
+      throw;
+    }
   }
 
   UnitParameter& EnvelopeSegment::period() const
@@ -179,6 +183,10 @@ namespace syn
     if (m_parent)
     {
       return m_parent->getParam(m_period_id);
+    }
+    else
+    {
+      throw;
     }
   }
 
@@ -188,6 +196,10 @@ namespace syn
     {
       return m_parent->getParam(m_target_amp_id);
     }
+    else
+    {
+      throw;
+    }
   }
 
   UnitParameter& EnvelopeSegment::target_amp() const
@@ -195,6 +207,10 @@ namespace syn
     if (m_parent)
     {
       return m_parent->getParam(m_target_amp_id);
+    }
+    else
+    {
+      throw;
     }
   }
 
@@ -204,6 +220,10 @@ namespace syn
     {
       return m_parent->getParam(m_shape_id);
     }
+    else
+    {
+      throw;
+    }
   }
 
   UnitParameter& EnvelopeSegment::shape() const
@@ -211,6 +231,10 @@ namespace syn
     if (m_parent)
     {
       return m_parent->getParam(m_shape_id);
+    }
+    else
+    {
+      throw;
     }
   }
 

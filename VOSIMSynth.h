@@ -7,6 +7,7 @@
 #include "VoiceManager.h"
 #include "Instrument.h"
 #include "Oscilloscope.h"
+#include "UnitFactory.h"
 #include <vector>
 
 using namespace syn;
@@ -35,6 +36,8 @@ private:
   VoiceManager m_voiceManager;
   Oscilloscope* m_Oscilloscope;
   Instrument* m_instr;
+  UnitFactory* m_unitfactory;
+
   vector<pair<int, int>> m_hostParamMap;
   unordered_map<int,unordered_map<int,int>> m_invHostParamMap;
   IGraphics* pGraphics;

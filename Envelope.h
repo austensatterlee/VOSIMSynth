@@ -67,7 +67,7 @@ namespace syn
     int getPointId(int seg) { return m_segments[seg]->target_amp().getId(); };
     double getPeriod(int seg) { return m_segments[seg]->period(); };
     double getShape(int seg) { return m_segments[seg]->shape(); };
-    double getPoint(int seg) { return m_segments[seg]->target_amp(); };
+    double getPos(int seg) { return m_segments[seg]->target_amp(); };
     double getInitPoint() { return m_initPoint; };
     void setInitPoint(double x) { m_initPoint = x; };
 

@@ -6,46 +6,46 @@
 
 namespace syn
 {
-  template <int ND = 2>
+  template <int ND = 2, typename T=double>
   class NDPoint
   {
-  private:
-    double m_pvec[ND];
+  protected:
+    T m_pvec[ND];
   public:
     NDPoint()
     {
-      memset(m_pvec, 0, ND*sizeof(double));
+      memset(m_pvec, 0, ND*sizeof(T));
     }
-    NDPoint(const double a_tuple[ND])
+    NDPoint(const T a_tuple[ND])
     {
       std::copy(a_tuple, a_tuple + ND, m_pvec);
     }
-    NDPoint(const NDPoint<ND>& a_pt)
+    NDPoint(const NDPoint<ND,T>& a_pt)
     {
       std::copy(a_pt.m_pvec, a_pt.m_pvec + ND, m_pvec);
     }
-    NDPoint(double a_n1, ...)
+    NDPoint(T a_n1, ...)
     {
       va_list vl;
       va_start(vl, a_n1);
-      double value = a_n1;
+      T value = a_n1;
       for (int i = 0; i < ND; i++)
       {
         m_pvec[i] = value;
-        value = va_arg(vl, double);
+        value = va_arg(vl, T);
       }
       va_end(vl);
     }
-    NDPoint<ND> operator*(double a_num) const
+    NDPoint<ND,T> operator*(T a_num) const
     {
-      double newpos[ND];
+      T newpos[ND];
       for (int i = 0; i < ND; i++)
       {
         newpos[i] = m_pvec[i] * a_num;
       }
       return NDPoint(newpos);
     }
-    NDPoint<ND> operator*(const NDPoint<ND>& a_pt) const
+    NDPoint<ND,T> operator*(const NDPoint<ND>& a_pt) const
     {
       double newpos[ND];
       for (int i = 0; i < ND; i++)
@@ -54,117 +54,117 @@ namespace syn
       }
       return NDPoint(newpos);
     }
-    NDPoint<ND> operator+(double a_num) const
+    NDPoint<ND,T> operator+(T a_num) const
     {
-      double newpos[ND];
+      T newpos[ND];
       for (int i = 0; i < ND; i++)
       {
         newpos[i] = m_pvec[i] + a_num;
       }
       return NDPoint(newpos);
     }
-    NDPoint<ND> operator+(const NDPoint<ND>& a_pt) const
+    NDPoint<ND,T> operator+(const NDPoint<ND,T>& a_pt) const
     {
-      double newpos[ND];
+      T newpos[ND];
       for (int i = 0; i < ND; i++)
       {
         newpos[i] = m_pvec[i] + a_pt.m_pvec[i];
       }
       return NDPoint(newpos);
     }
-    NDPoint<ND> operator-(double a_num) const
+    NDPoint<ND,T> operator-(T a_num) const
     {
-      double newpos[ND];
+      T newpos[ND];
       for (int i = 0; i < ND; i++)
       {
         newpos[i] = m_pvec[i] - a_num;
       }
       return NDPoint(newpos);
     }
-    NDPoint<ND> operator-(const NDPoint<ND>& a_pt) const
+    NDPoint<ND,T> operator-(const NDPoint<ND,T>& a_pt) const
     {
-      double newpos[ND];
+      T newpos[ND];
       for (int i = 0; i < ND; i++)
       {
         newpos[i] = m_pvec[i] - a_pt.m_pvec[i];
       }
       return NDPoint(newpos);
     }
-    NDPoint<ND> operator/(const NDPoint<ND>& a_pt) const
+    NDPoint<ND,T> operator/(const NDPoint<ND,T>& a_pt) const
     {
-      double newpos[ND];
+      T newpos[ND];
       for (int i = 0; i < ND; i++)
       {
         newpos[i] = m_pvec[i] / a_pt.m_pvec[i];
       }
       return NDPoint(newpos);
     }
-    NDPoint<ND> operator/(double a_num) const
+    NDPoint<ND,T> operator/(double a_num) const
     {
-      double newpos[ND];
+      T newpos[ND];
       for (int i = 0; i < ND; i++)
       {
         newpos[i] = m_pvec[i] / a_num;
       }
       return NDPoint(newpos);
     }
-    void operator*=(double a_num)
+    void operator*=(T a_num)
     {
       for (int i = 0; i < ND; i++)
       {
         m_pvec[i] *= a_num;
       }
     }
-    void operator*=(const NDPoint& a_pt)
+    void operator*=(const NDPoint<ND,T>& a_pt)
     {
       for (int i = 0; i < ND; i++)
       {
         m_pvec[i] *= a_pt.m_pvec[i];
       }
     }
-    void operator+=(double a_num)
+    void operator+=(T a_num)
     {
       for (int i = 0; i < ND; i++)
       {
         m_pvec[i] += a_num;
       }
     }
-    void operator+=(const NDPoint& a_pt)
+    void operator+=(const NDPoint<ND,T>& a_pt)
     {
       for (int i = 0; i < ND; i++)
       {
         m_pvec[i] += a_pt.m_pvec[i];
       }
     }
-    void operator/=(const NDPoint<ND>& a_pt)
+    void operator/=(const NDPoint<ND,T>& a_pt)
     {
       for (int i = 0; i < ND; i++)
       {
         m_pvec[i] /= a_pt.m_pvec[i];
       }
     }
-    void operator/=(double a_num)
+    void operator/=(T a_num)
     {
       for (int i = 0; i < ND; i++)
       {
         m_pvec[i] /= a_num;
       }
     }
-    void operator-=(double a_num)
+    void operator-=(T a_num)
     {
       for (int i = 0; i < ND; i++)
       {
         m_pvec[i] -= a_num;
       }
     }
-    void operator-=(const NDPoint& a_pt)
+    void operator-=(const NDPoint<ND,T>& a_pt)
     {
       for (int i = 0; i < ND; i++)
       {
         m_pvec[i] -= a_pt.m_pvec[i];
       }
     }
-    bool operator==(double a_num) const
+    bool operator==(T a_num) const
     {
       for (int i = 0; i < ND; i++)
       {
@@ -173,7 +173,7 @@ namespace syn
       }
       return true;
     }
-    bool operator==(const NDPoint<ND>& a_pt)
+    bool operator==(const NDPoint<ND,T>& a_pt)
     {
       for (int i = 0; i < ND; i++)
       {
@@ -182,7 +182,7 @@ namespace syn
       }
       return true;
     }
-    bool operator<(const NDPoint<ND>& a_pt)
+    bool operator<(const NDPoint<ND,T>& a_pt)
     {
       for (int i = 0; i < ND; i++)
       {
@@ -191,11 +191,11 @@ namespace syn
       }
       return true;
     }
-    double& operator[](const int& index)
+    T& operator[](const int& index)
     {
       return m_pvec[index];
     }  
-    const double& operator[](const int& index) const
+    const T& operator[](const int& index) const
     {
       return m_pvec[index];
     }
@@ -209,12 +209,12 @@ namespace syn
       dmag = sqrt(dmag);
       return dmag;
     }
-    double distFrom(const NDPoint<ND>& a_pt) const
+    double distFrom(const NDPoint<ND,T>& a_pt) const
     {
-      NDPoint<ND> pt = *this - a_pt;
+      NDPoint<ND,T> pt = *this - a_pt;
       return pt.mag();
     }
-    void clamp(const NDPoint<ND>& a_minpt, const NDPoint<ND>& a_maxpt)
+    void clamp(const NDPoint<ND,T>& a_minpt, const NDPoint<ND,T>& a_maxpt)
     {
       for (int i = 0; i < ND; i++)
       {
@@ -230,28 +230,28 @@ namespace syn
     }
   };
 
-  template <int ND>
-  NDPoint<ND> getZeros()
+  template <int ND, typename T=double>
+  NDPoint<ND,T> getZeros()
   {
-    double zeros[ND];
+    T zeros[ND];
     std::fill_n(zeros, ND, 0.0);
     return NDPoint<ND>(zeros);
   }
-  template <int ND>
-  NDPoint<ND> getOnes()
+  template <int ND, typename T = double>
+  NDPoint<ND,T> getOnes()
   {
-    double ones[ND];
+    T ones[ND];
     std::fill_n(ones, ND, 1.0);
-    return NDPoint<ND>(ones);
+    return NDPoint<ND,T>(ones);
   }
-  template <int ND>
-  NDPoint<ND> getUnitv(int a_dir)
+  template <int ND, typename T = double>
+  NDPoint<ND,T> getUnitv(int a_dir)
   {
     _ASSERT(a_dir >= 0 && a_dir < ND);
-    double pvec[ND];
+    T pvec[ND];
     std::fill_n(pvec, ND, 0.0);
     pvec[a_dir] = 1.0;
-    return NDPoint<ND>(pvec);
+    return NDPoint<ND,T>(pvec);
   }
 }
 #endif // __NDPoint__

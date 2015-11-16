@@ -30,13 +30,13 @@ namespace syn
       m_velocity(1.0),
       m_gain(addParam("gain", DOUBLE_TYPE, 0, 1)),
       m_pitch(addParam("pitch", DOUBLE_TYPE, 0, 128, true)),
-      m_pitchshift(addParam("pitchshift", DOUBLE_TYPE, -12, 12)),
+      m_tune(addParam("tune", DOUBLE_TYPE, -12, 12)),
       m_phaseshift(addParam("phaseshift", DOUBLE_TYPE, -0.5, 0.5)),
       m_portamento(addParam("portamento", DOUBLE_TYPE, 0, 1, true))
     {
       m_portamento.mod(0,SET);
       m_Step = 440./m_Fs;
-      m_targetStep = m_Step;
+      m_Step = m_Step;
     };
     Oscillator(const Oscillator& osc) :
       Oscillator(osc.m_name)
@@ -46,7 +46,7 @@ namespace syn
       m_velocity = osc.m_velocity;
       m_phase = osc.m_phase;
     }
-    virtual int getSamplesPerPeriod() const { return 1. / m_Step; }
+    virtual int getSamplesPerPeriod() const { return (int)(ceil(1. / m_Step)); }
     virtual void sync() { m_basePhase = 0; };
     bool isActive() const { return m_gain != 0; };
     virtual void noteOn(int pitch, int vel);
@@ -55,16 +55,16 @@ namespace syn
     UnitParameter& m_portamento;
     UnitParameter& m_gain;
     UnitParameter& m_pitch;
-    UnitParameter& m_pitchshift;
+    UnitParameter& m_tune;
     UnitParameter& m_phaseshift;
   protected:
     double m_basePhase = 0;
     double m_phase = 0;
     double m_Step;
-    double m_targetStep;
     double m_velocity;
     void updateSyncStatus() { m_isSynced = m_phase < m_Step; };
     virtual void tick_phase();
+    virtual void update_step();
   };
 
   class BasicOscillator : public Oscillator
@@ -88,8 +88,8 @@ namespace syn
     LFOOscillator(string name) : BasicOscillator(name)
     {
       m_pitch.mod(-12, SET); 
-      m_pitchshift.setMax(24);
-      m_pitchshift.setMin(-24);
+      m_tune.setMax(24);
+      m_tune.setMin(-24);
     }
 
     LFOOscillator(const LFOOscillator& other) : LFOOscillator(other.m_name)

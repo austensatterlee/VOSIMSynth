@@ -79,7 +79,10 @@ namespace syn
     {
       for (int j = 0; j < m_params.size(); j++)
       {
-        m_params[j]->pull(i);
+        m_params[j]->reset();
+        if(m_params[j]->numConnections()>0){
+          m_params[j]->pull(i);
+        }
       }
       process(i);
       m_bufind = i;

@@ -120,6 +120,9 @@
     <ClInclude Include="RandomOscillator.h">
       <Filter>Components\Units</Filter>
     </ClInclude>
+    <ClInclude Include="UnitFactory.h">
+      <Filter>Components\Units</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="vst2">

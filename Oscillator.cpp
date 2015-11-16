@@ -18,7 +18,15 @@ namespace syn
 
   void Oscillator::setFs(double fs)
   {
-    m_targetStep = m_targetStep*m_Fs / fs; m_Fs = fs;
+    m_Step = m_Step*m_Fs / fs; m_Fs = fs;
+  }
+
+  void Oscillator::update_step()
+  {
+    if (m_pitch.isDirty() || m_tune.isDirty())
+    {
+      m_Step = pitchToFreq(m_pitch + m_tune) / m_Fs;
+    }
   }
   
   /**
@@ -27,18 +35,13 @@ namespace syn
    */
   void Oscillator::tick_phase()
   {
-    if (m_pitch.isDirty() || m_pitchshift.isDirty())
-    {
-      m_targetStep = pitchToFreq(m_pitch + m_pitchshift) / m_Fs;
-    }
-    m_Step = m_targetStep;
-
+    update_step();
     m_basePhase += m_Step;
     if (m_basePhase >= 1)
       m_basePhase -= 1;
     m_phase = m_basePhase + m_phaseshift;
-    while (m_phase >= 1) m_phase -= 1;
-    while (m_phase < 0) m_phase += 1;
+    if (m_phase >= 1) m_phase -= 1;
+    else if (m_phase < 0) m_phase += 1;
     updateSyncStatus();
   }
 

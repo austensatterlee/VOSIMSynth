@@ -20,8 +20,9 @@ namespace syn
     virtual ~Instrument() {};
 
     void addSource(SourceUnit* unit);
-    void setPrimarySource(string name);
-    void addPrimarySource(string name);
+    void removePrimarySource(int srcid);
+    void addPrimarySource(int srcid);
+    virtual bool removeUnit(int uid) override;
     SourceUnit& getSourceUnit(string name) { return *(SourceUnit*)m_units[m_unitmap[name]]; };
     void noteOn(int note, int vel);
     void noteOff(int note, int vel);

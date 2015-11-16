@@ -125,8 +125,11 @@ namespace syn
       Instrument* voice = m_allVoices[*v];
       if (voice->isActive())
       {
+        if (voice->getBufSize() != bufsize)
+        {
+          setBufSize(bufsize);
+        }
         voice->tick();
-        assert(bufsize==voice->getBufSize());
         const vector<double>& voicebuf = voice->getLastOutputBuffer();
         for(int i=0;i<voice->getBufSize();i++){
           buf[i] += voicebuf[i];

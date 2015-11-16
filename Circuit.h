@@ -44,12 +44,14 @@ namespace syn
   public:
     Circuit() :
       m_nextUid(0),
-      m_bufsize(1)
+      m_bufsize(1),
+      m_sinkId(-1)
     {}
     virtual ~Circuit();
     Circuit* clone();
     bool addUnit(Unit* unit);
     bool addUnit(Unit* unit, int uid);
+    virtual bool removeUnit(int uid);
     void setSinkId(int id);
     void setSinkName(string name);
     /*!
@@ -67,10 +69,10 @@ namespace syn
 
     vector<tuple<string, string>> getParameterNames();
     Unit& getUnit(string name) { return *m_units[m_unitmap[name]]; };
-    const Unit& getUnit(string name) const { return *m_units.at(m_unitmap.at(name)); };
     Unit& getUnit(int id) { return *m_units[id]; };
     const Unit& getUnit(int id) const { return *m_units.at(id); };
     int getUnitId(string name);
+    int getUnitId(Unit* unit);
     /**
      * \brief Generate the requested number of samples. The result can be retrieved using getLastOutputBuffer()
      */
@@ -82,6 +84,7 @@ namespace syn
     bool hasUnit(int uid);
     double getLastOutput() const { return m_units[m_sinkId]->getLastOutput(); };
     const vector<double>& getLastOutputBuffer() const { return m_units[m_sinkId]->getLastOutputBuffer(); };
+    const vector<ConnectionMetadata>& getConnectionsTo(int unitid);
   protected:
     typedef  vector<Unit*> UnitVec;
     typedef  vector<vector<ConnectionMetadata>> ConnVec;

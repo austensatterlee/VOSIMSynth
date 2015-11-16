@@ -13,7 +13,7 @@ void syn::UnitParameter::mod(double amt, MOD_ACTION action)
   if (action == SET && amt != m_baseValue)
   {
     m_baseValue = amt;
-    m_currValue = m_baseValue;
+    m_currValue = amt;
     m_needsUpdate = true;
   }
   else if (action == ADD && amt != 0)

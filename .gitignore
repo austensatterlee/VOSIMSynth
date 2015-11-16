@@ -237,3 +237,4 @@ build-win/
 *.pyc
 doc/
 *.bk
+*.swp

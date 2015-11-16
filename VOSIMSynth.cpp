@@ -15,9 +15,6 @@
 #include <cstring>
 
 using namespace std;
-#define O_TU "bosc0"
-#define O_U "master"
-
 
 const int kNumPrograms = 1;
 
@@ -52,7 +49,7 @@ void VOSIMSynth::makeGraphics()
 {
 
   pGraphics = MakeGraphics(this, kWidth, kHeight);
-  pGraphics->AttachPanelBackground(&pt2color(palette[0]));
+  pGraphics->AttachPanelBackground(&(IColor)(palette[0]));
 
   //IBitmap wedgeswitch2p = pGraphics->LoadIBitmap(WEDGE_SWITCH_2P_ID, WEDGE_SWITCH_2P_FN, 2);
   IBitmap push2p = pGraphics->LoadIBitmap(PUSH_2P_ID, PUSH_2P_FN, 2);
@@ -80,16 +77,19 @@ void VOSIMSynth::makeGraphics()
   m_numParameters = i;
   
   m_Oscilloscope = new Oscilloscope(this, IRECT(10, 600, 790, 790));
-  EnvelopeEditor* m_EnvEditor1 = new EnvelopeEditor(this, &m_voiceManager, "ampenv1", IRECT(500, 10, 800 - 10, 150), 10, -1.0, 1.0, 1);
-  EnvelopeEditor* m_EnvEditor2 = new EnvelopeEditor(this, &m_voiceManager, "ampenv2", IRECT(500, 160, 800 - 10, 300), 10, -1.0, 1.0, 1);
-  EnvelopeEditor* m_EnvEditor3 = new EnvelopeEditor(this, &m_voiceManager, "pulseenv1", IRECT(500, 310, 800 - 10, 450), 10, -1.0, 1.0, 1);
-  EnvelopeEditor* m_EnvEditor4 = new EnvelopeEditor(this, &m_voiceManager, "decayenv1", IRECT(500, 460, 800 - 10, 600), 10, -1, 1, 1);
- 
   pGraphics->AttachControl(m_Oscilloscope);
+ /* EnvelopeEditor* m_EnvEditor1 = new EnvelopeEditor(this, &m_voiceManager, "amp_env0", IRECT(500, 10, 800 - 10, 150), 10, -1.0, 1.0, 1);
+  EnvelopeEditor* m_EnvEditor2 = new EnvelopeEditor(this, &m_voiceManager, "amp_env1", IRECT(500, 160, 800 - 10, 300), 10, -1.0, 1.0, 1);
+  EnvelopeEditor* m_EnvEditor3 = new EnvelopeEditor(this, &m_voiceManager, "amp_env2", IRECT(500, 310, 800 - 10, 450), 10, -1.0, 1.0, 1);
+  EnvelopeEditor* m_EnvEditor4 = new EnvelopeEditor(this, &m_voiceManager, "lfo_amp_env0", IRECT(500, 460, 800 - 10, 600), 10, -1, 1, 1);
   pGraphics->AttachControl(m_EnvEditor1);
   pGraphics->AttachControl(m_EnvEditor2);
   pGraphics->AttachControl(m_EnvEditor3);
-  pGraphics->AttachControl(m_EnvEditor4);
+  pGraphics->AttachControl(m_EnvEditor4);*/
+
+  UnitPanel* unitpanel = new UnitPanel(this, { 5,5,450,550 }, &m_voiceManager, m_unitfactory);
+ 
+  pGraphics->AttachControl(unitpanel);
 
   int j = 0;
   i = 0;
@@ -121,39 +121,15 @@ void VOSIMSynth::makeGraphics()
 
 void VOSIMSynth::makeInstrument()
 {
-  Envelope* env1 = new Envelope("ampenv1");
-  Envelope* env2 = new Envelope("ampenv2");
-  Envelope* env3 = new Envelope("pulseenv1");
-  Envelope* env4 = new Envelope("decayenv1");
-  VosimChoir* vchoir0 = new VosimChoir("vchoir0",7);
-  Oscillator* osc0 = new VosimOscillator("osc0");
-  Oscillator* bosc0 = new BasicOscillator("bosc0");
-  AccumulatingUnit* acc = new AccumulatingUnit("master");
-  Filter<AA_FILTER_SIZE+1, AA_FILTER_SIZE>* filt1 = new Filter<AA_FILTER_SIZE+1, AA_FILTER_SIZE>("filt1",AA_FILTER_X, AA_FILTER_Y);
-
   m_instr = new Instrument();
-  m_instr->addSource(env1);
-  m_instr->addSource(env2);
-  m_instr->addSource(env3);
-  m_instr->addSource(env4);
-  m_instr->addSource(vchoir0);
-  m_instr->addSource(bosc0);
-  m_instr->addUnit(acc);
-  m_instr->addUnit(filt1);
-  m_instr->addConnection("ampenv1", "bosc0", "gain", SCALE);
-  m_instr->addConnection("ampenv2", "vchoir0", "gain", SCALE);
-  m_instr->addConnection("pulseenv1", "vchoir0", "pulsepitch", ADD);
-  m_instr->addConnection("decayenv1", "vchoir0", "decay", SCALE);
-  m_instr->addConnection("vchoir0", "master", "input", ADD);
-  m_instr->addConnection("bosc0", "master", "input", ADD);
-  m_instr->addConnection("master", "filt1", "input", ADD);
+  m_unitfactory = new UnitFactory();
+  m_unitfactory->addSourceUnitPrototype(new Envelope("Envelope"));
+  m_unitfactory->addUnitPrototype(new AccumulatingUnit("Accumulator"));
+  m_unitfactory->addSourceUnitPrototype(new VosimOscillator("Osc.VOSIM"));
+  m_unitfactory->addSourceUnitPrototype(new BasicOscillator("Osc.Basic"));
+  m_unitfactory->addSourceUnitPrototype(new LFOOscillator("Osc.LFO"));
 
-  m_instr->setSinkName("master");
-  m_instr->setPrimarySource("ampenv1");
-  m_instr->addPrimarySource("ampenv2");
-
-  m_voiceManager.setMaxVoices(16, m_instr);
-  m_instr->getUnit("master").modifyParameter(1, 1. / m_voiceManager.getMaxVoices(), SET);
+  m_voiceManager.setMaxVoices(4, m_instr);
   m_voiceManager.m_onDyingVoice.Connect(this, &VOSIMSynth::OnDyingVoice);
 
   m_MIDIReceiver.noteOn.Connect(this, &VOSIMSynth::OnNoteOn);
@@ -169,8 +145,8 @@ void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel)
   Instrument* vnew = m_voiceManager.getNewestVoice();
   if (vnew)
   {
-    m_Oscilloscope->connectInput(vnew->getUnit(O_U));
-    m_Oscilloscope->connectTrigger(vnew->getSourceUnit(O_TU));
+    /*m_Oscilloscope->connectInput(vnew->getUnit(O_U));
+    m_Oscilloscope->connectTrigger(vnew->getSourceUnit(O_TU));*/
   }
 }
 
@@ -179,8 +155,8 @@ void VOSIMSynth::OnDyingVoice(Instrument* dying)
   Instrument* vnew = m_voiceManager.getNewestVoice();
   if (vnew)
   {
-    m_Oscilloscope->connectInput(vnew->getUnit(O_U));
-    m_Oscilloscope->connectTrigger(vnew->getSourceUnit(O_TU));
+    /*m_Oscilloscope->connectInput(vnew->getUnit(O_U));
+    m_Oscilloscope->connectTrigger(vnew->getSourceUnit(O_TU));*/
   }
 }
 

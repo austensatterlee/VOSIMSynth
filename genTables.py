@@ -75,25 +75,26 @@ def GenerateBLSaw(n):
     # for harmonic in xrange(1,int(fs/2)):
         # blbuf+=(1./harmonic)*sin(2*pi*harmonic*(k/fs))
     # return -2/pi*blbuf
-    k = arange(0,n)
-    fs = float64(n)
-    f0 = 1./fs
-    phases = k*f0
+    k = arange(n)
+    T = 1./float64(n)
     blbuf = zeros(n)
-    h=1
-    while (f0*h<0.5):
-        blbuf += 2./(2+sqrt(2.))/h*cos(f0*h*2*pi)*sin(f0*k*h*2*pi)
+    h = 1
+    while (h*T<0.5):
+        blbuf += 1./h*cos((T*h)*pi)*sin((T*h)*k*2*pi)
         h+=1
-    return -blbuf
+    return blbuf
 
 def GenerateBlit(n):
     k=arange(n)
-    fs = float64(n)
+    T = 1./float64(n)
     blbuf = zeros(n)
-
-    for harmonic in xrange(1,int(fs/2)):
-        blbuf+=cos(2*pi*harmonic*(k/fs))
-    return blbuf/int(fs/2)
+    h = 1
+    G = 1.
+    while(h*T<0.5):
+        blbuf+=G*sin(2*pi*k*T*h)
+        h+=1
+        G*=0.9
+    return blbuf
 
 def GenerateMinBLEP(nZeroCrossings, nOverSampling):
     n = (nZeroCrossings * 2 * nOverSampling) + 1
@@ -130,9 +131,10 @@ def GenerateMinBLEP(nZeroCrossings, nOverSampling):
 
     return minBLEP
 
-def GenerateSinSquared(n):
-    t = linspace(0,1,n)
-    c = 0.5*(1-cos(t*2*pi))
+def GenerateSine(n):
+    k = arange(n)
+    T = 1./n
+    c = sin(k*T*2*pi)
     return c
 
 def SincKernel(M,fc):
@@ -157,13 +159,13 @@ def rewriteAutomatedSection(full_text,replacement_text):
 def main(pargs):
     v = pargs.verbose
 
-    ss_points = 65536
-    sinsquaredtable = GenerateSinSquared(ss_points)
+    ss_points = 128
+    sinsquaredtable = GenerateSine(ss_points)
     sk_points = 5
     sk_fc = 0.5
     sinckernel = SincKernel(sk_points,sk_fc)
-    pitchtable = PitchTable(65536,-128,128)
-    blsaw = GenerateBLSaw(1024)
+    pitchtable = PitchTable(128,-128,128)
+    blsaw = GenerateBLSaw(128)
 
     key_order = ['size','input_min','input_max', 'isPeriodic']
     tables = {

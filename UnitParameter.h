@@ -72,12 +72,14 @@ namespace syn
       m_connections(0)
     {
       mod(0.5*(m_max + m_min), SET);
+      m_currValue = m_baseValue;
     }
     UnitParameter(const UnitParameter& other) :
       UnitParameter(other.m_parent, other.m_name, other.m_id, other.m_type, other.m_min, other.m_max)
     {
       mod(other.m_baseValue, SET);
       setTransformFunc(other.m_transform_func);
+      m_currValue = m_baseValue;
     }
     virtual ~UnitParameter() {};
 
@@ -119,9 +121,9 @@ namespace syn
     {
       m_connections.push_back({ srcbuffer,action });
     }
+    int numConnections() const { return m_connections.size(); }
     void pull(int bufind)
-    {
-      reset();
+    {      
       for (int i = 0; i < m_connections.size(); i++)
       {
         mod((*m_connections[i].srcbuffer)[bufind], m_connections[i].action);

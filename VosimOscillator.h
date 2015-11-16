@@ -53,9 +53,10 @@ namespace syn
       m_decay(addParam("decay", DOUBLE_TYPE, 0, 0.9)),
       m_ppitch(addParam("pulsepitch", DOUBLE_TYPE, 0, 1)),
       m_number(addParam("number", INT_TYPE, 0, 4)),
+      m_harmonicdecay(addParam("harmonicdecay", DOUBLE_TYPE, 0, 0.9)),
       m_tune(addParam("tune", DOUBLE_TYPE, -12, 12)),
-      m_pitchdrift(addParam("pitch_drift", DOUBLE_TYPE, 0, 2.0)),
-      m_driftfreq(addParam("drift_freq", DOUBLE_TYPE, 0, 128.0))
+      m_pitchdrift(addParam("pulse_drift", DOUBLE_TYPE, 0, 0.5)),
+      m_driftfreq(addParam("drift_freq", DOUBLE_TYPE, -64, 0))
     {
       assert(size>0);
       m_choir = (VosimOscillator**)malloc(m_size*sizeof(VosimOscillator*));
@@ -64,6 +65,7 @@ namespace syn
       {
         m_choir[i] = new VosimOscillator(name);
         m_pulsedrifters[i] = new NormalRandomOscillator(name);
+        m_choir[i]->getParam("tune").addConnection(&m_pulsedrifters[i]->getLastOutputBuffer(),ADD);
       }
     }
     VosimChoir(const VosimChoir& other) : VosimChoir(other.m_name, other.m_size)
@@ -78,6 +80,15 @@ namespace syn
       delete m_choir;
       delete m_pulsedrifters;
     }
+    //virtual void resizeOutputBuffer(size_t size)
+    //{
+    //  Unit::resizeOutputBuffer(size);
+    //  for (int i = 0; i < m_size; i++)
+    //  {
+    //    m_choir[i]->resizeOutputBuffer(size);
+    //    m_pulsedrifters[i]->resizeOutputBuffer(size);
+    //  }
+    //}
     bool isActive() const { return m_gain != 0; };
     virtual void noteOn(int pitch, int vel)
     {
@@ -100,9 +111,10 @@ namespace syn
         m_choir[i]->setFs(fs);
       }
     }
-    virtual int getSamplesPerPeriod() const { return m_choir[0]->getSamplesPerPeriod(); }
+    virtual int getSamplesPerPeriod() const { return m_choir[0]->getSamplesPerPeriod(); }   
     UnitParameter& m_gain;
     UnitParameter& m_decay;
+    UnitParameter& m_harmonicdecay;
     UnitParameter& m_ppitch;
     UnitParameter& m_number;
     UnitParameter& m_tune;
@@ -112,20 +124,31 @@ namespace syn
     virtual void process(int bufind)
     {
       m_output[bufind] = 0;
+      double harmonicgain = 1.0;
       for (int i = 0; i < m_size; i++)
       {
         m_choir[i]->m_decay.mod(m_decay, SET);
 
-        m_choir[i]->m_ppitch.mod(m_ppitch*(double)i/m_size, SET);
+        m_choir[i]->m_ppitch.mod(m_ppitch*(1+(double)i/m_size), SET);
 
-        m_choir[i]->m_number.mod(m_number + i, SET);
+        m_choir[i]->m_number.mod(m_number+i, SET);
 
         m_pulsedrifters[i]->m_pitch.mod(m_driftfreq,SET);
-        m_pulsedrifters[i]->tick();
-        m_choir[i]->m_pitchshift.mod(m_pulsedrifters[i]->getLastOutput()*m_pitchdrift+m_tune, SET);
+        m_pulsedrifters[i]->m_gain.mod(m_pitchdrift, SET);
+        m_choir[i]->m_tune.mod(m_tune, SET);
 
+        m_pulsedrifters[i]->tick();
         m_choir[i]->tick();
-        m_output[bufind] += m_choir[i]->getLastOutput();
+
+        if (i & 0x01)
+        {
+          m_output[bufind] += harmonicgain*m_choir[i]->getLastOutput();
+        }
+        else
+        {
+          m_output[bufind] -= harmonicgain*m_choir[i]->getLastOutput();
+        }
+        harmonicgain*=m_harmonicdecay;
       }
       m_output[bufind] *= m_gain;
     }

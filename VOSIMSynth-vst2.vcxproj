@@ -224,6 +224,7 @@
       <SubSystem>Windows</SubSystem>
       <AdditionalDependencies>libfftw3-3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>E:\clibs\fftw-3.3.4-dll32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <Profile>true</Profile>
     </Link>
     <CustomBuildStep>
       <Command>doxygen</Command>
@@ -254,6 +255,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(x64_LIB_PATHS);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Tracer|Win32'">
@@ -319,6 +321,7 @@
     <ClInclude Include="Filter.h" />
     <ClInclude Include="Oscilloscope.h" />
     <ClInclude Include="NDPoint.h" />
+    <ClInclude Include="UnitFactory.h" />
     <ClInclude Include="UnitParameter.h" />
     <ClInclude Include="tables.h" />
     <ClInclude Include="UI.h" />

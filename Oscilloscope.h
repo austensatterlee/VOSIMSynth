@@ -22,7 +22,7 @@ namespace syn
   struct OscilloscopeConfig
   {
     const string name;
-    const TransformFunc* transform;
+    TransformFunc* transform;
     const bool useAutoSync;
     const int defaultBufSize;
     string xunits;
@@ -48,17 +48,17 @@ namespace syn
     SourceUnit* m_currTriggerSrc = nullptr;
     Unit* m_currInput = nullptr;
     bool m_isActive;
-    deque<int> m_syncIndexQueue;
     double m_minY, m_maxY;
+    int m_Padding;
+    int m_displayIndex;
     double m_syncDelayEst;
+    int m_currSyncDelay;
+    int m_periodCount;
+    int m_displayPeriods;
     int m_BufInd;
     int m_BufSize;
-    int m_Padding;
-    int m_currSyncDelay;
-    int m_displayPeriods;
-    int m_periodCount;
     OscilloscopeConfig* m_config;
-    vector<double> m_inputBuffer;
+    vector<double> m_inputRingBuffer, m_inputBuffer;
     IPopupMenu m_menu;
     double toScreenX(double val)
     {
@@ -91,8 +91,7 @@ namespace syn
     void disconnectTrigger(SourceUnit& srccomp);
     void process();
     void setPeriod(int nsamp) {
-      WDL_MutexLock lock(&m_mutex);
-      while (m_displayPeriods*nsamp > 8192)
+      while (m_displayPeriods>1 && m_displayPeriods*nsamp > 16384)
       {
         m_displayPeriods-=1;
       }

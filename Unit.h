@@ -41,7 +41,7 @@ namespace syn
     double getFs() const { return m_Fs; };
     const vector<double>& getLastOutputBuffer() const { return m_output; };
     double getLastOutput() const { return m_output[m_bufind]; };
-    void resizeOutputBuffer(size_t newbufsize){ m_output.resize(newbufsize); }
+    virtual void resizeOutputBuffer(size_t newbufsize){ m_output.resize(newbufsize); }
     /*!
      *\brief Modifies the value of the parameter associated with portid.
      */

@@ -36,7 +36,7 @@ namespace syn
     IRECT m_timeScaleRect;
     int getSelected(double x, double y);
     void insertPointFromScreen(const NDPoint<2>& screenpt); //<! doesn't work
-    NDPoint<2>& getPoint(int index);
+    NDPoint<2>& getPos(int index);
     NDPoint<2> toScreen(const NDPoint<2>& a_pt) const;
     NDPoint<2> toModel(const NDPoint<2>& a_pt) const;
     /*!
