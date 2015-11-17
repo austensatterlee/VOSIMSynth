@@ -49,8 +49,8 @@ namespace syn
     {}
     virtual ~Circuit();
     Circuit* clone();
-    bool addUnit(Unit* unit);
-    bool addUnit(Unit* unit, int uid);
+    int addUnit(Unit* unit);
+    int addUnit(Unit* unit, int uid);
     virtual bool removeUnit(int uid);
     void setSinkId(int id);
     void setSinkName(string name);
@@ -58,8 +58,8 @@ namespace syn
      * \brief Specify a connection from one unit's output to another unit's parameter.
      * \sa Connection
      */
-    void addConnection(string srcname, string targetname, string pname, MOD_ACTION action);
-    void addConnection(ConnectionMetadata c);
+    bool addConnection(string srcname, string targetname, string pname, MOD_ACTION action);
+    bool addConnection(ConnectionMetadata c);
     /**
      * \brief Manually modify a Unit's parameter
      */
@@ -80,14 +80,14 @@ namespace syn
     void setFs(double fs);
     void setBufSize(size_t bufsize);
     size_t getBufSize(){ return m_bufsize; }
-    bool hasUnit(string name);
-    bool hasUnit(int uid);
-    double getLastOutput() const { return m_units[m_sinkId]->getLastOutput(); };
-    const vector<double>& getLastOutputBuffer() const { return m_units[m_sinkId]->getLastOutputBuffer(); };
-    const vector<ConnectionMetadata>& getConnectionsTo(int unitid);
+    bool hasUnit(string name) const;
+    bool hasUnit(int uid) const;
+    double getLastOutput() const { return m_units.at(m_sinkId)->getLastOutput(); };
+    const vector<double>& getLastOutputBuffer() const { return m_units.at(m_sinkId)->getLastOutputBuffer(); };
+    const vector<ConnectionMetadata>& getConnectionsTo(int unitid) const;
   protected:
-    typedef  vector<Unit*> UnitVec;
-    typedef  vector<vector<ConnectionMetadata>> ConnVec;
+    typedef  unordered_map<int,Unit*> UnitVec;
+    typedef  unordered_map<int,vector<ConnectionMetadata>> ConnVec;
     UnitVec m_units;
     ConnVec m_forwardConnections;
     ConnVec m_backwardConnections;

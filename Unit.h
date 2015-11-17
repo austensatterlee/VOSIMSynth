@@ -54,7 +54,8 @@ namespace syn
     vector<string> getParameterNames() const;
     int getParamId(string name);
     Circuit& getParent() const { return *m_parent; };
-    const string getName() const { return m_name; }
+    string getName() const { return m_name; }
+    void setName(string name){ m_name = name; }
     Unit* clone() const;
   protected:
     typedef vector<UnitParameter*> ParamVec;

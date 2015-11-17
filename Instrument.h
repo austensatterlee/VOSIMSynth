@@ -19,7 +19,7 @@ namespace syn
     {}
     virtual ~Instrument() {};
 
-    void addSource(SourceUnit* unit);
+    int addSource(SourceUnit* unit);
     void removePrimarySource(int srcid);
     void addPrimarySource(int srcid);
     virtual bool removeUnit(int uid) override;

@@ -3,12 +3,15 @@
 namespace syn
 {
 
-  void Instrument::addSource(SourceUnit* unit)
+  int Instrument::addSource(SourceUnit* unit)
   {
-    m_sourcemap.push_back(m_units.size());
-    if(m_primarySrcVec.empty())
-      m_primarySrcVec.push_back(m_sourcemap.back());
-    addUnit(unit);
+    int uid = addUnit(unit);
+    if(uid!=-1){
+      m_sourcemap.push_back(uid);
+      if (m_primarySrcVec.empty())
+        m_primarySrcVec.push_back(m_sourcemap.back());
+    }
+    return uid;
   }
 
   void Instrument::addPrimarySource(int srcid)
@@ -65,7 +68,7 @@ namespace syn
   {
     if(m_sinkId<0) return false;
     for(int i=0;i<m_primarySrcVec.size();i++){
-      if(((SourceUnit*)m_units[m_primarySrcVec[i]])->isActive()) return true;
+      if(((SourceUnit*)m_units.at(m_primarySrcVec[i]))->isActive()) return true;
     }
     return false;
   }

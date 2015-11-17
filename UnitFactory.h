@@ -29,12 +29,14 @@ namespace syn
     {
       m_unit_prototypes.push_back(prototype);
       m_prototype_names.push_back(prototype->getName());
+      m_unit_counts.push_back(0);
     }
 
     void addSourceUnitPrototype(const SourceUnit* prototype)
     {
       m_source_unit_prototypes.push_back(prototype);
       m_source_prototype_names.push_back(prototype->getName());
+      m_source_unit_counts.push_back(0);
     }
 
     const vector<string>& getPrototypeNames() const
@@ -57,19 +59,33 @@ namespace syn
       return m_source_unit_prototypes;
     }
 
-    Unit* createUnit(int protonum) const
+    Unit* createUnit(int protonum)
     {
-      return m_unit_prototypes[protonum]->clone();
+      Unit* unit = m_unit_prototypes[protonum]->clone();
+      char namebuf[256];
+      sprintf(namebuf,"%s_%d", unit->getName().c_str() ,m_unit_counts[protonum]);
+      string newname = namebuf;
+      unit->setName(newname);
+      m_unit_counts[protonum]++;
+      return unit;
     }
 
-    SourceUnit* createSourceUnit(int protonum) const
+    SourceUnit* createSourceUnit(int protonum)
     {
-      return dynamic_cast<SourceUnit*>(m_source_unit_prototypes[protonum]->clone());
+      SourceUnit* srcunit = dynamic_cast<SourceUnit*>(m_source_unit_prototypes[protonum]->clone());
+      char namebuf[256];
+      sprintf(namebuf, "%s_%d", srcunit->getName().c_str(), m_source_unit_counts[protonum]);
+      string newname = namebuf;
+      srcunit->setName(newname);
+      m_source_unit_counts[protonum]++;
+      return srcunit;
     }
 
   protected:
     vector<const Unit*> m_unit_prototypes;
+    vector<int> m_unit_counts;
     vector<const SourceUnit*> m_source_unit_prototypes;
+    vector<int> m_source_unit_counts;
     vector<string> m_prototype_names;
     vector<string> m_source_prototype_names;
   };

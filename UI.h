@@ -54,7 +54,7 @@ namespace syn
     NDPoint<2, int> getPos();
     NDPoint<2, int> getPortPos(int port);
     NDPoint<2, int> getOutputPos();
-    virtual bool showContextMenu(int x, int y);
+    Unit* getUnit();
     int getSelectedParam(int x, int y);
   protected:
     Unit* m_unit;
@@ -64,7 +64,6 @@ namespace syn
     bool m_is_sink;
     vector<IRECT> m_portLabels;
     vector<IRECT> m_ports;
-    IPopupMenu m_menu;
   };
 
   class UnitPanel : public IControl
@@ -77,7 +76,7 @@ namespace syn
       RESIZE,
       CONNECT
     };
-    vector<UnitControl*> m_unitControls;
+    unordered_map<int,UnitControl*> m_unitControls;
     VoiceManager* m_vm;
     UnitFactory* m_unitFactory;
     IPopupMenu m_main_menu;
@@ -88,6 +87,7 @@ namespace syn
     DRAG_ACTION m_currAction;
     int m_lastSelectedUnit, m_lastSelectedParam;
     void updateInstrument();
+    void deleteUnit(int unitctrlid);
   public:
     UnitPanel(IPlugBase* pPlug, IRECT pR, VoiceManager* voiceManager, UnitFactory* unitFactory) :
       m_vm(voiceManager),
