@@ -123,6 +123,9 @@
     <ClInclude Include="UnitFactory.h">
       <Filter>Components\Units</Filter>
     </ClInclude>
+    <ClInclude Include="ITextSlider.h">
+      <Filter>UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="vst2">

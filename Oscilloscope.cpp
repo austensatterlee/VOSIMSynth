@@ -47,17 +47,17 @@ namespace syn
     for (int i = 0; i < srcbuffer.size(); i++)
     {
       m_BufInd++;
-      if (m_BufInd >= m_inputRingBuffer.size()-1)
+      if (m_BufInd >= m_inputRingBuffer.size() - 1)
       {
         m_BufInd = 0;
       }
       m_inputRingBuffer[m_BufInd] = srcbuffer[i];
       m_currSyncDelay++;
 
-      if ( 
-           (!m_config->useAutoSync && m_currSyncDelay>m_config->defaultBufSize) || 
-           (m_currTriggerSrc && m_currSyncDelay > m_currTriggerSrc->getSamplesPerPeriod())
-         )
+      if (
+        (!m_config->useAutoSync && m_currSyncDelay > m_config->defaultBufSize) ||
+        (m_currTriggerSrc && m_currSyncDelay > m_currTriggerSrc->getSamplesPerPeriod())
+        )
       {
         int correctPeriod;
         if (m_config->useAutoSync)
@@ -79,6 +79,7 @@ namespace syn
           m_periodCount = 0;
           m_displayIndex = m_BufInd;
           // Copy input chunk from circular input buffer to a non-circular buffer
+          m_mutex.Enter();
           m_inputBuffer.resize(getPeriod()*m_displayPeriods);
           int inputBufInd = m_displayIndex;
           for (int i = m_inputBuffer.size() - 1; i >= 0; i--)
@@ -87,7 +88,7 @@ namespace syn
             m_inputBuffer[i] = m_inputRingBuffer[inputBufInd];
             inputBufInd--;
           }
-
+          m_mutex.Leave();
           SetDirty();
         }
         m_syncDelayEst += 0.1*((double)m_currSyncDelay - m_syncDelayEst);
@@ -203,20 +204,25 @@ namespace syn
   {
     int bufReadLen = getPeriod()*m_displayPeriods;
     if (bufReadLen >= m_config->outputbuf.size())
-      bufReadLen = m_config->outputbuf.size() - 1;    
+      bufReadLen = m_config->outputbuf.size() - 1;
     return bufReadLen;
   }
 
   bool Oscilloscope::Draw(IGraphics *pGraphics)
   {
     pGraphics->DrawRect(&(IColor)ColorPoint(palette[2] - getUnitv<4>(0)*40.0), &m_InnerRect);
-    if (!m_isActive)
+    IText errortxtstyle(12, &IColor{ 255,255,0,0 }, "Helvetica", IText::kStyleNormal, IText::kAlignNear, 0, IText::kQualityClearType);
+    IText txtstyle(12, &(IColor)(palette[4]), "Helvetica", IText::kStyleNormal, IText::kAlignNear, 0, IText::kQualityClearType, &(IColor)(palette[1]), &(IColor)(palette[3]));
+    IText txtstylecenter(txtstyle); txtstylecenter.mAlign = IText::kAlignCenter;
+    if (!m_isActive || !m_currInput)
     {
       pGraphics->DrawRect(&(IColor)ColorPoint(palette[2] - getUnitv<4>(0)*40.0), &mRECT);
+      if (!m_currInput)
+      {
+        pGraphics->DrawIText(&errortxtstyle, "No input!", &m_InnerRect.GetPadded(-10));
+      }
       return false;
     }
-    IText  txtstyle(12, &(IColor)(palette[4]), "Helvetica", IText::kStyleNormal, IText::kAlignNear, 0, IText::kQualityClearType, &(IColor)(palette[1]), &(IColor)(palette[3]));
-    IText txtstylecenter(txtstyle); txtstylecenter.mAlign = IText::kAlignCenter;
     ColorPoint bgcolor = palette[1] - getUnitv<4>(0)*127.0;
     pGraphics->FillIRect(&(IColor)(bgcolor), &m_InnerRect);
     IColor cval = (IColor)ColorPoint(getOnes<4>()*255.0 - bgcolor);
@@ -244,7 +250,9 @@ namespace syn
 
 
     // Execute transform using non-circular input buffer
+    m_mutex.Enter();
     m_config->doTransform(mPlug, m_inputBuffer);
+    m_mutex.Leave();
     // Adjust axis boundaries
     if (m_config->argmin > 0 && m_config->argmax > 0)
     {

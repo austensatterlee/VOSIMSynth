@@ -312,6 +312,7 @@
     <ClInclude Include="Circuit.h" />
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="Instrument.h" />
+    <ClInclude Include="ITextSlider.h" />
     <ClInclude Include="RandomOscillator.h" />
     <ClInclude Include="SourceUnit.h" />
     <ClInclude Include="Unit.h" />

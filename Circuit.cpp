@@ -14,10 +14,11 @@ namespace syn
   Circuit::~Circuit()
   {
     // Delete units
-    for (int i = 0; i < m_units.size(); i++)
+    for (std::pair<int, Unit*> unitpair : m_units)
     {
-      delete m_units[i];
+      delete unitpair.second;
     }
+    m_units.clear();
   }
 
   int Circuit::addUnit(Unit* unit, int uid)

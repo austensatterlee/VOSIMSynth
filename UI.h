@@ -6,6 +6,7 @@
 #include "NDPoint.h"
 #include "VoiceManager.h"
 #include "UnitFactory.h"
+#include "ITextSlider.h"
 #include <vector>
 #define SCREEN_PAD_L 25
 #define X_PAD 10
@@ -46,7 +47,7 @@ namespace syn
   class UnitControl : public IControl
   {
   public:
-    UnitControl(IPlugBase* pPlug, Unit* unit, int x, int y, int size = 10);
+    UnitControl(IPlugBase* pPlug, VoiceManager* vm, Unit* unit, int x, int y, int size = 10);
     virtual ~UnitControl();
     virtual bool Draw(IGraphics* pGraphics) override;
     void move(int newx, int newy);
@@ -55,14 +56,16 @@ namespace syn
     NDPoint<2, int> getPortPos(int port);
     NDPoint<2, int> getOutputPos();
     Unit* getUnit();
+    int getSelectedPort(int x, int y);
     int getSelectedParam(int x, int y);
+    void modParam(int paramid, double dX);
   protected:
     Unit* m_unit;
     int m_size;
     int m_nParams;
     int m_x, m_y;
     bool m_is_sink;
-    vector<IRECT> m_portLabels;
+    vector<ITextSlider> m_portLabels;
     vector<IRECT> m_ports;
   };
 
@@ -74,6 +77,7 @@ namespace syn
       NONE = 0,
       MOVE,
       RESIZE,
+      MOD_PARAM,
       CONNECT
     };
     unordered_map<int,UnitControl*> m_unitControls;
@@ -85,7 +89,8 @@ namespace syn
     int m_isMouseDown;
     NDPoint<2, int> m_lastMousePos, m_lastClickPos;
     DRAG_ACTION m_currAction;
-    int m_lastSelectedUnit, m_lastSelectedParam;
+    int m_lastSelectedUnit, m_lastSelectedPort;
+    int m_lastSelectedParam;
     void updateInstrument();
     void deleteUnit(int unitctrlid);
   public:

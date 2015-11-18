@@ -28,6 +28,10 @@ namespace syn
     u->m_output = m_output;
     u->m_parammap = m_parammap;
     u->m_bufind = m_bufind;
+    for (int i = 0; i < m_params.size(); i++)
+    {
+      u->m_params[i]->mod(*m_params[i],SET);
+    }
     return u;
   }
 

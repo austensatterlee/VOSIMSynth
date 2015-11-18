@@ -31,6 +31,8 @@ public:
   void ProcessMidiMsg(IMidiMsg* pMsg);
   void SetInstrParameter(int unitid, int paramid, double value);
   double GetInstrParameter(int unitid, int paramid);
+  int m_oscilloscope_input_unit;
+  int m_oscilloscope_trigger_unit;
 private:
   MIDIReceiver m_MIDIReceiver;
   VoiceManager m_voiceManager;

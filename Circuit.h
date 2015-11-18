@@ -53,6 +53,7 @@ namespace syn
     int addUnit(Unit* unit, int uid);
     virtual bool removeUnit(int uid);
     void setSinkId(int id);
+    int getSinkId() const { return m_sinkId; }
     void setSinkName(string name);
     /*!
      * \brief Specify a connection from one unit's output to another unit's parameter.

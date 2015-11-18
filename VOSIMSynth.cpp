@@ -33,7 +33,9 @@ enum ELayout
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   :
-  IPLUG_CTOR(256, kNumPrograms, instanceInfo)
+  IPLUG_CTOR(256, kNumPrograms, instanceInfo),
+  m_oscilloscope_input_unit(-1),
+  m_oscilloscope_trigger_unit(-1)
 {
   TRACE;
   _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -87,7 +89,7 @@ void VOSIMSynth::makeGraphics()
   pGraphics->AttachControl(m_EnvEditor3);
   pGraphics->AttachControl(m_EnvEditor4);*/
 
-  UnitPanel* unitpanel = new UnitPanel(this, { 5,5,450,550 }, &m_voiceManager, m_unitfactory);
+  UnitPanel* unitpanel = new UnitPanel(this, { 5,5,795,550 }, &m_voiceManager, m_unitfactory);
  
   pGraphics->AttachControl(unitpanel);
 
@@ -130,8 +132,8 @@ void VOSIMSynth::makeInstrument()
   m_unitfactory->addSourceUnitPrototype(new LFOOscillator("Osc.LFO"));
 
   m_voiceManager.setMaxVoices(4, m_instr);
+  
   m_voiceManager.m_onDyingVoice.Connect(this, &VOSIMSynth::OnDyingVoice);
-
   m_MIDIReceiver.noteOn.Connect(this, &VOSIMSynth::OnNoteOn);
   m_MIDIReceiver.noteOff.Connect(&m_voiceManager, &VoiceManager::noteOff);
 }
@@ -143,20 +145,20 @@ void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel)
 {
   m_voiceManager.noteOn(pitch, vel);
   Instrument* vnew = m_voiceManager.getNewestVoice();
-  if (vnew)
+  if (vnew && m_oscilloscope_input_unit!=-1 && m_oscilloscope_trigger_unit!=-1)
   {
-    /*m_Oscilloscope->connectInput(vnew->getUnit(O_U));
-    m_Oscilloscope->connectTrigger(vnew->getSourceUnit(O_TU));*/
+    m_Oscilloscope->connectInput(vnew->getUnit(m_oscilloscope_input_unit));
+    m_Oscilloscope->connectTrigger(vnew->getSourceUnit(m_oscilloscope_trigger_unit));
   }
 }
 
 void VOSIMSynth::OnDyingVoice(Instrument* dying)
 {
   Instrument* vnew = m_voiceManager.getNewestVoice();
-  if (vnew)
+  if (vnew && m_oscilloscope_input_unit != -1 && m_oscilloscope_trigger_unit != -1)
   {
-    /*m_Oscilloscope->connectInput(vnew->getUnit(O_U));
-    m_Oscilloscope->connectTrigger(vnew->getSourceUnit(O_TU));*/
+    m_Oscilloscope->connectInput(vnew->getUnit(m_oscilloscope_input_unit));
+    m_Oscilloscope->connectTrigger(vnew->getSourceUnit(m_oscilloscope_trigger_unit));
   }
 }
 
