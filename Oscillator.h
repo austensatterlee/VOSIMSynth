@@ -88,6 +88,7 @@ namespace syn
     LFOOscillator(string name) : BasicOscillator(name)
     {
       m_pitch.mod(-12, SET); 
+      m_pitch.setIsHidden(false);
       m_tune.setMax(24);
       m_tune.setMin(-24);
     }

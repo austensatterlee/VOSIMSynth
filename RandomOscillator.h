@@ -9,14 +9,14 @@ namespace syn
 {  
   static int NUMRANDOMOSCILLATORS = 0;
   class RandomOscillator :
-    public Oscillator
+    public LFOOscillator
   {
   protected:
     random_device m_rd;
     mt19937 m_gen;
   public:
     RandomOscillator(string name) :
-      Oscillator(name)
+      LFOOscillator(name)
     {
       unsigned int seed = m_rd();
       m_gen = mt19937(seed);

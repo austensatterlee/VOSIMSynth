@@ -8,6 +8,7 @@
 #include "VosimOscillator.h"
 #include "IControl.h"
 #include "UI.h"
+#include "CircuitPanel.h"
 #include "Filter.h"
 #include <cmath>
 #include <ctime>
@@ -80,17 +81,16 @@ void VOSIMSynth::makeGraphics()
   
   m_Oscilloscope = new Oscilloscope(this, IRECT(10, 600, 790, 790));
   pGraphics->AttachControl(m_Oscilloscope);
- /* EnvelopeEditor* m_EnvEditor1 = new EnvelopeEditor(this, &m_voiceManager, "amp_env0", IRECT(500, 10, 800 - 10, 150), 10, -1.0, 1.0, 1);
-  EnvelopeEditor* m_EnvEditor2 = new EnvelopeEditor(this, &m_voiceManager, "amp_env1", IRECT(500, 160, 800 - 10, 300), 10, -1.0, 1.0, 1);
-  EnvelopeEditor* m_EnvEditor3 = new EnvelopeEditor(this, &m_voiceManager, "amp_env2", IRECT(500, 310, 800 - 10, 450), 10, -1.0, 1.0, 1);
-  EnvelopeEditor* m_EnvEditor4 = new EnvelopeEditor(this, &m_voiceManager, "lfo_amp_env0", IRECT(500, 460, 800 - 10, 600), 10, -1, 1, 1);
-  pGraphics->AttachControl(m_EnvEditor1);
-  pGraphics->AttachControl(m_EnvEditor2);
-  pGraphics->AttachControl(m_EnvEditor3);
-  pGraphics->AttachControl(m_EnvEditor4);*/
+  //EnvelopeEditor* m_EnvEditor1 = new EnvelopeEditor(this, &m_voiceManager, "amp_env0", IRECT(500, 10, 800 - 10, 150), 10, -1.0, 1.0, 1);
+  //EnvelopeEditor* m_EnvEditor2 = new EnvelopeEditor(this, &m_voiceManager, "amp_env1", IRECT(500, 160, 800 - 10, 300), 10, -1.0, 1.0, 1);
+  //EnvelopeEditor* m_EnvEditor3 = new EnvelopeEditor(this, &m_voiceManager, "amp_env2", IRECT(500, 310, 800 - 10, 450), 10, -1.0, 1.0, 1);
+  //EnvelopeEditor* m_EnvEditor4 = new EnvelopeEditor(this, &m_voiceManager, "lfo_amp_env0", IRECT(500, 460, 800 - 10, 600), 10, -1, 1, 1);
+  //pGraphics->AttachControl(m_EnvEditor1);
+  //pGraphics->AttachControl(m_EnvEditor2);
+  //pGraphics->AttachControl(m_EnvEditor3);
+  //pGraphics->AttachControl(m_EnvEditor4);
 
-  UnitPanel* unitpanel = new UnitPanel(this, { 5,5,795,550 }, &m_voiceManager, m_unitfactory);
- 
+  CircuitPanel* unitpanel = new CircuitPanel(this, { 5,5,795,550 }, &m_voiceManager, m_unitfactory);
   pGraphics->AttachControl(unitpanel);
 
   int j = 0;
@@ -128,8 +128,11 @@ void VOSIMSynth::makeInstrument()
   m_unitfactory->addSourceUnitPrototype(new Envelope("Envelope"));
   m_unitfactory->addUnitPrototype(new AccumulatingUnit("Accumulator"));
   m_unitfactory->addSourceUnitPrototype(new VosimOscillator("Osc.VOSIM"));
+  m_unitfactory->addSourceUnitPrototype(new VosimChoir("Osc.VOSIM.Choir"));
+  m_unitfactory->addSourceUnitPrototype(new NormalRandomOscillator("Osc.Random.Normal"));
   m_unitfactory->addSourceUnitPrototype(new BasicOscillator("Osc.Basic"));
   m_unitfactory->addSourceUnitPrototype(new LFOOscillator("Osc.LFO"));
+  
 
   m_voiceManager.setMaxVoices(4, m_instr);
   

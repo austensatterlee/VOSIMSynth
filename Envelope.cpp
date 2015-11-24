@@ -30,7 +30,7 @@ namespace syn
       getParam(period).mod(0.1,SET);
       paramname.str(""); paramname.clear();
       paramname << "target" << i;
-      target = addParam(paramname.str(), DOUBLE_TYPE, -1.0, 1.0).getId();
+      target = addParam(paramname.str(), DOUBLE_TYPE, 0, 1.0).getId();
       if (i == numSegments - 1)
       {
         getParam(target).mod(0.0, SET);

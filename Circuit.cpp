@@ -31,6 +31,7 @@ namespace syn
       m_units[uid] = unit;
       unit->m_parent = this;
       unit->resizeOutputBuffer(m_bufsize);
+      unit->setFs(m_Fs);
       m_isGraphDirty = true;
       return uid;
     }
@@ -219,6 +220,7 @@ namespace syn
 
   void Circuit::setFs(double fs)
   {
+    m_Fs = fs;
     for (std::pair<int,Unit*> unit : m_units)
     {
       unit.second->setFs(fs);

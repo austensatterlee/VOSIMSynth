@@ -310,6 +310,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\WDL\IPlug\IPlugVST.h" />
     <ClInclude Include="Circuit.h" />
+    <ClInclude Include="CircuitPanel.h" />
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="Instrument.h" />
     <ClInclude Include="ITextSlider.h" />
@@ -337,6 +338,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\WDL\IPlug\IPlugVST.cpp" />
     <ClCompile Include="Circuit.cpp" />
+    <ClCompile Include="CircuitPanel.cpp" />
     <ClCompile Include="Instrument.cpp" />
     <ClCompile Include="OscilloscopeTransforms.cpp" />
     <ClCompile Include="Unit.cpp" />
@@ -345,7 +347,6 @@
     <ClCompile Include="Filter.cpp" />
     <ClCompile Include="Oscilloscope.cpp" />
     <ClCompile Include="tables.cpp" />
-    <ClCompile Include="UI.cpp" />
     <ClCompile Include="UnitParameter.cpp" />
     <ClCompile Include="VoiceManager.cpp" />
     <ClCompile Include="VosimOscillator.cpp" />

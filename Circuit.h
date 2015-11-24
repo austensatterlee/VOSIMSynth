@@ -45,7 +45,8 @@ namespace syn
     Circuit() :
       m_nextUid(0),
       m_bufsize(1),
-      m_sinkId(-1)
+      m_sinkId(-1),
+      m_Fs(48e3)
     {}
     virtual ~Circuit();
     Circuit* clone();
@@ -97,6 +98,7 @@ namespace syn
     bool m_isGraphDirty = true; //!< indicates whether or not the graph's linearization should be recomputed
     int m_sinkId;
     size_t m_bufsize;
+    double m_Fs;
   private:
     void refreshProcQueue();
     virtual Circuit* cloneImpl() const { return new Circuit(); };

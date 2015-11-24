@@ -113,6 +113,7 @@ namespace syn
     double getMax() const { return m_max; }
     void setMin(double min) { m_min = min; }
     void setMax(double max) { m_max = max; }
+    void setIsHidden(bool ishidden){ m_isHidden = ishidden; }
     const IControl* getController() const { return m_controller; }
     bool hasController() const { return m_controller != nullptr; }
     void setTransformFunc(ParamTransformFunc func) { m_transform_func = func; }

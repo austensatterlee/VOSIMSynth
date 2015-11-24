@@ -5,9 +5,6 @@
       <Filter>vst2</Filter>
     </ClCompile>
     <ClCompile Include="VOSIMSynth.cpp" />
-    <ClCompile Include="UI.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="Oscilloscope.cpp">
       <Filter>UI</Filter>
     </ClCompile>
@@ -52,6 +49,9 @@
     </ClCompile>
     <ClCompile Include="Unit.cpp">
       <Filter>Components\Units</Filter>
+    </ClCompile>
+    <ClCompile Include="CircuitPanel.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -124,6 +124,9 @@
       <Filter>Components\Units</Filter>
     </ClInclude>
     <ClInclude Include="ITextSlider.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="CircuitPanel.h">
       <Filter>UI</Filter>
     </ClInclude>
   </ItemGroup>

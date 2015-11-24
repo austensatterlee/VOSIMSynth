@@ -46,7 +46,7 @@ namespace syn
   class VosimChoir : public SourceUnit
   {
   public:
-    VosimChoir(string name, size_t size) :
+    VosimChoir(string name, size_t size=4) :
       SourceUnit(name),
       m_size(size),
       m_gain(addParam("gain", DOUBLE_TYPE, 0, 1)),
@@ -56,7 +56,7 @@ namespace syn
       m_harmonicdecay(addParam("harmonicdecay", DOUBLE_TYPE, 0, 0.9)),
       m_tune(addParam("tune", DOUBLE_TYPE, -12, 12)),
       m_pitchdrift(addParam("pulse_drift", DOUBLE_TYPE, 0, 0.5)),
-      m_driftfreq(addParam("drift_freq", DOUBLE_TYPE, -64, 0))
+      m_driftfreq(addParam("drift_freq", DOUBLE_TYPE, -32, 32))
     {
       assert(size>0);
       m_choir = (VosimOscillator**)malloc(m_size*sizeof(VosimOscillator*));
