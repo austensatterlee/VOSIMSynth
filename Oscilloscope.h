@@ -8,7 +8,6 @@
 #include <deque>
 #include <array>
 
-
 using std::vector;
 using std::deque;
 using std::array;
@@ -16,7 +15,6 @@ using Gallant::Signal1;
 
 namespace syn
 {
- 
   struct OscilloscopeConfig;
   typedef void (TransformFunc)(OscilloscopeConfig& oscconfig, IPlugBase* pPlug, const vector<double>& process);
   struct OscilloscopeConfig
@@ -27,15 +25,15 @@ namespace syn
     const int defaultBufSize;
     string xunits;
     string yunits;
-    int argmin,argmax;
+    int argmin, argmax;
     vector<double> xaxisticks;
     vector<string> xaxislbls;
     vector<double> yaxisticks;
-    vector<string> yaxislbls;    
+    vector<string> yaxislbls;
     vector<double> outputbuf;
     void doTransform(IPlugBase* pPlug, const vector<double>& process)
     {
-      transform(*this,pPlug,process);
+      transform(*this, pPlug, process);
     }
   };
 
@@ -79,7 +77,7 @@ namespace syn
 
     bool Draw(IGraphics *pGraphics);
     bool IsDirty() { return m_isActive && mDirty; }
-    int getPeriod() { return m_BufSize/m_displayPeriods; }
+    int getPeriod() { return m_BufSize / m_displayPeriods; }
     void OnMouseWheel(int x, int y, IMouseMod* pMod, int d);
     void connectInput(Unit& comp);
     void connectTrigger(SourceUnit& comp);
@@ -91,11 +89,11 @@ namespace syn
     void disconnectTrigger(SourceUnit& srccomp);
     void process();
     void setPeriod(int nsamp) {
-      while (m_displayPeriods>1 && m_displayPeriods*nsamp > 16384)
+      while (m_displayPeriods > 1 && m_displayPeriods*nsamp > 16384)
       {
-        m_displayPeriods-=1;
+        m_displayPeriods -= 1;
       }
-      setBufSize(m_displayPeriods*nsamp); 
+      setBufSize(m_displayPeriods*nsamp);
     }
     void setConfig(OscilloscopeConfig* config);
   };
@@ -106,9 +104,9 @@ namespace syn
   TransformFunc magnitudeTransform;
   TransformFunc inverseTransform;
   TransformFunc passthruTransform;
-  static array<OscilloscopeConfig,2> OSCILLOSCOPE_CONFIGS = {{
+  static array<OscilloscopeConfig, 2> OSCILLOSCOPE_CONFIGS = { {
     { "Spectral Magnitude", magnitudeTransform, false, 256, "Hz", "dB" },
     { "Time Domain", passthruTransform, true, 1, "seconds", "" }
-  }};
+  } };
 }
 #endif

@@ -139,7 +139,7 @@ namespace syn
 
   void Oscilloscope::connectInput(Unit& comp)
   {
-    // connect 
+    // connect
     disconnectInput();
     m_currInput = &comp;
     m_currSyncDelay = 0;
@@ -157,7 +157,6 @@ namespace syn
 
   void Oscilloscope::OnMouseUp(int x, int y, IMouseMod* pMod)
   {
-
   }
 
   void Oscilloscope::OnMouseDown(int x, int y, IMouseMod* pMod)
@@ -247,7 +246,6 @@ namespace syn
 
     if (m_inputRingBuffer.empty())
       return false;
-
 
     // Execute transform using non-circular input buffer
     m_mutex.Enter();

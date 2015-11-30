@@ -2,8 +2,6 @@
 
 namespace syn
 {
-
-
   /******************************
   * Oscillator methods
   *
@@ -28,7 +26,7 @@ namespace syn
       m_Step = pitchToFreq(m_pitch + m_tune) / m_Fs;
     }
   }
-  
+
   /**
    * \brief
    * \todo Maybe let Unit inheritors implement a function that gets called only when some parameters have changed
@@ -75,5 +73,4 @@ namespace syn
     }
     m_output[bufind] = m_velocity*m_gain*output;
   }
-
 }

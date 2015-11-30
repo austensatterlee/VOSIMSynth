@@ -29,7 +29,7 @@ STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_VIS
 CAPTION "Preferences"
 FONT 8, "MS Sans Serif"
 {
-    DEFPUSHBUTTON   "OK", IDOK, 110, 285, 50, 14
+  DEFPUSHBUTTON   "OK", IDOK, 110, 285, 50, 14
     PUSHBUTTON      "Apply", IDAPPLY, 54, 285, 50, 14
     PUSHBUTTON      "Cancel", IDCANCEL, 166, 285, 50, 14
     COMBOBOX        IDC_COMBO_AUDIO_DRIVER, 20, 35, 100, 100, CBS_DROPDOWNLIST | CBS_HASSTRINGS
@@ -66,18 +66,18 @@ FONT 8, "MS Sans Serif"
     AUTOCHECKBOX    "Mono Input", IDC_CB_MONO_INPUT, 135, 127, 56, 8
 }
 
-IDR_MENU1 MENU DISCARDABLE 
+IDR_MENU1 MENU DISCARDABLE
 BEGIN
-    POPUP "&File"
-    BEGIN
+POPUP "&File"
+BEGIN
 //      MENUITEM SEPARATOR
-        MENUITEM "Preferences...",              ID_PREFERENCES
-        MENUITEM "&Quit",                       ID_QUIT
-    END
-    POPUP "&Help"
-    BEGIN
-        MENUITEM "&About",                      ID_ABOUT
-    END
+MENUITEM "Preferences...", ID_PREFERENCES
+MENUITEM "&Quit", ID_QUIT
+END
+POPUP "&Help"
+BEGIN
+MENUITEM "&About", ID_ABOUT
+END
 END
 
 #endif // SA_API

@@ -9,8 +9,7 @@
 #define INVLERP(A,B,X) (((X)-(A))/((B)-(A)))
 
 namespace syn
-{ 
-
+{
   inline int gcd(int a, int b)
   {
     int c;

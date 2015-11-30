@@ -215,7 +215,7 @@
       <ShowIncludes>false</ShowIncludes>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <FloatingPointExceptions>false</FloatingPointExceptions>
-      <AdditionalIncludeDirectories>E:\clibs\fftw-3.3.4-dll32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -223,7 +223,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Windows</SubSystem>
       <AdditionalDependencies>libfftw3-3.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>E:\clibs\fftw-3.3.4-dll32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <Profile>true</Profile>
     </Link>
     <CustomBuildStep>
@@ -312,6 +312,7 @@
     <ClInclude Include="Circuit.h" />
     <ClInclude Include="CircuitPanel.h" />
     <ClInclude Include="Delegate.h" />
+    <ClInclude Include="fftw3.h" />
     <ClInclude Include="Instrument.h" />
     <ClInclude Include="ITextSlider.h" />
     <ClInclude Include="RandomOscillator.h" />
@@ -359,7 +360,7 @@
     <ResourceCompile Include="VOSIMSynth.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\..\..\..\..\clibs\fftw-3.3.4-dll32\libfftw3-3.lib" />
+    <Library Include="libfftw3-3.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

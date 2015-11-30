@@ -1,4 +1,5 @@
 from numpy import *
+from scipy import signal as ss
 import re
 import os
 
@@ -65,36 +66,42 @@ def MinimumPhase(n,realCepstrum):
     minimumPhase = realTime
     return minimumPhase
 
-def GenerateBLSaw(n):
+def GenerateBLSaw(intervals=4,resolution=2700,fs=48000,fc=15000,beta=8.3,apgain=0.5,apbeta=0.5):
     """ Generate band limited sawtooth wave """
-    # Alt method
-    # k=arange(n)
-    # fs = float64(n)
-    # blbuf = zeros(n)
+    pts = intervals*resolution+1
+    blit = GenerateBlit(intervals,resolution,fs,fc,beta,apgain,apbeta)
+    blsawseg = blit.cumsum()
+    blsawseg = 2*blsawseg/blsawseg[-1]
+    blsawseg[pts/2:] -= 2
+    blsawseg /= blsawseg.max()
+    naivesaw = ss.sawtooth(arange(pts)*2*pi/pts)
+    blsawseg_up = zeros_like(naivesaw)
+    
+    return blsaw
 
-    # for harmonic in xrange(1,int(fs/2)):
-        # blbuf+=(1./harmonic)*sin(2*pi*harmonic*(k/fs))
-    # return -2/pi*blbuf
-    k = arange(n)
-    T = 1./float64(n)
-    blbuf = zeros(n)
-    h = 1
-    while (h*T<0.5):
-        blbuf += 1./h*cos((T*h)*pi)*sin((T*h)*k*2*pi)
-        h+=1
-    return blbuf
+def GenerateBlit(intervals=10,resolution=100,fs=48000,fc=18300,beta=9.,apgain=0.9,apbeta=0.7):
+    """
+    Generate a bandlimited dirac delta impulse.
 
-def GenerateBlit(n):
-    k=arange(n)
-    T = 1./float64(n)
-    blbuf = zeros(n)
-    h = 1
-    G = 1.
-    while(h*T<0.5):
-        blbuf+=G*sin(2*pi*k*T*h)
-        h+=1
-        G*=0.9
-    return blbuf
+    intervals - number of samples (sampled at fs) to span
+    resolution - number of points per sample; e.g. oversampling amount
+    fs - sampling frequency
+    fc - cutoff
+    beta - first window param
+    apgain - apodizing window gain (subtracted from the )
+    """
+    intervals=2*(intervals/2)+1
+    pts = resolution*intervals # impulse length in points
+    x1 = arange(pts)
+    x2 = intervals*2*(x1-(pts)/2+1e-5)/(pts)
+    x3 = pi*fc*1.0/fs*x2
+    h = array([sin(x)/x if x!=0 else 1.0 for x in x3]) # brickwall filter impulse response
+    w = ss.kaiser(pts,beta) # window
+    apw = 1-apgain*ss.kaiser(pts,apbeta) # apodization window
+    blit = apw*(w*h) # blit
+
+    blit = blit/blit.max() # normalize
+    return blit
 
 def GenerateMinBLEP(nZeroCrossings, nOverSampling):
     n = (nZeroCrossings * 2 * nOverSampling) + 1
@@ -136,12 +143,6 @@ def GenerateSine(n):
     T = 1./n
     c = sin(k*T*2*pi)
     return c
-
-def SincKernel(M,fc):
-    N = arange(M+1)
-    window = 0.42-0.5*cos(2*pi*N/M)+0.8*cos(4*pi*N/M)
-    wsinc=array([sin(2*pi*fc*(i-M/2))/(i-M/2) if i!=M/2 else 2*pi*fc for i in N])
-    return wsinc*window
 
 def PitchTable(n,notestart=0,notefinish=128):
     N = linspace(notestart,notefinish,n)
@@ -236,7 +237,36 @@ if __name__=="__main__":
 """Tools"""
 def magspec(signal,fs=None):
     from matplotlib import pyplot as plt
-    k = arange(len(signal)/2)
-    fs = fs or 1./len(signal)
-    freqs = k*fs
-    plt.plot( freqs, 20*log10(abs(fft.fft(signal))[k] ))
+    k = arange(1,len(signal)/2)
+    fs = fs or len(signal)
+    freqs = k*1./len(signal)*fs
+    signalfft = fft.fft(signal)[1:len(signal)/2]
+    plt.semilogx( freqs, 20*log10(abs(signalfft)) )
+
+def maggain(signal1,signal2,fs=None):
+    from matplotlib import pyplot as plt
+    assert len(signal1)==len(signal2)
+    k = arange(1,len(signal1)/2)
+    fs = fs or len(signal1)
+    freqs = k*1./len(signal1)*fs
+    signal1fft = fft.fft(signal1)[1:len(signal1)/2]
+    signal2fft = fft.fft(signal2)[1:len(signal1)/2]
+    plt.semilogx( freqs, 20*(log10(abs(signal1fft))-log10(abs(signal2fft))) )
+
+def slidingwindow(window,signal,window_res,transpose_ratio):
+    intervals = int(len(window)/float(window_res))
+    norig = len(signal)
+    phase_step = transpose_ratio/float(norig)
+    nfinal = int(1./phase_step)
+    output = zeros(nfinal)
+    sphase = 0.0
+    for k in xrange(nfinal):
+        index = int(sphase*norig)
+        offset = window_res-1+(int(sphase)-sphase)*window_res
+        print offset
+        for i in xrange(intervals):
+            output[k] += window[mod(offset+window_res*i,len(window))]*signal[mod(index+i-intervals/2+1,norig)]
+        sphase+=phase_step
+        if sphase>=1:
+            sphase-=1
+    return output

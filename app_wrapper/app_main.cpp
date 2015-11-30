@@ -1,9 +1,9 @@
 #include "app_main.h"
 
 #ifdef OS_WIN
-  #include <windows.h>
-  #include <shlobj.h>
-  #include <sys/stat.h>
+#include <windows.h>
+#include <shlobj.h>
+#include <sys/stat.h>
 #endif
 
 HWND gHWND;
@@ -79,9 +79,9 @@ int GetAudioDeviceID(char* deviceNameToTest)
 {
   TRACE;
 
-  for(int i = 0; i < gAudioIDDevNames.size(); i++)
+  for (int i = 0; i < gAudioIDDevNames.size(); i++)
   {
-    if(!strcmp(deviceNameToTest, gAudioIDDevNames.at(i).c_str() ))
+    if (!strcmp(deviceNameToTest, gAudioIDDevNames.at(i).c_str()))
       return i;
   }
 
@@ -92,16 +92,16 @@ unsigned int GetMIDIInPortNumber(const char* nameToTest)
 {
   int start = 1;
 
-  if(!strcmp(nameToTest, "off")) return 0;
+  if (!strcmp(nameToTest, "off")) return 0;
 
-  #ifdef OS_OSX
+#ifdef OS_OSX
   start = 2;
-  if(!strcmp(nameToTest, "virtual input")) return 1;
-  #endif
+  if (!strcmp(nameToTest, "virtual input")) return 1;
+#endif
 
   for (int i = 0; i < gMidiIn->getPortCount(); i++)
   {
-    if(!strcmp(nameToTest, gMidiIn->getPortName(i).c_str()))
+    if (!strcmp(nameToTest, gMidiIn->getPortName(i).c_str()))
       return (i + start);
   }
 
@@ -112,16 +112,16 @@ unsigned int GetMIDIOutPortNumber(const char* nameToTest)
 {
   int start = 1;
 
-  if(!strcmp(nameToTest, "off")) return 0;
+  if (!strcmp(nameToTest, "off")) return 0;
 
-  #ifdef OS_OSX
+#ifdef OS_OSX
   start = 2;
-  if(!strcmp(nameToTest, "virtual output")) return 1;
-  #endif
+  if (!strcmp(nameToTest, "virtual output")) return 1;
+#endif
 
   for (int i = 0; i < gMidiOut->getPortCount(); i++)
   {
-    if(!strcmp(nameToTest, gMidiOut->getPortName(i).c_str()))
+    if (!strcmp(nameToTest, gMidiOut->getPortName(i).c_str()))
       return (i + start);
   }
 
@@ -141,31 +141,31 @@ void ProbeAudioIO()
 
   unsigned int nDevices = gDAC->getDeviceCount();
 
-  for (int i=0; i<nDevices; i++)
+  for (int i = 0; i < nDevices; i++)
   {
     info = gDAC->getDeviceInfo(i);
     std::string deviceName = info.name;
 
-    #ifdef OS_OSX
+#ifdef OS_OSX
     size_t colonIdx = deviceName.rfind(": ");
 
-    if(colonIdx != std::string::npos && deviceName.length() >= 2)
+    if (colonIdx != std::string::npos && deviceName.length() >= 2)
       deviceName = deviceName.substr(colonIdx + 2, deviceName.length() - colonIdx - 2);
 
-    #endif
+#endif
 
     gAudioIDDevNames.push_back(deviceName);
 
-    if ( info.probed == false )
+    if (info.probed == false)
       std::cout << deviceName << ": Probe Status = Unsuccessful\n";
-    else if ( !strcmp("Generic Low Latency ASIO Driver", deviceName.c_str() ))
+    else if (!strcmp("Generic Low Latency ASIO Driver", deviceName.c_str()))
       std::cout << deviceName << ": Probe Status = Unsuccessful\n";
     else
     {
-      if(info.inputChannels > 0)
+      if (info.inputChannels > 0)
         gAudioInputDevs.push_back(i);
 
-      if(info.outputChannels > 0)
+      if (info.outputChannels > 0)
         gAudioOutputDevs.push_back(i);
     }
   }
@@ -173,7 +173,7 @@ void ProbeAudioIO()
 
 void ProbeMidiIO()
 {
-  if ( !gMidiIn || !gMidiOut )
+  if (!gMidiIn || !gMidiOut)
     return;
   else
   {
@@ -181,11 +181,11 @@ void ProbeMidiIO()
 
     gMIDIInputDevNames.push_back("off");
 
-    #ifndef OS_WIN
+#ifndef OS_WIN
     gMIDIInputDevNames.push_back("virtual input");
-    #endif
+#endif
 
-    for (int i=0; i<nInputPorts; i++ )
+    for (int i = 0; i < nInputPorts; i++)
     {
       gMIDIInputDevNames.push_back(gMidiIn->getPortName(i));
     }
@@ -198,7 +198,7 @@ void ProbeMidiIO()
     gMIDIOutputDevNames.push_back("virtual output");
 #endif
 
-    for (int i=0; i<nOutputPorts; i++ )
+    for (int i = 0; i < nOutputPorts; i++)
     {
       gMIDIOutputDevNames.push_back(gMidiOut->getPortName(i));
       //This means the virtual output port wont be added as an input
@@ -233,26 +233,26 @@ bool MIDISettingsInStateAreEqual(AppState* os, AppState* ns)
   return true;
 }
 
-void MIDICallback( double deltatime, std::vector< unsigned char > *message, void *userData )
+void MIDICallback(double deltatime, std::vector< unsigned char > *message, void *userData)
 {
-  if ( message->size() )
+  if (message->size())
   {
     IMidiMsg *myMsg;
 
     switch (message->size())
     {
-      case 1:
-        myMsg = new IMidiMsg(0, message->at(0), 0, 0);
-        break;
-      case 2:
-        myMsg = new IMidiMsg(0, message->at(0), message->at(1), 0);
-        break;
-      case 3:
-        myMsg = new IMidiMsg(0, message->at(0), message->at(1), message->at(2));
-        break;
-      default:
-        DBGMSG("NOT EXPECTING %d midi callback msg len\n", (int) message->size());
-        break;
+    case 1:
+      myMsg = new IMidiMsg(0, message->at(0), 0, 0);
+      break;
+    case 2:
+      myMsg = new IMidiMsg(0, message->at(0), message->at(1), 0);
+      break;
+    case 3:
+      myMsg = new IMidiMsg(0, message->at(0), message->at(1), message->at(2));
+      break;
+    default:
+      DBGMSG("NOT EXPECTING %d midi callback msg len\n", (int)message->size());
+      break;
     }
 
     IMidiMsg msg(*myMsg);
@@ -262,7 +262,7 @@ void MIDICallback( double deltatime, std::vector< unsigned char > *message, void
     // filter midi messages based on channel, if gStatus.mMidiInChan != all (0)
     if (gState->mMidiInChan)
     {
-      if (gState->mMidiInChan == msg.Channel() + 1 )
+      if (gState->mMidiInChan == msg.Channel() + 1)
         gPluginInstance->ProcessMidiMsg(&msg);
     }
     else
@@ -273,13 +273,13 @@ void MIDICallback( double deltatime, std::vector< unsigned char > *message, void
 }
 
 int AudioCallback(void *outputBuffer,
-                  void *inputBuffer,
-                  unsigned int nFrames,
-                  double streamTime,
-                  RtAudioStreamStatus status,
-                  void *userData )
+  void *inputBuffer,
+  unsigned int nFrames,
+  double streamTime,
+  RtAudioStreamStatus status,
+  void *userData)
 {
-  if ( status )
+  if (status)
     std::cout << "Stream underflow detected!" << std::endl;
 
   double* inputBufferD = (double*)inputBuffer;
@@ -287,19 +287,19 @@ int AudioCallback(void *outputBuffer,
 
   int inRightOffset = 0;
 
-  if(!gState->mAudioInIsMono)
+  if (!gState->mAudioInIsMono)
     inRightOffset = nFrames;
 
   if (gVecElapsed > N_VECTOR_WAIT) // wait N_VECTOR_WAIT * iovs before processing audio, to avoid clicks
   {
-    for (int i=0; i<nFrames; i++)
+    for (int i = 0; i < nFrames; i++)
     {
       gBufIndex %= gSigVS;
 
       if (gBufIndex == 0)
       {
-        double* inputs[2] = {inputBufferD + i, inputBufferD + inRightOffset + i};
-        double* outputs[2] = {outputBufferD + i, outputBufferD + nFrames + i};
+        double* inputs[2] = { inputBufferD + i, inputBufferD + inRightOffset + i };
+        double* outputs[2] = { outputBufferD + i, outputBufferD + nFrames + i };
 
         gPluginInstance->LockMutexAndProcessDoubleReplacing(inputs, outputs, gSigVS);
       }
@@ -344,18 +344,18 @@ bool TryToChangeAudioDriverType()
   }
 
 #ifdef OS_WIN
-  if(gState->mAudioDriverType == DAC_ASIO)
+  if (gState->mAudioDriverType == DAC_ASIO)
     gDAC = new RtAudio(RtAudio::WINDOWS_ASIO);
   else
     gDAC = new RtAudio(RtAudio::WINDOWS_DS);
 #elif defined OS_OSX
-  if(gState->mAudioDriverType == DAC_COREAUDIO)
+  if (gState->mAudioDriverType == DAC_COREAUDIO)
     gDAC = new RtAudio(RtAudio::MACOSX_CORE);
   //else
   //gDAC = new RtAudio(RtAudio::UNIX_JACK);
 #endif
 
-  if(gDAC)
+  if (gDAC)
     return true;
   else
     return false;
@@ -369,7 +369,7 @@ bool TryToChangeAudio()
   int outputID = -1;
 
 #ifdef OS_WIN
-  if(gState->mAudioDriverType == DAC_ASIO)
+  if (gState->mAudioDriverType == DAC_ASIO)
     inputID = GetAudioDeviceID(gState->mAudioOutDev);
   else
     inputID = GetAudioDeviceID(gState->mAudioInDev);
@@ -391,13 +391,13 @@ bool TryToChangeAudio()
 }
 
 bool InitialiseAudio(unsigned int inId,
-                     unsigned int outId,
-                     unsigned int sr,
-                     unsigned int iovs,
-                     unsigned int chnls,
-                     unsigned int inChanL,
-                     unsigned int outChanL
-                    )
+  unsigned int outId,
+  unsigned int sr,
+  unsigned int iovs,
+  unsigned int chnls,
+  unsigned int inChanL,
+  unsigned int outChanL
+  )
 {
   TRACE;
 
@@ -434,7 +434,7 @@ bool InitialiseAudio(unsigned int inId,
 
   RtAudio::StreamOptions options;
   options.flags = RTAUDIO_NONINTERLEAVED;
-// options.streamName = BUNDLE_NAME; // JACK stream name, not used on other streams
+  // options.streamName = BUNDLE_NAME; // JACK stream name, not used on other streams
 
   gBufIndex = 0;
   gVecElapsed = 0;
@@ -447,12 +447,12 @@ bool InitialiseAudio(unsigned int inId,
   try
   {
     TRACE;
-    gDAC->openStream( &oParams, &iParams, RTAUDIO_FLOAT64, sr, &gIOVS, &AudioCallback, NULL, &options);
+    gDAC->openStream(&oParams, &iParams, RTAUDIO_FLOAT64, sr, &gIOVS, &AudioCallback, NULL, &options);
     gDAC->startStream();
 
     memcpy(gActiveState, gState, sizeof(AppState)); // copy state to active state
   }
-  catch ( RtError& e )
+  catch (RtError& e)
   {
     e.printMessage();
     return false;
@@ -467,7 +467,7 @@ bool InitialiseMidi()
   {
     gMidiIn = new RtMidiIn();
   }
-  catch ( RtError &error )
+  catch (RtError &error)
   {
     FREE_NULL(gMidiIn);
     error.printMessage();
@@ -478,15 +478,15 @@ bool InitialiseMidi()
   {
     gMidiOut = new RtMidiOut();
   }
-  catch ( RtError &error )
+  catch (RtError &error)
   {
     FREE_NULL(gMidiOut);
     error.printMessage();
     return false;
   }
 
-  gMidiIn->setCallback( &MIDICallback );
-  gMidiIn->ignoreTypes( !ENABLE_SYSEX, !ENABLE_MIDICLOCK, !ENABLE_ACTIVE_SENSING );
+  gMidiIn->setCallback(&MIDICallback);
+  gMidiIn->ignoreTypes(!ENABLE_SYSEX, !ENABLE_MIDICLOCK, !ENABLE_ACTIVE_SENSING);
 
   return true;
 }
@@ -495,7 +495,7 @@ bool ChooseMidiInput(const char* pPortName)
 {
   unsigned int port = GetMIDIInPortNumber(pPortName);
 
-  if(port == -1)
+  if (port == -1)
   {
     strcpy(gState->mMidiInDev, "off");
     UpdateINI();
@@ -520,14 +520,14 @@ bool ChooseMidiInput(const char* pPortName)
     {
       return true;
     }
-    #ifdef OS_WIN
+#ifdef OS_WIN
     else
     {
-      gMidiIn->openPort(port-1);
+      gMidiIn->openPort(port - 1);
       return true;
     }
-    #else
-    else if(port == 1)
+#else
+    else if (port == 1)
     {
       std::string virtualMidiInputName = "To ";
       virtualMidiInputName += BUNDLE_NAME;
@@ -536,10 +536,10 @@ bool ChooseMidiInput(const char* pPortName)
     }
     else
     {
-      gMidiIn->openPort(port-2);
+      gMidiIn->openPort(port - 2);
       return true;
     }
-    #endif
+#endif
   }
 
   return false;
@@ -549,7 +549,7 @@ bool ChooseMidiOutput(const char* pPortName)
 {
   unsigned int port = GetMIDIOutPortNumber(pPortName);
 
-  if(port == -1)
+  if (port == -1)
   {
     strcpy(gState->mMidiOutDev, "off");
     UpdateINI();
@@ -575,14 +575,14 @@ bool ChooseMidiOutput(const char* pPortName)
     {
       return true;
     }
-    #ifdef OS_WIN
+#ifdef OS_WIN
     else
     {
-      gMidiOut->openPort(port-1);
+      gMidiOut->openPort(port - 1);
       return true;
     }
-    #else
-    else if(port == 1)
+#else
+    else if (port == 1)
     {
       std::string virtualMidiOutputName = "From ";
       virtualMidiOutputName += BUNDLE_NAME;
@@ -591,10 +591,10 @@ bool ChooseMidiOutput(const char* pPortName)
     }
     else
     {
-      gMidiOut->openPort(port-2);
+      gMidiOut->openPort(port - 2);
       return true;
     }
-    #endif
+#endif
   }
 
   return false;
@@ -608,10 +608,10 @@ extern bool AttachGUI()
   {
 #ifdef OS_WIN
     if (!pGraphics->OpenWindow(gHWND))
-      pGraphics=0;
+      pGraphics = 0;
 #else // Cocoa OSX
     if (!pGraphics->OpenWindow(gHWND))
-      pGraphics=0;
+      pGraphics = 0;
 #endif
     if (pGraphics)
     {
@@ -656,7 +656,7 @@ void Cleanup()
   gMidiIn->closePort();
   gMidiOut->closePort();
 
-  if ( gDAC->isStreamOpen() ) gDAC->closeStream();
+  if (gDAC->isStreamOpen()) gDAC->closeStream();
 
   delete gPluginInstance;
   delete gState;
@@ -665,7 +665,7 @@ void Cleanup()
   delete gMidiIn;
   delete gMidiOut;
   delete gDAC;
-  delete [] gINIPath;
+  delete[] gINIPath;
 }
 
 #ifdef OS_WIN
@@ -677,7 +677,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
   {
     // Try to open the mutex.
     HANDLE hMutex = OpenMutex(
-                      MUTEX_ALL_ACCESS, 0, BUNDLE_NAME);
+      MUTEX_ALL_ACCESS, 0, BUNDLE_NAME);
 
     // If hMutex is 0 then the mutex doesn't exist.
     if (!hMutex)
@@ -692,7 +692,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
       return 0;
     }
 
-    gHINST=hInstance;
+    gHINST = hInstance;
 
     InitCommonControls();
     gScrollMessage = RegisterWindowMessage("MSWHEEL_ROLLMSG");
@@ -701,7 +701,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
     gTempState = new AppState();
     gActiveState = new AppState();
 
-    if (SHGetFolderPathA( NULL, CSIDL_LOCAL_APPDATA, NULL, 0, gINIPath ) != S_OK)
+    if (SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, gINIPath) != S_OK)
     {
       DBGMSG("could not retrieve the user's application data directory!\n");
 
@@ -712,11 +712,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
     sprintf(gINIPath, "%s\\%s", gINIPath, BUNDLE_NAME); // Add the app name to the path
 
     struct stat st;
-    if(stat(gINIPath, &st) == 0) // if directory exists
+    if (stat(gINIPath, &st) == 0) // if directory exists
     {
       sprintf(gINIPath, "%s\\%s", gINIPath, "settings.ini"); // add file name to path
 
-      if(stat(gINIPath, &st) == 0) // if settings file exists read values into state
+      if (stat(gINIPath, &st) == 0) // if settings file exists read values into state
       {
         gState->mAudioDriverType = GetPrivateProfileInt("audio", "driver", 0, gINIPath);
 
@@ -758,15 +758,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 
     Init();
 
-    CreateDialog(gHINST,MAKEINTRESOURCE(IDD_DIALOG_MAIN),GetDesktopWindow(),MainDlgProc);
+    CreateDialog(gHINST, MAKEINTRESOURCE(IDD_DIALOG_MAIN), GetDesktopWindow(), MainDlgProc);
 
-    for(;;)
+    for (;;)
     {
-      MSG msg= {0,};
-      int vvv = GetMessage(&msg,NULL,0,0);
+      MSG msg = { 0, };
+      int vvv = GetMessage(&msg, NULL, 0, 0);
       if (!vvv)  break;
 
-      if (vvv<0)
+      if (vvv < 0)
       {
         Sleep(10);
         continue;
@@ -777,26 +777,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
         continue;
       }
 
-      if (gHWND && IsDialogMessage(gHWND,&msg)) continue;
+      if (gHWND && IsDialogMessage(gHWND, &msg)) continue;
 
       // default processing for other dialogs
-      HWND hWndParent=NULL;
+      HWND hWndParent = NULL;
       HWND temphwnd = msg.hwnd;
       do
       {
         if (GetClassLong(temphwnd, GCW_ATOM) == (INT)32770)
         {
-          hWndParent=temphwnd;
-          if (!(GetWindowLong(temphwnd,GWL_STYLE)&WS_CHILD)) break; // not a child, exit
+          hWndParent = temphwnd;
+          if (!(GetWindowLong(temphwnd, GWL_STYLE)&WS_CHILD)) break; // not a child, exit
         }
-      }
-      while (temphwnd = GetParent(temphwnd));
+      } while (temphwnd = GetParent(temphwnd));
 
-      if (hWndParent && IsDialogMessage(hWndParent,&msg)) continue;
+      if (hWndParent && IsDialogMessage(hWndParent, &msg)) continue;
 
       TranslateMessage(&msg);
       DispatchMessage(&msg);
-
     }
 
     // in case gHWND didnt get destroyed -- this corresponds to SWELLAPP_DESTROY roughly
@@ -806,7 +804,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 
     ReleaseMutex(hMutex);
   }
-  catch(...)
+  catch (...)
   {
     //TODO proper error catching
     DBGMSG("another instance running");
@@ -822,150 +820,148 @@ INT_PTR SWELLAppMain(int msg, INT_PTR parm1, INT_PTR parm2)
 {
   switch (msg)
   {
-    case SWELLAPP_ONLOAD:
+  case SWELLAPP_ONLOAD:
 
-      gState = new AppState();
-      gTempState = new AppState();
-      gActiveState = new AppState();
+    gState = new AppState();
+    gTempState = new AppState();
+    gActiveState = new AppState();
 
-      homeDir = getenv("HOME");
-      sprintf(gINIPath, "%s/Library/Application Support/%s/", homeDir, BUNDLE_NAME);
+    homeDir = getenv("HOME");
+    sprintf(gINIPath, "%s/Library/Application Support/%s/", homeDir, BUNDLE_NAME);
 
-      struct stat st;
-      if(stat(gINIPath, &st) == 0) // if directory exists
+    struct stat st;
+    if (stat(gINIPath, &st) == 0) // if directory exists
+    {
+      sprintf(gINIPath, "%s%s", gINIPath, "settings.ini"); // add file name to path
+
+      if (stat(gINIPath, &st) == 0) // if settings file exists read values into state
+      {
+        gState->mAudioDriverType = GetPrivateProfileInt("audio", "driver", 0, gINIPath);
+
+        GetPrivateProfileString("audio", "indev", "Built-in Input", gState->mAudioInDev, 100, gINIPath);
+        GetPrivateProfileString("audio", "outdev", "Built-in Output", gState->mAudioOutDev, 100, gINIPath);
+
+        //audio
+        gState->mAudioInChanL = GetPrivateProfileInt("audio", "in1", 1, gINIPath); // 1 is first audio input
+        gState->mAudioInChanR = GetPrivateProfileInt("audio", "in2", 2, gINIPath);
+        gState->mAudioOutChanL = GetPrivateProfileInt("audio", "out1", 1, gINIPath); // 1 is first audio output
+        gState->mAudioOutChanR = GetPrivateProfileInt("audio", "out2", 2, gINIPath);
+        gState->mAudioInIsMono = GetPrivateProfileInt("audio", "monoinput", 0, gINIPath);
+
+        GetPrivateProfileString("audio", "iovs", "512", gState->mAudioIOVS, 100, gINIPath);
+        GetPrivateProfileString("audio", "sigvs", "32", gState->mAudioSigVS, 100, gINIPath);
+        GetPrivateProfileString("audio", "sr", "44100", gState->mAudioSR, 100, gINIPath);
+
+        //midi
+        GetPrivateProfileString("midi", "indev", "no input", gState->mMidiInDev, 100, gINIPath);
+        GetPrivateProfileString("midi", "outdev", "no output", gState->mMidiOutDev, 100, gINIPath);
+
+        gState->mMidiInChan = GetPrivateProfileInt("midi", "inchan", 0, gINIPath); // 0 is any
+        gState->mMidiOutChan = GetPrivateProfileInt("midi", "outchan", 0, gINIPath); // 1 is first chan
+
+        UpdateINI(); // this will write over any invalid values in the file
+      }
+      else // settings file doesn't exist, so populate with default values
+      {
+        UpdateINI();
+      }
+    }
+    else   // folder doesn't exist - make folder and make file
+    {
+      // http://blog.tremend.ro/2008/10/06/create-directories-in-c-using-mkdir-with-proper-permissions/
+
+      mode_t process_mask = umask(0);
+      int result_code = mkdir(gINIPath, S_IRWXU | S_IRWXG | S_IRWXO);
+      umask(process_mask);
+
+      if (result_code) return 1;
+      else
       {
         sprintf(gINIPath, "%s%s", gINIPath, "settings.ini"); // add file name to path
-
-        if(stat(gINIPath, &st) == 0) // if settings file exists read values into state
-        {
-          gState->mAudioDriverType = GetPrivateProfileInt("audio", "driver", 0, gINIPath);
-
-          GetPrivateProfileString("audio", "indev", "Built-in Input", gState->mAudioInDev, 100, gINIPath);
-          GetPrivateProfileString("audio", "outdev", "Built-in Output", gState->mAudioOutDev, 100, gINIPath);
-
-          //audio
-          gState->mAudioInChanL = GetPrivateProfileInt("audio", "in1", 1, gINIPath); // 1 is first audio input
-          gState->mAudioInChanR = GetPrivateProfileInt("audio", "in2", 2, gINIPath);
-          gState->mAudioOutChanL = GetPrivateProfileInt("audio", "out1", 1, gINIPath); // 1 is first audio output
-          gState->mAudioOutChanR = GetPrivateProfileInt("audio", "out2", 2, gINIPath);
-          gState->mAudioInIsMono = GetPrivateProfileInt("audio", "monoinput", 0, gINIPath);
-
-          GetPrivateProfileString("audio", "iovs", "512", gState->mAudioIOVS, 100, gINIPath);
-          GetPrivateProfileString("audio", "sigvs", "32", gState->mAudioSigVS, 100, gINIPath);
-          GetPrivateProfileString("audio", "sr", "44100", gState->mAudioSR, 100, gINIPath);
-
-          //midi
-          GetPrivateProfileString("midi", "indev", "no input", gState->mMidiInDev, 100, gINIPath);
-          GetPrivateProfileString("midi", "outdev", "no output", gState->mMidiOutDev, 100, gINIPath);
-
-          gState->mMidiInChan = GetPrivateProfileInt("midi", "inchan", 0, gINIPath); // 0 is any
-          gState->mMidiOutChan = GetPrivateProfileInt("midi", "outchan", 0, gINIPath); // 1 is first chan
-
-          UpdateINI(); // this will write over any invalid values in the file
-        }
-        else // settings file doesn't exist, so populate with default values
-        {
-          UpdateINI();
-        }
-
+        UpdateINI(); // will write file if doesn't exist
       }
-      else   // folder doesn't exist - make folder and make file
-      {
-        // http://blog.tremend.ro/2008/10/06/create-directories-in-c-using-mkdir-with-proper-permissions/
-
-        mode_t process_mask = umask(0);
-        int result_code = mkdir(gINIPath, S_IRWXU | S_IRWXG | S_IRWXO);
-        umask(process_mask);
-
-        if(result_code) return 1;
-        else
-        {
-          sprintf(gINIPath, "%s%s", gINIPath, "settings.ini"); // add file name to path
-          UpdateINI(); // will write file if doesn't exist
-        }
-      }
-      break;
+    }
+    break;
 #pragma mark loaded
-    case SWELLAPP_LOADED:
+  case SWELLAPP_LOADED:
+  {
+    Init();
+
+    HMENU menu = SWELL_GetCurrentMenu();
+
+    if (menu)
     {
-      Init();
+      // other windows will get the stock (bundle) menus
+      //SWELL_SetDefaultModalWindowMenu(menu);
+      //SWELL_SetDefaultWindowMenu(menu);
 
-      HMENU menu = SWELL_GetCurrentMenu();
-
-      if (menu)
+      // work on a new menu
+      menu = SWELL_DuplicateMenu(menu);
+      HMENU src = LoadMenu(NULL, MAKEINTRESOURCE(IDR_MENU1));
+      int x;
+      for (x = 0; x < GetMenuItemCount(src) - 1; x++)
       {
-        // other windows will get the stock (bundle) menus
-        //SWELL_SetDefaultModalWindowMenu(menu);
-        //SWELL_SetDefaultWindowMenu(menu);
-
-        // work on a new menu
-        menu = SWELL_DuplicateMenu(menu);
-        HMENU src = LoadMenu(NULL,MAKEINTRESOURCE(IDR_MENU1));
-        int x;
-        for (x=0; x<GetMenuItemCount(src)-1; x++)
+        HMENU sm = GetSubMenu(src, x);
+        if (sm)
         {
-          HMENU sm = GetSubMenu(src,x);
-          if (sm)
-          {
-            char str[1024];
-            MENUITEMINFO mii= {sizeof(mii),MIIM_TYPE,};
-            mii.dwTypeData=str;
-            mii.cch=sizeof(str);
-            str[0]=0;
-            GetMenuItemInfo(src,x,TRUE,&mii);
-            MENUITEMINFO mi= {sizeof(mi),MIIM_STATE|MIIM_SUBMENU|MIIM_TYPE,MFT_STRING,0,0,SWELL_DuplicateMenu(sm),NULL,NULL,0,str};
-            InsertMenuItem(menu,x+1,TRUE,&mi);
-          }
+          char str[1024];
+          MENUITEMINFO mii = { sizeof(mii),MIIM_TYPE, };
+          mii.dwTypeData = str;
+          mii.cch = sizeof(str);
+          str[0] = 0;
+          GetMenuItemInfo(src, x, TRUE, &mii);
+          MENUITEMINFO mi = { sizeof(mi),MIIM_STATE | MIIM_SUBMENU | MIIM_TYPE,MFT_STRING,0,0,SWELL_DuplicateMenu(sm),NULL,NULL,0,str };
+          InsertMenuItem(menu, x + 1, TRUE, &mi);
         }
       }
-
-      if (menu)
-      {
-        HMENU sm=GetSubMenu(menu,1);
-        DeleteMenu(sm,ID_QUIT,MF_BYCOMMAND); // remove QUIT from our file menu, since it is in the system menu on OSX
-        DeleteMenu(sm,ID_PREFERENCES,MF_BYCOMMAND); // remove PREFERENCES from the file menu, since it is in the system menu on OSX
-
-        // remove any trailing separators
-        int a= GetMenuItemCount(sm);
-        while (a > 0 && GetMenuItemID(sm,a-1)==0) DeleteMenu(sm,--a,MF_BYPOSITION);
-
-        DeleteMenu(menu,1,MF_BYPOSITION); // delete file menu
-      }
-
-      // if we want to set any default modifiers for items in the menus, we can use:
-      // SetMenuItemModifier(menu,commandID,MF_BYCOMMAND,'A',FCONTROL) etc.
-
-      HWND hwnd = CreateDialog(gHINST,MAKEINTRESOURCE(IDD_DIALOG_MAIN),NULL,MainDlgProc);
-      if (menu)
-      {
-        SetMenu(hwnd, menu); // set the menu for the dialog to our menu (on Windows that menu is set from the .rc, but on SWELL
-        SWELL_SetDefaultModalWindowMenu(menu); // other windows will get the stock (bundle) menus
-      }
-      // we need to set it manually (and obviously we've edited the menu anyway)
     }
 
-    if(!AttachGUI()) DBGMSG("couldn't attach gui\n"); //todo error
+    if (menu)
+    {
+      HMENU sm = GetSubMenu(menu, 1);
+      DeleteMenu(sm, ID_QUIT, MF_BYCOMMAND); // remove QUIT from our file menu, since it is in the system menu on OSX
+      DeleteMenu(sm, ID_PREFERENCES, MF_BYCOMMAND); // remove PREFERENCES from the file menu, since it is in the system menu on OSX
 
+      // remove any trailing separators
+      int a = GetMenuItemCount(sm);
+      while (a > 0 && GetMenuItemID(sm, a - 1) == 0) DeleteMenu(sm, --a, MF_BYPOSITION);
+
+      DeleteMenu(menu, 1, MF_BYPOSITION); // delete file menu
+    }
+
+    // if we want to set any default modifiers for items in the menus, we can use:
+    // SetMenuItemModifier(menu,commandID,MF_BYCOMMAND,'A',FCONTROL) etc.
+
+    HWND hwnd = CreateDialog(gHINST, MAKEINTRESOURCE(IDD_DIALOG_MAIN), NULL, MainDlgProc);
+    if (menu)
+    {
+      SetMenu(hwnd, menu); // set the menu for the dialog to our menu (on Windows that menu is set from the .rc, but on SWELL
+      SWELL_SetDefaultModalWindowMenu(menu); // other windows will get the stock (bundle) menus
+    }
+    // we need to set it manually (and obviously we've edited the menu anyway)
+  }
+
+  if (!AttachGUI()) DBGMSG("couldn't attach gui\n"); //todo error
+
+  break;
+  case SWELLAPP_ONCOMMAND:
+    // this is to catch commands coming from the system menu etc
+    if (gHWND && (parm1 & 0xffff)) SendMessage(gHWND, WM_COMMAND, parm1 & 0xffff, 0);
     break;
-    case SWELLAPP_ONCOMMAND:
-      // this is to catch commands coming from the system menu etc
-      if (gHWND && (parm1&0xffff)) SendMessage(gHWND,WM_COMMAND,parm1&0xffff,0);
-      break;
 #pragma mark destroy
-    case SWELLAPP_DESTROY:
+  case SWELLAPP_DESTROY:
 
-      if (gHWND) DestroyWindow(gHWND);
-      Cleanup();
-      break;
-    case SWELLAPP_PROCESSMESSAGE: // can hook keyboard input here
-      // parm1 = (MSG*), should we want it -- look in swell.h to see what the return values refer to
-      break;
+    if (gHWND) DestroyWindow(gHWND);
+    Cleanup();
+    break;
+  case SWELLAPP_PROCESSMESSAGE: // can hook keyboard input here
+    // parm1 = (MSG*), should we want it -- look in swell.h to see what the return values refer to
+    break;
   }
   return 0;
 }
 
 #endif
-
 
 #ifndef OS_WIN
 #include "swell-dlggen.h"
@@ -980,7 +976,7 @@ BEGIN
 END
 SWELL_DEFINE_DIALOG_RESOURCE_END(IDD_DIALOG_MAIN)
 
-SWELL_DEFINE_DIALOG_RESOURCE_BEGIN(IDD_DIALOG_PREF,SET_IDD_STYLE,"Preferences",320,420,SET_IDD_SCALE)
+SWELL_DEFINE_DIALOG_RESOURCE_BEGIN(IDD_DIALOG_PREF, SET_IDD_STYLE, "Preferences", 320, 420, SET_IDD_SCALE)
 BEGIN
 GROUPBOX        "Audio Settings", IDC_STATIC, 5, 10, 300, 230
 
@@ -1044,12 +1040,12 @@ SWELL_DEFINE_MENU_RESOURCE_BEGIN(IDR_MENU1)
 POPUP "&File"
 BEGIN
 // MENUITEM SEPARATOR
-MENUITEM "Preferences...",              ID_PREFERENCES
-MENUITEM "&Quit",                       ID_QUIT
+MENUITEM "Preferences...", ID_PREFERENCES
+MENUITEM "&Quit", ID_QUIT
 END
 POPUP "&Help"
 BEGIN
-MENUITEM "&About",                      ID_ABOUT
+MENUITEM "&About", ID_ABOUT
 END
 SWELL_DEFINE_MENU_RESOURCE_END(IDR_MENU1)
 

@@ -4,13 +4,11 @@
 #include <algorithm>
 #include <unordered_set>
 
-
 using std::vector;
 using std::deque;
 using std::unordered_set;
 namespace syn
 {
-
   Circuit::~Circuit()
   {
     // Delete units
@@ -33,6 +31,10 @@ namespace syn
       unit->resizeOutputBuffer(m_bufsize);
       unit->setFs(m_Fs);
       m_isGraphDirty = true;
+      while (m_units.find(m_nextUid) != m_units.end())
+      {
+        m_nextUid++;
+      }
       return uid;
     }
     return -1;
@@ -40,10 +42,6 @@ namespace syn
 
   int Circuit::addUnit(Unit* unit)
   {
-    while (m_units.find(m_nextUid) != m_units.end())
-    {
-      m_nextUid++;
-    }
     return addUnit(unit, m_nextUid);
   }
 
@@ -60,7 +58,7 @@ namespace syn
         {
           if (connsto[j].targetid == uid)
           {
-            connsto.erase(connsto.begin()+j);
+            connsto.erase(connsto.begin() + j);
             j--;
           }
         }
@@ -86,7 +84,7 @@ namespace syn
       m_units.erase(uid);
       delete unit;
       m_isGraphDirty = true;
-      if(uid==m_sinkId) m_sinkId=-1;
+      if (uid == m_sinkId) m_sinkId = -1;
       return true;
     }
     return false;
@@ -221,7 +219,7 @@ namespace syn
   void Circuit::setFs(double fs)
   {
     m_Fs = fs;
-    for (std::pair<int,Unit*> unit : m_units)
+    for (std::pair<int, Unit*> unit : m_units)
     {
       unit.second->setFs(fs);
     }
@@ -241,15 +239,15 @@ namespace syn
     Circuit* circ = (Circuit*)cloneImpl();
     circ->m_bufsize = m_bufsize;
 
-    // Clone units 
-    for (std::pair<int,Unit*> unitpair : m_units)
+    // Clone units
+    for (std::pair<int, Unit*> unitpair : m_units)
     {
-      circ->addUnit(unitpair.second->clone(),unitpair.first);
+      circ->addUnit(unitpair.second->clone(), unitpair.first);
     }
     circ->setSinkId(m_sinkId);
 
     // Clone connections
-    for (std::pair<int,vector<ConnectionMetadata>> connpair : m_forwardConnections)
+    for (std::pair<int, vector<ConnectionMetadata>> connpair : m_forwardConnections)
     {
       for (int j = 0; j < connpair.second.size(); j++)
       {
@@ -269,7 +267,7 @@ namespace syn
 
   bool Circuit::hasUnit(int uid) const
   {
-    return m_units.find(uid)!=m_units.end();
+    return m_units.find(uid) != m_units.end();
   }
 
   const vector<ConnectionMetadata>& Circuit::getConnectionsTo(int unitid) const
@@ -278,7 +276,7 @@ namespace syn
     {
       return m_backwardConnections.at(unitid);
     }
-    return {};
+    return{};
   }
 
   int Circuit::getUnitId(string name)
@@ -305,6 +303,4 @@ namespace syn
     }
     return uid;
   }
-
 }
-

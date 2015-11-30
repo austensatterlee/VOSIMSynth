@@ -19,22 +19,22 @@
 */
 
 #ifdef OS_WIN
-  #include <windows.h>
-  #include <commctrl.h>
+#include <windows.h>
+#include <commctrl.h>
 
-  #define DEFAULT_INPUT_DEV "Default Device"
-  #define DEFAULT_OUTPUT_DEV "Default Device"
+#define DEFAULT_INPUT_DEV "Default Device"
+#define DEFAULT_OUTPUT_DEV "Default Device"
 
-  #define DAC_DS 0
-  #define DAC_ASIO 1
+#define DAC_DS 0
+#define DAC_ASIO 1
 #elif defined OS_OSX
-  #include "swell.h"
-  #define SLEEP( milliseconds ) usleep( (unsigned long) (milliseconds * 1000.0) )
+#include "swell.h"
+#define SLEEP( milliseconds ) usleep( (unsigned long) (milliseconds * 1000.0) )
 
-  #define DEFAULT_INPUT_DEV "Built-in Input"
-  #define DEFAULT_OUTPUT_DEV "Built-in Output"
+#define DEFAULT_INPUT_DEV "Built-in Input"
+#define DEFAULT_OUTPUT_DEV "Built-in Output"
 
-  #define DAC_COREAUDIO 0
+#define DAC_COREAUDIO 0
 //  #define DAC_JACK 1
 #endif
 
@@ -74,7 +74,7 @@ struct AppState
   UInt16 mMidiInChan;
   UInt16 mMidiOutChan;
 
-  AppState():
+  AppState() :
     mAudioDriverType(0), // DS / CoreAudio by default
     mAudioInChanL(1),
     mAudioInChanR(2),
@@ -106,13 +106,13 @@ extern int GetAudioDeviceID(char* deviceNameToTest);
 
 extern void ProbeAudioIO();
 extern bool InitialiseAudio(unsigned int inId,
-                            unsigned int outId,
-                            unsigned int sr,
-                            unsigned int iovs,
-                            unsigned int chnls,
-                            unsigned int inChanL,
-                            unsigned int outChanL
-                           );
+  unsigned int outId,
+  unsigned int sr,
+  unsigned int iovs,
+  unsigned int chnls,
+  unsigned int inChanL,
+  unsigned int outChanL
+  );
 
 extern bool AudioSettingsInStateAreEqual(AppState* os, AppState* ns);
 extern bool MIDISettingsInStateAreEqual(AppState* os, AppState* ns);
@@ -144,4 +144,3 @@ extern std::vector<std::string> gMIDIInputDevNames;
 extern std::vector<std::string> gMIDIOutputDevNames;
 
 #endif //_IPLUGAPP_APP_MAIN_H_
-

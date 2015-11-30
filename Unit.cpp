@@ -30,7 +30,7 @@ namespace syn
     u->m_bufind = m_bufind;
     for (int i = 0; i < m_params.size(); i++)
     {
-      u->m_params[i]->mod(*m_params[i],SET);
+      u->m_params[i]->mod(*m_params[i], SET);
     }
     return u;
   }
@@ -61,7 +61,7 @@ namespace syn
 
   Unit::Unit(string name) :
     m_Fs(44100.0),
-    m_output(1,0.0),
+    m_output(1, 0.0),
     m_bufind(0),
     m_name(name),
     m_parent(nullptr)
@@ -84,7 +84,7 @@ namespace syn
       for (int j = 0; j < m_params.size(); j++)
       {
         m_params[j]->reset();
-        if(m_params[j]->numConnections()>0){
+        if (m_params[j]->numConnections()>0) {
           m_params[j]->pull(i);
         }
       }
@@ -98,5 +98,4 @@ namespace syn
   {
     return m_parammap.at(name);
   }
-
 }

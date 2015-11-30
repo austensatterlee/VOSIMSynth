@@ -35,7 +35,7 @@ namespace syn
     MOD_ACTION action;
     bool operator==(const Connection& other)
     {
-      return srcbuffer==other.srcbuffer && action==other.action;
+      return srcbuffer == other.srcbuffer && action == other.action;
     }
   };
 
@@ -113,7 +113,7 @@ namespace syn
     double getMax() const { return m_max; }
     void setMin(double min) { m_min = min; }
     void setMax(double max) { m_max = max; }
-    void setIsHidden(bool ishidden){ m_isHidden = ishidden; }
+    void setIsHidden(bool ishidden) { m_isHidden = ishidden; }
     const IControl* getController() const { return m_controller; }
     bool hasController() const { return m_controller != nullptr; }
     void setTransformFunc(ParamTransformFunc func) { m_transform_func = func; }
@@ -124,7 +124,7 @@ namespace syn
     }
     int numConnections() const { return m_connections.size(); }
     void pull(int bufind)
-    {      
+    {
       for (int i = 0; i < m_connections.size(); i++)
       {
         mod((*m_connections[i].srcbuffer)[bufind], m_connections[i].action);

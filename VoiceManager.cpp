@@ -82,7 +82,7 @@ namespace syn
   {
     for (int i = 0; i < m_allVoices.size(); i++)
     {
-      if(m_allVoices[i]->getBufSize()!=bufsize)
+      if (m_allVoices[i]->getBufSize() != bufsize)
         m_allVoices[i]->setBufSize(bufsize);
     }
   }
@@ -112,7 +112,7 @@ namespace syn
     while (m_allVoices.size() < max)
     {
       m_allVoices.push_back((Instrument*)m_instrument->clone());
-      makeIdle(m_allVoices.size()-1);
+      makeIdle(m_allVoices.size() - 1);
     }
     m_numVoices = 0;
   }
@@ -131,7 +131,7 @@ namespace syn
         }
         voice->tick();
         const vector<double>& voicebuf = voice->getLastOutputBuffer();
-        for(int i=0;i<voice->getBufSize();i++){
+        for (int i = 0; i < voice->getBufSize(); i++) {
           buf[i] += voicebuf[i];
         }
       }
@@ -170,7 +170,6 @@ namespace syn
     }
     return 0;
   }
-
 
   int VoiceManager::getNewestVoiceInd() const
   {

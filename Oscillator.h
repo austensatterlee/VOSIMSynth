@@ -21,7 +21,7 @@ namespace syn
     NUM_OSC_MODES
   };
 
-  const vector<string> OSC_MODE_NAMES{"Saw","Naive saw","Sine","Tri","Square","Naive square"};
+  const vector<string> OSC_MODE_NAMES{ "Saw","Naive saw","Sine","Tri","Square","Naive square" };
 
   class Oscillator : public SourceUnit
   {
@@ -34,8 +34,8 @@ namespace syn
       m_phaseshift(addParam("phaseshift", DOUBLE_TYPE, -0.5, 0.5)),
       m_portamento(addParam("portamento", DOUBLE_TYPE, 0, 1, true))
     {
-      m_portamento.mod(0,SET);
-      m_Step = 440./m_Fs;
+      m_portamento.mod(0, SET);
+      m_Step = 440. / m_Fs;
       m_Step = m_Step;
     };
     Oscillator(const Oscillator& osc) :
@@ -50,7 +50,7 @@ namespace syn
     virtual void sync() { m_basePhase = 0; };
     bool isActive() const { return m_gain != 0; };
     virtual void noteOn(int pitch, int vel);
-    virtual void noteOff(int pitch, int vel){};
+    virtual void noteOff(int pitch, int vel) {};
     virtual void setFs(double fs);
     UnitParameter& m_portamento;
     UnitParameter& m_gain;
@@ -69,7 +69,7 @@ namespace syn
 
   class BasicOscillator : public Oscillator
   {
-    public:
+  public:
     BasicOscillator(string name) : Oscillator(name),
       m_waveform(addEnumParam("waveform", OSC_MODE_NAMES))
     {};
@@ -79,7 +79,8 @@ namespace syn
   protected:
     virtual void process(int bufind);
   private:
-    virtual Unit* cloneImpl() const { return new BasicOscillator(*this); };
+    virtual Unit* cloneImpl() const override { return new BasicOscillator(*this); };
+    virtual string getClassName() const override { return "BasicOscillator"; };
   };
 
   class LFOOscillator : public BasicOscillator
@@ -87,7 +88,7 @@ namespace syn
   public:
     LFOOscillator(string name) : BasicOscillator(name)
     {
-      m_pitch.mod(-12, SET); 
+      m_pitch.mod(-12, SET);
       m_pitch.setIsHidden(false);
       m_tune.setMax(24);
       m_tune.setMin(-24);
@@ -100,7 +101,8 @@ namespace syn
       sync();
     }
   private:
-    virtual Unit* cloneImpl() const { return new LFOOscillator(*this); };
+    virtual Unit* cloneImpl() const override { return new LFOOscillator(*this); };
+    virtual string getClassName() const override { return "LFOOscillator"; };
   };
 };
 #endif

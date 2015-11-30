@@ -22,8 +22,8 @@ namespace syn
     m_InnerRect = IRECT(pR.L + m_Padding[0], pR.T + m_Padding[1], pR.R - m_Padding[2], pR.B - m_Padding[3]);
     m_ltpt = NDPoint<2>((double)m_InnerRect.L, (double)m_InnerRect.T);
     m_whpt = NDPoint<2>((double)m_InnerRect.W(), (double)m_InnerRect.H());
-    m_ampScaleRect = IRECT(mRECT.L, mRECT.T+10, mRECT.L + 75, mRECT.T + 20).GetPadded(2);
-    m_timeScaleRect = IRECT(mRECT.L+100, mRECT.T+10, mRECT.L + 175, mRECT.T + 20).GetPadded(2);
+    m_ampScaleRect = IRECT(mRECT.L, mRECT.T + 10, mRECT.L + 75, mRECT.T + 20).GetPadded(2);
+    m_timeScaleRect = IRECT(mRECT.L + 100, mRECT.T + 10, mRECT.L + 175, mRECT.T + 20).GetPadded(2);
 
     setEnvelope(vm, envname);
   }
@@ -89,7 +89,6 @@ namespace syn
     modelpt[1] = (1 - modelpt[1]);
     return modelpt;
   }
-
 
   void EnvelopeEditor::OnMouseDrag(int x, int y, int dX, int dY, IMouseMod* pMod)
   {
@@ -235,10 +234,9 @@ namespace syn
   {
     IText  titletxtstyle(12, &(IColor)palette[4], "Helvetica", IText::kStyleBold, IText::kAlignFar, 0, IText::kQualityClearType);
     IText  fgtxtstyle(10, &(IColor)palette[4], 0, IText::kStyleNormal, IText::kAlignNear, 0, IText::kQualityClearType);
-    IText  bgtxtstyle(10, &(IColor)ColorPoint(palette[4]-getUnitv<4>(0)*60.0), 0, IText::kStyleItalic, IText::kAlignNear, 0, IText::kQualityClearType);
+    IText  bgtxtstyle(10, &(IColor)ColorPoint(palette[4] - getUnitv<4>(0)*60.0), 0, IText::kStyleItalic, IText::kAlignNear, 0, IText::kQualityClearType);
     NDPoint<2> screenpt1, screenpt2;
     Envelope* env = ((Envelope*)&m_voiceManager->getProtoInstrument()->getUnit(m_targetEnvId));
-
 
     pGraphics->FillIRect(&(IColor)palette[0], &m_InnerRect);
     pGraphics->DrawRect(&(IColor)palette[1], &m_InnerRect);
@@ -290,7 +288,7 @@ namespace syn
         sprintf(strbuffer, "%.2f", currPeriod);
         pGraphics->DrawIText(&fgtxtstyle, strbuffer, &IRECT(screenpt2[0], m_InnerRect.B, mRECT.R, mRECT.B));
         sprintf(strbuffer, "%.2f", cumuPeriod);
-        pGraphics->DrawIText(&bgtxtstyle, strbuffer, &IRECT(screenpt2[0], m_InnerRect.B+10, mRECT.R, mRECT.B));
+        pGraphics->DrawIText(&bgtxtstyle, strbuffer, &IRECT(screenpt2[0], m_InnerRect.B + 10, mRECT.R, mRECT.B));
         pGraphics->DrawLine(&(IColor)(palette[1]), screenpt2[0], m_InnerRect.B, screenpt2[0], screenpt2[1], 0, true);
         pGraphics->DrawLine(&(IColor)(palette[1]), m_InnerRect.L, screenpt2[1], screenpt2[0], screenpt2[1], 0, true);
         if (i == env->readParam(0))
@@ -383,5 +381,4 @@ namespace syn
       SetDirty();
     }
   }
-
 }

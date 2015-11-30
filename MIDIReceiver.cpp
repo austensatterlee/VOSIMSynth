@@ -20,7 +20,7 @@ void MIDIReceiver::advance()
     {
       int noteNumber = midiMessage->NoteNumber();
       int velocity = midiMessage->Velocity();
-      if (status == IMidiMsg::kNoteOn && velocity>0)
+      if (status == IMidiMsg::kNoteOn && velocity > 0)
       {
         if (mKeyStatus[noteNumber] == false)
         {

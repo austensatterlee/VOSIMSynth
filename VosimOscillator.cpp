@@ -6,9 +6,8 @@
 ******************************/
 namespace syn
 {
-
   VosimOscillator::VosimOscillator(const VosimOscillator& vosc) :
-    VosimOscillator(vosc.m_name)      
+    VosimOscillator(vosc.m_name)
   {
     m_curr_pulse_gain = vosc.m_curr_pulse_gain;
     m_pulse_step = vosc.m_pulse_step;
@@ -16,7 +15,7 @@ namespace syn
     m_unwrapped_pulse_phase = vosc.m_unwrapped_pulse_phase;
   }
 
- void VosimOscillator::process(int bufind)
+  void VosimOscillator::process(int bufind)
   {
     Oscillator::tick_phase();
     m_pulse_step = m_Step*(m_number + 4 * m_ppitch);
@@ -33,8 +32,8 @@ namespace syn
     {
       m_last_pulse_phase = m_pulse_phase;
       m_pulse_phase = m_unwrapped_pulse_phase - (int)m_unwrapped_pulse_phase;
-      if(m_last_pulse_phase > m_pulse_phase){
-        m_curr_pulse_gain*=m_decay;
+      if (m_last_pulse_phase > m_pulse_phase) {
+        m_curr_pulse_gain *= m_decay;
       }
       double tableval = lut_vosim_pulse_cos.getlinear(m_pulse_phase);
       m_output[bufind] = m_gain*m_velocity*m_curr_pulse_gain*tableval;
@@ -47,5 +46,4 @@ namespace syn
     m_pulse_phase = 0;
     m_unwrapped_pulse_phase = 0;
   }
-
 }

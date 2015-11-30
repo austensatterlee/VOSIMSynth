@@ -129,6 +129,7 @@
     <ClInclude Include="CircuitPanel.h">
       <Filter>UI</Filter>
     </ClInclude>
+    <ClInclude Include="fftw3.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="vst2">
@@ -157,6 +158,6 @@
     <ResourceCompile Include="VOSIMSynth.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\..\..\..\..\clibs\fftw-3.3.4-dll32\libfftw3-3.lib" />
+    <Library Include="libfftw3-3.lib" />
   </ItemGroup>
 </Project>

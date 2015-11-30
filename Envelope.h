@@ -72,11 +72,13 @@ namespace syn
     void setInitPoint(double x) { m_initPoint = x; };
 
   protected:
-    void	updateSegment(const int segment); //!< Updates the EnvelopeSegment to reflect the values in m_params 
+    void	updateSegment(const int segment); //!< Updates the EnvelopeSegment to reflect the values in m_params
 
     virtual void process(int bufind);
   private:
-    virtual Unit* cloneImpl() const { return new Envelope(*this); };
+    virtual Unit* cloneImpl() const { return new Envelope(*this); }
+    virtual inline string getClassName() const override { return "Envelope"; }
+
     vector<EnvelopeSegment*> m_segments;
     UnitParameter& m_loopStart;
     UnitParameter& m_loopEnd;

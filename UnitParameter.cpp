@@ -78,7 +78,7 @@ void syn::UnitParameter::initIParam(IParam* iparam)
     }
     break;
   case BOOL_TYPE:
-    iparam->InitBool(name,m_baseValue, label,groupname);
+    iparam->InitBool(name, m_baseValue, label, groupname);
     break;
   }
 }

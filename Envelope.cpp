@@ -13,21 +13,21 @@ namespace syn
     m_initPoint(0),
     m_numSegments(numSegments),
     m_phase(0),
-    m_loopStart(addParam("loopstart",INT_TYPE, 0, numSegments)),
-    m_loopEnd(addParam("loopend",INT_TYPE, 0, numSegments))
+    m_loopStart(addParam("loopstart", INT_TYPE, 0, numSegments)),
+    m_loopEnd(addParam("loopend", INT_TYPE, 0, numSegments))
   {
     m_loopStart.mod(-1, SET);
     m_loopEnd.mod(-1, SET);
     // set up a standard ADSR envelope
     ostringstream paramname;
     int i;
-    int period,shape,target;
+    int period, shape, target;
     for (i = 0; i < numSegments; i++)
     {
       paramname.str(""); paramname.clear();
       paramname << "period" << i;
       period = addParam(paramname.str(), DOUBLE_TYPE, MIN_ENV_PERIOD, 10.0).getId();
-      getParam(period).mod(0.1,SET);
+      getParam(period).mod(0.1, SET);
       paramname.str(""); paramname.clear();
       paramname << "target" << i;
       target = addParam(paramname.str(), DOUBLE_TYPE, 0, 1.0).getId();
@@ -39,11 +39,11 @@ namespace syn
       {
         getParam(target).mod(1.0, SET);
       }
-      
+
       paramname.str(""); paramname.clear();
       paramname << "shape" << i;
       shape = addParam(paramname.str(), DOUBLE_TYPE, MIN_ENV_SHAPE, 1.0).getId();
-      m_segments.push_back(new EnvelopeSegment(this, period,target,shape));
+      m_segments.push_back(new EnvelopeSegment(this, period, target, shape));
       updateSegment(i);
     }
   }
@@ -77,10 +77,10 @@ namespace syn
 
   void Envelope::updateSegment(int segment)
   {
-    if(m_segments[segment]->period().isDirty() || m_fsIsDirty){
+    if (m_segments[segment]->period().isDirty() || m_fsIsDirty) {
       m_segments[segment]->step = 1. / (m_Fs*(m_segments[segment]->period()));
     }
-    if(m_phase==0){
+    if (m_phase == 0) {
       if (segment == 0)
       {
         m_segments[segment]->prev_amp = m_initPoint;
@@ -98,13 +98,13 @@ namespace syn
   }
 
   void Envelope::process(int bufind)
-{
+  {
     updateSegment(m_currSegment);
     EnvelopeSegment& currseg = *m_segments[m_currSegment];
     bool hasHitSetpoint = (currseg.is_increasing && getLastOutput() >= currseg.target_amp()) || \
-                          (!currseg.is_increasing && getLastOutput() <= currseg.target_amp());
-    // Advance to a new segment if our time is up or if we're released and we have fully decayed 
-    if (m_phase >= 1 || (m_currSegment==m_numSegments-1 && hasHitSetpoint))
+      (!currseg.is_increasing && getLastOutput() <= currseg.target_amp());
+    // Advance to a new segment if our time is up or if we're released and we have fully decayed
+    if (m_phase >= 1 || (m_currSegment == m_numSegments - 1 && hasHitSetpoint))
     {
       if (m_currSegment + 1 == (int)readParam(1))
       { // check if we have reached a loop point
@@ -113,7 +113,7 @@ namespace syn
       }
       else if (m_currSegment < m_numSegments - 2)
       { // check if we have reached the sustain point
-        setSegment(m_currSegment+1);
+        setSegment(m_currSegment + 1);
       }
       else if (m_currSegment == m_numSegments - 1)
       { // check if we have fully decayed
@@ -144,7 +144,7 @@ namespace syn
 
   void Envelope::noteOff(int pitch, int vel)
   {
-    setSegment(m_numSegments-1);
+    setSegment(m_numSegments - 1);
   }
 
   int Envelope::getSamplesPerPeriod() const
@@ -164,7 +164,7 @@ namespace syn
       *this = other;
     }
     return *this;
-  } 
+  }
 
   UnitParameter& EnvelopeSegment::period()
   {
@@ -237,5 +237,4 @@ namespace syn
       throw;
     }
   }
-
 }

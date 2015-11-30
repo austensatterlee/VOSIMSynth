@@ -5,17 +5,17 @@
 #include "GallantSignal.h"
 #include <unordered_map>
 #include <vector>
-#include <tuple>
+#include <functional>
 
 using Gallant::Signal1;
-using std::tuple;
 using std::unordered_map;
 using std::vector;
-
-typedef  unordered_map<string, int> IDMap; //!< string->integral id translation map 
+using std::hash;
 
 namespace syn
 {
+  typedef unordered_map<string, int> IDMap; //!< string to array index translation map
+
   class Circuit; // forward decl.
 /**
  * \class Unit
@@ -33,15 +33,16 @@ namespace syn
   public:
     Unit(string name);
     virtual ~Unit();
+    virtual void setFs(double fs) { m_Fs = fs; };
+    const unsigned int getClassIdentifier() const { hash<string> hash_fn; return hash_fn(getClassName()); };
     /*!
      * \brief Runs the unit for the specified number of ticks. The result is accessed via getLastOutputBuffer().
      */
     void tick();
-    virtual void setFs(double fs) { m_Fs = fs; };
     double getFs() const { return m_Fs; };
     const vector<double>& getLastOutputBuffer() const { return m_output; };
-    double getLastOutput() const { return m_output[m_bufind]; };
-    virtual void resizeOutputBuffer(size_t newbufsize){ m_output.resize(newbufsize); }
+    double getLastOutput() const { return m_output[m_output.size() - 1]; };
+    virtual void resizeOutputBuffer(size_t newbufsize) { m_output.resize(newbufsize); }
     /*!
      *\brief Modifies the value of the parameter associated with portid.
      */
@@ -55,7 +56,7 @@ namespace syn
     int getParamId(string name);
     Circuit& getParent() const { return *m_parent; };
     string getName() const { return m_name; }
-    void setName(string name){ m_name = name; }
+    void setName(string name) { m_name = name; }
     Unit* clone() const;
   protected:
     typedef vector<UnitParameter*> ParamVec;
@@ -66,13 +67,13 @@ namespace syn
     double m_Fs;
     vector<double> m_output;
     virtual void process(int bufind) = 0; //<! should add its result to m_output[bufind]
-    UnitParameter& addParam(string name, int id, PARAM_TYPE ptype, const double min, const double max, const bool isHidden=false);
-    UnitParameter& addParam(string name, PARAM_TYPE ptype, const double min, const double max, const bool isHidden=false);
+    UnitParameter& addParam(string name, int id, PARAM_TYPE ptype, const double min, const double max, const bool isHidden = false);
+    UnitParameter& addParam(string name, PARAM_TYPE ptype, const double min, const double max, const bool isHidden = false);
     UnitParameter& addEnumParam(string name, const vector<string> choice_names);
-    
   private:
     int m_bufind;
     virtual Unit* cloneImpl() const = 0;
+    virtual inline string getClassName() const = 0;
     virtual void beginProcessing() {};
     virtual void finishProcessing() {}; //<! Allows parent classes to apply common processing to child class outputs.
   };
@@ -98,7 +99,8 @@ namespace syn
   private:
     UnitParameter& m_input;
     UnitParameter& m_gain;
-    virtual Unit* cloneImpl() const { return new AccumulatingUnit(*this); };
+    virtual Unit* cloneImpl() const override { return new AccumulatingUnit(*this); }
+    virtual string getClassName() const override { return "AccumulatingUnit"; }
   };
 }
 #endif

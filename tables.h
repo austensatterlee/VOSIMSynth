@@ -5,11 +5,10 @@
 //todo: add oversampling and bias info to the LookupTable class so that it can still be accessed with a double between some arbitrary min and max.
 namespace syn
 {
-
   class LookupTable
   {
   public:
-    LookupTable(const double* table, int size, double input_min = 0, double input_max = 1, bool isPeriodic=true) :
+    LookupTable(const double* table, int size, double input_min = 0, double input_max = 1, bool isPeriodic = true) :
       m_table(table),
       m_size(size),
       m_isperiodic(isPeriodic)
@@ -32,12 +31,12 @@ namespace syn
 
   /*::automated::*/
   extern const double BL_SAW[128];
-extern const double PITCH_TABLE[128];
-extern const double VOSIM_PULSE_COS[128];
+  extern const double PITCH_TABLE[128];
+  extern const double VOSIM_PULSE_COS[128];
 
-const LookupTable lut_bl_saw(BL_SAW, 128);
-const LookupTable lut_pitch_table(PITCH_TABLE, 128, -1, 1, false);
-const LookupTable lut_vosim_pulse_cos(VOSIM_PULSE_COS, 128);
+  const LookupTable lut_bl_saw(BL_SAW, 128);
+  const LookupTable lut_pitch_table(PITCH_TABLE, 128, -1, 1, false);
+  const LookupTable lut_vosim_pulse_cos(VOSIM_PULSE_COS, 128);
 
   /*::/automated::*/
 }

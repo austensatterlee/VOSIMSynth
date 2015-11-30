@@ -35,7 +35,8 @@ namespace syn
     UnitParameter& m_number;
   private:
     /* internal state */
-    virtual Unit* cloneImpl() const { return new VosimOscillator(*this); };
+    virtual Unit* cloneImpl() const override { return new VosimOscillator(*this); }
+    virtual inline string getClassName() const override { return "VosimOscillator"; }
     double		m_curr_pulse_gain;
     double    m_pulse_step;
     double    m_pulse_phase;
@@ -46,7 +47,7 @@ namespace syn
   class VosimChoir : public SourceUnit
   {
   public:
-    VosimChoir(string name, size_t size=4) :
+    VosimChoir(string name, size_t size = 4) :
       SourceUnit(name),
       m_size(size),
       m_gain(addParam("gain", DOUBLE_TYPE, 0, 1)),
@@ -58,14 +59,14 @@ namespace syn
       m_pitchdrift(addParam("pulse_drift", DOUBLE_TYPE, 0, 0.5)),
       m_driftfreq(addParam("drift_freq", DOUBLE_TYPE, -32, 32))
     {
-      assert(size>0);
+      assert(size > 0);
       m_choir = (VosimOscillator**)malloc(m_size*sizeof(VosimOscillator*));
       m_pulsedrifters = (NormalRandomOscillator**)malloc(m_size*sizeof(NormalRandomOscillator*));
       for (int i = 0; i < m_size; i++)
       {
         m_choir[i] = new VosimOscillator(name);
         m_pulsedrifters[i] = new NormalRandomOscillator(name);
-        m_choir[i]->getParam("tune").addConnection(&m_pulsedrifters[i]->getLastOutputBuffer(),ADD);
+        m_choir[i]->getParam("tune").addConnection(&m_pulsedrifters[i]->getLastOutputBuffer(), ADD);
       }
     }
     VosimChoir(const VosimChoir& other) : VosimChoir(other.m_name, other.m_size)
@@ -94,7 +95,7 @@ namespace syn
     {
       for (int i = 0; i < m_size; i++)
       {
-        m_choir[i]->noteOn(pitch,vel);
+        m_choir[i]->noteOn(pitch, vel);
       }
     }
     virtual void noteOff(int pitch, int vel)
@@ -111,7 +112,7 @@ namespace syn
         m_choir[i]->setFs(fs);
       }
     }
-    virtual int getSamplesPerPeriod() const { return m_choir[0]->getSamplesPerPeriod(); }   
+    virtual int getSamplesPerPeriod() const { return m_choir[0]->getSamplesPerPeriod(); }
     UnitParameter& m_gain;
     UnitParameter& m_decay;
     UnitParameter& m_harmonicdecay;
@@ -129,11 +130,11 @@ namespace syn
       {
         m_choir[i]->m_decay.mod(m_decay, SET);
 
-        m_choir[i]->m_ppitch.mod(m_ppitch*(1+(double)i/m_size), SET);
+        m_choir[i]->m_ppitch.mod(m_ppitch*(1 + (double)i / m_size), SET);
 
-        m_choir[i]->m_number.mod(m_number+i, SET);
+        m_choir[i]->m_number.mod(m_number + i, SET);
 
-        m_pulsedrifters[i]->m_pitch.mod(m_driftfreq,SET);
+        m_pulsedrifters[i]->m_pitch.mod(m_driftfreq, SET);
         m_pulsedrifters[i]->m_gain.mod(m_pitchdrift, SET);
         m_choir[i]->m_tune.mod(m_tune, SET);
 
@@ -148,7 +149,7 @@ namespace syn
         {
           m_output[bufind] -= harmonicgain*m_choir[i]->getLastOutput();
         }
-        harmonicgain*=m_harmonicdecay;
+        harmonicgain *= m_harmonicdecay;
       }
       m_output[bufind] *= m_gain;
     }
@@ -156,10 +157,8 @@ namespace syn
     VosimOscillator** m_choir;
     NormalRandomOscillator** m_pulsedrifters;
     size_t m_size;
-    virtual Unit* cloneImpl() const
-    {
-      return new VosimChoir(*this);
-    }
+    virtual Unit* cloneImpl() const override { return new VosimChoir(*this); }
+    virtual string getClassName() const override { return "VosimChoir"; }
   };
 }
 

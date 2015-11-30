@@ -58,14 +58,14 @@ namespace syn
     for (i = 0, j = xBufInd; i < nX; i++, j--)
     {
       if (j < 0)
-        j = nX-1;
+        j = nX - 1;
       YBuf[yBufInd] += XBuf[j] * XCoefs[i];
     }
-    for (i = 1, j = yBufInd-1; i < nY; i++, j--)
+    for (i = 1, j = yBufInd - 1; i < nY; i++, j--)
     {
       if (j < 0)
-        j = nY-1;
-      YBuf[yBufInd] -= YBuf[j] * YCoefs[i]/YCoefs[0];
+        j = nY - 1;
+      YBuf[yBufInd] -= YBuf[j] * YCoefs[i] / YCoefs[0];
     }
     xBufInd++;
     if (xBufInd == nX)

@@ -41,7 +41,7 @@ namespace syn
   void UnitControl::resize(int newsize)
   {
     const vector<string>& paramNames = m_unit->getParameterNames();
-    if (newsize <= 10*m_nParams+30) newsize = m_nParams * 10 + 30;
+    if (newsize <= 10 * m_nParams + 30) newsize = m_nParams * 10 + 30;
     m_size = newsize;
     mRECT.R = m_x + m_size;
     mRECT.B = m_y + m_size;
@@ -52,7 +52,7 @@ namespace syn
     {
       m_portLabels[i].setRect(IRECT{ m_x + 30 ,portY, m_x + newsize,portY + 10 });
       m_ports[i].add_rect = IRECT{ m_x, portY, m_x + 10, portY + 10 };
-      m_ports[i].scale_rect = IRECT{ m_x+12, portY, m_x + 22, portY + 10 };
+      m_ports[i].scale_rect = IRECT{ m_x + 12, portY, m_x + 22, portY + 10 };
       portY += rowsize;
     }
     SetTargetArea(mRECT);
@@ -60,17 +60,23 @@ namespace syn
 
   bool UnitControl::Draw(IGraphics* pGraphics)
   {
+    Instrument* instr = (Instrument*)&m_unit->getParent();
     IText textfmt{ 12,0,"Helvetica",IText::kStyleNormal,IText::kAlignNear,0,IText::kQualityClearType };
     IText textfmtwhite{ 12,&IColor{ 255,255,255,255 },"Helvetica",IText::kStyleNormal,IText::kAlignNear,0,IText::kQualityClearType };
     IText centertextfmt{ 12,0,"Helvetica",IText::kStyleNormal,IText::kAlignCenter,0,IText::kQualityClearType };
     // If this unit is the circuit sink
-    if (m_unit->getParent().getSinkId() == m_unit->getParent().getUnitId(m_unit))
+    if (instr->getSinkId() == instr->getUnitId(m_unit))
     {
       pGraphics->FillIRect(&(IColor)palette[1], &mRECT);
     }
     else
     {
       pGraphics->FillIRect(&(IColor)palette[2], &mRECT);
+    }
+
+    if (instr->isPrimarySource(instr->getUnitId(m_unit)))
+    {
+      pGraphics->DrawRect(&IColor{ 255,255,255,255 }, &(mRECT.GetPadded(10)));
     }
 
     VOSIMSynth* vs = (VOSIMSynth*)mPlug;
@@ -90,8 +96,8 @@ namespace syn
     pGraphics->DrawIText(&centertextfmt, strbuf, &IRECT{ m_x,m_y,m_x + m_size,m_y + 10 });
     for (int i = 0; i < paramNames.size(); i++)
     {
-      pGraphics->FillCircle(&IColor{150,0,255,0}, m_ports[i].add_rect.MW(), m_ports[i].add_rect.MH(), m_ports[i].add_rect.W() / 2, 0, true);
-      pGraphics->DrawIText(&centertextfmt,"+", &m_ports[i].add_rect);
+      pGraphics->FillCircle(&IColor{ 150,0,255,0 }, m_ports[i].add_rect.MW(), m_ports[i].add_rect.MH(), m_ports[i].add_rect.W() / 2, 0, true);
+      pGraphics->DrawIText(&centertextfmt, "+", &m_ports[i].add_rect);
       pGraphics->FillCircle(&IColor{ 150,255,0,0 }, m_ports[i].scale_rect.MW(), m_ports[i].scale_rect.MH(), m_ports[i].scale_rect.W() / 2, 0, true);
       pGraphics->DrawIText(&centertextfmt, "x", &m_ports[i].scale_rect);
       char strbuf[256];
@@ -127,7 +133,7 @@ namespace syn
     }
     else
     {
-      return NDPoint<2,int>(0,0);
+      return NDPoint<2, int>(0, 0);
     }
   }
 
@@ -143,7 +149,7 @@ namespace syn
 
   SelectedPort UnitControl::getSelectedPort(int x, int y)
   {
-    SelectedPort selectedPort = {-1,SET};
+    SelectedPort selectedPort = { -1,SET };
     for (int i = 0; i < m_ports.size(); i++)
     {
       if (m_ports[i].add_rect.Contains(x, y))
@@ -192,6 +198,15 @@ namespace syn
     WDL_MutexLock lock(&mPlug->GetGUI()->mMutex);
     // Delete unit from instrument
     Unit* unit = m_unitControls[unitctrlid]->getUnit();
+    int unitid = unit->getParent().getUnitId(unit);
+    VOSIMSynth* vs = (VOSIMSynth*)mPlug;
+    // reset oscilloscope input and trigger if necessary
+    if (unitid == vs->m_oscilloscope_input_unit) {
+      vs->m_oscilloscope_input_unit = -1;
+    }
+    if (unitid == vs->m_oscilloscope_trigger_unit) {
+      vs->m_oscilloscope_trigger_unit = -1;
+    }
     Instrument* instr = m_vm->getProtoInstrument();
     instr->removeUnit(instr->getUnitId(unit));
     // Delete unit controller
@@ -217,7 +232,7 @@ namespace syn
       {
         m_currAction = MOD_PARAM;
       }
-      else if (pMod->L && m_lastSelectedPort.paramid>=0)
+      else if (pMod->L && m_lastSelectedPort.paramid >= 0)
       {
         m_currAction = CONNECT;
       }
@@ -232,6 +247,24 @@ namespace syn
     }
   }
 
+  void CircuitPanel::createSourceUnit(int factoryid, int x, int y) {
+    IPlugBase::IMutexLock lock(mPlug);
+    Instrument* instr = m_vm->getProtoInstrument();
+    SourceUnit* srcunit = m_unitFactory->createSourceUnit(factoryid);
+    int uid = instr->addSource(srcunit);
+    m_unitControls[uid] = new UnitControl(mPlug, m_vm, srcunit, x, y);
+    updateInstrument();
+  }
+
+  void CircuitPanel::createUnit(int factoryid, int x, int y) {
+    IPlugBase::IMutexLock lock(mPlug);
+    Instrument* instr = m_vm->getProtoInstrument();
+    Unit* unit = m_unitFactory->createUnit(factoryid);
+    int uid = instr->addUnit(unit);
+    m_unitControls[uid] = new UnitControl(mPlug, m_vm, unit, x, y);
+    updateInstrument();
+  }
+
   void CircuitPanel::OnMouseUp(int x, int y, IMouseMod* pMod)
   {
     WDL_MutexLock lock(&mPlug->GetGUI()->mMutex);
@@ -242,36 +275,26 @@ namespace syn
       IPopupMenu* selectedMenu = mPlug->GetGUI()->CreateIPopupMenu(&m_main_menu, x, y);
       if (selectedMenu == &m_sourceunit_menu)
       { // Create a source unit
-
-        IPlugBase::IMutexLock lock(mPlug);
         int itemChosen = selectedMenu->GetChosenItemIdx();
-        SourceUnit* srcunit = m_unitFactory->createSourceUnit(itemChosen);
-        int uid = instr->addSource(srcunit);
-        m_unitControls[uid] = new UnitControl(mPlug, m_vm, srcunit, x, y);
-        updateInstrument();
+        createSourceUnit(itemChosen, x, y);
       }
       else if (selectedMenu == &m_unit_menu)
       { // Create a non-source unit
-
-        IPlugBase::IMutexLock lock(mPlug);
         int itemChosen = selectedMenu->GetChosenItemIdx();
-        Unit* unit = m_unitFactory->createUnit(itemChosen);
-        int uid = instr->addUnit(unit);
-        m_unitControls[uid] = new UnitControl(mPlug, m_vm, unit, x, y);
-        updateInstrument();
+        createUnit(itemChosen, x, y);
       }
     }
     else if (m_isMouseDown == 2 && currSelectedUnit >= 0)
     { // Right clicking on a unit
-
       IPopupMenu unitmenu;
-      unitmenu.AddItem("Make sink");
+      unitmenu.AddItem("Set sink");
       unitmenu.AddItem("Delete");
       unitmenu.AddItem("Set oscilloscope source");
       if (instr->isSourceUnit(currSelectedUnit))
       {
         unitmenu.AddSeparator();
         unitmenu.AddItem("Set oscilloscope trigger");
+        unitmenu.AddItem("Set primary source");
       }
       Unit* unit = m_unitControls[currSelectedUnit]->getUnit();
       IPopupMenu* selectedmenu = mPlug->GetGUI()->CreateIPopupMenu(&unitmenu, x, y);
@@ -280,24 +303,29 @@ namespace syn
         IPlugBase::IMutexLock lock(mPlug);
         int selectedItem = selectedmenu->GetChosenItemIdx();
         if (selectedItem == 0)
-        {
+        { // Set sink
           instr->setSinkId(instr->getUnitId(unit));
           updateInstrument();
         }
         else if (selectedItem == 1)
-        {
+        { // Delete unit
           deleteUnit(currSelectedUnit);
           updateInstrument();
         }
         else if (selectedItem == 2)
-        {
+        { // Set oscilloscope source
           VOSIMSynth* vs = (VOSIMSynth*)mPlug;
           vs->m_oscilloscope_input_unit = instr->getUnitId(unit);
         }
         else if (selectedItem == 4)
-        {
+        { // Set oscilloscope trigger
           VOSIMSynth* vs = (VOSIMSynth*)mPlug;
           vs->m_oscilloscope_trigger_unit = instr->getUnitId(unit);
+        }
+        else if (selectedItem == 5)
+        { // Set primary source
+          instr->resetPrimarySource(instr->getUnitId(unit));
+          updateInstrument();
         }
       }
     }
@@ -354,7 +382,7 @@ namespace syn
       for (int j = 0; j < connections.size(); j++)
       {
         NDPoint<2, int> pt1 = m_unitControls[connections[j].srcid]->getOutputPos();
-        NDPoint<2, int> pt2 = m_unitControls[connections[j].targetid]->getPortPos(SelectedPort{connections[j].portid,connections[j].action});
+        NDPoint<2, int> pt2 = m_unitControls[connections[j].targetid]->getPortPos(SelectedPort{ connections[j].portid,connections[j].action });
         pGraphics->DrawLine(&IColor(255, 255, 255, 255), pt1[0], pt1[1], pt2[0], pt2[1], 0, true);
       }
     }
@@ -378,4 +406,117 @@ namespace syn
     return selectedUnit;
   }
 
+  ByteChunk CircuitPanel::serialize() const
+  {
+    ByteChunk serialized;
+
+    unsigned int numunits = m_unitControls.size();
+    serialized.PutBytes(&numunits, sizeof(unsigned int));
+    for (std::pair<int, UnitControl*> ctrlpair : m_unitControls)
+    {
+      serialized.PutChunk(&serializeUnitControl(ctrlpair.first));
+    }
+
+    Instrument* instr = m_vm->getProtoInstrument();
+    for (std::pair<int, UnitControl*> ctrlpair : m_unitControls)
+    {
+      int unitid = instr->getUnitId(ctrlpair.second->m_unit);
+      const vector<ConnectionMetadata> connections = instr->getConnectionsTo(unitid);
+
+      unsigned int numconnections = connections.size();
+      serialized.PutBytes(&numconnections, sizeof(unsigned int));
+      for (int j = 0; j < connections.size(); j++)
+      {
+        serialized.Put<ConnectionMetadata>(&connections[j]);
+      }
+    }
+    return serialized;
+  }
+  int CircuitPanel::unserialize(ByteChunk* serialized, int startPos)
+  {
+    int chunkpos = startPos;
+
+    // Unserialize units
+    unsigned int numunits;
+    chunkpos = serialized->Get<unsigned int>(&numunits, chunkpos);
+    for (int i = 0; i < numunits; i++) {
+      chunkpos = unserializeUnitControl(serialized, chunkpos);
+    }
+
+    // Unserialize connections
+    Instrument* instr = m_vm->getProtoInstrument();
+    for (int i = 0; i < numunits; i++) {
+      unsigned int numConns;
+      chunkpos = serialized->Get<unsigned int>(&numConns, chunkpos);
+      for (int j = 0; j < numConns; j++) {
+        ConnectionMetadata conn;
+        chunkpos = serialized->Get<ConnectionMetadata>(&conn, chunkpos);
+        instr->addConnection(conn);
+      }
+    }
+    return chunkpos;
+  }
+  ByteChunk CircuitPanel::serializeUnitControl(int ctrlidx) const
+  {
+    ByteChunk serialized;
+    UnitControl* uctrl = m_unitControls.at(ctrlidx);
+    Instrument* instr = m_vm->getProtoInstrument();
+    unsigned int unitClassId = uctrl->m_unit->getClassIdentifier();
+    int unitid = instr->getUnitId(uctrl->m_unit);
+    bool isSource = instr->isSourceUnit(unitid);
+    bool isPrimarySource = isSource ? instr->isPrimarySource(unitid) : false;
+
+    serialized.Put<unsigned int>(&unitClassId);
+    serialized.Put<int>(&unitid);
+    serialized.Put<bool>(&isSource);
+    serialized.Put<bool>(&isPrimarySource);
+    serialized.Put<bool>(&uctrl->m_is_sink);
+
+    serialized.Put<unsigned int>(&uctrl->m_nParams);
+    for (int i = 0; i < uctrl->m_nParams; i++) {
+      double paramval = uctrl->m_unit->getParam(i);
+      serialized.Put<double>(&paramval);
+    }
+
+    serialized.Put<int>(&uctrl->m_size);
+    serialized.Put<int>(&uctrl->m_x);
+    serialized.Put<int>(&uctrl->m_y);
+    return serialized;
+  }
+
+  int CircuitPanel::unserializeUnitControl(ByteChunk* chunk, int startPos)
+  {
+    int chunkpos = startPos;
+    unsigned int unitClassId;
+    int unitid;
+    bool isSource, isPrimarySource, isSink;
+    unsigned int numparams;
+    int x, y;
+    int size;
+    Unit* unit;
+    chunkpos = chunk->Get<unsigned int>(&unitClassId, chunkpos);
+    chunkpos = chunk->Get<int>(&unitid, chunkpos);
+    chunkpos = chunk->Get<bool>(&isSource, chunkpos);
+    chunkpos = chunk->Get<bool>(&isPrimarySource, chunkpos);
+    chunkpos = chunk->Get<bool>(&isSink, chunkpos);
+    unit = isSource ? m_unitFactory->createSourceUnit(unitClassId) : m_unitFactory->createUnit(unitClassId);
+
+    chunkpos = chunk->Get<unsigned int>(&numparams, chunkpos);
+    for (int i = 0; i < numparams; i++) {
+      double paramval;
+      chunkpos = chunk->Get<double>(&paramval, chunkpos);
+      unit->modifyParameter(i, paramval, SET);
+    }
+    chunkpos = chunk->Get<int>(&x, chunkpos);
+    chunkpos = chunk->Get<int>(&y, chunkpos);
+    chunkpos = chunk->Get<int>(&size, chunkpos);
+
+    Instrument* instr = m_vm->getProtoInstrument();
+    int uid = isSource ? instr->addSource(dynamic_cast<SourceUnit*>(unit), unitid) : instr->addUnit(unit, unitid);
+    m_unitControls[uid] = new UnitControl(mPlug, m_vm, unit, x, y, size);
+    if (isSink) instr->setSinkId(uid);
+    if (isPrimarySource) instr->setPrimarySource(uid);
+    updateInstrument();
+    return chunkpos;
+  }
 }

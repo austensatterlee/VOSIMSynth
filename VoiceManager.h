@@ -26,7 +26,7 @@ namespace syn
     VoiceList m_idleVoiceStack;
     vector<Instrument*> m_allVoices;
     Instrument* m_instrument;
-    int createVoice(int note,int vel);
+    int createVoice(int note, int vel);
     void makeIdle();
     int findIdleVoice();
     void makeIdle(int vind);
@@ -34,7 +34,7 @@ namespace syn
   public:
     void noteOn(uint8_t noteNumber, uint8_t velocity);
     void noteOff(uint8_t noteNumber, uint8_t velocity);
-    Instrument* getLowestVoice(){ int ind = getLowestVoiceInd(); return ind>=0 ? m_allVoices[ind] : nullptr; };
+    Instrument* getLowestVoice() { int ind = getLowestVoiceInd(); return ind >= 0 ? m_allVoices[ind] : nullptr; };
     Instrument* getNewestVoice() { int ind = getNewestVoiceInd(); return ind >= 0 ? m_allVoices[ind] : nullptr; };
     Instrument* getOldestVoice() { int ind = getOldestVoiceInd(); return ind >= 0 ? m_allVoices[ind] : nullptr; };
     Instrument* getHighestVoice() { int ind = getHighestVoiceInd(); return ind >= 0 ? m_allVoices[ind] : nullptr; };
@@ -43,12 +43,12 @@ namespace syn
     int getOldestVoiceInd() const;
     int getHighestVoiceInd() const;
 
-    Instrument* getProtoInstrument() const {return m_instrument;};
+    Instrument* getProtoInstrument() const { return m_instrument; };
     void setFs(double fs);
     void setBufSize(size_t bufsize);
     void setMaxVoices(int max, Instrument* v);
     int getNumVoices() const { return m_numVoices; };
-    int getMaxVoices(){return m_maxVoices;};
+    int getMaxVoices() { return m_maxVoices; };
     void modifyParameter(int uid, int pid, double val, MOD_ACTION action);
     void tick(double* buf, size_t bufsize);
     Signal1<Instrument*> m_onDyingVoice;

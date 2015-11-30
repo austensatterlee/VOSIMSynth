@@ -28,7 +28,6 @@ namespace syn
     ColorPoint(const NDPoint<4>& pt) :
       NDPoint<4>(pt)
     {
-
     }
     operator IColor() const
     {
@@ -38,7 +37,7 @@ namespace syn
 
   const vector<ColorPoint> palette = {
     {0xFF06070E},
-    {0xFF29524A},
+    {0xFF49524A},
     {0xFF94A187},
     {0xFFC5AFA0},
     {0xFFE9BCB7}
@@ -62,6 +61,5 @@ namespace syn
     pGraphics->AttachControl(knobLbl);
     pGraphics->AttachControl(knobTextCtrl);
   }
-
 }
 #endif

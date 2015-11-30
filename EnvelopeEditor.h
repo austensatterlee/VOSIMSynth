@@ -20,7 +20,7 @@ namespace syn
     double m_ampScale;
     double m_maxTimeScale;
     double m_minAmpScale, m_maxAmpScale;
-    array<int,4> m_Padding;
+    array<int, 4> m_Padding;
     IRECT m_InnerRect;
     vector<NDPoint<2> > m_points;
     NDPoint<2> m_ltpt; // left, top coords

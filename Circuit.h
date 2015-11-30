@@ -9,7 +9,6 @@
 #include <deque>
 #include <tuple>
 
-
 namespace syn
 {
   using std::list;
@@ -25,7 +24,7 @@ namespace syn
     MOD_ACTION action;
     bool operator==(const ConnectionMetadata& other)
     {
-      return other.srcid==srcid && other.targetid==targetid && other.portid==portid && other.action==action;
+      return other.srcid == srcid && other.targetid == targetid && other.portid == portid && other.action == action;
     }
   };
 
@@ -81,15 +80,15 @@ namespace syn
     void tick();
     void setFs(double fs);
     void setBufSize(size_t bufsize);
-    size_t getBufSize(){ return m_bufsize; }
+    size_t getBufSize() { return m_bufsize; }
     bool hasUnit(string name) const;
     bool hasUnit(int uid) const;
     double getLastOutput() const { return m_units.at(m_sinkId)->getLastOutput(); };
     const vector<double>& getLastOutputBuffer() const { return m_units.at(m_sinkId)->getLastOutputBuffer(); };
     const vector<ConnectionMetadata>& getConnectionsTo(int unitid) const;
   protected:
-    typedef  unordered_map<int,Unit*> UnitVec;
-    typedef  unordered_map<int,vector<ConnectionMetadata>> ConnVec;
+    typedef  unordered_map<int, Unit*> UnitVec;
+    typedef  unordered_map<int, vector<ConnectionMetadata>> ConnVec;
     UnitVec m_units;
     ConnVec m_forwardConnections;
     ConnVec m_backwardConnections;
@@ -99,10 +98,11 @@ namespace syn
     int m_sinkId;
     size_t m_bufsize;
     double m_Fs;
+    int m_nextUid;
   private:
     void refreshProcQueue();
+
     virtual Circuit* cloneImpl() const { return new Circuit(); };
-    int m_nextUid;
   };
 };
 #endif // __Circuit__

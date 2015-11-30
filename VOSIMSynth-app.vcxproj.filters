@@ -132,6 +132,7 @@
     <ClInclude Include="UnitParameter.h">
       <Filter>Components\Connectors</Filter>
     </ClInclude>
+    <ClInclude Include="fftw3.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\WDL\rtaudiomidi\RtAudio.cpp">
@@ -213,5 +214,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="libfftw3-3.lib" />
   </ItemGroup>
 </Project>
