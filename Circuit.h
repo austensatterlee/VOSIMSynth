@@ -34,7 +34,7 @@ namespace syn
   * \brief A collection of Units and Connections.
   *
   * A circuit allows Units to automatically cooperate by managing the signal flow via Connections.
-  * The signal flow of a Circuit starts at the Units without incoming connections and flows towards the Unit
+  * The signal flow of a Circuit starts at the Units without incoming connections (sources) and flows towards the Unit
   * marked as the sink. The output of the Circuit is the output of the sink.
   *
   */
@@ -74,6 +74,7 @@ namespace syn
     const Unit& getUnit(int id) const { return *m_units.at(id); };
     int getUnitId(string name);
     int getUnitId(Unit* unit);
+    vector<int> getUnitIds() const;
     /**
      * \brief Generate the requested number of samples. The result can be retrieved using getLastOutputBuffer()
      */

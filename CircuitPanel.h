@@ -72,6 +72,7 @@ namespace syn
     SelectedPort m_lastSelectedPort;
     void updateInstrument();
     void deleteUnit(int unitctrlid);
+    void setSink(int unitctrlid);
   public:
     CircuitPanel(IPlugBase* pPlug, IRECT pR, VoiceManager* voiceManager, UnitFactory* unitFactory) :
       m_vm(voiceManager),

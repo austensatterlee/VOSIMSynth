@@ -215,6 +215,14 @@ namespace syn
     delete unitctrl;
   }
 
+  void CircuitPanel::setSink(int unitctrlid)
+  {
+    Instrument* instr = m_vm->getProtoInstrument();
+    Unit* unit = m_unitControls[unitctrlid]->getUnit();
+    instr->setSinkId(instr->getUnitId(unit));
+    m_unitControls[unitctrlid]->m_is_sink = true;
+  }
+
   void CircuitPanel::OnMouseDown(int x, int y, IMouseMod* pMod)
   {
     if (pMod->L) m_isMouseDown = 1;
@@ -249,6 +257,7 @@ namespace syn
 
   void CircuitPanel::createSourceUnit(int factoryid, int x, int y) {
     IPlugBase::IMutexLock lock(mPlug);
+    WDL_MutexLock guilock(&mPlug->GetGUI()->mMutex);
     Instrument* instr = m_vm->getProtoInstrument();
     SourceUnit* srcunit = m_unitFactory->createSourceUnit(factoryid);
     int uid = instr->addSource(srcunit);
@@ -258,6 +267,7 @@ namespace syn
 
   void CircuitPanel::createUnit(int factoryid, int x, int y) {
     IPlugBase::IMutexLock lock(mPlug);
+    WDL_MutexLock guilock(&mPlug->GetGUI()->mMutex);
     Instrument* instr = m_vm->getProtoInstrument();
     Unit* unit = m_unitFactory->createUnit(factoryid);
     int uid = instr->addUnit(unit);
@@ -304,7 +314,7 @@ namespace syn
         int selectedItem = selectedmenu->GetChosenItemIdx();
         if (selectedItem == 0)
         { // Set sink
-          instr->setSinkId(instr->getUnitId(unit));
+          setSink(currSelectedUnit);
           updateInstrument();
         }
         else if (selectedItem == 1)
@@ -435,6 +445,14 @@ namespace syn
   int CircuitPanel::unserialize(ByteChunk* serialized, int startPos)
   {
     int chunkpos = startPos;
+    Instrument* instr = m_vm->getProtoInstrument();
+    vector<int> unitctrlids;
+    for (std::pair<int, UnitControl*> ctrlpair : m_unitControls) {
+      unitctrlids.push_back(ctrlpair.first);
+    }
+    for (int i = 0; i < unitctrlids.size(); i++) {
+      deleteUnit(unitctrlids[i]);
+    }
 
     // Unserialize units
     unsigned int numunits;
@@ -444,7 +462,6 @@ namespace syn
     }
 
     // Unserialize connections
-    Instrument* instr = m_vm->getProtoInstrument();
     for (int i = 0; i < numunits; i++) {
       unsigned int numConns;
       chunkpos = serialized->Get<unsigned int>(&numConns, chunkpos);
@@ -454,6 +471,7 @@ namespace syn
         instr->addConnection(conn);
       }
     }
+    updateInstrument();
     return chunkpos;
   }
   ByteChunk CircuitPanel::serializeUnitControl(int ctrlidx) const
@@ -507,14 +525,14 @@ namespace syn
       chunkpos = chunk->Get<double>(&paramval, chunkpos);
       unit->modifyParameter(i, paramval, SET);
     }
+    chunkpos = chunk->Get<int>(&size, chunkpos);
     chunkpos = chunk->Get<int>(&x, chunkpos);
     chunkpos = chunk->Get<int>(&y, chunkpos);
-    chunkpos = chunk->Get<int>(&size, chunkpos);
 
     Instrument* instr = m_vm->getProtoInstrument();
     int uid = isSource ? instr->addSource(dynamic_cast<SourceUnit*>(unit), unitid) : instr->addUnit(unit, unitid);
     m_unitControls[uid] = new UnitControl(mPlug, m_vm, unit, x, y, size);
-    if (isSink) instr->setSinkId(uid);
+    if (isSink) setSink(uid);
     if (isPrimarySource) instr->setPrimarySource(uid);
     updateInstrument();
     return chunkpos;

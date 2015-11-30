@@ -303,4 +303,13 @@ namespace syn
     }
     return uid;
   }
+
+  vector<int> Circuit::getUnitIds() const
+  {
+    vector<int> unitIds;
+    for (std::pair<int,Unit*> unitpair : m_units) {
+      unitIds.push_back(unitpair.first);
+    }
+    return unitIds;
+  }
 }
