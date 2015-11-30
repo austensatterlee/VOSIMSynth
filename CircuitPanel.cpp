@@ -195,7 +195,8 @@ namespace syn
 
   void CircuitPanel::deleteUnit(int unitctrlid)
   {
-    WDL_MutexLock lock(&mPlug->GetGUI()->mMutex);
+    IPlugBase::IMutexLock lock(mPlug);
+    WDL_MutexLock guilock(&mPlug->GetGUI()->mMutex);
     // Delete unit from instrument
     Unit* unit = m_unitControls[unitctrlid]->getUnit();
     int unitid = unit->getParent().getUnitId(unit);
@@ -442,6 +443,7 @@ namespace syn
     }
     return serialized;
   }
+
   int CircuitPanel::unserialize(ByteChunk* serialized, int startPos)
   {
     int chunkpos = startPos;
@@ -504,6 +506,8 @@ namespace syn
 
   int CircuitPanel::unserializeUnitControl(ByteChunk* chunk, int startPos)
   {
+    IPlugBase::IMutexLock lock(mPlug);
+    WDL_MutexLock guilock(&mPlug->GetGUI()->mMutex);
     int chunkpos = startPos;
     unsigned int unitClassId;
     int unitid;
