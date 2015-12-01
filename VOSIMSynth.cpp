@@ -50,7 +50,7 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 void VOSIMSynth::makeGraphics()
 {
   pGraphics = MakeGraphics(this, kWidth, kHeight);
-  pGraphics->AttachPanelBackground(&(IColor)(palette[0]));
+  pGraphics->AttachPanelBackground(&(IColor)(globalPalette[0]));
 
   //IBitmap wedgeswitch2p = pGraphics->LoadIBitmap(WEDGE_SWITCH_2P_ID, WEDGE_SWITCH_2P_FN, 2);
   IBitmap push2p = pGraphics->LoadIBitmap(PUSH_2P_ID, PUSH_2P_FN, 2);

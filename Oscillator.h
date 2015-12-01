@@ -3,11 +3,10 @@
 #include <cstdint>
 #include <cmath>
 #include <vector>
-#include "tables.h"
 #include "SourceUnit.h"
-#include "DSPMath.h"
 
 using namespace std;
+
 namespace syn
 {
   enum OSC_MODE
@@ -21,23 +20,23 @@ namespace syn
     NUM_OSC_MODES
   };
 
-  const vector<string> OSC_MODE_NAMES{ "Saw","Naive saw","Sine","Tri","Square","Naive square" };
+  const vector<string> OSC_MODE_NAMES{"Saw","Naive saw","Sine","Tri","Square","Naive square"};
 
   class Oscillator : public SourceUnit
   {
   public:
     Oscillator(string name) : SourceUnit(name),
-      m_velocity(1.0),
-      m_gain(addParam("gain", DOUBLE_TYPE, 0, 1)),
-      m_pitch(addParam("pitch", DOUBLE_TYPE, 0, 128, true)),
-      m_tune(addParam("tune", DOUBLE_TYPE, -12, 12)),
-      m_phaseshift(addParam("phaseshift", DOUBLE_TYPE, -0.5, 0.5)),
-      m_portamento(addParam("portamento", DOUBLE_TYPE, 0, 1, true))
+                              m_velocity(1.0),
+                              m_gain(addParam("gain", DOUBLE_TYPE, -1, 1, 0.5)),
+                              m_pitch(addParam("pitch", DOUBLE_TYPE, 0, 128, 0, true)),
+                              m_tune(addParam("tune", DOUBLE_TYPE, -12, 12, 0)),
+                              m_phaseshift(addParam("phaseshift", DOUBLE_TYPE, -0.5, 0.5, 0.0)),
+                              m_portamento(addParam("portamento", DOUBLE_TYPE, 0, 1, 0, true))
     {
-      m_portamento.mod(0, SET);
       m_Step = 440. / m_Fs;
       m_Step = m_Step;
     };
+
     Oscillator(const Oscillator& osc) :
       Oscillator(osc.m_name)
     {
@@ -46,12 +45,29 @@ namespace syn
       m_velocity = osc.m_velocity;
       m_phase = osc.m_phase;
     }
-    virtual int getSamplesPerPeriod() const { return (int)(ceil(1. / m_Step)); }
-    virtual void sync() { m_basePhase = 0; };
-    bool isActive() const { return m_gain != 0; };
-    virtual void noteOn(int pitch, int vel);
-    virtual void noteOff(int pitch, int vel) {};
-    virtual void setFs(double fs);
+
+    virtual int getSamplesPerPeriod() const override
+    {
+      return (int)(ceil(1. / m_Step));
+    }
+
+    virtual void sync()
+    {
+      m_basePhase = 0;
+    };
+
+    virtual bool isActive() const override
+    {
+      return m_gain != 0;
+    };
+
+    virtual void noteOn(int pitch, int vel) override;
+
+    virtual void noteOff(int pitch, int vel) override
+    {
+    };
+
+    virtual void setFs(double fs) override;
     UnitParameter& m_portamento;
     UnitParameter& m_gain;
     UnitParameter& m_pitch;
@@ -62,7 +78,12 @@ namespace syn
     double m_phase = 0;
     double m_Step;
     double m_velocity;
-    void updateSyncStatus() { m_isSynced = m_phase < m_Step; };
+
+    void updateSyncStatus()
+    {
+      m_isSynced = m_phase < m_Step;
+    };
+
     virtual void tick_phase();
     virtual void update_step();
   };
@@ -71,16 +92,27 @@ namespace syn
   {
   public:
     BasicOscillator(string name) : Oscillator(name),
-      m_waveform(addEnumParam("waveform", OSC_MODE_NAMES))
-    {};
+                                   m_waveform(addEnumParam("waveform", OSC_MODE_NAMES))
+    {
+    };
+
     BasicOscillator(const BasicOscillator& other) : BasicOscillator(other.m_name)
-    {};
+    {
+    };
+
     UnitParameter& m_waveform;
   protected:
-    virtual void process(int bufind);
+    virtual void process(int bufind) override;
   private:
-    virtual Unit* cloneImpl() const override { return new BasicOscillator(*this); };
-    virtual string getClassName() const override { return "BasicOscillator"; };
+    virtual Unit* cloneImpl() const override
+    {
+      return new BasicOscillator(*this);
+    };
+
+    virtual string getClassName() const override
+    {
+      return "BasicOscillator";
+    };
   };
 
   class LFOOscillator : public BasicOscillator
@@ -95,14 +127,25 @@ namespace syn
     }
 
     LFOOscillator(const LFOOscillator& other) : LFOOscillator(other.m_name)
-    {};
-    virtual void noteOn(int pitch, int vel)
+    {
+    };
+
+    virtual void noteOn(int pitch, int vel) override
     {
       sync();
     }
+
   private:
-    virtual Unit* cloneImpl() const override { return new LFOOscillator(*this); };
-    virtual string getClassName() const override { return "LFOOscillator"; };
+    virtual Unit* cloneImpl() const override
+    {
+      return new LFOOscillator(*this);
+    };
+
+    virtual string getClassName() const override
+    {
+      return "LFOOscillator";
+    };
   };
 };
 #endif
+

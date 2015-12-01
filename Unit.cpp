@@ -35,18 +35,18 @@ namespace syn
     return u;
   }
 
-  UnitParameter& Unit::addParam(string name, int id, PARAM_TYPE ptype, const double min, const double max, const bool isHidden)
+  UnitParameter& Unit::addParam(string name, int id, PARAM_TYPE ptype, const double min, const double max, const double defaultValue, const bool isHidden)
   {
     m_parammap[name] = id;
     if (m_params.size() <= id)
       m_params.resize(id + 1);
-    m_params[id] = new UnitParameter(this, name, id, ptype, min, max, isHidden);
+    m_params[id] = new UnitParameter(this, name, id, ptype, min, max, defaultValue, isHidden);
     return *m_params[id];
   }
 
-  UnitParameter& Unit::addParam(string name, PARAM_TYPE ptype, const double min, const double max, const bool isHidden)
+  UnitParameter& Unit::addParam(string name, PARAM_TYPE ptype, const double min, const double max, const double defaultValue, const bool isHidden)
   {
-    return addParam(name, m_params.size(), ptype, min, max, isHidden);
+    return addParam(name, m_params.size(), ptype, min, max, defaultValue, isHidden);
   }
 
   UnitParameter& Unit::addEnumParam(string name, const vector<string> choice_names)

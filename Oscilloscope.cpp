@@ -7,10 +7,12 @@ namespace syn
   Oscilloscope::Oscilloscope(IPlugBase * pPlug, IRECT pR) :
     IControl(pPlug, pR),
     m_periodCount(0),
-    m_BufInd(0),
+    m_BufInd(0), 
+    m_BufSize(0),
     m_minY(0),
     m_maxY(1),
-    m_Padding(25),
+    m_Padding(25), 
+    m_displayIndex(0),
     m_displayPeriods(1),
     m_isActive(false),
     m_currSyncDelay(0),
@@ -82,10 +84,10 @@ namespace syn
           m_mutex.Enter();
           m_inputBuffer.resize(getPeriod()*m_displayPeriods);
           int inputBufInd = m_displayIndex;
-          for (int i = m_inputBuffer.size() - 1; i >= 0; i--)
+          for (int j = m_inputBuffer.size() - 1; j >= 0; j--)
           {
             if (inputBufInd < 0) inputBufInd = m_inputRingBuffer.size() - 1;
-            m_inputBuffer[i] = m_inputRingBuffer[inputBufInd];
+            m_inputBuffer[j] = m_inputRingBuffer[inputBufInd];
             inputBufInd--;
           }
           m_mutex.Leave();
@@ -199,7 +201,7 @@ namespace syn
     }
   }
 
-  int Oscilloscope::getBufReadLength()
+  int Oscilloscope::getBufReadLength() const
   {
     int bufReadLen = getPeriod()*m_displayPeriods;
     if (bufReadLen >= m_config->outputbuf.size())
@@ -209,38 +211,53 @@ namespace syn
 
   bool Oscilloscope::Draw(IGraphics *pGraphics)
   {
-    pGraphics->DrawRect(&(IColor)ColorPoint(palette[2] - getUnitv<4>(0)*40.0), &m_InnerRect);
-    IText errortxtstyle(12, &IColor{ 255,255,0,0 }, "Helvetica", IText::kStyleNormal, IText::kAlignNear, 0, IText::kQualityClearType);
-    IText txtstyle(12, &(IColor)(palette[4]), "Helvetica", IText::kStyleNormal, IText::kAlignNear, 0, IText::kQualityClearType, &(IColor)(palette[1]), &(IColor)(palette[3]));
-    IText txtstylecenter(txtstyle); txtstylecenter.mAlign = IText::kAlignCenter;
+    // Local color palette
+    IColor outlinecolor = ColorPoint(globalPalette[2] - getUnitv<4>(0)*40.0);
+    IColor bgcolor = ColorPoint(globalPalette[1] - getUnitv<4>(0)*127.0);
+    IColor axescolor = ColorPoint(globalPalette[1]);
+    IColor errorcolor_text{ 255,255,0,0 };
+    IColor normalcolor_text{255,255,255,255};
+    // Local text palette
+    IText errortxtstyle(12, &errorcolor_text, "Helvetica", IText::kStyleNormal, IText::kAlignNear, 0, IText::kQualityClearType);
+    IText txtstyle(12, &normalcolor_text, "Helvetica", IText::kStyleNormal, IText::kAlignNear, 0, IText::kQualityClearType);
+    IText txtstylecenter(12, &normalcolor_text, "Helvetica", IText::kStyleNormal, IText::kAlignCenter, 0, IText::kQualityClearType);
+
+    // Draw outline
+    pGraphics->DrawRect(&outlinecolor, &mRECT);
     if (!m_isActive || !m_currInput)
     {
-      pGraphics->DrawRect(&(IColor)ColorPoint(palette[2] - getUnitv<4>(0)*40.0), &mRECT);
       if (!m_currInput)
       {
-        pGraphics->DrawIText(&errortxtstyle, "No input!", &m_InnerRect.GetPadded(-10));
+        pGraphics->DrawIText(&errortxtstyle, "No input!", &m_InnerRect);
       }
       return false;
     }
-    ColorPoint bgcolor = palette[1] - getUnitv<4>(0)*127.0;
-    pGraphics->FillIRect(&(IColor)(bgcolor), &m_InnerRect);
-    IColor cval = (IColor)ColorPoint(getOnes<4>()*255.0 - bgcolor);
-    /* zero line */
-    double zero = toScreenY(0);
-    pGraphics->DrawLine(&(IColor)(palette[1]), mRECT.L, zero, mRECT.W() + mRECT.L, zero);
+    // Fill background
+    pGraphics->FillIRect(&bgcolor, &m_InnerRect);
+
+    // Draw y=0 line
+    int zero = toScreenY(0);
+    pGraphics->DrawLine(&axescolor, mRECT.L, zero, mRECT.W() + mRECT.L, zero);
 
     char gridstr[128];
+    // Draw axes tick labels
+    IRECT yticklabel_max{m_InnerRect.L - 10, m_InnerRect.T, m_InnerRect.L, m_InnerRect.T + 10};
+    IRECT yticklabel_zero{mRECT.L, zero - 10, m_InnerRect.L, zero + 10};
+    IRECT yticklabel_min{m_InnerRect.L - 10, m_InnerRect.B - 10, m_InnerRect.L, m_InnerRect.B};
+    IRECT xunitslabel{ mRECT.L, m_InnerRect.B + 10, mRECT.R, mRECT.B };
     snprintf(gridstr, 32, "%.4f", m_maxY);
-    pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(m_InnerRect.L - 10, m_InnerRect.T, m_InnerRect.L, m_InnerRect.T + 10));
+    pGraphics->DrawIText(&txtstyle, gridstr, &yticklabel_max);
     snprintf(gridstr, 32, "%.2f %s", 0.0, m_config->yunits.c_str());
-    pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.L, zero - 10, m_InnerRect.L, zero + 10));
+    pGraphics->DrawIText(&txtstyle, gridstr, &yticklabel_zero);
     snprintf(gridstr, 32, "%.4f", m_minY);
-    pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(m_InnerRect.L - 10, m_InnerRect.B - 10, m_InnerRect.L, m_InnerRect.B));
+    pGraphics->DrawIText(&txtstyle, gridstr, &yticklabel_min);
+    sprintf(gridstr, m_config->xunits.c_str());
+    pGraphics->DrawIText(&txtstylecenter, gridstr, &xunitslabel);
+
+    // Draw window information text
     sprintf(gridstr, "Displaying %d periods | Buffer size: %d (in) %d (out) | Input frequency: %.2f Hz (%.2f Hz)", \
       m_displayPeriods, m_BufSize, m_config->outputbuf.size(), GetPlug()->GetSampleRate() / m_syncDelayEst, GetPlug()->GetSampleRate() / m_currTriggerSrc->getSamplesPerPeriod());
-    pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(mRECT.L, mRECT.T, mRECT.R, mRECT.B));
-    sprintf(gridstr, m_config->xunits.c_str());
-    pGraphics->DrawIText(&txtstylecenter, gridstr, &IRECT(mRECT.L, m_InnerRect.B + 10, mRECT.R, mRECT.B));
+    pGraphics->DrawIText(&txtstyle, gridstr, &mRECT);
     double x1, y1;
     double x2, y2;
 
@@ -251,36 +268,39 @@ namespace syn
     m_mutex.Enter();
     m_config->doTransform(mPlug, m_inputBuffer);
     m_mutex.Leave();
+
     // Adjust axis boundaries
     if (m_config->argmin > 0 && m_config->argmax > 0)
     {
       double minY = m_config->outputbuf[m_config->argmin];
       double maxY = m_config->outputbuf[m_config->argmax];
-      if (minY < m_minY) m_minY = minY;
-      if (maxY > m_maxY) m_maxY = maxY;
+      m_minY = minY;
+      m_maxY = maxY;
     }
 
     // Draw transform output
     int bufreadlen = getBufReadLength();
     int numxticks = 10;
-    double xtickdist = m_InnerRect.W() / (double)numxticks;
+    double xtickdist = m_InnerRect.W() / (double)numxticks; // min distance between xtick labels
     int lastxtick = 0;
+    IColor curvecolor{255,255,255,255};
     for (int j = 1; j <= bufreadlen; j += 1)
     {
       x1 = toScreenX(m_config->xaxisticks[j - 1]);
       x2 = toScreenX(m_config->xaxisticks[j]);
       y1 = toScreenY(m_config->outputbuf[j - 1]);
       y2 = toScreenY(m_config->outputbuf[j]);
-      cval.A = 255;// - 25* bufreadlen /m_InnerRect.W();
-      cval.R *= (1 - (y2 - m_InnerRect.T) / m_InnerRect.H());
-      cval.G *= 1;
-      cval.B *= (1 - abs(y1 - y2) / m_InnerRect.H());
-      //pGraphics->DrawLine(&cval, x2, m_InnerRect.B, x2, y2);
-      pGraphics->DrawLine(&cval, x1, y1, x2, y2, 0, true);
+      curvecolor.A = 255;// - 25* bufreadlen /m_InnerRect.W();
+      curvecolor.R *= (1 - (y2 - m_InnerRect.T) / m_InnerRect.H());
+      curvecolor.G *= 1;
+      curvecolor.B *= (1 - abs(y1 - y2) / m_InnerRect.H());
+      pGraphics->DrawLine(&curvecolor, x1, y1, x2, y2, 0, true);
+      // Draw x ticks
       if (j == 1 || x2 - lastxtick >= xtickdist)
       {
+        IRECT xticklabel(x2, m_InnerRect.B, x2 + 10, m_InnerRect.B + 10);
         snprintf(gridstr, 128, "%s", m_config->xaxislbls[j].c_str());
-        pGraphics->DrawIText(&txtstyle, gridstr, &IRECT(x2, m_InnerRect.B, x2 + 10, m_InnerRect.B + 10));
+        pGraphics->DrawIText(&txtstyle, gridstr, &xticklabel);
         lastxtick = x2;
       }
     }

@@ -1,7 +1,6 @@
 #ifndef __UNIT__
 #define __UNIT__
 #include "UnitParameter.h"
-#include "DSPMath.h"
 #include "GallantSignal.h"
 #include <unordered_map>
 #include <vector>
@@ -67,9 +66,9 @@ namespace syn
     double m_Fs;
     vector<double> m_output;
     virtual void process(int bufind) = 0; //<! should add its result to m_output[bufind]
-    UnitParameter& addParam(string name, int id, PARAM_TYPE ptype, const double min, const double max, const bool isHidden = false);
-    UnitParameter& addParam(string name, PARAM_TYPE ptype, const double min, const double max, const bool isHidden = false);
     UnitParameter& addEnumParam(string name, const vector<string> choice_names);
+    UnitParameter& addParam(string name, int id, PARAM_TYPE ptype, const double min, const double max, const double defaultValue, const bool isHidden=false);
+    UnitParameter& addParam(string name, PARAM_TYPE ptype, const double min, const double max, const double defaultValue, const bool isHidden=false);
   private:
     int m_bufind;
     virtual Unit* cloneImpl() const = 0;
@@ -85,14 +84,14 @@ namespace syn
   {
   public:
     AccumulatingUnit(string name) : Unit(name),
-      m_input(addParam("input", DOUBLE_TYPE, -1, 1, true)),
-      m_gain(addParam("gain", DOUBLE_TYPE, 0, 1))
+      m_input(addParam("input", DOUBLE_TYPE, -1, 1, 0.0, true)),
+      m_gain(addParam("gain", DOUBLE_TYPE, 0, 1, 0.5))
     {}
     AccumulatingUnit(const AccumulatingUnit& other) : AccumulatingUnit(other.m_name)
     {}
     virtual ~AccumulatingUnit() {};
   protected:
-    virtual void process(int bufind)
+    virtual void process(int bufind) override
     {
       m_output[bufind] = m_input*m_gain;
     }

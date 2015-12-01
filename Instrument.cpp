@@ -1,5 +1,7 @@
 #include "Instrument.h"
+#include "SourceUnit.h"
 #include <cassert>
+
 namespace syn
 {
   int Instrument::addSource(SourceUnit* unit)
@@ -42,11 +44,7 @@ namespace syn
     if (srcmap_it != m_sourcemap.end())
     {
       m_sourcemap.erase(srcmap_it);
-      SourceVec::iterator primarysrc_it = std::find(m_primarySrcVec.begin(), m_primarySrcVec.end(), uid);
-      if (primarysrc_it != m_primarySrcVec.end())
-      {
-        m_primarySrcVec.erase(primarysrc_it);
-      }
+      removePrimarySource(uid);
     }
     return success;
   }
@@ -54,12 +52,7 @@ namespace syn
   void Instrument::removePrimarySource(int srcid)
   {
     SourceVec::iterator it = std::find(m_primarySrcVec.begin(), m_primarySrcVec.end(), srcid);
-    if (it == m_primarySrcVec.end())
-    {
-      DBGMSG("Error: cannot remove source unit as primary source");
-      return;
-    }
-    m_primarySrcVec.erase(it);
+    if (it != m_primarySrcVec.end()) m_primarySrcVec.erase(it);
   }
 
   void Instrument::noteOn(int pitch, int vel)

@@ -22,6 +22,15 @@ namespace syn
     resize(size);
   }
 
+  void UnitControl::OnMouseDblClick(int x, int y, IMouseMod* pMod)
+  {
+    int selectedParam = getSelectedParam(x,y);
+    if(selectedParam>=0)
+    {
+      m_portLabels[selectedParam].OnMouseDblClick(x,y,pMod);
+    }
+  }
+
   UnitControl::~UnitControl()
   {}
 
@@ -38,10 +47,15 @@ namespace syn
     resize(m_size);
   }
 
+  int UnitControl::getMinSize() const
+  {
+    return 10*m_nParams+30;
+  }
+
   void UnitControl::resize(int newsize)
   {
     const vector<string>& paramNames = m_unit->getParameterNames();
-    if (newsize <= 10 * m_nParams + 30) newsize = m_nParams * 10 + 30;
+    if (newsize <= getMinSize()) newsize = getMinSize();
     m_size = newsize;
     mRECT.R = m_x + m_size;
     mRECT.B = m_y + m_size;
@@ -50,7 +64,8 @@ namespace syn
     int rowsize = (newsize - 20) / (double)m_nParams;
     for (int i = 0; i < paramNames.size(); i++)
     {
-      m_portLabels[i].setRect(IRECT{ m_x + 30 ,portY, m_x + newsize,portY + 10 });
+      IRECT port_label_irect{ m_x + 30 ,portY, m_x + newsize,portY + 10 };
+      m_portLabels[i].setRect(port_label_irect);
       m_ports[i].add_rect = IRECT{ m_x, portY, m_x + 10, portY + 10 };
       m_ports[i].scale_rect = IRECT{ m_x + 12, portY, m_x + 22, portY + 10 };
       portY += rowsize;
@@ -60,26 +75,25 @@ namespace syn
 
   bool UnitControl::Draw(IGraphics* pGraphics)
   {
-    Instrument* instr = (Instrument*)&m_unit->getParent();
-    IText textfmt{ 12,0,"Helvetica",IText::kStyleNormal,IText::kAlignNear,0,IText::kQualityClearType };
-    IText textfmtwhite{ 12,&IColor{ 255,255,255,255 },"Helvetica",IText::kStyleNormal,IText::kAlignNear,0,IText::kQualityClearType };
-    IText centertextfmt{ 12,0,"Helvetica",IText::kStyleNormal,IText::kAlignCenter,0,IText::kQualityClearType };
-    // If this unit is the circuit sink
-    if (instr->getSinkId() == instr->getUnitId(m_unit))
-    {
-      pGraphics->FillIRect(&(IColor)palette[1], &mRECT);
-    }
-    else
-    {
-      pGraphics->FillIRect(&(IColor)palette[2], &mRECT);
-    }
+    Instrument* instr = static_cast<Instrument*>(&m_unit->getParent());
+    // Local text palette
+    IText textfmt{ 12, &COLOR_BLACK,"Helvetica",IText::kStyleNormal,IText::kAlignNear,0,IText::kQualityClearType };
+    IText textfmtwhite{ 12, &COLOR_WHITE,"Helvetica",IText::kStyleNormal,IText::kAlignNear,0,IText::kQualityClearType };
+    IText centertextfmt{ 12, &COLOR_BLACK,"Helvetica",IText::kStyleNormal,IText::kAlignCenter,0,IText::kQualityClearType };
+    // Local color palette
+    IColor bg_color = m_is_sink ? globalPalette[1] : globalPalette[2];
+    IColor addport_color{ 150,0,255,0 };
+    IColor mulport_color{ 150,255,0,0 };
 
     if (instr->isPrimarySource(instr->getUnitId(m_unit)))
     {
-      pGraphics->DrawRect(&IColor{ 255,255,255,255 }, &(mRECT.GetPadded(10)));
+      IRECT paddedoutline = mRECT.GetPadded(5);
+      pGraphics->DrawRect(&COLOR_WHITE, &paddedoutline);
     }
 
-    VOSIMSynth* vs = (VOSIMSynth*)mPlug;
+    pGraphics->FillIRect(&bg_color, &mRECT);
+
+    VOSIMSynth* vs = static_cast<VOSIMSynth*>(mPlug);
     // If this unit is the oscilloscope input
     if (vs->m_oscilloscope_input_unit == m_unit->getParent().getUnitId(m_unit))
     {
@@ -93,12 +107,18 @@ namespace syn
     vector<string> paramNames = m_unit->getParameterNames();
     char strbuf[256];
     sprintf(strbuf, "%s", m_unit->getName().c_str());
-    pGraphics->DrawIText(&centertextfmt, strbuf, &IRECT{ m_x,m_y,m_x + m_size,m_y + 10 });
+    IRECT titleTextRect{ m_x,m_y,m_x + m_size,m_y + 10 };
+    pGraphics->DrawIText(&centertextfmt, strbuf, &titleTextRect, true);
+    pGraphics->DrawIText(&centertextfmt, strbuf, &titleTextRect);
+    if(titleTextRect.W()+10>m_size)
+    {
+      resize(titleTextRect.W()+10);
+    }
     for (int i = 0; i < paramNames.size(); i++)
     {
-      pGraphics->FillCircle(&IColor{ 150,0,255,0 }, m_ports[i].add_rect.MW(), m_ports[i].add_rect.MH(), m_ports[i].add_rect.W() / 2, 0, true);
+      pGraphics->FillCircle(&addport_color, m_ports[i].add_rect.MW(), m_ports[i].add_rect.MH(), m_ports[i].add_rect.W() / 2, 0, true);
       pGraphics->DrawIText(&centertextfmt, "+", &m_ports[i].add_rect);
-      pGraphics->FillCircle(&IColor{ 150,255,0,0 }, m_ports[i].scale_rect.MW(), m_ports[i].scale_rect.MH(), m_ports[i].scale_rect.W() / 2, 0, true);
+      pGraphics->FillCircle(&mulport_color, m_ports[i].scale_rect.MW(), m_ports[i].scale_rect.MH(), m_ports[i].scale_rect.W() / 2, 0, true);
       pGraphics->DrawIText(&centertextfmt, "x", &m_ports[i].scale_rect);
       sprintf(strbuf, "%s", paramNames[i].c_str());
       if (!m_unit->getParam(i).isHidden())
@@ -215,6 +235,13 @@ namespace syn
     Instrument* instr = m_vm->getProtoInstrument();
     Unit* unit = m_unitControls[unitctrlid]->getUnit();
     instr->setSinkId(instr->getUnitId(unit));
+    for(std::pair<int,UnitControl*> ctrlpair : m_unitControls)
+    {
+      if(ctrlpair.second->m_is_sink)
+      {
+        ctrlpair.second->m_is_sink = false;
+      }
+    }
     m_unitControls[unitctrlid]->m_is_sink = true;
   }
 
@@ -305,7 +332,7 @@ namespace syn
       IPopupMenu* selectedmenu = mPlug->GetGUI()->CreateIPopupMenu(&unitmenu, x, y);
       if (selectedmenu == &unitmenu)
       {
-        IPlugBase::IMutexLock lock(mPlug);
+        IPlugBase::IMutexLock lock1(mPlug);
         int selectedItem = selectedmenu->GetChosenItemIdx();
         if (selectedItem == 0)
         { // Set sink
@@ -336,8 +363,8 @@ namespace syn
     }
     else if (m_currAction == CONNECT && currSelectedUnit >= 0)
     {
-      IPlugBase::IMutexLock lock(mPlug);
-      bool result = m_vm->getProtoInstrument()->addConnection({ currSelectedUnit, m_lastSelectedUnit, m_lastSelectedPort.paramid, m_lastSelectedPort.modaction });
+      IPlugBase::IMutexLock lock1(mPlug);
+      m_vm->getProtoInstrument()->addConnection({ currSelectedUnit, m_lastSelectedUnit, m_lastSelectedPort.paramid, m_lastSelectedPort.modaction });
       updateInstrument();
     }
     m_currAction = NONE;
@@ -357,8 +384,8 @@ namespace syn
       }
       else if (m_currAction == RESIZE)
       {
-        int newsize = NDPoint<2, int>(x, y).distFrom(unitPos);
-        unitCtrl->resize(newsize);
+        int newsize = NDPoint<2, int>(x, y).distFrom(m_lastClickPos);
+        unitCtrl->resize(dX+unitCtrl->m_size);
       }
       else if (m_currAction == MOVE)
       {
@@ -370,12 +397,22 @@ namespace syn
   }
 
   void CircuitPanel::OnMouseDblClick(int x, int y, IMouseMod* pMod)
-  {}
+  {
+    WDL_MutexLock lock(&mPlug->GetGUI()->mMutex);
+    int currSelectedUnit = getSelectedUnit(x, y);
+    if(currSelectedUnit>=0)
+    {
+      UnitControl* unitctrl = m_unitControls[currSelectedUnit];
+      unitctrl->OnMouseDblClick(x,y,pMod);
+    }
+  }
 
   bool CircuitPanel::Draw(IGraphics* pGraphics)
   {
     WDL_MutexLock lock(&pGraphics->mMutex);
-    pGraphics->FillIRect(&(IColor)palette[0], &mRECT);
+    // Local palette
+    IColor bg_color = globalPalette[0];
+    pGraphics->FillIRect(&bg_color, &mRECT);
     for (std::pair<int, UnitControl*> unitpair : m_unitControls)
     {
       unitpair.second->Draw(pGraphics);
@@ -387,13 +424,14 @@ namespace syn
       for (int j = 0; j < connections.size(); j++)
       {
         NDPoint<2, int> pt1 = m_unitControls[connections[j].srcid]->getOutputPos();
-        NDPoint<2, int> pt2 = m_unitControls[connections[j].targetid]->getPortPos(SelectedPort{ connections[j].portid,connections[j].action });
-        pGraphics->DrawLine(&IColor(255, 255, 255, 255), pt1[0], pt1[1], pt2[0], pt2[1], 0, true);
+        SelectedPort selectedPort{ connections[j].portid,connections[j].action };
+        NDPoint<2, int> pt2 = m_unitControls[connections[j].targetid]->getPortPos(selectedPort);
+        pGraphics->DrawLine(&COLOR_WHITE, pt1[0], pt1[1], pt2[0], pt2[1], 0, true);
       }
     }
     if (m_currAction == CONNECT)
     {
-      pGraphics->DrawLine(&IColor(255, 255, 255, 255), m_lastClickPos[0], m_lastClickPos[1], m_lastMousePos[0], m_lastMousePos[1], 0, true);
+      pGraphics->DrawLine(&COLOR_WHITE, m_lastClickPos[0], m_lastClickPos[1], m_lastMousePos[0], m_lastMousePos[1], 0, true);
     }
     return true;
   }
@@ -419,7 +457,8 @@ namespace syn
     serialized.PutBytes(&numunits, sizeof(unsigned int));
     for (std::pair<int, UnitControl*> ctrlpair : m_unitControls)
     {
-      serialized.PutChunk(&serializeUnitControl(ctrlpair.first));
+      ByteChunk unitctrl_chunk = serializeUnitControl(ctrlpair.first);
+      serialized.PutChunk(&unitctrl_chunk);
     }
 
     Instrument* instr = m_vm->getProtoInstrument();

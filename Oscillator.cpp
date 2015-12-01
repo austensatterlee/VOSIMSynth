@@ -1,4 +1,5 @@
 #include "Oscillator.h"
+#include "DSPMath.h"
 
 namespace syn
 {
@@ -16,7 +17,8 @@ namespace syn
 
   void Oscillator::setFs(double fs)
   {
-    m_Step = m_Step*m_Fs / fs; m_Fs = fs;
+    m_Step = m_Step * m_Fs / fs;
+    m_Fs = fs;
   }
 
   void Oscillator::update_step()
@@ -71,6 +73,7 @@ namespace syn
       output = 0;
       break;
     }
-    m_output[bufind] = m_velocity*m_gain*output;
+    m_output[bufind] = m_velocity * m_gain * output;
   }
 }
+

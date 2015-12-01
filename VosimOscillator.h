@@ -17,18 +17,18 @@ namespace syn
   public:
     VosimOscillator(string name) :
       Oscillator(name),
-      m_decay(addParam("decay", DOUBLE_TYPE, 0, 0.9)),
-      m_ppitch(addParam("pulsepitch", DOUBLE_TYPE, 0, 1)),
-      m_number(addParam("number", INT_TYPE, 0, 4)),
+      m_decay(addParam("decay", DOUBLE_TYPE, 0, 0.9, 0.5)),
+      m_ppitch(addParam("pulsepitch", DOUBLE_TYPE, 0, 1, 0.5)),
+      m_number(addParam("number", INT_TYPE, 0, 4, 1.0)),
       m_relativeamt(addParam("relative", DOUBLE_TYPE, 0, 1, true)),
       m_curr_pulse_gain(1.0),
       m_pulse_step(0.0),
-      m_pulse_phase(0.0),
+      m_pulse_phase(0.0), m_last_pulse_phase(0),
       m_unwrapped_pulse_phase(0.0)
     {};
     VosimOscillator(const VosimOscillator& vosc);
-    virtual void process(int bufind);
-    virtual void sync();
+    virtual void process(int bufind) override;
+    virtual void sync() override;
     UnitParameter& m_relativeamt;
     UnitParameter& m_decay;
     UnitParameter& m_ppitch;
@@ -50,14 +50,14 @@ namespace syn
     VosimChoir(string name, size_t size = 4) :
       SourceUnit(name),
       m_size(size),
-      m_gain(addParam("gain", DOUBLE_TYPE, 0, 1)),
-      m_decay(addParam("decay", DOUBLE_TYPE, 0, 0.9)),
-      m_ppitch(addParam("pulsepitch", DOUBLE_TYPE, 0, 1)),
-      m_number(addParam("number", INT_TYPE, 0, 4)),
-      m_harmonicdecay(addParam("harmonicdecay", DOUBLE_TYPE, 0, 0.9)),
-      m_tune(addParam("tune", DOUBLE_TYPE, -12, 12)),
-      m_pitchdrift(addParam("pulse_drift", DOUBLE_TYPE, 0, 0.5)),
-      m_driftfreq(addParam("drift_freq", DOUBLE_TYPE, -32, 32))
+      m_gain(addParam("gain", DOUBLE_TYPE, 0, 1, 0.5)),
+      m_decay(addParam("decay", DOUBLE_TYPE, 0, 0.9, 0.5)),
+      m_ppitch(addParam("pulsepitch", DOUBLE_TYPE, 0, 1, 0.5)),
+      m_number(addParam("number", INT_TYPE, 0, 4, 1.0)),
+      m_harmonicdecay(addParam("harmonicdecay", DOUBLE_TYPE, 0, 0.9, 0.5)),
+      m_tune(addParam("tune", DOUBLE_TYPE, -12, 12, 0.0)),
+      m_pitchdrift(addParam("pulse_drift", DOUBLE_TYPE, 0, 0.25, 0.125)),
+      m_driftfreq(addParam("drift_freq", DOUBLE_TYPE, -64, 64, 0))
     {
       assert(size > 0);
       m_choir = (VosimOscillator**)malloc(m_size*sizeof(VosimOscillator*));

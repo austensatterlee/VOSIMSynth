@@ -1,9 +1,7 @@
 #pragma once
 #include "Oscillator.h"
-#include "UnitParameter.h"
 #include <random>
-#include <string>
-#include <cmath>
+#include "DSPMath.h"
 using namespace std;
 namespace syn
 {
@@ -34,7 +32,8 @@ namespace syn
       m_next(0.0),
       m_rand_period(1.0),
       m_norm_gen(0.0, 1.0),
-      m_exp_gen(1.0)
+      m_exp_gen(1.0),
+      m_curr_polarity(1)
     {}
     NormalRandomOscillator(const NormalRandomOscillator& other) : NormalRandomOscillator(other.m_name)
     {
@@ -46,26 +45,29 @@ namespace syn
   protected:
     double m_curr, m_next;
     double m_rand_period;
+    double m_curr_polarity;
     exponential_distribution<double> m_exp_gen;
     normal_distribution<double> m_norm_gen;
-    virtual void update_step()
+    virtual void update_step() override
     {
       double freq = pitchToFreq(m_pitch + m_tune);
       m_exp_gen = exponential_distribution<double>{ freq };
       m_Step = 1. / (m_rand_period*m_Fs);
     }
-    virtual void process(int bufind)
+    virtual void process(int bufind) override
     {
       tick_phase();
       if (m_isSynced)
       {
         m_curr = m_next;
-        m_next = m_gain*m_norm_gen(m_gen);
+        m_curr_polarity *= -1;
+        m_next = m_curr_polarity*m_gain*m_norm_gen(m_gen);
         m_rand_period = m_exp_gen(m_gen);
       }
       m_output[bufind] = LERP(m_curr, m_next, m_phase);
     }
   private:
-    virtual Unit* cloneImpl() const { return new NormalRandomOscillator(*this); };
+    virtual Unit* cloneImpl() const override
+    { return new NormalRandomOscillator(*this); };
   };
 };

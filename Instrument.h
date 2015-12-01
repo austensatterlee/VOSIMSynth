@@ -1,12 +1,12 @@
 #pragma once
 #include "Circuit.h"
 #include <unordered_map>
-#include <functional>
-#include <numeric>
 
 using std::unordered_map;
 namespace syn
 {
+  class SourceUnit;
+
   class Instrument :
     public Circuit
   {
@@ -14,8 +14,8 @@ namespace syn
     Instrument() : m_note(-1) {};
     Instrument(const Instrument& instr) :
       m_sourcemap(instr.m_sourcemap),
-      m_primarySrcVec(instr.m_primarySrcVec),
-      m_note(instr.m_note)
+      m_note(instr.m_note),
+      m_primarySrcVec(instr.m_primarySrcVec)
     {}
     virtual ~Instrument() {};
 
@@ -45,6 +45,6 @@ namespace syn
     int m_note;
     SourceVec m_primarySrcVec;
   private:
-    virtual Circuit* cloneImpl() const;
+    virtual Circuit* cloneImpl() const override;
   };
 }

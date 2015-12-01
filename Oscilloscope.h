@@ -58,31 +58,34 @@ namespace syn
     OscilloscopeConfig* m_config;
     vector<double> m_inputRingBuffer, m_inputBuffer;
     IPopupMenu m_menu;
-    double toScreenX(double val)
+    double toScreenX(double val) const
     {
-      int bufreadlength = getBufReadLength();
       double normalxval = (val - m_config->xaxisticks.front()) / (m_config->xaxisticks.back() - m_config->xaxisticks.front());
       return  normalxval*m_InnerRect.W() + m_InnerRect.L;
     };
-    double toScreenY(double val)
+    double toScreenY(double val) const
     {
       double normalyval = (val - m_minY) / (m_maxY - m_minY);
       return m_InnerRect.B - m_InnerRect.H()*normalyval;
     }
     void setBufSize(int s);
-    int getBufReadLength();
+    int getBufReadLength() const;
   public:
     Oscilloscope(IPlugBase *pPlug, IRECT pR);
     ~Oscilloscope() {};
 
-    bool Draw(IGraphics *pGraphics);
-    bool IsDirty() { return m_isActive && mDirty; }
-    int getPeriod() { return m_BufSize / m_displayPeriods; }
-    void OnMouseWheel(int x, int y, IMouseMod* pMod, int d);
+    virtual bool Draw(IGraphics *pGraphics) override;
+
+    virtual bool IsDirty() override
+    { return m_isActive && mDirty; }
+    int getPeriod() const
+    { return m_BufSize / m_displayPeriods; }
+
+    virtual void OnMouseWheel(int x, int y, IMouseMod* pMod, int d) override;
     void connectInput(Unit& comp);
     void connectTrigger(SourceUnit& comp);
-    void OnMouseUp(int x, int y, IMouseMod* pMod);
-    void OnMouseDown(int x, int y, IMouseMod* pMod);
+    virtual void OnMouseUp(int x, int y, IMouseMod* pMod) override;
+    virtual void OnMouseDown(int x, int y, IMouseMod* pMod) override;
     void disconnectInput();
     void disconnectInput(Unit& srccomp);
     void disconnectTrigger();

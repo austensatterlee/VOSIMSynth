@@ -1,7 +1,6 @@
 #include "Circuit.h"
 #include <stdexcept>
 #include <vector>
-#include <algorithm>
 #include <unordered_set>
 
 using std::vector;
@@ -145,8 +144,8 @@ namespace syn
   {
     if (!hasUnit(c.srcid) || !hasUnit(c.targetid))
     {
-      throw std::invalid_argument("Either source or target name not found inside circuit!");
       DBGMSG("Error connecting source (%d) and target (%d) inside circuit!", c.srcid, c.targetid);
+      throw std::invalid_argument("Either source or target name not found inside circuit!");
     }
     if (c.targetid == c.srcid)
     {

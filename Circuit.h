@@ -2,7 +2,6 @@
 #define __Circuit__
 
 #include "Unit.h"
-#include "SourceUnit.h"
 #include "UnitParameter.h"
 #include <list>
 #include <map>
@@ -67,6 +66,7 @@ namespace syn
     void modifyParameter(int uid, int param, double val, MOD_ACTION action);
     void modifyParameter(string uname, string param, double val, MOD_ACTION action);
     double readParam(int uid, int param);
+    UnitParameter& getParameter(int uid, int param) {return m_units[uid]->getParam(param); }
 
     vector<tuple<string, string>> getParameterNames();
     Unit& getUnit(string name) { return *m_units[m_unitmap[name]]; };

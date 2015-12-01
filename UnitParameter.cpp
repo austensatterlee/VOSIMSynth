@@ -83,7 +83,7 @@ void syn::UnitParameter::initIParam(IParam* iparam)
   }
 }
 
-const string syn::UnitParameter::getString() const
+string syn::UnitParameter::getString() const
 {
   char valueBuf[256];
   switch (m_type)

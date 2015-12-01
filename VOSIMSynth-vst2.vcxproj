@@ -312,7 +312,6 @@
     <ClInclude Include="Circuit.h" />
     <ClInclude Include="CircuitPanel.h" />
     <ClInclude Include="Delegate.h" />
-    <ClInclude Include="fftw3.h" />
     <ClInclude Include="Instrument.h" />
     <ClInclude Include="ITextSlider.h" />
     <ClInclude Include="RandomOscillator.h" />
@@ -358,9 +357,6 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VOSIMSynth.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="libfftw3-3.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

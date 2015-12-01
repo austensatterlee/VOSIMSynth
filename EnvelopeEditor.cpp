@@ -232,27 +232,27 @@ namespace syn
 
   bool EnvelopeEditor::Draw(IGraphics* pGraphics)
   {
-    IText  titletxtstyle(12, &(IColor)palette[4], "Helvetica", IText::kStyleBold, IText::kAlignFar, 0, IText::kQualityClearType);
-    IText  fgtxtstyle(10, &(IColor)palette[4], 0, IText::kStyleNormal, IText::kAlignNear, 0, IText::kQualityClearType);
-    IText  bgtxtstyle(10, &(IColor)ColorPoint(palette[4] - getUnitv<4>(0)*60.0), 0, IText::kStyleItalic, IText::kAlignNear, 0, IText::kQualityClearType);
+    IText  titletxtstyle(12, &(IColor)globalPalette[4], "Helvetica", IText::kStyleBold, IText::kAlignFar, 0, IText::kQualityClearType);
+    IText  fgtxtstyle(10, &(IColor)globalPalette[4], 0, IText::kStyleNormal, IText::kAlignNear, 0, IText::kQualityClearType);
+    IText  bgtxtstyle(10, &(IColor)ColorPoint(globalPalette[4] - getUnitv<4>(0)*60.0), 0, IText::kStyleItalic, IText::kAlignNear, 0, IText::kQualityClearType);
     NDPoint<2> screenpt1, screenpt2;
     Envelope* env = ((Envelope*)&m_voiceManager->getProtoInstrument()->getUnit(m_targetEnvId));
 
-    pGraphics->FillIRect(&(IColor)palette[0], &m_InnerRect);
-    pGraphics->DrawRect(&(IColor)palette[1], &m_InnerRect);
+    pGraphics->FillIRect(&(IColor)globalPalette[0], &m_InnerRect);
+    pGraphics->DrawRect(&(IColor)globalPalette[1], &m_InnerRect);
 
     char strbuffer[256];
     string envname = m_voiceManager->getProtoInstrument()->getUnit(m_targetEnvId).getName();
     sprintf(strbuffer, "%s", envname.c_str());
     pGraphics->DrawIText(&titletxtstyle, strbuffer, &mRECT);
     sprintf(strbuffer, "Time scale: %.2f", m_timeScale);
-    pGraphics->FillIRect(&(IColor)palette[0], &m_timeScaleRect);
+    pGraphics->FillIRect(&(IColor)globalPalette[0], &m_timeScaleRect);
     pGraphics->DrawIText(&fgtxtstyle, strbuffer, &m_timeScaleRect.GetPadded(-2));
-    pGraphics->DrawRect(&(IColor)palette[1], &m_timeScaleRect);
+    pGraphics->DrawRect(&(IColor)globalPalette[1], &m_timeScaleRect);
     sprintf(strbuffer, "Amp scale: %.2f", m_ampScale);
-    pGraphics->FillIRect(&(IColor)palette[0], &m_ampScaleRect);
+    pGraphics->FillIRect(&(IColor)globalPalette[0], &m_ampScaleRect);
     pGraphics->DrawIText(&fgtxtstyle, strbuffer, &m_ampScaleRect.GetPadded(-2));
-    pGraphics->DrawRect(&(IColor)palette[1], &m_ampScaleRect);
+    pGraphics->DrawRect(&(IColor)globalPalette[1], &m_ampScaleRect);
     double cumuPeriod = 0;
     double currPeriod = 0;
     IColor* currColor;
@@ -263,21 +263,21 @@ namespace syn
       if (i > 0)
       {
         screenpt1 = toScreen(m_points[i - 1]);
-        pGraphics->DrawLine(&(IColor)(palette[3]), screenpt1[0], screenpt1[1], screenpt2[0], screenpt2[1], 0, true);
+        pGraphics->DrawLine(&(IColor)(globalPalette[3]), screenpt1[0], screenpt1[1], screenpt2[0], screenpt2[1], 0, true);
       }
       if (i == m_lastSelectedIdx)
       {
-        currColor = &(IColor)(palette[4]);
+        currColor = &(IColor)(globalPalette[4]);
       }
       else
       {
         if (i == env->readParam(0) || i == env->readParam(1))
         { // check if point is a loop start or end
-          currColor = &(IColor)(palette[2]);
+          currColor = &(IColor)(globalPalette[2]);
         }
         else
         {
-          currColor = &(IColor)(palette[2]);
+          currColor = &(IColor)(globalPalette[2]);
         }
       }
       pGraphics->FillCircle(currColor, screenpt2[0], screenpt2[1], ptsize, 0, true);
@@ -289,8 +289,8 @@ namespace syn
         pGraphics->DrawIText(&fgtxtstyle, strbuffer, &IRECT(screenpt2[0], m_InnerRect.B, mRECT.R, mRECT.B));
         sprintf(strbuffer, "%.2f", cumuPeriod);
         pGraphics->DrawIText(&bgtxtstyle, strbuffer, &IRECT(screenpt2[0], m_InnerRect.B + 10, mRECT.R, mRECT.B));
-        pGraphics->DrawLine(&(IColor)(palette[1]), screenpt2[0], m_InnerRect.B, screenpt2[0], screenpt2[1], 0, true);
-        pGraphics->DrawLine(&(IColor)(palette[1]), m_InnerRect.L, screenpt2[1], screenpt2[0], screenpt2[1], 0, true);
+        pGraphics->DrawLine(&(IColor)(globalPalette[1]), screenpt2[0], m_InnerRect.B, screenpt2[0], screenpt2[1], 0, true);
+        pGraphics->DrawLine(&(IColor)(globalPalette[1]), m_InnerRect.L, screenpt2[1], screenpt2[0], screenpt2[1], 0, true);
         if (i == env->readParam(0))
         {
           pGraphics->DrawIText(&fgtxtstyle, "S", &IRECT(screenpt2[0] - 15, screenpt2[1] - 10, mRECT.R, mRECT.B));

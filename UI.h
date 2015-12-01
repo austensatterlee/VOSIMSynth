@@ -1,12 +1,7 @@
 #ifndef __UI__
 #define __UI__
 #include "IControl.h"
-#include "IParam.h"
-#include "Unit.h"
 #include "NDPoint.h"
-#include "VoiceManager.h"
-#include "UnitFactory.h"
-#include "ITextSlider.h"
 #include <vector>
 #define SCREEN_PAD_L 25
 #define X_PAD 10
@@ -35,31 +30,12 @@ namespace syn
     }
   };
 
-  const vector<ColorPoint> palette = {
+  const vector<ColorPoint> globalPalette = {
     {0xFF06070E},
     {0xFF49524A},
     {0xFF94A187},
     {0xFFC5AFA0},
     {0xFFE9BCB7}
   };
-
-  template<class U>
-  void attachKnob(IGraphics *pGraphics, IPlugBase *pPlug, uint8_t r, uint8_t c, int paramIdx, string name, IBitmap *pBmp)
-  {
-    int x = (CELL_SIZE + X_PAD)*(c)+X_PAD + SCREEN_PAD_L;
-    int y = (CELL_SIZE + Y_PAD)*(r)+Y_PAD;
-    IText textprops(12, &COLOR_WHITE, "Helvetica");
-    IParam* param = pPlug->GetParam(paramIdx);
-    IRECT lbltextrect = IRECT(x, y + CELL_SIZE, x + CELL_SIZE, y + CELL_SIZE + Y_PAD / 2);
-    IRECT valtextrect = IRECT(x, y + CELL_SIZE + Y_PAD / 2, x + CELL_SIZE, y + CELL_SIZE + Y_PAD);
-    ICaptionControl* knobTextCtrl = new ICaptionControl(pPlug, lbltextrect, paramIdx, &textprops, false);
-    ITextControl* knobLbl = new ITextControl(pPlug, valtextrect, &textprops, name.c_str());
-    knobTextCtrl->DisablePrompt(false);
-    U* knobCtrl = new U(pPlug, x, y, paramIdx, pBmp);
-
-    pGraphics->AttachControl(knobCtrl);
-    pGraphics->AttachControl(knobLbl);
-    pGraphics->AttachControl(knobTextCtrl);
-  }
 }
 #endif

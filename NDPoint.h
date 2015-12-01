@@ -2,7 +2,6 @@
 #define __NDPoint__
 
 #include <stdarg.h>
-#include <algorithm>
 
 namespace syn
 {

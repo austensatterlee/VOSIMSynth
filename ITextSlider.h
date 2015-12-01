@@ -1,5 +1,4 @@
 #pragma once
-#include "IPlug_include_in_plug_hdr.h"
 #include "IGraphics.h"
 #include "UnitParameter.h"
 #include "VoiceManager.h"
@@ -32,6 +31,12 @@ namespace syn
       m_rect = newrect;
     }
 
+    void OnMouseDblClick(int x, int y, IMouseMod* pMod) override
+    {
+      m_value = m_vm->getProtoInstrument()->getParameter(m_unitid, m_paramid).getDefault();
+      m_vm->modifyParameter(m_unitid, m_paramid, m_value, SET);
+    }
+
     IRECT& getRect()
     {
       return m_rect;
@@ -46,19 +51,27 @@ namespace syn
       m_vm->modifyParameter(m_unitid, m_paramid, m_value*(m_max - m_min) + m_min, SET);
     }
 
-    bool Draw(IGraphics* pGraphics)
+    virtual bool Draw(IGraphics* pGraphics) override
     {
-      IText textfmt{ 12,&IColor{255,255,255,255},"Helvetica",IText::kStyleNormal,IText::kAlignNear,0,IText::kQualityClearType };
-      IText textfmtfar{ 12,&IColor{ 255,255,255,255 },"Helvetica",IText::kStyleNormal,IText::kAlignFar,0,IText::kQualityClearType };
-      pGraphics->FillIRect(&IColor{ 255,100,50,125 }, &m_rect);
-      pGraphics->FillIRect(&IColor{ 255,200,150,225 }, &IRECT{ m_rect.L,m_rect.T,m_rect.L+(int)(m_rect.W()*m_value),m_rect.B });
+      // Local color palette
+      IColor bg_color{ 255,100,50,125 };
+      IColor fg_color{ 255,200,150,225 };
+      // Local text palette
+      IText textfmtfar{ 12,&COLOR_WHITE,"Helvetica",IText::kStyleNormal,IText::kAlignFar,0,IText::kQualityClearType };
+      // Draw background
+      pGraphics->FillIRect(&bg_color, &m_rect);
+      // Draw foreground (filled portion)
+      IRECT filled_irect{ m_rect.L,m_rect.T,m_rect.L + (int)(m_rect.W()*m_value),m_rect.B };
+      pGraphics->FillIRect(&fg_color, &filled_irect);
 
       UnitParameter& param = m_vm->getProtoInstrument()->getUnit(m_unitid).getParam(m_paramid);
 
       string paramstr = param.getString();
       char strbuf[256];
       sprintf(strbuf,"%s",paramstr.c_str());
-      pGraphics->DrawIText(&textfmtfar, strbuf, &IRECT{ m_rect.L,m_rect.T,m_rect.L + m_rect.W(),m_rect.B });
+
+      IRECT value_display_irect{ m_rect.L,m_rect.T,m_rect.L + m_rect.W(),m_rect.B };
+      pGraphics->DrawIText(&textfmtfar, strbuf, &value_display_irect);
 
       return true;
     }

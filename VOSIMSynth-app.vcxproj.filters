@@ -108,9 +108,6 @@
     <ClInclude Include="Oscillator.h">
       <Filter>Components\Generators</Filter>
     </ClInclude>
-    <ClInclude Include="Filter.h">
-      <Filter>Components\Unary</Filter>
-    </ClInclude>
     <ClInclude Include="SourceUnit.h">
       <Filter>Components\Atomic</Filter>
     </ClInclude>
@@ -133,6 +130,9 @@
       <Filter>Components\Connectors</Filter>
     </ClInclude>
     <ClInclude Include="fftw3.h" />
+    <ClInclude Include="Filter.h">
+      <Filter>Components\Atomic</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\WDL\rtaudiomidi\RtAudio.cpp">
@@ -190,9 +190,6 @@
     <ClCompile Include="Oscillator.cpp">
       <Filter>Components\Generators</Filter>
     </ClCompile>
-    <ClCompile Include="Filter.cpp">
-      <Filter>Components\Unary</Filter>
-    </ClCompile>
     <ClCompile Include="Unit.cpp">
       <Filter>Components\Atomic</Filter>
     </ClCompile>
@@ -207,6 +204,9 @@
     </ClCompile>
     <ClCompile Include="UnitParameter.cpp">
       <Filter>Components\Connectors</Filter>
+    </ClCompile>
+    <ClCompile Include="Filter.cpp">
+      <Filter>Components\Atomic</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

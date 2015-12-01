@@ -19,12 +19,15 @@ namespace syn
 
   class UnitControl : public IControl
   {
+  private:
     friend class CircuitPanel;
   public:
     UnitControl(IPlugBase* pPlug, VoiceManager* vm, Unit* unit, int x, int y, int size = 10);
+    virtual void OnMouseDblClick(int x, int y, IMouseMod* pMod) override;
     virtual ~UnitControl();
     virtual bool Draw(IGraphics* pGraphics) override;
     void move(int newx, int newy);
+    int getMinSize() const;
     void resize(int newsize);
     NDPoint<2, int> getPos() const;
     NDPoint<2, int> getPortPos(SelectedPort& port);
@@ -78,9 +81,11 @@ namespace syn
       m_vm(voiceManager),
       m_unitFactory(unitFactory),
       m_isMouseDown(0),
-      m_lastSelectedUnit(-1),
+      m_lastSelectedUnit(-1), 
+      m_lastSelectedParam(-1),
       m_lastMousePos(0, 0),
-      m_lastClickPos(0, 0),
+      m_lastClickPos(0, 0), 
+      m_currAction(NONE),
       IControl(pPlug, pR)
     {
       m_main_menu.AddItem("Source Units", &m_sourceunit_menu);

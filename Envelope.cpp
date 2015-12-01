@@ -1,5 +1,6 @@
 #include "Envelope.h"
 #include <sstream>
+#include "tables.h"
 using std::ostringstream;
 /******************************
 * Envelope methods
@@ -13,8 +14,8 @@ namespace syn
     m_initPoint(0),
     m_numSegments(numSegments),
     m_phase(0),
-    m_loopStart(addParam("loopstart", INT_TYPE, 0, numSegments)),
-    m_loopEnd(addParam("loopend", INT_TYPE, 0, numSegments))
+    m_loopStart(addParam("loopstart", INT_TYPE, 0, numSegments, -1)),
+    m_loopEnd(addParam("loopend", INT_TYPE, 0, numSegments, -1))
   {
     m_loopStart.mod(-1, SET);
     m_loopEnd.mod(-1, SET);
@@ -26,23 +27,22 @@ namespace syn
     {
       paramname.str(""); paramname.clear();
       paramname << "period" << i;
-      period = addParam(paramname.str(), DOUBLE_TYPE, MIN_ENV_PERIOD, 10.0).getId();
+      period = addParam(paramname.str(), DOUBLE_TYPE, MIN_ENV_PERIOD, 10.0, MIN_ENV_PERIOD).getId();
       getParam(period).mod(0.1, SET);
       paramname.str(""); paramname.clear();
       paramname << "target" << i;
-      target = addParam(paramname.str(), DOUBLE_TYPE, 0, 1.0).getId();
       if (i == numSegments - 1)
       {
-        getParam(target).mod(0.0, SET);
+        target = addParam(paramname.str(), DOUBLE_TYPE, 0, 1.0, 0).getId();
       }
       else
       {
-        getParam(target).mod(1.0, SET);
+        target = addParam(paramname.str(), DOUBLE_TYPE, 0, 1.0, 1).getId();
       }
 
       paramname.str(""); paramname.clear();
       paramname << "shape" << i;
-      shape = addParam(paramname.str(), DOUBLE_TYPE, MIN_ENV_SHAPE, 1.0).getId();
+      shape = addParam(paramname.str(), DOUBLE_TYPE, MIN_ENV_SHAPE, 1.0, 1.0).getId();
       m_segments.push_back(new EnvelopeSegment(this, period, target, shape));
       updateSegment(i);
     }
@@ -125,7 +125,8 @@ namespace syn
     {
       m_phase += m_segments[m_currSegment]->step;
     }
-    m_output[bufind] = LERP(m_segments[m_currSegment]->prev_amp, m_segments[m_currSegment]->target_amp(), m_phase);
+    const EnvelopeSegment& currSeg = *m_segments[m_currSegment];
+    m_output[bufind] = LERP(currSeg.prev_amp, currSeg.target_amp(), std::pow(m_phase, currSeg.shape()));
   }
 
   void Envelope::setSegment(int seg)
@@ -172,10 +173,7 @@ namespace syn
     {
       return m_parent->getParam(m_period_id);
     }
-    else
-    {
-      throw;
-    }
+    throw;
   }
 
   UnitParameter& EnvelopeSegment::period() const
@@ -184,10 +182,7 @@ namespace syn
     {
       return m_parent->getParam(m_period_id);
     }
-    else
-    {
-      throw;
-    }
+    throw;
   }
 
   UnitParameter& EnvelopeSegment::target_amp()
@@ -196,10 +191,7 @@ namespace syn
     {
       return m_parent->getParam(m_target_amp_id);
     }
-    else
-    {
-      throw;
-    }
+    throw;
   }
 
   UnitParameter& EnvelopeSegment::target_amp() const
@@ -208,10 +200,7 @@ namespace syn
     {
       return m_parent->getParam(m_target_amp_id);
     }
-    else
-    {
-      throw;
-    }
+    throw;
   }
 
   UnitParameter& EnvelopeSegment::shape()
@@ -220,10 +209,7 @@ namespace syn
     {
       return m_parent->getParam(m_shape_id);
     }
-    else
-    {
-      throw;
-    }
+    throw;
   }
 
   UnitParameter& EnvelopeSegment::shape() const
@@ -232,9 +218,6 @@ namespace syn
     {
       return m_parent->getParam(m_shape_id);
     }
-    else
-    {
-      throw;
-    }
+    throw;
   }
 }
