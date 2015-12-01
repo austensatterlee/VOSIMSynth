@@ -26,13 +26,12 @@ namespace syn
     virtual bool Draw(IGraphics* pGraphics) override;
     void move(int newx, int newy);
     void resize(int newsize);
-    NDPoint<2, int> getPos();
+    NDPoint<2, int> getPos() const;
     NDPoint<2, int> getPortPos(SelectedPort& port);
-    NDPoint<2, int> getOutputPos();
-    Unit* getUnit();
+    NDPoint<2, int> getOutputPos() const;
+    Unit* getUnit() const;
     SelectedPort getSelectedPort(int x, int y);
     int getSelectedParam(int x, int y);
-    void modParam(int paramid, double dX);
   private:
     struct Port
     {
@@ -48,6 +47,7 @@ namespace syn
     vector<ITextSlider> m_portLabels;
     vector<Port> m_ports;
   };
+
   class CircuitPanel : public IControl
   {
   protected:
@@ -70,7 +70,7 @@ namespace syn
     DRAG_ACTION m_currAction;
     int m_lastSelectedUnit, m_lastSelectedParam;
     SelectedPort m_lastSelectedPort;
-    void updateInstrument();
+    void updateInstrument() const;
     void deleteUnit(int unitctrlid);
     void setSink(int unitctrlid);
   public:

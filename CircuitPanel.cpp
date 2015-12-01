@@ -16,7 +16,7 @@ namespace syn
   {
     for (int i = 0; i < m_nParams; i++)
     {
-      m_portLabels.push_back(ITextSlider(vm, IRECT{ 0,0,0,0 }, unit->getParent().getUnitId(unit), i));
+      m_portLabels.push_back(ITextSlider(pPlug, vm, IRECT{ 0,0,0,0 }, unit->getParent().getUnitId(unit), i));
     }
     m_ports.resize(m_nParams);
     resize(size);
@@ -100,7 +100,6 @@ namespace syn
       pGraphics->DrawIText(&centertextfmt, "+", &m_ports[i].add_rect);
       pGraphics->FillCircle(&IColor{ 150,255,0,0 }, m_ports[i].scale_rect.MW(), m_ports[i].scale_rect.MH(), m_ports[i].scale_rect.W() / 2, 0, true);
       pGraphics->DrawIText(&centertextfmt, "x", &m_ports[i].scale_rect);
-      char strbuf[256];
       sprintf(strbuf, "%s", paramNames[i].c_str());
       if (!m_unit->getParam(i).isHidden())
       {
@@ -115,7 +114,7 @@ namespace syn
     return true;
   }
 
-  NDPoint<2, int> UnitControl::getPos()
+  NDPoint<2, int> UnitControl::getPos() const
   {
     return NDPoint<2, int>(m_x, m_y);
   }
@@ -137,12 +136,12 @@ namespace syn
     }
   }
 
-  NDPoint<2, int> UnitControl::getOutputPos()
+  NDPoint<2, int> UnitControl::getOutputPos() const
   {
     return NDPoint<2, int>(m_x + m_size, m_y + m_size / 2);
   }
 
-  Unit* UnitControl::getUnit()
+  Unit* UnitControl::getUnit() const
   {
     return m_unit;
   }
@@ -183,12 +182,7 @@ namespace syn
     return selectedParam;
   }
 
-  void UnitControl::modParam(int paramid, double dX)
-  {
-    m_portLabels[paramid].modParam(dX);
-  }
-
-  void CircuitPanel::updateInstrument()
+  void CircuitPanel::updateInstrument() const
   {
     m_vm->setMaxVoices(m_vm->getMaxVoices(), m_vm->getProtoInstrument());
   }
@@ -359,7 +353,7 @@ namespace syn
       NDPoint<2, int> unitPos = unitCtrl->getPos();
       if (m_currAction == MOD_PARAM)
       {
-        unitCtrl->modParam(m_lastSelectedParam, dX);
+        unitCtrl->m_portLabels[m_lastSelectedParam].OnMouseDrag(x,y,dX,dY,pMod);
       }
       else if (m_currAction == RESIZE)
       {

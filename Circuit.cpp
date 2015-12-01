@@ -245,6 +245,7 @@ namespace syn
       circ->addUnit(unitpair.second->clone(), unitpair.first);
     }
     circ->setSinkId(m_sinkId);
+    circ->setFs(m_Fs);
 
     // Clone connections
     for (std::pair<int, vector<ConnectionMetadata>> connpair : m_forwardConnections)

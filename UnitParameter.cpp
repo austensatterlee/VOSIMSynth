@@ -82,3 +82,30 @@ void syn::UnitParameter::initIParam(IParam* iparam)
     break;
   }
 }
+
+const string syn::UnitParameter::getString() const
+{
+  char valueBuf[256];
+  switch (m_type)
+  {
+  case DOUBLE_TYPE:
+    sprintf(valueBuf,"%.3f",m_currValue);
+    break;
+  case INT_TYPE:
+    sprintf(valueBuf, "%d", (int)m_currValue);
+    break;
+  case ENUM_TYPE:
+    for (map<double,string>::const_reverse_iterator it=m_valueNames.crbegin();it!=m_valueNames.crend();it++) {
+      if (m_currValue >= it->first) {
+        sprintf(valueBuf, "%s", it->second.c_str());
+        break;
+      }
+    }
+    break;
+  case BOOL_TYPE:
+    if(m_currValue==0) sprintf(valueBuf,"true");
+    else sprintf(valueBuf,"false");
+    break;
+  }
+  return string(valueBuf);
+}

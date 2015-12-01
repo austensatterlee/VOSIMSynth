@@ -5,10 +5,10 @@
 #include "IParam.h"
 #include <string>
 #include <vector>
-#include <unordered_map>
+#include <map>
 
 using std::string;
-using std::unordered_map;
+using std::map;
 using std::vector;
 
 namespace syn
@@ -55,7 +55,7 @@ namespace syn
     const IControl* m_controller;
     bool m_isHidden;
     bool m_needsUpdate;
-    unordered_map<double, string> m_valueNames;
+    map<double, string> m_valueNames;
     vector<Connection> m_connections;
     ParamTransformFunc m_transform_func;
   public:
@@ -107,6 +107,7 @@ namespace syn
     }
 
     const string getName() const { return m_name; };
+    const string getString() const;
     const int getId() const { return m_id; };
     double getBase() const { return m_baseValue; }
     double getMin() const { return m_min; }
