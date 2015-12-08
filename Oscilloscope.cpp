@@ -4,7 +4,7 @@
 
 namespace syn
 {
-  Oscilloscope::Oscilloscope(IPlugBase * pPlug, IRECT pR) :
+  Oscilloscope::Oscilloscope(IPlugBase * pPlug, IRECT pR, VoiceManager* vm) :
     IControl(pPlug, pR),
     m_periodCount(0),
     m_BufInd(0), 
@@ -16,7 +16,10 @@ namespace syn
     m_displayPeriods(1),
     m_isActive(false),
     m_currSyncDelay(0),
-    m_syncDelayEst(1)
+    m_syncDelayEst(1),
+    m_vm(vm),
+    m_srcUnit_id(-1),
+    m_triggerUnit_id(-1)
   {
     m_InnerRect = pR.GetPadded(-m_Padding);
 
@@ -39,8 +42,11 @@ namespace syn
 
   void Oscilloscope::process()
   {
-    if (!m_isActive || !m_currInput) return;
-    const vector<double>& srcbuffer = m_currInput->getLastOutputBuffer();
+    if (!m_isActive) return;
+    const Unit* currInput = getSourceUnit();
+    const SourceUnit* currTrigger = getTriggerUnit();
+    if(currInput==nullptr || currTrigger==nullptr) return;
+    const vector<double>& srcbuffer = currInput->getLastOutputBuffer();
     if (m_inputRingBuffer.size() <= srcbuffer.size())
     {
       setPeriod(srcbuffer.size());
@@ -58,13 +64,13 @@ namespace syn
 
       if (
         (!m_config->useAutoSync && m_currSyncDelay > m_config->defaultBufSize) ||
-        (m_currTriggerSrc && m_currSyncDelay > m_currTriggerSrc->getSamplesPerPeriod())
+        (m_currSyncDelay > currTrigger->getSamplesPerPeriod())
         )
       {
         int correctPeriod;
         if (m_config->useAutoSync)
         {
-          correctPeriod = m_currTriggerSrc->getSamplesPerPeriod();
+          correctPeriod = currTrigger->getSamplesPerPeriod();
         }
         else
         {
@@ -93,10 +99,31 @@ namespace syn
           m_mutex.Leave();
           SetDirty();
         }
-        m_syncDelayEst += 0.1*((double)m_currSyncDelay - m_syncDelayEst);
+        m_syncDelayEst += 0.1*(double(m_currSyncDelay) - m_syncDelayEst);
         m_currSyncDelay = 0;
       }
     }
+  }
+
+  void Oscilloscope::setPeriod(int nsamp)
+  {
+    while (m_displayPeriods > 1 && m_displayPeriods*nsamp > 16384)
+    {
+      m_displayPeriods -= 1;
+    }
+    setBufSize(m_displayPeriods*nsamp);
+  }
+
+  double Oscilloscope::toScreenX(double val) const
+  {
+    double normalxval = (val - m_config->xaxisticks.front()) / (m_config->xaxisticks.back() - m_config->xaxisticks.front());
+    return  normalxval*m_InnerRect.W() + m_InnerRect.L;
+  }
+
+  double Oscilloscope::toScreenY(double val) const
+  {
+    double normalyval = (val - m_minY) / (m_maxY - m_minY);
+    return m_InnerRect.B - m_InnerRect.H()*normalyval;
   }
 
   void Oscilloscope::setBufSize(int s)
@@ -113,52 +140,18 @@ namespace syn
     }
   }
 
-  void Oscilloscope::disconnectInput()
+  void Oscilloscope::connectInput(int srcUnit_id)
   {
-    m_currInput = nullptr;
-  }
-
-  void Oscilloscope::disconnectTrigger()
-  {
-    m_currTriggerSrc = nullptr;
-  }
-
-  void Oscilloscope::disconnectInput(Unit& srccomp)
-  {
-    if (m_currInput && m_currInput == &srccomp)
-    {
-      disconnectInput();
-    }
-  }
-
-  void Oscilloscope::disconnectTrigger(SourceUnit& srccomp)
-  {
-    if (m_currTriggerSrc && m_currTriggerSrc == &srccomp)
-    {
-      disconnectTrigger();
-    }
-  }
-
-  void Oscilloscope::connectInput(Unit& comp)
-  {
-    // connect
-    disconnectInput();
-    m_currInput = &comp;
+    m_srcUnit_id = srcUnit_id;
     m_currSyncDelay = 0;
     m_periodCount = 0;
   }
 
-  void Oscilloscope::connectTrigger(SourceUnit& comp)
+  void Oscilloscope::connectTrigger(int triggerUnit_id)
   {
-    // connect
-    disconnectTrigger();
-    m_currTriggerSrc = &comp;
+    m_triggerUnit_id = triggerUnit_id;
     m_currSyncDelay = 0;
     m_periodCount = 0;
-  }
-
-  void Oscilloscope::OnMouseUp(int x, int y, IMouseMod* pMod)
-  {
   }
 
   void Oscilloscope::OnMouseDown(int x, int y, IMouseMod* pMod)
@@ -209,6 +202,34 @@ namespace syn
     return bufReadLen;
   }
 
+  const SourceUnit* Oscilloscope::getTriggerUnit() const
+  {
+    SourceUnit* trigger_unit = nullptr;
+    if(m_vm->getNewestVoice()->hasUnit(m_triggerUnit_id))
+    {
+      trigger_unit = &m_vm->getNewestVoice()->getSourceUnit(m_triggerUnit_id);
+    }
+    return trigger_unit;
+  }
+
+  const Unit* Oscilloscope::getSourceUnit() const
+  {
+    Unit* source_unit = nullptr;
+    if (m_vm->getNewestVoice()->hasUnit(m_srcUnit_id))
+    {
+      source_unit = &m_vm->getNewestVoice()->getUnit(m_srcUnit_id);
+    }
+    return source_unit;
+  }
+
+  bool Oscilloscope::isConnected() const
+  {
+    bool is_connected = true;
+    is_connected &= m_vm->getNewestVoice()->hasUnit(m_srcUnit_id);
+    is_connected &= m_vm->getNewestVoice()->hasUnit(m_triggerUnit_id);
+    return is_connected;
+  }
+
   bool Oscilloscope::Draw(IGraphics *pGraphics)
   {
     // Local color palette
@@ -224,9 +245,9 @@ namespace syn
 
     // Draw outline
     pGraphics->DrawRect(&outlinecolor, &mRECT);
-    if (!m_isActive || !m_currInput)
+    if (!m_isActive || !isConnected())
     {
-      if (!m_currInput)
+      if (!isConnected())
       {
         pGraphics->DrawIText(&errortxtstyle, "No input!", &m_InnerRect);
       }
@@ -255,8 +276,11 @@ namespace syn
     pGraphics->DrawIText(&txtstylecenter, gridstr, &xunitslabel);
 
     // Draw window information text
+    int bufsize = m_config->outputbuf.size();
+    double estfreq = GetPlug()->GetSampleRate() / m_syncDelayEst;
+    double publishedfreq = GetPlug()->GetSampleRate() / getPeriod();
     sprintf(gridstr, "Displaying %d periods | Buffer size: %d (in) %d (out) | Input frequency: %.2f Hz (%.2f Hz)", \
-      m_displayPeriods, m_BufSize, m_config->outputbuf.size(), GetPlug()->GetSampleRate() / m_syncDelayEst, GetPlug()->GetSampleRate() / m_currTriggerSrc->getSamplesPerPeriod());
+      m_displayPeriods, m_BufSize, bufsize, estfreq, publishedfreq);
     pGraphics->DrawIText(&txtstyle, gridstr, &mRECT);
     double x1, y1;
     double x2, y2;

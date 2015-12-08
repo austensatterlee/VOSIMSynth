@@ -95,13 +95,15 @@ namespace syn
 
     VOSIMSynth* vs = static_cast<VOSIMSynth*>(mPlug);
     // If this unit is the oscilloscope input
-    if (vs->m_oscilloscope_input_unit == m_unit->getParent().getUnitId(m_unit))
+    if (vs->m_Oscilloscope->getInputId() == m_unit->getParent().getUnitId(m_unit))
     {
-      pGraphics->DrawIText(&textfmt, "I", &IRECT{ mRECT.R - 10,mRECT.B - 10,mRECT.R,mRECT.B });
+      IRECT input_badge_irect { mRECT.R - 10,mRECT.B - 10,mRECT.R,mRECT.B };
+      pGraphics->DrawIText(&textfmt, "I", &input_badge_irect);
     }
-    if (vs->m_oscilloscope_trigger_unit == m_unit->getParent().getUnitId(m_unit))
+    if (vs->m_Oscilloscope->getTriggerId() == m_unit->getParent().getUnitId(m_unit))
     {
-      pGraphics->DrawIText(&textfmt, "T", &IRECT{ mRECT.R - 20,mRECT.B - 10,mRECT.R - 10,mRECT.B });
+      IRECT trigger_badge_irect{ mRECT.R - 20,mRECT.B - 10,mRECT.R - 10,mRECT.B };
+      pGraphics->DrawIText(&textfmt, "T", &trigger_badge_irect);
     }
 
     vector<string> paramNames = m_unit->getParameterNames();
@@ -204,30 +206,24 @@ namespace syn
 
   void CircuitPanel::updateInstrument() const
   {
+    IPlugBase::IMutexLock lock(mPlug);
     m_vm->setMaxVoices(m_vm->getMaxVoices(), m_vm->getProtoInstrument());
   }
 
   void CircuitPanel::deleteUnit(int unitctrlid)
   {
-    IPlugBase::IMutexLock lock(mPlug);
     WDL_MutexLock guilock(&mPlug->GetGUI()->mMutex);
     // Delete unit from instrument
     Unit* unit = m_unitControls[unitctrlid]->getUnit();
     int unitid = unit->getParent().getUnitId(unit);
-    VOSIMSynth* vs = (VOSIMSynth*)mPlug;
-    // reset oscilloscope input and trigger if necessary
-    if (unitid == vs->m_oscilloscope_input_unit) {
-      vs->m_oscilloscope_input_unit = -1;
-    }
-    if (unitid == vs->m_oscilloscope_trigger_unit) {
-      vs->m_oscilloscope_trigger_unit = -1;
-    }
+    VOSIMSynth* vs = static_cast<VOSIMSynth*>(mPlug);
     Instrument* instr = m_vm->getProtoInstrument();
     instr->removeUnit(instr->getUnitId(unit));
     // Delete unit controller
     UnitControl* unitctrl = m_unitControls[unitctrlid];
     m_unitControls.erase(unitctrlid);
     delete unitctrl;
+    updateInstrument();
   }
 
   void CircuitPanel::setSink(int unitctrlid)
@@ -235,7 +231,7 @@ namespace syn
     Instrument* instr = m_vm->getProtoInstrument();
     Unit* unit = m_unitControls[unitctrlid]->getUnit();
     instr->setSinkId(instr->getUnitId(unit));
-    for(std::pair<int,UnitControl*> ctrlpair : m_unitControls)
+    for(pair<int,UnitControl*> ctrlpair : m_unitControls)
     {
       if(ctrlpair.second->m_is_sink)
       {
@@ -243,6 +239,7 @@ namespace syn
       }
     }
     m_unitControls[unitctrlid]->m_is_sink = true;
+    updateInstrument();
   }
 
   void CircuitPanel::OnMouseDown(int x, int y, IMouseMod* pMod)
@@ -278,7 +275,6 @@ namespace syn
   }
 
   void CircuitPanel::createSourceUnit(int factoryid, int x, int y) {
-    IPlugBase::IMutexLock lock(mPlug);
     WDL_MutexLock guilock(&mPlug->GetGUI()->mMutex);
     Instrument* instr = m_vm->getProtoInstrument();
     SourceUnit* srcunit = m_unitFactory->createSourceUnit(factoryid);
@@ -288,7 +284,6 @@ namespace syn
   }
 
   void CircuitPanel::createUnit(int factoryid, int x, int y) {
-    IPlugBase::IMutexLock lock(mPlug);
     WDL_MutexLock guilock(&mPlug->GetGUI()->mMutex);
     Instrument* instr = m_vm->getProtoInstrument();
     Unit* unit = m_unitFactory->createUnit(factoryid);
@@ -299,7 +294,6 @@ namespace syn
 
   void CircuitPanel::OnMouseUp(int x, int y, IMouseMod* pMod)
   {
-    WDL_MutexLock lock(&mPlug->GetGUI()->mMutex);
     Instrument* instr = m_vm->getProtoInstrument();
     int currSelectedUnit = getSelectedUnit(x, y);
     if (m_isMouseDown == 2 && currSelectedUnit == -1)
@@ -332,7 +326,6 @@ namespace syn
       IPopupMenu* selectedmenu = mPlug->GetGUI()->CreateIPopupMenu(&unitmenu, x, y);
       if (selectedmenu == &unitmenu)
       {
-        IPlugBase::IMutexLock lock1(mPlug);
         int selectedItem = selectedmenu->GetChosenItemIdx();
         if (selectedItem == 0)
         { // Set sink
@@ -346,13 +339,13 @@ namespace syn
         }
         else if (selectedItem == 2)
         { // Set oscilloscope source
-          VOSIMSynth* vs = (VOSIMSynth*)mPlug;
-          vs->m_oscilloscope_input_unit = instr->getUnitId(unit);
+          VOSIMSynth* vs = static_cast<VOSIMSynth*>(mPlug);
+          vs->m_Oscilloscope->connectInput(instr->getUnitId(unit));
         }
         else if (selectedItem == 4)
         { // Set oscilloscope trigger
-          VOSIMSynth* vs = (VOSIMSynth*)mPlug;
-          vs->m_oscilloscope_trigger_unit = instr->getUnitId(unit);
+          VOSIMSynth* vs = static_cast<VOSIMSynth*>(mPlug);
+          vs->m_Oscilloscope->connectTrigger(instr->getUnitId(unit));
         }
         else if (selectedItem == 5)
         { // Set primary source
@@ -363,7 +356,6 @@ namespace syn
     }
     else if (m_currAction == CONNECT && currSelectedUnit >= 0)
     {
-      IPlugBase::IMutexLock lock1(mPlug);
       m_vm->getProtoInstrument()->addConnection({ currSelectedUnit, m_lastSelectedUnit, m_lastSelectedPort.paramid, m_lastSelectedPort.modaction });
       updateInstrument();
     }
@@ -384,7 +376,6 @@ namespace syn
       }
       else if (m_currAction == RESIZE)
       {
-        int newsize = NDPoint<2, int>(x, y).distFrom(m_lastClickPos);
         unitCtrl->resize(dX+unitCtrl->m_size);
       }
       else if (m_currAction == MOVE)
@@ -413,12 +404,12 @@ namespace syn
     // Local palette
     IColor bg_color = globalPalette[0];
     pGraphics->FillIRect(&bg_color, &mRECT);
-    for (std::pair<int, UnitControl*> unitpair : m_unitControls)
+    for (pair<int, UnitControl*> unitpair : m_unitControls)
     {
       unitpair.second->Draw(pGraphics);
     }
     Instrument* instr = m_vm->getProtoInstrument();
-    for (std::pair<int, UnitControl*> unitpair : m_unitControls)
+    for (pair<int, UnitControl*> unitpair : m_unitControls)
     {
       const vector<ConnectionMetadata>& connections = instr->getConnectionsTo(unitpair.first);
       for (int j = 0; j < connections.size(); j++)
@@ -426,12 +417,12 @@ namespace syn
         NDPoint<2, int> pt1 = m_unitControls[connections[j].srcid]->getOutputPos();
         SelectedPort selectedPort{ connections[j].portid,connections[j].action };
         NDPoint<2, int> pt2 = m_unitControls[connections[j].targetid]->getPortPos(selectedPort);
-        pGraphics->DrawLine(&COLOR_WHITE, pt1[0], pt1[1], pt2[0], pt2[1], 0, true);
+        pGraphics->DrawLine(&COLOR_WHITE, pt1[0], pt1[1], pt2[0], pt2[1], nullptr, true);
       }
     }
     if (m_currAction == CONNECT)
     {
-      pGraphics->DrawLine(&COLOR_WHITE, m_lastClickPos[0], m_lastClickPos[1], m_lastMousePos[0], m_lastMousePos[1], 0, true);
+      pGraphics->DrawLine(&COLOR_WHITE, m_lastClickPos[0], m_lastClickPos[1], m_lastMousePos[0], m_lastMousePos[1], nullptr, true);
     }
     return true;
   }
@@ -439,7 +430,7 @@ namespace syn
   int CircuitPanel::getSelectedUnit(int x, int y)
   {
     int selectedUnit = -1;
-    for (std::pair<int, UnitControl*> unitpair : m_unitControls)
+    for (pair<int, UnitControl*> unitpair : m_unitControls)
     {
       if (unitpair.second->IsHit(x, y))
       {
@@ -455,14 +446,14 @@ namespace syn
 
     unsigned int numunits = m_unitControls.size();
     serialized.PutBytes(&numunits, sizeof(unsigned int));
-    for (std::pair<int, UnitControl*> ctrlpair : m_unitControls)
+    for (pair<int, UnitControl*> ctrlpair : m_unitControls)
     {
       ByteChunk unitctrl_chunk = serializeUnitControl(ctrlpair.first);
       serialized.PutChunk(&unitctrl_chunk);
     }
 
     Instrument* instr = m_vm->getProtoInstrument();
-    for (std::pair<int, UnitControl*> ctrlpair : m_unitControls)
+    for (pair<int, UnitControl*> ctrlpair : m_unitControls)
     {
       int unitid = instr->getUnitId(ctrlpair.second->m_unit);
       const vector<ConnectionMetadata> connections = instr->getConnectionsTo(unitid);
@@ -482,7 +473,7 @@ namespace syn
     int chunkpos = startPos;
     Instrument* instr = m_vm->getProtoInstrument();
     vector<int> unitctrlids;
-    for (std::pair<int, UnitControl*> ctrlpair : m_unitControls) {
+    for (pair<int, UnitControl*> ctrlpair : m_unitControls) {
       unitctrlids.push_back(ctrlpair.first);
     }
     for (int i = 0; i < unitctrlids.size(); i++) {
@@ -539,7 +530,6 @@ namespace syn
 
   int CircuitPanel::unserializeUnitControl(ByteChunk* chunk, int startPos)
   {
-    IPlugBase::IMutexLock lock(mPlug);
     WDL_MutexLock guilock(&mPlug->GetGUI()->mMutex);
     int chunkpos = startPos;
     unsigned int unitClassId;
@@ -570,7 +560,7 @@ namespace syn
     int uid = isSource ? instr->addSource(dynamic_cast<SourceUnit*>(unit), unitid) : instr->addUnit(unit, unitid);
     m_unitControls[uid] = new UnitControl(mPlug, m_vm, unit, x, y, size);
     if (isSink) setSink(uid);
-    if (isPrimarySource) instr->setPrimarySource(uid);
+    if (isPrimarySource) instr->resetPrimarySource(uid);
     updateInstrument();
     return chunkpos;
   }

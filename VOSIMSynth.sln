@@ -22,21 +22,15 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VOSIMSynth-vst2", "VOSIMSyn
 		{33958832-2FFD-49D8-9C13-5F0B26739E81} = {33958832-2FFD-49D8-9C13-5F0B26739E81}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VOSIMSynth-vst3", "VOSIMSynth-vst3.vcxproj", "{079FC65A-F0E5-4E97-B318-A16D1D0B89DF}"
-	ProjectSection(ProjectDependencies) = postProject
-		{3059A12C-2A45-439B-81EC-201D8ED347A3} = {3059A12C-2A45-439B-81EC-201D8ED347A3}
-		{33958832-2FFD-49D8-9C13-5F0B26739E81} = {33958832-2FFD-49D8-9C13-5F0B26739E81}
-		{5755CC40-C699-491B-BD7C-5D841C26C28D} = {5755CC40-C699-491B-BD7C-5D841C26C28D}
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "base", "..\..\VST3_SDK\base\win\base.vcxproj", "{5755CC40-C699-491B-BD7C-5D841C26C28D}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{55829103-8D4B-4492-8C7B-485D6E81CB28}"
 	ProjectSection(SolutionItems) = preProject
 		Performance1.psess = Performance1.psess
 	EndProjectSection
 EndProject
 Global
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64
@@ -94,30 +88,6 @@ Global
 		{2EB4846A-93E0-43A0-821E-12237105168F}.Tracer|Win32.Build.0 = Tracer|Win32
 		{2EB4846A-93E0-43A0-821E-12237105168F}.Tracer|x64.ActiveCfg = Tracer|x64
 		{2EB4846A-93E0-43A0-821E-12237105168F}.Tracer|x64.Build.0 = Tracer|x64
-		{079FC65A-F0E5-4E97-B318-A16D1D0B89DF}.Debug|Win32.ActiveCfg = Debug|Win32
-		{079FC65A-F0E5-4E97-B318-A16D1D0B89DF}.Debug|Win32.Build.0 = Debug|Win32
-		{079FC65A-F0E5-4E97-B318-A16D1D0B89DF}.Debug|x64.ActiveCfg = Debug|x64
-		{079FC65A-F0E5-4E97-B318-A16D1D0B89DF}.Debug|x64.Build.0 = Debug|x64
-		{079FC65A-F0E5-4E97-B318-A16D1D0B89DF}.Release|Win32.ActiveCfg = Release|Win32
-		{079FC65A-F0E5-4E97-B318-A16D1D0B89DF}.Release|Win32.Build.0 = Release|Win32
-		{079FC65A-F0E5-4E97-B318-A16D1D0B89DF}.Release|x64.ActiveCfg = Release|x64
-		{079FC65A-F0E5-4E97-B318-A16D1D0B89DF}.Release|x64.Build.0 = Release|x64
-		{079FC65A-F0E5-4E97-B318-A16D1D0B89DF}.Tracer|Win32.ActiveCfg = Tracer|Win32
-		{079FC65A-F0E5-4E97-B318-A16D1D0B89DF}.Tracer|Win32.Build.0 = Tracer|Win32
-		{079FC65A-F0E5-4E97-B318-A16D1D0B89DF}.Tracer|x64.ActiveCfg = Tracer|x64
-		{079FC65A-F0E5-4E97-B318-A16D1D0B89DF}.Tracer|x64.Build.0 = Tracer|x64
-		{5755CC40-C699-491B-BD7C-5D841C26C28D}.Debug|Win32.ActiveCfg = Debug|Win32
-		{5755CC40-C699-491B-BD7C-5D841C26C28D}.Debug|Win32.Build.0 = Debug|Win32
-		{5755CC40-C699-491B-BD7C-5D841C26C28D}.Debug|x64.ActiveCfg = Debug|x64
-		{5755CC40-C699-491B-BD7C-5D841C26C28D}.Debug|x64.Build.0 = Debug|x64
-		{5755CC40-C699-491B-BD7C-5D841C26C28D}.Release|Win32.ActiveCfg = Release|Win32
-		{5755CC40-C699-491B-BD7C-5D841C26C28D}.Release|Win32.Build.0 = Release|Win32
-		{5755CC40-C699-491B-BD7C-5D841C26C28D}.Release|x64.ActiveCfg = Release|x64
-		{5755CC40-C699-491B-BD7C-5D841C26C28D}.Release|x64.Build.0 = Release|x64
-		{5755CC40-C699-491B-BD7C-5D841C26C28D}.Tracer|Win32.ActiveCfg = Release|Win32
-		{5755CC40-C699-491B-BD7C-5D841C26C28D}.Tracer|Win32.Build.0 = Release|Win32
-		{5755CC40-C699-491B-BD7C-5D841C26C28D}.Tracer|x64.ActiveCfg = Release|x64
-		{5755CC40-C699-491B-BD7C-5D841C26C28D}.Tracer|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

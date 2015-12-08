@@ -31,7 +31,7 @@ namespace syn
       m_curr(0.0),
       m_next(0.0),
       m_rand_period(1.0),
-      m_norm_gen(0.0, 1.0),
+      m_uni_gen(0.0, 1.0),
       m_exp_gen(1.0),
       m_curr_polarity(1)
     {}
@@ -47,12 +47,12 @@ namespace syn
     double m_rand_period;
     double m_curr_polarity;
     exponential_distribution<double> m_exp_gen;
-    normal_distribution<double> m_norm_gen;
+    uniform_real_distribution<double> m_uni_gen;
     virtual void update_step() override
     {
       double freq = pitchToFreq(m_pitch + m_tune);
       m_exp_gen = exponential_distribution<double>{ freq };
-      m_Step = 1. / (m_rand_period*m_Fs);
+      m_Step = freq / (m_Fs);
     }
     virtual void process(int bufind) override
     {
@@ -61,7 +61,7 @@ namespace syn
       {
         m_curr = m_next;
         m_curr_polarity *= -1;
-        m_next = m_curr_polarity*m_gain*m_norm_gen(m_gen);
+        m_next = m_curr_polarity*m_gain*m_uni_gen(m_gen);
         m_rand_period = m_exp_gen(m_gen);
       }
       m_output[bufind] = LERP(m_curr, m_next, m_phase);

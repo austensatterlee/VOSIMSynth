@@ -6,8 +6,6 @@
 #include <stdint.h>
 #include <string>
 #include <list>
-#include <unordered_map>
-#include <array>
 
 using std::list;
 using std::map;
@@ -48,13 +46,14 @@ namespace syn
     void setBufSize(size_t bufsize);
     void setMaxVoices(int max, Instrument* v);
     int getNumVoices() const { return m_numVoices; };
-    int getMaxVoices() { return m_maxVoices; };
+    int getMaxVoices() const
+    { return m_maxVoices; };
     void modifyParameter(int uid, int pid, double val, MOD_ACTION action);
     void tick(double* buf, size_t bufsize);
     Signal1<Instrument*> m_onDyingVoice;
 
     VoiceManager() :
-      m_numVoices(0)
+      m_numVoices(0), m_maxVoices(0), m_instrument(nullptr)
     {
     };
     ~VoiceManager() {}

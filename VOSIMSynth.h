@@ -2,7 +2,6 @@
 #define __VOSIMSYNTH__
 
 #include "IPlug_include_in_plug_hdr.h"
-#include "resource.h"
 #include "MIDIReceiver.h"
 #include "VoiceManager.h"
 #include "Instrument.h"
@@ -19,16 +18,14 @@ public:
   VOSIMSynth(IPlugInstanceInfo instanceInfo);
   void makeGraphics();
   void makeInstrument();
-  void OnNoteOn(uint8_t pitch, uint8_t vel);
-  void OnDyingVoice(Instrument* dying);
   ~VOSIMSynth()
   {
   };
 
-  void Reset();
-  void OnParamChange(int paramIdx);
-  void ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames);
-  void ProcessMidiMsg(IMidiMsg* pMsg);
+  virtual void Reset() override;
+  void OnParamChange(int paramIdx) override;
+  virtual void ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) override;
+  virtual void ProcessMidiMsg(IMidiMsg* pMsg) override;
   void SetInstrParameter(int unitid, int paramid, double value);
   double GetInstrParameter(int unitid, int paramid);
 
@@ -37,13 +34,10 @@ public:
   virtual int UnserializeState(ByteChunk* pChunk, int startPos) override;
 
   virtual void PresetsChangedByHost() override;
-
-  int m_oscilloscope_input_unit;
-  int m_oscilloscope_trigger_unit;
+  Oscilloscope* m_Oscilloscope;
 private:
   MIDIReceiver m_MIDIReceiver;
   VoiceManager m_voiceManager;
-  Oscilloscope* m_Oscilloscope;
   CircuitPanel* m_circuitPanel;
   Instrument* m_instr;
   UnitFactory* m_unitfactory;

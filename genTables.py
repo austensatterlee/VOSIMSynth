@@ -66,18 +66,15 @@ def MinimumPhase(n,realCepstrum):
     minimumPhase = realTime
     return minimumPhase
 
-def GenerateBLSaw(intervals=4,resolution=2700,fs=48000,fc=15000,beta=8.3,apgain=0.5,apbeta=0.5):
+def GenerateBLSaw(pts,oversample=1):
     """ Generate band limited sawtooth wave """
-    pts = intervals*resolution+1
-    blit = GenerateBlit(intervals,resolution,fs,fc,beta,apgain,apbeta)
-    blsawseg = blit.cumsum()
-    blsawseg = 2*blsawseg/blsawseg[-1]
-    blsawseg[pts/2:] -= 2
-    blsawseg /= blsawseg.max()
-    naivesaw = ss.sawtooth(arange(pts)*2*pi/pts)
-    blsawseg_up = zeros_like(naivesaw)
-    
-    return blsaw
+    nfft = pts
+    pts = int(pts/oversample)
+    ind = arange(1,pts)
+    freqmags = zeros(pts,dtype=complex128)
+    freqmags[ind] = 1j*1./ind
+    blsaw = fft.irfft(freqmags*1./2*nfft,n=nfft)
+    return blsaw/blsaw.max()
 
 def GenerateBlit(intervals=10,resolution=100,fs=48000,fc=18300,beta=9.,apgain=0.9,apbeta=0.7):
     """
@@ -90,12 +87,12 @@ def GenerateBlit(intervals=10,resolution=100,fs=48000,fc=18300,beta=9.,apgain=0.
     beta - first window param
     apgain - apodizing window gain (subtracted from the )
     """
+    Ts = 1./fs
     intervals=2*(intervals/2)+1
     pts = resolution*intervals # impulse length in points
-    x1 = arange(pts)
-    x2 = intervals*2*(x1-(pts)/2+1e-5)/(pts)
-    x3 = pi*fc*1.0/fs*x2
-    h = array([sin(x)/x if x!=0 else 1.0 for x in x3]) # brickwall filter impulse response
+    ind = (arange(-pts/2,pts/2)+1e-5)/pts # pts points spread across [-0.5,0.5)
+    x = intervals*2*ind # pts points spread across [-intervals,intervals)
+    h = sinc(pi*fc*Ts*x)
     w = ss.kaiser(pts,beta) # window
     apw = 1-apgain*ss.kaiser(pts,apbeta) # apodization window
     blit = apw*(w*h) # blit
@@ -160,17 +157,14 @@ def rewriteAutomatedSection(full_text,replacement_text):
 def main(pargs):
     v = pargs.verbose
 
-    ss_points = 128
-    sinsquaredtable = GenerateSine(ss_points)
-    sk_points = 5
-    sk_fc = 0.5
-    sinckernel = SincKernel(sk_points,sk_fc)
-    pitchtable = PitchTable(128,-128,128)
-    blsaw = GenerateBLSaw(128)
+    ss_points = 1024
+    sintable = GenerateSine(ss_points)
+    pitchtable = PitchTable(256,-128,128)
+    blsaw = GenerateBLSaw(1024,16)
 
     key_order = ['size','input_min','input_max', 'isPeriodic']
     tables = {
-            'VOSIM_PULSE_COS':dict(data=sinsquaredtable,size=ss_points),
+            'SIN':dict(data=sintable,size=ss_points),
             'PITCH_TABLE':dict(data=pitchtable,size=len(pitchtable),input_min=-1,input_max=1,isPeriodic=False),
             'BL_SAW':dict(data=blsaw,size=len(blsaw))
             }
@@ -235,38 +229,101 @@ if __name__=="__main__":
     main(pargs)
 
 """Tools"""
-def magspec(signal,fs=None):
+def magspec(signal,logscale=True, fs=None, pts=None):
     from matplotlib import pyplot as plt
-    k = arange(1,len(signal)/2)
-    fs = fs or len(signal)
-    freqs = k*1./len(signal)*fs
-    signalfft = fft.fft(signal)[1:len(signal)/2]
-    plt.semilogx( freqs, 20*log10(abs(signalfft)) )
+    pts = pts or len(signal)
+    k = arange(1,pts/2)
+    fs = fs or pts
+    freqs = linfreqs = k*1./pts*fs
+    if(logscale):
+        freqs = log2(freqs)
+    signalfft = fft.fft(signal,n=pts)[1:pts/2]/pts
+    if(all(signalfft)):
+        mag = 20*log10(abs(signalfft))
+        ylabel = "dB"
+    else:
+        mag = abs(signalfft)**2
+        ylabel = "Amp"
+    f = plt.gcf()
+    ax = plt.gca()
+    ax.plot( freqs, mag )
+    nxticks = len(ax.get_xticks())
+    xticklabels = map(lambda x:"{:.2g}".format(x),linfreqs[:-1:len(linfreqs)/nxticks]/fs);
+    ax.set_xticklabels(xticklabels)
+    ax.set_xlabel("Hz")
+    ax.set_ylabel(ylabel)
+    ax.grid(True,which='both')
+    f.show()
 
-def maggain(signal1,signal2,fs=None):
+def maggain(signal1,signal2,logscale=True,fs=None):
     from matplotlib import pyplot as plt
-    assert len(signal1)==len(signal2)
-    k = arange(1,len(signal1)/2)
-    fs = fs or len(signal1)
-    freqs = k*1./len(signal1)*fs
-    signal1fft = fft.fft(signal1)[1:len(signal1)/2]
-    signal2fft = fft.fft(signal2)[1:len(signal1)/2]
-    plt.semilogx( freqs, 20*(log10(abs(signal1fft))-log10(abs(signal2fft))) )
+    fftlength = max(len(signal1),len(signal2))
+    k = arange(1,fftlength/2)
+    fs = fs or fftlength
+    linfreqs = freqs = k*1./fftlength*fs
+    if(logscale):
+        freqs = log2(freqs)
+    signal1fft = fft.fft(signal1,n=fftlength)[1:fftlength/2]/fftlength
+    signal2fft = fft.fft(signal2,n=fftlength)[1:fftlength/2]/fftlength
+    if(all(signal1fft) and all(signal2fft)):
+        mag1 = 20*log10(abs(signal1fft))
+        mag2 = 20*log10(abs(signal2fft))
+        gain = mag2-mag1
+        ylabel = "dB"
+    else:
+        mag1 = abs(signal1fft)**2
+        mag2 = abs(signal2fft)**2
+        gain = mag2-mag1
+        ylabel = "Amp"
+    f = plt.gcf()
+    ax = plt.gca()
+    ax.plot( freqs, gain )
+    nxticks = min(len(linfreqs),len(ax.get_xticks()))
+    xticklabels = map(lambda x:"{:.2g}".format(x),linfreqs[:-1:len(linfreqs)/nxticks]/fs);
+    ax.set_xticklabels(xticklabels)
+    ax.set_xlabel("Hz")
+    ax.set_ylabel(ylabel)
+    ax.grid(True,which='both')
+    f.show()
 
-def slidingwindow(window,signal,window_res,transpose_ratio):
-    intervals = int(len(window)/float(window_res))
-    norig = len(signal)
-    phase_step = transpose_ratio/float(norig)
-    nfinal = int(1./phase_step)
-    output = zeros(nfinal)
-    sphase = 0.0
-    for k in xrange(nfinal):
-        index = int(sphase*norig)
-        offset = window_res-1+(int(sphase)-sphase)*window_res
-        print offset
-        for i in xrange(intervals):
-            output[k] += window[mod(offset+window_res*i,len(window))]*signal[mod(index+i-intervals/2+1,norig)]
-        sphase+=phase_step
-        if sphase>=1:
-            sphase-=1
+def blit(P,M=None):
+    """ Generates an impulse train """
+    M = M or 2*floor(P/2)+1
+    mprat = M*1./P
+    sincM = lambda x: cos(pi*x)/cos(pi*1./M*x)
+    output = array(sincM(arange(P)))
     return output
+
+def slidingwindow(signal,window,oversample,transpose,numperiods=1):
+    phasestep = transpose*1./len(signal)
+    phase = 0
+    output = []
+    period = 0
+    intervals = len(window)/oversample
+    while period<numperiods:
+        index = int(phase*len(signal))
+        fracindex = phase*len(signal)-int(phase*len(signal))
+        output.append(0)
+        convindices = zeros([2,intervals],dtype=int)
+        for k in arange(intervals):
+            convindex = int(mod(index-k+intervals/2,len(signal)))
+            windowindex = int(mod(k*oversample+fracindex*oversample,len(window)))
+            convindices[0,k]=convindex
+            convindices[1,k]=windowindex
+            # if(convindex==index):
+                # print convindex,windowindex,fracindex,k
+            output[-1]+=signal[convindex]*window[windowindex]
+        if phase==0:
+            return convindices
+        phase += phasestep
+        if (phase>=1):
+            period+=1
+            phase-=1
+    return array(output)
+
+def genApodWindow(pts,beta,apgain,apbeta):
+    w = ss.kaiser(pts,beta) # window
+    apw = 1-apgain*ss.kaiser(pts,apbeta) # apodization window
+    W = w*apw
+    W/=max(W)
+    return W

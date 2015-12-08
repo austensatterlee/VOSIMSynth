@@ -122,6 +122,7 @@ namespace syn
     {
       m_pitch.mod(-12, SET);
       m_pitch.setIsHidden(false);
+      m_pitch.setMin(-12);
       m_tune.setMax(24);
       m_tune.setMin(-24);
     }

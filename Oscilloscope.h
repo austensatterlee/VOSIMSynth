@@ -3,6 +3,7 @@
 #include "IControl.h"
 #include "Unit.h"
 #include "SourceUnit.h"
+#include "VoiceManager.h"
 #include "GallantSignal.h"
 #include <vector>
 #include <deque>
@@ -43,8 +44,8 @@ namespace syn
     WDL_Mutex m_mutex;
   protected:
     IRECT m_InnerRect;
-    SourceUnit* m_currTriggerSrc = nullptr;
-    Unit* m_currInput = nullptr;
+    VoiceManager* m_vm;
+    int m_srcUnit_id, m_triggerUnit_id;
     bool m_isActive;
     double m_minY, m_maxY;
     int m_Padding;
@@ -58,21 +59,19 @@ namespace syn
     OscilloscopeConfig* m_config;
     vector<double> m_inputRingBuffer, m_inputBuffer;
     IPopupMenu m_menu;
-    double toScreenX(double val) const
-    {
-      double normalxval = (val - m_config->xaxisticks.front()) / (m_config->xaxisticks.back() - m_config->xaxisticks.front());
-      return  normalxval*m_InnerRect.W() + m_InnerRect.L;
-    };
-    double toScreenY(double val) const
-    {
-      double normalyval = (val - m_minY) / (m_maxY - m_minY);
-      return m_InnerRect.B - m_InnerRect.H()*normalyval;
-    }
+    double toScreenX(double val) const;;
+    double toScreenY(double val) const;
     void setBufSize(int s);
     int getBufReadLength() const;
+    const SourceUnit* getTriggerUnit() const;
+    const Unit* getSourceUnit() const;
+    bool isConnected() const;
   public:
-    Oscilloscope(IPlugBase *pPlug, IRECT pR);
-    ~Oscilloscope() {};
+    Oscilloscope(IPlugBase *pPlug, IRECT pR, VoiceManager* vm);
+    ~Oscilloscope() {}
+
+    int getInputId() const {return m_srcUnit_id; };
+    int getTriggerId() const { return m_triggerUnit_id; };
 
     virtual bool Draw(IGraphics *pGraphics) override;
 
@@ -81,23 +80,12 @@ namespace syn
     int getPeriod() const
     { return m_BufSize / m_displayPeriods; }
 
+    void connectInput(int srcUnit_id);
+    void connectTrigger(int triggerUnit_id);
     virtual void OnMouseWheel(int x, int y, IMouseMod* pMod, int d) override;
-    void connectInput(Unit& comp);
-    void connectTrigger(SourceUnit& comp);
-    virtual void OnMouseUp(int x, int y, IMouseMod* pMod) override;
     virtual void OnMouseDown(int x, int y, IMouseMod* pMod) override;
-    void disconnectInput();
-    void disconnectInput(Unit& srccomp);
-    void disconnectTrigger();
-    void disconnectTrigger(SourceUnit& srccomp);
     void process();
-    void setPeriod(int nsamp) {
-      while (m_displayPeriods > 1 && m_displayPeriods*nsamp > 16384)
-      {
-        m_displayPeriods -= 1;
-      }
-      setBufSize(m_displayPeriods*nsamp);
-    }
+    void setPeriod(int nsamp);
     void setConfig(OscilloscopeConfig* config);
   };
 

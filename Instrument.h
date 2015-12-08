@@ -34,7 +34,7 @@ namespace syn
     virtual bool removeUnit(int uid) override;
     SourceUnit& getSourceUnit(string name) const { return *(SourceUnit*)m_units.at(m_unitmap.at(name)); };
     SourceUnit& getSourceUnit(int srcid) const { return *(SourceUnit*)m_units.at(srcid); };
-    bool isSourceUnit(int srcid) const { return std::find(m_sourcemap.begin(), m_sourcemap.end(), srcid) != m_sourcemap.end(); };
+    bool isSourceUnit(int srcid) const { return find(m_sourcemap.begin(), m_sourcemap.end(), srcid) != m_sourcemap.end(); };
     void noteOn(int note, int vel);
     void noteOff(int note, int vel);
     bool isActive() const;

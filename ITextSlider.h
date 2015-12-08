@@ -33,8 +33,9 @@ namespace syn
 
     void OnMouseDblClick(int x, int y, IMouseMod* pMod) override
     {
-      m_value = m_vm->getProtoInstrument()->getParameter(m_unitid, m_paramid).getDefault();
-      m_vm->modifyParameter(m_unitid, m_paramid, m_value, SET);
+      double defaultValue = m_vm->getProtoInstrument()->getParameter(m_unitid, m_paramid).getDefault();
+      m_value = (defaultValue - m_min)/(m_max-m_min);
+      m_vm->modifyParameter(m_unitid, m_paramid, defaultValue, SET);
     }
 
     IRECT& getRect()

@@ -34,13 +34,13 @@ namespace syn
 
   bool Instrument::isPrimarySource(int srcid) const
   {
-    return std::find(m_primarySrcVec.begin(), m_primarySrcVec.end(), srcid) != m_primarySrcVec.end();
+    return find(m_primarySrcVec.begin(), m_primarySrcVec.end(), srcid) != m_primarySrcVec.end();
   }
 
   bool Instrument::removeUnit(int uid)
   {
     bool success = Circuit::removeUnit(uid);
-    SourceVec::iterator srcmap_it = std::find(m_sourcemap.begin(), m_sourcemap.end(), uid);
+    SourceVec::iterator srcmap_it = find(m_sourcemap.begin(), m_sourcemap.end(), uid);
     if (srcmap_it != m_sourcemap.end())
     {
       m_sourcemap.erase(srcmap_it);
@@ -51,7 +51,7 @@ namespace syn
 
   void Instrument::removePrimarySource(int srcid)
   {
-    SourceVec::iterator it = std::find(m_primarySrcVec.begin(), m_primarySrcVec.end(), srcid);
+    SourceVec::iterator it = find(m_primarySrcVec.begin(), m_primarySrcVec.end(), srcid);
     if (it != m_primarySrcVec.end()) m_primarySrcVec.erase(it);
   }
 
@@ -60,7 +60,7 @@ namespace syn
     m_note = pitch;
     for (int i = 0; i < m_sourcemap.size(); i++)
     {
-      ((SourceUnit*)m_units[m_sourcemap[i]])->noteOn(pitch, vel);
+      static_cast<SourceUnit*>(m_units[m_sourcemap[i]])->noteOn(pitch, vel);
     }
   }
 
@@ -68,7 +68,7 @@ namespace syn
   {
     for (int i = 0; i < m_sourcemap.size(); i++)
     {
-      ((SourceUnit*)m_units[m_sourcemap[i]])->noteOff(pitch, vel);
+      static_cast<SourceUnit*>(m_units[m_sourcemap[i]])->noteOff(pitch, vel);
     }
   }
 
@@ -76,7 +76,7 @@ namespace syn
   {
     if (m_sinkId < 0) return false;
     for (int i = 0; i < m_primarySrcVec.size(); i++) {
-      if (((SourceUnit*)m_units.at(m_primarySrcVec[i]))->isActive()) return true;
+      if (static_cast<SourceUnit*>(m_units.at(m_primarySrcVec[i]))->isActive()) return true;
     }
     return false;
   }

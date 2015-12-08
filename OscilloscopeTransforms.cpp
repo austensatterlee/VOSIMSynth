@@ -1,13 +1,12 @@
 #include "Oscilloscope.h"
 #include "fftw3.h"
 #include <vector>
-#include <cmath>
 
 using namespace std;
 
 namespace syn
 {
-  void magnitudeTransform(OscilloscopeConfig& oscconfig, IPlugBase* pPlug, const std::vector<double>& inputbuf)
+  void magnitudeTransform(OscilloscopeConfig& oscconfig, IPlugBase* pPlug, const vector<double>& inputbuf)
   {
     int N = inputbuf.size();
     int halfN = N / 2;
@@ -16,8 +15,8 @@ namespace syn
       oscconfig.xaxisticks.resize(halfN, 0.0);
       oscconfig.xaxislbls.resize(halfN);
     }
-    double* process = (double*)fftw_malloc(sizeof(double) * N);
-    fftw_complex* out = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * (halfN + 1));
+    double* process = static_cast<double*>(fftw_malloc(sizeof(double) * N));
+    fftw_complex* out = static_cast<fftw_complex*>(fftw_malloc(sizeof(fftw_complex) * (halfN + 1)));
     fftw_plan p = fftw_plan_dft_r2c_1d(N, process, out, FFTW_ESTIMATE);
 
     memcpy(process, inputbuf.data(), sizeof(double)*N);
@@ -31,8 +30,8 @@ namespace syn
     {
       int i = k - 1;
       oscconfig.outputbuf[i] = oscconfig.outputbuf[i] + 0.7*(20 * log10(sqrt(out[k][0] * out[k][0] + out[k][1] * out[k][1])) - oscconfig.outputbuf[i]);
-      oscconfig.xaxisticks[i] = log10((k / (double)halfN)*pPlug->GetSampleRate());
-      snprintf(lblbuf, 64, "%g", (k / (double)N)*pPlug->GetSampleRate());
+      oscconfig.xaxisticks[i] = log10((k / double(halfN))*pPlug->GetSampleRate());
+      snprintf(lblbuf, 64, "%g", (k / double(N))*pPlug->GetSampleRate());
       oscconfig.xaxislbls[i] = string(lblbuf);
       if (isinf(oscconfig.outputbuf[i]))
       {
@@ -48,7 +47,7 @@ namespace syn
     fftw_free(out);
   }
 
-  void passthruTransform(OscilloscopeConfig& oscconfig, IPlugBase* pPlug, const std::vector<double>& inputbuf)
+  void passthruTransform(OscilloscopeConfig& oscconfig, IPlugBase* pPlug, const vector<double>& inputbuf)
   {
     int N = inputbuf.size();
     if (oscconfig.outputbuf.size() != N) {
@@ -63,8 +62,8 @@ namespace syn
     for (int i = 0; i < N; i++)
     {
       oscconfig.outputbuf[i] = inputbuf[i];
-      oscconfig.xaxisticks[i] = i / (double)N*pPlug->GetSampleRate();
-      snprintf(lblbuf, 64, "%f", i / (double)pPlug->GetSampleRate());
+      oscconfig.xaxisticks[i] = i / double(N)*pPlug->GetSampleRate();
+      snprintf(lblbuf, 64, "%f", i / double(pPlug->GetSampleRate()));
       oscconfig.xaxislbls[i] = string(lblbuf);
       if (oscconfig.argmax == -1 || oscconfig.outputbuf[i] > oscconfig.outputbuf[oscconfig.argmax])
         oscconfig.argmax = i;

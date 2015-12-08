@@ -1,9 +1,6 @@
 #ifndef __DSPMATH__
 #define __DSPMATH__
-#include <cmath>
-#include <vector>
 #include "tables.h"
-#include "db2val.h"
 
 #define LERP(A,B,F) (((B)-(A))*(F)+(A))
 #define INVLERP(A,B,X) (((X)-(A))/((B)-(A)))

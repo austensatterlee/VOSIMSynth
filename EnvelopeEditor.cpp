@@ -1,7 +1,6 @@
 #include "EnvelopeEditor.h"
 #include "UI.h"
-#include <algorithm>
-#include <cmath>
+
 namespace syn
 {
   EnvelopeEditor::EnvelopeEditor(VOSIMSynth *pPlug, VoiceManager* vm, string envname, IRECT pR, const double maxTimeScale, const double minAmpScale, const double maxAmpScale, const double defaultAmpScale) :
@@ -38,7 +37,7 @@ namespace syn
     mousept = toModel(mousept);
 
     double min_dist = -1;
-    int min_pt_idx;
+    int min_pt_idx = -1;
     for (int i = 0; i < m_points.size(); i++)
     {
       NDPoint<2>& pt = m_points[i];
@@ -58,17 +57,6 @@ namespace syn
     {
       return -1;
     }
-  }
-
-  void EnvelopeEditor::insertPointFromScreen(const NDPoint<2>& screenpt)
-  {
-    int afterIndex = getSelected(screenpt[0], screenpt[1]);
-    NDPoint<2> modelpt = toModel(screenpt);
-    m_points.insert(m_points.begin() + afterIndex, modelpt);
-
-    Envelope* env = (Envelope*)(&m_voiceManager->getProtoInstrument()->getUnit(m_targetEnvId));
-
-    resyncEnvelope();
   }
 
   NDPoint<2>& EnvelopeEditor::getPos(int index)
@@ -92,7 +80,7 @@ namespace syn
 
   void EnvelopeEditor::OnMouseDrag(int x, int y, int dX, int dY, IMouseMod* pMod)
   {
-    NDPoint<2> mouse_pt((double)x, (double)y);
+    NDPoint<2> mouse_pt{double(x), double(y)};
 
     // Only select a new point once per mouse click
     if (!m_isMouseDown)
@@ -308,7 +296,7 @@ namespace syn
   {
     if (m_voiceManager && !m_isMouseDown)
     {
-      Envelope* env = (Envelope*)(&m_voiceManager->getProtoInstrument()->getUnit(m_targetEnvId));
+      Envelope* env = static_cast<Envelope*>(&m_voiceManager->getProtoInstrument()->getUnit(m_targetEnvId));
       m_points.resize(env->getNumSegments() + 1);
       m_points[0] = NDPoint<2>{ 0,env->getInitPoint() };
       double xtotal = 0;
@@ -318,7 +306,7 @@ namespace syn
         double amp = m_VOSIMPlug->GetInstrParameter(m_targetEnvId, env->getPointId(i));
         m_points[i + 1] = NDPoint<2>{ xtotal , amp };
       }
-      xtotal = std::ceil(xtotal);
+      xtotal = ceil(xtotal);
       m_timeScale = xtotal;
       for (int i = 0; i < env->getNumSegments(); i++)
       {
@@ -366,7 +354,7 @@ namespace syn
   {
     if (m_voiceManager)
     {
-      Envelope* env = (Envelope*)(&m_voiceManager->getProtoInstrument()->getUnit(m_targetEnvId));
+      Envelope* env = static_cast<Envelope*>(&m_voiceManager->getProtoInstrument()->getUnit(m_targetEnvId));
 
       for (int seg = 0; seg < m_points.size() - 1; seg++)
       {

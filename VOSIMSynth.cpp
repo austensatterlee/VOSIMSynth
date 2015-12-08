@@ -1,18 +1,9 @@
-#define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
-#include <crtdbg.h>
-
 #include "VOSIMSynth.h"
 #include "IPlug_include_in_plug_src.h"
 #include "EnvelopeEditor.h"
 #include "VosimOscillator.h"
-#include "IControl.h"
 #include "UI.h"
-#include "Filter.h"
-#include <cmath>
-#include <ctime>
-#include <tuple>
-#include <cstring>
 
 using namespace std;
 
@@ -33,12 +24,9 @@ enum ELayout
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
   :
-  IPLUG_CTOR(256, kNumPrograms, instanceInfo),
-  m_oscilloscope_input_unit(-1),
-  m_oscilloscope_trigger_unit(-1)
+  IPLUG_CTOR(256, kNumPrograms, instanceInfo)
 {
   TRACE;
-  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
   //MakePreset("preset 1", ... );
   //MakeDefaultPreset((char *) "-", kNumPrograms);
@@ -50,15 +38,16 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 void VOSIMSynth::makeGraphics()
 {
   pGraphics = MakeGraphics(this, kWidth, kHeight);
-  pGraphics->AttachPanelBackground(&(IColor)(globalPalette[0]));
+  IColor bg_color = IColor(globalPalette[0]);
+  pGraphics->AttachPanelBackground(&bg_color);
 
-  //IBitmap wedgeswitch2p = pGraphics->LoadIBitmap(WEDGE_SWITCH_2P_ID, WEDGE_SWITCH_2P_FN, 2);
-  IBitmap push2p = pGraphics->LoadIBitmap(PUSH_2P_ID, PUSH_2P_FN, 2);
-  IBitmap colorKnob = pGraphics->LoadIBitmap(COLOR_RING_KNOB_ID, COLOR_RING_KNOB_FN, kColorKnobFrames);
-  //IBitmap toggleswitch3p = pGraphics->LoadIBitmap(TOGGLE_SWITCH_3P_ID, TOGGLE_SWITCH_3P_FN, 3);
-  IBitmap numberedKnob = pGraphics->LoadIBitmap(KNOB_ID, KNOB_FN, kNumberedKnobFrames);
+  // IBitmap wedgeswitch2p = pGraphics->LoadIBitmap(WEDGE_SWITCH_2P_ID, WEDGE_SWITCH_2P_FN, 2);
+  // IBitmap push2p = pGraphics->LoadIBitmap(PUSH_2P_ID, PUSH_2P_FN, 2);
+  // IBitmap colorKnob = pGraphics->LoadIBitmap(COLOR_RING_KNOB_ID, COLOR_RING_KNOB_FN, kColorKnobFrames);
+  // IBitmap toggleswitch3p = pGraphics->LoadIBitmap(TOGGLE_SWITCH_3P_ID, TOGGLE_SWITCH_3P_FN, 3);
+  // IBitmap numberedKnob = pGraphics->LoadIBitmap(KNOB_ID, KNOB_FN, kNumberedKnobFrames);
 
-  m_Oscilloscope = new Oscilloscope(this, IRECT(10, 600, 790, 790));
+  m_Oscilloscope = new Oscilloscope(this, IRECT(10, 600, 790, 790), &m_voiceManager);
   pGraphics->AttachControl(m_Oscilloscope);
 
   m_circuitPanel = new CircuitPanel(this, { 5,5,795,550 }, &m_voiceManager, m_unitfactory);
@@ -75,36 +64,14 @@ void VOSIMSynth::makeInstrument()
   m_unitfactory->addUnitPrototype(new AccumulatingUnit("Accumulator"));
   m_unitfactory->addSourceUnitPrototype(new VosimOscillator("Osc.VOSIM"));
   m_unitfactory->addSourceUnitPrototype(new VosimChoir("Osc.VOSIM.Choir"));
-  //m_unitfactory->addSourceUnitPrototype(new NormalRandomOscillator("Osc.Random.Normal"));
+  m_unitfactory->addSourceUnitPrototype(new NormalRandomOscillator("Osc.Random.Normal"));
   m_unitfactory->addSourceUnitPrototype(new BasicOscillator("Osc.Basic"));
   m_unitfactory->addSourceUnitPrototype(new LFOOscillator("Osc.LFO"));
 
-  m_voiceManager.setMaxVoices(4, m_instr);
+  m_voiceManager.setMaxVoices(6, m_instr);
 
-  m_voiceManager.m_onDyingVoice.Connect(this, &VOSIMSynth::OnDyingVoice);
-  m_MIDIReceiver.noteOn.Connect(this, &VOSIMSynth::OnNoteOn);
+  m_MIDIReceiver.noteOn.Connect(&m_voiceManager, &VoiceManager::noteOn);
   m_MIDIReceiver.noteOff.Connect(&m_voiceManager, &VoiceManager::noteOff);
-}
-
-void VOSIMSynth::OnNoteOn(uint8_t pitch, uint8_t vel)
-{
-  m_voiceManager.noteOn(pitch, vel);
-  Instrument* vnew = m_voiceManager.getNewestVoice();
-  if (vnew && m_oscilloscope_input_unit != -1 && m_oscilloscope_trigger_unit != -1)
-  {
-    m_Oscilloscope->connectInput(vnew->getUnit(m_oscilloscope_input_unit));
-    m_Oscilloscope->connectTrigger(vnew->getSourceUnit(m_oscilloscope_trigger_unit));
-  }
-}
-
-void VOSIMSynth::OnDyingVoice(Instrument* dying)
-{
-  Instrument* vnew = m_voiceManager.getNewestVoice();
-  if (vnew && m_oscilloscope_input_unit != -1 && m_oscilloscope_trigger_unit != -1)
-  {
-    m_Oscilloscope->connectInput(vnew->getUnit(m_oscilloscope_input_unit));
-    m_Oscilloscope->connectTrigger(vnew->getSourceUnit(m_oscilloscope_trigger_unit));
-  }
 }
 
 void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames)

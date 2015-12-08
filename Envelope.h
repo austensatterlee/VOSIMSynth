@@ -4,7 +4,7 @@
 #include <vector>
 
 #define MIN_ENV_PERIOD	.001
-#define MIN_ENV_SHAPE	.0000001
+#define MIN_ENV_SHAPE	.001
 
 namespace syn
 {

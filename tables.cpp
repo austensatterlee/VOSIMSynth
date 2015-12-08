@@ -17,7 +17,7 @@ namespace syn
       else phase = 0;
     }
 
-    int int_index = (int)(phase);
+    int int_index = int(phase);
     int next_int_index = int_index + 1;
     if (m_isperiodic && next_int_index >= m_size) next_int_index -= m_size;
     else if (!m_isperiodic && next_int_index >= m_size) next_int_index = m_size - 1;

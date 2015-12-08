@@ -41,6 +41,7 @@ namespace syn
       IRECT add_rect;
       IRECT scale_rect;
     };
+
   protected:
     Unit* m_unit;
     int m_size;
@@ -62,6 +63,7 @@ namespace syn
       MOD_PARAM,
       CONNECT
     };
+
     unordered_map<int, UnitControl*> m_unitControls;
     VoiceManager* m_vm;
     UnitFactory* m_unitFactory;
@@ -81,10 +83,10 @@ namespace syn
       m_vm(voiceManager),
       m_unitFactory(unitFactory),
       m_isMouseDown(0),
-      m_lastSelectedUnit(-1), 
+      m_lastSelectedUnit(-1),
       m_lastSelectedParam(-1),
       m_lastMousePos(0, 0),
-      m_lastClickPos(0, 0), 
+      m_lastClickPos(0, 0),
       m_currAction(NONE),
       IControl(pPlug, pR)
     {
@@ -101,7 +103,10 @@ namespace syn
         m_sourceunit_menu.AddItem(srcUnitNames[i].c_str(), i);
       }
     };
-    ~CircuitPanel() {};
+
+    ~CircuitPanel()
+    {
+    };
 
     virtual void OnMouseDown(int x, int y, IMouseMod* pMod) override;
     void createSourceUnit(int factoryid, int x, int y);
@@ -111,7 +116,11 @@ namespace syn
     virtual void OnMouseDblClick(int x, int y, IMouseMod* pMod) override;
     virtual bool Draw(IGraphics* pGraphics) override;
     int getSelectedUnit(int x, int y);
-    virtual bool IsDirty() override { return true; }
+
+    virtual bool IsDirty() override
+    {
+      return true;
+    }
 
     /**
     * Serializes the current state of the CircuitPanel, including instrument topology and parameters
@@ -150,3 +159,4 @@ namespace syn
     int unserializeUnitControl(ByteChunk* chunk, int startPos);
   };
 }
+

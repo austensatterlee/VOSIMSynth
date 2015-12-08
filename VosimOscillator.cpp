@@ -35,7 +35,7 @@ namespace syn
       if (m_last_pulse_phase > m_pulse_phase) {
         m_curr_pulse_gain *= m_decay;
       }
-      double tableval = lut_vosim_pulse_cos.getlinear(m_pulse_phase);
+      double tableval = lut_sin.getlinear(m_pulse_phase);
       m_output[bufind] = m_gain*m_velocity*m_curr_pulse_gain*tableval;
     }
   }

@@ -84,6 +84,7 @@ namespace syn
       delete unit;
       m_isGraphDirty = true;
       if (uid == m_sinkId) m_sinkId = -1;
+      m_nextUid = uid;
       return true;
     }
     return false;
@@ -152,7 +153,7 @@ namespace syn
       return false;
     }
     vector<ConnectionMetadata>& fl = m_forwardConnections[c.srcid];
-    if (std::find(fl.begin(), fl.end(), c) == fl.end()) // connection not in forward list (and thus not in backward list)
+    if (find(fl.begin(), fl.end(), c) == fl.end()) // connection not in forward list (and thus not in backward list)
     {
       vector<ConnectionMetadata>& bl = m_backwardConnections[c.targetid];
       fl.push_back(c);

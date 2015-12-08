@@ -42,7 +42,7 @@ namespace syn
 
       paramname.str(""); paramname.clear();
       paramname << "shape" << i;
-      shape = addParam(paramname.str(), DOUBLE_TYPE, MIN_ENV_SHAPE, 1.0, 1.0).getId();
+      shape = addParam(paramname.str(), DOUBLE_TYPE, MIN_ENV_SHAPE, 2.0, 1.0).getId();
       m_segments.push_back(new EnvelopeSegment(this, period, target, shape));
       updateSegment(i);
     }

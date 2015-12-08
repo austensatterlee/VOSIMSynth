@@ -14,21 +14,27 @@ namespace syn
 
   void VoiceManager::makeIdle()
   {
-    m_numVoices--;
-    int vind = m_voiceMap.begin()->second.back();
-    m_voiceMap.begin()->second.pop_back();
-    m_voiceStack.remove(vind);
-    m_onDyingVoice.Emit(m_allVoices[vind]);
-    m_idleVoiceStack.push_front(vind);
+    if (m_numVoices > 0) {
+      int vind = getOldestVoiceInd();
+      makeIdle(vind);
+    }
   }
 
   void VoiceManager::makeIdle(int vind)
   {
-    m_numVoices--;
-    m_voiceMap[m_allVoices[vind]->getNote()].remove(vind);
-    m_voiceStack.remove(vind);
-    m_onDyingVoice.Emit(m_allVoices[vind]);
-    m_idleVoiceStack.push_front(vind);
+    if (m_numVoices > 0) {
+      if(m_voiceMap.find(m_allVoices[vind]->getNote())!=m_voiceMap.end()){
+        m_voiceMap[m_allVoices[vind]->getNote()].remove(vind);     
+        if (m_voiceMap[m_allVoices[vind]->getNote()].empty())
+        {
+          m_voiceMap.erase(m_allVoices[vind]->getNote());
+        }
+        m_voiceStack.remove(vind);
+        m_onDyingVoice.Emit(m_allVoices[vind]);
+        m_idleVoiceStack.push_front(vind);
+        m_numVoices--;
+      }
+    }
   }
 
   int VoiceManager::findIdleVoice()
@@ -92,10 +98,19 @@ namespace syn
     if (max < 1)
       max = 1;
     m_maxVoices = max;
+    while (m_voiceStack.size() > 0)
+    {
+      makeIdle();
+      m_idleVoiceStack.pop_front();
+    }
+
+    while (m_idleVoiceStack.size() > 0)
+    {
+      m_idleVoiceStack.pop_back();
+    }
+
     while (m_allVoices.size() > max)
     {
-      makeIdle(m_allVoices.size() - 1);
-      m_idleVoiceStack.pop_front();
       delete m_allVoices.back();
       m_allVoices.pop_back();
     }
@@ -105,14 +120,14 @@ namespace syn
     for (int i = 0; i < m_allVoices.size(); i++)
     {
       delete m_allVoices[i];
-      m_allVoices[i] = (Instrument*)m_instrument->clone();
-      makeIdle(i);
+      m_allVoices[i] = static_cast<Instrument*>(m_instrument->clone());
+      m_idleVoiceStack.push_back(i);
     }
 
     while (m_allVoices.size() < max)
     {
-      m_allVoices.push_back((Instrument*)m_instrument->clone());
-      makeIdle(m_allVoices.size() - 1);
+      m_allVoices.push_back(static_cast<Instrument*>(m_instrument->clone()));
+      m_idleVoiceStack.push_back(m_allVoices.size()-1);
     }
     m_numVoices = 0;
   }
@@ -157,7 +172,7 @@ namespace syn
 
   int VoiceManager::getLowestVoiceInd() const
   {
-    if (m_numVoices)
+    if (m_numVoices > 0)
     {
       VoiceMap::const_iterator it;
       for (it = m_voiceMap.begin(); it != m_voiceMap.end(); it++)
@@ -173,9 +188,9 @@ namespace syn
 
   int VoiceManager::getNewestVoiceInd() const
   {
-    if (m_numVoices)
+    if (m_numVoices > 0)
     {
-      for (VoiceList::const_reverse_iterator it = m_voiceStack.rbegin(); it != m_voiceStack.rend(); it++)
+      for (VoiceList::const_reverse_iterator it = m_voiceStack.crbegin(); it != m_voiceStack.crend(); ++it)
       {
         if (m_allVoices[*it]->isActive())
           return *it;
@@ -186,9 +201,9 @@ namespace syn
 
   int VoiceManager::getOldestVoiceInd() const
   {
-    if (m_numVoices)
+    if (m_numVoices > 0)
     {
-      for (VoiceList::const_iterator it = m_voiceStack.begin(); it != m_voiceStack.end(); it++)
+      for (VoiceList::const_iterator it = m_voiceStack.cbegin(); it != m_voiceStack.cend(); ++it)
       {
         if (m_allVoices[*it]->isActive())
           return *it;
@@ -199,10 +214,10 @@ namespace syn
 
   int VoiceManager::getHighestVoiceInd() const
   {
-    if (m_numVoices)
+    if (m_numVoices > 0)
     {
       VoiceMap::const_reverse_iterator it;
-      for (it = m_voiceMap.rbegin(); it != m_voiceMap.rend(); it++)
+      for (it = m_voiceMap.crbegin(); it != m_voiceMap.crend(); ++it)
       {
         if (!it->second.empty() && m_allVoices[it->second.back()]->isActive())
         {

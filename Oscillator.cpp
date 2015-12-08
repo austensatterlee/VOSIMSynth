@@ -58,7 +58,7 @@ namespace syn
       output = 2 * (m_phase - 0.5);
       break;
     case SINE_WAVE:
-      output = 2 * (0.5 - lut_vosim_pulse_cos.getlinear(m_phase));
+      output = lut_sin.getlinear(m_phase);
       break;
     case TRI_WAVE:
       output = m_phase <= 0.5 ? 4 * m_phase - 1 : -4 * (m_phase - 0.5) + 1;
