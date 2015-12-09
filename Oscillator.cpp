@@ -23,9 +23,9 @@ namespace syn
 
   void Oscillator::update_step()
   {
-    if (m_pitch.isDirty() || m_tune.isDirty())
+    if (m_pitch.isDirty() || m_finetune.isDirty())
     {
-      m_Step = pitchToFreq(m_pitch + m_tune) / m_Fs;
+      m_Step = pitchToFreq(m_pitch + m_finetune) / m_Fs;
     }
   }
 

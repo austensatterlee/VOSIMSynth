@@ -64,7 +64,7 @@ void VOSIMSynth::makeInstrument()
   m_unitfactory->addUnitPrototype(new AccumulatingUnit("Accumulator"));
   m_unitfactory->addSourceUnitPrototype(new VosimOscillator("Osc.VOSIM"));
   m_unitfactory->addSourceUnitPrototype(new VosimChoir("Osc.VOSIM.Choir"));
-  m_unitfactory->addSourceUnitPrototype(new NormalRandomOscillator("Osc.Random.Normal"));
+  m_unitfactory->addSourceUnitPrototype(new UniformRandomOscillator("Osc.Random.Normal"));
   m_unitfactory->addSourceUnitPrototype(new BasicOscillator("Osc.Basic"));
   m_unitfactory->addSourceUnitPrototype(new LFOOscillator("Osc.LFO"));
 

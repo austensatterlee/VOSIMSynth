@@ -510,18 +510,28 @@ namespace syn
     bool isSource = instr->isSourceUnit(unitid);
     bool isPrimarySource = isSource ? instr->isPrimarySource(unitid) : false;
 
+    // Write unique class identifier
     serialized.Put<unsigned int>(&unitClassId);
+    // Write the ID given to the unit by its parent circuit so it can be placed in the same location
     serialized.Put<int>(&unitid);
+    // Write whether or not this unit is a SourceUnit
     serialized.Put<bool>(&isSource);
+    // Write whether or not this unit is a primary source within its circuit
     serialized.Put<bool>(&isPrimarySource);
+    // Write whether or not this unit is the audio sink
     serialized.Put<bool>(&uctrl->m_is_sink);
 
+    // Write the unit's parameter configuration
     serialized.Put<unsigned int>(&uctrl->m_nParams);
     for (int i = 0; i < uctrl->m_nParams; i++) {
       double paramval = uctrl->m_unit->getParam(i);
+      // Write the parameter's name
+      serialized.PutStr(uctrl->m_unit->getParam(i).getName().c_str());
+      // Write the parameter's current value
       serialized.Put<double>(&paramval);
     }
 
+    // Write info related to this unit's GUI window
     serialized.Put<int>(&uctrl->m_size);
     serialized.Put<int>(&uctrl->m_x);
     serialized.Put<int>(&uctrl->m_y);
@@ -549,8 +559,15 @@ namespace syn
     chunkpos = chunk->Get<unsigned int>(&numparams, chunkpos);
     for (int i = 0; i < numparams; i++) {
       double paramval;
+      WDL_String paramname;
+      chunkpos = chunk->GetStr(&paramname, chunkpos);
       chunkpos = chunk->Get<double>(&paramval, chunkpos);
-      unit->modifyParameter(i, paramval, SET);
+      int paramid = unit->getParamId(paramname.Get());
+      if(paramid==-1)
+      {
+        continue;
+      }
+      unit->modifyParameter(paramid, paramval, SET);
     }
     chunkpos = chunk->Get<int>(&size, chunkpos);
     chunkpos = chunk->Get<int>(&x, chunkpos);

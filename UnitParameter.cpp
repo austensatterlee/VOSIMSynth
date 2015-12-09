@@ -103,8 +103,8 @@ string syn::UnitParameter::getString() const
     }
     break;
   case BOOL_TYPE:
-    if(m_currValue==0) sprintf(valueBuf,"true");
-    else sprintf(valueBuf,"false");
+    if(m_currValue==0) sprintf(valueBuf,"false");
+    else sprintf(valueBuf,"true");
     break;
   }
   return string(valueBuf);

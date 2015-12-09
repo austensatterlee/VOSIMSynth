@@ -96,6 +96,15 @@ namespace syn
 
   int Unit::getParamId(string name)
   {
-    return m_parammap.at(name);
+    int paramid;
+    try
+    {
+      paramid = m_parammap.at(name);
+    }
+    catch (out_of_range exc)
+    {
+      paramid = -1;
+    }
+    return paramid;
   }
 }

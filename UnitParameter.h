@@ -115,6 +115,7 @@ namespace syn
     double getMin() const { return m_min; }
     double getMax() const { return m_max; }
     double getDefault() const { return m_defaultValue; }
+    void setDefault(double a_default) { mod(a_default,SET); m_defaultValue = a_default; }
     void setMin(double min) { m_min = min; }
     void setMax(double max) { m_max = max; }
     void setIsHidden(bool ishidden) { m_isHidden = ishidden; }

@@ -26,12 +26,11 @@ namespace syn
   {
   public:
     Oscillator(string name) : SourceUnit(name),
-                              m_velocity(1.0),
                               m_gain(addParam("gain", DOUBLE_TYPE, -1, 1, 0.5)),
                               m_pitch(addParam("pitch", DOUBLE_TYPE, 0, 128, 0, true)),
-                              m_tune(addParam("tune", DOUBLE_TYPE, -12, 12, 0)),
+                              m_finetune(addParam("tune", DOUBLE_TYPE, -12, 12, 0)),
                               m_phaseshift(addParam("phaseshift", DOUBLE_TYPE, -0.5, 0.5, 0.0)),
-                              m_portamento(addParam("portamento", DOUBLE_TYPE, 0, 1, 0, true))
+                              m_velocity(1.0)
     {
       m_Step = 440. / m_Fs;
       m_Step = m_Step;
@@ -48,7 +47,7 @@ namespace syn
 
     virtual int getSamplesPerPeriod() const override
     {
-      return (int)(ceil(1. / m_Step));
+      return (int)(floor(1. / m_Step));
     }
 
     virtual void sync()
@@ -68,10 +67,9 @@ namespace syn
     };
 
     virtual void setFs(double fs) override;
-    UnitParameter& m_portamento;
     UnitParameter& m_gain;
     UnitParameter& m_pitch;
-    UnitParameter& m_tune;
+    UnitParameter& m_finetune;
     UnitParameter& m_phaseshift;
   protected:
     double m_basePhase = 0;
@@ -118,13 +116,15 @@ namespace syn
   class LFOOscillator : public BasicOscillator
   {
   public:
-    LFOOscillator(string name) : BasicOscillator(name)
+    LFOOscillator(string name) : BasicOscillator(name),
+    m_reset(addParam("Reset",BOOL_TYPE,0,1,0))
     {
-      m_pitch.mod(-12, SET);
+      m_pitch.setDefault(-12);
       m_pitch.setIsHidden(false);
-      m_pitch.setMin(-12);
-      m_tune.setMax(24);
-      m_tune.setMin(-24);
+      m_pitch.setMin(-64);
+      m_pitch.setMax(16);
+      m_finetune.setMax(24);
+      m_finetune.setMin(-24);
     }
 
     LFOOscillator(const LFOOscillator& other) : LFOOscillator(other.m_name)
@@ -133,9 +133,11 @@ namespace syn
 
     virtual void noteOn(int pitch, int vel) override
     {
-      sync();
+      if(m_reset) 
+        sync();
     }
 
+    UnitParameter& m_reset;
   private:
     virtual Unit* cloneImpl() const override
     {

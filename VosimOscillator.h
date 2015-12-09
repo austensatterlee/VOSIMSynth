@@ -70,11 +70,11 @@ namespace syn
     {
       assert(size > 0);
       m_choir = static_cast<VosimOscillator**>(malloc(m_size * sizeof(VosimOscillator*)));
-      m_pulsedrifters = static_cast<NormalRandomOscillator**>(malloc(m_size * sizeof(NormalRandomOscillator*)));
+      m_pulsedrifters = static_cast<UniformRandomOscillator**>(malloc(m_size * sizeof(UniformRandomOscillator*)));
       for (int i = 0; i < m_size; i++)
       {
         m_choir[i] = new VosimOscillator(name);
-        m_pulsedrifters[i] = new NormalRandomOscillator(name);
+        m_pulsedrifters[i] = new UniformRandomOscillator(name);
         m_choir[i]->getParam("tune").addConnection(&m_pulsedrifters[i]->getLastOutputBuffer(), ADD);
       }
     }
@@ -160,7 +160,7 @@ namespace syn
 
         m_pulsedrifters[i]->m_pitch.mod(m_driftfreq, SET);
         m_pulsedrifters[i]->m_gain.mod(m_pitchdrift, SET);
-        m_choir[i]->m_tune.mod(m_tune, SET);
+        m_choir[i]->m_finetune.mod(m_tune, SET);
 
         m_pulsedrifters[i]->tick();
         m_choir[i]->tick();
@@ -173,7 +173,7 @@ namespace syn
 
   private:
     VosimOscillator** m_choir;
-    NormalRandomOscillator** m_pulsedrifters;
+    UniformRandomOscillator** m_pulsedrifters;
     size_t m_size;
 
     virtual Unit* cloneImpl() const override
