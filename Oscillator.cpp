@@ -64,7 +64,7 @@ namespace syn
       output = m_phase <= 0.5 ? 4 * m_phase - 1 : -4 * (m_phase - 0.5) + 1;
       break;
     case SQUARE_WAVE:
-      output = lut_bl_saw.getlinear(m_phase - 0.5) - lut_bl_saw.getlinear(m_phase);
+      output = -lut_bl_saw.getlinear(m_phase - 0.5) + lut_bl_saw.getlinear(m_phase);
       break;
     case NAIVE_SQUARE_WAVE:
       output = m_phase <= 0.5 ? -1 : 1;

@@ -30,11 +30,11 @@ namespace syn
   };
 
   /*::automated::*/
-  extern const double BL_SAW[1024];
+  extern const double BL_SAW[256];
 extern const double PITCH_TABLE[256];
 extern const double SIN[1024];
 
-const LookupTable lut_bl_saw(BL_SAW, 1024);
+const LookupTable lut_bl_saw(BL_SAW, 256);
 const LookupTable lut_pitch_table(PITCH_TABLE, 256, -1, 1, false);
 const LookupTable lut_sin(SIN, 1024);
 

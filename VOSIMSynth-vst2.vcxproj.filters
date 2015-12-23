@@ -53,6 +53,9 @@
     <ClCompile Include="CircuitPanel.cpp">
       <Filter>UI</Filter>
     </ClCompile>
+    <ClCompile Include="UnitControl.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\WDL\IPlug\IPlugVST.h">
@@ -127,6 +130,9 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="CircuitPanel.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UnitControl.h">
       <Filter>UI</Filter>
     </ClInclude>
   </ItemGroup>

@@ -17,7 +17,7 @@ using Gallant::Signal1;
 namespace syn
 {
   struct OscilloscopeConfig;
-  typedef void (TransformFunc)(OscilloscopeConfig& oscconfig, IPlugBase* pPlug, const vector<double>& process);
+  typedef void (TransformFunc)(OscilloscopeConfig& oscconfig, IPlugBase* pPlug, vector<double>& process);
   struct OscilloscopeConfig
   {
     const string name;
@@ -32,7 +32,7 @@ namespace syn
     vector<double> yaxisticks;
     vector<string> yaxislbls;
     vector<double> outputbuf;
-    void doTransform(IPlugBase* pPlug, const vector<double>& process)
+    void doTransform(IPlugBase* pPlug, vector<double>& process)
     {
       transform(*this, pPlug, process);
     }
@@ -96,7 +96,7 @@ namespace syn
   TransformFunc inverseTransform;
   TransformFunc passthruTransform;
   static array<OscilloscopeConfig, 2> OSCILLOSCOPE_CONFIGS = { {
-    { "Spectral Magnitude", magnitudeTransform, false, 256, "Hz", "dB" },
+    { "Spectral Magnitude", magnitudeTransform, false, 1024, "Hz", "dB" },
     { "Time Domain", passthruTransform, true, 1, "seconds", "" }
   } };
 }

@@ -35,7 +35,9 @@ namespace syn
 
   void Oscilloscope::setConfig(OscilloscopeConfig* config)
   {
+    m_mutex.Enter();
     m_config = config;
+    m_mutex.Leave();
     m_minY = 1.0;
     m_maxY = -1.0;
   }
@@ -70,7 +72,7 @@ namespace syn
         int correctPeriod;
         if (m_config->useAutoSync)
         {
-          correctPeriod = currTrigger->getSamplesPerPeriod();
+          correctPeriod = m_syncDelayEst; //currTrigger->getSamplesPerPeriod();
         }
         else
         {
@@ -298,8 +300,16 @@ namespace syn
     {
       double minY = m_config->outputbuf[m_config->argmin];
       double maxY = m_config->outputbuf[m_config->argmax];
-      m_minY = minY;
-      m_maxY = maxY;
+
+      if(m_minY < minY)
+        m_minY = m_minY + 0.1*0.05*(minY - m_minY);
+      else
+        m_minY = minY;
+
+      if(m_maxY > maxY)      
+        m_maxY = m_maxY + 0.1*0.05*(maxY - m_maxY);
+      else      
+        m_maxY = maxY;  
     }
 
     // Draw transform output

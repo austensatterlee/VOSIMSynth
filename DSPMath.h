@@ -24,5 +24,23 @@ namespace syn
       freq = 1;
     return freq;
   }
+
+  template<typename T>
+  inline T max(T a1, T a2)
+  {
+    return a1 > a2 ? a1 : a2; 
+  }
+
+  template<typename T>
+  inline T min(T a1, T a2)
+  {
+    return a1 < a2 ? a1 : a2;
+  }
+
+  inline IRECT shiftIRECT(const IRECT& a_irect, int a_x, int a_y)
+  {
+    IRECT shifted{a_irect.L + a_x, a_irect.T + a_y, a_irect.R + a_x, a_irect.B + a_y};
+    return shifted;
+  }
 }
 #endif

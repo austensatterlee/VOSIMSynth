@@ -3,8 +3,8 @@
 #include "SourceUnit.h"
 #include <vector>
 
-#define MIN_ENV_PERIOD	.001
-#define MIN_ENV_SHAPE	.001
+#define MIN_ENV_PERIOD	0.0001
+#define MIN_ENV_SHAPE	0.001
 
 namespace syn
 {
@@ -40,11 +40,8 @@ namespace syn
     };
 
     EnvelopeSegment& operator=(const EnvelopeSegment& other);
-    UnitParameter& period();
     UnitParameter& period() const;
-    UnitParameter& target_amp();
     UnitParameter& target_amp() const;
-    UnitParameter& shape();
     UnitParameter& shape() const;
     double prev_amp;
     double step;

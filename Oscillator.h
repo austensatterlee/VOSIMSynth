@@ -26,7 +26,7 @@ namespace syn
   {
   public:
     Oscillator(string name) : SourceUnit(name),
-                              m_gain(addParam("gain", DOUBLE_TYPE, -1, 1, 0.5)),
+                              m_gain(addParam("gain", DOUBLE_TYPE, -1, 1, 0.0)),
                               m_pitch(addParam("pitch", DOUBLE_TYPE, 0, 128, 0, true)),
                               m_finetune(addParam("tune", DOUBLE_TYPE, -12, 12, 0)),
                               m_phaseshift(addParam("phaseshift", DOUBLE_TYPE, -0.5, 0.5, 0.0)),

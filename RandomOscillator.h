@@ -11,13 +11,10 @@ namespace syn
   {
   protected:
     random_device m_rd;
-    mt19937 m_gen;
   public:
     RandomOscillator(string name) :
       Oscillator(name)
     {
-      unsigned int seed = m_rd();
-      m_gen = mt19937(seed);
     }
 
     virtual ~RandomOscillator()
@@ -31,32 +28,23 @@ namespace syn
   {
   public:
     UniformRandomOscillator(string name) : RandomOscillator(name),
-      m_curr(0.0),
-      m_next(0.0),
-      m_rand_period(1.0),
-      m_exp_gen(1.0),
-      m_uni_gen(0.0, 1.0)
+      m_next(m_rd()),
+      m_curr(0)
     {
     m_pitch.setIsHidden(false);
     m_pitch.setMin(-64);
-    m_pitch.setMax(128);
+    m_pitch.setMax(128);    
     }
     UniformRandomOscillator(const UniformRandomOscillator& other) : UniformRandomOscillator(other.m_name)
     {
       m_curr = other.m_curr;
-      m_next = other.m_next;
-      m_rand_period = other.m_rand_period;
     }
     virtual ~UniformRandomOscillator() {}
   protected:
-    double m_curr, m_next;
-    double m_rand_period;
-    exponential_distribution<double> m_exp_gen;
-    uniform_real_distribution<double> m_uni_gen;
+    uint32_t m_curr,m_next;
     virtual void update_step() override
     {
       double freq = pitchToFreq(m_pitch + m_finetune);
-      m_exp_gen = exponential_distribution<double>{ freq };
       m_Step = freq / (m_Fs);
     }
     virtual void process(int bufind) override
@@ -65,10 +53,9 @@ namespace syn
       if (m_isSynced)
       {
         m_curr = m_next;
-        m_next = m_gain*m_uni_gen(m_gen);
-        m_rand_period = m_exp_gen(m_gen);
+        m_next = 69069*m_next+1;
       }
-      m_output[bufind] = LERP(m_curr, m_next, m_phase)*lut_sin.getlinear(m_phase);
+      m_output[bufind] = m_gain*(LERP((m_curr / double(0x7FFFFFFF)), (m_next/double(0x7FFFFFFF)), m_phase)-1.0);
     }
   private:
     virtual Unit* cloneImpl() const override

@@ -1,7 +1,7 @@
 from numpy import *
 from scipy import signal as ss
 import re
-import os
+import os,sys
 
 def MakeTableStr(table,name,ctype="const double"):
     rows = int(sqrt(table.size))
@@ -66,14 +66,14 @@ def MinimumPhase(n,realCepstrum):
     minimumPhase = realTime
     return minimumPhase
 
-def GenerateBLSaw(pts,oversample=1):
+def GenerateBLSaw(pts,nharmonics=None):
     """ Generate band limited sawtooth wave """
     nfft = pts
-    pts = int(pts/oversample)
-    ind = arange(1,pts)
-    freqmags = zeros(pts,dtype=complex128)
-    freqmags[ind] = 1j*1./ind
-    blsaw = fft.irfft(freqmags*1./2*nfft,n=nfft)
+    hpts = nharmonics or pts/2+1
+    hind = arange(1,hpts)
+    freqmags = zeros(pts/2+1,dtype=complex128)
+    freqmags[hind] = 1j*1./hind
+    blsaw = fft.irfft(freqmags,n=nfft)
     return blsaw/blsaw.max()
 
 def GenerateBlit(intervals=10,resolution=100,fs=48000,fc=18300,beta=9.,apgain=0.9,apbeta=0.7):
@@ -85,19 +85,19 @@ def GenerateBlit(intervals=10,resolution=100,fs=48000,fc=18300,beta=9.,apgain=0.
     fs - sampling frequency
     fc - cutoff
     beta - first window param
-    apgain - apodizing window gain (subtracted from the )
+    apgain - apodizing window gain
     """
     Ts = 1./fs
-    intervals=2*(intervals/2)+1
+    intervals=2*(int(intervals)/2)+1 # make intervals odd
     pts = resolution*intervals # impulse length in points
-    ind = (arange(-pts/2,pts/2)+1e-5)/pts # pts points spread across [-0.5,0.5)
-    x = intervals*2*ind # pts points spread across [-intervals,intervals)
-    h = sinc(pi*fc*Ts*x)
+    ind = arange(pts)*1./resolution-intervals/2 # pts points spread across [-intervals/2,intervals/2)
+    x = fc*Ts*ind # pts points spread across fc/fs*[-intervals/2, intervals/2)
+    h = sinc(x)
     w = ss.kaiser(pts,beta) # window
     apw = 1-apgain*ss.kaiser(pts,apbeta) # apodization window
-    blit = apw*(w*h) # blit
+    blit = (apw*w)*h # blit
 
-    blit = blit/blit.max() # normalize
+    blit = blit/2./blit.max() # normalize
     return blit
 
 def GenerateMinBLEP(nZeroCrossings, nOverSampling):
@@ -160,7 +160,7 @@ def main(pargs):
     ss_points = 1024
     sintable = GenerateSine(ss_points)
     pitchtable = PitchTable(256,-128,128)
-    blsaw = GenerateBLSaw(1024,16)
+    blsaw = GenerateBLSaw(256,16)
 
     key_order = ['size','input_min','input_max', 'isPeriodic']
     tables = {
@@ -229,11 +229,11 @@ if __name__=="__main__":
     main(pargs)
 
 """Tools"""
-def magspec(signal,logscale=True, fs=None, pts=None):
+def magspec(signal, pts=None, fs=None, logscale=True):
     from matplotlib import pyplot as plt
     pts = pts or len(signal)
     k = arange(1,pts/2)
-    fs = fs or pts
+    fs = fs or 1.
     freqs = linfreqs = k*1./pts*fs
     if(logscale):
         freqs = log2(freqs)
@@ -246,23 +246,21 @@ def magspec(signal,logscale=True, fs=None, pts=None):
         ylabel = "Amp"
     f = plt.gcf()
     ax = plt.gca()
-    ax.plot( freqs, mag )
-    nxticks = len(ax.get_xticks())
-    xticklabels = map(lambda x:"{:.2g}".format(x),linfreqs[:-1:len(linfreqs)/nxticks]/fs);
-    ax.set_xticklabels(xticklabels)
+    if logscale:
+        ax.semilogx( linfreqs, mag, basex=2)
+    else:
+        ax.plot( linfreqs, mag )
     ax.set_xlabel("Hz")
     ax.set_ylabel(ylabel)
     ax.grid(True,which='both')
     f.show()
 
-def maggain(signal1,signal2,logscale=True,fs=None):
+def maggain(signal1,signal2,pts=None,fs=None,logscale=True):
     from matplotlib import pyplot as plt
-    fftlength = max(len(signal1),len(signal2))
+    fftlength = pts or max(len(signal1),len(signal2))
     k = arange(1,fftlength/2)
-    fs = fs or fftlength
+    fs = fs or 1.
     linfreqs = freqs = k*1./fftlength*fs
-    if(logscale):
-        freqs = log2(freqs)
     signal1fft = fft.fft(signal1,n=fftlength)[1:fftlength/2]/fftlength
     signal2fft = fft.fft(signal2,n=fftlength)[1:fftlength/2]/fftlength
     if(all(signal1fft) and all(signal2fft)):
@@ -277,53 +275,55 @@ def maggain(signal1,signal2,logscale=True,fs=None):
         ylabel = "Amp"
     f = plt.gcf()
     ax = plt.gca()
-    ax.plot( freqs, gain )
-    nxticks = min(len(linfreqs),len(ax.get_xticks()))
-    xticklabels = map(lambda x:"{:.2g}".format(x),linfreqs[:-1:len(linfreqs)/nxticks]/fs);
-    ax.set_xticklabels(xticklabels)
+    if logscale:
+        ax.semilogx( linfreqs, gain, basex=2)
+    else:
+        ax.plot( linfreqs, gain )
     ax.set_xlabel("Hz")
     ax.set_ylabel(ylabel)
     ax.grid(True,which='both')
     f.show()
 
-def blit(P,M=None):
-    """ Generates an impulse train """
-    M = M or 2*floor(P/2)+1
-    mprat = M*1./P
-    sincM = lambda x: cos(pi*x)/cos(pi*1./M*x)
-    output = array(sincM(arange(P)))
-    return output
+def lerp(a,b,frac):
+    return (b-a)*frac + a
 
-def slidingwindow(signal,window,oversample,transpose,numperiods=1):
-    phasestep = transpose*1./len(signal)
-    phase = 0
-    output = []
-    period = 0
-    intervals = len(window)/oversample
-    while period<numperiods:
-        index = int(phase*len(signal))
-        fracindex = phase*len(signal)-int(phase*len(signal))
-        output.append(0)
-        convindices = zeros([2,intervals],dtype=int)
-        for k in arange(intervals):
-            convindex = int(mod(index-k+intervals/2,len(signal)))
-            windowindex = int(mod(k*oversample+fracindex*oversample,len(window)))
-            convindices[0,k]=convindex
-            convindices[1,k]=windowindex
-            # if(convindex==index):
-                # print convindex,windowindex,fracindex,k
-            output[-1]+=signal[convindex]*window[windowindex]
-        if phase==0:
-            return convindices
-        phase += phasestep
-        if (phase>=1):
-            period+=1
-            phase-=1
-    return array(output)
+def slidewindow(signal,window,resolution,fc=1.0):
+    M = arange(len(signal))
+    winlen = len(window)/resolution/2
+    newsig = zeros(len(signal))
+    scale = 1.0
+    for m in M:
+        for n in xrange(m-winlen,m+winlen+1):
+            k = mod(n,len(signal))
+            filtphase = resolution*(m-n+winlen)
+            tableindex = int(fc*filtphase)
+            tableindex_frac = fc*filtphase - tableindex
+            tableindex_nxt = mod(tableindex+1,len(window))
+            newsig[m] += signal[k]*lerp(window[tableindex],window[tableindex_nxt],tableindex_frac)
+    return newsig
+
+def sinclowpass(signal,fc,winlen=10):
+    newsignal = zeros(len(signal))
+    M = arange(len(signal))
+    N = arange(len(signal))
+    # for m in M:
+        # for n in xrange(N):
+            # newsignal[m] += signal[n]*sinc(fc*(m-n))
+        # newsignal[m]*=2*fc
+    fc = fc
+    sincfir = sinc(fc*arange(-winlen,winlen+1))
+    apwin = genApodWindow(len(sincfir),9.,0.9,0.7)
+    sincfir *= apwin
+    sincfir /= sincfir.max()
+    for m in M:
+        for n in xrange(m-winlen,m+winlen+1):
+            k = mod(n,len(signal))
+            newsignal[m] += signal[k]*sincfir[m-n+winlen]
+    return newsignal*fc
+
 
 def genApodWindow(pts,beta,apgain,apbeta):
     w = ss.kaiser(pts,beta) # window
     apw = 1-apgain*ss.kaiser(pts,apbeta) # apodization window
     W = w*apw
-    W/=max(W)
     return W

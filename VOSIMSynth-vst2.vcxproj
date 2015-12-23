@@ -216,6 +216,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <FloatingPointExceptions>false</FloatingPointExceptions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -238,6 +239,9 @@
     <CustomBuildStep>
       <TreatOutputAsContent>false</TreatOutputAsContent>
     </CustomBuildStep>
+    <Bscmake>
+      <PreserveSbr>true</PreserveSbr>
+    </Bscmake>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -323,6 +327,7 @@
     <ClInclude Include="Filter.h" />
     <ClInclude Include="Oscilloscope.h" />
     <ClInclude Include="NDPoint.h" />
+    <ClInclude Include="UnitControl.h" />
     <ClInclude Include="UnitFactory.h" />
     <ClInclude Include="UnitParameter.h" />
     <ClInclude Include="tables.h" />
@@ -347,6 +352,7 @@
     <ClCompile Include="Filter.cpp" />
     <ClCompile Include="Oscilloscope.cpp" />
     <ClCompile Include="tables.cpp" />
+    <ClCompile Include="UnitControl.cpp" />
     <ClCompile Include="UnitParameter.cpp" />
     <ClCompile Include="VoiceManager.cpp" />
     <ClCompile Include="VosimOscillator.cpp" />

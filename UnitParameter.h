@@ -33,7 +33,7 @@ namespace syn
   {
     const vector<double>* srcbuffer;
     MOD_ACTION action;
-    bool operator==(const Connection& other)
+    bool operator==(const Connection& other) const
     {
       return srcbuffer == other.srcbuffer && action == other.action;
     }

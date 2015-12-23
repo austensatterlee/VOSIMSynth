@@ -65,7 +65,7 @@ namespace syn
       m_number(addParam("number", INT_TYPE, 0, 4, 1.0)),
       m_tune(addParam("tune", DOUBLE_TYPE, -12, 12, 0.0)),
       m_pitchdrift(addParam("pulse_drift", DOUBLE_TYPE, 0, 12.0, 0.125)),
-      m_driftfreq(addParam("drift_freq", DOUBLE_TYPE, -64, 64, 0)),
+      m_driftfreq(addParam("drift_freq", DOUBLE_TYPE, -64, 128, 0)),
       m_size(size)
     {
       assert(size > 0);
@@ -74,6 +74,7 @@ namespace syn
       for (int i = 0; i < m_size; i++)
       {
         m_choir[i] = new VosimOscillator(name);
+        m_choir[i]->getParam("gain").mod(1.0,SET);
         m_pulsedrifters[i] = new UniformRandomOscillator(name);
         m_choir[i]->getParam("tune").addConnection(&m_pulsedrifters[i]->getLastOutputBuffer(), ADD);
       }
@@ -154,7 +155,7 @@ namespace syn
       {
         m_choir[i]->m_decay.mod(m_decay, SET);
 
-        m_choir[i]->m_ppitch.mod(m_ppitch * (1 + double(i) / m_size), SET);
+        m_choir[i]->m_ppitch.mod(m_ppitch, SET);
 
         m_choir[i]->m_number.mod(m_number + i, SET);
 

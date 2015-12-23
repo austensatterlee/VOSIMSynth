@@ -9,16 +9,14 @@ using std::ostringstream;
 namespace syn
 {
   Envelope::Envelope(string name, int numSegments) : SourceUnit(name),
-    m_currSegment(0),
-    m_isDone(true),
+    m_loopStart(addParam("loopstart", INT_TYPE, 0, numSegments, 0)),
+    m_loopEnd(addParam("loopend", INT_TYPE, 0, numSegments, 0)),
     m_initPoint(0),
     m_numSegments(numSegments),
-    m_phase(0),
-    m_loopStart(addParam("loopstart", INT_TYPE, 0, numSegments, -1)),
-    m_loopEnd(addParam("loopend", INT_TYPE, 0, numSegments, -1))
+    m_currSegment(0),
+    m_isDone(true),
+    m_phase(0)
   {
-    m_loopStart.mod(-1, SET);
-    m_loopEnd.mod(-1, SET);
     // set up a standard ADSR envelope
     ostringstream paramname;
     int i;
@@ -27,8 +25,8 @@ namespace syn
     {
       paramname.str(""); paramname.clear();
       paramname << "period" << i;
-      period = addParam(paramname.str(), DOUBLE_TYPE, MIN_ENV_PERIOD, 10.0, MIN_ENV_PERIOD).getId();
-      getParam(period).mod(0.1, SET);
+      period = addParam(paramname.str(), DOUBLE_TYPE, MIN_ENV_PERIOD, 2.0, MIN_ENV_PERIOD).getId();
+      getParam(period).mod(MIN_ENV_PERIOD, SET);
       paramname.str(""); paramname.clear();
       paramname << "target" << i;
       if (i == numSegments - 1)
@@ -42,7 +40,7 @@ namespace syn
 
       paramname.str(""); paramname.clear();
       paramname << "shape" << i;
-      shape = addParam(paramname.str(), DOUBLE_TYPE, MIN_ENV_SHAPE, 2.0, 1.0).getId();
+      shape = addParam(paramname.str(), DOUBLE_TYPE, MIN_ENV_SHAPE, 10.0, 1.0).getId();
       m_segments.push_back(new EnvelopeSegment(this, period, target, shape));
       updateSegment(i);
     }
@@ -106,9 +104,9 @@ namespace syn
     // Advance to a new segment if our time is up or if we're released and we have fully decayed
     if (m_phase >= 1 || (m_currSegment == m_numSegments - 1 && hasHitSetpoint))
     {
-      if (m_currSegment + 1 == (int)readParam(1))
+      if (m_currSegment + 1 == int(readParam(1)))
       { // check if we have reached a loop point
-        setSegment((int)readParam(0));
+        setSegment(int(readParam(0)));
         m_isSynced = true;
       }
       else if (m_currSegment < m_numSegments - 2)
@@ -151,11 +149,11 @@ namespace syn
   int Envelope::getSamplesPerPeriod() const
   {
     double approx = 0;
-    for (int i = 0; i < m_numSegments; i++)
+    for (int i = 0; i < m_numSegments-1; i++)
     {
       approx += m_segments[i]->period()*m_Fs;
     }
-    return (int)approx;
+    return int(approx);
   }
 
   EnvelopeSegment& EnvelopeSegment::operator=(const EnvelopeSegment& other)
@@ -167,15 +165,6 @@ namespace syn
     return *this;
   }
 
-  UnitParameter& EnvelopeSegment::period()
-  {
-    if (m_parent)
-    {
-      return m_parent->getParam(m_period_id);
-    }
-    throw;
-  }
-
   UnitParameter& EnvelopeSegment::period() const
   {
     if (m_parent)
@@ -185,29 +174,11 @@ namespace syn
     throw;
   }
 
-  UnitParameter& EnvelopeSegment::target_amp()
-  {
-    if (m_parent)
-    {
-      return m_parent->getParam(m_target_amp_id);
-    }
-    throw;
-  }
-
   UnitParameter& EnvelopeSegment::target_amp() const
   {
     if (m_parent)
     {
       return m_parent->getParam(m_target_amp_id);
-    }
-    throw;
-  }
-
-  UnitParameter& EnvelopeSegment::shape()
-  {
-    if (m_parent)
-    {
-      return m_parent->getParam(m_shape_id);
     }
     throw;
   }
