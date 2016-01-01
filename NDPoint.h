@@ -304,7 +304,7 @@ namespace syn
   template <int ND, typename T = double>
   NDPoint<ND, T> getUnitv(int a_dir)
   {
-    _ASSERT(a_dir >= 0 && a_dir < ND);
+//    _ASSERT(a_dir >= 0 && a_dir < ND);
     T pvec[ND];
     std::fill_n(pvec, ND, 0.0);
     pvec[a_dir] = 1.0;
