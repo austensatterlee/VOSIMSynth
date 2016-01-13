@@ -75,7 +75,7 @@ namespace syn
 
     virtual bool Draw(IGraphics *pGraphics) override;
 
-    virtual bool IsDirty() override
+	  bool IsDirty() override
     { return m_isActive && mDirty; }
     int getPeriod() const
     { return m_BufSize / m_displayPeriods; }

@@ -24,7 +24,7 @@ namespace syn
       Unit(name),
       XCoefs(X),
       YCoefs(Y),
-      m_input(addParam("input", DOUBLE_TYPE, -1, 1, true))
+      m_input(addParam("input", IParam::kTypeDouble, -1, 1, true))
     {
       XBuf = (double*)malloc(sizeof(double)*nX);
       YBuf = (double*)malloc(sizeof(double)*nY);

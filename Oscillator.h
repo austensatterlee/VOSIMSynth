@@ -26,10 +26,10 @@ namespace syn
   {
   public:
     Oscillator(string name) : SourceUnit(name),
-                              m_gain(addParam("gain", DOUBLE_TYPE, -1, 1, 0.0)),
-                              m_pitch(addParam("pitch", DOUBLE_TYPE, 0, 128, 0, true)),
-                              m_finetune(addParam("tune", DOUBLE_TYPE, -12, 12, 0)),
-                              m_phaseshift(addParam("phaseshift", DOUBLE_TYPE, -0.5, 0.5, 0.0)),
+                              m_gain(addParam("gain", IParam::kTypeDouble, -1, 1, 0.0)),
+                              m_pitch(addParam("pitch", IParam::kTypeDouble, 0, 128, 0, true)),
+                              m_finetune(addParam("tune", IParam::kTypeDouble, -12, 12, 0)),
+                              m_phaseshift(addParam("phaseshift", IParam::kTypeDouble, -0.5, 0.5, 0.0)),
                               m_velocity(1.0)
     {
       m_Step = 440. / m_Fs;
@@ -117,14 +117,10 @@ namespace syn
   {
   public:
     LFOOscillator(string name) : BasicOscillator(name),
-    m_reset(addParam("Reset",BOOL_TYPE,0,1,0))
+    m_reset(addParam("Reset",IParam::kTypeBool,0,1,0))
     {
-      m_pitch.setDefault(-12);
-      m_pitch.setIsHidden(false);
-      m_pitch.setMin(-64);
-      m_pitch.setMax(16);
-      m_finetune.setMax(24);
-      m_finetune.setMin(-24);
+		m_pitch = UnitParameter(this, m_pitch.getName(), m_pitch.getId(), m_pitch.Type(), -64, 16, 0);
+		m_finetune = UnitParameter(this, m_finetune.getName(), m_finetune.getId(), m_finetune.Type(), -24, 24, 0);
     }
 
     LFOOscillator(const LFOOscillator& other) : LFOOscillator(other.m_name)

@@ -9,8 +9,8 @@ using std::ostringstream;
 namespace syn
 {
   Envelope::Envelope(string name, int numSegments) : SourceUnit(name),
-    m_loopStart(addParam("loopstart", INT_TYPE, 0, numSegments, 0)),
-    m_loopEnd(addParam("loopend", INT_TYPE, 0, numSegments, 0)),
+    m_loopStart(addParam("loopstart", IParam::kTypeInt, 0, numSegments, 0)),
+    m_loopEnd(addParam("loopend", IParam::kTypeInt, 0, numSegments, 0)),
     m_initPoint(0),
     m_numSegments(numSegments),
     m_currSegment(0),
@@ -25,22 +25,22 @@ namespace syn
     {
       paramname.str(""); paramname.clear();
       paramname << "period" << i;
-      period = addParam(paramname.str(), DOUBLE_TYPE, MIN_ENV_PERIOD, 2.0, MIN_ENV_PERIOD).getId();
+      period = addParam(paramname.str(), IParam::kTypeDouble, MIN_ENV_PERIOD, 2.0, MIN_ENV_PERIOD).getId();
       getParam(period).mod(MIN_ENV_PERIOD, SET);
       paramname.str(""); paramname.clear();
       paramname << "target" << i;
       if (i == numSegments - 1)
       {
-        target = addParam(paramname.str(), DOUBLE_TYPE, 0, 1.0, 0).getId();
+        target = addParam(paramname.str(), IParam::kTypeDouble, 0, 1.0, 0).getId();
       }
       else
       {
-        target = addParam(paramname.str(), DOUBLE_TYPE, 0, 1.0, 1).getId();
+        target = addParam(paramname.str(), IParam::kTypeDouble, 0, 1.0, 1).getId();
       }
 
       paramname.str(""); paramname.clear();
       paramname << "shape" << i;
-      shape = addParam(paramname.str(), DOUBLE_TYPE, MIN_ENV_SHAPE, 10.0, 1.0).getId();
+      shape = addParam(paramname.str(), IParam::kTypeDouble, MIN_ENV_SHAPE, 10.0, 1.0).getId();
       m_segments.push_back(new EnvelopeSegment(this, period, target, shape));
       updateSegment(i);
     }
@@ -75,9 +75,7 @@ namespace syn
 
   void Envelope::updateSegment(int segment)
   {
-    if (m_segments[segment]->period().isDirty() || m_fsIsDirty) {
-      m_segments[segment]->step = 1. / (m_Fs*(m_segments[segment]->period()));
-    }
+    m_segments[segment]->step = 1. / (m_Fs*(m_segments[segment]->period()));
     if (m_phase == 0) {
       if (segment == 0)
       {

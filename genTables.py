@@ -157,10 +157,10 @@ def rewriteAutomatedSection(full_text,replacement_text):
 def main(pargs):
     v = pargs.verbose
 
-    ss_points = 1024
+    ss_points = 16384
     sintable = GenerateSine(ss_points)
-    pitchtable = PitchTable(256,-128,128)
-    blsaw = GenerateBLSaw(256,16)
+    pitchtable = PitchTable(16384,-128,128)
+    blsaw = GenerateBLSaw(16384,16)
 
     key_order = ['size','input_min','input_max', 'isPeriodic']
     tables = {

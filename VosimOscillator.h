@@ -16,10 +16,10 @@ namespace syn
   public:
     VosimOscillator(string name) :
       Oscillator(name),
-      m_relativeamt(addParam("relative", DOUBLE_TYPE, 0, 1, true)),
-      m_decay(addParam("decay", DOUBLE_TYPE, 0, 0.9, 0.5)),
-      m_ppitch(addParam("pulsepitch", DOUBLE_TYPE, 0, 1, 0.5)),
-      m_number(addParam("number", INT_TYPE, 0, 4, 1.0)),
+      m_relativeamt(addParam("relative", IParam::kTypeDouble, 0, 1, true)),
+      m_decay(addParam("decay", IParam::kTypeDouble, 0, 1, 0.5)),
+      m_ppitch(addParam("pulsepitch", IParam::kTypeDouble, 0, 1, 0.5)),
+      m_number(addParam("number", IParam::kTypeInt, 0, 16, 1.0)),
       m_curr_pulse_gain(1.0),
       m_pulse_step(0.0),
       m_pulse_phase(0.0), m_last_pulse_phase(0),
@@ -58,14 +58,15 @@ namespace syn
   public:
     VosimChoir(string name, size_t size = 4) :
       SourceUnit(name),
-      m_gain(addParam("gain", DOUBLE_TYPE, 0, 1, 0.5)),
-      m_decay(addParam("decay", DOUBLE_TYPE, 0, 0.9, 0.5)),
-      m_harmonicdecay(addParam("harmonicdecay", DOUBLE_TYPE, -1, 1, -0.5)),
-      m_ppitch(addParam("pulsepitch", DOUBLE_TYPE, 0, 1, 0.5)),
-      m_number(addParam("number", INT_TYPE, 0, 4, 1.0)),
-      m_tune(addParam("tune", DOUBLE_TYPE, -12, 12, 0.0)),
-      m_pitchdrift(addParam("pulse_drift", DOUBLE_TYPE, 0, 12.0, 0.125)),
-      m_driftfreq(addParam("drift_freq", DOUBLE_TYPE, -64, 128, 0)),
+      m_gain(addParam("gain", IParam::kTypeDouble, 0, 1, 0.5)),
+      m_decay(addParam("decay", IParam::kTypeDouble, 0, 1, 0.5)),
+      m_harmonicdecay(addParam("harmonicdecay", IParam::kTypeDouble, -1, 1, 0.0)),
+      m_ppitch(addParam("pulsepitch", IParam::kTypeDouble, 0, 1, 0.5)),
+		m_relativeamt(addParam("relative", IParam::kTypeDouble, 0, 1, 0.5)),
+      m_number(addParam("number", IParam::kTypeInt, 0, 16, 1)),
+      m_tune(addParam("tune", IParam::kTypeDouble, -12, 12, 0.0)),
+      m_pitchdrift(addParam("pulse_drift", IParam::kTypeDouble, 0, 1.0, 0.0)),
+      m_driftfreq(addParam("drift_freq", IParam::kTypeDouble, -64, 128, 0)),
       m_size(size)
     {
       assert(size > 0);
@@ -76,7 +77,7 @@ namespace syn
         m_choir[i] = new VosimOscillator(name);
         m_choir[i]->getParam("gain").mod(1.0,SET);
         m_pulsedrifters[i] = new UniformRandomOscillator(name);
-        m_choir[i]->getParam("tune").addConnection(&m_pulsedrifters[i]->getLastOutputBuffer(), ADD);
+        m_choir[i]->getParam("decay").addConnection(&m_pulsedrifters[i]->getLastOutputBuffer(), ADD);
       }
     }
 
@@ -142,6 +143,7 @@ namespace syn
     UnitParameter& m_decay;
     UnitParameter& m_harmonicdecay;
     UnitParameter& m_ppitch;
+	UnitParameter& m_relativeamt;
     UnitParameter& m_number;
     UnitParameter& m_tune;
     UnitParameter& m_pitchdrift;
@@ -151,13 +153,15 @@ namespace syn
     {
       m_output[bufind] = 0;
       double harmonicgain = 1.0;
+	  double relative = 0.0;
       for (int i = 0; i < m_size; i++)
       {
         m_choir[i]->m_decay.mod(m_decay, SET);
 
         m_choir[i]->m_ppitch.mod(m_ppitch, SET);
 
-        m_choir[i]->m_number.mod(m_number + i, SET);
+        m_choir[i]->m_number.mod(m_number, SET);
+		m_choir[i]->m_relativeamt.mod(relative, SET);
 
         m_pulsedrifters[i]->m_pitch.mod(m_driftfreq, SET);
         m_pulsedrifters[i]->m_gain.mod(m_pitchdrift, SET);
@@ -168,6 +172,7 @@ namespace syn
 
         m_output[bufind] += harmonicgain * m_choir[i]->getLastOutput();
         harmonicgain *= m_harmonicdecay;
+		relative += m_relativeamt/m_size;
       }
       m_output[bufind] *= m_gain;
     }

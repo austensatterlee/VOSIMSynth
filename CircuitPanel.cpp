@@ -209,7 +209,7 @@ namespace syn
   {
     WDL_MutexLock lock(&pGraphics->mMutex);
     // Local palette
-    IColor bg_color = globalPalette[0];
+    IColor bg_color = globalPalette[TERTIARY][0];
     pGraphics->FillIRect(&bg_color, &mRECT);
     for (pair<int, UnitControl*> unitpair : m_unitControls)
     {
@@ -219,17 +219,18 @@ namespace syn
     for (pair<int, UnitControl*> unitpair : m_unitControls)
     {
       const vector<ConnectionMetadata>& connections = instr->getConnectionsTo(unitpair.first);
+	  /* Draw wires */
       for (int j = 0; j < connections.size(); j++)
       {
         NDPoint<2, int> pt1 = m_unitControls[connections[j].srcid]->getOutputPos();
         SelectedPort selectedPort{ connections[j].portid,connections[j].action };
         NDPoint<2, int> pt2 = m_unitControls[connections[j].targetid]->getPortPos(selectedPort);
-        pGraphics->DrawLine(&COLOR_WHITE, pt1[0], pt1[1], pt2[0], pt2[1], nullptr, true);
+        pGraphics->DrawLine(&COLOR_BLACK, pt1[0], pt1[1], pt2[0], pt2[1], nullptr, true);
       }
     }
     if (m_currAction == CONNECT)
     {
-      pGraphics->DrawLine(&COLOR_WHITE, m_lastClickPos[0], m_lastClickPos[1], m_lastMousePos[0], m_lastMousePos[1], nullptr, true);
+      pGraphics->DrawLine(&COLOR_GRAY, m_lastClickPos[0], m_lastClickPos[1], m_lastMousePos[0], m_lastMousePos[1], nullptr, true);
     }
     return true;
   }

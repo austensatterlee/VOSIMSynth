@@ -38,7 +38,7 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 void VOSIMSynth::makeGraphics()
 {
   pGraphics = MakeGraphics(this, kWidth, kHeight);
-  IColor bg_color = IColor(globalPalette[0]);
+  IColor bg_color = COLOR_BLACK;
   pGraphics->AttachPanelBackground(&bg_color);
 
   // IBitmap wedgeswitch2p = pGraphics->LoadIBitmap(WEDGE_SWITCH_2P_ID, WEDGE_SWITCH_2P_FN, 2);
@@ -47,10 +47,10 @@ void VOSIMSynth::makeGraphics()
   // IBitmap toggleswitch3p = pGraphics->LoadIBitmap(TOGGLE_SWITCH_3P_ID, TOGGLE_SWITCH_3P_FN, 3);
   // IBitmap numberedKnob = pGraphics->LoadIBitmap(KNOB_ID, KNOB_FN, kNumberedKnobFrames);
 
-  m_Oscilloscope = new Oscilloscope(this, IRECT(10, 600, 790, 790), &m_voiceManager);
+  m_Oscilloscope = new Oscilloscope(this, IRECT(5, kHeight-100, kWidth-5, kHeight-5), &m_voiceManager);
   pGraphics->AttachControl(m_Oscilloscope);
 
-  m_circuitPanel = new CircuitPanel(this, { 5,5,795,550 }, &m_voiceManager, m_unitfactory);
+  m_circuitPanel = new CircuitPanel(this, { 5,5,kWidth-5,kHeight - 110}, &m_voiceManager, m_unitfactory);
   pGraphics->AttachControl(m_circuitPanel);
 
   AttachGraphics(pGraphics);
@@ -64,7 +64,7 @@ void VOSIMSynth::makeInstrument()
   m_unitfactory->addUnitPrototype(new AccumulatingUnit("Accumulator"));
   m_unitfactory->addSourceUnitPrototype(new VosimOscillator("Osc.VOSIM"));
   m_unitfactory->addSourceUnitPrototype(new VosimChoir("Osc.VOSIM.Choir"));
-  m_unitfactory->addSourceUnitPrototype(new UniformRandomOscillator("Osc.Random.Normal"));
+  m_unitfactory->addSourceUnitPrototype(new UniformRandomOscillator("Osc.Random.Uniform"));
   m_unitfactory->addSourceUnitPrototype(new BasicOscillator("Osc.Basic"));
   m_unitfactory->addSourceUnitPrototype(new LFOOscillator("Osc.LFO"));
 

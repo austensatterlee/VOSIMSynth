@@ -235,9 +235,9 @@ namespace syn
   bool Oscilloscope::Draw(IGraphics *pGraphics)
   {
     // Local color palette
-    IColor outlinecolor = ColorPoint(globalPalette[2] - getUnitv<4>(0)*40.0);
-    IColor bgcolor = ColorPoint(globalPalette[1] - getUnitv<4>(0)*127.0);
-    IColor axescolor = ColorPoint(globalPalette[1]);
+    IColor outlinecolor = globalPalette[SECONDARY][2];
+    IColor bgcolor = globalPalette[TERTIARY][3];
+    IColor axescolor = globalPalette[SECONDARY][1];
     IColor errorcolor_text{ 255,255,0,0 };
     IColor normalcolor_text{255,255,255,255};
     // Local text palette
@@ -256,7 +256,7 @@ namespace syn
       return false;
     }
     // Fill background
-    pGraphics->FillIRect(&bgcolor, &m_InnerRect);
+    pGraphics->FillIRect(&bgcolor, &mRECT);
 
     // Draw y=0 line
     int zero = toScreenY(0);

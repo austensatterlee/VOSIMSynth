@@ -18,7 +18,7 @@ namespace syn
   void VosimOscillator::process(int bufind)
   {
     Oscillator::tick_phase();
-    m_pulse_step = m_Step*(m_number + 4 * m_ppitch);
+    m_pulse_step = m_Step*(m_number + 12 * m_ppitch) * m_relativeamt + 1/m_Fs * (pitchToFreq(m_ppitch*96+32)) * (1-m_relativeamt);
     m_unwrapped_pulse_phase = m_phase / m_Step * m_pulse_step;
     if (m_unwrapped_pulse_phase < 1)
     {
@@ -31,7 +31,7 @@ namespace syn
     else
     {
       m_last_pulse_phase = m_pulse_phase;
-      m_pulse_phase = m_unwrapped_pulse_phase - (int)m_unwrapped_pulse_phase;
+      m_pulse_phase = m_unwrapped_pulse_phase - static_cast<int>(m_unwrapped_pulse_phase);
       if (m_last_pulse_phase > m_pulse_phase) {
         m_curr_pulse_gain *= m_decay;
       }

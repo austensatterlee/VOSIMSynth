@@ -31,9 +31,7 @@ namespace syn
       m_next(m_rd()),
       m_curr(0)
     {
-    m_pitch.setIsHidden(false);
-    m_pitch.setMin(-64);
-    m_pitch.setMax(128);    
+		m_pitch = UnitParameter(this, m_pitch.getName(), m_pitch.getId(), m_pitch.Type(), -128, 128, 0);
     }
     UniformRandomOscillator(const UniformRandomOscillator& other) : UniformRandomOscillator(other.m_name)
     {

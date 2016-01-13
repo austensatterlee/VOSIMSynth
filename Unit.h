@@ -67,8 +67,8 @@ namespace syn
     vector<double> m_output;
     virtual void process(int bufind) = 0; //<! should add its result to m_output[bufind]
     UnitParameter& addEnumParam(string name, const vector<string> choice_names);
-    UnitParameter& addParam(string name, int id, PARAM_TYPE ptype, const double min, const double max, const double defaultValue, const bool isHidden=false);
-    UnitParameter& addParam(string name, PARAM_TYPE ptype, const double min, const double max, const double defaultValue, const bool isHidden=false);
+    UnitParameter& addParam(string name, int id, IParam::EParamType ptype, const double min, const double max, const double defaultValue, const bool isHidden=false);
+    UnitParameter& addParam(string name, IParam::EParamType ptype, const double min, const double max, const double defaultValue, const bool isHidden=false);
   private:
     int m_bufind;
     virtual Unit* cloneImpl() const = 0;
@@ -84,8 +84,8 @@ namespace syn
   {
   public:
     AccumulatingUnit(string name) : Unit(name),
-      m_input(addParam("input", DOUBLE_TYPE, -1, 1, 0.0, true)),
-      m_gain(addParam("gain", DOUBLE_TYPE, 0, 1, 0.5))
+      m_input(addParam("input", IParam::kTypeDouble, -1, 1, 0.0, true)),
+      m_gain(addParam("gain", IParam::kTypeDouble, 0, 1, 0.5))
     {}
     AccumulatingUnit(const AccumulatingUnit& other) : AccumulatingUnit(other.m_name)
     {}

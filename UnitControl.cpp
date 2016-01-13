@@ -104,7 +104,7 @@ namespace syn
     IText textfmt{ 12, &COLOR_BLACK,"Helvetica",IText::kStyleNormal,IText::kAlignNear,0,IText::kQualityClearType };
     IText centertextfmt{ 12, &COLOR_BLACK,"Helvetica",IText::kStyleNormal,IText::kAlignCenter,0,IText::kQualityClearType };
     // Local color palette
-    IColor bg_color = m_is_sink ? globalPalette[1] : globalPalette[2];
+    IColor bg_color = m_is_sink ? globalPalette[TERTIARY][2] : globalPalette[TERTIARY][1];
     IColor addport_color{ 150,0,255,0 };
     IColor mulport_color{ 150,255,0,0 };
 
