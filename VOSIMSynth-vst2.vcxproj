@@ -313,6 +313,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\WDL\IPlug\IPlugVST.h" />
+    <ClInclude Include="ADSREnvelope.h" />
     <ClInclude Include="Circuit.h" />
     <ClInclude Include="CircuitPanel.h" />
     <ClInclude Include="Delegate.h" />
@@ -342,6 +343,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\WDL\IPlug\IPlugVST.cpp" />
+    <ClCompile Include="ADSREnvelope.cpp" />
     <ClCompile Include="Circuit.cpp" />
     <ClCompile Include="CircuitPanel.cpp" />
     <ClCompile Include="Instrument.cpp" />

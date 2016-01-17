@@ -38,9 +38,13 @@ namespace syn
     };
     void reset() { memset(YBuf, 0, nY*sizeof(double)); memset(XBuf, 0, nX*sizeof(double)); xBufInd = 0; yBufInd = 0; };
   protected:
-    virtual void process(int bufind);
+	void process(int bufind) override;
+	void onSampleRateChange(double newfs) override;
+	void onBufferSizeChange(size_t newbuffersize) override;
+	void onTempoChange(double newtempo) override;
   private:
-    virtual Unit* cloneImpl() const { return new Filter(*this); };
+    Unit* cloneImpl() const override { return new Filter(*this); };
+	string getClassName() const override;
   };
 
   template <size_t nX, size_t nY>
@@ -48,7 +52,28 @@ namespace syn
     Filter<nX, nY>(filt.m_name, filt.XCoefs, filt.YCoefs)
   {}
 
-  template <size_t nX, size_t nY>
+	template <size_t nX, size_t nY>
+	void Filter<nX, nY>::onSampleRateChange(double newfs)
+	{
+	}
+
+	template <size_t nX, size_t nY>
+	void Filter<nX, nY>::onBufferSizeChange(size_t newbuffersize)
+	{
+	}
+
+	template <size_t nX, size_t nY>
+	void Filter<nX, nY>::onTempoChange(double newtempo)
+	{
+	}
+
+	template <size_t nX, size_t nY>
+	string Filter<nX, nY>::getClassName() const
+	{
+		return "Filter";
+	}
+
+	template <size_t nX, size_t nY>
   void Filter<nX, nY>::process(int bufind)
   {
     XBuf[xBufInd] = readParam(0);

@@ -134,10 +134,8 @@ void VOSIMSynth::Reset()
 {
   TRACE;
   IMutexLock lock(this);
-  double fs = GetSampleRate();
   m_MIDIReceiver.Resize(GetBlockSize());
-  m_voiceManager.setBufSize(GetBlockSize());
-  m_voiceManager.setFs(fs);
+  m_voiceManager.onHostReset(GetSampleRate(), GetBlockSize(), GetTempo());
 }
 
 void VOSIMSynth::OnParamChange(int paramIdx)

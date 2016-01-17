@@ -30,7 +30,6 @@ namespace syn
           m_voiceMap.erase(m_allVoices[vind]->getNote());
         }
         m_voiceStack.remove(vind);
-        m_onDyingVoice.Emit(m_allVoices[vind]);
         m_idleVoiceStack.push_front(vind);
         m_numVoices--;
       }
@@ -68,28 +67,23 @@ namespace syn
   {
     if (m_voiceMap.find(noteNumber) != m_voiceMap.end() && !m_voiceMap[noteNumber].empty())
     {
-      for (VoiceList::iterator v = m_voiceMap[noteNumber].begin(); v != m_voiceMap[noteNumber].end(); v++)
+      for (VoiceList::iterator v = m_voiceMap[noteNumber].begin(); v != m_voiceMap[noteNumber].end(); ++v)
       {
         m_allVoices[*v]->noteOff(noteNumber, velocity);
       }
     }
   }
 
-  void VoiceManager::setFs(double fs)
+  void VoiceManager::onHostReset(double fs, size_t bufsize, double tempo)
   {
-    m_instrument->setFs(fs);
-    for (vector<Instrument*>::iterator v = m_allVoices.begin(); v != m_allVoices.end(); v++)
+    m_instrument->setSampleRate(fs);
+	m_instrument->setBufferSize(bufsize);
+	m_instrument->setTempo(tempo);
+    for (vector<Instrument*>::iterator v = m_allVoices.begin(); v != m_allVoices.end(); ++v)
     {
-      (*v)->setFs(fs);
-    }
-  }
-
-  void VoiceManager::setBufSize(size_t bufsize)
-  {
-    for (int i = 0; i < m_allVoices.size(); i++)
-    {
-      if (m_allVoices[i]->getBufSize() != bufsize)
-        m_allVoices[i]->setBufSize(bufsize);
+	  (*v)->setSampleRate(fs);
+	  (*v)->setBufferSize(bufsize);
+	  (*v)->setTempo(tempo);
     }
   }
 
@@ -140,10 +134,6 @@ namespace syn
       Instrument* voice = m_allVoices[*v];
       if (voice->isActive())
       {
-        if (voice->getBufSize() != bufsize)
-        {
-          setBufSize(bufsize);
-        }
         voice->tick();
         const vector<double>& voicebuf = voice->getLastOutputBuffer();
         for (int i = 0; i < voice->getBufSize(); i++) {

@@ -15,13 +15,21 @@ namespace syn
     m_velocity = vel / 255.0;
   }
 
-  void Oscillator::setFs(double fs)
-  {
-    m_Step = m_Step * m_Fs / fs;
-    m_Fs = fs;
-  }
+	void Oscillator::onSampleRateChange(double newfs)
+	{
+		m_Step = m_Step * m_Fs / newfs;
+		m_Fs = newfs;
+	}
 
-  void Oscillator::update_step()
+	void Oscillator::onBufferSizeChange(size_t newbuffersize)
+	{
+	}
+
+	void Oscillator::onTempoChange(double newtempo)
+	{
+	}
+
+	void Oscillator::update_step()
   {
     if (m_pitch.isDirty() || m_finetune.isDirty())
     {

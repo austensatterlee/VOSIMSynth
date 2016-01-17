@@ -55,6 +55,7 @@ namespace syn
 
   class VosimChoir : public SourceUnit
   {
+	  
   public:
     VosimChoir(string name, size_t size = 4) :
       SourceUnit(name),
@@ -96,15 +97,6 @@ namespace syn
       delete m_pulsedrifters;
     }
 
-    //virtual void resizeOutputBuffer(size_t size)
-    //{
-    //  Unit::resizeOutputBuffer(size);
-    //  for (int i = 0; i < m_size; i++)
-    //  {
-    //    m_choir[i]->resizeOutputBuffer(size);
-    //    m_pulsedrifters[i]->resizeOutputBuffer(size);
-    //  }
-    //}
     virtual bool isActive() const override
     {
       return m_gain != 0;
@@ -123,14 +115,6 @@ namespace syn
       for (int i = 0; i < m_size; i++)
       {
         m_choir[i]->noteOff(pitch, vel);
-      }
-    }
-
-    virtual void setFs(double fs) override
-    {
-      for (int i = 0; i < m_size; i++)
-      {
-        m_choir[i]->setFs(fs);
       }
     }
 
@@ -156,6 +140,8 @@ namespace syn
 	  double relative = 0.0;
       for (int i = 0; i < m_size; i++)
       {
+		relative += m_relativeamt / m_size;
+
         m_choir[i]->m_decay.mod(m_decay, SET);
 
         m_choir[i]->m_ppitch.mod(m_ppitch, SET);
@@ -172,14 +158,15 @@ namespace syn
 
         m_output[bufind] += harmonicgain * m_choir[i]->getLastOutput();
         harmonicgain *= m_harmonicdecay;
-		relative += m_relativeamt/m_size;
       }
       m_output[bufind] *= m_gain;
     }
 
+	void onSampleRateChange(double newfs) override;
+
   private:
     VosimOscillator** m_choir;
-    UniformRandomOscillator** m_pulsedrifters;
+    UniformRandomOscillator** m_pulsedrifters; 
     size_t m_size;
 
     virtual Unit* cloneImpl() const override

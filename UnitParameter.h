@@ -43,7 +43,6 @@ namespace syn
 		double m_offsetValue;
 		bool m_isHidden;
 		bool m_isDirty;
-		const IControl* m_controller;
 		vector<Connection> m_connections;
 	public:
 		UnitParameter(Unit* parent, string name, int id, IParam::EParamType ptype, double min, double max, double defaultValue, bool ishidden = false);
@@ -79,21 +78,6 @@ namespace syn
 		{
 			return m_id;
 		};
-
-		double getBase() const
-		{
-			return m_offsetValue;
-		}
-
-		const IControl* getController() const
-		{
-			return m_controller;
-		}
-
-		bool hasController() const
-		{
-			return m_controller != nullptr;
-		}
 
 		bool isHidden() const
 		{
@@ -133,19 +117,10 @@ namespace syn
 			}
 		}
 
-		void setController(const IControl* controller);
-		void unsetController(const IControl* controller);
-
 		UnitParameter* clone() const
 		{
-			UnitParameter* other = cloneImpl();
+			UnitParameter* other = new UnitParameter(*this);
 			return other;
-		}
-
-	private:
-		virtual UnitParameter* cloneImpl() const
-		{
-			return new UnitParameter(*this);
 		}
 	};
 }

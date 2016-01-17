@@ -93,11 +93,11 @@ def GenerateBlit(intervals=10,resolution=100,fs=48000,fc=18300,beta=9.,apgain=0.
     ind = arange(pts)*1./resolution-intervals/2 # pts points spread across [-intervals/2,intervals/2)
     x = fc*Ts*ind # pts points spread across fc/fs*[-intervals/2, intervals/2)
     h = sinc(x)
+
     w = ss.kaiser(pts,beta) # window
     apw = 1-apgain*ss.kaiser(pts,apbeta) # apodization window
     blit = (apw*w)*h # blit
 
-    blit = blit/2./blit.max() # normalize
     return blit
 
 def GenerateMinBLEP(nZeroCrossings, nOverSampling):
@@ -287,20 +287,41 @@ def maggain(signal1,signal2,pts=None,fs=None,logscale=True):
 def lerp(a,b,frac):
     return (b-a)*frac + a
 
-def slidewindow(signal,window,resolution,fc=1.0):
+def resample(signal,window,window_resolution,resample_ratio):
+    resolution = window_resolution
     M = arange(len(signal))
     winlen = len(window)/resolution/2
-    newsig = zeros(len(signal))
-    scale = 1.0
-    for m in M:
-        for n in xrange(m-winlen,m+winlen+1):
-            k = mod(n,len(signal))
-            filtphase = resolution*(m-n+winlen)
-            tableindex = int(fc*filtphase)
-            tableindex_frac = fc*filtphase - tableindex
-            tableindex_nxt = mod(tableindex+1,len(window))
-            newsig[m] += signal[k]*lerp(window[tableindex],window[tableindex_nxt],tableindex_frac)
-    return newsig
+    newsiglen = int(len(signal)*resample_ratio)
+    newsig = zeros(newsiglen)
+    phase = 0.0
+    phase_step = 1./resample_ratio
+
+    windowsamples = [] #debug
+    sigsamples = [] #debug
+    for m in xrange(newsiglen):
+        phase_ind = int(phase)
+        windowsamples.append([]) #debug
+        sigsamples.append([]) #debug
+        for i in xrange(-winlen+1,winlen+1):
+            n = phase - (phase_ind + i)
+            tableindex = int(resolution*n)
+            tableindex_frac = resolution*n - tableindex
+            tableindex_nxt = tableindex+1
+            #  currtablesample = window[tableindex] if tableindex >= 0 and tableindex < len(window) else 0.0
+            #  nexttablesample = window[tableindex_nxt] if tableindex_nxt >= 0 and tableindex_nxt < len(window) else 0.0
+            currtablesample = window[ mod( tableindex, len(window)   ) ]
+            nexttablesample = window[ mod( tableindex+1, len(window) ) ]
+
+            sig_ind = mod(phase_ind + i, len(signal))
+            sigsample = signal[sig_ind]
+            sigsamples[-1].append(sigsample) #debug
+
+            winsample = lerp(currtablesample,nexttablesample,tableindex_frac)
+            windowsamples[-1].append(winsample) #debug
+
+            newsig[m] += sigsample*winsample
+        phase += phase_step
+    return array(windowsamples),array(sigsamples),newsig
 
 def sinclowpass(signal,fc,winlen=10):
     newsignal = zeros(len(signal))

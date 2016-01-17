@@ -5,7 +5,6 @@ syn::UnitParameter::UnitParameter(Unit* parent, string name, int id, IParam::EPa
 	m_parent(parent),
 	m_name(name),
 	m_id(id),
-	m_controller(nullptr),
 	m_isHidden(ishidden),
 	m_connections(0)
 {
@@ -36,7 +35,7 @@ syn::UnitParameter::UnitParameter(Unit* parent, string name, int id, IParam::EPa
 bool syn::UnitParameter::operator==(const UnitParameter& p) const
 {
   return m_id == p.m_id && m_name == p.m_name && Type() == p.Type() &&\
-	GetMin() == p.GetMin() && GetMax() == p.GetMax() && m_controller == p.m_controller;
+	GetMin() == p.GetMin() && GetMax() == p.GetMax();
 }
 
 void syn::UnitParameter::mod(double amt, MOD_ACTION action)
@@ -56,29 +55,5 @@ void syn::UnitParameter::mod(double amt, MOD_ACTION action)
   {
     Set(Value() * amt);
 	m_isDirty = true;
-  }
-}
-
-void syn::UnitParameter::setController(const IControl* controller)
-{
-  if (!m_controller)
-  {
-    m_controller = controller;
-  }
-  else
-  {
-    throw std::logic_error("UnitParameter already has a controller.");
-  }
-}
-
-void syn::UnitParameter::unsetController(const IControl* controller)
-{
-  if (m_controller == controller)
-  {
-    m_controller = nullptr;
-  }
-  else
-  {
-    throw std::logic_error("Only the UnitParameter's assigned controller can disconnect itself.");
   }
 }

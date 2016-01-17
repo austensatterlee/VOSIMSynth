@@ -296,18 +296,18 @@ namespace syn
     m_mutex.Leave();
 
     // Adjust axis boundaries
-    if (m_config->argmin > 0 && m_config->argmax > 0)
+    if (m_config->argmin >= 0 && m_config->argmax >= 0)
     {
       double minY = m_config->outputbuf[m_config->argmin];
       double maxY = m_config->outputbuf[m_config->argmax];
 
       if(m_minY < minY)
-        m_minY = m_minY + 0.1*0.05*(minY - m_minY);
+        m_minY = m_minY + 0.05*(minY - m_minY);
       else
         m_minY = minY;
 
       if(m_maxY > maxY)      
-        m_maxY = m_maxY + 0.1*0.05*(maxY - m_maxY);
+        m_maxY = m_maxY + 0.05*(maxY - m_maxY);
       else      
         m_maxY = maxY;  
     }
@@ -315,7 +315,7 @@ namespace syn
     // Draw transform output
     int bufreadlen = getBufReadLength();
     int numxticks = 10;
-    double xtickdist = m_InnerRect.W() / (double)numxticks; // min distance between xtick labels
+    double xtickdist = m_InnerRect.W() * 1.0/numxticks; // min distance between xtick labels
     int lastxtick = 0;
     IColor curvecolor{255,255,255,255};
     for (int j = 1; j <= bufreadlen; j += 1)

@@ -56,6 +56,9 @@
     <ClCompile Include="UnitControl.cpp">
       <Filter>UI</Filter>
     </ClCompile>
+    <ClCompile Include="ADSREnvelope.cpp">
+      <Filter>Components\Units</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\WDL\IPlug\IPlugVST.h">
@@ -134,6 +137,9 @@
     </ClInclude>
     <ClInclude Include="UnitControl.h">
       <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ADSREnvelope.h">
+      <Filter>Components\Units</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

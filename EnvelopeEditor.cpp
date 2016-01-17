@@ -298,12 +298,12 @@ namespace syn
     {
       Envelope* env = static_cast<Envelope*>(&m_voiceManager->getProtoInstrument()->getUnit(m_targetEnvId));
       m_points.resize(env->getNumSegments() + 1);
-      m_points[0] = NDPoint<2>{ 0,env->getInitPoint() };
+      m_points[0] = NDPoint<2>{ 0,env->getInitTarget() };
       double xtotal = 0;
       for (int i = 0; i < env->getNumSegments(); i++)
       {
-        xtotal += m_VOSIMPlug->GetInstrParameter(m_targetEnvId, env->getPeriodId(i));
-        double amp = m_VOSIMPlug->GetInstrParameter(m_targetEnvId, env->getPointId(i));
+        xtotal += m_VOSIMPlug->GetInstrParameter(m_targetEnvId, env->getPeriod(i).getId());
+        double amp = m_VOSIMPlug->GetInstrParameter(m_targetEnvId, env->getTarget(i).getId());
         m_points[i + 1] = NDPoint<2>{ xtotal , amp };
       }
       xtotal = ceil(xtotal);
@@ -339,12 +339,6 @@ namespace syn
     m_voiceManager = vm;
     if (m_voiceManager)
     {
-      m_targetEnvId = vm->getProtoInstrument()->getUnitId(targetEnvName);
-      vector<string> paramnames = vm->getProtoInstrument()->getUnit(m_targetEnvId).getParameterNames();
-      for (int i = 0; i < paramnames.size(); i++)
-      {
-        vm->getProtoInstrument()->getUnit(m_targetEnvId).getParam(paramnames[i]).setController(this);
-      }
       resyncPoints();
       resyncEnvelope();
     }
@@ -359,12 +353,10 @@ namespace syn
       for (int seg = 0; seg < m_points.size() - 1; seg++)
       {
         // set point
-        //m_voiceManager->modifyParameter(m_targetEnvId, env->getPointId(seg), m_ampScale*m_points[seg + 1][1], SET);
-        m_VOSIMPlug->SetInstrParameter(m_targetEnvId, env->getPointId(seg), m_ampScale*m_points[seg + 1][1]);
+		m_voiceManager->modifyParameter(m_targetEnvId, env->getTarget(seg).getId(), m_ampScale*m_points[seg + 1][1], SET);
         // set period
         double newperiod = m_timeScale*(m_points[seg + 1][0] - m_points[seg][0]);
-        //m_voiceManager->modifyParameter(m_targetEnvId, env->getPeriodId(seg), newperiod, SET);
-        m_VOSIMPlug->SetInstrParameter(m_targetEnvId, env->getPeriodId(seg), newperiod);
+		m_voiceManager->modifyParameter(m_targetEnvId, env->getPeriod(seg).getId(), newperiod, SET);
       }
       SetDirty();
     }

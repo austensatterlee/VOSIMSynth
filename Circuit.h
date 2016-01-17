@@ -21,7 +21,7 @@ namespace syn
     int targetid;
     int portid;
     MOD_ACTION action;
-    bool operator==(const ConnectionMetadata& other)
+    bool operator==(const ConnectionMetadata& other) const
     {
       return other.srcid == srcid && other.targetid == targetid && other.portid == portid && other.action == action;
     }
@@ -44,7 +44,8 @@ namespace syn
       m_nextUid(0),
       m_bufsize(1),
       m_sinkId(-1),
-      m_Fs(48e3)
+      m_Fs(48e3), 
+	  m_tempo(120)
     {}
     virtual ~Circuit();
     Circuit* clone();
@@ -79,9 +80,10 @@ namespace syn
      * \brief Generate the requested number of samples. The result can be retrieved using getLastOutputBuffer()
      */
     void tick();
-    void setFs(double fs);
-    void setBufSize(size_t bufsize);
-    size_t getBufSize() { return m_bufsize; }
+	void setSampleRate(double newfs);
+	void setBufferSize(size_t newbufsize);
+	void setTempo(double newtempo);
+    size_t getBufSize() const { return m_bufsize; }
     bool hasUnit(string name) const;
     bool hasUnit(int uid) const;
     double getLastOutput() const { return m_units.at(m_sinkId)->getLastOutput(); };
@@ -98,7 +100,7 @@ namespace syn
     bool m_isGraphDirty = true; //!< indicates whether or not the graph's linearization should be recomputed
     int m_sinkId;
     size_t m_bufsize;
-    double m_Fs;
+    double m_Fs, m_tempo;
     int m_nextUid;
   private:
     void refreshProcQueue();
