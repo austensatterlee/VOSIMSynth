@@ -329,7 +329,7 @@ namespace syn
     serialized.Put<bool>(&uctrl->m_is_sink);
 
     // Write the unit's parameter configuration
-    serialized.Put<unsigned int>(&uctrl->m_nParams);
+    serialized.Put<size_t>(&uctrl->m_nParams);
     for (int i = 0; i < uctrl->m_nParams; i++) {
       double paramval = uctrl->m_unit->getParam(i);
       // Write the parameter's name

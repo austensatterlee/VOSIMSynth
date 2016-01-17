@@ -19,7 +19,7 @@ namespace syn
     int m_shape_id;
   public:
 
-    EnvelopeSegment::EnvelopeSegment(Envelope* parent, int pid, int taid, int sid) :
+    EnvelopeSegment(Envelope* parent, int pid, int taid, int sid) :
       m_parent(parent),
       m_period_id(pid),
       m_target_amp_id(taid),
@@ -30,11 +30,11 @@ namespace syn
     {
     };
 
-    EnvelopeSegment::EnvelopeSegment() : EnvelopeSegment(nullptr, 0, 0, 0)
+    EnvelopeSegment() : EnvelopeSegment(nullptr, 0, 0, 0)
     {
     };
 
-    EnvelopeSegment::EnvelopeSegment(const EnvelopeSegment& other) :
+    EnvelopeSegment(const EnvelopeSegment& other) :
       EnvelopeSegment(other.m_parent, other.m_period_id, other.m_target_amp_id, other.m_shape_id)
     {
     };
