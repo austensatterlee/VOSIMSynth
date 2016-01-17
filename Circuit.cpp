@@ -296,7 +296,6 @@ namespace syn
 	{
 		if (m_unitmap.find(name) == m_unitmap.end())
 		{
-			DBGMSG("Unit (%s) not found in circuit.", name);
 			throw std::invalid_argument("Unit (" + name + ") not found in circuit.");
 		}
 		return m_unitmap.at(name);
@@ -311,7 +310,6 @@ namespace syn
 		}
 		if (uid == -1)
 		{
-			DBGMSG("Unit not found in circuit.");
 			throw std::invalid_argument("Unit not found in circuit.");
 		}
 		return uid;

@@ -279,8 +279,8 @@ namespace syn
 
     // Draw window information text
     int bufsize = m_config->outputbuf.size();
-    double estfreq = GetPlug()->GetSampleRate() / m_syncDelayEst;
-    double publishedfreq = GetPlug()->GetSampleRate() / getPeriod();
+    double estfreq = pGraphics->GetPlug()->GetSampleRate() / m_syncDelayEst;
+    double publishedfreq = pGraphics->GetPlug()->GetSampleRate() / getPeriod();
     sprintf(gridstr, "Displaying %d periods | Buffer size: %d (in) %d (out) | Input frequency: %.2f Hz (%.2f Hz)", \
       m_displayPeriods, m_BufSize, bufsize, estfreq, publishedfreq);
     pGraphics->DrawIText(&txtstyle, gridstr, &mRECT);
