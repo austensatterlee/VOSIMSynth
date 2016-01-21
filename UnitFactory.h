@@ -92,6 +92,11 @@ namespace syn
       int protonum = m_class_identifiers.at(classidentifier);
       return createUnit(protonum);
     }
+
+	bool hasClassId(unsigned a_unit_class_id) {
+		bool result = m_class_identifiers.find(a_unit_class_id) != m_class_identifiers.end();
+		return result;
+    }
   protected:
     vector<const Unit*> m_unit_prototypes;
     vector<int> m_unit_counts;

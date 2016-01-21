@@ -119,10 +119,12 @@ namespace syn
 		Circuit* m_parent;
 		double m_Fs, m_tempo;
 		vector<double> m_output;
-		virtual void process(int bufind) = 0; //<! should add its result to m_output[bufind]
-		UnitParameter& addEnumParam(string name, const vector<string> choice_names);
-		UnitParameter& addParam(string name, int id, IParam::EParamType ptype, const double min, const double max, const double defaultValue, const bool isHidden = false);
-		UnitParameter& addParam(string name, IParam::EParamType ptype, const double min, const double max, const double defaultValue, const bool isHidden = false);
+		virtual void process(int bufind) = 0; // should add its result to m_output[bufind]
+		UnitParameter& addParam(string name, int id, IParam::EParamType ptype, double min, double max, double defaultValue, double step, double shape = 1.0, bool isHidden = false, bool canModulate = true);
+		UnitParameter& addDoubleParam(string name, double min, double max, double defaultValue, double step, double shape = 1.0, bool isHidden = false, bool canModulate = true);
+		UnitParameter& addIntParam(string name, int min, int max, int defaultValue, double shape = 1.0, bool isHidden = false, bool canModulate = true);
+		UnitParameter& addBoolParam(string name, bool defaultValue);
+		UnitParameter& addEnumParam(string name, const vector<string> choice_names, int defaultValue);
 		virtual void onSampleRateChange(double newfs) = 0;
 		virtual void onBufferSizeChange(size_t newbuffersize) {};
 		virtual void onTempoChange(double newtempo) {};
@@ -131,13 +133,15 @@ namespace syn
 		virtual Unit* cloneImpl() const = 0;
 		virtual inline string getClassName() const = 0;
 
+		/// Allows parent classes to apply common processing before child class outputs.
 		virtual void beginProcessing()
 		{
 		};
 
+		/// Allows parent classes to apply common processing after child class outputs.
 		virtual void finishProcessing()
 		{
-		}; //<! Allows parent classes to apply common processing to child class outputs.
+		}; 
 	};
 
 	/*
@@ -147,8 +151,8 @@ namespace syn
 	{
 	public:
 		AccumulatingUnit(string name) : Unit(name),
-		                                m_input(addParam("input", IParam::kTypeDouble, -1, 1, 0.0, true)),
-		                                m_gain(addParam("gain", IParam::kTypeDouble, 0, 1, 0.5))
+		                                m_input(addDoubleParam("input", -1, 1, 0.0, 0.0, 1.0, true, true)),
+		                                m_gain(addDoubleParam("gain", 0, 1, 0.5, 1e-3, 2.0, false, true ))
 		{
 		}
 

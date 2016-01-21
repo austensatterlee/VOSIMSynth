@@ -73,10 +73,10 @@ def GenerateBLSaw(pts,nharmonics=None):
     hind = arange(1,hpts)
     freqmags = zeros(pts/2+1,dtype=complex128)
     freqmags[hind] = 1j*1./hind
-    blsaw = fft.irfft(freqmags,n=nfft)
+    blsaw = fft.fftshift(fft.irfft(freqmags,n=nfft))
     return blsaw/blsaw.max()
 
-def GenerateBlit(intervals=10,resolution=100,fs=48000,fc=18300,beta=9.,apgain=0.9,apbeta=0.7):
+def GenerateBlimp(intervals=10,resolution=2048,fs=48000,fc=18300,beta=9.,apgain=0.9,apbeta=0.7,ret_ind=False):
     """
     Generate a bandlimited dirac delta impulse.
 
@@ -87,18 +87,20 @@ def GenerateBlit(intervals=10,resolution=100,fs=48000,fc=18300,beta=9.,apgain=0.
     beta - first window param
     apgain - apodizing window gain
     """
-    Ts = 1./fs
     intervals=2*(int(intervals)/2)+1 # make intervals odd
-    pts = resolution*intervals # impulse length in points
-    ind = arange(pts)*1./resolution-intervals/2 # pts points spread across [-intervals/2,intervals/2)
-    x = fc*Ts*ind # pts points spread across fc/fs*[-intervals/2, intervals/2)
+    pts = resolution*intervals+1 # impulse length in points
+    ind = intervals*2*(arange(pts) - (pts-1)/2.)/(pts-1.) # pts points spread across [-intervals/2,intervals/2)
+    x = fc*1./fs*ind # pts points spread across fc/fs*[-intervals/2, intervals/2)
     h = sinc(x)
 
     w = ss.kaiser(pts,beta) # window
     apw = 1-apgain*ss.kaiser(pts,apbeta) # apodization window
     blit = (apw*w)*h # blit
-
-    return blit
+    blit = blit/blit.max()
+    if ret_ind:
+        return x,blit
+    else:
+        return blit
 
 def GenerateMinBLEP(nZeroCrossings, nOverSampling):
     n = (nZeroCrossings * 2 * nOverSampling) + 1
@@ -145,35 +147,59 @@ def PitchTable(n,notestart=0,notefinish=128):
     N = linspace(notestart,notefinish,n)
     return 440*2**((N-69.)/12.)
 
-def rewriteAutomatedSection(full_text,replacement_text):
+def rewriteAutomatedSection(full_text,tag,replacement_text):
+    """
+    Finds a portion of text surrounded by:
+
+        /*::tag::*/
+        ...
+        /*::/tag::*/
+
+    And replaces it with the provided replacement text.
+
+    """
+
     block_pattern = re.compile(
-            " */\\*::(?P<tag>.*?)::\\*/.*?\n *(?P<block>.*)\n */\\*::/(?P=tag)::\\*/",
+            "\n*(?P<spacing>\\s*?)/\\*::{0:}::\\*/.*?\\s*(?P<block>.*)\n?\\s*/\\*::/{0:}::\\*/".format(tag),
             re.DOTALL);
     match = block_pattern.search(full_text)
     if not match:
         return full_text
-    return re.sub(re.escape(match.groupdict()["block"]), replacement_text, full_text)
+    replacement_text=re.sub("\n\\s*","\n"+match.groupdict()['spacing'],replacement_text)
+    result = full_text[:match.start("block")] + replacement_text + full_text[match.end("block"):]
+    return result
 
 def main(pargs):
     v = pargs.verbose
 
-    ss_points = 16384
-    sintable = GenerateSine(ss_points)
+    BLIMP_RESOLUTION = 8192
+    sintable = GenerateSine(256)
     pitchtable = PitchTable(16384,-128,128)
-    blsaw = GenerateBLSaw(16384,16)
+    blsaw = GenerateBLSaw(256,128)
+    blimp = GenerateBlimp(10,BLIMP_RESOLUTION)
+    blimp = blimp[len(blimp)/2:]
 
     key_order = ['size','input_min','input_max', 'isPeriodic']
     tables = {
-            'SIN':dict(data=sintable,size=ss_points),
+            'SIN':dict(data=sintable,size=len(sintable)),
             'PITCH_TABLE':dict(data=pitchtable,size=len(pitchtable),input_min=-1,input_max=1,isPeriodic=False),
-            'BL_SAW':dict(data=blsaw,size=len(blsaw))
+            'BL_SAW':dict(data=blsaw,size=len(blsaw)),
+            'BLIMP_TABLE':dict(data=blimp,size=len(blimp))
             }
+    macrodefines = [
+            ('BLIMP_INTERVALS', (2*len(blimp))/BLIMP_RESOLUTION),
+            ('BLIMP_RES', BLIMP_RESOLUTION),
+            ]
 
+    # Generate macro defines
+    macrodefine_code = ""
+    for macroname,macroval in macrodefines:
+        line = "#define {} {}".format(macroname, macroval)
+        macrodefine_code += line + "\n"
+    # Generate lookup table structures
     tabledata_def = ""
     tabledata_decl = ""
     tableobj_def = ""
-    # tableinfostr = '\n'.join(["#define {} {}".format(k,v) for k,v in tableinfo.items()])
-    # tableinfostr += '\n'
     for name,struct in tables.items():
         tabledata_def += MakeTableStr(tables[name]['data'],name)
         tabledata_decl += "extern const double {}[{}];\n".format(name,len(tables[name]['data']))
@@ -191,8 +217,6 @@ def main(pargs):
         tableargs = "{}, ".format(name)+", ".join(currargs)
         tableobj_currdef = "const LookupTable lut_{}({});\n".format(name.lower(),tableargs);
         tableobj_def += tableobj_currdef
-        if v:
-            print tableobj_currdef
 
     if os.path.isfile("table_data.cpp"):
         if v:
@@ -212,13 +236,15 @@ def main(pargs):
     if os.path.isfile("tables.h"):
         if v:
             print "Backing up old tables.h..."
-        header_text = open('tables.h','r').read()
+        old_code = open('tables.h','r').read()
         with open('tables.h.bk','w') as fp:
-            fp.write(header_text)
+            fp.write(old_code)
     if v:
         print "Writing new tables.h..."
+    new_code = rewriteAutomatedSection(old_code,'lut_defs', tabledata_decl+'\n'+tableobj_def)
+    new_code = rewriteAutomatedSection(new_code,'macro_defs', macrodefine_code)
     with open('tables.h', 'w') as fp:
-        fp.write(rewriteAutomatedSection(header_text, tabledata_decl+'\n'+tableobj_def))
+        fp.write(new_code)
 
 if __name__=="__main__":
     import argparse as ap
@@ -229,7 +255,7 @@ if __name__=="__main__":
     main(pargs)
 
 """Tools"""
-def magspec(signal, pts=None, fs=None, logscale=True):
+def magspec(signal, pts=None, fs=None, logscale=True, **kwargs):
     from matplotlib import pyplot as plt
     pts = pts or len(signal)
     k = arange(1,pts/2)
@@ -247,15 +273,15 @@ def magspec(signal, pts=None, fs=None, logscale=True):
     f = plt.gcf()
     ax = plt.gca()
     if logscale:
-        ax.semilogx( linfreqs, mag, basex=2)
+        ax.semilogx( linfreqs, mag, basex=10, **kwargs)
     else:
-        ax.plot( linfreqs, mag )
+        ax.plot( linfreqs, mag, **kwargs)
     ax.set_xlabel("Hz")
     ax.set_ylabel(ylabel)
     ax.grid(True,which='both')
     f.show()
 
-def maggain(signal1,signal2,pts=None,fs=None,logscale=True):
+def maggain(signal1,signal2,pts=None,fs=None,logscale=True,**kwargs):
     from matplotlib import pyplot as plt
     fftlength = pts or max(len(signal1),len(signal2))
     k = arange(1,fftlength/2)
@@ -276,69 +302,110 @@ def maggain(signal1,signal2,pts=None,fs=None,logscale=True):
     f = plt.gcf()
     ax = plt.gca()
     if logscale:
-        ax.semilogx( linfreqs, gain, basex=2)
+        ax.semilogx( linfreqs, gain, basex=10, **kwargs)
     else:
-        ax.plot( linfreqs, gain )
+        ax.plot( linfreqs, gain, **kwargs )
     ax.set_xlabel("Hz")
     ax.set_ylabel(ylabel)
     ax.grid(True,which='both')
     f.show()
 
+def unitplot(*sigs,**kwargs):
+    """
+    plots multiple signals on the same timescale
+
+    """
+    from matplotlib import pyplot as plt
+    f = plt.gcf()
+    ax = plt.gca()
+    pltsigs = []
+    for sig in sigs:
+        pltsigs.append( linspace(0,1,len(sig)) )
+        pltsigs.append( sig )
+    ax.plot(*pltsigs,**kwargs)
+    ax.grid(True,which="both")
+    f.show()
+
 def lerp(a,b,frac):
     return (b-a)*frac + a
 
-def resample(signal,window,window_resolution,resample_ratio):
-    resolution = window_resolution
-    M = arange(len(signal))
-    winlen = len(window)/resolution/2
-    newsiglen = int(len(signal)*resample_ratio)
+def upsample(signal,amt,filt,filt_res=1):
+    """
+    signal - signal to upsample
+    amt - integer amount to upsample
+    filt - interpolation kernel
+    filt_res - interpolation kernel oversampling factor
+
+    """
+    siglen = len(signal)
+    newsiglen = siglen * amt
     newsig = zeros(newsiglen)
-    phase = 0.0
-    phase_step = 1./resample_ratio
+    halffiltlen = len(filt)/filt_res/2
+    # y[ j + iL ] = sum_{k=0}^{K} x[ i - k ] * h[ j + k*L]
+    # i = index of original sample
+    # j = index of interpolated sample
+    # L = upsample amount
+    for i in xrange(siglen):
+        for j in xrange(amt):
+            newsigind = j + i*amt
+            for k in xrange(-halffiltlen,halffiltlen+1):
+                filtind = filt_res*(j + k*amt + halffiltlen)
+                sigind = clip( i - k, 0, siglen-1 )
+                if filtind>=0 and filtind < 2*halffiltlen*filt_res:
+                    newsig[ newsigind ] += signal[ sigind ] * filt[ filtind ]
+    return newsig
 
-    windowsamples = [] #debug
-    sigsamples = [] #debug
+def resample(signal, ratio, filt, filt_res):
+    """
+    signal - signal to resample
+    ratio - ratio of new sample rate to old sample rate
+    filt - the filter kernel to use
+    filt_res - oversampling factor of filter kernel
+
+    """
+    filt_len = len(filt)/filt_res
+    siglen = len(signal)
+    newsiglen = int(siglen * ratio)
+    newsig = zeros(newsiglen)
+    phase_step = filt_res/ratio
+
+    if ratio < 1:
+        offset_step = filt_res*ratio
+    else:
+        offset_step = filt_res
+
+    phase = 0
     for m in xrange(newsiglen):
-        phase_ind = int(phase)
-        windowsamples.append([]) #debug
-        sigsamples.append([]) #debug
-        for i in xrange(-winlen+1,winlen+1):
-            n = phase - (phase_ind + i)
-            tableindex = int(resolution*n)
-            tableindex_frac = resolution*n - tableindex
-            tableindex_nxt = tableindex+1
-            #  currtablesample = window[tableindex] if tableindex >= 0 and tableindex < len(window) else 0.0
-            #  nexttablesample = window[tableindex_nxt] if tableindex_nxt >= 0 and tableindex_nxt < len(window) else 0.0
-            currtablesample = window[ mod( tableindex, len(window)   ) ]
-            nexttablesample = window[ mod( tableindex+1, len(window) ) ]
-
-            sig_ind = mod(phase_ind + i, len(signal))
-            sigsample = signal[sig_ind]
-            sigsamples[-1].append(sigsample) #debug
-
-            winsample = lerp(currtablesample,nexttablesample,tableindex_frac)
-            windowsamples[-1].append(winsample) #debug
-
-            newsig[m] += sigsample*winsample
+        index = int(phase/filt_res)
+        offset = phase-index*filt_res
+        if ratio < 1:
+            offset *= 1.0*ratio
+        print offset,index
+        for i in xrange(filt_len/2):
+            newsig[m] += filt[offset] * signal[clip(index-i,0,siglen-1)]
+            filt_ind = len(filt)-offset
+            if ratio<1:
+                filt_ind*=ratio
+            newsig[m] += filt[filt_ind] * signal[clip(index+1+i,0,siglen-1)]
+            offset += offset_step
         phase += phase_step
-    return array(windowsamples),array(sigsamples),newsig
+    return newsig
 
 def sinclowpass(signal,fc,winlen=10):
     newsignal = zeros(len(signal))
     M = arange(len(signal))
-    N = arange(len(signal))
     # for m in M:
         # for n in xrange(N):
             # newsignal[m] += signal[n]*sinc(fc*(m-n))
         # newsignal[m]*=2*fc
     fc = fc
-    sincfir = sinc(fc*arange(-winlen,winlen+1))
+    sincfir = sinc(fc*arange(-winlen+1,winlen+1))
     apwin = genApodWindow(len(sincfir),9.,0.9,0.7)
     sincfir *= apwin
     sincfir /= sincfir.max()
     for m in M:
-        for n in xrange(m-winlen,m+winlen+1):
-            k = mod(n,len(signal))
+        for n in xrange(m-winlen+1,m+winlen+1):
+            k = clip(n,0,len(signal)-1)
             newsignal[m] += signal[k]*sincfir[m-n+winlen]
     return newsignal*fc
 

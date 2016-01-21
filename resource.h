@@ -59,24 +59,24 @@ instrument determined by PLUG _IS _INST
 #define PLUG_DOES_STATE_CHUNKS 1
 
 // Unique IDs for each image resource.
-#define KNOB_ID					      101
-#define PUSH_2P_ID				    102
+#define KNOB_ID					101
+#define PUSH_2P_ID				102
 #define COLOR_RING_KNOB_ID		103
-#define GREY_KNOB_ID			    104
+#define GREY_KNOB_ID			104
 #define WEDGE_SWITCH_2P_ID		105
 #define TOGGLE_SWITCH_3P_ID		106
 
 // Image resource locations for this plug.
-#define KNOB_FN				          "resources/img/knob.png"
-#define PUSH_2P_FN			        "resources/img/2p_push.png"
+#define KNOB_FN				    "resources/img/knob.png"
+#define PUSH_2P_FN			    "resources/img/2p_push.png"
 #define COLOR_RING_KNOB_FN	    "resources/img/color_ring_knob.png"
-#define GREY_KNOB_FN		        "resources/img/grey_knob.png"
+#define GREY_KNOB_FN		    "resources/img/grey_knob.png"
 #define WEDGE_SWITCH_2P_FN	    "resources/img/wedge_switch_2p.png"
 #define TOGGLE_SWITCH_3P_FN     "resources/img/toggle_switch_3p.png"
 
 // GUI default dimensions
 #define GUI_WIDTH 800
-#define GUI_HEIGHT 600
+#define GUI_HEIGHT 800
 
 // on MSVC, you must define SA_API in the resource editor preprocessor macros as well as the c++ ones
 #if defined(SA_API) && !defined(OS_IOS)
@@ -95,3 +95,4 @@ instrument determined by PLUG _IS _INST
 "Spatial|Fx", "OnlyRT", "OnlyOfflineProcess", "Mono", "Stereo",
 "Surround"
 */
+

@@ -290,10 +290,11 @@
     <ClInclude Include="..\..\WDL\rtaudiomidi\RtAudio.h" />
     <ClInclude Include="..\..\WDL\rtaudiomidi\RtError.h" />
     <ClInclude Include="..\..\WDL\rtaudiomidi\RtMidi.h" />
+    <ClInclude Include="ADSREnvelope.h" />
     <ClInclude Include="app_wrapper\app_main.h" />
     <ClInclude Include="app_wrapper\app_resource.h" />
     <ClInclude Include="Circuit.h" />
-    <ClInclude Include="Connection.h" />
+    <ClInclude Include="CircuitPanel.h" />
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="DSPMath.h" />
     <ClInclude Include="Envelope.h" />
@@ -302,14 +303,18 @@
     <ClInclude Include="Filter.h" />
     <ClInclude Include="GallantSignal.h" />
     <ClInclude Include="Instrument.h" />
+    <ClInclude Include="ITextSlider.h" />
     <ClInclude Include="MIDIReceiver.h" />
     <ClInclude Include="NDPoint.h" />
     <ClInclude Include="Oscillator.h" />
     <ClInclude Include="Oscilloscope.h" />
+    <ClInclude Include="RandomOscillator.h" />
     <ClInclude Include="SourceUnit.h" />
     <ClInclude Include="tables.h" />
     <ClInclude Include="UI.h" />
     <ClInclude Include="Unit.h" />
+    <ClInclude Include="UnitControl.h" />
+    <ClInclude Include="UnitFactory.h" />
     <ClInclude Include="UnitParameter.h" />
     <ClInclude Include="VoiceManager.h" />
     <ClInclude Include="VosimOscillator.h" />
@@ -323,9 +328,11 @@
     <ClCompile Include="..\..\WDL\IPlug\IPlugStandalone.cpp" />
     <ClCompile Include="..\..\WDL\rtaudiomidi\RtAudio.cpp" />
     <ClCompile Include="..\..\WDL\rtaudiomidi\RtMidi.cpp" />
+    <ClCompile Include="ADSREnvelope.cpp" />
     <ClCompile Include="app_wrapper\app_dialog.cpp" />
     <ClCompile Include="app_wrapper\app_main.cpp" />
     <ClCompile Include="Circuit.cpp" />
+    <ClCompile Include="CircuitPanel.cpp" />
     <ClCompile Include="Envelope.cpp" />
     <ClCompile Include="EnvelopeEditor.cpp" />
     <ClCompile Include="Filter.cpp" />
@@ -336,8 +343,8 @@
     <ClCompile Include="OscilloscopeTransforms.cpp" />
     <ClCompile Include="tables.cpp" />
     <ClCompile Include="table_data.cpp" />
-    <ClCompile Include="UI.cpp" />
     <ClCompile Include="Unit.cpp" />
+    <ClCompile Include="UnitControl.cpp" />
     <ClCompile Include="UnitParameter.cpp" />
     <ClCompile Include="VoiceManager.cpp" />
     <ClCompile Include="VosimOscillator.cpp" />
@@ -345,9 +352,6 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VOSIMSynth.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="libfftw3-3.lib" />

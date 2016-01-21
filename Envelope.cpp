@@ -1,6 +1,6 @@
 #include "Envelope.h"
 #include <sstream>
-#include "tables.h"
+#include "DSPMath.h"
 using std::ostringstream;
 
 /******************************
@@ -11,8 +11,8 @@ namespace syn
 {
 	Envelope::Envelope(string name, int numSegments) :
 		SourceUnit(name),
-		m_loopStart(addParam("loopstart", IParam::kTypeInt, 0, numSegments, 0)),
-		m_loopEnd(addParam("loopend", IParam::kTypeInt, 0, numSegments, 0)),
+		m_loopStart(addIntParam("loopstart", 0, numSegments, 0)),
+		m_loopEnd(addIntParam("loopend", 0, numSegments, 0)),
 		m_initPoint(0),
 		m_numSegments(numSegments),
 		m_currSegment(0),
@@ -28,18 +28,18 @@ namespace syn
 			paramname.str("");
 			paramname.clear();
 			paramname << "period" << i;
-			period = addParam(paramname.str(), IParam::kTypeDouble, MIN_ENV_PERIOD, 2.0, MIN_ENV_PERIOD).getId();
+			period = addDoubleParam(paramname.str(), MIN_ENV_PERIOD, 2.0, MIN_ENV_PERIOD, 1e-3).getId();
 			getParam(period).mod(MIN_ENV_PERIOD, SET);
 			paramname.str("");
 			paramname.clear();
 			paramname << "target" << i;
 			if (i == numSegments - 1)
 			{
-				target = addParam(paramname.str(), IParam::kTypeDouble, 0.0, 1.0, 0).getId();
+				target = addDoubleParam(paramname.str(), 0.0, 1.0, 0, 1e-3, 2).getId();
 			}
 			else
 			{
-				target = addParam(paramname.str(), IParam::kTypeDouble, 0.0, 1.0, 1).getId();
+				target = addDoubleParam(paramname.str(), 0.0, 1.0, 1, 1e-3, 2).getId();
 			}
 
 			m_segments.push_back(new EnvelopeSegment(this, period, target));

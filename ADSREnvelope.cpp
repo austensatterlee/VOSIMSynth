@@ -74,10 +74,10 @@ namespace syn
 
 	ADSREnvelope::ADSREnvelope(string name) :
 		SourceUnit(name),
-		m_attack(addParam("attack", IParam::kTypeDouble, 0.001, 1.0, 0.001)),
-		m_decay(addParam("decay", IParam::kTypeDouble, 0.001, 1.0, 0.001)),
-		m_sustain(addParam("sustain", IParam::kTypeDouble, 0.0, 1.0, 1.0)),
-		m_release(addParam("release", IParam::kTypeDouble, 0.001, 1.0, 0.001)),
+		m_attack(addDoubleParam("attack", 0.001, 1.0, 0.001, 1e-3)),
+		m_decay(addDoubleParam("decay", 0.001, 1.0, 0.001, 1e-3)),
+		m_sustain(addDoubleParam("sustain", 0.0, 1.0, 1.0, 1e-3, 2)),
+		m_release(addDoubleParam("release", 0.001, 1.0, 0.001, 1e-3)),
 		m_isActive(false)
 	{
 	}

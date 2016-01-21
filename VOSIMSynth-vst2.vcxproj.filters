@@ -149,11 +149,11 @@
     <Filter Include="UI">
       <UniqueIdentifier>{442b2f8c-f311-4a57-8103-df15c82a3a77}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Components">
-      <UniqueIdentifier>{926ccf49-734a-4aa8-a9a6-26a07ffbb17e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Utils">
       <UniqueIdentifier>{7008aa44-48bc-4a10-a2fb-9da5e9bf8a97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components">
+      <UniqueIdentifier>{926ccf49-734a-4aa8-a9a6-26a07ffbb17e}</UniqueIdentifier>
     </Filter>
     <Filter Include="Components\Composite">
       <UniqueIdentifier>{12c963f3-4d04-4efc-9214-35098e35df6f}</UniqueIdentifier>

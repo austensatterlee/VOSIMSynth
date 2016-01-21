@@ -24,10 +24,10 @@ namespace syn
       Unit(name),
       XCoefs(X),
       YCoefs(Y),
-      m_input(addParam("input", IParam::kTypeDouble, -1, 1, true))
+      m_input(addDoubleParam("input", -1, 1, 0, 0, 1.0, true, true))
     {
-      XBuf = (double*)malloc(sizeof(double)*nX);
-      YBuf = (double*)malloc(sizeof(double)*nY);
+      XBuf = static_cast<double*>(malloc(sizeof(double)*nX));
+      YBuf = static_cast<double*>(malloc(sizeof(double)*nY));
       reset();
     };
     Filter(const Filter& filt);
@@ -40,8 +40,6 @@ namespace syn
   protected:
 	void process(int bufind) override;
 	void onSampleRateChange(double newfs) override;
-	void onBufferSizeChange(size_t newbuffersize) override;
-	void onTempoChange(double newtempo) override;
   private:
     Unit* cloneImpl() const override { return new Filter(*this); };
 	string getClassName() const override;
@@ -54,16 +52,6 @@ namespace syn
 
 	template <size_t nX, size_t nY>
 	void Filter<nX, nY>::onSampleRateChange(double newfs)
-	{
-	}
-
-	template <size_t nX, size_t nY>
-	void Filter<nX, nY>::onBufferSizeChange(size_t newbuffersize)
-	{
-	}
-
-	template <size_t nX, size_t nY>
-	void Filter<nX, nY>::onTempoChange(double newtempo)
 	{
 	}
 

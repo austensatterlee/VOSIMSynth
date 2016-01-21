@@ -41,15 +41,6 @@ namespace syn
 		}
 	}
 
-	void VosimChoir::onSampleRateChange(double newfs)
-	{
-		for (int i = 0; i < m_size; i++)
-		{
-			m_choir[i]->setSampleRate(newfs);
-			m_pulsedrifters[i]->setSampleRate(newfs);
-		}
-	}
-
 	void VosimOscillator::sync()
 	{
 		Oscillator::sync();

@@ -35,26 +35,36 @@ namespace syn
 		return u;
 	}
 
-	UnitParameter& Unit::addParam(string name, int id, IParam::EParamType ptype, const double min, const double max, const double defaultValue, const bool isHidden)
+	UnitParameter& Unit::addParam(string name, int id, IParam::EParamType ptype, double min, double max, double defaultValue, double step, double shape, bool isHidden, bool canModulate)
 	{
 		m_parammap[name] = id;
 		if (m_params.size() <= id)
 			m_params.resize(id + 1);
-		m_params[id] = new UnitParameter(this, name, id, ptype, min, max, defaultValue, isHidden);
+		m_params[id] = new UnitParameter(this, name, id, ptype, min, max, defaultValue, step, shape, isHidden, canModulate);
 		return *m_params[id];
 	}
 
-	UnitParameter& Unit::addParam(string name, IParam::EParamType ptype, const double min, const double max, const double defaultValue, const bool isHidden)
+	UnitParameter& Unit::addDoubleParam(string name, double min, double max, double defaultValue, double step, double shape, bool isHidden, bool canModulate)
 	{
-		return addParam(name, m_params.size(), ptype, min, max, defaultValue, isHidden);
+		return addParam(name, m_params.size(), IParam::kTypeDouble, min, max, defaultValue, step, shape , isHidden, canModulate);
 	}
 
-	UnitParameter& Unit::addEnumParam(string name, const vector<string> choice_names)
+	UnitParameter& Unit::addIntParam(string name, int min, int max, int defaultValue, double shape, bool isHidden, bool canModulate)
 	{
-		UnitParameter& param = addParam(name, IParam::kTypeEnum, 0, choice_names.size(), false);
+		return addParam(name, m_params.size(), IParam::kTypeInt, min, max, defaultValue, 1.0, shape, isHidden, canModulate);
+	}
+
+	UnitParameter& Unit::addBoolParam(string name, bool defaultValue)
+	{
+		return addParam(name, m_params.size(), IParam::kTypeInt, 0, 1, defaultValue, 1.0, 1.0, false, false);
+	}
+
+	UnitParameter& Unit::addEnumParam(string name, const vector<string> choice_names, int defaultValue)
+	{
+		UnitParameter& param = addParam(name, m_params.size(), IParam::kTypeEnum, 0, choice_names.size(), defaultValue, 1.0, 1.0, false, false);
 		for (int i = 0; i < choice_names.size(); i++)
 		{
-			param.SetDisplayText(i, choice_names[i].c_str());
+			param.setDisplayText(i, choice_names[i].c_str());
 		}
 		return param;
 	}
@@ -104,7 +114,7 @@ namespace syn
 			for (int j = 0; j < m_params.size(); j++)
 			{
 				m_params[j]->reset();
-				if (m_params[j]->numConnections() > 0)
+				if (m_params[j]->getNumConnections() > 0)
 				{
 					m_params[j]->pull(i);
 				}

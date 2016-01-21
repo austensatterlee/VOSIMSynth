@@ -19,6 +19,7 @@ namespace syn
 			UnitParameter& param = m_vm->getProtoInstrument()->getUnit(unitid).getParam(paramid);
 			m_name = param.getName();
 			mDisablePrompt = false;
+			mValue = param.getNormalized();
 		}
 
 		virtual ~ITextSlider()
@@ -27,8 +28,9 @@ namespace syn
 		virtual void OnMouseDblClick(int x, int y, IMouseMod* pMod) override
 		{
 			UnitParameter& param = m_vm->getProtoInstrument()->getUnit(m_unitid).getParam(m_paramid);
-			double defaultValue = param.GetDefault();
+			double defaultValue = param.getDefault();
 			m_vm->modifyParameter(m_unitid, m_paramid, defaultValue, SET);
+			mValue = param.getNormalized();
 		}
 
 		void setRECT(const IRECT& a_newrect)
@@ -43,17 +45,20 @@ namespace syn
 
 		virtual void OnMouseDrag(int x, int y, int dX, int dY, IMouseMod* pMod) override
 		{
+			UnitParameter& param = m_vm->getProtoInstrument()->getUnit(m_unitid).getParam(m_paramid);
 			// do fine adjustments when shift is held
-			double scale = pMod->S ? 0.01 : 1;
-			// todo integer adjustments when ctrl is held
+			double scale = pMod->S ? 0.1 : 1;
+			// coarse adjustments when ctrl is held
 			if(pMod->C)
 			{
 				scale = 10.0; 
 			}
+			scale /= mRECT.W();
 			
-			double modamt = dX*scale / mRECT.W();
-			double curramt = m_vm->getProtoInstrument()->getUnit(m_unitid).getParam(m_paramid);
-			m_vm->modifyParameter(m_unitid, m_paramid, curramt+modamt, SET);
+			double modamt = dX * scale / 4;
+			mValue += modamt;
+			m_vm->modifyParameter(m_unitid, m_paramid, mValue, SET_NORM);
+			mValue = param.getNormalized();
 		}
 
 		virtual bool Draw(IGraphics* pGraphics) override
@@ -69,7 +74,7 @@ namespace syn
 
 			UnitParameter& param = m_vm->getProtoInstrument()->getUnit(m_unitid).getParam(m_paramid);
 			// Draw foreground (filled portion)
-			IRECT filled_irect{ mRECT.L,mRECT.T,mRECT.L + int(mRECT.W()*param.GetNormalized()),mRECT.B };
+			IRECT filled_irect{ mRECT.L,mRECT.T,mRECT.L + int(mRECT.W()*param.getNormalized()),mRECT.B };
 			pGraphics->FillIRect(&fg_color, &filled_irect);
 
 			char strbuf[256];
@@ -81,14 +86,14 @@ namespace syn
 			pGraphics->DrawIText(&textfmtnear, strbuf, &mRECT);
 
 			// Draw parameter value
-			param.GetDisplayForHost(strbuf);
+			param.getDisplayText(strbuf, false);
 			
 			IRECT value_display_size{ 0,0,0,0 };
 			pGraphics->DrawIText(&textfmtnear, strbuf, &value_display_size, true);
 			pGraphics->DrawIText(&textfmtfar, strbuf, &mRECT);
 
 			// Update minimum size if text doesn't fit
-			m_minsize = max(m_minsize, value_display_size.W() + name_display_size.W() + 10);
+			m_minsize = MAX(m_minsize, value_display_size.W() + name_display_size.W() + 10);
 			return true;
 		}
 

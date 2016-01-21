@@ -10,29 +10,23 @@
     <Filter Include="app\ASIO_SDK">
       <UniqueIdentifier>{b91b9db4-5584-4959-a395-7394ba3cf5a3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="UI">
-      <UniqueIdentifier>{3f4b1097-126c-45a1-9566-7e153980207d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Utils">
-      <UniqueIdentifier>{8a97cec2-798f-4da9-ac48-6ba7cd37a6e5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Components">
-      <UniqueIdentifier>{6fd4ade1-4bfc-42ee-9111-d947f86d5329}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Components\Generators">
-      <UniqueIdentifier>{991e3e5e-52c4-4eba-97ba-5b039e75eb6c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Components\Unary">
-      <UniqueIdentifier>{d6ad17d6-17e4-4e7a-ab2e-588d79166981}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Components\Atomic">
-      <UniqueIdentifier>{75534c9b-228d-4c22-9bd7-6ca4b4a9c33f}</UniqueIdentifier>
+      <UniqueIdentifier>{046577b4-6f83-4bb8-9910-c8866b48b1cf}</UniqueIdentifier>
     </Filter>
     <Filter Include="Components\Composite">
-      <UniqueIdentifier>{70598cf0-8f0b-4f24-bcde-18d6b140879c}</UniqueIdentifier>
+      <UniqueIdentifier>{d3ad0c40-2b31-4215-9903-e314349bc9d4}</UniqueIdentifier>
     </Filter>
     <Filter Include="Components\Connectors">
-      <UniqueIdentifier>{99a9473b-2c42-4ff1-af5c-d8ff5844483f}</UniqueIdentifier>
+      <UniqueIdentifier>{244fae96-190d-488c-9412-80c594ac9bce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components\Units">
+      <UniqueIdentifier>{b7c6e23d-ff1f-4295-a87c-4c3908e5bbac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{6a6a1b1d-0693-47b7-b3f4-879ae417afaf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{a5d7ae24-426e-403a-920f-803a0587a9f8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -72,6 +66,52 @@
       <Filter>app</Filter>
     </ClInclude>
     <ClInclude Include="app_wrapper\app_resource.h" />
+    <ClInclude Include="fftw3.h" />
+    <ClInclude Include="Circuit.h">
+      <Filter>Components\Composite</Filter>
+    </ClInclude>
+    <ClInclude Include="Instrument.h">
+      <Filter>Components\Composite</Filter>
+    </ClInclude>
+    <ClInclude Include="VoiceManager.h">
+      <Filter>Components\Composite</Filter>
+    </ClInclude>
+    <ClInclude Include="UnitParameter.h">
+      <Filter>Components\Connectors</Filter>
+    </ClInclude>
+    <ClInclude Include="ADSREnvelope.h">
+      <Filter>Components\Units</Filter>
+    </ClInclude>
+    <ClInclude Include="RandomOscillator.h">
+      <Filter>Components\Units</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceUnit.h">
+      <Filter>Components\Units</Filter>
+    </ClInclude>
+    <ClInclude Include="Unit.h">
+      <Filter>Components\Units</Filter>
+    </ClInclude>
+    <ClInclude Include="Envelope.h">
+      <Filter>Components\Units</Filter>
+    </ClInclude>
+    <ClInclude Include="Filter.h">
+      <Filter>Components\Units</Filter>
+    </ClInclude>
+    <ClInclude Include="UnitFactory.h">
+      <Filter>Components\Units</Filter>
+    </ClInclude>
+    <ClInclude Include="VosimOscillator.h">
+      <Filter>Components\Units</Filter>
+    </ClInclude>
+    <ClInclude Include="Oscillator.h">
+      <Filter>Components\Units</Filter>
+    </ClInclude>
+    <ClInclude Include="CircuitPanel.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ITextSlider.h">
+      <Filter>UI</Filter>
+    </ClInclude>
     <ClInclude Include="EnvelopeEditor.h">
       <Filter>UI</Filter>
     </ClInclude>
@@ -79,6 +119,9 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="NDPoint.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UnitControl.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="UI.h">
@@ -98,40 +141,6 @@
     </ClInclude>
     <ClInclude Include="GallantSignal.h">
       <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Envelope.h">
-      <Filter>Components\Generators</Filter>
-    </ClInclude>
-    <ClInclude Include="VosimOscillator.h">
-      <Filter>Components\Generators</Filter>
-    </ClInclude>
-    <ClInclude Include="Oscillator.h">
-      <Filter>Components\Generators</Filter>
-    </ClInclude>
-    <ClInclude Include="SourceUnit.h">
-      <Filter>Components\Atomic</Filter>
-    </ClInclude>
-    <ClInclude Include="Unit.h">
-      <Filter>Components\Atomic</Filter>
-    </ClInclude>
-    <ClInclude Include="Circuit.h">
-      <Filter>Components\Composite</Filter>
-    </ClInclude>
-    <ClInclude Include="Instrument.h">
-      <Filter>Components\Composite</Filter>
-    </ClInclude>
-    <ClInclude Include="VoiceManager.h">
-      <Filter>Components\Composite</Filter>
-    </ClInclude>
-    <ClInclude Include="Connection.h">
-      <Filter>Components\Connectors</Filter>
-    </ClInclude>
-    <ClInclude Include="UnitParameter.h">
-      <Filter>Components\Connectors</Filter>
-    </ClInclude>
-    <ClInclude Include="fftw3.h" />
-    <ClInclude Include="Filter.h">
-      <Filter>Components\Atomic</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -160,13 +169,46 @@
     <ClCompile Include="..\..\WDL\IPlug\IPlugStandalone.cpp">
       <Filter>app</Filter>
     </ClCompile>
+    <ClCompile Include="Circuit.cpp">
+      <Filter>Components\Composite</Filter>
+    </ClCompile>
+    <ClCompile Include="Instrument.cpp">
+      <Filter>Components\Composite</Filter>
+    </ClCompile>
+    <ClCompile Include="VoiceManager.cpp">
+      <Filter>Components\Composite</Filter>
+    </ClCompile>
+    <ClCompile Include="UnitParameter.cpp">
+      <Filter>Components\Connectors</Filter>
+    </ClCompile>
+    <ClCompile Include="ADSREnvelope.cpp">
+      <Filter>Components\Units</Filter>
+    </ClCompile>
+    <ClCompile Include="Unit.cpp">
+      <Filter>Components\Units</Filter>
+    </ClCompile>
+    <ClCompile Include="Envelope.cpp">
+      <Filter>Components\Units</Filter>
+    </ClCompile>
+    <ClCompile Include="Filter.cpp">
+      <Filter>Components\Units</Filter>
+    </ClCompile>
+    <ClCompile Include="VosimOscillator.cpp">
+      <Filter>Components\Units</Filter>
+    </ClCompile>
+    <ClCompile Include="Oscillator.cpp">
+      <Filter>Components\Units</Filter>
+    </ClCompile>
+    <ClCompile Include="CircuitPanel.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
     <ClCompile Include="EnvelopeEditor.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="Oscilloscope.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="UI.cpp">
+    <ClCompile Include="UnitControl.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="OscilloscopeTransforms.cpp">
@@ -181,39 +223,9 @@
     <ClCompile Include="table_data.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="Envelope.cpp">
-      <Filter>Components\Generators</Filter>
-    </ClCompile>
-    <ClCompile Include="VosimOscillator.cpp">
-      <Filter>Components\Generators</Filter>
-    </ClCompile>
-    <ClCompile Include="Oscillator.cpp">
-      <Filter>Components\Generators</Filter>
-    </ClCompile>
-    <ClCompile Include="Unit.cpp">
-      <Filter>Components\Atomic</Filter>
-    </ClCompile>
-    <ClCompile Include="Circuit.cpp">
-      <Filter>Components\Composite</Filter>
-    </ClCompile>
-    <ClCompile Include="Instrument.cpp">
-      <Filter>Components\Composite</Filter>
-    </ClCompile>
-    <ClCompile Include="VoiceManager.cpp">
-      <Filter>Components\Composite</Filter>
-    </ClCompile>
-    <ClCompile Include="UnitParameter.cpp">
-      <Filter>Components\Connectors</Filter>
-    </ClCompile>
-    <ClCompile Include="Filter.cpp">
-      <Filter>Components\Atomic</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VOSIMSynth.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="libfftw3-3.lib" />

@@ -293,6 +293,9 @@ namespace syn
     chunkpos = serialized->Get<unsigned int>(&numunits, chunkpos);
     for (int i = 0; i < numunits; i++) {
       chunkpos = unserializeUnitControl(serialized, chunkpos);
+	  if(!chunkpos) {
+		  return 0;
+	  }
     }
 
     // Unserialize connections
@@ -362,8 +365,13 @@ namespace syn
     chunkpos = chunk->Get<bool>(&isSource, chunkpos);
     chunkpos = chunk->Get<bool>(&isPrimarySource, chunkpos);
     chunkpos = chunk->Get<bool>(&isSink, chunkpos);
-    unit = isSource ? m_unitFactory->createSourceUnit(unitClassId) : m_unitFactory->createUnit(unitClassId);
+	if (m_unitFactory->hasClassId(unitClassId)) {
+		unit = isSource ? m_unitFactory->createSourceUnit(unitClassId) : m_unitFactory->createUnit(unitClassId);
+	}else {
+		return 0;
+	}
 
+	/* Unserialize parameters */
     chunkpos = chunk->Get<unsigned int>(&numparams, chunkpos);
     for (int i = 0; i < numparams; i++) {
       double paramval;

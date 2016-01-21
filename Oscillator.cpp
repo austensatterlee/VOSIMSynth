@@ -18,6 +18,7 @@ namespace syn
 	void Oscillator::onSampleRateChange(double newfs)
 	{
 		m_Step = m_Step * m_Fs / newfs;
+		m_Period = 1. / m_Step;
 		m_Fs = newfs;
 	}
 
@@ -34,6 +35,7 @@ namespace syn
     if (m_pitch.isDirty() || m_finetune.isDirty())
     {
       m_Step = pitchToFreq(m_pitch + m_finetune) / m_Fs;
+	  m_Period = 1. / m_Step;
 	  m_pitch.setClean();
 	  m_finetune.setClean();
     }
@@ -62,19 +64,19 @@ namespace syn
     switch ((int)m_waveform)
     {
     case SAW_WAVE:
-      output = lut_bl_saw.getlinear(m_phase);
+      output = lut_bl_saw.getresampled(m_phase,m_Period);
       break;
     case NAIVE_SAW_WAVE:
-      output = 2 * (m_phase - 0.5);
+      output = 4 * (m_phase - 0.5);
       break;
     case SINE_WAVE:
-      output = lut_sin.getlinear(m_phase);
+      output = lut_sin.getresampled(m_phase, m_Period);
       break;
     case TRI_WAVE:
       output = m_phase <= 0.5 ? 4 * m_phase - 1 : -4 * (m_phase - 0.5) + 1;
       break;
     case SQUARE_WAVE:
-      output = -lut_bl_saw.getlinear(m_phase - 0.5) + lut_bl_saw.getlinear(m_phase);
+      output = -lut_bl_saw.getresampled(m_phase+0.5, m_Period) + lut_bl_saw.getresampled(m_phase, m_Period);
       break;
     case NAIVE_SQUARE_WAVE:
       output = m_phase <= 0.5 ? -1 : 1;
