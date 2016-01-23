@@ -3,9 +3,7 @@
 
 #include "Oscillator.h"
 #include "SourceUnit.h"
-#include "RandomOscillator.h"
 #include <random>
-#include <cmath>
 
 using namespace std;
 
@@ -28,20 +26,20 @@ namespace syn
 		};
 
 		VosimOscillator(const VosimOscillator& vosc);
-		virtual void process(int bufind) override;
-		virtual void sync() override;
+		void process(int bufind) override;
+		void sync() override;
 		UnitParameter& m_relativeamt;
 		UnitParameter& m_decay;
 		UnitParameter& m_ppitch;
 		UnitParameter& m_number;
 	private:
 		/* internal state */
-		virtual Unit* cloneImpl() const override
+		Unit* cloneImpl() const override
 		{
 			return new VosimOscillator(*this);
 		}
 
-		virtual inline string getClassName() const override
+		string getClassName() const override
 		{
 			return "VosimOscillator";
 		}

@@ -277,15 +277,6 @@ namespace syn
     sprintf(gridstr, m_config->xunits.c_str());
     pGraphics->DrawIText(&txtstylecenter, gridstr, &xunitslabel);
 
-    // Draw window information text
-    int bufsize = m_config->outputbuf.size();
-    double estfreq = pGraphics->GetPlug()->GetSampleRate() / m_syncDelayEst;
-    double publishedfreq = pGraphics->GetPlug()->GetSampleRate() / getPeriod();
-    sprintf(gridstr, "Displaying %d periods | Buffer size: %d (in) %d (out) | Input frequency: %.2f Hz (%.2f Hz)", \
-      m_displayPeriods, m_BufSize, bufsize, estfreq, publishedfreq);
-    pGraphics->DrawIText(&txtstyle, gridstr, &mRECT);
-    double x1, y1;
-    double x2, y2;
 
     if (m_inputRingBuffer.empty())
       return false;
@@ -293,25 +284,36 @@ namespace syn
     // Execute transform using non-circular input buffer
     m_mutex.Enter();
     m_config->doTransform(mPlug, m_inputBuffer);
-    m_mutex.Leave();
 
     // Adjust axis boundaries
-    if (m_config->argmin >= 0 && m_config->argmax >= 0)
-    {
-      double minY = m_config->outputbuf[m_config->argmin];
-      double maxY = m_config->outputbuf[m_config->argmax];
+	if (m_config->argmin >= 0 && m_config->argmax >= 0)
+	{
+		double minY = m_config->outputbuf[m_config->argmin];
+		double maxY = m_config->outputbuf[m_config->argmax];
 
-      if(m_minY < minY)
-        m_minY = m_minY + 0.05*(minY - m_minY);
-      else
-        m_minY = minY;
+		if (m_minY < minY)
+			m_minY = m_minY + 0.25*(minY - m_minY);
+		else
+			m_minY = minY;
 
-      if(m_maxY > maxY)      
-        m_maxY = m_maxY + 0.05*(maxY - m_maxY);
-      else      
-        m_maxY = maxY;  
-    }
+		if (m_maxY > maxY)
+			m_maxY = m_maxY + 0.25*(maxY - m_maxY);
+		else
+			m_maxY = maxY;
 
+
+		// Draw window information text
+		int bufsize = m_config->outputbuf.size();
+		double estfreq = pGraphics->GetPlug()->GetSampleRate() / m_syncDelayEst;
+		double publishedfreq = pGraphics->GetPlug()->GetSampleRate() / getPeriod();
+		sprintf(gridstr, "Displaying %d periods | Buffer size: %d (in) %d (out) | Input frequency: %.2f Hz (%.2f Hz) | Amp: %.2f", \
+			m_displayPeriods, m_BufSize, bufsize, estfreq, publishedfreq, 0.5*(maxY - minY));
+	}
+	m_mutex.Leave();
+
+	pGraphics->DrawIText(&txtstyle, gridstr, &mRECT);
+	double x1, y1;
+	double x2, y2;
     // Draw transform output
     int bufreadlen = getBufReadLength();
     int numxticks = 10;

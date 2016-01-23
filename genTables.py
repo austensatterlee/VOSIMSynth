@@ -76,7 +76,7 @@ def GenerateBLSaw(pts,nharmonics=None):
     blsaw = fft.fftshift(fft.irfft(freqmags,n=nfft))
     return blsaw/blsaw.max()
 
-def GenerateBlimp(intervals=10,resolution=2048,fs=48000,fc=18300,beta=9.,apgain=0.9,apbeta=0.7,ret_ind=False):
+def GenerateBlimp(intervals=10,resolution=2048,fs=48000,fc=20000,beta=9.,apgain=0.9,apbeta=0.7,ret_ind=False):
     """
     Generate a bandlimited dirac delta impulse.
 
@@ -98,9 +98,9 @@ def GenerateBlimp(intervals=10,resolution=2048,fs=48000,fc=18300,beta=9.,apgain=
     blit = (apw*w)*h # blit
     blit = blit/blit.max()
     if ret_ind:
-        return x,blit
+        return x[len(x)/2:],blit[len(blit)/2:]
     else:
-        return blit
+        return blit[len(blit)/2:]
 
 def GenerateMinBLEP(nZeroCrossings, nOverSampling):
     n = (nZeroCrossings * 2 * nOverSampling) + 1
@@ -171,20 +171,29 @@ def rewriteAutomatedSection(full_text,tag,replacement_text):
 
 def main(pargs):
     v = pargs.verbose
+    prefilterhalf=[0.0028,-0.0119,0.0322,-0.0709,0.1375,-0.2544,0.4385,-0.6334,1.7224]
+    prefilter=hstack([prefilterhalf,list(reversed(prefilterhalf[:-1]))])
 
     BLIMP_RESOLUTION = 8192
     sintable = GenerateSine(256)
     pitchtable = PitchTable(16384,-128,128)
-    blsaw = GenerateBLSaw(256,128)
-    blimp = GenerateBlimp(10,BLIMP_RESOLUTION)
-    blimp = blimp[len(blimp)/2:]
+    blsaw = GenerateBLSaw(2048,1024)
+    blsaw = convolve( prefilter, blsaw, 'same' ) # apply gain to high frequencies
+    blsaw /= blsaw.max()
 
-    key_order = ['size','input_min','input_max', 'isPeriodic']
+    blimp = GenerateBlimp(5,BLIMP_RESOLUTION,fc=20e3)
+    blimp = convolve( prefilter, blimp, 'same' ) # apply gain to high frequencies
+    blimp /= blimp.max()
+
+    key_order = {
+            "LookupTable":['size','input_min','input_max', 'isPeriodic'],
+            "ResampledLookupTable":['size']
+            }
     tables = {
-            'SIN':dict(data=sintable,size=len(sintable)),
-            'PITCH_TABLE':dict(data=pitchtable,size=len(pitchtable),input_min=-1,input_max=1,isPeriodic=False),
-            'BL_SAW':dict(data=blsaw,size=len(blsaw)),
-            'BLIMP_TABLE':dict(data=blimp,size=len(blimp))
+            'SIN':dict(classname="ResampledLookupTable",data=sintable,size=len(sintable)),
+            'PITCH_TABLE':dict(classname="LookupTable",data=pitchtable,size=len(pitchtable),input_min=-1,input_max=1,isPeriodic=False),
+            'BL_SAW':dict(classname="ResampledLookupTable",data=blsaw,size=len(blsaw)),
+            'BLIMP_TABLE':dict(classname="LookupTable",data=blimp,size=len(blimp))
             }
     macrodefines = [
             ('BLIMP_INTERVALS', (2*len(blimp))/BLIMP_RESOLUTION),
@@ -205,17 +214,20 @@ def main(pargs):
         tabledata_decl += "extern const double {}[{}];\n".format(name,len(tables[name]['data']))
 
         currargs = []
-        for k in key_order:
+        classname = struct["classname"]
+        for k in key_order[classname]:
             if k not in struct:
                 continue
             if k=="data":
+                continue
+            if k=="classname":
                 continue
             val = struct[k]
             if type(val)==bool:
                 val = "true" if val else "false"
             currargs.append("{}".format(val))
         tableargs = "{}, ".format(name)+", ".join(currargs)
-        tableobj_currdef = "const LookupTable lut_{}({});\n".format(name.lower(),tableargs);
+        tableobj_currdef = "const {} lut_{}({});\n".format(classname,name.lower(),tableargs);
         tableobj_def += tableobj_currdef
 
     if os.path.isfile("table_data.cpp"):
@@ -355,40 +367,64 @@ def upsample(signal,amt,filt,filt_res=1):
                     newsig[ newsigind ] += signal[ sigind ] * filt[ filtind ]
     return newsig
 
-def resample(signal, ratio, filt, filt_res):
+def resample(signal, new_table_size, filt, filt_res, isperiodic=True):
     """
     signal - signal to resample
     ratio - ratio of new sample rate to old sample rate
-    filt - the filter kernel to use
+    filt - the symmetric filter kernel to use (should contain only one "wing")
     filt_res - oversampling factor of filter kernel
 
     """
     filt_len = len(filt)/filt_res
     siglen = len(signal)
-    newsiglen = int(siglen * ratio)
+    ratio = new_table_size*1.0/siglen
+    newsiglen = int(new_table_size)
     newsig = zeros(newsiglen)
-    phase_step = filt_res/ratio
+    phase_step = 1.0/(new_table_size)
 
+    filt_step = filt_res
     if ratio < 1:
-        offset_step = filt_res*ratio
-    else:
-        offset_step = filt_res
+        filt_step *= ratio
 
     phase = 0
-    for m in xrange(newsiglen):
-        index = int(phase/filt_res)
-        offset = phase-index*filt_res
-        if ratio < 1:
-            offset *= 1.0*ratio
-        print offset,index
-        for i in xrange(filt_len/2):
-            newsig[m] += filt[offset] * signal[clip(index-i,0,siglen-1)]
-            filt_ind = len(filt)-offset
-            if ratio<1:
-                filt_ind*=ratio
-            newsig[m] += filt[filt_ind] * signal[clip(index+1+i,0,siglen-1)]
-            offset += offset_step
+    new_index = 0
+    max_taps_used = 0
+    while new_index < newsiglen:
+        index = int(phase*siglen)
+        frac_index = phase*siglen - index
+        offset = frac_index * filt_step
+        filt_phase = offset
+        i = 0
+        num_taps_used = 0
+        while filt_phase < len(filt):
+            filt_sample = filt[int(filt_phase)]
+            sig_index = index - i
+            if isperiodic:
+                sig_index = mod(sig_index,siglen)
+                newsig[new_index] += filt_sample * signal[sig_index]
+            elif sig_index >= 0 and sig_index < siglen:
+                newsig[new_index] += filt_sample * signal[sig_index]
+            filt_phase += filt_step
+            i+=1
+        num_taps_used += i-1
+        filt_phase = filt_step - offset
+        i = 0
+        while filt_phase < len(filt):
+            filt_sample = filt[int(filt_phase)]
+            sig_index = index + 1 + i
+            if isperiodic:
+                sig_index = mod(sig_index,siglen)
+                newsig[new_index] += filt_sample * signal[sig_index]
+            elif sig_index >= 0 and sig_index < siglen:
+                newsig[new_index] += filt_sample * signal[sig_index]
+            filt_phase += filt_step
+            i+=1
+        num_taps_used += i-1
+        if num_taps_used > max_taps_used:
+            max_taps_used = num_taps_used
         phase += phase_step
+        new_index+=1
+    print max_taps_used
     return newsig
 
 def sinclowpass(signal,fc,winlen=10):

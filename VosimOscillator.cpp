@@ -1,4 +1,5 @@
 #include "VosimOscillator.h"
+#include "tables.h"
 
 /******************************
 * VOSIM methods
@@ -18,7 +19,7 @@ namespace syn
 	void VosimOscillator::process(int bufind)
 	{
 		Oscillator::tick_phase();
-		m_pulse_step = m_Step * (m_number + 8 * m_ppitch * m_relativeamt)*m_relativeamt + 1 / m_Fs * (pitchToFreq(m_ppitch * 57 * (1 - m_relativeamt) + 57))*(1- m_relativeamt) ;
+		m_pulse_step = m_Step * (m_number + 8 * m_ppitch * m_relativeamt) + 1 / m_Fs * (pitchToFreq(m_ppitch * 57 * (1 - m_relativeamt) + 57));
 		m_unwrapped_pulse_phase = m_phase / m_Step * m_pulse_step;
 		if (m_unwrapped_pulse_phase < 1)
 		{
@@ -36,7 +37,7 @@ namespace syn
 			{
 				m_curr_pulse_gain *= m_decay;
 			}
-			double tableval = 1 - lut_sin.getlinear(m_pulse_phase + 0.25);
+			double tableval = 1 - lut_sin.getresampled(m_pulse_phase + 0.25,1./m_pulse_step);
 			m_output[bufind] = m_gain * m_velocity * m_curr_pulse_gain * tableval;
 		}
 	}

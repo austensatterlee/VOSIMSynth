@@ -1,47 +1,57 @@
 #ifndef __TABLES__
 #define __TABLES__
 /*::macro_defs::*/
-#define BLIMP_INTERVALS 11
-#define BLIMP_RES 2048
+#define BLIMP_INTERVALS 5
+#define BLIMP_RES 8192
 /*::/macro_defs::*/
-//todo: add oversampling and bias info to the LookupTable class so that it can still be accessed with a double between some arbitrary min and max.
 namespace syn
 {
 	class LookupTable
 	{
 	public:
-		LookupTable(const double* table, int size, double input_min = 0, double input_max = 1, bool isPeriodic = true) :
-			m_table(table),
-			m_size(size),
-			m_isperiodic(isPeriodic)
-		{
-			m_norm_bias = input_min;
-			m_norm_scale = 1. / (input_max - input_min);
-			m_normalizePhase = (m_norm_bias != 0 && m_norm_scale != 1);
+		LookupTable(const double* table, int size, double input_min = 0, double input_max = 1, bool isPeriodic = true);
+
+		virtual ~LookupTable() {
+			delete[] m_diff_table;
 		}
-		LookupTable() :
-			LookupTable(nullptr, 0, 0, 1)
-		{}
 		double getlinear(double phase) const;
-		double getresampled(double phase, double period) const;
 		int size() const { return m_size; }
-	private:
+	protected:
 		int m_size;
 		bool m_normalizePhase, m_isperiodic;
 		double m_norm_bias;
 		double m_norm_scale;
 		const double* m_table;
+		double* m_diff_table;
+	};
+
+	class ResampledLookupTable : public LookupTable
+	{
+	public:
+		ResampledLookupTable(const double* table, int size);
+		virtual ~ResampledLookupTable() {
+			for (int i = 0; i < m_num_resampled_tables; i++) {
+				delete[] m_resampled_tables[i];
+			}
+			delete[] m_resampled_tables;
+			delete[] m_resampled_sizes;
+		}
+		double getresampled(double phase, double period) const;
+	protected:
+		int m_num_resampled_tables;
+		int* m_resampled_sizes;
+		double** m_resampled_tables;
 	};
 
 	/*::lut_defs::*/
-	extern const double BL_SAW[256];
+	extern const double BL_SAW[2048];
 	extern const double PITCH_TABLE[16384];
 	extern const double SIN[256];
-	extern const double BLIMP_TABLE[11265];
-	const LookupTable lut_bl_saw(BL_SAW, 256);
+	extern const double BLIMP_TABLE[20481];
+	const ResampledLookupTable lut_bl_saw(BL_SAW, 2048);
 	const LookupTable lut_pitch_table(PITCH_TABLE, 16384, -1, 1, false);
-	const LookupTable lut_sin(SIN, 256);
-	const LookupTable lut_blimp_table(BLIMP_TABLE, 11265);
+	const ResampledLookupTable lut_sin(SIN, 256);
+	const LookupTable lut_blimp_table(BLIMP_TABLE, 20481);
 	/*::/lut_defs::*/
 
 	inline double pitchToFreq(double pitch)
@@ -51,5 +61,16 @@ namespace syn
 			freq = 1;
 		return freq;
 	}
+
+	/**
+	 * Retrieve a single sample from table as if it were resampled to have the specified period. 
+	 * Uses fractional sinc interpolation/decimation.
+	 */
+	double getresampled_single(const double* table, int size, double phase, double period);
+	/**
+	 * Resample an entire table to have the specified period and store the result in resampled_table (which should already be allocated).
+	 * Uses fractional sinc interpolation/decimation.
+	 */
+	void resample_table(const double* table, int size, double* resampled_table, double period);
 }
 #endif

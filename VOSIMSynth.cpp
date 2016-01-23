@@ -4,6 +4,7 @@
 #include "EnvelopeEditor.h"
 #include "VosimOscillator.h"
 #include "UI.h"
+#include "RandomOscillator.h"
 
 using namespace std;
 

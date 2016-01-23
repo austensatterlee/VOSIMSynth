@@ -12,7 +12,7 @@ namespace syn
   {
     sync();
     m_pitch.mod(pitch, SET);
-    m_velocity = vel / 255.0;
+    m_velocity = DBToAmp(LERP(-30,0,vel / 127.0));
   }
 
 	void Oscillator::onSampleRateChange(double newfs)
@@ -67,7 +67,7 @@ namespace syn
       output = lut_bl_saw.getresampled(m_phase,m_Period);
       break;
     case NAIVE_SAW_WAVE:
-      output = 4 * (m_phase - 0.5);
+      output = 2 * (m_phase - 0.5);
       break;
     case SINE_WAVE:
       output = lut_sin.getresampled(m_phase, m_Period);
