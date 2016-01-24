@@ -5,6 +5,7 @@
 #include "VosimOscillator.h"
 #include "UI.h"
 #include "RandomOscillator.h"
+#include "ADSREnvelope.h"
 
 using namespace std;
 
@@ -59,6 +60,7 @@ void VOSIMSynth::makeInstrument() {
 	m_instr = new Instrument();
 	m_unitfactory = new UnitFactory();
 	m_unitfactory->addSourceUnitPrototype(new Envelope("Envelope"));
+	m_unitfactory->addSourceUnitPrototype(new ADSREnvelope("ADSREnvelope"));
 	m_unitfactory->addUnitPrototype(new AccumulatingUnit("Accumulator"));
 	m_unitfactory->addSourceUnitPrototype(new VosimOscillator("Osc.VOSIM"));
 	m_unitfactory->addSourceUnitPrototype(new UniformRandomOscillator("Osc.Random.Uniform"));

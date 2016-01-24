@@ -25,7 +25,7 @@ namespace syn
   inline T WRAP(T x, T modulo)
   {
 	  T newx = x;
-	  while(newx >=modulo)
+	  while(newx >= modulo)
 	  {
 		  newx -= modulo;
 	  }

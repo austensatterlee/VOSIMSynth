@@ -17,9 +17,8 @@ namespace syn
     // Delete unit from instrument
     Unit* unit = m_unitControls[unitctrlid]->getUnit();
     int unitid = unit->getParent().getUnitId(unit);
-    VOSIMSynth* vs = static_cast<VOSIMSynth*>(mPlug);
     Instrument* instr = m_vm->getProtoInstrument();
-    instr->removeUnit(instr->getUnitId(unit));
+    instr->removeUnit(unitid);
     // Delete unit controller
     UnitControl* unitctrl = m_unitControls[unitctrlid];
     m_unitControls.erase(unitctrlid);
@@ -133,12 +132,10 @@ namespace syn
         if (selectedItem == 0)
         { // Set sink
           setSink(currSelectedUnit);
-          updateInstrument();
         }
         else if (selectedItem == 1)
         { // Delete unit
           deleteUnit(currSelectedUnit);
-          updateInstrument();
         }
         else if (selectedItem == 2)
         { // Set oscilloscope source
@@ -209,7 +206,7 @@ namespace syn
   {
     WDL_MutexLock lock(&pGraphics->mMutex);
     // Local palette
-    IColor bg_color = globalPalette[TERTIARY][0];
+    IColor bg_color = globalPalette[PRIMARY][0];
     pGraphics->FillIRect(&bg_color, &mRECT);
     for (pair<int, UnitControl*> unitpair : m_unitControls)
     {

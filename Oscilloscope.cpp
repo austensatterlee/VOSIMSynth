@@ -235,9 +235,9 @@ namespace syn
   bool Oscilloscope::Draw(IGraphics *pGraphics)
   {
     // Local color palette
-    IColor outlinecolor = globalPalette[SECONDARY][2];
-    IColor bgcolor = globalPalette[TERTIARY][3];
-    IColor axescolor = globalPalette[SECONDARY][1];
+    IColor outlinecolor = globalPalette[SECONDARY][3];
+    IColor bgcolor = globalPalette[SECONDARY][0];
+    IColor axescolor = globalPalette[SECONDARY][2];
     IColor errorcolor_text{ 255,255,0,0 };
     IColor normalcolor_text{255,255,255,255};
     // Local text palette

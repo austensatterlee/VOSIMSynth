@@ -1,7 +1,7 @@
 #ifndef __TABLES__
 #define __TABLES__
 /*::macro_defs::*/
-#define BLIMP_INTERVALS 5
+#define BLIMP_INTERVALS 11
 #define BLIMP_RES 8192
 /*::/macro_defs::*/
 namespace syn
@@ -15,6 +15,7 @@ namespace syn
 			delete[] m_diff_table;
 		}
 		double getlinear(double phase) const;
+		double getraw(int index) const;
 		int size() const { return m_size; }
 	protected:
 		int m_size;
@@ -28,7 +29,7 @@ namespace syn
 	class ResampledLookupTable : public LookupTable
 	{
 	public:
-		ResampledLookupTable(const double* table, int size);
+		ResampledLookupTable(const double* table, int size, const LookupTable& blimp_table);
 		virtual ~ResampledLookupTable() {
 			for (int i = 0; i < m_num_resampled_tables; i++) {
 				delete[] m_resampled_tables[i];
@@ -41,17 +42,18 @@ namespace syn
 		int m_num_resampled_tables;
 		int* m_resampled_sizes;
 		double** m_resampled_tables;
+		const LookupTable& m_blimp_table;
 	};
 
 	/*::lut_defs::*/
-	extern const double BL_SAW[2048];
+	extern const double BLIMP_TABLE[45057];
 	extern const double PITCH_TABLE[16384];
-	extern const double SIN[256];
-	extern const double BLIMP_TABLE[20481];
-	const ResampledLookupTable lut_bl_saw(BL_SAW, 2048);
+	extern const double BL_SAW[2048];
+	extern const double SIN[2048];
+	const LookupTable lut_blimp_table(BLIMP_TABLE, 45057);
 	const LookupTable lut_pitch_table(PITCH_TABLE, 16384, -1, 1, false);
-	const ResampledLookupTable lut_sin(SIN, 256);
-	const LookupTable lut_blimp_table(BLIMP_TABLE, 20481);
+	const ResampledLookupTable lut_bl_saw(BL_SAW, 2048, lut_blimp_table);
+	const ResampledLookupTable lut_sin(SIN, 2048, lut_blimp_table);
 	/*::/lut_defs::*/
 
 	inline double pitchToFreq(double pitch)
@@ -66,11 +68,11 @@ namespace syn
 	 * Retrieve a single sample from table as if it were resampled to have the specified period. 
 	 * Uses fractional sinc interpolation/decimation.
 	 */
-	double getresampled_single(const double* table, int size, double phase, double period);
+	double getresampled_single(const double* table, int size, double phase, double period, const LookupTable& blimp_table);
 	/**
 	 * Resample an entire table to have the specified period and store the result in resampled_table (which should already be allocated).
 	 * Uses fractional sinc interpolation/decimation.
 	 */
-	void resample_table(const double* table, int size, double* resampled_table, double period);
+	void resample_table(const double* table, int size, double* resampled_table, double period, const LookupTable& blimp_table);
 }
 #endif

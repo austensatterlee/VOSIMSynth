@@ -76,7 +76,7 @@ def GenerateBLSaw(pts,nharmonics=None):
     blsaw = fft.fftshift(fft.irfft(freqmags,n=nfft))
     return blsaw/blsaw.max()
 
-def GenerateBlimp(intervals=10,resolution=2048,fs=48000,fc=20000,beta=9.,apgain=0.9,apbeta=0.7,ret_ind=False):
+def GenerateBlimp(intervals=10,resolution=2048,fs=48000,fc=20000,beta=9.,apgain=0.9,apbeta=0.7,ret_half=True):
     """
     Generate a bandlimited dirac delta impulse.
 
@@ -95,12 +95,14 @@ def GenerateBlimp(intervals=10,resolution=2048,fs=48000,fc=20000,beta=9.,apgain=
 
     w = ss.kaiser(pts,beta) # window
     apw = 1-apgain*ss.kaiser(pts,apbeta) # apodization window
-    blit = (apw*w)*h # blit
-    blit = blit/blit.max()
-    if ret_ind:
-        return x[len(x)/2:],blit[len(blit)/2:]
-    else:
+    window = w*apw
+    window /= window.max()
+    blit = window*h # blit
+    blit /= blit.max()
+    if ret_half:
         return blit[len(blit)/2:]
+    else:
+        return blit
 
 def GenerateMinBLEP(nZeroCrossings, nOverSampling):
     n = (nZeroCrossings * 2 * nOverSampling) + 1
@@ -169,32 +171,40 @@ def rewriteAutomatedSection(full_text,tag,replacement_text):
     result = full_text[:match.start("block")] + replacement_text + full_text[match.end("block"):]
     return result
 
+def make_symmetric_r(right_half):
+    left_half = list(reversed(right_half))
+    return hstack([left_half[:-1],right_half])
+
+def make_symmetric_l(left_half):
+    right_half = list(reversed(left_half))
+    return hstack([left_half[:-1],right_half])
+
 def main(pargs):
     v = pargs.verbose
-    prefilterhalf=[0.0028,-0.0119,0.0322,-0.0709,0.1375,-0.2544,0.4385,-0.6334,1.7224]
-    prefilter=hstack([prefilterhalf,list(reversed(prefilterhalf[:-1]))])
+    prefilter_lhalf=[0.0028,-0.0119,0.0322,-0.0709,0.1375,-0.2544,0.4385,-0.6334,1.7224]
+    prefilter=make_symmetric_l(prefilter_lhalf)
 
     BLIMP_RESOLUTION = 8192
-    sintable = GenerateSine(256)
+    sintable = GenerateSine(2048)
     pitchtable = PitchTable(16384,-128,128)
     blsaw = GenerateBLSaw(2048,1024)
     blsaw = convolve( prefilter, blsaw, 'same' ) # apply gain to high frequencies
     blsaw /= blsaw.max()
 
-    blimp = GenerateBlimp(5,BLIMP_RESOLUTION,fc=20e3)
-    blimp = convolve( prefilter, blimp, 'same' ) # apply gain to high frequencies
+    blimp = GenerateBlimp(10,BLIMP_RESOLUTION,fc=19e3)
+    # blimp = convolve( prefilter, blimp, 'same' ) # apply gain to high frequencies
     blimp /= blimp.max()
 
     key_order = {
             "LookupTable":['size','input_min','input_max', 'isPeriodic'],
-            "ResampledLookupTable":['size']
+            "ResampledLookupTable":['size','blimp']
             }
-    tables = {
-            'SIN':dict(classname="ResampledLookupTable",data=sintable,size=len(sintable)),
-            'PITCH_TABLE':dict(classname="LookupTable",data=pitchtable,size=len(pitchtable),input_min=-1,input_max=1,isPeriodic=False),
-            'BL_SAW':dict(classname="ResampledLookupTable",data=blsaw,size=len(blsaw)),
-            'BLIMP_TABLE':dict(classname="LookupTable",data=blimp,size=len(blimp))
-            }
+    tables = [
+            ['BLIMP_TABLE',dict(classname="LookupTable",data=blimp,size=len(blimp))],
+            ['PITCH_TABLE',dict(classname="LookupTable",data=pitchtable,size=len(pitchtable),input_min=-1,input_max=1,isPeriodic=False)],
+            ['BL_SAW',dict(classname="ResampledLookupTable",data=blsaw,size=len(blsaw),blimp="lut_blimp_table")],
+            ['SIN',dict(classname="ResampledLookupTable",data=sintable,size=len(sintable),blimp="lut_blimp_table")],
+            ]
     macrodefines = [
             ('BLIMP_INTERVALS', (2*len(blimp))/BLIMP_RESOLUTION),
             ('BLIMP_RES', BLIMP_RESOLUTION),
@@ -209,9 +219,9 @@ def main(pargs):
     tabledata_def = ""
     tabledata_decl = ""
     tableobj_def = ""
-    for name,struct in tables.items():
-        tabledata_def += MakeTableStr(tables[name]['data'],name)
-        tabledata_decl += "extern const double {}[{}];\n".format(name,len(tables[name]['data']))
+    for name,struct in tables:
+        tabledata_def += MakeTableStr(struct['data'],name)
+        tabledata_decl += "extern const double {}[{}];\n".format(name,len(struct['data']))
 
         currargs = []
         classname = struct["classname"]
@@ -367,7 +377,7 @@ def upsample(signal,amt,filt,filt_res=1):
                     newsig[ newsigind ] += signal[ sigind ] * filt[ filtind ]
     return newsig
 
-def resample(signal, new_table_size, filt, filt_res, isperiodic=True):
+def resample(signal, new_table_size, filt, filt_res, numperiods=1, isperiodic=True, useinterp=True):
     """
     signal - signal to resample
     ratio - ratio of new sample rate to old sample rate
@@ -378,9 +388,10 @@ def resample(signal, new_table_size, filt, filt_res, isperiodic=True):
     filt_len = len(filt)/filt_res
     siglen = len(signal)
     ratio = new_table_size*1.0/siglen
-    newsiglen = int(new_table_size)
+    newsiglen = int(new_table_size*numperiods)
     newsig = zeros(newsiglen)
-    phase_step = 1.0/(new_table_size)
+    phases = zeros(newsiglen)
+    phase_step = 1.0/new_table_size
 
     filt_step = filt_res
     if ratio < 1:
@@ -389,15 +400,23 @@ def resample(signal, new_table_size, filt, filt_res, isperiodic=True):
     phase = 0
     new_index = 0
     max_taps_used = 0
+    currperiod = 0
     while new_index < newsiglen:
+        phases[new_index] = phase
         index = int(phase*siglen)
         frac_index = phase*siglen - index
         offset = frac_index * filt_step
         filt_phase = offset
         i = 0
         num_taps_used = 0
+        filt_sum = 0
         while filt_phase < len(filt):
-            filt_sample = filt[int(filt_phase)]
+            if useinterp:
+                next_filt_phase = clip(int(filt_phase)+1,0,len(filt)-1)
+                frac_filt_phase = filt_phase - int(filt_phase)
+                filt_sample = lerp(filt[int(filt_phase)],filt[next_filt_phase],frac_filt_phase)
+            else:
+                filt_sample = filt[int(filt_phase)]
             sig_index = index - i
             if isperiodic:
                 sig_index = mod(sig_index,siglen)
@@ -405,12 +424,18 @@ def resample(signal, new_table_size, filt, filt_res, isperiodic=True):
             elif sig_index >= 0 and sig_index < siglen:
                 newsig[new_index] += filt_sample * signal[sig_index]
             filt_phase += filt_step
+            filt_sum += filt_sample
             i+=1
         num_taps_used += i-1
         filt_phase = filt_step - offset
         i = 0
         while filt_phase < len(filt):
-            filt_sample = filt[int(filt_phase)]
+            if useinterp:
+                next_filt_phase = clip(int(filt_phase)+1,0,len(filt)-1)
+                frac_filt_phase = filt_phase - int(filt_phase)
+                filt_sample = lerp(filt[int(filt_phase)],filt[next_filt_phase],frac_filt_phase)
+            else:
+                filt_sample = filt[int(filt_phase)]
             sig_index = index + 1 + i
             if isperiodic:
                 sig_index = mod(sig_index,siglen)
@@ -418,13 +443,19 @@ def resample(signal, new_table_size, filt, filt_res, isperiodic=True):
             elif sig_index >= 0 and sig_index < siglen:
                 newsig[new_index] += filt_sample * signal[sig_index]
             filt_phase += filt_step
+            filt_sum += filt_sample
             i+=1
+        newsig[new_index] /= filt_sum
         num_taps_used += i-1
         if num_taps_used > max_taps_used:
             max_taps_used = num_taps_used
         phase += phase_step
         new_index+=1
-    print max_taps_used
+        if phase >= 1:
+            phase -= 1
+            currperiod+=1
+    if ratio < 1:
+        newsig *= ratio
     return newsig
 
 def sinclowpass(signal,fc,winlen=10):

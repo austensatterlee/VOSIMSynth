@@ -95,6 +95,7 @@ namespace syn
 		bool hasHitSetpoint = (currseg.is_increasing && getLastOutput() >= currseg.target_amp()) ||
 			(!currseg.is_increasing && getLastOutput() <= currseg.target_amp());
 		// Advance to a new segment if our time is up or if we're released and we have fully decayed
+		m_phase += m_segments[m_currSegment]->step;
 		if (m_phase >= 1 || (m_currSegment == m_numSegments - 1 && hasHitSetpoint))
 		{
 			if (m_currSegment + 1 == int(readParam(1)))
@@ -102,29 +103,24 @@ namespace syn
 				setSegment(int(readParam(0)));
 				m_isSynced = true;
 			}
-			else if (m_currSegment < m_numSegments - 2)
-			{ // advance if we have not reached the sustain point
-				setSegment(m_currSegment + 1);
-			}
 			else if (m_currSegment == m_numSegments - 1)
-			{ // check if we have fully decayed
-				m_isDone = true;
+			{ // check if we have fully released
+				m_isDone = true; 
+				m_phase = 1.0;
+			} 
+			else if(m_currSegment == m_numSegments-2)
+			{ // if we have reached the sustain point
+				m_phase = 1.0;
 			}
-
-			if(m_currSegment == m_numSegments-2)
-			{
-				m_isSynced = true;
+			else 
+			{ // otherwise advance to the next segment
+			  setSegment(m_currSegment + 1);				
 			}
 		}
-		else
-		{
-			m_phase += m_segments[m_currSegment]->step;
-		}
-		const EnvelopeSegment& currSeg = *m_segments[m_currSegment];
-		double MIN_ENV_DB = AmpToDB(MIN_ENV_AMP);
-		double prevdb = LERP(MIN_ENV_DB,0,currSeg.prev_amp);
-		double targetdb = LERP(MIN_ENV_DB, 0, currSeg.target_amp());
-		double output = DBToAmp(LERP(prevdb,targetdb, m_phase));
+		const EnvelopeSegment& currSeg = *m_segments[m_currSegment];		
+		double prevamp = currSeg.prev_amp;
+		double targetamp = currSeg.target_amp();
+		double output = LERP(prevamp, targetamp, m_phase);
 		
 		m_output[bufind] = output;
 	}
@@ -147,14 +143,6 @@ namespace syn
 			updateSegment(i);
 		}
 		m_fsIsDirty = false;
-	}
-
-	void Envelope::onBufferSizeChange(size_t newbuffersize)
-	{
-	}
-
-	void Envelope::onTempoChange(double newtempo)
-	{
 	}
 
 	void Envelope::noteOn(int pitch, int vel)

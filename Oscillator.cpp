@@ -34,8 +34,8 @@ namespace syn
   {
     if (m_pitch.isDirty() || m_finetune.isDirty())
     {
-      m_Step = pitchToFreq(m_pitch + m_finetune) / m_Fs;
-	  m_Period = 1. / m_Step;
+	  m_Period = m_Fs / pitchToFreq(m_pitch + m_finetune);
+	  m_Step = 1./m_Period;
 	  m_pitch.setClean();
 	  m_finetune.setClean();
     }

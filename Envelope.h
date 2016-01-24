@@ -4,7 +4,7 @@
 #include <vector>
 
 #define MIN_ENV_PERIOD	0.0001
-#define MIN_ENV_AMP 0.001
+#define MIN_ENV_AMP 0.01
 
 namespace syn
 {
@@ -104,18 +104,16 @@ namespace syn
 	protected:
 		void updateSegment(const int segment); //!< Updates the EnvelopeSegment to reflect the values in m_params
 
-		virtual void process(int bufind) override;
+		void process(int bufind) override;
 		void setSegment(int seg);
-		virtual void onSampleRateChange(double newfs) override;
-		virtual void onBufferSizeChange(size_t newbuffersize) override;
-		virtual void onTempoChange(double newtempo) override;
+		void onSampleRateChange(double newfs) override;
 	private:
-		virtual Unit* cloneImpl() const override
+		Unit* cloneImpl() const override
 		{
 			return new Envelope(*this);
 		}
 
-		virtual string getClassName() const override
+		string getClassName() const override
 		{
 			return "Envelope";
 		}
