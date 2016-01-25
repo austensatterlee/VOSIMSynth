@@ -9,42 +9,46 @@ using namespace std;
 
 namespace syn
 {
-	enum OSC_MODE
+	enum WAVE_SHAPE
 	{
 		SAW_WAVE = 0,
 		NAIVE_SAW_WAVE,
 		SINE_WAVE,
+		NAIVE_SINE_WAVE,
 		TRI_WAVE,
 		SQUARE_WAVE,
 		NAIVE_SQUARE_WAVE,
 		NUM_OSC_MODES
 	};
 
-	const vector<string> OSC_MODE_NAMES{"Saw","Naive saw","Sine","Tri","Square","Naive square"};
+	const vector<string> WAVE_SHAPE_NAMES{"Saw","Naive saw","Sine","Naive sine", "Tri","Square","Naive square"};
+
+	double sampleWaveShape(WAVE_SHAPE shape, double phase, double period);
 
 	class Oscillator : public SourceUnit
 	{
 	public:
 		Oscillator(string name) : SourceUnit(name),
-		                          m_gain(addDoubleParam("gain", 0, 1, 0.0, 1e-2, 2.0)),
-		                          m_pitch(addIntParam("pitch", 0, 128, 0, 1.0, true, true)),
-		                          m_finetune(addDoubleParam("tune", -12, 12, 0, 1e-1)),
-		                          m_phaseshift(addDoubleParam("phaseshift", -0.5, 0.5, 0, 1/12.)),
-		                          m_velocity(1.0) {
-			m_Step = 440. / m_Fs;
-			m_Period = 1. / m_Step;
-		};
+		                          m_gain(addDoubleParam("gain", 0.0, 1.0, 0.1, 1e-2)),
+		                          m_phase_shift(addDoubleParam("phase", 0.0, 0.5, 0.0, 1e-2)),
+		                          m_basePhase(0),
+		                          m_phase(0),
+		                          m_phase_step(0),
+		                          m_period(1),
+		                          m_freq(1),
+		                          isFreqDirty(true) { };
 
 		Oscillator(const Oscillator& osc) :
 			Oscillator(osc.m_name) {
 			m_basePhase = osc.m_basePhase;
-			m_Step = osc.m_Step;
-			m_velocity = osc.m_velocity;
 			m_phase = osc.m_phase;
+			m_phase_step = osc.m_phase_step;
+			m_period = osc.m_period;
+			m_freq = osc.m_freq;
 		}
 
 		int getSamplesPerPeriod() const override {
-			return static_cast<int>(floor(1. / m_Step));
+			return static_cast<int>(m_period);
 		}
 
 		virtual void sync() {
@@ -55,76 +59,97 @@ namespace syn
 			return m_gain != 0;
 		};
 
-		void noteOn(int pitch, int vel) override;
-
-		void noteOff(int pitch, int vel) override { };
-
 		UnitParameter& m_gain;
-		UnitParameter& m_pitch;
-		UnitParameter& m_finetune;
-		UnitParameter& m_phaseshift;
+		UnitParameter& m_phase_shift;
 	protected:
-		double m_basePhase = 0;
-		double m_phase = 0;
-		double m_Step;
-		double m_Period;
-		double m_velocity;
-
-		void updateSyncStatus() {
-			m_isSynced = m_phase < m_Step;
-		};
+		double m_basePhase;
+		double m_phase;
+		double m_phase_step;
+		double m_period;
+		double m_freq;
 
 		virtual void tick_phase();
 		virtual void update_step();
 		void onSampleRateChange(double newfs) override;
-		void onBufferSizeChange(size_t newbuffersize) override;
-		void onTempoChange(double newtempo) override;
+	private:
+		void beginProcessing() override;
+		void finishProcessing() override;
+		bool isFreqDirty;
 	};
 
 	class BasicOscillator : public Oscillator
 	{
 	public:
+
 		BasicOscillator(string name) : Oscillator(name),
-		                               m_waveform(addEnumParam("waveform", OSC_MODE_NAMES, 0)) {};
+		                               m_pitch(0), m_velocity(0), m_isPitchDirty(false),
+		                               m_waveform(addEnumParam("waveform", WAVE_SHAPE_NAMES, 0)),
+		                               m_tune(addDoubleParam("tune", -12.0, 12.0, 0.0, 1e-2)),
+		                               m_octave(addIntParam("octave", -3, 3, 0)) {};
 
 		BasicOscillator(const BasicOscillator& other) : BasicOscillator(other.m_name) {};
 
+		void noteOn(int pitch, int vel) override;
+		void noteOff(int pitch, int vel) override;
+
 		UnitParameter& m_waveform;
+		UnitParameter& m_tune;
+		UnitParameter& m_octave;
 	protected:
-		virtual void process(int bufind) override;
+		void update_step() override;
+		void process(int bufind) override;
+		double m_pitch;
+		bool m_isPitchDirty;
+		double m_velocity;
 	private:
-		virtual Unit* cloneImpl() const override {
+		Unit* cloneImpl() const override {
 			return new BasicOscillator(*this);
 		};
 
-		virtual string getClassName() const override {
+		string getClassName() const override {
 			return "BasicOscillator";
 		};
 	};
 
-	class LFOOscillator : public BasicOscillator
+	class LFOOscillator : public Oscillator
 	{
 	public:
-		LFOOscillator(string name) : BasicOscillator(name),
-		                             m_reset(addBoolParam("Reset", 0)) {
-			m_pitch.setMin(-64); m_pitch.setMax(16); m_pitch.setHidden(false);
-			m_finetune.setMin(-12); m_finetune.setMax(12);
-		}
+
+		LFOOscillator(string name) : Oscillator(name),
+		                             m_rate(addIntParam("rate", 1, 16, 1)),
+		                             m_freq_param(addDoubleParam("freq", 1e-1, 20.0, 1.0, 1e-1)),
+		                             m_waveform(addEnumParam("waveform", WAVE_SHAPE_NAMES, 0)),
+		                             m_reset(addBoolParam("Reset", 0)),
+		                             m_useBPM(addBoolParam("BPM", false)),
+		                             m_tempo(120) { }
 
 		LFOOscillator(const LFOOscillator& other) : LFOOscillator(other.m_name) {}
 
-		virtual void noteOn(int pitch, int vel) override {
+		void noteOn(int pitch, int vel) override {
 			if (m_reset)
 				sync();
 		}
 
+		void noteOff(int pitch, int vel) override { }
+
+		void onTempoChange(double newtempo) override;
+
+
+		UnitParameter& m_rate;
+		UnitParameter& m_freq_param;
+		UnitParameter& m_waveform;
 		UnitParameter& m_reset;
+		UnitParameter& m_useBPM;
+	protected:
+		virtual void process(int bufind) override;
+		void update_step() override;
+		double m_tempo;
 	private:
-		virtual Unit* cloneImpl() const override {
+		Unit* cloneImpl() const override {
 			return new LFOOscillator(*this);
 		};
 
-		virtual string getClassName() const override {
+		string getClassName() const override {
 			return "LFOOscillator";
 		};
 	};

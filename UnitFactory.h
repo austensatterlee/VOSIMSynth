@@ -2,108 +2,100 @@
 #include "Unit.h"
 #include "SourceUnit.h"
 #include <vector>
+#include <set>
 
 using std::vector;
+using std::set;
 
 namespace syn
 {
-  class UnitFactory
-  {
-  public:
+	struct FactoryPrototype
+	{
+		FactoryPrototype(string a_group_name, const Unit* a_unit) :
+			group_name{a_group_name},
+			name{a_unit->getName()},
+			prototype{a_unit},
+			build_count{0} {};
 
-    UnitFactory()
-    {}
+		string group_name;
+		string name;
+		const Unit* prototype;
+		int build_count;
+	};
 
-    virtual ~UnitFactory()
-    {
-      for (int i = 0; i < m_unit_prototypes.size(); i++)
-      {
-        delete m_unit_prototypes[i];
-      }
-    }
+	class UnitFactory
+	{
+	public:
 
-    /**
-     * \brief Register a prototype unit with the factory. Prototype deletion will be taken care of upon factory destruction.
-     */
-    void addUnitPrototype(const Unit* prototype)
-    {
-      m_unit_prototypes.push_back(prototype);
-      m_prototype_names.push_back(prototype->getName());
-      m_unit_counts.push_back(0);
-      m_class_identifiers[prototype->getClassIdentifier()] = m_unit_prototypes.size() - 1;
-    }
+		UnitFactory() {}
 
-    void addSourceUnitPrototype(const SourceUnit* prototype)
-    {
-      m_source_unit_prototypes.push_back(prototype);
-      m_source_prototype_names.push_back(prototype->getName());
-      m_source_unit_counts.push_back(0);
-      m_class_identifiers[prototype->getClassIdentifier()] = m_source_unit_prototypes.size() - 1;
-    }
+		virtual ~UnitFactory() {
+			for (int i = 0; i < m_prototypes.size(); i++) {
+				delete m_prototypes[i]->prototype;
+				delete m_prototypes[i];
+			}
+		}
 
-    const vector<string>& getPrototypeNames() const
-    {
-      return m_prototype_names;
-    }
+		/**
+		 * \brief Register a prototype unit with the factory. Prototype deletion will be taken care of upon factory destruction.
+		 */
+		void addUnitPrototype(string a_group_name, const Unit* a_unit) {
+			FactoryPrototype* prototype = new FactoryPrototype(a_group_name, a_unit);
+			m_prototypes.push_back(prototype);
+			m_group_names.insert(prototype->group_name);
+			m_class_identifiers[prototype->prototype->getClassIdentifier()] = m_prototypes.size() - 1;
+		}
 
-    const vector<string>& getSourcePrototypeNames() const
-    {
-      return m_source_prototype_names;
-    }
+		const set<string>& getGroupNames() const {
+			return m_group_names;
+		}
 
-    const vector<const Unit*>& getPrototypes() const
-    {
-      return m_unit_prototypes;
-    }
+		vector<string> getPrototypeNames(const string& group) const {
+			vector<string> names;
+			for (const FactoryPrototype* prototype : m_prototypes) {
+				if (prototype->group_name == group) {
+					names.push_back(prototype->name);
+				}
+			}
+			return names;
+		}
 
-    const vector<const SourceUnit*>& getSourcePrototypes() const
-    {
-      return m_source_unit_prototypes;
-    }
+		Unit* createUnit(int protonum) const {
+			Unit* unit = m_prototypes[protonum]->prototype->clone();
+			char namebuf[256];
+			snprintf(namebuf, 256, "%s_%d", unit->getName().c_str(), m_prototypes[protonum]->build_count);
+			string newname = namebuf;
+			unit->setName(newname);
+			m_prototypes[protonum]->build_count++;
+			return unit;
+		}
 
-    Unit* createUnit(int protonum)
-    {
-      Unit* unit = m_unit_prototypes[protonum]->clone();
-      char namebuf[256];
-      sprintf(namebuf, "%s_%d", unit->getName().c_str(), m_unit_counts[protonum]);
-      string newname = namebuf;
-      unit->setName(newname);
-      m_unit_counts[protonum]++;
-      return unit;
-    }
+		Unit* createUnit(string name) {
+			int i = 0;
+			for (const FactoryPrototype* prototype : m_prototypes) {
+				if (prototype->name == name) {
+					return createUnit(i);
+				}
+				i++;
+			}
+			throw std::logic_error("Unit name not found in factory.");
+		}
 
-    SourceUnit* createSourceUnit(int protonum)
-    {
-      SourceUnit* srcunit = dynamic_cast<SourceUnit*>(m_source_unit_prototypes[protonum]->clone());
-      char namebuf[256];
-      sprintf(namebuf, "%s_%d", srcunit->getName().c_str(), m_source_unit_counts[protonum]);
-      string newname = namebuf;
-      srcunit->setName(newname);
-      m_source_unit_counts[protonum]++;
-      return srcunit;
-    }
+		Unit* createUnit(const unsigned int classidentifier) const {
+			int protonum = m_class_identifiers.at(classidentifier);
+			return createUnit(protonum);
+		}
 
-    SourceUnit* createSourceUnit(const unsigned int classidentifier) {
-      int protonum = m_class_identifiers.at(classidentifier);
-      return createSourceUnit(protonum);
-    }
+		bool hasClassId(unsigned a_unit_class_id) {
+			bool result = m_class_identifiers.find(a_unit_class_id) != m_class_identifiers.end();
+			return result;
+		}
 
-    Unit* createUnit(const unsigned int classidentifier) {
-      int protonum = m_class_identifiers.at(classidentifier);
-      return createUnit(protonum);
-    }
+	protected:
+		vector<FactoryPrototype*> m_prototypes;
+		set<string> m_group_names;
 
-	bool hasClassId(unsigned a_unit_class_id) {
-		bool result = m_class_identifiers.find(a_unit_class_id) != m_class_identifiers.end();
-		return result;
-    }
-  protected:
-    vector<const Unit*> m_unit_prototypes;
-    vector<int> m_unit_counts;
-    vector<const SourceUnit*> m_source_unit_prototypes;
-    vector<int> m_source_unit_counts;
-    vector<string> m_prototype_names;
-    vector<string> m_source_prototype_names;
-    unordered_map<unsigned int, int> m_class_identifiers;
-  };
+		unordered_map<unsigned int, int> m_class_identifiers; //<! mapping from unique class IDs to prototype numbers
+	};
 }
+

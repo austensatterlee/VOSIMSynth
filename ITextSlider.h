@@ -25,7 +25,7 @@ namespace syn
 		virtual ~ITextSlider()
 		{}
 
-		virtual void OnMouseDblClick(int x, int y, IMouseMod* pMod) override
+		void OnMouseDblClick(int x, int y, IMouseMod* pMod) override
 		{
 			UnitParameter& param = m_vm->getProtoInstrument()->getUnit(m_unitid).getParam(m_paramid);
 			double defaultValue = param.getDefault();
@@ -43,7 +43,7 @@ namespace syn
 			return m_minsize;
 		}
 
-		virtual void OnMouseDrag(int x, int y, int dX, int dY, IMouseMod* pMod) override
+		void OnMouseDrag(int x, int y, int dX, int dY, IMouseMod* pMod) override
 		{
 			UnitParameter& param = m_vm->getProtoInstrument()->getUnit(m_unitid).getParam(m_paramid);
 			// do fine adjustments when shift is held
@@ -61,7 +61,7 @@ namespace syn
 			mValue = param.getNormalized();
 		}
 
-		virtual bool Draw(IGraphics* pGraphics) override
+		bool Draw(IGraphics* pGraphics) override
 		{
 			// Local color palette
 			IColor bg_color{ 255,100,50,125 };

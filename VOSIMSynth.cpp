@@ -3,9 +3,8 @@
 #include "IPlug_include_in_plug_src.h"
 #include "EnvelopeEditor.h"
 #include "VosimOscillator.h"
-#include "UI.h"
-#include "RandomOscillator.h"
 #include "ADSREnvelope.h"
+#include "MathUnits.h"
 
 using namespace std;
 
@@ -59,13 +58,13 @@ void VOSIMSynth::makeGraphics() {
 void VOSIMSynth::makeInstrument() {
 	m_instr = new Instrument();
 	m_unitfactory = new UnitFactory();
-	m_unitfactory->addSourceUnitPrototype(new Envelope("Envelope"));
-	m_unitfactory->addSourceUnitPrototype(new ADSREnvelope("ADSREnvelope"));
-	m_unitfactory->addUnitPrototype(new AccumulatingUnit("Accumulator"));
-	m_unitfactory->addSourceUnitPrototype(new VosimOscillator("Osc.VOSIM"));
-	m_unitfactory->addSourceUnitPrototype(new UniformRandomOscillator("Osc.Random.Uniform"));
-	m_unitfactory->addSourceUnitPrototype(new BasicOscillator("Osc.Basic"));
-	m_unitfactory->addSourceUnitPrototype(new LFOOscillator("Osc.LFO"));
+	m_unitfactory->addUnitPrototype( "Generators", new VosimOscillator("Osc.VOSIM") );
+	m_unitfactory->addUnitPrototype( "Generators", new BasicOscillator("Osc.Basic") );
+	m_unitfactory->addUnitPrototype( "Modulators",new Envelope("Envelope") );
+	m_unitfactory->addUnitPrototype( "Modulators",new ADSREnvelope("ADSREnvelope") );
+	m_unitfactory->addUnitPrototype( "Modulators", new LFOOscillator("Osc.LFO") );
+	m_unitfactory->addUnitPrototype( "Math",new AccumulatingUnit("Accumulator") );
+	m_unitfactory->addUnitPrototype( "Math", new RectifierUnit("Rectifier") );
 
 	m_voiceManager.setMaxVoices(6, m_instr);
 

@@ -101,7 +101,7 @@ namespace syn
 			if (m_currSegment + 1 == int(readParam(1)))
 			{ // check if we have reached a loop point
 				setSegment(int(readParam(0)));
-				m_isSynced = true;
+				updateSyncStatus();
 			}
 			else if (m_currSegment == m_numSegments - 1)
 			{ // check if we have fully released

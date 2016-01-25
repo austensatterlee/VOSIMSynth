@@ -28,6 +28,7 @@ namespace syn
 
   void CircuitPanel::setSink(int unitctrlid)
   {
+	WDL_MutexLock guilock(&mPlug->GetGUI()->mMutex);
     Instrument* instr = m_vm->getProtoInstrument();
     Unit* unit = m_unitControls[unitctrlid]->getUnit();
     instr->setSinkId(instr->getUnitId(unit));
@@ -76,20 +77,15 @@ namespace syn
     }
   }
 
-  void CircuitPanel::createSourceUnit(int factoryid, int x, int y) {
+  void CircuitPanel::createUnit(string proto_name, int x, int y) {
     WDL_MutexLock guilock(&mPlug->GetGUI()->mMutex);
     Instrument* instr = m_vm->getProtoInstrument();
-    SourceUnit* srcunit = m_unitFactory->createSourceUnit(factoryid);
-    int uid = instr->addSource(srcunit);
-    m_unitControls[uid] = new UnitControl(mPlug, m_vm, srcunit, x, y);
-    updateInstrument();
-  }
-
-  void CircuitPanel::createUnit(int factoryid, int x, int y) {
-    WDL_MutexLock guilock(&mPlug->GetGUI()->mMutex);
-    Instrument* instr = m_vm->getProtoInstrument();
-    Unit* unit = m_unitFactory->createUnit(factoryid);
-    int uid = instr->addUnit(unit);
+    Unit* unit = m_unitFactory->createUnit(proto_name);
+	int uid;
+	if (unit->getUnitType() == STD_UNIT)
+		uid = instr->addUnit(unit);
+	else if (unit->getUnitType() == SOURCE_UNIT)
+		uid = instr->addSource(dynamic_cast<SourceUnit*>(unit));
     m_unitControls[uid] = new UnitControl(mPlug, m_vm, unit, x, y);
     updateInstrument();
   }
@@ -100,17 +96,14 @@ namespace syn
     int currSelectedUnit = getSelectedUnit(x, y);
     if (m_isMouseDown == 2 && currSelectedUnit == -1)
     { // Right clicking on open space
-      IPopupMenu* selectedMenu = mPlug->GetGUI()->CreateIPopupMenu(&m_main_menu, x, y);
-      if (selectedMenu == &m_sourceunit_menu)
-      { // Create a source unit
-        int itemChosen = selectedMenu->GetChosenItemIdx();
-        createSourceUnit(itemChosen, x, y);
-      }
-      else if (selectedMenu == &m_unit_menu)
-      { // Create a non-source unit
-        int itemChosen = selectedMenu->GetChosenItemIdx();
-        createUnit(itemChosen, x, y);
-      }
+		shared_ptr<IPopupMenu> main_menu = make_shared<IPopupMenu>();
+		vector<shared_ptr<IPopupMenu>> sub_menus;
+		generateUnitFactoryMenu(main_menu, sub_menus);
+        IPopupMenu* selectedMenu = mPlug->GetGUI()->CreateIPopupMenu(main_menu.get(), x, y);
+		if (selectedMenu) {
+			string unit_name = selectedMenu->GetItemText(selectedMenu->GetChosenItemIdx());
+			createUnit(unit_name, x, y);
+		}  
     }
     else if (m_isMouseDown == 2 && currSelectedUnit >= 0)
     { // Right clicking on a unit
@@ -193,7 +186,6 @@ namespace syn
 
   void CircuitPanel::OnMouseDblClick(int x, int y, IMouseMod* pMod)
   {
-    WDL_MutexLock lock(&mPlug->GetGUI()->mMutex);
     int currSelectedUnit = getSelectedUnit(x, y);
     if (currSelectedUnit >= 0)
     {
@@ -363,7 +355,7 @@ namespace syn
     chunkpos = chunk->Get<bool>(&isPrimarySource, chunkpos);
     chunkpos = chunk->Get<bool>(&isSink, chunkpos);
 	if (m_unitFactory->hasClassId(unitClassId)) {
-		unit = isSource ? m_unitFactory->createSourceUnit(unitClassId) : m_unitFactory->createUnit(unitClassId);
+		unit = m_unitFactory->createUnit(unitClassId);
 	}else {
 		return 0;
 	}

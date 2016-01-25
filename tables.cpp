@@ -26,12 +26,13 @@ namespace syn
 		if (m_normalizePhase) {
 			phase = (phase - m_norm_bias) * m_norm_scale;
 		}
-		if (m_isperiodic)
+		if (m_isperiodic){
 			phase = WRAP(phase, 1.0);
-		else
+			phase *= m_size;
+		}else {
 			phase = CLAMP(phase, 0.0, 1.0);
-
-		phase *= m_size;
+			phase *= m_size-1;
+		}
 
 		int int_index = int(phase);
 		double frac_index = phase - int_index;
@@ -45,18 +46,30 @@ namespace syn
 		return m_table[index];
 	}
 
-	ResampledLookupTable::ResampledLookupTable(const double* table, int size, const LookupTable& blimp_table) :
+	ResampledLookupTable::ResampledLookupTable(const double* table, int size, const BlimpTable& blimp_table_online, const BlimpTable& blimp_table_offline) :
 		LookupTable(table, size, 0, 1, true),
-		m_blimp_table(blimp_table) {
+		m_blimp_table(blimp_table_online)
+	{
+		/*m_num_resampled_tables = 1;
+		m_resampled_tables = static_cast<double**>(malloc(sizeof(double*)));
+		m_resampled_tables[0] = static_cast<double*>(malloc(m_size*sizeof(double)));
+		memcpy(m_resampled_tables[0], m_table, m_size*sizeof(double));
+		m_resampled_sizes = static_cast<int*>(malloc(sizeof(int) * 1));
+		m_resampled_sizes[0] = m_size;*/
+		resample_tables(blimp_table_offline);
+	}
+
+	void ResampledLookupTable::resample_tables(const BlimpTable& blimp_table_offline)
+	{
 		/* Construct resampled tables at ratios of powers of two */
-		m_num_resampled_tables = MAX(1,log2(m_size)-4);
+		m_num_resampled_tables = MAX(1, log2(m_size) - 3);
 		m_resampled_tables = new double*[m_num_resampled_tables];
 		m_resampled_sizes = new int[m_num_resampled_tables];
 		double currsize = m_size;
 		for (int i = 0; i < m_num_resampled_tables; i++) {
 			m_resampled_tables[i] = new double[currsize];
 			m_resampled_sizes[i] = currsize;
-			resample_table(m_table, m_size, m_resampled_tables[i], currsize, m_blimp_table);
+			resample_table(m_table, m_size, m_resampled_tables[i], currsize, blimp_table_offline);
 			currsize *= 0.5;
 		}
 	}
@@ -79,7 +92,7 @@ namespace syn
 		return getresampled_single(m_resampled_tables[min_size_diff_index], m_resampled_sizes[min_size_diff_index], phase, period, m_blimp_table);
 	}
 
-	void resample_table(const double* table, int size, double* resampled_table, double period, const LookupTable& blimp_table) {
+	void resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table) {
 		double phase = 0;
 		double phase_step = 1. / period;
 		double maxval = 0;
@@ -95,7 +108,7 @@ namespace syn
 		}
 	}
 
-	double getresampled_single(const double* table, int size, double phase, double period, const LookupTable& blimp_table) {
+	double getresampled_single(const double* table, int size, double phase, double period, const BlimpTable& blimp_table) {
 		double ratio = period * (1.0 / size);
 		phase = WRAP(phase, 1.0);
 		phase = phase * size;
@@ -103,38 +116,43 @@ namespace syn
 		double frac_index = (phase - index);
 		double blimp_step;
 		if (ratio < 1.0)
-			blimp_step = static_cast<double>(BLIMP_RES) * ratio;
+			blimp_step = static_cast<double>(blimp_table.m_resolution) * ratio;
 		else
-			blimp_step = static_cast<double>(BLIMP_RES);
+			blimp_step = static_cast<double>(blimp_table.m_resolution);
 
 		double offset = frac_index * blimp_step;
 
+		double filt_sum = 0;
 		double output = 0.0;
 		double filt_phase = offset;
 		double filt_sample;
 		int table_index = index;
 		while (filt_phase < blimp_table.size()) {
-			filt_sample = blimp_table.getraw(static_cast<int>(filt_phase));
+			//filt_sample = blimp_table.getraw(static_cast<int>(filt_phase));
+			filt_sample = blimp_table.getlinear(filt_phase/blimp_table.size());
 			if (table_index < 0) {
 				table_index = size - 1;
 			}
 			output += filt_sample * table[table_index--];
+			filt_sum += filt_sample;
 			filt_phase += blimp_step;
 		}
 		filt_phase = blimp_step - offset;
 		table_index = index + 1;
 		while (filt_phase < blimp_table.size()) {
-			filt_sample = blimp_table.getraw(static_cast<int>(filt_phase));
+			//filt_sample = blimp_table.getraw(static_cast<int>(filt_phase));
+			filt_sample = blimp_table.getlinear(filt_phase / blimp_table.size());
 			if (table_index >= size) {
 				table_index = 0;
 			}
 			output += filt_sample * table[table_index++];
+			filt_sum += filt_sample;
 			filt_phase += blimp_step;
 		}
 		if (ratio < 1)
-			output *= 2.66 * 0.5 * 0.83 * ratio;
+			output *= 1./filt_sum;
 		else
-			output *= 2.66 * 0.5 * 0.83;
+			output *= 1./filt_sum;
 		return output;
 	}
 }

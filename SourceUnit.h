@@ -12,7 +12,8 @@ namespace syn
 	{
 	public:
 		SourceUnit(string name) :
-			Unit(name), m_isSynced(false)
+			Unit(name), 
+			m_lastSyncIndex(0)
 		{
 		};
 
@@ -20,22 +21,31 @@ namespace syn
 		{
 		};
 
+		UNIT_TYPE getUnitType() const override {
+			return SOURCE_UNIT;
+		}
+
 		virtual void noteOn(int pitch, int vel) = 0;
 		virtual void noteOff(int pitch, int vel) = 0;
 		virtual int getSamplesPerPeriod() const = 0;
 		virtual bool isActive() const = 0;
 
-		bool isSynced() const
+		int getLastSyncIndex() const
 		{
-			return m_isSynced;
+			return m_lastSyncIndex;
 		};
 
 	protected:
-		bool m_isSynced;
+		int m_lastSyncIndex;
 
 		void beginProcessing() override
 		{
-			m_isSynced = false;
+			m_lastSyncIndex = 0;
+		}
+
+		/// Called by child class when phase gets reset
+		void updateSyncStatus() {
+			m_lastSyncIndex = m_bufind;
 		}
 	};
 }

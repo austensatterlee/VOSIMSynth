@@ -9,11 +9,12 @@ using namespace std;
 
 namespace syn
 {
-	class VosimOscillator : public Oscillator
+	class VosimOscillator : public BasicOscillator
 	{
 	public:
+
 		VosimOscillator(string name) :
-			Oscillator(name),
+			BasicOscillator(name),
 			m_relativeamt(addDoubleParam("relative", 0, 1, 0.5, 1e-3)),
 			m_decay(addDoubleParam("decay", 0, 1, 0.9, 1e-3, 2.0)),
 			m_ppitch(addDoubleParam("pulsepitch", 0, 1, 0.5, 1e-3, 2.0)),
@@ -23,6 +24,8 @@ namespace syn
 			m_pulse_phase(0.0), m_last_pulse_phase(0),
 			m_unwrapped_pulse_phase(0.0)
 		{
+			m_waveform.setHidden(true);
+			m_waveform.setCanModulate(false);
 		};
 
 		VosimOscillator(const VosimOscillator& vosc);

@@ -1,5 +1,6 @@
 #include "VosimOscillator.h"
 #include "tables.h"
+#include "DSPMath.h"
 
 /******************************
 * VOSIM methods
@@ -7,6 +8,7 @@
 ******************************/
 namespace syn
 {
+
 	VosimOscillator::VosimOscillator(const VosimOscillator& vosc) :
 		VosimOscillator(vosc.m_name)
 	{
@@ -19,8 +21,10 @@ namespace syn
 	void VosimOscillator::process(int bufind)
 	{
 		Oscillator::tick_phase();
-		m_pulse_step = m_Step * (m_number + 8 * m_ppitch * m_relativeamt) + 1 / m_Fs * (pitchToFreq(m_ppitch * 57 * (1 - m_relativeamt) + 57));
-		m_unwrapped_pulse_phase = m_phase / m_Step * m_pulse_step;
+		double pulse_pitch = LERP(12*log2(m_number*m_freq/440.)+69, 12 * log2(13000 / 440.) + 69, m_ppitch);
+		double pulse_freq = pitchToFreq(pulse_pitch);
+		m_pulse_step = pulse_freq / m_Fs;
+		m_unwrapped_pulse_phase = m_phase / m_phase_step * m_pulse_step;
 		if (m_unwrapped_pulse_phase < 1)
 		{
 			m_curr_pulse_gain = 1.0;

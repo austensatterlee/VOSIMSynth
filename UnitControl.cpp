@@ -75,10 +75,10 @@ namespace syn
 		int portY = m_y + 20;
 		int rowsize = (newsize - 30) / double(m_nParams);
 		for (int i = 0; i < paramNames.size(); i++) {
-			IRECT port_label_irect{m_x + 30 ,portY, m_x + newsize,portY + 10};
+			IRECT port_label_irect{ m_x + 30 ,portY, m_x + newsize,portY + 10 };
 			m_portLabels[i].setRECT(port_label_irect);
-			m_ports[i].add_rect = IRECT{m_x, portY, m_x + 10, portY + 10};
-			m_ports[i].scale_rect = IRECT{m_x + 12, portY, m_x + 22, portY + 10};
+			m_ports[i].add_rect = IRECT{ m_x, portY, m_x + 10, portY + 10 };
+			m_ports[i].scale_rect = IRECT{ m_x + 12, portY, m_x + 22, portY + 10 };
 			portY += rowsize;
 		}
 		SetTargetArea(mRECT);

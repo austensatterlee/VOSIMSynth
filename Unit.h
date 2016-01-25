@@ -4,7 +4,6 @@
 #include "GallantSignal.h"
 #include <unordered_map>
 #include <vector>
-#include <functional>
 
 using Gallant::Signal1;
 using std::unordered_map;
@@ -16,6 +15,14 @@ namespace syn
 	typedef unordered_map<string, int> IDMap; //!< string to array index translation map
 
 	class Circuit; // forward decl.
+
+	enum UNIT_TYPE
+	{
+		STD_UNIT,
+		SOURCE_UNIT,
+		NUM_UNIT_TYPES
+	};
+
 	/**
 	 * \class Unit
 	 *
@@ -30,36 +37,43 @@ namespace syn
 	{
 		friend class Circuit;
 	public:
-		Unit(string name);
+
+		Unit::Unit(string name) :
+			m_name(name),
+			m_parent(nullptr),
+			m_Fs(44100.0),
+			m_tempo(120),
+			m_output(1, 0.0),
+			m_bufind(0) {}
+
 		virtual ~Unit();
 		void setSampleRate(double newfs);
 		void setBufferSize(size_t newbufsize);
 		void setTempo(double newtempo);
 
-		unsigned int getClassIdentifier() const
-		{
+		/// Used for dynamic down-casting	 
+		virtual UNIT_TYPE getUnitType() const {
+			return STD_UNIT;
+		}
+
+		unsigned int getClassIdentifier() const {
 			hash<string> hash_fn;
 			return hash_fn(getClassName());
 		};
 
-		/*!
-		 * \brief Runs the unit for the specified number of ticks (specified with resizeOutputBuffer). The result is accessed via getLastOutputBuffer().
-		 */
+		/// Runs the unit for the specified number of ticks (specified with resizeOutputBuffer). The result is accessed via getLastOutputBuffer().		 
 		void tick();
 
-		double getFs() const
-		{
+		double getFs() const {
 			return m_Fs;
 		};
 
-		const vector<double>& getLastOutputBuffer() const
-		{
+		const vector<double>& getLastOutputBuffer() const {
 			return m_output;
 		};
 
-		double getLastOutput() const
-		{
-			return m_output[m_output.size() - 1];
+		double getLastOutput() const {
+			return m_output[m_bufind];
 		};
 
 		/*!
@@ -67,46 +81,40 @@ namespace syn
 		 */
 		void modifyParameter(int portid, double val, MOD_ACTION action);
 
-		bool hasParameter(string name)
-		{
+		bool hasParameter(string name) {
 			return m_parammap.find(name) != m_parammap.end();
 		};
 
-		double readParam(string pname) const
-		{
+		double readParam(string pname) const {
 			return *m_params[m_parammap.at(pname)];
 		};
 
-		double readParam(int id) const
-		{
+		double readParam(int id) const {
 			return *m_params[id];
 		};
 
-		UnitParameter& getParam(string pname)
-		{
+		UnitParameter& getParam(string pname) {
 			return *m_params[m_parammap.at(pname)];
 		}
 
-		UnitParameter& getParam(int pid)
-		{
+		UnitParameter& getParam(int pid) {
 			return *m_params[pid];
 		}
 
 		vector<string> getParameterNames() const;
+
+		/// Finds the integer parameter id associated with the given name. Returns -1 if no parameter is associated with the given name.
 		int getParamId(string name);
 
-		Circuit& getParent() const
-		{
+		Circuit& getParent() const {
 			return *m_parent;
 		};
 
-		string getName() const
-		{
+		string getName() const {
 			return m_name;
 		}
 
-		void setName(string name)
-		{
+		void setName(string name) {
 			m_name = name;
 		}
 
@@ -119,6 +127,7 @@ namespace syn
 		Circuit* m_parent;
 		double m_Fs, m_tempo;
 		vector<double> m_output;
+		int m_bufind;
 		virtual void process(int bufind) = 0; // should add its result to m_output[bufind]
 		UnitParameter& addParam(string name, int id, IParam::EParamType ptype, double min, double max, double defaultValue, double step, double shape = 1.0, bool isHidden = false, bool canModulate = true);
 		UnitParameter& addDoubleParam(string name, double min, double max, double defaultValue, double step, double shape = 1.0, bool isHidden = false, bool canModulate = true);
@@ -126,65 +135,20 @@ namespace syn
 		UnitParameter& addBoolParam(string name, bool defaultValue);
 		UnitParameter& addEnumParam(string name, const vector<string> choice_names, int defaultValue);
 		virtual void onSampleRateChange(double newfs) = 0;
+
 		virtual void onBufferSizeChange(size_t newbuffersize) {};
+
 		virtual void onTempoChange(double newtempo) {};
+
 	private:
-		int m_bufind;
 		virtual Unit* cloneImpl() const = 0;
 		virtual inline string getClassName() const = 0;
 
 		/// Allows parent classes to apply common processing before child class outputs.
-		virtual void beginProcessing()
-		{
-		};
+		virtual void beginProcessing() { };
 
 		/// Allows parent classes to apply common processing after child class outputs.
-		virtual void finishProcessing()
-		{
-		}; 
-	};
-
-	/*
-	 * MISC UTILITY UNITS
-	 */
-	class AccumulatingUnit : public Unit
-	{
-	public:
-		AccumulatingUnit(string name) : Unit(name),
-		                                m_input(addDoubleParam("input", -1, 1, 0.0, 0.0, 1.0, true, true)),
-		                                m_gain(addDoubleParam("gain", 0, 1, 0.5, 1e-3, 2.0, false, true ))
-		{
-		}
-
-		AccumulatingUnit(const AccumulatingUnit& other) : AccumulatingUnit(other.m_name)
-		{
-		}
-
-		virtual ~AccumulatingUnit()
-		{
-		};
-
-	protected:
-		void onSampleRateChange(double newfs) override {};
-
-		void process(int bufind) override
-		{
-			m_output[bufind] = m_input * m_gain;
-		}
-
-	private:
-		UnitParameter& m_input;
-		UnitParameter& m_gain;
-
-		Unit* cloneImpl() const override
-		{
-			return new AccumulatingUnit(*this);
-		}
-
-		string getClassName() const override
-		{
-			return "AccumulatingUnit";
-		}
+		virtual void finishProcessing() { };
 	};
 }
 #endif

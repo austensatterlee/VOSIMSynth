@@ -30,6 +30,8 @@ namespace syn {
 	private:
 		double m_phase;
 		ADSRStage m_currStage;
+		double m_initial;
+		double m_target;
 		bool m_isActive;
 		virtual Unit* cloneImpl() const override { return new ADSREnvelope(*this); };
 		virtual string getClassName() const override { return "ADSREnvelope"; }; 

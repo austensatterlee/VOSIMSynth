@@ -6,6 +6,7 @@
 #include "Containers.h"
 #include "UnitControl.h"
 #include <unordered_map>
+#include <memory>
 
 using namespace std;
 
@@ -26,9 +27,6 @@ namespace syn
     unordered_map<int, UnitControl*> m_unitControls;
     VoiceManager* m_vm;
     UnitFactory* m_unitFactory;
-    IPopupMenu m_main_menu;
-    IPopupMenu m_unit_menu;
-    IPopupMenu m_sourceunit_menu;
     int m_isMouseDown;
     NDPoint<2, int> m_lastMousePos, m_lastClickPos;
     DRAG_ACTION m_currAction;
@@ -49,18 +47,6 @@ namespace syn
       m_currAction(NONE),
       IControl(pPlug, pR)
     {
-      m_main_menu.AddItem("Source Units", &m_sourceunit_menu);
-      m_main_menu.AddItem("Units", &m_unit_menu);
-      const vector<string>& unitNames = unitFactory->getPrototypeNames();
-      for (int i = 0; i < unitNames.size(); i++)
-      {
-        m_unit_menu.AddItem(unitNames[i].c_str(), i);
-      }
-      const vector<string>& srcUnitNames = unitFactory->getSourcePrototypeNames();
-      for (int i = 0; i < srcUnitNames.size(); i++)
-      {
-        m_sourceunit_menu.AddItem(srcUnitNames[i].c_str(), i);
-      }
     };
 
     ~CircuitPanel()
@@ -68,8 +54,7 @@ namespace syn
     };
 
     virtual void OnMouseDown(int x, int y, IMouseMod* pMod) override;
-    void createSourceUnit(int factoryid, int x, int y);
-    void createUnit(int factoryid, int x, int y);
+	  void createUnit(string proto_name, int x, int y);
     virtual void OnMouseUp(int x, int y, IMouseMod* pMod) override;
     virtual void OnMouseDrag(int x, int y, int dX, int dY, IMouseMod* pMod) override;
     virtual void OnMouseDblClick(int x, int y, IMouseMod* pMod) override;
@@ -106,6 +91,22 @@ namespace syn
      */
     int unserialize(ByteChunk* serialized, int startPos);
   private:
+	 void generateUnitFactoryMenu(shared_ptr<IPopupMenu> main_menu, vector<shared_ptr<IPopupMenu>>& sub_menus) const {
+		 const set<string>& group_names = m_unitFactory->getGroupNames();
+		 int i = 0;
+		 for (const string& group_name : group_names) {
+			 while (sub_menus.size() <= i)
+				 sub_menus.push_back(make_shared<IPopupMenu>());
+			 main_menu->AddItem(group_name.c_str(), sub_menus[i].get());
+			 const vector<string>& proto_names = m_unitFactory->getPrototypeNames(group_name);
+			 int j = 0;
+			 for(const string& proto_name : proto_names) {				 
+				 sub_menus[i]->AddItem(proto_name.c_str(), j);
+				 j++;
+			 }
+			 i++;
+		 }
+	  }
     /**
      * Serializes the specified UnitControl, including the associated Unit itself
      */

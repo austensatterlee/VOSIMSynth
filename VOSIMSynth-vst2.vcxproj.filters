@@ -141,6 +141,9 @@
     <ClInclude Include="ADSREnvelope.h">
       <Filter>Components\Units</Filter>
     </ClInclude>
+    <ClInclude Include="MathUnits.h">
+      <Filter>Components\Units</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="vst2">

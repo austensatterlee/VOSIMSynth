@@ -42,11 +42,15 @@ namespace syn
 	class UnitParameter
 	{
 	public:
-		UnitParameter(Unit* parent, string name, int id, IParam::EParamType ptype, double min, double max, double defaultValue, double step, double shape = 1, bool isHidden = false, bool canModulate = true);
+		UnitParameter(Unit* parent, string name, int id, IParam::EParamType ptype,
+		              double min, double max, double defaultValue, double step,
+		              double shape = 1, bool isHidden = false, bool canModulate = true);
 
 
 		UnitParameter(const UnitParameter& other) :
-			UnitParameter(other.m_parent, other.m_name, other.m_id, other.getType(), other.getMin(), other.getMax(), other.getDefault(), other.getStep(), other.getShape(), other.isHidden(), other.canModulate())
+			UnitParameter(other.m_parent, other.m_name, other.m_id, other.getType(),
+			              other.getMin(), other.getMax(), other.getDefault(), other.getStep(),
+			              other.getShape(), other.isHidden(), other.canModulate())
 		{
 			mod(other.m_offsetValue, SET);
 		}
@@ -57,63 +61,133 @@ namespace syn
 
 		void mod(double amt, MOD_ACTION action);
 
-		operator double() const {
+		operator double() const
+		{
 			double value = m_value;
-			if (m_type != IParam::kTypeDouble)
-			{
-				value = floor(m_value);
+			if (m_type != IParam::kTypeDouble) {
+				value = m_value<0 ? ceil(m_value) : floor(m_value);
 			}
-			return value; 
+			return value;
 		}
 
-		double getNormalized() const { return ToNormalizedParam(m_value, m_min, m_max, m_shape); }
+		double getNormalized() const
+		{
+			return ToNormalizedParam(m_value, m_min, m_max, m_shape);
+		}
 
 		/// Prepare the parameter for the next sample by resetting to the base value
-		void reset() { m_value = m_offsetValue; }
+		void reset()
+		{
+			mod(m_offsetValue, SET);
+		}
 
-		string getName() const { return m_name; };
+		string getName() const
+		{
+			return m_name;
+		}
 
-		int getId() const { return m_id; };
+		void setName(string new_name)
+		{
+			m_name = new_name;
+		}
 
-		bool isHidden() const {	return m_isHidden; }
+		int getId() const
+		{
+			return m_id;
+		}
 
-		void setHidden(bool a_i) { m_isHidden = a_i; }
+		bool isHidden() const
+		{
+			return m_isHidden;
+		}
 
-		bool canModulate() const { return m_canModulate; }
+		void setHidden(bool a_i)
+		{
+			m_isHidden = a_i;
+		}
 
-		void setCanModulate(bool a_i) { m_canModulate = a_i; }
+		bool canModulate() const
+		{
+			return m_canModulate;
+		}
 
-		IParam::EParamType getType() const { return m_type; }
+		void setCanModulate(bool a_i)
+		{
+			m_canModulate = a_i;
+		}
 
-		double getMin() const { return m_min; }
+		IParam::EParamType getType() const
+		{
+			return m_type;
+		}
 
-		void setMin(int a_i) { m_min = a_i; }
+		void setType(IParam::EParamType new_type);
 
-		double getMax() const { return m_max; }
+		double getMin() const
+		{
+			return m_min;
+		}
 
-		void setMax(int a_i) { m_max = a_i; }
+		void setMin(double a_i)
+		{
+			m_min = a_i;
+		}
 
-		double getDefault() const { return m_default; }
+		double getMax() const
+		{
+			return m_max;
+		}
 
-		double getStep() const { return m_step; }
+		void setMax(double a_i)
+		{
+			m_max = a_i;
+		}
 
-		void setStep(double a_i) { m_step = a_i; }
+		double getDefault() const
+		{
+			return m_default;
+		}
 
-		double getShape() const { return m_shape; }
+		double getStep() const
+		{
+			return m_step;
+		}
 
-		void setShape(double a_i) { m_shape = a_i; }
+		void setStep(double a_i)
+		{
+			m_step = a_i;
+		}
+
+		double getShape() const
+		{
+			return m_shape;
+		}
+
+		void setShape(double a_i)
+		{
+			m_shape = a_i;
+		}
 
 		void setDisplayText(int value, const char* text);
 
 		void getDisplayText(char* r_displayText, bool normalized) const;
 
-		bool isDirty() const { return m_isDirty; }
+		bool isDirty() const
+		{
+			return m_isDirty;
+		}
 
-		void setClean() { m_isDirty = false; }
+		void setClean()
+		{
+			m_isDirty = false;
+		}
 
 		void addConnection(const vector<double>* srcbuffer, MOD_ACTION action);
 
-		int getNumConnections() const { return m_connections.size(); }
+		int getNumConnections() const
+		{
+			return m_connections.size();
+		}
 
 		void pull(int bufind);
 
@@ -122,6 +196,7 @@ namespace syn
 			UnitParameter* other = new UnitParameter(*this);
 			return other;
 		}
+
 	protected:
 		Unit* m_parent;
 		string m_name;

@@ -96,9 +96,8 @@ def GenerateBlimp(intervals=10,resolution=2048,fs=48000,fc=20000,beta=9.,apgain=
     w = ss.kaiser(pts,beta) # window
     apw = 1-apgain*ss.kaiser(pts,apbeta) # apodization window
     window = w*apw
-    window /= window.max()
     blit = window*h # blit
-    blit /= blit.max()
+    # blit /= blit.max()
     if ret_half:
         return blit[len(blit)/2:]
     else:
@@ -184,30 +183,37 @@ def main(pargs):
     prefilter_lhalf=[0.0028,-0.0119,0.0322,-0.0709,0.1375,-0.2544,0.4385,-0.6334,1.7224]
     prefilter=make_symmetric_l(prefilter_lhalf)
 
-    BLIMP_RESOLUTION = 8192
+    offline_res = 2048
+    online_res = 2048
+    online_intervals = 11
+    offline_intervals = 151
     sintable = GenerateSine(2048)
-    pitchtable = PitchTable(16384,-128,128)
+    pitchtable = PitchTable(8192,-128,128)
     blsaw = GenerateBLSaw(2048,1024)
-    blsaw = convolve( prefilter, blsaw, 'same' ) # apply gain to high frequencies
     blsaw /= blsaw.max()
 
-    blimp = GenerateBlimp(10,BLIMP_RESOLUTION,fc=19e3)
-    # blimp = convolve( prefilter, blimp, 'same' ) # apply gain to high frequencies
-    blimp /= blimp.max()
+    blimp_online = GenerateBlimp(online_intervals,online_res,fc=18e3)
+    blimp_offline = GenerateBlimp(offline_intervals,offline_res,fc=19e3)
+
+    blimp_online = convolve( prefilter, blimp_online, 'same' ) # apply gain to high frequencies
+    blimp_offline = convolve( prefilter, blimp_offline, 'same' ) # apply gain to high frequencies
+
+    blimp_online /= blimp_online.max()
+    blimp_offline /= blimp_offline.max()
 
     key_order = {
             "LookupTable":['size','input_min','input_max', 'isPeriodic'],
-            "ResampledLookupTable":['size','blimp']
+            "ResampledLookupTable":['size','blimp_online','blimp_offline'],
+            "BlimpTable":['size','intervals','res']
             }
     tables = [
-            ['BLIMP_TABLE',dict(classname="LookupTable",data=blimp,size=len(blimp))],
+            ['BLIMP_TABLE_OFFLINE',dict(classname="BlimpTable",data=blimp_offline,size=len(blimp_offline),intervals=offline_intervals,res=offline_res)],
+            ['BLIMP_TABLE_ONLINE',dict(classname="BlimpTable",data=blimp_online,size=len(blimp_online),intervals=online_intervals,res=online_res)],
             ['PITCH_TABLE',dict(classname="LookupTable",data=pitchtable,size=len(pitchtable),input_min=-1,input_max=1,isPeriodic=False)],
-            ['BL_SAW',dict(classname="ResampledLookupTable",data=blsaw,size=len(blsaw),blimp="lut_blimp_table")],
-            ['SIN',dict(classname="ResampledLookupTable",data=sintable,size=len(sintable),blimp="lut_blimp_table")],
+            ['BL_SAW',dict(classname="ResampledLookupTable",data=blsaw,size=len(blsaw),blimp_online="lut_blimp_table_online",blimp_offline="lut_blimp_table_offline")],
+            ['SIN',dict(classname="ResampledLookupTable",data=sintable,size=len(sintable),blimp_online="lut_blimp_table_online",blimp_offline="lut_blimp_table_offline")],
             ]
     macrodefines = [
-            ('BLIMP_INTERVALS', (2*len(blimp))/BLIMP_RESOLUTION),
-            ('BLIMP_RES', BLIMP_RESOLUTION),
             ]
 
     # Generate macro defines
@@ -445,7 +451,7 @@ def resample(signal, new_table_size, filt, filt_res, numperiods=1, isperiodic=Tr
             filt_phase += filt_step
             filt_sum += filt_sample
             i+=1
-        newsig[new_index] /= filt_sum
+        newsig[new_index]*=1./filt_sum
         num_taps_used += i-1
         if num_taps_used > max_taps_used:
             max_taps_used = num_taps_used
@@ -454,8 +460,7 @@ def resample(signal, new_table_size, filt, filt_res, numperiods=1, isperiodic=Tr
         if phase >= 1:
             phase -= 1
             currperiod+=1
-    if ratio < 1:
-        newsig *= ratio
+    # newsig *= min(1,siglen*1./newsiglen)
     return newsig
 
 def sinclowpass(signal,fc,winlen=10):

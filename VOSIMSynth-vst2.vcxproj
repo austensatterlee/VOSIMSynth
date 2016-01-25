@@ -156,12 +156,12 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <WarningLevel>Level2</WarningLevel>
+      <WarningLevel>Level1</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>$(VST_DEFS);$(DEBUG_DEFS);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PreprocessToFile>false</PreprocessToFile>
-      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -321,6 +321,7 @@
     <ClInclude Include="Delegate.h" />
     <ClInclude Include="Instrument.h" />
     <ClInclude Include="ITextSlider.h" />
+    <ClInclude Include="MathUnits.h" />
     <ClInclude Include="RandomOscillator.h" />
     <ClInclude Include="SourceUnit.h" />
     <ClInclude Include="Unit.h" />

@@ -69,16 +69,6 @@ namespace syn
 		return param;
 	}
 
-	Unit::Unit(string name) :
-		m_name(name), 
-		m_parent(nullptr),
-		m_Fs(44100.0),
-		m_tempo(120),
-		m_output(1, 0.0),
-		m_bufind(0)
-	{
-	}
-
 	Unit::~Unit()
 	{
 		// delete allocated parameters
@@ -108,7 +98,6 @@ namespace syn
 
 	void Unit::tick()
 	{
-		beginProcessing();
 		for (int i = 0; i < m_output.size(); i++)
 		{
 			for (int j = 0; j < m_params.size(); j++)
@@ -119,10 +108,11 @@ namespace syn
 					m_params[j]->pull(i);
 				}
 			}
+			beginProcessing();
 			process(i);
 			m_bufind = i;
+			finishProcessing();
 		}
-		finishProcessing();
 	}
 
 	int Unit::getParamId(string name)
