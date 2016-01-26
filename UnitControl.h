@@ -48,7 +48,7 @@ namespace syn {
     Unit* m_unit;
     int m_size;
     int m_minsize;
-    const size_t m_nParams;
+    size_t m_nParams;
     int m_x, m_y;
     bool m_is_sink;
     vector<ITextSlider> m_portLabels;

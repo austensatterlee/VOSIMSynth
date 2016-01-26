@@ -24,7 +24,7 @@ namespace syn
 			m_pulse_phase(0.0), m_last_pulse_phase(0),
 			m_unwrapped_pulse_phase(0.0)
 		{
-			m_waveform.setHidden(true);
+			m_waveform.setCanEdit(false);
 			m_waveform.setCanModulate(false);
 		};
 

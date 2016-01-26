@@ -102,13 +102,13 @@ void syn::UnitParameter::getDisplayText(char* r_displayText, bool normalized) co
 	}
 }
 
-void syn::UnitParameter::addConnection(const vector<double>* srcbuffer, MOD_ACTION action) {
+void syn::UnitParameter::addConnection(const vector<UnitSample>* srcbuffer, MOD_ACTION action) {
 	m_connections.push_back({srcbuffer,action});
 }
 
 void syn::UnitParameter::pull(int bufind) {
 	for (int i = 0; i < m_connections.size(); i++) {
-		mod((*m_connections[i].srcbuffer)[bufind], m_connections[i].action);
+		mod((*m_connections[i].srcbuffer)[bufind].getCollapsed(), m_connections[i].action);
 	}
 }
 

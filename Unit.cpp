@@ -35,33 +35,33 @@ namespace syn
 		return u;
 	}
 
-	UnitParameter& Unit::addParam(string name, int id, IParam::EParamType ptype, double min, double max, double defaultValue, double step, double shape, bool isHidden, bool canModulate)
+	UnitParameter& Unit::addParam(string name, int id, IParam::EParamType ptype, double min, double max, double defaultValue, double step, double shape, bool canEdit, bool canModulate)
 	{
 		m_parammap[name] = id;
 		if (m_params.size() <= id)
 			m_params.resize(id + 1);
-		m_params[id] = new UnitParameter(this, name, id, ptype, min, max, defaultValue, step, shape, isHidden, canModulate);
+		m_params[id] = new UnitParameter(this, name, id, ptype, min, max, defaultValue, step, shape, canEdit, canModulate);
 		return *m_params[id];
 	}
 
-	UnitParameter& Unit::addDoubleParam(string name, double min, double max, double defaultValue, double step, double shape, bool isHidden, bool canModulate)
+	UnitParameter& Unit::addDoubleParam(string name, double min, double max, double defaultValue, double step, double shape, bool canEdit, bool canModulate)
 	{
-		return addParam(name, m_params.size(), IParam::kTypeDouble, min, max, defaultValue, step, shape , isHidden, canModulate);
+		return addParam(name, m_params.size(), IParam::kTypeDouble, min, max, defaultValue, step, shape , canEdit, canModulate);
 	}
 
-	UnitParameter& Unit::addIntParam(string name, int min, int max, int defaultValue, double shape, bool isHidden, bool canModulate)
+	UnitParameter& Unit::addIntParam(string name, int min, int max, int defaultValue, double shape, bool canEdit, bool canModulate)
 	{
-		return addParam(name, m_params.size(), IParam::kTypeInt, min, max, defaultValue, 1.0, shape, isHidden, canModulate);
+		return addParam(name, m_params.size(), IParam::kTypeInt, min, max, defaultValue, 1.0, shape, canEdit, canModulate);
 	}
 
 	UnitParameter& Unit::addBoolParam(string name, bool defaultValue)
 	{
-		return addParam(name, m_params.size(), IParam::kTypeInt, 0, 1, defaultValue, 1.0, 1.0, false, false);
+		return addParam(name, m_params.size(), IParam::kTypeInt, 0, 1, defaultValue, 1.0, 1.0, true, false);
 	}
 
 	UnitParameter& Unit::addEnumParam(string name, const vector<string> choice_names, int defaultValue)
 	{
-		UnitParameter& param = addParam(name, m_params.size(), IParam::kTypeEnum, 0, choice_names.size(), defaultValue, 1.0, 1.0, false, false);
+		UnitParameter& param = addParam(name, m_params.size(), IParam::kTypeEnum, 0, choice_names.size(), defaultValue, 1.0, 1.0, true, false);
 		for (int i = 0; i < choice_names.size(); i++)
 		{
 			param.setDisplayText(i, choice_names[i].c_str());

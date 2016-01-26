@@ -35,9 +35,6 @@
     <ClCompile Include="UnitParameter.cpp">
       <Filter>Components\Connectors</Filter>
     </ClCompile>
-    <ClCompile Include="Filter.cpp">
-      <Filter>Components\Units</Filter>
-    </ClCompile>
     <ClCompile Include="Oscillator.cpp">
       <Filter>Components\Units</Filter>
     </ClCompile>

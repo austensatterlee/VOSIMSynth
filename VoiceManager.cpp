@@ -126,7 +126,7 @@ namespace syn
     m_numVoices = 0;
   }
 
-  void VoiceManager::tick(double* buf, size_t bufsize)
+  void VoiceManager::tick(double** buf, size_t bufsize)
   {
     vector<int> garbage_list;
     for (VoiceList::const_iterator v = m_voiceStack.begin(); v != m_voiceStack.end(); v++)
@@ -135,9 +135,10 @@ namespace syn
       if (voice->isActive())
       {
         voice->tick();
-        const vector<double>& voicebuf = voice->getLastOutputBuffer();
+        const vector<UnitSample>& voicebuf = voice->getLastOutputBuffer();
         for (int i = 0; i < voice->getBufSize(); i++) {
-          buf[i] += voicebuf[i];
+			buf[0][i] += voicebuf[i][0];
+			buf[1][i] += voicebuf[i][1];
         }
       }
       else

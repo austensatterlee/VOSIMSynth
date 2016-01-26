@@ -66,7 +66,7 @@ void VOSIMSynth::makeInstrument() {
 	m_unitfactory->addUnitPrototype( "Math",new AccumulatingUnit("Accumulator") );
 	m_unitfactory->addUnitPrototype( "Math", new RectifierUnit("Rectifier") );
 
-	m_voiceManager.setMaxVoices(6, m_instr);
+	m_voiceManager.setMaxVoices(16, m_instr);
 
 	m_MIDIReceiver.noteOn.Connect(&m_voiceManager, &VoiceManager::noteOn);
 	m_MIDIReceiver.noteOff.Connect(&m_voiceManager, &VoiceManager::noteOff);
@@ -74,15 +74,13 @@ void VOSIMSynth::makeInstrument() {
 
 void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) {
 	// Mutex is already locked for us.
-	double* leftOutput = outputs[0];
-	double* rightOutput = outputs[1];
-	memset(leftOutput, 0, nFrames * sizeof(double));
 	for (int s = 0; s < nFrames; s++) {
 		m_MIDIReceiver.advance();
 		m_sampleCount++;
 	}
-	m_voiceManager.tick(leftOutput, nFrames);
-	memcpy(rightOutput, leftOutput, nFrames * sizeof(double));
+	memset(outputs[0], 0, nFrames*sizeof(double));
+	memset(outputs[1], 0, nFrames*sizeof(double));
+	m_voiceManager.tick(outputs, nFrames);
 	m_Oscilloscope->process();
 	m_MIDIReceiver.Flush(nFrames);
 }
@@ -124,7 +122,7 @@ void VOSIMSynth::Reset() {
 	TRACE;
 	IMutexLock lock(this);
 	m_MIDIReceiver.Resize(GetBlockSize());
-	m_voiceManager.onHostReset(GetSampleRate(), GetBlockSize(), GetTempo());
+	m_voiceManager.onHostReset(GetSampleRate(), GetBlockSize(), GetTempo());	
 }
 
 void VOSIMSynth::OnParamChange(int paramIdx) {

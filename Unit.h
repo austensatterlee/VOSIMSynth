@@ -19,8 +19,28 @@ namespace syn
 	enum UNIT_TYPE
 	{
 		STD_UNIT,
-		SOURCE_UNIT,
-		NUM_UNIT_TYPES
+		SOURCE_UNIT
+	};
+
+	struct UnitSample
+	{
+		double output[2];
+		double getCollapsed() const
+		{
+			return 0.5*(output[0] + output[1]);
+		}
+		operator double() const {
+			return getCollapsed();
+		}
+		double& operator[](int index)
+		{
+			return output[index];
+		}
+
+		double operator[](int index) const
+		{
+			return output[index];
+		}
 	};
 
 	/**
@@ -43,7 +63,7 @@ namespace syn
 			m_parent(nullptr),
 			m_Fs(44100.0),
 			m_tempo(120),
-			m_output(1, 0.0),
+			m_output(1, { 0.0,0.0 }),
 			m_bufind(0) {}
 
 		virtual ~Unit();
@@ -68,11 +88,11 @@ namespace syn
 			return m_Fs;
 		};
 
-		const vector<double>& getLastOutputBuffer() const {
+		const vector<UnitSample>& getLastOutputBuffer() const {
 			return m_output;
 		};
 
-		double getLastOutput() const {
+		UnitSample getLastOutput() const {
 			return m_output[m_bufind];
 		};
 
@@ -126,12 +146,12 @@ namespace syn
 		string m_name;
 		Circuit* m_parent;
 		double m_Fs, m_tempo;
-		vector<double> m_output;
+		vector<UnitSample> m_output;
 		int m_bufind;
 		virtual void process(int bufind) = 0; // should add its result to m_output[bufind]
-		UnitParameter& addParam(string name, int id, IParam::EParamType ptype, double min, double max, double defaultValue, double step, double shape = 1.0, bool isHidden = false, bool canModulate = true);
-		UnitParameter& addDoubleParam(string name, double min, double max, double defaultValue, double step, double shape = 1.0, bool isHidden = false, bool canModulate = true);
-		UnitParameter& addIntParam(string name, int min, int max, int defaultValue, double shape = 1.0, bool isHidden = false, bool canModulate = true);
+		UnitParameter& addParam(string name, int id, IParam::EParamType ptype, double min, double max, double defaultValue, double step, double shape = 1.0, bool canEdit = true, bool canModulate = true);
+		UnitParameter& addDoubleParam(string name, double min = 0, double max = 1, double defaultValue = 0, double step = 1e-2, double shape = 1.0, bool canEdit = true, bool canModulate = true);
+		UnitParameter& addIntParam(string name, int min, int max, int defaultValue, double shape = 1.0, bool canEdit = true, bool canModulate = true);
 		UnitParameter& addBoolParam(string name, bool defaultValue);
 		UnitParameter& addEnumParam(string name, const vector<string> choice_names, int defaultValue);
 		virtual void onSampleRateChange(double newfs) = 0;

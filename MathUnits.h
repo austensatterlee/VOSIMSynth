@@ -13,8 +13,8 @@ namespace syn
 	{
 	public:
 		RectifierUnit(const string& name) :
-			Unit(name), m_input(addDoubleParam("input", -1, 1, 0.0, 1e-3, 1.0, true, true)),
-			m_gain(addDoubleParam("gain", -1, 1, 0.5, 1e-3)) {}
+			Unit(name), m_input(addDoubleParam("input", -1, 1, 0.0, 1e-3, 1.0, false, true)),
+			m_gain(addDoubleParam("gain", 0, 1, 0.0, 1e-3)) {}
 
 		RectifierUnit(const RectifierUnit& other) :
 			RectifierUnit(other.m_name) {}
@@ -23,7 +23,9 @@ namespace syn
 	protected:
 		void process(int bufind) override
 		{
-			m_output[bufind] = abs(m_input) * m_gain;
+			double output = abs(m_input) * m_gain;
+			m_output[bufind][0] = output;
+			m_output[bufind][1] = output;
 		};
 
 		void onSampleRateChange(double newfs) override {};
@@ -57,7 +59,9 @@ namespace syn
 
 		void process(int bufind) override
 		{
-			m_output[bufind] = m_input * m_gain;
+			double output = m_input * m_gain;
+			m_output[bufind][0] = output;
+			m_output[bufind][1] = output;
 		}
 
 		void onSampleRateChange(double newfs) override {};

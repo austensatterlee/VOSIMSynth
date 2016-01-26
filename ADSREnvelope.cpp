@@ -54,7 +54,9 @@ namespace syn
 				m_phase = 1.0;
 			}
 		}
-		m_output[bufind] = LERP(m_initial, m_target, m_phase);
+		double output = LERP(m_initial, m_target, m_phase);
+		m_output[bufind][0] = output;
+		m_output[bufind][1] = output;
 	}
 
 	void ADSREnvelope::noteOn(int pitch, int vel) {
@@ -84,7 +86,7 @@ namespace syn
 		SourceUnit(name),
 		m_attack(addDoubleParam("attack", 0.0, 1.0, 0.001, 1e-3)),
 		m_decay(addDoubleParam("decay", 0.0, 1.0, 0.001, 1e-3)),
-		m_sustain(addDoubleParam("sustain", 0.0, 1.0, 1.0, 1e-3, 2)),
+		m_sustain(addDoubleParam("sustain", 0.0, 1.0, 1.0, 1e-3)),
 		m_release(addDoubleParam("release", 0.0, 1.0, 0.001, 1e-3)),
 		m_phase(0),
 		m_currStage(ATTACK), 

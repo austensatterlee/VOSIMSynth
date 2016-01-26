@@ -354,7 +354,6 @@
     <ClCompile Include="Unit.cpp" />
     <ClCompile Include="Envelope.cpp" />
     <ClCompile Include="EnvelopeEditor.cpp" />
-    <ClCompile Include="Filter.cpp" />
     <ClCompile Include="Oscilloscope.cpp" />
     <ClCompile Include="tables.cpp" />
     <ClCompile Include="UnitControl.cpp" />

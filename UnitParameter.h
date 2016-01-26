@@ -5,7 +5,6 @@
 #include "IParam.h"
 #include "Containers.h"
 
-#include <string>
 #include <vector>
 #include <map>
 
@@ -26,9 +25,12 @@ namespace syn
 		NUM_MOD_ACTIONS
 	};
 
+	// forward declaration
+	struct UnitSample;
+
 	struct Connection
 	{
-		const vector<double>* srcbuffer;
+		const vector<UnitSample>* srcbuffer;
 		MOD_ACTION action;
 
 		bool operator==(const Connection& other) const
@@ -50,7 +52,7 @@ namespace syn
 		UnitParameter(const UnitParameter& other) :
 			UnitParameter(other.m_parent, other.m_name, other.m_id, other.getType(),
 			              other.getMin(), other.getMax(), other.getDefault(), other.getStep(),
-			              other.getShape(), other.isHidden(), other.canModulate())
+			              other.getShape(), other.canEdit(), other.canModulate())
 		{
 			mod(other.m_offsetValue, SET);
 		}
@@ -96,12 +98,12 @@ namespace syn
 			return m_id;
 		}
 
-		bool isHidden() const
+		bool canEdit() const
 		{
 			return m_isHidden;
 		}
 
-		void setHidden(bool a_i)
+		void setCanEdit(bool a_i)
 		{
 			m_isHidden = a_i;
 		}
@@ -182,7 +184,7 @@ namespace syn
 			m_isDirty = false;
 		}
 
-		void addConnection(const vector<double>* srcbuffer, MOD_ACTION action);
+		void addConnection(const vector<UnitSample>* srcbuffer, MOD_ACTION action);
 
 		int getNumConnections() const
 		{

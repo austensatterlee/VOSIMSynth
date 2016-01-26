@@ -47,7 +47,7 @@ namespace syn
 		int getNumVoices() const { return m_numVoices; };
 		int getMaxVoices() const { return m_maxVoices; };
 		void modifyParameter(int uid, int pid, double val, MOD_ACTION action);
-		void tick(double* buf, size_t bufsize);
+		void tick(double** buf, size_t bufsize);
 
 		VoiceManager() :
 			m_numVoices(0), m_maxVoices(0), m_instrument(nullptr)

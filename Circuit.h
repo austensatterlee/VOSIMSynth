@@ -87,7 +87,7 @@ namespace syn
     bool hasUnit(string name) const;
     bool hasUnit(int uid) const;
     double getLastOutput() const { return m_units.at(m_sinkId)->getLastOutput(); };
-    const vector<double>& getLastOutputBuffer() const { return m_units.at(m_sinkId)->getLastOutputBuffer(); };
+    const vector<UnitSample>& getLastOutputBuffer() const { return m_units.at(m_sinkId)->getLastOutputBuffer(); };
     const vector<ConnectionMetadata>& getConnectionsTo(int unitid) const;
   protected:
     typedef  unordered_map<int, Unit*> UnitVec;

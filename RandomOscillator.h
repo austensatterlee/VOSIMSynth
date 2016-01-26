@@ -1,6 +1,7 @@
 #pragma once
 #include <random>
 #include "DSPMath.h"
+#include "SourceUnit.h"
 using namespace std;
 
 namespace syn
@@ -31,7 +32,8 @@ namespace syn
 		void process(int bufind) override {
 			m_curr = m_next;
 			m_next = 69069 * m_next + 1;
-			m_output[bufind] = m_next;
+			m_output[bufind][0] = m_next;
+			m_output[bufind][1] = m_next;
 		}
 
 		void onSampleRateChange(double newfs) override { }

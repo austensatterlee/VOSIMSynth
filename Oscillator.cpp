@@ -54,7 +54,8 @@ namespace syn
 	}
 
 	void Oscillator::finishProcessing() {
-		m_output[m_bufind] *= m_gain;
+		m_output[m_bufind][0] = m_output[m_bufind][0]*m_gain;
+		m_output[m_bufind][1] = m_output[m_bufind][1]*m_gain;
 	}
 
 	void Oscillator::update_step() {
@@ -102,7 +103,8 @@ namespace syn
 		double output;
 		int shape = m_waveform;
 		output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period);
-		m_output[bufind] = output*m_velocity;
+		m_output[bufind][0] = output*m_velocity;
+		m_output[bufind][1] = output*m_velocity;
 	}
 
 	void LFOOscillator::onTempoChange(double newtempo) {
@@ -113,21 +115,22 @@ namespace syn
 		double output;
 		int shape = m_waveform;
 		output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period);
-		m_output[bufind] = output;
+		m_output[bufind][0] = output;
+		m_output[bufind][1] = output;
 	}
 
 	void LFOOscillator::update_step() {
 		// Switch between rate and frequency parameters depending on the useBPM switch
 		if(m_useBPM.isDirty()) {
 			if(m_useBPM) {
-				m_freq_param.setHidden(true);
+				m_freq_param.setCanEdit(false);
 				m_freq_param.setCanModulate(false);
-				m_rate.setHidden(false);
+				m_rate.setCanEdit(true);
 				m_rate.setCanModulate(true);
 			}else {
-				m_freq_param.setHidden(false);
+				m_freq_param.setCanEdit(true);
 				m_freq_param.setCanModulate(true);
-				m_rate.setHidden(true);
+				m_rate.setCanEdit(false);
 				m_rate.setCanModulate(false);
 			}
 		}

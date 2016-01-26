@@ -48,7 +48,7 @@ namespace syn
     const Unit* currInput = getSourceUnit();
     const SourceUnit* currTrigger = getTriggerUnit();
     if(currInput==nullptr || currTrigger==nullptr) return;
-    const vector<double>& srcbuffer = currInput->getLastOutputBuffer();
+    const vector<UnitSample>& srcbuffer = currInput->getLastOutputBuffer();
     if (m_inputRingBuffer.size() <= srcbuffer.size())
     {
       setPeriod(srcbuffer.size());

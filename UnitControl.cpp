@@ -15,7 +15,7 @@ namespace syn
 		m_is_sink(false) {
 		for (int i = 0; i < m_nParams; i++) {
 			m_portLabels.push_back(ITextSlider(pPlug, vm, IRECT{0,0,0,0}, unit->getParent().getUnitId(unit), i));
-		}
+		};
 		m_ports.resize(m_nParams);
 		resize(size);
 	}
@@ -74,12 +74,16 @@ namespace syn
 
 		int portY = m_y + 20;
 		int rowsize = (newsize - 30) / double(m_nParams);
+		m_nParams = 0;
 		for (int i = 0; i < paramNames.size(); i++) {
-			IRECT port_label_irect{ m_x + 30 ,portY, m_x + newsize,portY + 10 };
-			m_portLabels[i].setRECT(port_label_irect);
-			m_ports[i].add_rect = IRECT{ m_x, portY, m_x + 10, portY + 10 };
-			m_ports[i].scale_rect = IRECT{ m_x + 12, portY, m_x + 22, portY + 10 };
-			portY += rowsize;
+			if (m_unit->getParam(i).canModulate() || m_unit->getParam(i).canEdit()) {
+				IRECT port_label_irect{ m_x + 30 ,portY, m_x + newsize,portY + 10 };
+				m_portLabels[i].setRECT(port_label_irect);
+				m_ports[i].add_rect = IRECT{ m_x, portY, m_x + 10, portY + 10 };
+				m_ports[i].scale_rect = IRECT{ m_x + 12, portY, m_x + 22, portY + 10 }; 
+				m_nParams++;
+				portY += rowsize;
+			}
 		}
 		SetTargetArea(mRECT);
 		m_minsize = 10 * m_nParams + 40;
@@ -134,16 +138,15 @@ namespace syn
 			}
 			// Draw user control
 			sprintf(strbuf, "%s", paramNames[i].c_str());
-			if (!m_unit->getParam(i).isHidden()) {
+			if (m_unit->getParam(i).canEdit()) {
 				m_portLabels[i].Draw(pGraphics);
 				updateMinSize(m_portLabels[i].getMinSize() + m_ports[i].add_rect.W() + m_ports[i].scale_rect.W() + 20);
-			} else {
+			} else if(m_unit->getParam(i).canModulate()) {
 				pGraphics->DrawIText(&textfmt, strbuf, m_portLabels[i].GetRECT());
 			}
 
 			// Resize if too small
-			if (m_size < getMinSize())
-				resize(getMinSize());
+			resize(m_size);
 		}
 		return true;
 	}
@@ -190,7 +193,7 @@ namespace syn
 	int UnitControl::getSelectedParam(int x, int y) {
 		int selectedParam = -1;
 		for (int i = 0; i < m_portLabels.size(); i++) {
-			if (m_unit->getParam(i).isHidden())
+			if (!m_unit->getParam(i).canEdit())
 				continue;
 			if (m_portLabels[i].GetRECT()->Contains(x, y)) {
 				selectedParam = i;

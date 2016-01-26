@@ -35,11 +35,11 @@ namespace syn
 			paramname << "target" << i;
 			if (i == numSegments - 1)
 			{
-				target = addDoubleParam(paramname.str(), 0.0, 1.0, 0, 1e-3, 2).getId();
+				target = addDoubleParam(paramname.str(), 0.0, 1.0, 0, 1e-3).getId();
 			}
 			else
 			{
-				target = addDoubleParam(paramname.str(), 0.0, 1.0, 1, 1e-3, 2).getId();
+				target = addDoubleParam(paramname.str(), 0.0, 1.0, 1, 1e-3).getId();
 			}
 
 			m_segments.push_back(new EnvelopeSegment(this, period, target));
@@ -121,8 +121,9 @@ namespace syn
 		double prevamp = currSeg.prev_amp;
 		double targetamp = currSeg.target_amp();
 		double output = LERP(prevamp, targetamp, m_phase);
-		
-		m_output[bufind] = output;
+
+		m_output[bufind][0] = output;
+		m_output[bufind][1] = output;
 	}
 
 	void Envelope::setSegment(int seg)

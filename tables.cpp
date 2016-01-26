@@ -4,12 +4,12 @@
 namespace syn
 {
 	LookupTable::LookupTable(const double* table, int size, double input_min, double input_max, bool isPeriodic):
-		m_table(table),
 		m_size(size),
-		m_isperiodic(isPeriodic) {
+		m_isperiodic(isPeriodic),
+		m_table(table) {
 		m_norm_bias = input_min;
 		m_norm_scale = 1. / (input_max - input_min);
-		m_normalizePhase = (m_norm_bias != 0 && m_norm_scale != 1);
+		m_normalizePhase = !(input_min == 0 && input_max == 1);
 		/* Construct difference table for linear interpolation */
 		m_diff_table = new double[size];
 		for (int i = 0; i < size - 1; i++) {

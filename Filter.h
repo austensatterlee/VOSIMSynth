@@ -24,7 +24,7 @@ namespace syn
 	public:
 		Filter(string name, const double (&X)[nX], const double (&Y)[nY]) :
 			Unit(name),
-			m_input(addDoubleParam("input", -1, 1, 0, 0, 1.0, true, true)) {
+			m_input(addDoubleParam("input", -1, 1, 0, 0)) {
 			memcpy(XCoefs, X, sizeof(double));
 			memcpy(YCoefs, Y, sizeof(double));
 			reset();
@@ -86,7 +86,8 @@ namespace syn
 		yBufInd++;
 		if (yBufInd == nY)
 			yBufInd = 0;
-		m_output[bufind] = *output;
+		m_output[bufind][0] = *output;
+		m_output[bufind][1] = *output;
 	}
 }
 #endif
