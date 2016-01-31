@@ -100,6 +100,7 @@ namespace syn
 	{
 		for (int i = 0; i < m_output.size(); i++)
 		{
+			beginProcessing();
 			for (int j = 0; j < m_params.size(); j++)
 			{
 				m_params[j]->reset();
@@ -108,7 +109,6 @@ namespace syn
 					m_params[j]->pull(i);
 				}
 			}
-			beginProcessing();
 			process(i);
 			m_bufind = i;
 			finishProcessing();

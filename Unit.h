@@ -139,6 +139,9 @@ namespace syn
 		}
 
 		Unit* clone() const;
+
+		/// Called when the user changes a parameter
+		virtual void onParamChange(const UnitParameter* param) {};
 	protected:
 		typedef vector<UnitParameter*> ParamVec;
 		ParamVec m_params;

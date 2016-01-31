@@ -50,12 +50,6 @@ namespace syn
 		LookupTable(table, size, 0, 1, true),
 		m_blimp_table(blimp_table_online)
 	{
-		/*m_num_resampled_tables = 1;
-		m_resampled_tables = static_cast<double**>(malloc(sizeof(double*)));
-		m_resampled_tables[0] = static_cast<double*>(malloc(m_size*sizeof(double)));
-		memcpy(m_resampled_tables[0], m_table, m_size*sizeof(double));
-		m_resampled_sizes = static_cast<int*>(malloc(sizeof(int) * 1));
-		m_resampled_sizes[0] = m_size;*/
 		resample_tables(blimp_table_offline);
 	}
 
@@ -63,11 +57,12 @@ namespace syn
 	{
 		/* Construct resampled tables at ratios of powers of two */
 		m_num_resampled_tables = MAX(1, log2(m_size) - 3);
-		m_resampled_tables = new double*[m_num_resampled_tables];
+		m_resampled_tables = static_cast<double**>(malloc(sizeof(double*)*m_num_resampled_tables));
 		m_resampled_sizes = new int[m_num_resampled_tables];
 		double currsize = m_size;
 		for (int i = 0; i < m_num_resampled_tables; i++) {
-			m_resampled_tables[i] = new double[currsize];
+			int table_size = static_cast<size_t>(currsize);
+			m_resampled_tables[i] = static_cast<double*>( malloc(sizeof(double)*table_size) );
 			m_resampled_sizes[i] = currsize;
 			resample_table(m_table, m_size, m_resampled_tables[i], currsize, blimp_table_offline);
 			currsize *= 0.5;
@@ -78,7 +73,6 @@ namespace syn
 		int min_size_diff = -1;
 		int min_size_diff_index = 0;
 		int curr_size_diff;
-		phase = WRAP(phase, 1.0);
 		for (int i = 0; i < m_num_resampled_tables; i++) {
 			curr_size_diff = m_resampled_sizes[i] - static_cast<int>(period);
 			if (curr_size_diff < 0) {

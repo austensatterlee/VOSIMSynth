@@ -37,6 +37,7 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 
 void VOSIMSynth::makeGraphics() {
 	pGraphics = MakeGraphics(this, kWidth, kHeight);
+	pGraphics->HandleMouseOver(true);
 	IColor bg_color = COLOR_BLACK;
 	pGraphics->AttachPanelBackground(&bg_color);
 
@@ -58,13 +59,16 @@ void VOSIMSynth::makeGraphics() {
 void VOSIMSynth::makeInstrument() {
 	m_instr = new Instrument();
 	m_unitfactory = new UnitFactory();
-	m_unitfactory->addUnitPrototype( "Generators", new VosimOscillator("Osc.VOSIM") );
-	m_unitfactory->addUnitPrototype( "Generators", new BasicOscillator("Osc.Basic") );
+	m_unitfactory->addUnitPrototype( "Generators", new VosimOscillator("VOSIM") );
+	m_unitfactory->addUnitPrototype( "Generators", new BasicOscillator("Basic") );
+	m_unitfactory->addUnitPrototype( "Generators", new FormantOscillator("Formant"));
 	m_unitfactory->addUnitPrototype( "Modulators",new Envelope("Envelope") );
 	m_unitfactory->addUnitPrototype( "Modulators",new ADSREnvelope("ADSREnvelope") );
-	m_unitfactory->addUnitPrototype( "Modulators", new LFOOscillator("Osc.LFO") );
-	m_unitfactory->addUnitPrototype( "Math",new AccumulatingUnit("Accumulator") );
+	m_unitfactory->addUnitPrototype( "Modulators", new LFOOscillator("LFO") );
+	m_unitfactory->addUnitPrototype( "Math",new PanningUnit("Panner") );
 	m_unitfactory->addUnitPrototype( "Math", new RectifierUnit("Rectifier") );
+	m_unitfactory->addUnitPrototype( "Math", new InvertingUnit("Inverter"));
+	//m_unitfactory->addUnitPrototype( "Math", new MemoryUnit("Memory"));
 
 	m_voiceManager.setMaxVoices(16, m_instr);
 
@@ -80,6 +84,7 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
 	}
 	memset(outputs[0], 0, nFrames*sizeof(double));
 	memset(outputs[1], 0, nFrames*sizeof(double));
+	m_voiceManager.onHostReset(GetSampleRate(), GetBlockSize(), GetTempo());
 	m_voiceManager.tick(outputs, nFrames);
 	m_Oscilloscope->process();
 	m_MIDIReceiver.Flush(nFrames);
@@ -122,7 +127,7 @@ void VOSIMSynth::Reset() {
 	TRACE;
 	IMutexLock lock(this);
 	m_MIDIReceiver.Resize(GetBlockSize());
-	m_voiceManager.onHostReset(GetSampleRate(), GetBlockSize(), GetTempo());	
+	m_voiceManager.onHostReset(GetSampleRate(), GetBlockSize(), GetTempo());
 }
 
 void VOSIMSynth::OnParamChange(int paramIdx) {

@@ -13,7 +13,7 @@ namespace syn
 		case ATTACK:
 			segment_time = m_attack;
 			m_initial = 0;
-			m_target = m_decay>0 ? 1 : static_cast<double>(m_sustain); // skip decay segment if its length is zero
+			m_target = static_cast<bool>(m_decay)? 1 : static_cast<double>(m_sustain); // skip decay segment if its length is zero
 			break;
 		case DECAY:
 			segment_time = m_decay;

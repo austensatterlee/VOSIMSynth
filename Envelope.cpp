@@ -29,7 +29,6 @@ namespace syn
 			paramname.clear();
 			paramname << "period" << i;
 			period = addDoubleParam(paramname.str(), MIN_ENV_PERIOD, 2.0, MIN_ENV_PERIOD, 1e-3).getId();
-			getParam(period).mod(MIN_ENV_PERIOD, SET);
 			paramname.str("");
 			paramname.clear();
 			paramname << "target" << i;
@@ -63,13 +62,18 @@ namespace syn
 		}
 	}
 
+	void Envelope::onParamChange(const UnitParameter* param)
+	{
+		if(param == &m_segments[m_currSegment]->period()){
+			updateSegment(m_currSegment);
+		}			
+	}
+
 	void Envelope::updateSegment(int segment)
 	{
-		if (m_segments[segment]->period().isDirty() || m_fsIsDirty)
-		{
-			m_segments[segment]->step = 1. / (m_Fs * (m_segments[segment]->period()));
-			m_segments[segment]->period().setClean();
-		}
+
+		m_segments[segment]->step = 1. / (m_Fs * (m_segments[segment]->period()));
+
 		if (m_phase == 0)
 		{
 			if (segment == 0)
@@ -90,7 +94,6 @@ namespace syn
 
 	void Envelope::process(int bufind)
 	{
-		updateSegment(m_currSegment);
 		EnvelopeSegment& currseg = *m_segments[m_currSegment];
 		bool hasHitSetpoint = (currseg.is_increasing && getLastOutput() >= currseg.target_amp()) ||
 			(!currseg.is_increasing && getLastOutput() <= currseg.target_amp());
@@ -138,12 +141,10 @@ namespace syn
 	void Envelope::onSampleRateChange(double newfs)
 	{
 		m_Fs = newfs;
-		m_fsIsDirty = true;
 		for (int i = 0; i < m_numSegments; i++)
 		{
 			updateSegment(i);
 		}
-		m_fsIsDirty = false;
 	}
 
 	void Envelope::noteOn(int pitch, int vel)

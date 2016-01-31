@@ -50,7 +50,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <WholeProgramOptimization>FastLTCG</WholeProgramOptimization>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
@@ -219,6 +219,9 @@
       <FloatingPointExceptions>false</FloatingPointExceptions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BrowseInformation>true</BrowseInformation>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -228,6 +231,7 @@
       <AdditionalDependencies>libfftw3-3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <Profile>true</Profile>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <CustomBuildStep>
       <Command>doxygen</Command>
@@ -324,6 +328,7 @@
     <ClInclude Include="MathUnits.h" />
     <ClInclude Include="RandomOscillator.h" />
     <ClInclude Include="SourceUnit.h" />
+    <ClInclude Include="table_data.h" />
     <ClInclude Include="Unit.h" />
     <ClInclude Include="DSPMath.h" />
     <ClInclude Include="Envelope.h" />
@@ -350,6 +355,7 @@
     <ClCompile Include="Circuit.cpp" />
     <ClCompile Include="CircuitPanel.cpp" />
     <ClCompile Include="Instrument.cpp" />
+    <ClCompile Include="ITextSlider.cpp" />
     <ClCompile Include="OscilloscopeTransforms.cpp" />
     <ClCompile Include="Unit.cpp" />
     <ClCompile Include="Envelope.cpp" />
@@ -363,7 +369,6 @@
     <ClCompile Include="VOSIMSynth.cpp" />
     <ClCompile Include="MIDIReceiver.cpp" />
     <ClCompile Include="Oscillator.cpp" />
-    <ClCompile Include="table_data.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="VOSIMSynth.rc" />

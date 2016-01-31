@@ -61,12 +61,11 @@ namespace syn
      */
     bool addConnection(string srcname, string targetname, string pname, MOD_ACTION action);
     bool addConnection(ConnectionMetadata c);
+	void removeConnection(ConnectionMetadata c);
     /**
      * \brief Manually modify a Unit's parameter
      */
     void modifyParameter(int uid, int param, double val, MOD_ACTION action);
-    void modifyParameter(string uname, string param, double val, MOD_ACTION action);
-    double readParam(int uid, int param);
     UnitParameter& getParameter(int uid, int param) {return m_units[uid]->getParam(param); }
 
     vector<tuple<string, string>> getParameterNames();

@@ -66,6 +66,36 @@ def MinimumPhase(n,realCepstrum):
     minimumPhase = realTime
     return minimumPhase
 
+def DSF(f0, fm, a, N, pts=None):
+    """
+    Digital summation formula.
+
+    @returns $sum_{n=1}^{N} a^n sin(2\pi f0 t + 2\pi n fm t)$
+
+    """
+    pts = pts or 2*N
+    # phase_shift = 2*pi*f0*arange(pts)*1.0/(pts)
+    phase_shift = 2*pi*f0
+    phases = 2*pi*fm*arange(pts)*1.0/(pts)
+    numerator = sin(phase_shift)-a*sin(phase_shift-phases)-a**(N+1)*(sin(phase_shift+(N+1)*phases)-a*sin(phase_shift+N*phases))
+    denominator = 1 + a**2 - 2*a*cos(phases)
+    result = numerator / denominator
+    result[where(denominator)==0]=1.0
+    return result/result.max()
+
+def GenerateBlit(pts,nharmonics=None):
+    """
+    Generate a band-limited impulse train using the FFT
+
+    """
+    pts = (pts*2)/2+1
+    nharmonics = nharmonics or pts/2
+    blit_spectrum = zeros(pts,dtype=complex128)
+    blit_spectrum[:nharmonics] = 1.0*1j
+    blit = fft.fftshift(fft.irfft(blit_spectrum))
+    blit = blit/blit.max()
+    return blit
+
 def GenerateBLSaw(pts,nharmonics=None):
     """ Generate band limited sawtooth wave """
     nfft = pts
@@ -96,12 +126,12 @@ def GenerateBlimp(intervals=10,resolution=2048,fs=48000,fc=20000,beta=9.,apgain=
     w = ss.kaiser(pts,beta) # window
     apw = 1-apgain*ss.kaiser(pts,apbeta) # apodization window
     window = w*apw
-    blit = window*h # blit
-    # blit /= blit.max()
+    blimp = window*h # blimp
+    # blimp /= blimp.max()
     if ret_half:
-        return blit[len(blit)/2:]
+        return blimp[len(blimp)/2:]
     else:
-        return blit
+        return blimp
 
 def GenerateMinBLEP(nZeroCrossings, nOverSampling):
     n = (nZeroCrossings * 2 * nOverSampling) + 1
@@ -148,6 +178,11 @@ def PitchTable(n,notestart=0,notefinish=128):
     N = linspace(notestart,notefinish,n)
     return 440*2**((N-69.)/12.)
 
+def InvPitchTable(pitchtable):
+    invpitchlen = ceil(len(pitchtable)*1./min(diff(pitchtable)))
+    invpitchtable = arange(invpitchlen)[1:]*1./invpitchlen*max(pitchtable)
+    return log2(invpitchtable)
+
 def rewriteAutomatedSection(full_text,tag,replacement_text):
     """
     Finds a portion of text surrounded by:
@@ -177,110 +212,6 @@ def make_symmetric_r(right_half):
 def make_symmetric_l(left_half):
     right_half = list(reversed(left_half))
     return hstack([left_half[:-1],right_half])
-
-def main(pargs):
-    v = pargs.verbose
-    prefilter_lhalf=[0.0028,-0.0119,0.0322,-0.0709,0.1375,-0.2544,0.4385,-0.6334,1.7224]
-    prefilter=make_symmetric_l(prefilter_lhalf)
-
-    offline_res = 2048
-    online_res = 2048
-    online_intervals = 11
-    offline_intervals = 151
-    sintable = GenerateSine(2048)
-    pitchtable = PitchTable(8192,-128,128)
-    blsaw = GenerateBLSaw(2048,1024)
-    blsaw /= blsaw.max()
-
-    blimp_online = GenerateBlimp(online_intervals,online_res,fc=18e3)
-    blimp_offline = GenerateBlimp(offline_intervals,offline_res,fc=19e3)
-
-    blimp_online = convolve( prefilter, blimp_online, 'same' ) # apply gain to high frequencies
-    blimp_offline = convolve( prefilter, blimp_offline, 'same' ) # apply gain to high frequencies
-
-    blimp_online /= blimp_online.max()
-    blimp_offline /= blimp_offline.max()
-
-    key_order = {
-            "LookupTable":['size','input_min','input_max', 'isPeriodic'],
-            "ResampledLookupTable":['size','blimp_online','blimp_offline'],
-            "BlimpTable":['size','intervals','res']
-            }
-    tables = [
-            ['BLIMP_TABLE_OFFLINE',dict(classname="BlimpTable",data=blimp_offline,size=len(blimp_offline),intervals=offline_intervals,res=offline_res)],
-            ['BLIMP_TABLE_ONLINE',dict(classname="BlimpTable",data=blimp_online,size=len(blimp_online),intervals=online_intervals,res=online_res)],
-            ['PITCH_TABLE',dict(classname="LookupTable",data=pitchtable,size=len(pitchtable),input_min=-1,input_max=1,isPeriodic=False)],
-            ['BL_SAW',dict(classname="ResampledLookupTable",data=blsaw,size=len(blsaw),blimp_online="lut_blimp_table_online",blimp_offline="lut_blimp_table_offline")],
-            ['SIN',dict(classname="ResampledLookupTable",data=sintable,size=len(sintable),blimp_online="lut_blimp_table_online",blimp_offline="lut_blimp_table_offline")],
-            ]
-    macrodefines = [
-            ]
-
-    # Generate macro defines
-    macrodefine_code = ""
-    for macroname,macroval in macrodefines:
-        line = "#define {} {}".format(macroname, macroval)
-        macrodefine_code += line + "\n"
-    # Generate lookup table structures
-    tabledata_def = ""
-    tabledata_decl = ""
-    tableobj_def = ""
-    for name,struct in tables:
-        tabledata_def += MakeTableStr(struct['data'],name)
-        tabledata_decl += "extern const double {}[{}];\n".format(name,len(struct['data']))
-
-        currargs = []
-        classname = struct["classname"]
-        for k in key_order[classname]:
-            if k not in struct:
-                continue
-            if k=="data":
-                continue
-            if k=="classname":
-                continue
-            val = struct[k]
-            if type(val)==bool:
-                val = "true" if val else "false"
-            currargs.append("{}".format(val))
-        tableargs = "{}, ".format(name)+", ".join(currargs)
-        tableobj_currdef = "const {} lut_{}({});\n".format(classname,name.lower(),tableargs);
-        tableobj_def += tableobj_currdef
-
-    if os.path.isfile("table_data.cpp"):
-        if v:
-            print "Backing up old table_data.cpp..."
-        old_table_data = open('table_data.cpp','r').read()
-        with open('table_data.cpp.bk','w') as fp:
-            fp.write(old_table_data)
-
-    if v:
-        print "Writing new table_data.cpp..."
-    with open('table_data.cpp','w') as fp:
-        fp.write("#include \"tables.h\"\n")
-        fp.write("namespace syn {\n")
-        fp.write(tabledata_def)
-        fp.write("\n}\n")
-
-    if os.path.isfile("tables.h"):
-        if v:
-            print "Backing up old tables.h..."
-        old_code = open('tables.h','r').read()
-        with open('tables.h.bk','w') as fp:
-            fp.write(old_code)
-    if v:
-        print "Writing new tables.h..."
-    new_code = rewriteAutomatedSection(old_code,'lut_defs', tabledata_decl+'\n'+tableobj_def)
-    new_code = rewriteAutomatedSection(new_code,'macro_defs', macrodefine_code)
-    with open('tables.h', 'w') as fp:
-        fp.write(new_code)
-
-if __name__=="__main__":
-    import argparse as ap
-    psr = ap.ArgumentParser()
-    psr.add_argument("-v","--verbose",action="store_true")
-    pargs = psr.parse_args()
-
-    main(pargs)
 
 """Tools"""
 def magspec(signal, pts=None, fs=None, logscale=True, **kwargs):
@@ -481,9 +412,133 @@ def sinclowpass(signal,fc,winlen=10):
             newsignal[m] += signal[k]*sincfir[m-n+winlen]
     return newsignal*fc
 
-
 def genApodWindow(pts,beta,apgain,apbeta):
     w = ss.kaiser(pts,beta) # window
     apw = 1-apgain*ss.kaiser(pts,apbeta) # apodization window
     W = w*apw
     return W
+
+def normalize_power(signal):
+    signal_norm = signal/sqrt(sum(signal**2))*sqrt(0.5)
+    return signal_norm
+
+def main(pargs):
+    v = pargs.verbose
+    prefilter_lhalf=[0.0028,-0.0119,0.0322,-0.0709,0.1375,-0.2544,0.4385,-0.6334,1.7224]
+    prefilter=make_symmetric_l(prefilter_lhalf)
+
+    offline_intervals = 512
+    offline_res = 128
+
+    online_intervals = 10
+    online_res = 8192
+
+    sintable = GenerateSine(8192)
+    pitchtable = PitchTable(2048,0,128)
+
+    blsaw = GenerateBLSaw(2048,1024)
+    blsaw /= blsaw.max()
+
+    blimp_online = GenerateBlimp(online_intervals,online_res,fc=20e3)
+    blimp_offline = GenerateBlimp(offline_intervals,offline_res,fc=20e3)
+
+    blimp_online = convolve( prefilter, blimp_online, 'same' ) # apply gain to high frequencies
+    blimp_offline = convolve( prefilter, blimp_offline, 'same' ) # apply gain to high frequencies
+
+    blimp_online /= blimp_online.max()
+    blimp_offline /= blimp_offline.max()
+
+    key_order = {
+            "LookupTable":['size','input_min','input_max', 'isPeriodic'],
+            "ResampledLookupTable":['size','blimp_online','blimp_offline'],
+            "BlimpTable":['size','intervals','res']
+            }
+    tables = [
+            ['BLIMP_TABLE_OFFLINE',dict(classname="BlimpTable", data=blimp_offline,
+                size=len(blimp_offline),
+                intervals=offline_intervals,
+                res=offline_res)],
+            ['BLIMP_TABLE_ONLINE',dict(classname="BlimpTable", data=blimp_online,
+                size=len(blimp_online),
+                intervals=online_intervals,
+                res=online_res)],
+            ['PITCH_TABLE',dict(classname="LookupTable", data=pitchtable,
+                size=len(pitchtable),
+                input_min=0,
+                input_max=1,
+                isPeriodic=False)],
+            ['BL_SAW',dict(classname="ResampledLookupTable", data=blsaw,
+                size=len(blsaw),
+                blimp_online="lut_blimp_table_online",
+                blimp_offline="lut_blimp_table_offline")],
+            ['SIN',dict(classname="LookupTable",data=sintable,
+                size=len(sintable),
+                input_min = 0,
+                input_max = 1,
+                isPeriodic = True)],
+            ]
+    macrodefines = [
+            ]
+
+    # Generate macro defines
+    macrodefine_code = ""
+    for macroname,macroval in macrodefines:
+        line = "#define {} {}".format(macroname, macroval)
+        macrodefine_code += line + "\n"
+    # Generate lookup table structures
+    tabledata_def = ""
+    tabledata_decl = ""
+    tableobj_def = ""
+    for name,struct in tables:
+        tabledata_def += MakeTableStr(struct['data'],name)
+        tabledata_decl += "extern const double {}[{}];\n".format(name,len(struct['data']))
+
+        currargs = []
+        classname = struct["classname"]
+        for k in key_order[classname]:
+            if k not in struct:
+                continue
+            if k=="data":
+                continue
+            if k=="classname":
+                continue
+            val = struct[k]
+            if type(val)==bool:
+                val = "true" if val else "false"
+            currargs.append("{}".format(val))
+        tableargs = "{}, ".format(name)+", ".join(currargs)
+        tableobj_currdef = "const {} lut_{}({});\n".format(classname,name.lower(),tableargs);
+        tableobj_def += tableobj_currdef
+
+    if os.path.isfile("table_data.h"):
+        if v:
+            print "Backing up old table_data.h..."
+        old_table_data = open('table_data.h','r').read()
+        with open('table_data.h.bk','w') as fp:
+            fp.write(old_table_data)
+
+    if v:
+        print "Writing new table_data.cpp..."
+    with open('table_data.h','w') as fp:
+        fp.write(tabledata_def)
+
+    if os.path.isfile("tables.h"):
+        if v:
+            print "Backing up old tables.h..."
+        old_code = open('tables.h','r').read()
+        with open('tables.h.bk','w') as fp:
+            fp.write(old_code)
+    if v:
+        print "Writing new tables.h..."
+    new_code = rewriteAutomatedSection(old_code,'lut_defs', tabledata_decl+'\n'+tableobj_def)
+    new_code = rewriteAutomatedSection(new_code,'macro_defs', macrodefine_code)
+    with open('tables.h', 'w') as fp:
+        fp.write(new_code)
+
+if __name__=="__main__":
+    import argparse as ap
+    psr = ap.ArgumentParser()
+    psr.add_argument("-v","--verbose",action="store_true")
+    pargs = psr.parse_args()
+
+    main(pargs)

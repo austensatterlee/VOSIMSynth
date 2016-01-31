@@ -1,5 +1,6 @@
 #include "Oscillator.h"
 #include "DSPMath.h"
+#include "tables.h"
 
 namespace syn
 {
@@ -17,9 +18,6 @@ namespace syn
 				output = 2 * phase - 2;
 			break;
 		case SINE_WAVE:
-			output = lut_sin.getresampled(phase, period);
-			break;
-		case NAIVE_SINE_WAVE:
 			output = lut_sin.getlinear(phase);
 			break;
 		case TRI_WAVE:
@@ -49,7 +47,8 @@ namespace syn
 	}
 
 	void Oscillator::beginProcessing() {
-		update_step();
+		SourceUnit::beginProcessing();
+		m_prevFreq = m_freq;
 		tick_phase();
 	}
 
@@ -76,26 +75,30 @@ namespace syn
 			m_phase -= 1;
 		else if (m_phase < 0)
 			m_phase += 1;
-		if (m_phase < m_phase_step)
+		if (m_phase < m_phase_step) {
+			sync();
 			updateSyncStatus();
+		}
 	}
 
 	void BasicOscillator::noteOn(int pitch, int vel) {
 		sync();
 		m_velocity = DBToAmp(LERP(-30, 0, vel / 127.0));
-		m_pitch = pitch;
-		m_isPitchDirty = true;
+		m_notepitch = pitch;
+		update_step();
 	}
 
 	void BasicOscillator::noteOff(int pitch, int vel) {}
 
+	void BasicOscillator::onParamChange(const UnitParameter* param)
+	{
+		if(param == &m_tune || param == &m_octave)
+			update_step();
+	}
+
 	void BasicOscillator::update_step() {
-		if(m_tune.isDirty() || m_octave.isDirty() || m_isPitchDirty) {
-			m_freq = pitchToFreq(m_pitch + m_tune + m_octave * 12);
-			m_tune.setClean();
-			m_octave.setClean();
-			m_isPitchDirty = false;
-		}
+		m_pitch = m_notepitch + m_tune + m_octave * 12;
+		m_freq = pitchToFreq(m_pitch);
 		Oscillator::update_step();
 	}
 
@@ -111,6 +114,33 @@ namespace syn
 		m_tempo = newtempo;
 	}
 
+	void LFOOscillator::onParamChange(const UnitParameter* param)
+	{
+		bool useBPM_bool = m_useBPM;
+		if (param==&m_useBPM)
+		{
+			// Switch between rate and frequency parameters depending on the useBPM switch
+			if (useBPM_bool) {
+				m_freq_param.setCanEdit(false);
+				m_freq_param.setCanModulate(false);
+				m_rate.setCanEdit(true);
+				m_rate.setCanModulate(true);
+			}
+			else {
+				m_freq_param.setCanEdit(true);
+				m_freq_param.setCanModulate(true);
+				m_rate.setCanEdit(false);
+				m_rate.setCanModulate(false);
+			}
+			update_step();
+		}
+		else if (useBPM_bool && param == &m_rate) {
+			update_step();
+		}else if (!useBPM_bool && param == &m_freq_param) {
+			update_step();
+		}
+	}
+
 	void LFOOscillator::process(int bufind) {
 		double output;
 		int shape = m_waveform;
@@ -120,26 +150,14 @@ namespace syn
 	}
 
 	void LFOOscillator::update_step() {
-		// Switch between rate and frequency parameters depending on the useBPM switch
-		if(m_useBPM.isDirty()) {
-			if(m_useBPM) {
-				m_freq_param.setCanEdit(false);
-				m_freq_param.setCanModulate(false);
-				m_rate.setCanEdit(true);
-				m_rate.setCanModulate(true);
-			}else {
-				m_freq_param.setCanEdit(true);
-				m_freq_param.setCanModulate(true);
-				m_rate.setCanEdit(false);
-				m_rate.setCanModulate(false);
-			}
-		}
 		// Update frequency
-		if (m_freq_param.isDirty() && !m_useBPM) {
+		if (!m_useBPM) 
+		{
 			m_freq = m_freq_param;
 		}
-		else if(m_rate.isDirty() && m_useBPM) {
-			m_freq = m_rate / 8.0*m_tempo;
+		else 
+		{
+			m_freq = 16.0/m_rate*(m_tempo/60.0);
 		}
 		Oscillator::update_step();
 	}

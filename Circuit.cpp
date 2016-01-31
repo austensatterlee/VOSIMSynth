@@ -12,8 +12,7 @@ namespace syn
 	Circuit::~Circuit()
 	{
 		// Delete units
-		for (std::pair<int, Unit*> unitpair : m_units)
-		{
+		for (std::pair<int, Unit*> unitpair : m_units) {
 			delete unitpair.second;
 		}
 		m_units.clear();
@@ -21,8 +20,7 @@ namespace syn
 
 	int Circuit::addUnit(Unit* unit, int uid)
 	{
-		if (!hasUnit(unit->getName()))
-		{
+		if (!hasUnit(unit->getName())) {
 			m_forwardConnections[uid] = vector<ConnectionMetadata>();
 			m_backwardConnections[uid] = vector<ConnectionMetadata>();
 			m_unitmap[unit->getName()] = uid;
@@ -32,8 +30,7 @@ namespace syn
 			unit->setBufferSize(m_bufsize);
 			unit->setTempo(m_tempo);
 			m_isGraphDirty = true;
-			while (m_units.find(m_nextUid) != m_units.end())
-			{
+			while (m_units.find(m_nextUid) != m_units.end()) {
 				m_nextUid++;
 			}
 			return uid;
@@ -48,30 +45,23 @@ namespace syn
 
 	bool Circuit::removeUnit(int uid)
 	{
-		if (hasUnit(uid))
-		{
+		if (hasUnit(uid)) {
 			// Surgically remove any mention of this unit from connection metadata
 			const vector<ConnectionMetadata>& bwconns = m_backwardConnections[uid];
-			for (int i = 0; i < bwconns.size(); i++)
-			{
+			for (int i = 0; i < bwconns.size(); i++) {
 				vector<ConnectionMetadata>& connsto = m_forwardConnections[bwconns[i].srcid];
-				for (int j = 0; j < connsto.size(); j++)
-				{
-					if (connsto[j].targetid == uid)
-					{
+				for (int j = 0; j < connsto.size(); j++) {
+					if (connsto[j].targetid == uid) {
 						connsto.erase(connsto.begin() + j);
 						j--;
 					}
 				}
 			}
 			const vector<ConnectionMetadata>& fwconns = m_forwardConnections[uid];
-			for (int i = 0; i < fwconns.size(); i++)
-			{
+			for (int i = 0; i < fwconns.size(); i++) {
 				vector<ConnectionMetadata>& connsfrom = m_backwardConnections[fwconns[i].targetid];
-				for (int j = 0; j < connsfrom.size(); j++)
-				{
-					if (connsfrom[j].srcid == uid)
-					{
+				for (int j = 0; j < connsfrom.size(); j++) {
+					if (connsfrom[j].srcid == uid) {
 						connsfrom.erase(connsfrom.begin() + j);
 						j--;
 					}
@@ -85,7 +75,8 @@ namespace syn
 			m_units.erase(uid);
 			delete unit;
 			m_isGraphDirty = true;
-			if (uid == m_sinkId) m_sinkId = -1;
+			if (uid == m_sinkId)
+				m_sinkId = -1;
 			m_nextUid = uid;
 			return true;
 		}
@@ -104,38 +95,24 @@ namespace syn
 		m_isGraphDirty = true;
 	}
 
-	void Circuit::modifyParameter(string uname, string pname, double val, MOD_ACTION action)
-	{
-		m_units[m_unitmap[uname]]->modifyParameter(m_units[m_unitmap[uname]]->m_parammap[pname], val, action);
-	}
-
 	void Circuit::modifyParameter(int uid, int portid, double val, MOD_ACTION action)
 	{
 		m_units[uid]->modifyParameter(portid, val, action);
 	}
 
-	double Circuit::readParam(int uid, int param)
-	{
-		return m_units[uid]->readParam(param);
-	}
-
 	vector<tuple<string, string>> Circuit::getParameterNames()
 	{
 		vector<tuple<string, string>> all_pnames;
-		if (m_sinkId < 0)
-		{
+		if (m_sinkId < 0) {
 			return all_pnames;
 		}
-		if (m_isGraphDirty)
-		{
+		if (m_isGraphDirty) {
 			refreshProcQueue();
 		}
-		for (int i = 0; i < m_processQueue.size(); i++)
-		{
+		for (int i = 0; i < m_processQueue.size(); i++) {
 			Unit* unit = m_units[m_processQueue[i]];
 			vector<string> pnames = unit->getParameterNames();
-			for (string pname : pnames)
-			{
+			for (string pname : pnames) {
 				tuple<string, string> nametup{unit->getName(),pname};
 				all_pnames.push_back(nametup);
 			}
@@ -145,13 +122,11 @@ namespace syn
 
 	bool Circuit::addConnection(ConnectionMetadata c)
 	{
-		if (!hasUnit(c.srcid) || !hasUnit(c.targetid))
-		{
+		if (!hasUnit(c.srcid) || !hasUnit(c.targetid)) {
 			DBGMSG("Error connecting source (%d) and target (%d) inside circuit!", c.srcid, c.targetid);
 			throw std::invalid_argument("Either source or target name not found inside circuit!");
 		}
-		if (c.targetid == c.srcid)
-		{
+		if (c.targetid == c.srcid) {
 			return false;
 		}
 		vector<ConnectionMetadata>& fl = m_forwardConnections[c.srcid];
@@ -164,6 +139,21 @@ namespace syn
 			m_isGraphDirty = true;
 		}
 		return true;
+	}
+
+	void Circuit::removeConnection(ConnectionMetadata c)
+	{
+		vector<ConnectionMetadata>& fl = m_forwardConnections[c.srcid];
+		vector<ConnectionMetadata>& bl = m_backwardConnections[c.targetid];
+		vector<ConnectionMetadata>::iterator fl_loc = find(fl.begin(), fl.end(), c);
+		vector<ConnectionMetadata>::iterator bl_loc = find(bl.begin(), bl.end(), c);
+		if (fl_loc != fl.end()) {
+			fl.erase(fl_loc);
+		}
+		if (bl_loc != bl.end()) {
+			bl.erase(bl_loc);
+		}
+		m_units[c.targetid]->m_params[c.portid]->removeConnection(&(m_units[c.srcid]->getLastOutputBuffer()), c.action);
 	}
 
 	bool Circuit::addConnection(string srcname, string targetname, string pname, MOD_ACTION action)
@@ -180,18 +170,15 @@ namespace syn
 		deque<int> dependencyQueue({m_sinkId});
 		deque<int>& processQueue = m_processQueue;
 		processQueue.clear();
-		while (!dependencyQueue.empty())
-		{
+		while (!dependencyQueue.empty()) {
 			int currUnit = dependencyQueue.back();
 			dependencyQueue.pop_back();
 			processQueue.push_front(currUnit);
 			if (!m_backwardConnections[currUnit].size())
 				continue;
-			for (int i = 0; i < m_backwardConnections[currUnit].size(); i++)
-			{
+			for (int i = 0; i < m_backwardConnections[currUnit].size(); i++) {
 				int sourceid = m_backwardConnections[currUnit][i].srcid;
-				if (closed_set.find(sourceid) == closed_set.end())
-				{
+				if (closed_set.find(sourceid) == closed_set.end()) {
 					dependencyQueue.push_front(sourceid);
 					closed_set.insert(sourceid);
 				}
@@ -201,18 +188,15 @@ namespace syn
 
 	void Circuit::tick()
 	{
-		if (m_sinkId < 0)
-		{
+		if (m_sinkId < 0) {
 			return;
 		}
-		if (m_isGraphDirty)
-		{
+		if (m_isGraphDirty) {
 			refreshProcQueue();
 			m_isGraphDirty = false;
 		}
 
-		for (int currUnitId : m_processQueue)
-		{
+		for (int currUnitId : m_processQueue) {
 			Unit& source = *m_units[currUnitId];
 			source.tick();
 		}
@@ -221,8 +205,7 @@ namespace syn
 	void Circuit::setSampleRate(double newfs)
 	{
 		m_Fs = newfs;
-		for (std::pair<int, Unit*> unit : m_units)
-		{
+		for (std::pair<int, Unit*> unit : m_units) {
 			unit.second->setSampleRate(newfs);
 		}
 	}
@@ -230,8 +213,7 @@ namespace syn
 	void Circuit::setBufferSize(size_t newbufsize)
 	{
 		m_bufsize = newbufsize;
-		for (std::pair<int, Unit*> unit : m_units)
-		{
+		for (std::pair<int, Unit*> unit : m_units) {
 			unit.second->setBufferSize(newbufsize);
 		}
 	}
@@ -239,8 +221,7 @@ namespace syn
 	void Circuit::setTempo(double newtempo)
 	{
 		m_tempo = newtempo;
-		for (std::pair<int, Unit*> unit : m_units)
-		{
+		for (std::pair<int, Unit*> unit : m_units) {
 			unit.second->setTempo(newtempo);
 		}
 	}
@@ -250,8 +231,7 @@ namespace syn
 		Circuit* circ = static_cast<Circuit*>(cloneImpl());
 
 		// Clone units
-		for (std::pair<int, Unit*> unitpair : m_units)
-		{
+		for (std::pair<int, Unit*> unitpair : m_units) {
 			circ->addUnit(unitpair.second->clone(), unitpair.first);
 		}
 		circ->setSinkId(m_sinkId);
@@ -260,10 +240,8 @@ namespace syn
 		circ->setTempo(m_tempo);
 
 		// Clone connections
-		for (std::pair<int, vector<ConnectionMetadata>> connpair : m_forwardConnections)
-		{
-			for (int j = 0; j < connpair.second.size(); j++)
-			{
+		for (std::pair<int, vector<ConnectionMetadata>> connpair : m_forwardConnections) {
+			for (int j = 0; j < connpair.second.size(); j++) {
 				circ->addConnection(connpair.second[j]);
 			}
 		}
@@ -285,8 +263,7 @@ namespace syn
 
 	const vector<ConnectionMetadata>& Circuit::getConnectionsTo(int unitid) const
 	{
-		if (hasUnit(unitid))
-		{
+		if (hasUnit(unitid)) {
 			return m_backwardConnections.at(unitid);
 		}
 		return {};
@@ -294,8 +271,7 @@ namespace syn
 
 	int Circuit::getUnitId(string name)
 	{
-		if (m_unitmap.find(name) == m_unitmap.end())
-		{
+		if (m_unitmap.find(name) == m_unitmap.end()) {
 			throw std::invalid_argument("Unit (" + name + ") not found in circuit.");
 		}
 		return m_unitmap.at(name);
@@ -304,12 +280,11 @@ namespace syn
 	int Circuit::getUnitId(Unit* unit)
 	{
 		int uid = -1;
-		for (std::pair<int, Unit*> unitpair : m_units)
-		{
-			if (unitpair.second == unit) uid = unitpair.first;
+		for (std::pair<int, Unit*> unitpair : m_units) {
+			if (unitpair.second == unit)
+				uid = unitpair.first;
 		}
-		if (uid == -1)
-		{
+		if (uid == -1) {
 			throw std::invalid_argument("Unit not found in circuit.");
 		}
 		return uid;
@@ -318,8 +293,7 @@ namespace syn
 	vector<int> Circuit::getUnitIds() const
 	{
 		vector<int> unitIds;
-		for (std::pair<int, Unit*> unitpair : m_units)
-		{
+		for (std::pair<int, Unit*> unitpair : m_units) {
 			unitIds.push_back(unitpair.first);
 		}
 		return unitIds;

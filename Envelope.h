@@ -24,22 +24,16 @@ namespace syn
 			m_target_amp_id(taid),
 			prev_amp(0),
 			step(0),
-			is_increasing(false)
-		{
-		};
+			is_increasing(false) { };
 
-		EnvelopeSegment::EnvelopeSegment() : EnvelopeSegment(nullptr, 0, 0)
-		{
-		};
+		EnvelopeSegment::EnvelopeSegment() : EnvelopeSegment(nullptr, 0, 0) { };
 
 		EnvelopeSegment::EnvelopeSegment(const EnvelopeSegment& other) :
-			EnvelopeSegment(other.m_parent, other.m_period_id, other.m_target_amp_id)
-		{
-		};
+			EnvelopeSegment(other.m_parent, other.m_period_id, other.m_target_amp_id) { };
 
 		EnvelopeSegment& operator=(const EnvelopeSegment& other);
-		UnitParameter& period() const;
 		UnitParameter& target_amp() const;
+		UnitParameter& period() const;
 		double prev_amp;
 		double step;
 		bool is_increasing;
@@ -48,16 +42,17 @@ namespace syn
 	class Envelope : public SourceUnit
 	{
 	public:
-		virtual void noteOn(int pitch, int vel) override;
-		virtual void noteOff(int pitch, int vel) override;
 		Envelope(string name, int numSegments);
 
-		explicit Envelope(string name) : Envelope(name, 4)
-		{
-		};
+		Envelope(string name) : Envelope(name, 4) { };
+
+		void noteOn(int pitch, int vel) override;
+		void noteOff(int pitch, int vel) override;
 
 		Envelope(const Envelope& env);
 		virtual ~Envelope();
+
+		void onParamChange(const UnitParameter* param) override;
 
 		bool isActive() const override
 		{
@@ -127,7 +122,6 @@ namespace syn
 		bool m_isDone;
 		double m_RelPoint;
 		double m_phase;
-		bool m_fsIsDirty;
 	};
 }
 #endif // __Envelope__

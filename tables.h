@@ -1,6 +1,6 @@
 #ifndef __TABLES__
 #define __TABLES__
-
+#include "table_data.h"
 /*::macro_defs::*/
 /*::/macro_defs::*/
 namespace syn
@@ -61,16 +61,16 @@ namespace syn
 	};
 
 	/*::lut_defs::*/
-	extern const double BLIMP_TABLE_OFFLINE[154625];
-	extern const double BLIMP_TABLE_ONLINE[11265];
-	extern const double PITCH_TABLE[8192];
-	extern const double BL_SAW[2048];
-	extern const double SIN[2048];
-	const BlimpTable lut_blimp_table_offline(BLIMP_TABLE_OFFLINE, 154625, 151, 2048);
-	const BlimpTable lut_blimp_table_online(BLIMP_TABLE_ONLINE, 11265, 11, 2048);
-	const LookupTable lut_pitch_table(PITCH_TABLE, 8192, -1, 1, false);
+//	const double BLIMP_TABLE_OFFLINE[32833];
+//	const double BLIMP_TABLE_ONLINE[45057];
+//	const double PITCH_TABLE[2048];
+//	const double BL_SAW[2048];
+//	const double SIN[8192];
+	const BlimpTable lut_blimp_table_offline(BLIMP_TABLE_OFFLINE, 32833, 512, 128);
+	const BlimpTable lut_blimp_table_online(BLIMP_TABLE_ONLINE, 45057, 10, 8192);
+	const LookupTable lut_pitch_table(PITCH_TABLE, 2048, 0, 1, false);
 	const ResampledLookupTable lut_bl_saw(BL_SAW, 2048, lut_blimp_table_online, lut_blimp_table_offline);
-	const ResampledLookupTable lut_sin(SIN, 2048, lut_blimp_table_online, lut_blimp_table_offline);
+	const LookupTable lut_sin(SIN, 8192, 0, 1, true);
 	/*::/lut_defs::*/
 
 	inline double pitchToFreq(double pitch)

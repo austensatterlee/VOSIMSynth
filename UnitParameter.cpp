@@ -2,11 +2,11 @@
 #include "Unit.h"
 #include "DSPMath.h"
 
-syn::UnitParameter::UnitParameter(Unit* parent, string name, int id, IParam::EParamType ptype, double minValue, double maxValue, double defaultValue, double step, double shape, bool isHidden, bool canModulate):
+syn::UnitParameter::UnitParameter(Unit* parent, string name, int id, IParam::EParamType ptype, double minValue, double maxValue, double defaultValue, double step, double shape, bool canEdit, bool canModulate):
 	m_parent(parent),
 	m_name(name),
 	m_id(id),
-	m_isHidden(isHidden),
+	m_canEdit(canEdit),
 	m_canModulate(canModulate),
 	m_min(minValue),
 	m_max(maxValue),
@@ -16,7 +16,8 @@ syn::UnitParameter::UnitParameter(Unit* parent, string name, int id, IParam::EPa
 	m_connections(0)
 {
 	setType(ptype);
-	mod(m_default, SET);
+	m_offsetValue = m_default;
+	m_value[0] = m_value[1] = m_offsetValue;
 }
 
 bool syn::UnitParameter::operator==(const UnitParameter& p) const {
@@ -25,22 +26,28 @@ bool syn::UnitParameter::operator==(const UnitParameter& p) const {
 }
 
 void syn::UnitParameter::mod(double amt, MOD_ACTION action) {
-	if (action == SET && !(amt==m_value && amt==m_offsetValue)) {
+	if (action == SET) {
 		m_offsetValue = CLAMP(amt,m_min,m_max);
-		m_value = m_offsetValue;
-		m_isDirty = true;
+		m_value[0] = m_value[1] = m_offsetValue;
+		m_parent->onParamChange(this);
 	} else if (action == SET_NORM) {
 		m_offsetValue = FromNormalizedParam(amt, m_min, m_max, m_shape);
 		m_offsetValue = CLAMP(m_offsetValue, m_min, m_max);
-		m_value = m_offsetValue;
-		m_isDirty = true;
-	} else if (action == ADD && amt != 0) {
-		m_value += amt;
-		m_isDirty = true;
-	} else if (action == SCALE && amt != 1) {
-		m_value *= amt;
-		m_isDirty = true;
+		m_value[0] = m_value[1] = m_offsetValue;
+		m_parent->onParamChange(this);
 	}
+}
+
+void syn::UnitParameter::mod(const double amt[2], MOD_ACTION action)
+{
+	 if (action == ADD && !(amt[0] == 0 && amt[1]==0)) {
+		 m_value[0] += amt[0];
+		 m_value[1] += amt[1];
+	 }
+	 else if (action == SCALE && !(amt[0] == 1 && amt[1] == 1)) {
+		 m_value[0] *= amt[0];
+		 m_value[1] *= amt[1];
+	 }
 }
 
 void syn::UnitParameter::setType(IParam::EParamType new_type) {
@@ -74,10 +81,8 @@ void syn::UnitParameter::setDisplayText(int value, const char* text) {
 	}
 }
 
-void syn::UnitParameter::getDisplayText(char* r_displayText, bool normalized) const {
-	int value = m_value;
-	if (normalized)
-		value = FromNormalizedParam(value, m_min, m_max, m_shape);
+void syn::UnitParameter::getDisplayText(char* r_displayText) const {
+	double value = static_cast<double>(*this);
 
 	// Look for text that was mapped to the current value
 	int n = m_displayTexts.GetSize();
@@ -93,11 +98,11 @@ void syn::UnitParameter::getDisplayText(char* r_displayText, bool normalized) co
 	}
 
 	// Otherwise display the numerical value
-	double displayValue = m_value;
 
 	if (m_displayPrecision == 0) {
-		sprintf(r_displayText, "%d", int(displayValue));
+		sprintf(r_displayText, "%d", static_cast<int>(value));
 	} else {
+		double displayValue = value;
 		sprintf(r_displayText, "%.*f", m_displayPrecision, displayValue);
 	}
 }
@@ -106,9 +111,18 @@ void syn::UnitParameter::addConnection(const vector<UnitSample>* srcbuffer, MOD_
 	m_connections.push_back({srcbuffer,action});
 }
 
+void syn::UnitParameter::removeConnection(const vector<UnitSample>* a_srcbuffer, MOD_ACTION a_action)
+{
+	Connection conn = { a_srcbuffer,a_action };
+	vector<Connection>::iterator loc = find(m_connections.begin(), m_connections.end(), conn);
+	if(loc!=m_connections.end())
+		m_connections.erase(loc);
+}
+
 void syn::UnitParameter::pull(int bufind) {
 	for (int i = 0; i < m_connections.size(); i++) {
-		mod((*m_connections[i].srcbuffer)[bufind].getCollapsed(), m_connections[i].action);
+		mod((*m_connections[i].srcbuffer)[bufind].output, m_connections[i].action);
 	}
+	m_parent->onParamChange(this);
 }
 

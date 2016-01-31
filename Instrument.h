@@ -32,8 +32,8 @@ namespace syn
     void resetPrimarySource(int srcid);
     bool isPrimarySource(int srcid) const;
     bool removeUnit(int uid) override;
-    SourceUnit& getSourceUnit(string name) const { return *(SourceUnit*)m_units.at(m_unitmap.at(name)); };
-    SourceUnit& getSourceUnit(int srcid) const { return *(SourceUnit*)m_units.at(srcid); };
+    SourceUnit& getSourceUnit(string name) const { return *reinterpret_cast<SourceUnit*>(m_units.at(m_unitmap.at(name))); };
+    SourceUnit& getSourceUnit(int srcid) const { return *reinterpret_cast<SourceUnit*>(m_units.at(srcid)); };
     bool isSourceUnit(int srcid) const { return find(m_sourcemap.begin(), m_sourcemap.end(), srcid) != m_sourcemap.end(); };
     void noteOn(int note, int vel);
     void noteOff(int note, int vel);

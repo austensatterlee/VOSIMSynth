@@ -23,9 +23,6 @@
     <ClCompile Include="tables.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="table_data.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
     <ClCompile Include="VoiceManager.cpp">
       <Filter>Components\Composite</Filter>
     </ClCompile>
@@ -56,6 +53,9 @@
     <ClCompile Include="ADSREnvelope.cpp">
       <Filter>Components\Units</Filter>
     </ClCompile>
+    <ClCompile Include="ITextSlider.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\WDL\IPlug\IPlugVST.h">
@@ -70,9 +70,6 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="EnvelopeEditor.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="NDPoint.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="Circuit.h">
@@ -141,6 +138,10 @@
     <ClInclude Include="MathUnits.h">
       <Filter>Components\Units</Filter>
     </ClInclude>
+    <ClInclude Include="NDPoint.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="table_data.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="vst2">

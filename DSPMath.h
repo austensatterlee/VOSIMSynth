@@ -1,7 +1,8 @@
 #ifndef __DSPMATH__
 #define __DSPMATH__
 #include "IPlugStructs.h"
-#include "tables.h"
+#include "NDPoint.h"
+#include <cmath>
 
 #define LERP(A,B,F) (((B)-(A))*(F)+(A))
 #define INVLERP(A,B,X) (((X)-(A))/((B)-(A)))
@@ -40,6 +41,29 @@ namespace syn
   {
     IRECT shifted{a_irect.L + a_x, a_irect.T + a_y, a_irect.R + a_x, a_irect.B + a_y};
     return shifted;
+  }
+
+  template <typename T>
+  IRECT NDPointToIRECT(const NDPoint<2,T>& pt)
+  {
+	  return{ pt[0],pt[1],pt[0],pt[1] };
+  }
+
+  template <typename T>
+  NDPoint<2,T> closestPointOnLine(const NDPoint<2, T>& pt, const NDPoint<2, T>& a, const NDPoint<2, T>& b)
+  {
+	  
+	  double ablength = a.distFrom(b);
+	  NDPoint<2, double> abnorm = static_cast<NDPoint<2,double>>(a - b) * (1.0/ ablength);
+	  double proj = static_cast<NDPoint<2, double>>(pt - b).dot(abnorm);
+	  proj = CLAMP(proj, 0, ablength);
+	  return b + abnorm*proj;
+  }
+
+  template <typename T>
+  double pointLineDistance(const NDPoint<2,T>& pt, const NDPoint<2,T>& a, const NDPoint<2,T>& b)
+  {
+	  return (pt-closestPointOnLine(pt, a, b)).mag();
   }
 }
 #endif
