@@ -2,109 +2,153 @@
 #define __Circuit__
 
 #include "Unit.h"
-#include "UnitParameter.h"
-#include <list>
-#include <map>
-#include <deque>
-#include <tuple>
+#include "NamedContainer.h"
+#include <vector>
+#include <memory>
 
-namespace syn
-{
-  using std::list;
-  using std::map;
-  using std::deque;
-  using std::tuple;
+using std::shared_ptr;
+using std::vector;
 
-  struct ConnectionMetadata
-  {
-    int srcid;
-    int targetid;
-    int portid;
-    MOD_ACTION action;
-    bool operator==(const ConnectionMetadata& other) const
+namespace syn {
+    /**
+    * \class Circuit
+    *
+    * \brief A collection of Units.
+    *
+    * A Circuit is a Unit that contains other Units.
+    *
+    */
+    class Circuit : public Cloneable<Unit,Circuit> {
+    public:
+        Circuit();
+
+        int addUnit(shared_ptr<Unit> a_unit);
+
+        template<typename ID>
+        bool removeUnit(const ID& a_identifier);
+
+        template<typename ID>
+        bool connectInputs(int a_circuitInputPort, const ID& a_toIdentifier, int a_toInputPort);
+
+        template<typename ID>
+        bool connectOutputs(int a_circuitOutputPort, const ID& a_fromIdentifier, int a_fromOutputPort);
+
+        template<typename ID>
+        bool connectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier, int
+        a_toInputPort);
+
+        template<typename ID>
+        bool disconnectInputs(int a_circuitInputPort, const ID& a_toIdentifier, int a_toInputPort);
+
+        template<typename ID>
+        bool disconnectOutputs(int a_circuitOutputPort, const ID& a_fromIdentifier, int a_fromOutputPort);
+
+        template<typename ID>
+        bool disconnectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier, int
+        a_toInputPort);
+    protected:
+        virtual bool onParamChange_(int a_paramId) override;
+        virtual void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
+    private:
+        virtual string _getClassName() const override { return "Circuit"; };
+    private:
+        NamedContainer<shared_ptr<Unit> > m_units;
+        UnitConnectionBus m_internalInputs;
+        UnitConnectionBus m_internalOutputs;
+    };
+
+    template<typename ID>
+    bool Circuit::removeUnit(const ID& a_identifier)
     {
-      return other.srcid == srcid && other.targetid == targetid && other.portid == portid && other.action == action;
+        return m_units.remove(a_identifier);
     }
-  };
 
-  /**
-  * \class Circuit
-  *
-  * \brief A collection of Units and Connections.
-  *
-  * A circuit allows Units to automatically cooperate by managing the signal flow via Connections.
-  * The signal flow of a Circuit starts at the Units without incoming connections (sources) and flows towards the Unit
-  * marked as the sink. The output of the Circuit is the output of the sink.
-  *
-  */
-  class Circuit
-  {
-  public:
-    Circuit() :
-      m_nextUid(0),
-      m_bufsize(1),
-      m_sinkId(-1),
-      m_Fs(48e3), 
-	  m_tempo(120)
-    {}
-    virtual ~Circuit();
-    Circuit* clone();
-    int addUnit(Unit* unit);
-    int addUnit(Unit* unit, int uid);
-    virtual bool removeUnit(int uid);
-    void setSinkId(int id);
-    int getSinkId() const { return m_sinkId; }
-    void setSinkName(string name);
-    /*!
-     * \brief Specify a connection from one unit's output to another unit's parameter.
-     * \sa Connection
-     */
-    bool addConnection(string srcname, string targetname, string pname, MOD_ACTION action);
-    bool addConnection(ConnectionMetadata c);
-	void removeConnection(ConnectionMetadata c);
-    /**
-     * \brief Manually modify a Unit's parameter
-     */
-    void modifyParameter(int uid, int param, double val, MOD_ACTION action);
-    UnitParameter& getParameter(int uid, int param) {return m_units[uid]->getParam(param); }
+    template<typename ID>
+    bool Circuit::connectInputs(int a_circuitInputPort, const ID& a_toIdentifier, int a_toInputPort)
+    {
+        if( !m_units.find(a_toIdentifier) )
+            return false;
 
-    vector<tuple<string, string>> getParameterNames();
-    Unit& getUnit(string name) { return *m_units[m_unitmap[name]]; };
-    Unit& getUnit(int id) { return *m_units[id]; };
-    const Unit& getUnit(int id) const { return *m_units.at(id); };
-    int getUnitId(string name);
-    int getUnitId(Unit* unit);
-    vector<int> getUnitIds() const;
-    /**
-     * \brief Generate the requested number of samples. The result can be retrieved using getLastOutputBuffer()
-     */
-    void tick();
-	void setSampleRate(double newfs);
-	void setBufferSize(size_t newbufsize);
-	void setTempo(double newtempo);
-    size_t getBufSize() const { return m_bufsize; }
-    bool hasUnit(string name) const;
-    bool hasUnit(int uid) const;
-    double getLastOutput() const { return m_units.at(m_sinkId)->getLastOutput(); };
-    const vector<UnitSample>& getLastOutputBuffer() const { return m_units.at(m_sinkId)->getLastOutputBuffer(); };
-    const vector<ConnectionMetadata>& getConnectionsTo(int unitid) const;
-  protected:
-    typedef  unordered_map<int, Unit*> UnitVec;
-    typedef  unordered_map<int, vector<ConnectionMetadata>> ConnVec;
-    UnitVec m_units;
-    ConnVec m_forwardConnections;
-    ConnVec m_backwardConnections;
-    IDMap m_unitmap;
-    deque<int> m_processQueue; //!< cache storage for the linearized version of unit dependencies
-    bool m_isGraphDirty = true; //!< indicates whether or not the graph's linearization should be recomputed
-    int m_sinkId;
-    size_t m_bufsize;
-    double m_Fs, m_tempo;
-    int m_nextUid;
-  private:
-    void refreshProcQueue();
+        shared_ptr<Unit> toUnit = *(m_units.get(a_toIdentifier));
 
-    virtual Circuit* cloneImpl() const { return new Circuit(); };
-  };
+        if( toUnit.get()->getNumInputs() <= a_toInputPort || getNumInputs() <= a_circuitInputPort)
+            return false;
+
+        return m_internalInputs.connect(toUnit, a_toInputPort, a_circuitInputPort);
+    }
+
+    template<typename ID>
+    bool Circuit::connectOutputs(int a_circuitOutputPort, const ID& a_fromIdentifier, int a_fromOutputPort)
+    {
+        if( !m_units.find(a_fromIdentifier) )
+            return false;
+
+        shared_ptr<Unit> fromUnit = m_units.get(a_fromIdentifier);
+
+        if( fromUnit.get()->getNumOutputs() <= a_fromOutputPort || getNumOutputs() <= a_circuitOutputPort)
+            return false;
+
+        return m_internalOutputs.connect(fromUnit, a_fromOutputPort, a_circuitOutputPort);
+    }
+
+    template<typename ID>
+    bool Circuit::connectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier,
+                                  int a_toInputPort)
+    {
+        if( !m_units.find(a_fromIdentifier) || !m_units.find(a_toIdentifier) )
+            return false;
+
+        shared_ptr<Unit> fromUnit = *(m_units.get(a_fromIdentifier));
+        shared_ptr<Unit> toUnit = *(m_units.get(a_toIdentifier));
+
+        if( fromUnit.get()->getNumOutputs() <= a_fromOutputPort || toUnit.get()->getNumInputs() <= a_toInputPort)
+            return false;
+
+        return toUnit.get()->_connectInput(fromUnit, a_fromOutputPort, a_toInputPort);
+    }
+
+    template<typename ID>
+    bool Circuit::disconnectInputs(int a_circuitInputPort, const ID& a_toIdentifier, int a_toInputPort)
+    {
+        if( !m_units.find(a_toIdentifier) )
+            return false;
+
+        shared_ptr<Unit> toUnit = *(m_units.get(a_toIdentifier));
+
+        if( toUnit.get()->getNumInputs() <= a_toInputPort || getNumInputs() <= a_circuitInputPort)
+            return false;
+
+        return m_internalInputs.disconnect(toUnit, a_toInputPort, a_circuitInputPort);
+    }
+
+    template<typename ID>
+    bool Circuit::disconnectOutputs(int a_circuitOutputPort, const ID& a_fromIdentifier, int a_fromOutputPort)
+    {
+        if( !m_units.find(a_fromIdentifier) )
+            return false;
+
+        shared_ptr<Unit> fromUnit = *(m_units.get(a_fromIdentifier));
+
+        if( fromUnit.get()->getNumOutputs() <= a_fromOutputPort || getNumOutputs() <= a_circuitOutputPort)
+            return false;
+
+        return m_internalOutputs.disconnect(fromUnit, a_fromOutputPort, a_circuitOutputPort);
+    }
+
+    template<typename ID>
+    bool Circuit::disconnectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier,
+                                     int a_toInputPort)
+    {
+        if( !m_units.find(a_fromIdentifier) || !m_units.find(a_toIdentifier) )
+            return false;
+
+        shared_ptr<Unit> fromUnit = *(m_units.get(a_fromIdentifier));
+        shared_ptr<Unit> toUnit = *(m_units.get(a_toIdentifier));
+
+        if( fromUnit.get()->getNumOutputs() <= a_fromOutputPort || toUnit.get()->getNumInputs() <= a_toInputPort)
+            return false;
+
+        return toUnit.get()->_disconnectInput(fromUnit, a_fromOutputPort, a_toInputPort);
+    }
 };
 #endif // __Circuit__

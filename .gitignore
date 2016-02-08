@@ -1,6 +1,9 @@
 # Doxygen
 doc/
 
+# IDEA
+.idea/
+
 # Custom
 *.bak
 *.pdf

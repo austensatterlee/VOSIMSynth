@@ -1,25 +1,32 @@
 #pragma once
 #include "Unit.h"
-#include "SourceUnit.h"
 #include <vector>
+#include <memory>
 #include <set>
+#include <unordered_map>
+#include <cstdio>
+
+#define MAX_UNIT_STR_LEN 256
 
 using std::vector;
 using std::set;
+using std::unordered_map;
+using std::shared_ptr;
 
 namespace syn
 {
 	struct FactoryPrototype
 	{
-		FactoryPrototype(string a_group_name, const Unit* a_unit) :
-			group_name{a_group_name},
-			name{a_unit->getName()},
-			prototype{a_unit},
-			build_count{0} {};
+		FactoryPrototype(string a_group_name, shared_ptr<Unit> a_unit) :
+			group_name(a_group_name),
+			name(a_unit.get()->getName()),
+			prototype(a_unit),
+			build_count{0}
+        {};
 
 		string group_name;
 		string name;
-		const Unit* prototype;
+        shared_ptr<Unit> prototype;
 		int build_count;
 	};
 
@@ -39,7 +46,7 @@ namespace syn
 		/**
 		 * \brief Register a prototype unit with the factory. Prototype deletion will be taken care of upon factory destruction.
 		 */
-		void addUnitPrototype(string a_group_name, const Unit* a_unit) {
+		void addUnitPrototype(string a_group_name, shared_ptr<Unit> a_unit) {
 			FactoryPrototype* prototype = new FactoryPrototype(a_group_name, a_unit);
 			m_prototypes.push_back(prototype);
 			m_group_names.insert(prototype->group_name);
@@ -60,17 +67,17 @@ namespace syn
 			return names;
 		}
 
-		Unit* createUnit(int protonum) const {
-			Unit* unit = m_prototypes[protonum]->prototype->clone();
-			char namebuf[256];
+		shared_ptr<Unit> createUnit(int protonum) const {
+            shared_ptr<Unit> unit = m_prototypes[protonum]->prototype->clone();
+			char namebuf[MAX_UNIT_STR_LEN];
 			snprintf(namebuf, 256, "%s_%d", unit->getName().c_str(), m_prototypes[protonum]->build_count);
 			string newname = namebuf;
-			unit->setName(newname);
+			unit->_setName(newname);
 			m_prototypes[protonum]->build_count++;
 			return unit;
 		}
 
-		Unit* createUnit(string name) {
+        shared_ptr<Unit> createUnit(string name) {
 			int i = 0;
 			for (const FactoryPrototype* prototype : m_prototypes) {
 				if (prototype->name == name) {
@@ -81,7 +88,7 @@ namespace syn
 			throw std::logic_error("Unit name not found in factory.");
 		}
 
-		Unit* createUnit(const unsigned int classidentifier) const {
+        shared_ptr<Unit> createUnit(const unsigned int classidentifier) const {
 			int protonum = m_class_identifiers.at(classidentifier);
 			return createUnit(protonum);
 		}

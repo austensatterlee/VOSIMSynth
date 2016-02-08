@@ -1,12 +1,9 @@
-#ifndef __Parameter__
-#define __Parameter__
-
-#include "IControl.h"
-#include "IParam.h"
-#include "Containers.h"
+#ifndef __UnitParameter__
+#define __UnitParameter__
 
 #include <vector>
 #include <map>
+#include <cstring>
 
 using std::string;
 using std::map;
@@ -16,218 +13,77 @@ using std::vector;
 
 namespace syn
 {
-	enum MOD_ACTION
-	{
-		SET = 0,
-		SET_NORM,
-		ADD,
-		SCALE,
-		NUM_MOD_ACTIONS
-	};
-
-	// forward declaration
-	struct UnitSample;
-
-	struct Connection
-	{
-		const vector<UnitSample>* srcbuffer;
-		MOD_ACTION action;
-
-		bool operator==(const Connection& other) const
-		{
-			return srcbuffer == other.srcbuffer && action == other.action;
-		}
-	};
-
-	class Unit;
+    enum EParamType{
+        Null,
+        Bool,
+        Enum,
+        Int,
+        Double
+    };
 
 	class UnitParameter
 	{
 	public:
-		UnitParameter(Unit* parent, string name, int id, IParam::EParamType ptype,
-		              double min, double max, double defaultValue, double step,
-		              double shape = 1, bool canEdit = false, bool canModulate = true);
-
-
-		UnitParameter(const UnitParameter& other) :
-			UnitParameter(other.m_parent, other.m_name, other.m_id, other.getType(),
-			              other.getMin(), other.getMax(), other.getDefault(), other.getStep(),
-			              other.getShape(), other.canEdit(), other.canModulate())
-		{
-			m_offsetValue = other.m_offsetValue;
-			m_value[0] = m_value[1] = m_offsetValue;
+        UnitParameter();
+        UnitParameter(const string& a_name, bool a_defaultValue);
+        UnitParameter(const string& a_name, int a_min, int a_max, int a_defaultValue);
+        UnitParameter(const string& a_name, const vector<string>& a_optionNames);
+        UnitParameter(const string& a_name, double a_min, double a_max, double a_defaultValue);
+		bool operator==(const UnitParameter& a_rhs) const{
+			return memcmp(this,&a_rhs,sizeof(UnitParameter))==0;
 		}
 
-		bool operator==(const UnitParameter& p) const;
+		/**
+		 * Reset the parameter to its default value
+		 */
+		void reset();
 
-		virtual ~UnitParameter() {}
+		const string& getName() const;
 
-		/// used to modulate both channels simultaneously
-		void mod(double amt, MOD_ACTION action);
-		/// used to modulate both channels independently
-		void mod(const double amt[2], MOD_ACTION action);
+		EParamType getType() const;
 
-		operator double() const
-		{
-			double value = 0.5*(m_value[0] + m_value[1]);
-			if (m_type != IParam::kTypeDouble) {
-				int intvalue = static_cast<int>(value);
-				value = value - intvalue >= 0.5 ? intvalue + 1 : intvalue;
-			}
-			return value;
-		}
+		double getMin() const;
 
-		explicit operator bool() const
-		{
-			return m_value[0] > 0 || m_value[1] > 0;
-		}
+		void setMin(double a_new_min);
 
-		double operator[](int a_ind) const
-		{
-			return m_value[a_ind];
-		}
+		double getMax() const;
 
-		double getNormalized() const
-		{
-			return ToNormalizedParam((m_value[0]+m_value[1])*0.5, m_min, m_max, m_shape);
-		}
+		void setMax(double a_new_max);
 
-		/// Prepare the parameter for the next sample by resetting to the base value
-		void reset()
-		{
-			m_value[0] = m_value[1] = m_offsetValue;
-		}
+		double getDefaultValue() const;
 
-		string getName() const
-		{
-			return m_name;
-		}
+        bool set(bool a_value);
+        bool set(int a_value);
+        bool set(double a_value);
+        /**
+         * Set the parameter from a number in the range (0,1)
+         */
+        bool setNorm(double a_norm_value);
 
-		void setName(string new_name)
-		{
-			m_name = new_name;
-		}
-
-		int getId() const
-		{
-			return m_id;
-		}
-
-		bool canEdit() const
-		{
-			return m_canEdit;
-		}
-
-		void setCanEdit(bool a_i)
-		{
-			m_canEdit = a_i;
-		}
-
-		bool canModulate() const
-		{
-			return m_canModulate;
-		}
-
-		void setCanModulate(bool a_i)
-		{
-			m_canModulate = a_i;
-		}
-
-		IParam::EParamType getType() const
-		{
-			return m_type;
-		}
-
-		void setType(IParam::EParamType new_type);
-
-		double getMin() const
-		{
-			return m_min;
-		}
-
-		void setMin(double a_i)
-		{
-			m_min = a_i;
-		}
-
-		double getMax() const
-		{
-			return m_max;
-		}
-
-		void setMax(double a_i)
-		{
-			m_max = a_i;
-		}
-
-		double getDefault() const
-		{
-			return m_default;
-		}
-
-		double getStep() const
-		{
-			return m_step;
-		}
-
-		void setStep(double a_i)
-		{
-			m_step = a_i;
-		}
-
-		double getShape() const
-		{
-			return m_shape;
-		}
-
-		void setShape(double a_i)
-		{
-			m_shape = a_i;
-		}
-
-		void setDisplayText(int value, const char* text);
-
-		void getDisplayText(char* r_displayText) const;
-
-		void addConnection(const vector<UnitSample>* srcbuffer, MOD_ACTION action);
-		void removeConnection(const vector<UnitSample>* a_srcbuffer, MOD_ACTION a_action);
-
-		int getNumConnections() const
-		{
-			return m_connections.size();
-		}
-
-		void pull(int bufind);
-
-		UnitParameter* clone() const
-		{
-			UnitParameter* other = new UnitParameter(*this);
-			return other;
-		}
-
-	protected:
-		Unit* m_parent;
-		string m_name;
-		int m_id;
-		double m_value[2]; //<! current value (after modulation)
-		double m_offsetValue; //<! current value (before modulation)
-		double m_min, m_max;
-		double m_step, m_shape;
-		double m_default;
-		bool m_canEdit, m_canModulate;
-		int m_displayPrecision;
-		IParam::EParamType m_type;
-		vector<Connection> m_connections;
+        bool getBool() const;
+        int getInt() const;
+        double getDouble() const;
+        /**
+        * Get the parameter value as a number in the range (0,1)
+        */
+        double getNorm() const;
+        string getString() const;
 	private:
+        string m_name;
+        double m_value, m_defaultValue;
+        double m_min, m_max;
+        EParamType m_type;
+        int m_displayPrecision;
+
 		struct DisplayText
 		{
 			int m_value;
-			char m_text[MAX_PARAM_STR_LEN];
+			string m_text;
 		};
 
-		WDL_TypedBuf<DisplayText> m_displayTexts;
+		vector<DisplayText> m_displayTexts;
 	};
 }
-#endif // __Parameter__
+#endif // __UnitParameter__
 
 

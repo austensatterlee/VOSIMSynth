@@ -1,132 +1,108 @@
 #include "Unit.h"
-#include <array>
+
+using std::hash;
 
 using namespace std;
 
 namespace syn
 {
-	void Unit::modifyParameter(int portid, double val, MOD_ACTION action)
-	{
-		m_params[portid]->mod(val, action);
-	}
 
-	vector<string> Unit::getParameterNames() const
-	{
-		vector<string> pnames;
-		for (int i = 0; i < m_params.size(); i++)
-		{
-			pnames.push_back(m_params[i]->getName());
-		}
-		return pnames;
-	}
+    Unit::Unit(const Unit& a_other) :
+    m_parent(a_other.m_parent),
+    m_name(a_other.m_name),
+    m_inputSignals(a_other.m_inputSignals),
+    m_outputSignals(a_other.m_outputSignals)
+    {
 
-	Unit* Unit::clone() const
-	{
-		Unit* u = cloneImpl();
-		u->m_name = m_name;
-		u->m_Fs = m_Fs;
-		u->m_output = m_output;
-		u->m_parammap = m_parammap;
-		u->m_bufind = m_bufind;
-		for (int i = 0; i < m_params.size(); i++)
-		{
-			u->m_params[i]->mod(*m_params[i], SET);
-		}
-		return u;
-	}
+    }
 
-	UnitParameter& Unit::addParam(string name, int id, IParam::EParamType ptype, double min, double max, double defaultValue, double step, double shape, bool canEdit, bool canModulate)
-	{
-		m_parammap[name] = id;
-		if (m_params.size() <= id)
-			m_params.resize(id + 1);
-		m_params[id] = new UnitParameter(this, name, id, ptype, min, max, defaultValue, step, shape, canEdit, canModulate);
-		return *m_params[id];
-	}
+    unsigned int Unit::getClassIdentifier() const {
+        hash<string> hash_fn;
+        return hash_fn(_getClassName());
+    }
 
-	UnitParameter& Unit::addDoubleParam(string name, double min, double max, double defaultValue, double step, double shape, bool canEdit, bool canModulate)
-	{
-		return addParam(name, m_params.size(), IParam::kTypeDouble, min, max, defaultValue, step, shape , canEdit, canModulate);
-	}
+    shared_ptr<Circuit> Unit::getParent() {
+        return m_parent;
+    }
 
-	UnitParameter& Unit::addIntParam(string name, int min, int max, int defaultValue, double shape, bool canEdit, bool canModulate)
-	{
-		return addParam(name, m_params.size(), IParam::kTypeInt, min, max, defaultValue, 1.0, shape, canEdit, canModulate);
-	}
+    SignalBus& Unit::getOutputBus()
+    {
+        return m_outputSignals;
+    }
 
-	UnitParameter& Unit::addBoolParam(string name, bool defaultValue)
-	{
-		return addParam(name, m_params.size(), IParam::kTypeInt, 0, 1, defaultValue, 1.0, 1.0, true, false);
-	}
+    SignalBus& Unit::getInputBus()
+    {
+        return m_inputSignals;
+    }
 
-	UnitParameter& Unit::addEnumParam(string name, const vector<string> choice_names, int defaultValue)
-	{
-		UnitParameter& param = addParam(name, m_params.size(), IParam::kTypeEnum, 0, choice_names.size(), defaultValue, 1.0, 1.0, true, false);
-		for (int i = 0; i < choice_names.size(); i++)
-		{
-			param.setDisplayText(i, choice_names[i].c_str());
-		}
-		return param;
-	}
+    int Unit::getNumParameters() const
+    {
+        return m_parameters.size();
+    }
 
-	Unit::~Unit()
-	{
-		// delete allocated parameters
-		for (int i = 0; i < m_params.size(); i++)
-		{
-			delete m_params[i];
-		}
-	}
+    int Unit::getNumInputs() const
+    {
+        return m_inputSignals.size();
+    }
 
-	void Unit::setSampleRate(double newfs)
-	{
-		m_Fs = newfs;
-		onSampleRateChange(newfs);
-	}
+    int Unit::getNumOutputs() const
+    {
+        return m_outputSignals.size();
+    }
 
-	void Unit::setBufferSize(size_t newbufsize)
-	{
-		m_output.resize(newbufsize);
-		onBufferSizeChange(newbufsize);
-	}
+    const string& Unit::getName() const {
+        return m_name;
+    }
 
-	void Unit::setTempo(double newtempo)
-	{
-		m_tempo = newtempo;
-		onTempoChange(newtempo);
-	}
+    void Unit::_setName(const string& a_name) {
+        m_name = a_name;
+    }
 
-	void Unit::tick()
-	{
-		for (int i = 0; i < m_output.size(); i++)
-		{
-			beginProcessing();
-			for (int j = 0; j < m_params.size(); j++)
-			{
-				m_params[j]->reset();
-				if (m_params[j]->getNumConnections() > 0)
-				{
-					m_params[j]->pull(i);
-				}
-			}
-			process(i);
-			m_bufind = i;
-			finishProcessing();
-		}
-	}
+    void Unit::tick() {
+        if(m_hasTicked)
+            return;
+        m_hasTicked = true;
 
-	int Unit::getParamId(string name)
-	{
-		int paramid;
-		try
-		{
-			paramid = m_parammap.at(name);
-		}
-		catch (out_of_range exc)
-		{
-			paramid = -1;
-		}
-		return paramid;
-	}
+        /* Pull signals from inputs */
+        for( int i = 0; i < m_inputSignals.size(); i++){
+            Signal& inputChannel = m_inputSignals.getChannel(i);
+            m_inputConnections.pull(i,inputChannel);
+        }
+
+        m_outputSignals.clear();
+
+        process_(m_inputSignals, m_outputSignals);
+    }
+
+    void Unit::reset() {
+        m_inputSignals.clear();
+        m_hasTicked = false;
+    }
+
+    int Unit::addInput_(const string& a_name) {
+        return m_inputSignals.addChannel(a_name);
+    }
+
+    int Unit::addOutput_(const string& a_name) {
+        return m_outputSignals.addChannel(a_name);
+    }
+
+    int Unit::addParameter_(const UnitParameter& a_param) {
+        int indx = m_parameters.add(a_param.getName(), a_param);
+        return m_parameters.getItemIndex(indx);
+    }
+
+    void Unit::_setParent(shared_ptr<Circuit> a_new_parent) {
+        m_parent = a_new_parent;
+    }
+
+    bool Unit::_connectInput(shared_ptr<Unit> a_fromUnit, int a_fromOutputPort, int a_toInputPort) {
+        return m_inputConnections.connect(a_fromUnit, a_fromOutputPort, a_toInputPort);
+    }
+
+    bool Unit::_disconnectInput(shared_ptr<Unit> a_fromUnit, int a_fromOutputPort, int a_toInputPort) {
+        return m_inputConnections.disconnect(a_fromUnit, a_fromOutputPort, a_toInputPort);
+    }
+
 }
 

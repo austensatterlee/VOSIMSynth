@@ -1,178 +1,148 @@
 #ifndef __UNIT__
 #define __UNIT__
+
 #include "UnitParameter.h"
-#include "GallantSignal.h"
-#include <unordered_map>
+#include "SignalBus.h"
+#include "UnitConnectionBus.h"
+#include "NamedContainer.h"
 #include <vector>
+#include <memory>
 
-using Gallant::Signal1;
-using std::unordered_map;
-using std::vector;
-using std::hash;
+using std::shared_ptr;
+using std::make_shared;
 
-namespace syn
-{
-	typedef unordered_map<string, int> IDMap; //!< string to array index translation map
+namespace syn {
+    class Circuit;
+    /**
+     * \class Unit
+     *
+     * \brief Units encapsulate a discrete processor with an internal state
+     *
+     * A unit is composed of internal state variables, a number of outputs and inputs,
+     * and a transition function, Unit::process_, which produces a new set of outputs given the state
+     * of the Unit and the current input.
+     *
+     * New units should be derived by subclassing UnitCloneable, with Unit::addInput_, Unit::addOutput_,
+     * and Unit::addParameter_ called in the constructor some of number of times according to
+     * how many inputs, outputs, and parameters are needed (respectively).
+     *
+     */
+    class Unit {
+    public:
+        Unit() :
+                m_parent{nullptr},
+                m_name{""},
+                m_hasTicked(false)
+        {}
 
-	class Circuit; // forward decl.
+        Unit(const string& a_name) :
+                m_parent{nullptr},
+                m_name{a_name},
+                m_hasTicked(false)
+        {}
 
-	enum UNIT_TYPE
-	{
-		STD_UNIT,
-		SOURCE_UNIT
-	};
+        Unit(const Unit& a_other);
 
-	struct UnitSample
-	{
-		double output[2];
-		double getCollapsed() const
-		{
-			return 0.5*(output[0] + output[1]);
-		}
-		operator double() const {
-			return getCollapsed();
-		}
-		double& operator[](int index)
-		{
-			return output[index];
-		}
+        virtual ~Unit(){};
 
-		double operator[](int index) const
-		{
-			return output[index];
-		}
-	};
+        void tick();
 
-	/**
-	 * \class Unit
-	 *
-	 * \brief Units encapsulate a discrete processor with an internal state
-	 *
-	 * A unit is composed of N state variables, a single output, and a transition function which produces a new output
-	 * given the state of the Unit and the last output. Units expose some of their state variables as inputs in the
-	 * form of numbered parameters (UnitParameter).
-	 *
-	 */
-	class Unit
-	{
-		friend class Circuit;
-	public:
+        void reset();
 
-		Unit::Unit(string name) :
-			m_name(name),
-			m_parent(nullptr),
-			m_Fs(44100.0),
-			m_tempo(120),
-			m_output(1, { 0.0,0.0 }),
-			m_bufind(0) {}
+        shared_ptr<Circuit> getParent();
 
-		virtual ~Unit();
-		void setSampleRate(double newfs);
-		void setBufferSize(size_t newbufsize);
-		void setTempo(double newtempo);
+        template<typename ID>
+        const UnitParameter& getParameter(const ID& a_identifier);
 
-		/// Used for dynamic down-casting	 
-		virtual UNIT_TYPE getUnitType() const {
-			return STD_UNIT;
-		}
+        template<typename ID, typename T>
+        bool setParameter(const ID& a_identifier, const T& a_value);
 
-		unsigned int getClassIdentifier() const {
-			hash<string> hash_fn;
-			return hash_fn(getClassName());
-		};
+        SignalBus& getOutputBus();
+        SignalBus& getInputBus();
 
-		/// Runs the unit for the specified number of ticks (specified with resizeOutputBuffer). The result is accessed via getLastOutputBuffer().		 
-		void tick();
+        int getNumParameters() const;
+        int getNumInputs() const;
+        int getNumOutputs() const;
 
-		double getFs() const {
-			return m_Fs;
-		};
+        const string& getName() const;
 
-		const vector<UnitSample>& getLastOutputBuffer() const {
-			return m_output;
-		};
+        virtual Unit* clone() const = 0;
 
-		UnitSample getLastOutput() const {
-			return m_output[m_bufind];
-		};
+        unsigned int getClassIdentifier() const;
 
-		/*!
-		 *\brief Modifies the value of the parameter associated with portid.
-		 */
-		void modifyParameter(int portid, double val, MOD_ACTION action);
+    protected:
+        /**
+         * Called when a parameter has been modified. This function should be overridden
+         * to update the internal state and verify that the change is valid. If the change is not valid,
+         * the function should return false.
+         */
+        virtual bool onParamChange_(int a_paramId) = 0;
 
-		bool hasParameter(string name) {
-			return m_parammap.find(name) != m_parammap.end();
-		};
+        virtual void process_(const SignalBus& a_inputs, SignalBus& a_outputs) = 0;
 
-		double readParam(string pname) const {
-			return *m_params[m_parammap.at(pname)];
-		};
+        int addInput_(const string& a_name);
 
-		double readParam(int id) const {
-			return *m_params[id];
-		};
+        int addOutput_(const string& a_name);
 
-		UnitParameter& getParam(string pname) {
-			return *m_params[m_parammap.at(pname)];
-		}
+        int addParameter_(const UnitParameter& a_param);
 
-		UnitParameter& getParam(int pid) {
-			return *m_params[pid];
-		}
+    private:
+        virtual inline string _getClassName() const = 0;
 
-		vector<string> getParameterNames() const;
+        void _setParent(shared_ptr<Circuit> a_new_parent);
 
-		/// Finds the integer parameter id associated with the given name. Returns -1 if no parameter is associated with the given name.
-		int getParamId(string name);
+        void _setName(const string& a_name);
 
-		Circuit& getParent() const {
-			return *m_parent;
-		};
+        bool _connectInput(shared_ptr<Unit> a_fromUnit, int a_fromOutputPort, int a_toInputPort);
 
-		string getName() const {
-			return m_name;
-		}
+        bool _disconnectInput(shared_ptr<Unit> a_fromUnit, int a_fromOutputPort, int a_toInputPort);
 
-		void setName(string name) {
-			m_name = name;
-		}
+    private:
+        friend class Circuit;
+        friend class UnitFactory;
 
-		Unit* clone() const;
+        string m_name;
+        bool m_hasTicked;
+        NamedContainer<UnitParameter> m_parameters;
+        SignalBus m_inputSignals;
+        SignalBus m_outputSignals;
+        UnitConnectionBus m_inputConnections;
+        shared_ptr<Circuit> m_parent;
+    };
 
-		/// Called when the user changes a parameter
-		virtual void onParamChange(const UnitParameter* param) {};
-	protected:
-		typedef vector<UnitParameter*> ParamVec;
-		ParamVec m_params;
-		IDMap m_parammap;
-		string m_name;
-		Circuit* m_parent;
-		double m_Fs, m_tempo;
-		vector<UnitSample> m_output;
-		int m_bufind;
-		virtual void process(int bufind) = 0; // should add its result to m_output[bufind]
-		UnitParameter& addParam(string name, int id, IParam::EParamType ptype, double min, double max, double defaultValue, double step, double shape = 1.0, bool canEdit = true, bool canModulate = true);
-		UnitParameter& addDoubleParam(string name, double min = 0, double max = 1, double defaultValue = 0, double step = 1e-2, double shape = 1.0, bool canEdit = true, bool canModulate = true);
-		UnitParameter& addIntParam(string name, int min, int max, int defaultValue, double shape = 1.0, bool canEdit = true, bool canModulate = true);
-		UnitParameter& addBoolParam(string name, bool defaultValue);
-		UnitParameter& addEnumParam(string name, const vector<string> choice_names, int defaultValue);
-		virtual void onSampleRateChange(double newfs) = 0;
+    template<typename ID>
+    const UnitParameter& Unit::getParameter(const ID& a_identifier) {
+        return m_parameters.get(a_identifier);
+    }
 
-		virtual void onBufferSizeChange(size_t newbuffersize) {};
+    template<typename ID, typename T>
+    bool Unit::setParameter(const ID& a_identifier, const T& a_value){
+        if(!m_parameters.find(a_identifier))
+            return false;
+        if(m_parameters.get(a_identifier).set(a_value)){
+            int id = m_parameters.getItemIndex(a_identifier);
+            onParamChange_(id);
+            return true;
+        }else{
+            return false;
+        }
+    };
 
-		virtual void onTempoChange(double newtempo) {};
+    template<typename Base,typename Derived>
+    class Cloneable : public Base {
+    public:
+        template<typename... Args>
+        explicit Cloneable(Args... args) : Base(args...)
+        {
+        }
 
-	private:
-		virtual Unit* cloneImpl() const = 0;
-		virtual inline string getClassName() const = 0;
+        virtual ~Cloneable() {};
 
-		/// Allows parent classes to apply common processing before child class outputs.
-		virtual void beginProcessing() { };
-
-		/// Allows parent classes to apply common processing after child class outputs.
-		virtual void finishProcessing() { };
-	};
+        virtual Base* clone() const
+        {
+            return new Derived(dynamic_cast<Derived const &>(*this));
+        }
+    };
 }
 #endif
 
