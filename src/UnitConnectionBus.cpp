@@ -55,7 +55,7 @@ namespace syn {
             port[i].connectedUnit->tick();
 
             // add outputChannel to a_recipient
-            Signal& outputChannel = port[i].connectedUnit->getOutputBus().getChannel(port[i].connectedPort);
+            const Signal& outputChannel = port[i].connectedUnit->getOutputChannel(port[i].connectedPort);
             newInputValue += outputChannel.get();
         }
         a_recipient.set(newInputValue);
@@ -69,13 +69,14 @@ namespace syn {
         }
         const UnitPort& port = m_ports[a_localPort];
         double outputValue = a_signal.get();
+        double inputValue;
         for(int i=0;i<port.size();i++){
 
             port[i].connectedUnit->tick();
 
             // add outputChannel to a_recipient
-            Signal& inputChannel = port[i].connectedUnit->getInputBus().getChannel(port[i].connectedPort);
-            inputChannel.set(inputChannel.get() + outputValue);
+            inputValue = port[i].connectedUnit->getInputChannel(port[i].connectedPort).get();
+            port[i].connectedUnit->setInputChannel(port[i].connectedPort, inputValue + outputValue);
         }
         return true;
     }
@@ -83,5 +84,25 @@ namespace syn {
     int UnitConnectionBus::numPorts() const
     {
         return m_ports.size();
+    }
+
+    bool UnitConnectionBus::disconnect(shared_ptr<Unit> a_connectedUnit)
+    {
+        vector<pair<int,int> > garbage_list;
+        // Find all connections referencing this unit and add them to the garbage list
+        for(int i=0;i<m_ports.size();i++){
+            for(int j=0;j<m_ports[i].size();j++){
+                if(m_ports[i][j].connectedUnit == a_connectedUnit){
+                    garbage_list.push_back(make_pair(i,j));
+                }
+            }
+        }
+        // Remove all connections in the garbage list
+        for(int i=0;i<garbage_list.size();i++){
+            UnitPort& port = m_ports[garbage_list[i].first];
+            port.erase(port.begin()+garbage_list[i].second);
+        }
+
+        return garbage_list.size()>0;
     }
 }

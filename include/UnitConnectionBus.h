@@ -10,6 +10,7 @@
 #include <memory>
 
 using std::shared_ptr;
+using std::weak_ptr;
 
 namespace syn
 {
@@ -27,8 +28,21 @@ namespace syn
     class UnitConnectionBus
     {
     public:
+        /**
+         * Create the specified connection
+         * \returns False if connection already existed
+         */
         bool connect(shared_ptr<Unit> a_connectedUnit, int a_connectedPort, int a_localPort);
+        /**
+         * Remove the specified connection
+         * \returns True if connection existed
+         */
         bool disconnect(shared_ptr<Unit> a_connectedUnit, int a_connectedPort, int a_localPort);
+        /**
+         * Remove all connections that reference the specified unit
+         * \returns True if any connections were removed
+         */
+        bool disconnect(shared_ptr<Unit> a_connectedUnit);
         /**
          * Pull incoming output signals from the specified port into the specified receiving signal.
          * If multiple connections are present at a port, their values are summed.
@@ -38,7 +52,9 @@ namespace syn
         * Push the specified output signal into the input signals connected to the specified port.
         */
         bool push(int a_localPort, Signal& a_signal) const;
+
         int numPorts() const;
+
     private:
         typedef vector<UnitConnector> UnitPort;
         vector<UnitPort> m_ports;

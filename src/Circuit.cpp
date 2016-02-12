@@ -1,6 +1,4 @@
 #include "Circuit.h"
-#include <stdexcept>
-#include <vector>
 #include <unordered_set>
 
 using std::vector;
@@ -8,41 +6,144 @@ using std::unordered_set;
 
 namespace syn
 {
+
+
+    Circuit::Circuit() :
+    Circuit("")
+    {}
+
+    Circuit::Circuit(const string& a_name) :
+            Unit(a_name)
+    {
+        addInput_("left in");
+        addInput_("right in");
+        addOutput_("left out");
+        addOutput_("right out");
+    }
+
+    Circuit::Circuit(const Circuit& a_other) :
+            Circuit(a_other.getName())
+    {
+        for(int i=0;i<a_other.m_units.size();i++){
+            addUnit(shared_ptr<Unit>(a_other.m_units[i]->clone()));
+        }
+        for(int i=0;i<a_other.m_connectionRecords.size();i++){
+            const ConnectionRecord& rec = a_other.m_connectionRecords[i];
+            if(rec.type == ConnectionRecord::Input){
+                connectInputs(rec.from_port, rec.to_id, rec.to_port);
+            }else if(rec.type == ConnectionRecord::Output){
+                connectOutputs(rec.from_port, rec.to_id, rec.to_port);
+            }else if(rec.type == ConnectionRecord::Internal){
+                connectInternal(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
+            }
+        }
+    }
+
 	void Circuit::process_(const SignalBus& inputs, SignalBus& outputs)
 	{
         /* Push circuit input signals to internally connected input ports */
-        for(int i=0;i<m_inputSignals.size();i++){
+        for(int i=0;i< m_inputSignals.getNumChannels(); i++){
             Signal& inputSignal = m_inputSignals.getChannel(i);
-            m_internalInputs.push(i, inputSignal);
+            m_externalInputs.push(i, inputSignal);
         }
 
         // reset all internal components
         for (int i = 0; i < m_units.size(); i++)
         {
-            m_units.get(i).get()->reset();
+            m_units[i].get()->reset();
         }
 
         /* Push internally connected output signals to circuit output ports */
-        for(int i=0;i<m_outputSignals.size();i++){
+        for(int i=0;i< m_outputSignals.getNumChannels(); i++){
             Signal& outputSignal = m_outputSignals.getChannel(i);
-            m_internalOutputs.pull(i, outputSignal);
+            m_externalOutputs.pull(i, outputSignal);
         }
 	}
 
-    Circuit::Circuit()
-    {
-        addInput_("in");
-        addOutput_("out");
-    }
-
     int Circuit::addUnit(shared_ptr<Unit> a_unit)
     {
-        return m_units.add(a_unit.get()->getName(),a_unit);
+        int retval = m_units.add(a_unit.get()->getName(),a_unit);
+        if(retval<0)
+            return retval;
+        a_unit->_setParent(this);
+        a_unit->setFs(getFs());
+        a_unit->setTempo(getTempo());
+        a_unit->m_midiData = m_midiData;
+        return retval;
     }
 
-    bool Circuit::onParamChange_(int a_paramId)
+    vector<pair<int, int> > Circuit::getConnectionsToCircuitInput(int a_circuitInputPort) const{
+        vector<pair<int, int> > connectedPorts;
+        for(int i=0;i<m_connectionRecords.size();i++){
+            const ConnectionRecord& conn = m_connectionRecords[i];
+            if(conn.type==ConnectionRecord::Input && conn.from_port == a_circuitInputPort){
+                connectedPorts.push_back(make_pair(conn.to_id,conn.to_port));
+            }
+        }
+        return connectedPorts;
+    };
+
+    vector<pair<int, int> > Circuit::getConnectionsToCircuitOutput(int a_circuitOutputPort) const{
+        vector<pair<int, int> > connectedPorts;
+        for(int i=0;i<m_connectionRecords.size();i++){
+            const ConnectionRecord& conn = m_connectionRecords[i];
+            if(conn.type==ConnectionRecord::Output && conn.from_port == a_circuitOutputPort){
+                connectedPorts.push_back(make_pair(conn.to_id,conn.to_port));
+            }
+        }
+        return connectedPorts;
+    };
+
+    Unit* Circuit::_clone() const
     {
+        return new Circuit(*this);
+    }
+
+    bool Circuit::isActive() const
+    {
+        for(int i=0;i<m_units.size();i++){
+            if (m_units[i]->isActive())
+                return true;
+        }
         return false;
+    }
+
+    void Circuit::onFsChange_()
+    {
+        for(int i=0;i<m_units.size();i++){
+            m_units[i]->setFs(getFs());
+        }
+    }
+
+    void Circuit::onTempoChange_()
+    {
+        for(int i=0;i<m_units.size();i++){
+            m_units[i]->setTempo(getTempo());
+        }
+    }
+
+    void Circuit::onNoteOn_()
+    {
+        for(int i=0;i<m_units.size();i++){
+            m_units[i]->noteOn(getNote(),getVelocity());
+        }
+    }
+
+    void Circuit::onNoteOff_()
+    {
+        for(int i=0;i<m_units.size();i++){
+            m_units[i]->noteOff(getNote(),getVelocity());
+        }
+    }
+
+    const Unit& Circuit::getUnit(int a_unitId) const
+    {
+        return *(m_units[a_unitId]);
+    }
+
+    int Circuit::getNumUnits() const
+    {
+        return m_units.size();
     }
 }
 

@@ -3,8 +3,8 @@
 /**
  * Defines a general purpose point class templated by number of dimensions.
  */
-#include <stdarg.h>
-#include <math.h>
+#include <cstdarg>
+#include <algorithm>
 
 namespace syn
 {

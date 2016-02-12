@@ -1,8 +1,27 @@
 #include "ADSREnvelope.h"
 #include "DSPMath.h"
 
-
 namespace syn {
+
+
+    ADSREnvelope::ADSREnvelope(const string& name) :
+            Unit(name),
+            m_phase(0),
+            m_currStage(Attack),
+            m_initial(0),
+            m_target(1),
+            m_isActive(false),
+            m_pAttack(addParameter_(UnitParameter("attack",0.0,1.0,0.01))),
+            m_pDecay(addParameter_(UnitParameter("decay",0.0,1.0,0.01))),
+            m_pSustain(addParameter_(UnitParameter("sustain",0.0,1.0,1.0))),
+            m_pRelease(addParameter_(UnitParameter("release",0.0,1.0,0.01)))
+    {
+        addOutput_("out");
+    }
+
+    ADSREnvelope::ADSREnvelope(const ADSREnvelope& a_rhs) :
+            ADSREnvelope(a_rhs.getName())
+    {}
 
     void ADSREnvelope::process_(const SignalBus& a_inputs, SignalBus& a_outputs)
     {
@@ -13,7 +32,7 @@ namespace syn {
                 segment_time = getParameter(m_pAttack).getDouble();
                 m_initial = 0;
                 // skip decay segment if its length is zero
-                m_target = getParameter(m_pDecay).getDouble()==0 ? 1.0 : getParameter(m_pSustain).getDouble();
+                m_target = getParameter(m_pDecay).getDouble()!=0 ? 1.0 : getParameter(m_pSustain).getDouble();
                 break;
             case Decay:
                 segment_time = getParameter(m_pDecay).getDouble();
@@ -38,10 +57,10 @@ namespace syn {
 
 
         /* Handle segment change */
-        if (m_phase > 1.0) {
+        if (m_phase >= 1.0) {
             if (m_currStage == Attack) {
                 m_currStage = Decay;
-                m_initial = getOutputBus().getChannel(0).get();
+                m_initial = m_target;
                 m_phase = 0.0;
             } else if (m_currStage == Decay) {
                 m_currStage = Sustain;
@@ -58,38 +77,24 @@ namespace syn {
         a_outputs.setChannel(0,output);
     }
 
-    void ADSREnvelope::trigger()
+    void ADSREnvelope::onNoteOn_()
     {
         m_currStage = Attack;
         m_phase = 0;
+        m_isActive = true;
     }
 
-    void ADSREnvelope::release()
+    void ADSREnvelope::onNoteOff_()
     {
         m_currStage = Release;
-        m_initial = getOutputBus().getChannel(0).get();
+        m_initial = getOutputChannel(0).get();
         m_target = 0;
         m_phase = 0;
     }
 
-    ADSREnvelope::ADSREnvelope(const string& name) :
-            Cloneable(name),
-            m_phase(0),
-            m_currStage(Attack),
-            m_initial(0),
-            m_target(1),
-            m_isActive(false),
-            m_pAttack(addParameter_(UnitParameter("attack",0.0,1.0,0.01))),
-            m_pDecay(addParameter_(UnitParameter("decay",0.0,1.0,0.01))),
-            m_pSustain(addParameter_(UnitParameter("sustain",0.0,1.0,1.0))),
-            m_pRelease(addParameter_(UnitParameter("release",0.0,1.0,0.01)))
+    bool ADSREnvelope::isActive() const
     {
-        addOutput_("out");
-    }
-
-    bool ADSREnvelope::onParamChange_(int a_paramId)
-    {
-        return true;
+        return m_isActive;
     }
 }
 

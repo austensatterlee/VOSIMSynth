@@ -1,13 +1,39 @@
-cmake_minimum_required(VERSION 3.3)
-project(VOSIMLib)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
+PROJECT(VOSIMLib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+SET(CMAKE_VERBOSE_MAKEFILE ON)
 
-file(GLOB srcs src/*.cpp)
-file(GLOB hdrs include/*.h)
+IF (${MINGW})
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -fpermissive")
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -D__NO_INLINE__ -ffast-math -msse3 -msse2")
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -D__NO_INLINE__")
+ENDIF ()
 
-set(SOURCE_FILES ${srcs};${hdrs})
+IF (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    ADD_DEFINITIONS(-D__OS_WINDOWS__)
+ELSEIF (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    ADD_DEFINITIONS(-D__OS_LINUX__)
+ELSEIF (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    ADD_DEFINITIONS(-D__OS_MACOSX__)
+ENDIF ()
 
-include_directories(include)
+MESSAGE(WARNING ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
+MESSAGE(WARNING ${CMAKE_CXX_FLAGS_RELEASE})
+MESSAGE(WARNING ${CMAKE_CXX_FLAGS_DEBUG})
+MESSAGE(WARNING ${CMAKE_CXX_FLAGS})
 
-add_executable(VOSIMLib ${SOURCE_FILES};main.cpp)
+FILE(GLOB srcs src/*.cpp)
+FILE(GLOB hdrs include/*.h)
+FILE(GLOB stk_hdrs external/stk/Mutex.h)
+FILE(GLOB stk_srcs external/stk/Mutex.cpp)
+FILE(GLOB unit_hdrs units/include/*.h)
+FILE(GLOB unit_srcs units/src/*.cpp)
+
+SET(SOURCE_FILES ${srcs};${hdrs};${unit_hdrs};${unit_srcs};${stk_hdrs};${stk_srcs})
+
+INCLUDE_DIRECTORIES(include)
+INCLUDE_DIRECTORIES(units/include)
+INCLUDE_DIRECTORIES(external)
+
+ADD_LIBRARY(VOSIMLib STATIC ${SOURCE_FILES})

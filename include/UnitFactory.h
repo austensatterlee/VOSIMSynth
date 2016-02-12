@@ -37,29 +37,31 @@ namespace syn
 		UnitFactory() {}
 
 		virtual ~UnitFactory() {
-			for (int i = 0; i < m_prototypes.size(); i++) {
-				delete m_prototypes[i]->prototype;
-				delete m_prototypes[i];
-			}
+			m_prototypes.clear();
+			m_group_names.clear();
 		}
 
 		/**
 		 * \brief Register a prototype unit with the factory. Prototype deletion will be taken care of upon factory destruction.
 		 */
 		void addUnitPrototype(string a_group_name, shared_ptr<Unit> a_unit) {
-			FactoryPrototype* prototype = new FactoryPrototype(a_group_name, a_unit);
+			shared_ptr<FactoryPrototype> prototype = shared_ptr<FactoryPrototype> (new FactoryPrototype(a_group_name, a_unit));
 			m_prototypes.push_back(prototype);
 			m_group_names.insert(prototype->group_name);
 			m_class_identifiers[prototype->prototype->getClassIdentifier()] = m_prototypes.size() - 1;
 		}
 
-		const set<string>& getGroupNames() const {
+		void addUnitPrototype(string a_group_name, Unit* a_unit) {
+			addUnitPrototype(a_group_name, shared_ptr<Unit>(a_unit));
+		}
+
+		set<string> getGroupNames() const {
 			return m_group_names;
 		}
 
 		vector<string> getPrototypeNames(const string& group) const {
 			vector<string> names;
-			for (const FactoryPrototype* prototype : m_prototypes) {
+			for (shared_ptr<FactoryPrototype> prototype : m_prototypes) {
 				if (prototype->group_name == group) {
 					names.push_back(prototype->name);
 				}
@@ -67,39 +69,50 @@ namespace syn
 			return names;
 		}
 
-		shared_ptr<Unit> createUnit(int protonum) const {
-            shared_ptr<Unit> unit = m_prototypes[protonum]->prototype->clone();
+        int getPrototypeId(const string& a_name) const{
+            int i = 0;
+            for (shared_ptr<FactoryPrototype> prototype : m_prototypes) {
+                if (prototype->name == a_name) {
+                    return i;
+                }
+                i++;
+            }
+            return -1;
+        }
+
+		shared_ptr<Unit> createUnit(int a_protoNum) const {
+            shared_ptr<Unit> unit = shared_ptr<Unit>(m_prototypes[a_protoNum]->prototype->clone());
 			char namebuf[MAX_UNIT_STR_LEN];
-			snprintf(namebuf, 256, "%s_%d", unit->getName().c_str(), m_prototypes[protonum]->build_count);
+			snprintf(namebuf, 256, "%s_%d", unit->getName().c_str(), m_prototypes[a_protoNum]->build_count);
 			string newname = namebuf;
 			unit->_setName(newname);
-			m_prototypes[protonum]->build_count++;
+			m_prototypes[a_protoNum]->build_count++;
 			return unit;
 		}
 
-        shared_ptr<Unit> createUnit(string name) {
+        shared_ptr<Unit> createUnit(string a_name) {
 			int i = 0;
-			for (const FactoryPrototype* prototype : m_prototypes) {
-				if (prototype->name == name) {
+			for (shared_ptr<FactoryPrototype> prototype : m_prototypes) {
+				if (prototype->name == a_name) {
 					return createUnit(i);
 				}
 				i++;
 			}
-			throw std::logic_error("Unit name not found in factory.");
+			throw std::domain_error("Unit name not found in factory.");
 		}
 
-        shared_ptr<Unit> createUnit(const unsigned int classidentifier) const {
-			int protonum = m_class_identifiers.at(classidentifier);
+        shared_ptr<Unit> createUnit(unsigned int a_classIdentifier) const {
+			int protonum = m_class_identifiers.at(a_classIdentifier);
 			return createUnit(protonum);
 		}
 
-		bool hasClassId(unsigned a_unit_class_id) {
-			bool result = m_class_identifiers.find(a_unit_class_id) != m_class_identifiers.end();
+		bool hasClassId(unsigned a_classIdentifier) const {
+			bool result = m_class_identifiers.find(a_classIdentifier) != m_class_identifiers.end();
 			return result;
 		}
 
 	protected:
-		vector<FactoryPrototype*> m_prototypes;
+		vector<shared_ptr<FactoryPrototype>> m_prototypes;
 		set<string> m_group_names;
 
 		unordered_map<unsigned int, int> m_class_identifiers; //<! mapping from unique class IDs to prototype numbers

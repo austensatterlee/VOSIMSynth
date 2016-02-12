@@ -10,3 +10,6 @@ doc/
 *.pyc
 *.bk
 *.swp
+
+build/
+main.cpp

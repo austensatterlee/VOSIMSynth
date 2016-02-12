@@ -29,9 +29,7 @@ namespace syn
         UnitParameter(const string& a_name, int a_min, int a_max, int a_defaultValue);
         UnitParameter(const string& a_name, const vector<string>& a_optionNames);
         UnitParameter(const string& a_name, double a_min, double a_max, double a_defaultValue);
-		bool operator==(const UnitParameter& a_rhs) const{
-			return memcmp(this,&a_rhs,sizeof(UnitParameter))==0;
-		}
+
 
 		/**
 		 * Reset the parameter to its default value
@@ -60,6 +58,9 @@ namespace syn
          */
         bool setNorm(double a_norm_value);
 
+        template<typename T>
+        T get() const;
+
         bool getBool() const;
         int getInt() const;
         double getDouble() const;
@@ -83,6 +84,22 @@ namespace syn
 
 		vector<DisplayText> m_displayTexts;
 	};
+
+    template<typename T>
+    T UnitParameter::get() const{
+        switch(m_type){
+            case Bool:
+                return (T)getBool();
+            case Enum:
+            case Int:
+                return (T)getInt();
+            case Double:
+                return (T)getDouble();
+            case Null:
+            default:
+                return (T)NULL;
+        }
+    }
 }
 #endif // __UnitParameter__
 

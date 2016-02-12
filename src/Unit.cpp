@@ -4,35 +4,29 @@ using std::hash;
 
 using namespace std;
 
-namespace syn
-{
+namespace syn {
 
-    Unit::Unit(const Unit& a_other) :
-    m_parent(a_other.m_parent),
-    m_name(a_other.m_name),
-    m_inputSignals(a_other.m_inputSignals),
-    m_outputSignals(a_other.m_outputSignals)
+    Unit::Unit() :
+            m_parent{nullptr},
+            m_name{""},
+            m_hasTicked(false)
+    { }
+
+    Unit::Unit(const string& a_name) :
+            m_parent{nullptr},
+            m_name{a_name},
+            m_hasTicked(false)
+    { }
+
+    unsigned int Unit::getClassIdentifier() const
     {
-
-    }
-
-    unsigned int Unit::getClassIdentifier() const {
         hash<string> hash_fn;
         return hash_fn(_getClassName());
     }
 
-    shared_ptr<Circuit> Unit::getParent() {
+    const Circuit* const Unit::getParent() const
+    {
         return m_parent;
-    }
-
-    SignalBus& Unit::getOutputBus()
-    {
-        return m_outputSignals;
-    }
-
-    SignalBus& Unit::getInputBus()
-    {
-        return m_inputSignals;
     }
 
     int Unit::getNumParameters() const
@@ -42,31 +36,34 @@ namespace syn
 
     int Unit::getNumInputs() const
     {
-        return m_inputSignals.size();
+        return m_inputSignals.getNumChannels();
     }
 
     int Unit::getNumOutputs() const
     {
-        return m_outputSignals.size();
+        return m_outputSignals.getNumChannels();
     }
 
-    const string& Unit::getName() const {
+    const string& Unit::getName() const
+    {
         return m_name;
     }
 
-    void Unit::_setName(const string& a_name) {
+    void Unit::_setName(const string& a_name)
+    {
         m_name = a_name;
     }
 
-    void Unit::tick() {
-        if(m_hasTicked)
+    void Unit::tick()
+    {
+        if (m_hasTicked)
             return;
         m_hasTicked = true;
 
         /* Pull signals from inputs */
-        for( int i = 0; i < m_inputSignals.size(); i++){
+        for (int i = 0 ; i < m_inputSignals.getNumChannels() ; i++) {
             Signal& inputChannel = m_inputSignals.getChannel(i);
-            m_inputConnections.pull(i,inputChannel);
+            m_inputConnections.pull(i, inputChannel);
         }
 
         m_outputSignals.clear();
@@ -74,35 +71,110 @@ namespace syn
         process_(m_inputSignals, m_outputSignals);
     }
 
-    void Unit::reset() {
+    void Unit::reset()
+    {
         m_inputSignals.clear();
         m_hasTicked = false;
     }
 
-    int Unit::addInput_(const string& a_name) {
+    int Unit::addInput_(const string& a_name)
+    {
         return m_inputSignals.addChannel(a_name);
     }
 
-    int Unit::addOutput_(const string& a_name) {
+    int Unit::addOutput_(const string& a_name)
+    {
         return m_outputSignals.addChannel(a_name);
     }
 
-    int Unit::addParameter_(const UnitParameter& a_param) {
+    int Unit::addParameter_(const UnitParameter& a_param)
+    {
         int indx = m_parameters.add(a_param.getName(), a_param);
         return m_parameters.getItemIndex(indx);
     }
 
-    void Unit::_setParent(shared_ptr<Circuit> a_new_parent) {
+    void Unit::_setParent(Circuit* a_new_parent)
+    {
         m_parent = a_new_parent;
     }
 
-    bool Unit::_connectInput(shared_ptr<Unit> a_fromUnit, int a_fromOutputPort, int a_toInputPort) {
+    bool Unit::_connectInput(shared_ptr<Unit> a_fromUnit, int a_fromOutputPort, int a_toInputPort)
+    {
         return m_inputConnections.connect(a_fromUnit, a_fromOutputPort, a_toInputPort);
     }
 
-    bool Unit::_disconnectInput(shared_ptr<Unit> a_fromUnit, int a_fromOutputPort, int a_toInputPort) {
+    bool Unit::_disconnectInput(shared_ptr<Unit> a_fromUnit, int a_fromOutputPort, int a_toInputPort)
+    {
         return m_inputConnections.disconnect(a_fromUnit, a_fromOutputPort, a_toInputPort);
     }
 
+    bool Unit::_disconnectInput(shared_ptr<Unit> a_fromUnit){
+        return m_inputConnections.disconnect(a_fromUnit);
+    }
+
+    void Unit::setFs(double a_newFs)
+    {
+        m_audioConfig.fs = a_newFs;
+        onFsChange_();
+    }
+
+    void Unit::setTempo(double a_newTempo)
+    {
+        m_audioConfig.tempo = a_newTempo;
+        onTempoChange_();
+    }
+
+    void Unit::noteOn(int a_note, int a_velocity)
+    {
+        m_midiData.note = a_note;
+        m_midiData.velocity = a_velocity;
+        m_midiData.isNoteOn = true;
+        onNoteOn_();
+    }
+
+    void Unit::noteOff(int a_note, int a_velocity)
+    {
+        m_midiData.isNoteOn = false;
+        onNoteOff_();
+    }
+
+    double Unit::getFs() const
+    {
+        return m_audioConfig.fs;
+    }
+
+    double Unit::getTempo() const
+    {
+        return m_audioConfig.tempo;
+    }
+
+    int Unit::getNote() const
+    {
+        return m_midiData.note;
+    }
+
+    int Unit::getVelocity() const
+    {
+        return m_midiData.velocity;
+    }
+
+    bool Unit::isActive() const
+    {
+        return false;
+    }
+
+    Unit* Unit::clone() const
+    {
+        Unit* unit = _clone();
+
+        unit->m_name=m_name;
+        unit->m_inputSignals=m_inputSignals;
+        unit->m_outputSignals=m_outputSignals;
+        unit->m_parameters=m_parameters;
+        unit->m_midiData=m_midiData;
+        unit->setFs(m_audioConfig.fs);
+        unit->setTempo(m_audioConfig.tempo);
+        return unit;
+    }
 }
 

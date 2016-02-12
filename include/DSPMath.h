@@ -1,7 +1,6 @@
 #ifndef __DSPMATH__
 #define __DSPMATH__
 #include "NDPoint.h"
-#include <cmath>
 
 #define LERP(A,B,F) (((B)-(A))*(F)+(A))
 #define INVLERP(A,B,X) (((X)-(A))/((B)-(A)))

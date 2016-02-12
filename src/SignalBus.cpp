@@ -15,28 +15,23 @@ namespace syn {
         return m_signals.add(a_name, Signal());
     }
 
-    int SignalBus::size() const
+    int SignalBus::getNumChannels() const
     {
         return m_signals.size();
     }
 
     void SignalBus::set(SignalBus& a_other)
     {
-        for(int i=0;i<a_other.size();i++){
+        for(int i=0;i< a_other.getNumChannels(); i++){
             Signal& channel = a_other.getChannel(i);
             setChannel(i, channel);
         }
     }
 
-    const NamedContainer<Signal>& SignalBus::get() const
-    {
-        return m_signals;
-    }
-
     void SignalBus::clear()
     {
         for(int i=0;i<m_signals.size();i++){
-            m_signals.get(i).clear();
+            m_signals[i].clear();
         }
     }
 
@@ -45,7 +40,18 @@ namespace syn {
      *---------------------*/
 
     Signal::Signal() : m_value(0)
+    { }
+    Signal::Signal(const Signal& a_other) : m_value(a_other.m_value)
+    { }
+    Signal& Signal::operator=(const Signal& a_other)
     {
+        set(a_other);
+        return *this;
+    }
+
+    bool Signal::operator==(const Signal& a_rhs) const
+    {
+        return m_value == a_rhs.m_value;
     }
 
     double Signal::get() const

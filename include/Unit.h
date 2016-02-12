@@ -13,6 +13,18 @@ using std::make_shared;
 
 namespace syn {
     class Circuit;
+
+    struct AudioConfig {
+        double fs;
+        double tempo;
+    };
+
+    struct MidiData {
+        int note;
+        int velocity;
+        bool isNoteOn;
+    };
+
     /**
      * \class Unit
      *
@@ -29,46 +41,71 @@ namespace syn {
      */
     class Unit {
     public:
-        Unit() :
-                m_parent{nullptr},
-                m_name{""},
-                m_hasTicked(false)
-        {}
+        Unit();
 
-        Unit(const string& a_name) :
-                m_parent{nullptr},
-                m_name{a_name},
-                m_hasTicked(false)
-        {}
+        Unit(const string& a_name);
 
-        Unit(const Unit& a_other);
-
-        virtual ~Unit(){};
+        virtual ~Unit()
+        { };
 
         void tick();
 
         void reset();
 
-        shared_ptr<Circuit> getParent();
+        void setFs(double a_newFs);
+
+        void setTempo(double a_newTempo);
+
+        void noteOn(int a_note, int a_velocity);
+
+        void noteOff(int a_note, int a_velocity);
+
+        double getFs() const;
+
+        double getTempo() const;
+
+        int getNote() const;
+
+        int getVelocity() const;
+
+        //void sendMidiEvent();
+        virtual bool isActive() const;
+
+        const Circuit* const getParent() const;
 
         template<typename ID>
-        const UnitParameter& getParameter(const ID& a_identifier);
+        const UnitParameter& getParameter(const ID& a_identifier) const;
 
         template<typename ID, typename T>
         bool setParameter(const ID& a_identifier, const T& a_value);
 
-        SignalBus& getOutputBus();
-        SignalBus& getInputBus();
+        template<typename ID, typename T>
+        bool setParameterNorm(const ID& a_identifier, const T& a_value);
+
+        template<typename ID>
+        const Signal& getOutputChannel(const ID& a_identifier) const;
+
+        template<typename ID>
+        const Signal& getInputChannel(const ID& a_identifier) const;
+
+        template<typename ID, typename T>
+        bool setInputChannel(const ID& a_identifier, const T& a_val);
 
         int getNumParameters() const;
+
         int getNumInputs() const;
+
         int getNumOutputs() const;
 
         const string& getName() const;
 
-        virtual Unit* clone() const = 0;
-
         unsigned int getClassIdentifier() const;
+
+        /**
+         * Copies this unit into newly allocated memory (the caller is responsible for releasing the memory).
+         * Connections to other units are not preserved in the clone.
+         */
+        Unit* clone() const;
 
     protected:
         /**
@@ -76,7 +113,20 @@ namespace syn {
          * to update the internal state and verify that the change is valid. If the change is not valid,
          * the function should return false.
          */
-        virtual bool onParamChange_(int a_paramId) = 0;
+        virtual void onParamChange_(int a_paramId)
+        { };
+
+        virtual void onFsChange_()
+        { };
+
+        virtual void onTempoChange_()
+        { };
+
+        virtual void onNoteOn_()
+        { };
+
+        virtual void onNoteOff_()
+        { };
 
         virtual void process_(const SignalBus& a_inputs, SignalBus& a_outputs) = 0;
 
@@ -89,16 +139,36 @@ namespace syn {
     private:
         virtual inline string _getClassName() const = 0;
 
-        void _setParent(shared_ptr<Circuit> a_new_parent);
+        void _setParent(Circuit* a_new_parent);
 
         void _setName(const string& a_name);
 
+        /**
+         * Connect the specified output port to this units specified input port.
+         * \param a_fromUnit The output unit
+         * \param a_fromOutputPort The output port of a_fromUnit
+         * \param a_toInputPort The input port of this unit
+         * \returns False if the connection already existed
+         */
         bool _connectInput(shared_ptr<Unit> a_fromUnit, int a_fromOutputPort, int a_toInputPort);
 
+        /**
+         * Remove the specified connection
+         * \returns True if the connection existed
+         */
         bool _disconnectInput(shared_ptr<Unit> a_fromUnit, int a_fromOutputPort, int a_toInputPort);
+
+        /**
+         * Remove all connections referencing the specified Unit
+         * \returns True if any connections were removed
+         */
+        bool _disconnectInput(shared_ptr<Unit> a_fromUnit);
+
+        virtual Unit* _clone() const = 0;
 
     private:
         friend class Circuit;
+
         friend class UnitFactory;
 
         string m_name;
@@ -107,40 +177,61 @@ namespace syn {
         SignalBus m_inputSignals;
         SignalBus m_outputSignals;
         UnitConnectionBus m_inputConnections;
-        shared_ptr<Circuit> m_parent;
+        Circuit* m_parent;
+        AudioConfig m_audioConfig;
+        MidiData m_midiData;
     };
 
+
     template<typename ID>
-    const UnitParameter& Unit::getParameter(const ID& a_identifier) {
-        return m_parameters.get(a_identifier);
+    const Signal& Unit::getOutputChannel(const ID& a_identifier) const
+    {
+        return m_outputSignals.getChannel(a_identifier);
+    }
+
+    template<typename ID>
+    const Signal& Unit::getInputChannel(const ID& a_identifier) const
+    {
+        return m_inputSignals.getChannel(a_identifier);
     }
 
     template<typename ID, typename T>
-    bool Unit::setParameter(const ID& a_identifier, const T& a_value){
-        if(!m_parameters.find(a_identifier))
+    bool Unit::setInputChannel(const ID& a_identifier, const T& a_val)
+    {
+        return m_inputSignals.setChannel(a_identifier, a_val);
+    };
+
+    template<typename ID>
+    const UnitParameter& Unit::getParameter(const ID& a_identifier) const
+    {
+        return m_parameters[a_identifier];
+    }
+
+    template<typename ID, typename T>
+    bool Unit::setParameter(const ID& a_identifier, const T& a_value)
+    {
+        if (!m_parameters.find(a_identifier))
             return false;
-        if(m_parameters.get(a_identifier).set(a_value)){
+        if (m_parameters[a_identifier].set(a_value)) {
             int id = m_parameters.getItemIndex(a_identifier);
             onParamChange_(id);
             return true;
-        }else{
+        } else {
             return false;
         }
     };
 
-    template<typename Base,typename Derived>
-    class Cloneable : public Base {
-    public:
-        template<typename... Args>
-        explicit Cloneable(Args... args) : Base(args...)
-        {
-        }
-
-        virtual ~Cloneable() {};
-
-        virtual Base* clone() const
-        {
-            return new Derived(dynamic_cast<Derived const &>(*this));
+    template<typename ID, typename T>
+    bool Unit::setParameterNorm(const ID& a_identifier, const T& a_value)
+    {
+        if (!m_parameters.find(a_identifier))
+            return false;
+        if (m_parameters[a_identifier].setNorm(a_value)) {
+            int id = m_parameters.getItemIndex(a_identifier);
+            onParamChange_(id);
+            return true;
+        } else {
+            return false;
         }
     };
 }
