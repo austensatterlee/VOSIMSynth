@@ -28,6 +28,10 @@ namespace syn {
                 m_pTune(addParameter_({"tune", -12.0, 12.0, 0.0})),
                 m_pOctave(addParameter_({"octave", -2, 2, 0})),
                 m_pGain(addParameter_({"gain", 0.0, 1.0, 1.0})),
+				m_pPhaseOffset(addParameter_({"phase", 0.0, 0.5, 0.0})),
+				m_iGain(addInput_("gain")),
+				m_iNote(addInput_("note")),
+				m_iPhaseOffset(addInput_("phase")),
                 m_basePhase(0),
                 m_phase(0),
                 m_phase_step(0),
@@ -35,8 +39,6 @@ namespace syn {
                 m_freq(1),
                 m_pitch(0)
         {
-            addInput_("gain");
-            addInput_("pitch");
             addOutput_("out");
         }
 
@@ -48,13 +50,22 @@ namespace syn {
         double m_period;
         double m_freq;
         double m_pitch;
-
-        int m_pTune;
-        int m_pOctave;
-        int m_pGain;
+		double m_gain;
     protected:
-        virtual void tick_phase();
-        virtual void update_step();
+	    virtual void process_(const SignalBus& a_inputs, SignalBus& a_outputs);
+        virtual void tickPhase_(double a_phaseOffset);
+        virtual void updatePhaseStep_();
+	    virtual void sync_() {};
+		void onNoteOn_() override;
+	private:
+		int m_pTune;
+		int m_pOctave;
+		int m_pGain;
+		int m_pPhaseOffset;
+
+		int m_iGain;
+		int m_iNote;
+		int m_iPhaseOffset;
     };
 
     class BasicOscillator : public Oscillator {
@@ -72,10 +83,11 @@ namespace syn {
     protected:
         int m_pWaveform;
     protected:
-        virtual void process_(const SignalBus& a_inputs, SignalBus& a_outputs);
+	    void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
     private:
-        string _getClassName() const { return "BasicOscillator"; }
-        virtual Unit* _clone() const { return new BasicOscillator(*this); }
+        string _getClassName() const override { return "BasicOscillator"; }
+
+	    Unit* _clone() const override { return new BasicOscillator(*this); }
     };
 };
 #endif

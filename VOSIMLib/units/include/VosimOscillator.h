@@ -10,12 +10,11 @@ namespace syn {
     public:
         VosimOscillator(string name) :
                 Oscillator(name),
+                m_pulse_step(0.0),
+                m_curr_pulse_gain(1.0),
                 m_pPulseTune(addParameter_({"pulse freq", 0.0, 1.0, 0.5})),
                 m_pNumPulses(addParameter_({"number", 1, 8, 1})),
-                m_pPulseDecay(addParameter_({"decay", 0.0, 1.0, 0.0})),
-                m_pulse_step(0.0),
-                m_curr_pulse_num(0),
-                m_curr_pulse_gain(1.0)
+                m_pPulseDecay(addParameter_({"decay", 0.0, 1.0, 0.0}))
         { }
 
         VosimOscillator(const VosimOscillator& a_rhs) :
@@ -23,20 +22,20 @@ namespace syn {
         { }
 
     protected:
-        void process_(const SignalBus& a_inputs, SignalBus& a_outputs);
+	    void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
 
-        void update_step() override;
+        void updatePhaseStep_() override;
+
+		void sync_() override;
 
     private:
         string _getClassName() const override
         { return "VosimOscillator"; }
 
-        virtual Unit* _clone() const
-        { return new VosimOscillator(*this); }
+	    Unit* _clone() const override { return new VosimOscillator(*this); }
 
     private:
         double m_pulse_step;
-        int m_curr_pulse_num;
         double m_curr_pulse_gain;
         int m_pPulseTune;
         int m_pNumPulses;
@@ -58,14 +57,13 @@ namespace syn {
         { }
 
     protected:
-        void process_(const SignalBus& a_inputs, SignalBus& a_outputs);
+	    void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
 
     private:
         string _getClassName() const override
         { return "FormantOscillator"; }
 
-        virtual Unit* _clone() const
-        { return new FormantOscillator(*this); }
+	    Unit* _clone() const override { return new FormantOscillator(*this); }
 
     private:
         int m_pWidth;

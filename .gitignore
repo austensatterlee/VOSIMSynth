@@ -1,5 +1,6 @@
 # Doxygen
 doc/
+_build/
 
 # IDEA
 .idea/
@@ -10,6 +11,3 @@ doc/
 *.pyc
 *.bk
 *.swp
-
-build/
-main.cpp

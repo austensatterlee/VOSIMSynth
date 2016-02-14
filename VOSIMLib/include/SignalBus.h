@@ -49,7 +49,7 @@ namespace syn{
         bool setChannel(const ID& a_identifier, const T& a_newVal);
 
         template<typename ID>
-        string getChannelName(const ID& a_identifier);
+        string getChannelName(const ID& a_identifier) const;
 
         void clear();
     private:
@@ -86,7 +86,7 @@ namespace syn{
     }
 
     template<typename ID>
-    string SignalBus::getChannelName(const ID& a_identifier){
+    string SignalBus::getChannelName(const ID& a_identifier) const{
         return m_signals.getItemName(a_identifier);
     }
 

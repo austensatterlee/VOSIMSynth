@@ -100,7 +100,6 @@ namespace syn {
 
     void VoiceManager::tick(double& left_output, double& right_output)
     {
-        m_mutex.lock();
         _flushActionQueue();
         vector<int> garbage_list;
         left_output = 0;
@@ -108,10 +107,8 @@ namespace syn {
         for (VoiceList::const_iterator v = m_voiceStack.begin() ; v != m_voiceStack.end() ; v++) {
             Circuit* voice = m_allVoices[*v].get();
             if (voice->isActive()) {
-                m_mutex.lock();
                 voice->tick();
                 voice->reset();
-                m_mutex.unlock();
                 left_output += voice->getOutputChannel(0).get();
                 right_output += voice->getOutputChannel(1).get();
             }
@@ -122,8 +119,7 @@ namespace syn {
         for (int i = 0 ; i < garbage_list.size() ; i++) {
             _makeIdle(garbage_list[i]);
         }
-        m_mutex.signal();
-        m_mutex.unlock();
+		m_tickCount++;
     }
 
     int VoiceManager::_getLowestVoiceIndex() const
@@ -180,27 +176,34 @@ namespace syn {
     int VoiceManager::getNumVoices() const
     { return m_numVoices; }
 
-    void VoiceManager::queueAction(EMuxAction a_action, const MuxArgs& a_params)
-    {
+	unsigned VoiceManager::queueAction(EMuxAction a_action, const MuxArgs& a_params) {
         m_mutex.lock();
         m_queuedActions.push_back(make_pair(a_action, a_params));
-        m_mutex.wait();
         m_mutex.unlock();
+		return m_tickCount;
     }
 
     void VoiceManager::doAction(EMuxAction a_action, const MuxArgs& a_params)
     {
-        m_mutex.lock();
         _processAction(a_action, a_params);
-        m_mutex.unlock();
     }
 
-    void VoiceManager::_flushActionQueue()
+	unsigned VoiceManager::getTickCount() const {
+		return m_tickCount;
+    }
+
+	void VoiceManager::_flushActionQueue()
     {
-        while (!m_queuedActions.empty()) {
+        while (true) {
+			m_mutex.lock();
+			if(!m_queuedActions.size()) {
+				m_mutex.unlock();
+				return;
+			}
             EMuxAction action = m_queuedActions.front().first;
             MuxArgs params = m_queuedActions.front().second;
-            m_queuedActions.pop_front();
+			m_queuedActions.pop_front();
+			m_mutex.unlock();
             _processAction(action, params);
         }
     }
@@ -222,9 +225,6 @@ namespace syn {
                     break;
                 case ModifyParamNorm:
                     voice->setInternalParameterNorm(a_params.id1, a_params.id2, a_params.value);
-                    break;
-                case AddUnit:
-                    voice->addUnit(m_factory->createUnit(a_params.id1));
                     break;
                 case DeleteUnit:
                     voice->removeUnit(a_params.id1);
@@ -266,23 +266,6 @@ namespace syn {
     const Unit& VoiceManager::getUnit(int a_id) const
     {
         return m_instrument->getUnit(a_id);
-    }
-
-    int VoiceManager::addUnit(int a_prototypeId)
-    {
-        Circuit* voice;
-        // Apply action to all voices
-        int numVoices = m_allVoices.size();
-        int returnId = -1;
-        for (int i = 0 ; i <= numVoices ; i++) {
-            if (i == m_allVoices.size()) { // Apply action to prototype voice at end of loop
-                voice = m_instrument.get();
-            } else {
-                voice = m_allVoices[i].get();
-            }
-            returnId = voice->addUnit(m_factory->createUnit(a_prototypeId));
-        }
-        return returnId;
     }
 
     void VoiceManager::setFs(double a_newFs)

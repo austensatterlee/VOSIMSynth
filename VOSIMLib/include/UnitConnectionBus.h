@@ -21,7 +21,7 @@ namespace syn
         int connectedPort;
         int localPort;
         bool operator==(const UnitConnector& a_rhs) const {
-            return memcmp(this, &a_rhs, sizeof(UnitConnector))==0;
+			return connectedUnit == a_rhs.connectedUnit && connectedPort == a_rhs.connectedPort && localPort == a_rhs.localPort;
         }
     };
 

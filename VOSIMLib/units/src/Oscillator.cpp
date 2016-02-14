@@ -41,39 +41,50 @@ namespace syn {
     *
     ******************************/
 
-    void Oscillator::update_step()
+    void Oscillator::updatePhaseStep_()
     {
         m_freq = pitchToFreq(m_pitch);
         m_period = getFs() / m_freq;
         m_phase_step = 1. / m_period;
     }
 
-    void Oscillator::tick_phase()
+	void Oscillator::onNoteOn_() {
+		m_basePhase = 0.0;
+		sync_();
+    }
+
+	void Oscillator::tickPhase_(double a_phaseOffset)
     {
         m_basePhase += m_phase_step;
-        if (m_basePhase >= 1)
-            m_basePhase -= 1;
-        m_phase = m_basePhase;
-        if (m_phase >= 1)
-            m_phase -= 1;
-        else if (m_phase < 0)
-            m_phase += 1;
+		if (m_basePhase >= 1) {
+			m_basePhase -= 1;
+		}
+        m_phase = m_basePhase + a_phaseOffset;
+		m_phase = WRAP(m_phase,1.0);
+		if (m_phase < m_phase_step) {
+			sync_();
+		}
+    }
+
+
+	void Oscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
+		double tune = getParameter(m_pTune).getDouble() + a_inputs.getValue(m_iNote);
+		double oct = getParameter(m_pOctave).getInt();
+		double phase_offset = getParameter(m_pPhaseOffset).getDouble() + a_inputs.getValue(m_iPhaseOffset);
+		m_gain = getParameter(m_pGain).getDouble() * a_inputs.getValue(m_iGain);
+		m_pitch = tune + oct * 12;
+
+		updatePhaseStep_();
+		tickPhase_(phase_offset);
     }
 
     void BasicOscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs)
     {
-        double tune = getParameter(m_pTune).getDouble() + a_inputs.getValue(1);
-        double oct = getParameter(m_pOctave).getInt();
-        double gain = getParameter(m_pGain).getDouble() * a_inputs.getValue(0);
-        m_pitch = tune + oct * 12;
-
-        update_step();
-        tick_phase();
-
+		Oscillator::process_(a_inputs, a_outputs);
         double output;
         int shape = getParameter(m_pWaveform).getInt();
         output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period);
-        a_outputs.setChannel(0, gain * output);
+        a_outputs.setChannel(0, m_gain * output);
     }
 }
 

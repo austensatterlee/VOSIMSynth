@@ -118,7 +118,10 @@ namespace syn {
     {
         int intvalue = static_cast<int>(m_value);
         // round upwards
-        intvalue = (m_value - intvalue >= 0.5) ? intvalue + 1 : intvalue;
+		if (m_value > 0)
+			intvalue = (m_value - intvalue >= 0.5) ? intvalue + 1 : intvalue;
+		else
+			intvalue = (intvalue - m_value >= 0.5) ? intvalue - 1 : intvalue;
         return intvalue;
     }
 

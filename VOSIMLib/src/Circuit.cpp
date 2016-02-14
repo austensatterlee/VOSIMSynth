@@ -92,6 +92,10 @@ namespace syn
             }
         }
         return connectedPorts;
+    }
+
+	const vector<ConnectionRecord>& Circuit::getConnectionRecords() const {
+		return m_connectionRecords;
     };
 
     Unit* Circuit::_clone() const

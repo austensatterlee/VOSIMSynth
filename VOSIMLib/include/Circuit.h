@@ -72,6 +72,8 @@ namespace syn {
 
         vector<pair<int, int> > getConnectionsToCircuitOutput(int a_circuitOutputPort) const;
 
+		const vector<ConnectionRecord>& getConnectionRecords() const;
+
         template<typename UID, typename PID>
         double getInternalParameter(const UID& a_unitIdentifier, const PID& a_paramIdentifier) const;
 
@@ -181,34 +183,54 @@ namespace syn {
     };
 
     template<typename ID>
-    bool Circuit::removeUnit(const ID& a_identifier)
+    bool Circuit::removeUnit(const ID& a_unitIdentifier)
     {
-        shared_ptr<Unit> unit = m_units[a_identifier];
-        int unitId = m_units.getItemIndex(a_identifier);
+		if (!m_units.find(a_unitIdentifier))
+			return false;
+        shared_ptr<Unit> unit = m_units[a_unitIdentifier];
+        int unitId = m_units.getItemIndex(a_unitIdentifier);
         // Erase connections
         for (int i = 0 ; i < m_connectionRecords.size() ; i++) {
             const ConnectionRecord& rec = m_connectionRecords[i];
-            if (unitId == rec.to_id || unitId == rec.from_id) {
-                switch (rec.type) {
-                    case ConnectionRecord::Input:
-                        disconnectInputs(rec.from_port, rec.to_id, rec.to_port);
-                        break;
-                    case ConnectionRecord::Output:
-                        disconnectOutputs(rec.from_port, rec.to_id, rec.to_port);
-                        break;
-                    case ConnectionRecord::Internal:
-                        disconnectInternal(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
-                        break;
-                    default:
-                        throw std::domain_error("Invalid connection record type");
-                        break;
-                }
-                // disconnect methods remove the connection record from the list, so we need to decrement our index to
-                // compensate
-                i--;
-            }
+			switch(rec.type) {
+			case ConnectionRecord::Internal: 
+				if (unitId == rec.to_id || unitId == rec.from_id) {
+					disconnectInternal(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
+					// disconnect methods remove the connection record from the list, so we need to decrement our index to
+					// compensate
+					i--;
+				}else {
+					if (rec.to_id > unitId) { // drop unit id's to compensate for the removed unit
+						m_connectionRecords[i].to_id -= 1;
+					}
+					if (rec.from_id > unitId) { // drop unit id's to compensate for the removed unit
+						m_connectionRecords[i].from_id -= 1;
+					}
+				}
+				break;
+			case ConnectionRecord::Input:
+				if (unitId == rec.to_id) {
+					disconnectInputs(rec.from_port, rec.to_id, rec.to_port);
+					i--;
+				}
+				else if (rec.to_id > unitId) {
+					m_connectionRecords[i].to_id -= 1;
+				}
+				break;
+			case ConnectionRecord::Output:
+				if (unitId == rec.to_id) {
+					disconnectOutputs(rec.from_port, rec.to_id, rec.to_port);
+					i--;
+				}else if(rec.to_id > unitId) {
+					m_connectionRecords[i].to_id -= 1;
+				}
+				break;
+			case ConnectionRecord::Null:
+			default: break;
+			}
         }
-        m_units.remove(a_identifier);
+        m_units.remove(a_unitIdentifier);
+	    return true;
     }
 
     template<typename ID>
@@ -267,12 +289,13 @@ namespace syn {
         if (fromUnit->getNumOutputs() <= a_fromOutputPort || toUnit->getNumInputs() <= a_toInputPort)
             return false;
 
-        bool result = toUnit.get()->_connectInput(fromUnit, a_fromOutputPort, a_toInputPort);
+        bool result = toUnit->_connectInput(fromUnit, a_fromOutputPort, a_toInputPort);
         // record the connection upon success
         if (result) {
             m_connectionRecords.push_back({ConnectionRecord::Internal, fromUnitId, a_fromOutputPort, toUnitId,
                                            a_toInputPort});
         }
+	    return result;
     }
 
     template<typename ID>
@@ -290,7 +313,7 @@ namespace syn {
         bool result = m_externalInputs.disconnect(toUnit, a_toInputPort, a_circuitInputPort);
         // find and remove the associated connection record upon successful removal
         if (result) {
-            ConnectionRecord record = {ConnectionRecord::Input, -1, a_circuitInputPort, toUnitId, a_toInputPort};
+            ConnectionRecord record = {ConnectionRecord::Input, 0, a_circuitInputPort, toUnitId, a_toInputPort};
 
             for (int i = 0 ; i < m_connectionRecords.size() ; i++) {
                 if (m_connectionRecords[i] == record) {
@@ -317,7 +340,7 @@ namespace syn {
         bool result = m_externalOutputs.disconnect(fromUnit, a_fromOutputPort, a_circuitOutputPort);
         // find and remove the associated connection record upon successful removal
         if (result) {
-            ConnectionRecord record = {ConnectionRecord::Output, -1, a_circuitOutputPort, fromUnitId, a_fromOutputPort};
+            ConnectionRecord record = {ConnectionRecord::Output, 0, a_circuitOutputPort, fromUnitId, a_fromOutputPort};
             for (int i = 0 ; i < m_connectionRecords.size() ; i++) {
                 if (m_connectionRecords[i] == record) {
                     m_connectionRecords.erase(m_connectionRecords.begin() + i);
@@ -343,7 +366,7 @@ namespace syn {
         if (fromUnit->getNumOutputs() <= a_fromOutputPort || toUnit->getNumInputs() <= a_toInputPort)
             return false;
 
-        bool result = toUnit.get()->_disconnectInput(fromUnit, a_fromOutputPort, a_toInputPort);
+        bool result = toUnit->_disconnectInput(fromUnit, a_fromOutputPort, a_toInputPort);
         // find and remove the associated connection record upon successful removal
         if (result) {
             ConnectionRecord record = {ConnectionRecord::Internal, fromId, a_fromOutputPort, toId,

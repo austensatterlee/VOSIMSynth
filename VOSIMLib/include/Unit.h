@@ -82,6 +82,12 @@ namespace syn {
         template<typename ID, typename T>
         bool setParameterNorm(const ID& a_identifier, const T& a_value);
 
+		template<typename ID>
+		string getInputName(const ID& a_identifier) const;
+
+		template<typename ID>
+		string getOutputName(const ID& a_identifier) const;
+
         template<typename ID>
         const Signal& getOutputChannel(const ID& a_identifier) const;
 
@@ -233,7 +239,17 @@ namespace syn {
         } else {
             return false;
         }
-    };
+    }
+
+	template <typename ID>
+	string Unit::getInputName(const ID& a_identifier) const {
+		return m_inputSignals.getChannelName<ID>(a_identifier);
+    }
+
+	template <typename ID>
+	string Unit::getOutputName(const ID& a_identifier) const {
+		return m_outputSignals.getChannelName<ID>(a_identifier);
+	};
 }
 #endif
 

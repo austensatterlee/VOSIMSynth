@@ -1,0 +1,8 @@
+# Doxygen
+doc/
+
+# IDEA
+.idea/
+
+build/
+main.cpp

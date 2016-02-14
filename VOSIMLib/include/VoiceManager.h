@@ -22,7 +22,6 @@ namespace syn {
     enum EMuxAction {
         ModifyParam,
         ModifyParamNorm,
-        AddUnit,
         DeleteUnit,
         ConnectInput,
         ConnectOutput,
@@ -49,6 +48,7 @@ namespace syn {
         VoiceManager(shared_ptr<Circuit> a_proto, shared_ptr<UnitFactory> a_factory) :
                 m_numVoices(0),
                 m_maxVoices(0),
+				m_tickCount(0),
                 m_instrument(a_proto),
                 m_factory(a_factory)
         {
@@ -67,7 +67,6 @@ namespace syn {
          * The following is a description of parameter signatures corresponding to each possible action:
          * ModifyParam:         (int unit_id, int param_id, double value)
          * ModifyParamNorm:     (int unit_id, int param_id, double norm_value)
-         * AddUnit:             (int prototype_id)
          * DeleteUnit:          (int unit_id)
          * ConnectInput:        (int circuit_input_id, int unit_id, int unit_input_id)
          * ConnectOutput:       (int circuit_output_id, int unit_id, int output_port_id)
@@ -76,10 +75,14 @@ namespace syn {
          * DisconnectOutput:    (int circuit_output_id, int unit_id, int output_port_id)
          * DisconnectInternal:  (int from_unit_id, int from_unit_port, int to_unit_id, int to_unit_port
          */
-        void queueAction(EMuxAction a_action, const MuxArgs& a_params);
+		unsigned queueAction(EMuxAction a_action, const MuxArgs& a_params);
+
         void doAction(EMuxAction a_action, const MuxArgs& a_params);
 
+		unsigned getTickCount() const;
+
         void setFs(double a_newFs);
+
         void setTempo(double a_newTempo);
 
         void noteOn(int a_noteNumber, int a_velocity);
@@ -94,7 +97,8 @@ namespace syn {
 
         const Unit& getUnit(int a_id) const;
 
-        int addUnit(int a_prototypeId);
+		template<typename T>
+        int addUnit(T a_prototypeId);
 
         int getNumUnits() const;
 
@@ -132,13 +136,34 @@ namespace syn {
         typedef map<int, VoiceList> VoiceMap;
         int m_numVoices;
         int m_maxVoices;
+		unsigned m_tickCount;
         VoiceMap m_voiceMap;
         VoiceList m_voiceStack;
         VoiceList m_idleVoiceStack;
         vector<shared_ptr<Circuit> > m_allVoices;
         shared_ptr<Circuit> m_instrument;
         shared_ptr<UnitFactory> m_factory;
-        list<pair<EMuxAction, MuxArgs> > m_queuedActions;
+        list<pair<EMuxAction, MuxArgs> > m_queuedActions;		
     };
+
+	template <typename T>
+	int VoiceManager::addUnit(T a_prototypeId) {
+		shared_ptr<Circuit> voice;
+		// Apply action to all voices
+		int numVoices = m_allVoices.size();
+		int returnId = -1;
+		shared_ptr<Unit> unit = m_factory->createUnit(a_prototypeId);
+		for (int i = 0; i <= numVoices; i++) {
+			if (i == m_allVoices.size()) { // Apply action to prototype voice at end of loop
+				voice = m_instrument;
+				returnId = voice->addUnit(unit);
+			}
+			else {
+				voice = m_allVoices[i];
+				returnId = voice->addUnit(shared_ptr<Unit>(unit->clone()));
+			}
+		}
+		return returnId;
+	}
 }
 #endif
