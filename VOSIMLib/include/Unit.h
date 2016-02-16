@@ -64,6 +64,8 @@ namespace syn {
 
         double getTempo() const;
 
+		bool isNoteOn() const;
+
         int getNote() const;
 
         int getVelocity() const;

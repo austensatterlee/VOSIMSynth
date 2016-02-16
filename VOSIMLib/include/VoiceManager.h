@@ -43,8 +43,6 @@ namespace syn {
 
     class VoiceManager {
     public:
-        Mutex m_mutex;
-    public:
         VoiceManager(shared_ptr<Circuit> a_proto, shared_ptr<UnitFactory> a_factory) :
                 m_numVoices(0),
                 m_maxVoices(0),
@@ -89,13 +87,13 @@ namespace syn {
 
         void noteOff(int a_noteNumber, int a_velocity);
 
-        void setMaxVoices(int a_newMax);
+        void setMaxVoices(unsigned a_newMax);
 
         int getNumVoices() const;
 
         int getMaxVoices() const;
 
-        const Unit& getUnit(int a_id) const;
+        const Unit& getUnit(int a_id);
 
 		template<typename T>
         int addUnit(T a_prototypeId);
@@ -123,13 +121,13 @@ namespace syn {
 
         int _findIdleVoice();
 
-        int _getLowestVoiceIndex() const;
+        int _getLowestVoiceIndex();
 
-        int _getNewestVoiceIndex() const;
+        int _getNewestVoiceIndex();
 
-        int _getOldestVoiceIndex() const;
+        int _getOldestVoiceIndex();
 
-        int _getHighestVoiceIndex() const;
+        int _getHighestVoiceIndex();
 
     private:
         typedef list<int> VoiceList;
@@ -143,7 +141,9 @@ namespace syn {
         vector<shared_ptr<Circuit> > m_allVoices;
         shared_ptr<Circuit> m_instrument;
         shared_ptr<UnitFactory> m_factory;
-        list<pair<EMuxAction, MuxArgs> > m_queuedActions;		
+        list<pair<EMuxAction, MuxArgs> > m_queuedActions;
+
+		Mutex m_queueMutex, m_voiceMutex;
     };
 
 	template <typename T>

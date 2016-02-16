@@ -2,7 +2,6 @@
 #include "IGraphics.h"
 #include "UnitParameter.h"
 #include "VoiceManager.h"
-#include "DSPMath.h"
 
 namespace syn
 {

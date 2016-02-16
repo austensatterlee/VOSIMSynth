@@ -8,6 +8,7 @@
 #include "UnitControl.h"
 #include "stk/Mutex.h"
 #include <memory>
+#include "UnitControlContainer.h"
 
 #define WIRE_THRESH 10
 
@@ -37,13 +38,14 @@ namespace syn {
                 m_lastClickPos(0, 0),
                 m_lastClickState(0),
                 m_currAction(NONE),
-                m_lastSelectedUnit(-1),
-                m_lastSelectedParam(-1) 
+				m_lastSelectedUnit(-1)
 		{
         };
 
         ~CircuitPanel()
         { };
+
+		void registerUnitControl(shared_ptr<Unit> a_unit, shared_ptr<UnitControl> a_unitControl);
 
         void OnMouseOver(int x, int y, IMouseMod* pMod) override;
 
@@ -77,7 +79,7 @@ namespace syn {
         *
         * Structure:
         *  - <unsigned integer> N - number of units
-		*  - UNIT (xN) - unit serialization (See CircuitPanel::_serializeUnitControl and UnitControl::_unserializeUnitControl)
+		*  - UNIT (xN) - unit serialization (See CircuitPanel::_serializeUnitControl and UnitControlContainer::_unserializeUnitControl)
         *
         *
         *  - <unsigned integer> M - number of connection records
@@ -106,12 +108,12 @@ namespace syn {
 	    bool _checkNearestWire() const;
 
         /**
-         * Serializes the specified UnitControl, including the associated Unit itself
+         * Serializes the specified UnitControlContainer, including the associated Unit itself
          */
         ByteChunk _serializeUnitControl(int ctrlidx) const;
 
         /**
-         * Restores the UnitControl specified in the provided serialization.
+         * Restores the UnitControlContainer specified in the provided serialization.
          * The associated Unit is created and added to the prototype instrument.
          */
         int _unserializeUnitControl(ByteChunk* chunk, int startPos);
@@ -119,26 +121,25 @@ namespace syn {
     private:
         enum UIAction {
             NONE = 0,
-            MOVE,
-            RESIZE,
-            MOD_PARAM,
+            MODIFY_UNIT,
             CONNECT
         };
-		typedef vector<shared_ptr<UnitControl> > UnitList;
+		typedef vector<shared_ptr<UnitControlContainer> > UnitList;
         shared_ptr<VoiceManager> m_voiceManager;
         shared_ptr<UnitFactory> m_unitFactory;
+		map<unsigned, shared_ptr<UnitControl> > m_unitControlMap;
 		UnitList m_unitControls;
         NDPoint<2,int> m_lastMousePos;
         IMouseMod m_lastMouseState;
         NDPoint<2,int> m_lastClickPos;
         IMouseMod m_lastClickState;
-		Mutex m_mutex;
 
         UIAction m_currAction;
-        int m_lastSelectedUnit, m_lastSelectedParam;
+		int m_lastSelectedUnit;
         UnitPortVector m_lastSelectedUnitPort;
         CircuitPortVector m_lastSelectedCircuitPort;
         pair<ConnectionRecord,int> m_nearestWire = {{ConnectionRecord::Null,0,0,0,0},0};
+
         int c_portSize = 10;
     };
 
@@ -146,8 +147,15 @@ namespace syn {
 	int CircuitPanel::_createUnit(T prototypeIdentifier, int x, int y) {
 		int uid = m_voiceManager->addUnit(prototypeIdentifier);
 		if (m_unitControls.size() != uid)
-			throw std::logic_error("unit control vector out of sync with circuit");
-		m_unitControls.push_back(make_shared<UnitControl>(mPlug, m_voiceManager, uid, x, y));
+			throw logic_error("unit control vector out of sync with circuit");
+
+		unsigned classId = m_unitFactory->getClassId(prototypeIdentifier);
+		UnitControl* unitCtrl;
+		if (m_unitControlMap.find(classId) != m_unitControlMap.end())
+			unitCtrl = m_unitControlMap.at(classId)->construct(mPlug, m_voiceManager, uid, x, y);
+		else
+			unitCtrl = new DefaultUnitControl(mPlug, m_voiceManager, uid, x, y);
+		m_unitControls.push_back(make_shared<UnitControlContainer>(mPlug, m_voiceManager, unitCtrl, uid, x, y));
 		return m_unitControls.size() - 1;
 	}
 }

@@ -10,34 +10,37 @@ namespace syn
 {
 	void VosimOscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs)
 	{
+        m_num_pulses = getParameter(m_pNumPulses).getInt();
 		Oscillator::process_(a_inputs, a_outputs);
-        int num_pulses = getParameter(m_pNumPulses).getInt();
         double pulse_decay = getParameter(m_pPulseDecay).getDouble();
 
 		double output = 0.0;
+
 		double unwrapped_pulse_phase = m_phase * m_pulse_step / m_phase_step;
-		double pulse_phase = WRAP(unwrapped_pulse_phase, 1.0);
-		int curr_pulse_num = unwrapped_pulse_phase - pulse_phase;
-		
-		if (curr_pulse_num <= num_pulses) {
+
+		int curr_pulse_num = static_cast<int>(unwrapped_pulse_phase);
+
+		if (curr_pulse_num < m_num_pulses) {
+			double pulse_phase = unwrapped_pulse_phase - curr_pulse_num;
 			double pulseval = lut_sin.getlinear(pulse_phase);
+
+			double curr_pulse_gain = 1.0;
+			while(curr_pulse_num--) {
+				curr_pulse_gain *= (1 - pulse_decay);
+			}
 			
 			output = pulseval*abs(pulseval);
-			output *= m_curr_pulse_gain * sqrt(m_pulse_step / m_phase_step);
-
-			if (pulse_phase >= 1-m_pulse_step) {
-				m_curr_pulse_gain *= 1 - pulse_decay;
-			}
+			output *= curr_pulse_gain * sqrt(m_pulse_step / m_phase_step) * m_gain;
 		}
-		a_outputs.setChannel(0,output * m_gain);
+		a_outputs.setChannel(0,output);
 	}
 
-	void VosimOscillator::updatePhaseStep_()
+	void VosimOscillator::updatePhaseStep_(const SignalBus& a_inputs, SignalBus& a_outputs)
 	{
-		Oscillator::updatePhaseStep_();
+		Oscillator::updatePhaseStep_(a_inputs, a_outputs);
 		double pulse_freq;
         int num_pulses = getParameter(m_pNumPulses).getInt();
-        double pulse_tune = getParameter(m_pPulseTune).getDouble();
+        double pulse_tune = CLAMP(getParameter(m_pPulseTune).getDouble() + a_inputs.getValue(m_iPulseTune), 0, 1);
 		double min_freq = num_pulses*m_freq;
 		double max_freq = 2000;
 		if (min_freq > max_freq) {
@@ -47,11 +50,6 @@ namespace syn
 			pulse_freq = LERP(min_freq, max_freq, pulse_tune);
 		}
 		m_pulse_step = pulse_freq / getFs();
-	}
-
-	void VosimOscillator::sync_() {
-		Oscillator::sync_();
-		m_curr_pulse_gain = 1.0;
 	}
 
 	void FormantOscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs)

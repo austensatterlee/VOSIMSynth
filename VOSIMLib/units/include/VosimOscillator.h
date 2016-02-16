@@ -11,11 +11,13 @@ namespace syn {
         VosimOscillator(string name) :
                 Oscillator(name),
                 m_pulse_step(0.0),
-                m_curr_pulse_gain(1.0),
+				m_num_pulses(1),
                 m_pPulseTune(addParameter_({"pulse freq", 0.0, 1.0, 0.5})),
                 m_pNumPulses(addParameter_({"number", 1, 8, 1})),
-                m_pPulseDecay(addParameter_({"decay", 0.0, 1.0, 0.0}))
-        { }
+                m_pPulseDecay(addParameter_({"decay", 0.0, 1.0, 0.0})) 
+		{
+			m_iPulseTune = addInput_("pulse tune");
+        }
 
         VosimOscillator(const VosimOscillator& a_rhs) :
                 VosimOscillator(a_rhs.getName())
@@ -23,10 +25,7 @@ namespace syn {
 
     protected:
 	    void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
-
-        void updatePhaseStep_() override;
-
-		void sync_() override;
+        void updatePhaseStep_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
 
     private:
         string _getClassName() const override
@@ -36,8 +35,8 @@ namespace syn {
 
     private:
         double m_pulse_step;
-        double m_curr_pulse_gain;
-        int m_pPulseTune;
+		int m_num_pulses;
+        int m_pPulseTune, m_iPulseTune;
         int m_pNumPulses;
         int m_pPulseDecay;
     };

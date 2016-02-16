@@ -80,6 +80,14 @@ namespace syn
             return -1;
         }
 
+
+		int getPrototypeId(unsigned a_classId) const {
+			if(m_class_identifiers.find(a_classId) != m_class_identifiers.end()) {
+				return m_class_identifiers.at(a_classId);
+			}
+			return -1;
+		}
+
 		shared_ptr<Unit> createUnit(int a_protoNum) const {
             shared_ptr<Unit> unit = shared_ptr<Unit>(m_prototypes[a_protoNum]->prototype->clone());
 			char namebuf[MAX_UNIT_STR_LEN];
@@ -101,7 +109,7 @@ namespace syn
 			throw std::domain_error("Unit name not found in factory.");
 		}
 
-        shared_ptr<Unit> createUnit(unsigned int a_classIdentifier) const {
+        shared_ptr<Unit> createUnit(unsigned a_classIdentifier) const {
 			int protonum = m_class_identifiers.at(a_classIdentifier);
 			return createUnit(protonum);
 		}
@@ -111,6 +119,17 @@ namespace syn
 			return result;
 		}
 
+		unsigned getClassId(int a_protoNum) const {
+			int nPrototypes = m_prototypes.size();
+			if(nPrototypes <= a_protoNum) {
+				throw std::domain_error("Prototype not found in factory");
+			}
+			return m_prototypes[a_protoNum]->prototype->getClassIdentifier();
+		}
+
+		unsigned getClassId(unsigned a_protoNum) const {
+			return a_protoNum;
+		}
 	protected:
 		vector<shared_ptr<FactoryPrototype>> m_prototypes;
 		set<string> m_group_names;

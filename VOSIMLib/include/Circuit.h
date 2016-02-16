@@ -315,7 +315,7 @@ namespace syn {
         if (result) {
             ConnectionRecord record = {ConnectionRecord::Input, 0, a_circuitInputPort, toUnitId, a_toInputPort};
 
-            for (int i = 0 ; i < m_connectionRecords.size() ; i++) {
+            for (unsigned i = 0 ; i < m_connectionRecords.size() ; i++) {
                 if (m_connectionRecords[i] == record) {
                     m_connectionRecords.erase(m_connectionRecords.begin() + i);
                     break;
@@ -341,7 +341,7 @@ namespace syn {
         // find and remove the associated connection record upon successful removal
         if (result) {
             ConnectionRecord record = {ConnectionRecord::Output, 0, a_circuitOutputPort, fromUnitId, a_fromOutputPort};
-            for (int i = 0 ; i < m_connectionRecords.size() ; i++) {
+            for (unsigned i = 0 ; i < m_connectionRecords.size() ; i++) {
                 if (m_connectionRecords[i] == record) {
                     m_connectionRecords.erase(m_connectionRecords.begin() + i);
                     break;
@@ -371,7 +371,7 @@ namespace syn {
         if (result) {
             ConnectionRecord record = {ConnectionRecord::Internal, fromId, a_fromOutputPort, toId,
                                        a_toInputPort};
-            for (int i = 0 ; i < m_connectionRecords.size() ; i++) {
+            for (unsigned i = 0 ; i < m_connectionRecords.size() ; i++) {
                 if (m_connectionRecords[i] == record) {
                     m_connectionRecords.erase(m_connectionRecords.begin() + i);
                     break;

@@ -23,6 +23,8 @@ namespace syn
   template<typename T>
   inline T WRAP(T x, T modulo)
   {
+	  if (!modulo)
+		  return x;
 	  T newx = x;
 	  while(newx >= modulo)
 	  {

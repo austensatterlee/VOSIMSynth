@@ -75,6 +75,6 @@ bool syn::ITextSlider::Draw(IGraphics* pGraphics) {
 	pGraphics->DrawIText(&textfmtfar, strbuf, &mRECT);
 
 	// Update minimum size if text doesn't fit
-	m_minSize = MAX(m_minSize, value_display_size.W() + name_display_size.W() + 10);
+	m_minSize = value_display_size.W() + name_display_size.W() + 10;
 	return true;
 }

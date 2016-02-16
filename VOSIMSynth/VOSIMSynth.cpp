@@ -4,6 +4,7 @@
 #include "VosimOscillator.h"
 #include "ADSREnvelope.h"
 #include "MathUnits.h"
+#include "include/OscilloscopeUnit.h"
 
 using namespace std;
 
@@ -35,6 +36,9 @@ void VOSIMSynth::makeGraphics()
     // IBitmap numberedKnob = pGraphics->LoadIBitmap(KNOB_ID, KNOB_FN, kNumberedKnobFrames);
 
     m_circuitPanel = make_shared<CircuitPanel>(this, IRECT{5, 5, GUI_WIDTH - 5, GUI_HEIGHT - 5}, m_voiceManager, m_unitFactory);
+
+	m_circuitPanel->registerUnitControl(make_shared<OscilloscopeUnit>(""), make_shared<OscilloscopeUnitControl>());
+
     pGraphics->AttachControl(m_circuitPanel.get());
 
     AttachGraphics(pGraphics);
@@ -59,6 +63,8 @@ void VOSIMSynth::makeInstrument()
 
     m_unitFactory->addUnitPrototype("MIDI", new MidiNoteUnit("Midi Note"));
 	m_unitFactory->addUnitPrototype("MIDI", new VelocityUnit("Velocity"));
+
+	m_unitFactory->addUnitPrototype("Visualizer", new OscilloscopeUnit("Oscilloscope"));
 
     m_voiceManager = make_shared<VoiceManager>(circ, m_unitFactory);
     m_voiceManager->setMaxVoices(16);
@@ -89,7 +95,6 @@ void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg)
 
 bool VOSIMSynth::SerializeState(ByteChunk* pChunk)
 {
-    //IMutexLock lock(this);
     ByteChunk serialized = m_circuitPanel->serialize();
     pChunk->PutChunk(&serialized);
     return true;
@@ -97,7 +102,6 @@ bool VOSIMSynth::SerializeState(ByteChunk* pChunk)
 
 int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos)
 {
-    //IMutexLock lock(this);
     startPos = m_circuitPanel->unserialize(pChunk, startPos);
     return startPos;
 }

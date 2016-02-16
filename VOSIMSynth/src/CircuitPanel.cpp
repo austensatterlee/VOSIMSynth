@@ -1,5 +1,6 @@
 #include "CircuitPanel.h"
 #include <utility>
+#include <DSPMath.h>
 
 namespace syn {
     void CircuitPanel::_deleteUnit(int unitctrlid)
@@ -22,17 +23,18 @@ namespace syn {
     }
 
     void CircuitPanel::_deleteWire(ConnectionRecord a_conn) const {
+		WDL_MutexLock lock(&mPlug->mMutex);
         switch (a_conn.type) {
             case ConnectionRecord::Internal:
-                m_voiceManager->queueAction(DisconnectInternal,
+                m_voiceManager->doAction(DisconnectInternal,
 	                                            {a_conn.from_id, a_conn.from_port, a_conn.to_id, a_conn.to_port});
                 break;
             case ConnectionRecord::Input:
-                m_voiceManager->queueAction(DisconnectInput,
+                m_voiceManager->doAction(DisconnectInput,
 	                                            {a_conn.from_port, a_conn.to_id, a_conn.to_port});
                 break;
             case ConnectionRecord::Output:
-                m_voiceManager->queueAction(DisconnectOutput,
+                m_voiceManager->doAction(DisconnectOutput,
 	                                            {a_conn.from_port, a_conn.to_id, a_conn.to_port});
                 break;
             case ConnectionRecord::Null:
@@ -41,7 +43,11 @@ namespace syn {
         }
     }
 
-    void CircuitPanel::OnMouseOver(int x, int y, IMouseMod* pMod)
+	void CircuitPanel::registerUnitControl(shared_ptr<Unit> a_unit, shared_ptr<UnitControl> a_unitControl) {
+		m_unitControlMap[a_unit->getClassIdentifier()] = a_unitControl;
+    }
+
+	void CircuitPanel::OnMouseOver(int x, int y, IMouseMod* pMod)
     {
         m_lastMousePos = NDPoint<2, int>(x, y);
         m_nearestWire = getNearestWire(m_lastMousePos[0], m_lastMousePos[1]);
@@ -52,20 +58,15 @@ namespace syn {
         m_lastSelectedUnit = getSelectedUnit(x, y);
         m_lastSelectedCircuitPort = getSelectedPort(x, y);
         if (m_lastSelectedUnit >= 0) {
-            shared_ptr<UnitControl> unitCtrl = m_unitControls.at(m_lastSelectedUnit);
-            unitCtrl->OnMouseDown(x, y, pMod); // propogate event to unit
+            shared_ptr<UnitControlContainer> unitCtrl = m_unitControls.at(m_lastSelectedUnit);
+            unitCtrl->onMouseDown(x, y, pMod); // propogate event to unit
 
             m_lastSelectedUnitPort = unitCtrl->getSelectedPort(x, y);
-            m_lastSelectedParam = unitCtrl->getSelectedParam(x, y);
 
-            if (pMod->L && m_lastSelectedParam >= 0) {
-                m_currAction = MOD_PARAM;
-            } else if (pMod->L && m_lastSelectedUnitPort.type != UnitPortVector::Null) {
-                m_currAction = CONNECT;
-            } else if (pMod->C && pMod->L) {
-                m_currAction = RESIZE;
-            } else if (pMod->L) {
-                m_currAction = MOVE;
+			if (pMod->L && m_lastSelectedUnitPort.type != UnitPortVector::Null) {
+				m_currAction = CONNECT;
+			} else if (pMod->L) {
+                m_currAction = MODIFY_UNIT;
             }
         } else if (pMod->L && m_lastSelectedCircuitPort.type != CircuitPortVector::Null) {
             m_currAction = CONNECT;
@@ -132,34 +133,31 @@ namespace syn {
                 }
             }
         }
-        if (m_lastClickState.R && currSelectedUnit == -1) { // Right clicking on open space
-            if (m_lastClickState.R && _checkNearestWire()) {
-                // Open wire context menu if distance to nearest wire is below threshold
-                shared_ptr<IPopupMenu> wire_menu = make_shared<IPopupMenu>();
-                wire_menu->AddItem("Delete", 0);
-                IPopupMenu* selectedMenu = mPlug->GetGUI()->CreateIPopupMenu(wire_menu.get(), x, y);
-                if (selectedMenu == wire_menu.get()) {
-                    switch (wire_menu->GetChosenItemIdx()) {
-                        case 0:
-                            _deleteWire(m_nearestWire.first);
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
-            else {
-                // Open unit builder context menu
-                shared_ptr<IPopupMenu> main_menu = make_shared<IPopupMenu>();
-                vector<shared_ptr<IPopupMenu>> sub_menus;
-                _generateUnitFactoryMenu(main_menu, sub_menus);
-                IPopupMenu* selectedMenu = mPlug->GetGUI()->CreateIPopupMenu(main_menu.get(), x, y);
-                if (selectedMenu) {
-                    string unit_name = selectedMenu->GetItemText(selectedMenu->GetChosenItemIdx());
-                    _createUnit(unit_name, x, y);
-                }
-            }
-        } else if (m_lastClickState.R && currSelectedUnit >= 0) { // Right clicking on a unit
+        if (m_lastClickState.R && currSelectedUnit == -1) { // Right clicking on open space            
+            // Open unit builder context menu
+            shared_ptr<IPopupMenu> main_menu = make_shared<IPopupMenu>();
+            vector<shared_ptr<IPopupMenu>> sub_menus;
+            _generateUnitFactoryMenu(main_menu, sub_menus);
+            IPopupMenu* selectedMenu = mPlug->GetGUI()->CreateIPopupMenu(main_menu.get(), x, y);
+            if (selectedMenu) {
+                string unit_name = selectedMenu->GetItemText(selectedMenu->GetChosenItemIdx());
+                _createUnit(unit_name, x, y);
+            }            
+        } else if (m_lastClickState.R && _checkNearestWire()) { // Right clicking on a wire
+			// Open wire context menu if distance to nearest wire is below threshold
+			shared_ptr<IPopupMenu> wire_menu = make_shared<IPopupMenu>();
+			wire_menu->AddItem("Delete", 0);
+			IPopupMenu* selectedMenu = mPlug->GetGUI()->CreateIPopupMenu(wire_menu.get(), x, y);
+			if (selectedMenu == wire_menu.get()) {
+				switch (wire_menu->GetChosenItemIdx()) {
+				case 0:
+					_deleteWire(m_nearestWire.first);
+					break;
+				default:
+					break;
+				}
+			}
+		} else if (m_lastClickState.R && currSelectedUnit >= 0) { // Right clicking on a unit
             IPopupMenu unitmenu;
             unitmenu.AddItem("Delete");
             IPopupMenu* selectedmenu = mPlug->GetGUI()->CreateIPopupMenu(&unitmenu, x, y);
@@ -170,7 +168,7 @@ namespace syn {
                 }
             }
         } else if (currSelectedUnit >= 0) { // propogate event to unit if no other actions need to be taken
-            m_unitControls.at(currSelectedUnit)->OnMouseUp(x, y, pMod);
+            m_unitControls.at(currSelectedUnit)->onMouseUp(x, y, pMod);
         }
         m_currAction = NONE;
     }
@@ -180,16 +178,11 @@ namespace syn {
 		WDL_MutexLock lock(&mPlug->mMutex);
         NDPoint<2, int> currMousePos = NDPoint<2, int>(x, y);
         if (m_lastSelectedUnit >= 0) {
-            shared_ptr<UnitControl> unitCtrl = m_unitControls.at(m_lastSelectedUnit);
+            shared_ptr<UnitControlContainer> unitCtrl = m_unitControls.at(m_lastSelectedUnit);
             NDPoint<2, int> unitPos = unitCtrl->getPos();
-            if (m_currAction == MOD_PARAM) {
-                unitCtrl->m_paramControls[m_lastSelectedParam].OnMouseDrag(x, y, dX, dY, pMod);
-            } else if (m_currAction == RESIZE) {
-                unitCtrl->resize(NDPoint<2,int>(dX,dY) + unitCtrl->m_size);
-            } else if (m_currAction == MOVE) {
-                NDPoint<2, int> newUnitPos = currMousePos - m_lastMousePos + unitPos;
-                unitCtrl->move(newUnitPos[0], newUnitPos[1]);
-            }
+            if (m_currAction == MODIFY_UNIT) {
+                unitCtrl->onMouseDrag(x, y, dX, dY, pMod);
+            } 
         }
         m_lastMousePos = currMousePos;
         m_lastMouseState = *pMod;
@@ -200,8 +193,8 @@ namespace syn {
 		WDL_MutexLock lock(&mPlug->mMutex);
         int currSelectedUnit = getSelectedUnit(x, y);
         if (currSelectedUnit >= 0) {
-            shared_ptr<UnitControl> unitctrl = m_unitControls.at(currSelectedUnit);
-            unitctrl->OnMouseDblClick(x, y, pMod);
+            shared_ptr<UnitControlContainer> unitctrl = m_unitControls.at(currSelectedUnit);
+            unitctrl->onMouseDblClick(x, y, pMod);
         }
         m_lastClickPos = {x, y};
         m_lastClickState = *pMod;
@@ -224,7 +217,7 @@ namespace syn {
 		for (int i = 0; i < nUnits;i++) {
 			if (i >= m_unitControls.size())
 				continue;
-            m_unitControls.at(i)->Draw(pGraphics);
+            m_unitControls.at(i)->draw(pGraphics);
         }
 
         // Draw internal connections (connections between units)
@@ -316,8 +309,8 @@ namespace syn {
     int CircuitPanel::getSelectedUnit(int x, int y) const
     {
         int selectedUnit = -1;
-        for (shared_ptr<UnitControl> unitControl : m_unitControls) {
-            if (unitControl->IsHit(x, y)) {
+        for (shared_ptr<UnitControlContainer> unitControl : m_unitControls) {
+            if (unitControl->isHit(x, y)) {
                 selectedUnit = unitControl->getUnitId();
             }
         }
@@ -332,7 +325,7 @@ namespace syn {
         NDPoint<2, int> pt = {x, y};
 
         // Check wires between internal units
-        for (shared_ptr<UnitControl> unitControl : m_unitControls) {
+        for (shared_ptr<UnitControlContainer> unitControl : m_unitControls) {
             int toUnitId = unitControl->getUnitId();
             int nPorts = circ.getUnit(toUnitId).getNumInputs();
             for (int toPortId = 0 ; toPortId < nPorts ; toPortId++) {

@@ -44,6 +44,7 @@ namespace syn {
 
     void VoiceManager::noteOn(int a_noteNumber, int a_velocity)
     {
+		m_voiceMutex.lock();
         if (m_numVoices == m_maxVoices - 1) {
             int vind = _getOldestVoiceIndex();
             m_idleVoiceStack.remove(vind);
@@ -57,6 +58,7 @@ namespace syn {
         else if (m_numVoices >= 0) {
             _createVoice(a_noteNumber, a_velocity);
         }
+		m_voiceMutex.unlock();
     }
 
     void VoiceManager::noteOff(int a_noteNumber, int a_velocity)
@@ -68,7 +70,7 @@ namespace syn {
         }
     }
 
-    void VoiceManager::setMaxVoices(int a_newMax)
+    void VoiceManager::setMaxVoices(unsigned a_newMax)
     {
         if (a_newMax < 1)
             a_newMax = 1;
@@ -86,7 +88,7 @@ namespace syn {
             m_allVoices.pop_back();
         }
 
-        for (int i = 0 ; i < m_allVoices.size() ; i++) {
+        for (unsigned i = 0 ; i < m_allVoices.size() ; i++) {
             m_allVoices[i] = shared_ptr<Circuit>(static_cast<Circuit*>(m_instrument->clone()));
             m_idleVoiceStack.push_back(i);
         }
@@ -116,70 +118,88 @@ namespace syn {
                 garbage_list.push_back(*v);
             }
         }
+		m_voiceMutex.lock();
         for (int i = 0 ; i < garbage_list.size() ; i++) {
             _makeIdle(garbage_list[i]);
         }
+		m_voiceMutex.unlock();
 		m_tickCount++;
     }
 
-    int VoiceManager::_getLowestVoiceIndex() const
+    int VoiceManager::_getLowestVoiceIndex()
     {
+		m_voiceMutex.lock();
         if (m_numVoices > 0) {
             VoiceMap::const_iterator it;
             for (it = m_voiceMap.begin() ; it != m_voiceMap.end() ; it++) {
                 if (!it->second.empty() && m_allVoices[it->second.back()]->isActive()) {
+					m_voiceMutex.unlock();
                     return it->second.back();
                 }
             }
         }
-        return 0;
+		m_voiceMutex.unlock();
+        return -1;
     }
 
-    int VoiceManager::_getNewestVoiceIndex() const
+    int VoiceManager::_getNewestVoiceIndex()
     {
+		m_voiceMutex.lock();
         if (m_numVoices > 0) {
             for (VoiceList::const_reverse_iterator it = m_voiceStack.crbegin() ; it != m_voiceStack.crend() ; ++it) {
-                if (m_allVoices[*it]->isActive())
-                    return *it;
+				if (m_allVoices[*it]->isActive()) {
+					m_voiceMutex.unlock();
+					return *it;
+				}
             }
         }
-        return 0;
+		m_voiceMutex.unlock();
+        return -1;
     }
 
-    int VoiceManager::_getOldestVoiceIndex() const
+    int VoiceManager::_getOldestVoiceIndex()
     {
+		m_voiceMutex.lock();
         if (m_numVoices > 0) {
             for (VoiceList::const_iterator it = m_voiceStack.cbegin() ; it != m_voiceStack.cend() ; ++it) {
-                if (m_allVoices[*it]->isActive())
-                    return *it;
+				if (m_allVoices[*it]->isActive()) {
+					m_voiceMutex.unlock();
+					return *it;
+				}
             }
         }
-        return 0;
+		m_voiceMutex.unlock();
+        return -1;
     }
 
-    int VoiceManager::_getHighestVoiceIndex() const
+    int VoiceManager::_getHighestVoiceIndex()
     {
+		m_voiceMutex.lock();
         if (m_numVoices > 0) {
             VoiceMap::const_reverse_iterator it;
             for (it = m_voiceMap.crbegin() ; it != m_voiceMap.crend() ; ++it) {
                 if (!it->second.empty() && m_allVoices[it->second.back()]->isActive()) {
+					m_voiceMutex.unlock();
                     return it->second.back();
                 }
             }
         }
-        return 0;
+		m_voiceMutex.unlock();
+        return -1;
     }
 
-    int VoiceManager::getMaxVoices() const
-    { return m_maxVoices; }
+    int VoiceManager::getMaxVoices() const {
+	    return m_maxVoices;
+    }
 
-    int VoiceManager::getNumVoices() const
-    { return m_numVoices; }
+    int VoiceManager::getNumVoices() const {
+	    return m_numVoices;
+    }
 
 	unsigned VoiceManager::queueAction(EMuxAction a_action, const MuxArgs& a_params) {
-        m_mutex.lock();
+        m_queueMutex.lock();
         m_queuedActions.push_back(make_pair(a_action, a_params));
-        m_mutex.unlock();
+        m_queueMutex.unlock();
 		return m_tickCount;
     }
 
@@ -195,15 +215,15 @@ namespace syn {
 	void VoiceManager::_flushActionQueue()
     {
         while (true) {
-			m_mutex.lock();
+			m_queueMutex.lock();
 			if(!m_queuedActions.size()) {
-				m_mutex.unlock();
+				m_queueMutex.unlock();
 				return;
 			}
             EMuxAction action = m_queuedActions.front().first;
             MuxArgs params = m_queuedActions.front().second;
 			m_queuedActions.pop_front();
-			m_mutex.unlock();
+			m_queueMutex.unlock();
             _processAction(action, params);
         }
     }
@@ -263,8 +283,12 @@ namespace syn {
         return m_instrument->getNumUnits();
     }
 
-    const Unit& VoiceManager::getUnit(int a_id) const
+    const Unit& VoiceManager::getUnit(int a_id)
     {
+		int voiceInd = _getHighestVoiceIndex();
+		if(voiceInd>=0) {
+			return m_allVoices[voiceInd]->getUnit(a_id);
+		}
         return m_instrument->getUnit(a_id);
     }
 

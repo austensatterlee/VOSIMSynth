@@ -148,7 +148,11 @@ namespace syn {
         return m_audioConfig.tempo;
     }
 
-    int Unit::getNote() const
+	bool Unit::isNoteOn() const {
+		return m_midiData.isNoteOn;
+    }
+
+	int Unit::getNote() const
     {
         return m_midiData.note;
     }
@@ -160,7 +164,7 @@ namespace syn {
 
     bool Unit::isActive() const
     {
-        return false;
+        return m_midiData.isNoteOn;
     }
 
     Unit* Unit::clone() const

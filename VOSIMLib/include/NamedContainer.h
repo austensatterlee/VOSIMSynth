@@ -84,7 +84,7 @@ namespace syn {
             return false;
         }
         // Check if item was named and, if so, remove its name from the list
-        for(int i=0;i<m_names.size();i++){
+        for(unsigned i=0;i<m_names.size();i++){
             if(m_names[i].second==itemidx){
                 m_names.erase(m_names.begin()+i);
                 i--;
@@ -142,11 +142,13 @@ namespace syn {
                 return m_names[i].first;
             }
         }
+		throw std::domain_error("Item does not exist in NamedContainer");
     }
 
     template<typename T>
     int NamedContainer<T>::getItemIndex(int a_itemIndex) const{
-        if (a_itemIndex < 0 || a_itemIndex >= m_data.size()){
+		int nData = m_data.size();
+        if (a_itemIndex < 0 || a_itemIndex >= nData){
             return -1;
         }else{
             return a_itemIndex;
@@ -155,7 +157,8 @@ namespace syn {
 
     template<typename T>
     int NamedContainer<T>::getItemIndex(const string& a_name) const{
-        for(int i=0;i<m_names.size();i++){
+		int nNames = m_names.size();
+        for(int i=0;i<nNames;i++){
             if(m_names[i].first == a_name){
                 return m_names[i].second;
             }
@@ -165,7 +168,8 @@ namespace syn {
 
     template<typename T>
     int NamedContainer<T>::getItemIndex(const T& a_item) const{
-        for(int i=0;i<m_names.size();i++){
+		int nNames = m_names.size();
+        for(int i=0;i<nNames;i++){
             int itemidx = m_names[i].second;
             if(m_data[itemidx] == a_item){
                 return itemidx;

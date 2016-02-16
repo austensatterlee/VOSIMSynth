@@ -51,6 +51,7 @@ namespace syn
         for (int i = 0; i < m_units.size(); i++)
         {
             m_units[i].get()->reset();
+			m_units[i].get()->tick();
         }
 
         /* Push internally connected output signals to circuit output ports */

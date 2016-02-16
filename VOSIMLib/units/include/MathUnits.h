@@ -204,7 +204,8 @@ namespace syn {
 		{
 			return "MemoryUnit";
 		}
-		virtual Unit* _clone() const { return new MemoryUnit(*this); }
+
+		Unit* _clone() const override { return new MemoryUnit(*this); }
 	private:
 		double m_lastInput;
 	};
@@ -230,6 +231,10 @@ namespace syn {
 
         }
 
+		bool isActive() const override {
+			return isNoteOn();
+		}
+
     protected:
         void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
         {
@@ -240,7 +245,8 @@ namespace syn {
         {
             return "MidiNoteUnit";
         }
-        virtual Unit* _clone() const { return new MidiNoteUnit(*this); }
+
+	    Unit* _clone() const override { return new MidiNoteUnit(*this); }
     };
 
 	/**
@@ -260,17 +266,22 @@ namespace syn {
 
 		}
 
+		bool isActive() const override {
+			return isNoteOn();
+		}
+
 	protected:
 		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
 		{
-			a_outputs.setChannel(0, getVelocity());
+			a_outputs.setChannel(0, getVelocity()*1./128);
 		};
 	private:
 		string _getClassName() const override
 		{
 			return "VelocityUnit";
 		}
-		virtual Unit* _clone() const { return new VelocityUnit(*this); }
+
+		Unit* _clone() const override { return new VelocityUnit(*this); }
 	};
 }
 

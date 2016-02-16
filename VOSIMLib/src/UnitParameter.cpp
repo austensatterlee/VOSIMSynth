@@ -1,9 +1,13 @@
 #include <stdio.h>
 #include "UnitParameter.h"
+#include <DSPMath.h>
 
 namespace syn {
     UnitParameter::UnitParameter() :
             m_name(""),
+		    m_value(0),
+		    m_min(0),
+		    m_max(1),
             m_type(Null),
             m_displayPrecision(0)
     {
@@ -38,7 +42,7 @@ namespace syn {
             m_name(a_name),
             m_type(Enum),
             m_min(0),
-            m_max(a_optionNames.size()),
+            m_max(a_optionNames.size()-1),
             m_defaultValue(2),
             m_value(2),
             m_displayPrecision(0)
@@ -108,8 +112,6 @@ namespace syn {
 
     bool UnitParameter::set(bool a_value)
     {
-        if(a_value < m_min || a_value > m_max)
-            return false;
         m_value = static_cast<double>(a_value);
         return true;
     }
@@ -153,8 +155,7 @@ namespace syn {
 
     bool UnitParameter::setNorm(double a_norm_value)
     {
-        if(a_norm_value < 0 || a_norm_value > 1)
-            return false;
+		a_norm_value = CLAMP(a_norm_value, 0, 1);
         m_value = a_norm_value*(m_max - m_min) + m_min;
         return true;
     }

@@ -41,7 +41,7 @@ namespace syn {
     *
     ******************************/
 
-    void Oscillator::updatePhaseStep_()
+    void Oscillator::updatePhaseStep_(const SignalBus& a_inputs, SignalBus& a_outputs)
     {
         m_freq = pitchToFreq(m_pitch);
         m_period = getFs() / m_freq;
@@ -61,9 +61,10 @@ namespace syn {
 		}
         m_phase = m_basePhase + a_phaseOffset;
 		m_phase = WRAP(m_phase,1.0);
-		if (m_phase < m_phase_step) {
+		if (m_phase < m_last_phase) {
 			sync_();
 		}
+		m_last_phase = m_phase;
     }
 
 
@@ -74,7 +75,7 @@ namespace syn {
 		m_gain = getParameter(m_pGain).getDouble() * a_inputs.getValue(m_iGain);
 		m_pitch = tune + oct * 12;
 
-		updatePhaseStep_();
+		updatePhaseStep_(a_inputs, a_outputs);
 		tickPhase_(phase_offset);
     }
 
