@@ -112,25 +112,25 @@ namespace syn {
         a_toInputPort);
 
     protected:
-        virtual void process_(const SignalBus& a_inputs, SignalBus& a_outputs);
+	    void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
 
-        virtual void onFsChange_();
+	    void onFsChange_() override;
 
-        virtual void onTempoChange_();
+	    void onTempoChange_() override;
 
-        virtual void onNoteOn_();
+	    void onNoteOn_() override;
 
-        virtual void onNoteOff_();
+	    void onNoteOff_() override;
 
     private:
-        virtual string _getClassName() const
-        {
+	    string _getClassName() const override {
             return "Circuit";
         };
 
-        virtual Unit* _clone() const;
+	    Unit* _clone() const override;
 
     private:
+		friend class VoiceManager;
         NamedContainer<shared_ptr<Unit> > m_units;
         UnitConnectionBus m_externalInputs;
         UnitConnectionBus m_externalOutputs;

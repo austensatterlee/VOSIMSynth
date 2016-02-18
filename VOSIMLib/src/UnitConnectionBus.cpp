@@ -71,9 +71,6 @@ namespace syn {
         double outputValue = a_signal.get();
         double inputValue;
         for(int i=0;i<port.size();i++){
-
-            port[i].connectedUnit->tick();
-
             // add outputChannel to a_recipient
             inputValue = port[i].connectedUnit->getInputChannel(port[i].connectedPort).get();
             port[i].connectedUnit->setInputChannel(port[i].connectedPort, inputValue + outputValue);

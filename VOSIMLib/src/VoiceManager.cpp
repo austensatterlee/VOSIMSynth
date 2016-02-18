@@ -100,19 +100,21 @@ namespace syn {
         m_numVoices = 0;
     }
 
-    void VoiceManager::tick(double& left_output, double& right_output)
+    void VoiceManager::tick(const double& a_left_input, const double& a_right_input, double& a_left_output, double& a_right_output)
     {
         _flushActionQueue();
         vector<int> garbage_list;
-        left_output = 0;
-        right_output = 0;
+        a_left_output = 0;
+        a_right_output = 0;
         for (VoiceList::const_iterator v = m_voiceStack.begin() ; v != m_voiceStack.end() ; v++) {
             Circuit* voice = m_allVoices[*v].get();
+			voice->m_inputSignals.setChannel(0, a_left_input);
+			voice->m_inputSignals.setChannel(1, a_right_input);
             if (voice->isActive()) {
                 voice->tick();
                 voice->reset();
-                left_output += voice->getOutputChannel(0).get();
-                right_output += voice->getOutputChannel(1).get();
+                a_left_output += voice->getOutputChannel(0).get();
+                a_right_output += voice->getOutputChannel(1).get();
             }
             else {
                 garbage_list.push_back(*v);
@@ -285,7 +287,7 @@ namespace syn {
 
     const Unit& VoiceManager::getUnit(int a_id)
     {
-		int voiceInd = _getHighestVoiceIndex();
+		int voiceInd = _getNewestVoiceIndex();
 		if(voiceInd>=0) {
 			return m_allVoices[voiceInd]->getUnit(a_id);
 		}

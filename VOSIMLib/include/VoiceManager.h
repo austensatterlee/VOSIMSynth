@@ -57,7 +57,7 @@ namespace syn {
             m_allVoices.clear();
         }
 
-        void tick(double& left_output, double& right_output);
+        void tick(const double& a_left_input, const double& a_right_input, double& a_left_output, double& a_right_output);
 
         /**
          * Queue an action to be processed before the next sample.

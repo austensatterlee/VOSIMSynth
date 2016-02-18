@@ -107,7 +107,7 @@ namespace syn {
 
     bool UnitParameter::getBool() const
     {
-        return m_value < 0.5;
+        return m_value > 0.5;
     }
 
     bool UnitParameter::set(bool a_value)

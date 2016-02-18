@@ -3,6 +3,9 @@ from scipy import signal as ss
 import re
 import os,sys
 
+TABLEDATA_FILE = "include/table_data.h"
+TABLEHDR_FILE = "include/tables.h"
+
 def MakeTableStr(table,name,ctype="const double"):
     rows = int(sqrt(table.size))
     cols = int(ceil(sqrt(table.size)))
@@ -427,14 +430,14 @@ def main(pargs):
     prefilter_lhalf=[0.0028,-0.0119,0.0322,-0.0709,0.1375,-0.2544,0.4385,-0.6334,1.7224]
     prefilter=make_symmetric_l(prefilter_lhalf)
 
-    offline_intervals = 512
+    offline_intervals = 511
     offline_res = 128
 
-    online_intervals = 10
+    online_intervals = 5
     online_res = 8192
 
     sintable = GenerateSine(8192)
-    pitchtable = PitchTable(2048,0,128)
+    pitchtable = PitchTable(4096,-128,128)
 
     blsaw = GenerateBLSaw(2048,1024)
     blsaw /= blsaw.max()
@@ -464,7 +467,7 @@ def main(pargs):
                 res=online_res)],
             ['PITCH_TABLE',dict(classname="LookupTable", data=pitchtable,
                 size=len(pitchtable),
-                input_min=0,
+                input_min=-1,
                 input_max=1,
                 isPeriodic=False)],
             ['BL_SAW',dict(classname="ResampledLookupTable", data=blsaw,
@@ -491,7 +494,7 @@ def main(pargs):
     tableobj_def = ""
     for name,struct in tables:
         tabledata_def += MakeTableStr(struct['data'],name)
-        tabledata_decl += "extern const double {}[{}];\n".format(name,len(struct['data']))
+        # tabledata_decl += "extern const double {}[{}];\n".format(name,len(struct['data']))
 
         currargs = []
         classname = struct["classname"]
@@ -510,30 +513,31 @@ def main(pargs):
         tableobj_currdef = "const {} lut_{}({});\n".format(classname,name.lower(),tableargs);
         tableobj_def += tableobj_currdef
 
-    if os.path.isfile("table_data.h"):
+    if os.path.isfile(TABLEDATA_FILE):
         if v:
             print "Backing up old table_data.h..."
-        old_table_data = open('table_data.h','r').read()
-        with open('table_data.h.bk','w') as fp:
+        old_table_data = open(TABLEDATA_FILE,'r').read()
+        with open(TABLEDATA_FILE+'.bk','w') as fp:
             fp.write(old_table_data)
 
     if v:
         print "Writing new table_data.cpp..."
-    with open('table_data.h','w') as fp:
+    with open(TABLEDATA_FILE,'w') as fp:
         fp.write(tabledata_def)
 
-    if os.path.isfile("tables.h"):
+    if os.path.isfile(TABLEHDR_FILE):
         if v:
-            print "Backing up old tables.h..."
-        old_code = open('tables.h','r').read()
-        with open('tables.h.bk','w') as fp:
+            print "Backing up old {}...".format(TABLEHDR_FILE)
+        old_code = open('{}'.format(TABLEHDR_FILE),'r').read()
+        with open('{}.bk'.format(TABLEHDR_FILE),'w') as fp:
             fp.write(old_code)
-    if v:
-        print "Writing new tables.h..."
-    new_code = rewriteAutomatedSection(old_code,'lut_defs', tabledata_decl+'\n'+tableobj_def)
-    new_code = rewriteAutomatedSection(new_code,'macro_defs', macrodefine_code)
-    with open('tables.h', 'w') as fp:
-        fp.write(new_code)
+
+        if v:
+            print "Writing new {}...".format(TABLEHDR_FILE)
+        new_code = rewriteAutomatedSection(old_code,'lut_defs', tabledata_decl+'\n'+tableobj_def)
+        new_code = rewriteAutomatedSection(new_code,'macro_defs', macrodefine_code)
+        with open(TABLEHDR_FILE, 'w') as fp:
+            fp.write(new_code)
 
 if __name__=="__main__":
     import argparse as ap

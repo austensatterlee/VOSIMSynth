@@ -10,19 +10,17 @@ namespace syn {
         ADSREnvelope(const ADSREnvelope& a_rhs);
 
     protected:
-        virtual void process_(const SignalBus& a_inputs, SignalBus& a_outputs);
+	    void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
 
     public:
         virtual bool isActive() const override;
 
-        virtual void onNoteOn_();
-        virtual void onNoteOff_();
+	    void trigger();
+	    void release();
     private:
-        virtual string _getClassName() const
-        { return "ADSREnvelope"; };
+	    string _getClassName() const override { return "ADSREnvelope"; };
 
-        virtual Unit* _clone() const
-        { return new ADSREnvelope(*this); }
+	    Unit* _clone() const override { return new ADSREnvelope(*this); }
 
     private:
         enum EADSRStage {
@@ -40,5 +38,7 @@ namespace syn {
         int m_pDecay;
         int m_pSustain;
         int m_pRelease;
+
+		int m_iGate;
     };
 }

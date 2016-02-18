@@ -57,20 +57,24 @@ namespace syn {
     {
         m_lastSelectedUnit = getSelectedUnit(x, y);
         m_lastSelectedCircuitPort = getSelectedPort(x, y);
-        if (m_lastSelectedUnit >= 0) {
-            shared_ptr<UnitControlContainer> unitCtrl = m_unitControls.at(m_lastSelectedUnit);
-            unitCtrl->onMouseDown(x, y, pMod); // propogate event to unit
+		if (pMod->L) {
+			if (m_lastSelectedUnit >= 0) {
+				shared_ptr<UnitControlContainer> unitCtrl = m_unitControls.at(m_lastSelectedUnit);
+				unitCtrl->onMouseDown(x, y, pMod); // propogate event to unit
 
-            m_lastSelectedUnitPort = unitCtrl->getSelectedPort(x, y);
+				m_lastSelectedUnitPort = unitCtrl->getSelectedPort(x, y);
 
-			if (pMod->L && m_lastSelectedUnitPort.type != UnitPortVector::Null) {
+				if (m_lastSelectedUnitPort.type != UnitPortVector::Null) {
+					m_currAction = CONNECT;
+				}
+				else {
+					m_currAction = MODIFY_UNIT;
+				}
+			}
+			else if (m_lastSelectedCircuitPort.type != CircuitPortVector::Null) {
 				m_currAction = CONNECT;
-			} else if (pMod->L) {
-                m_currAction = MODIFY_UNIT;
-            }
-        } else if (pMod->L && m_lastSelectedCircuitPort.type != CircuitPortVector::Null) {
-            m_currAction = CONNECT;
-        }
+			}
+		}
         m_lastClickPos = m_lastMousePos;
         m_lastClickState = *pMod;
         m_lastMousePos = m_lastClickPos;
@@ -99,9 +103,9 @@ namespace syn {
                 args.id2 = m_lastSelectedUnit;
                 args.id3 = m_lastSelectedUnitPort.id;
                 if (m_lastSelectedUnitPort.type == UnitPortVector::Input) {
-                    m_voiceManager->queueAction(ConnectInput, args);
+                    m_voiceManager->doAction(ConnectInput, args);
                 } else {
-                    m_voiceManager->queueAction(ConnectOutput, args);
+                    m_voiceManager->doAction(ConnectOutput, args);
                 }
             } else if (m_lastSelectedCircuitPort.type && m_lastSelectedCircuitPort.type == currSelectedUnitPort.type) {
                 // connect circuit port to unit port
@@ -109,9 +113,9 @@ namespace syn {
                 args.id2 = currSelectedUnit;
                 args.id3 = currSelectedUnitPort.id;
                 if (currSelectedUnitPort.type == UnitPortVector::Input) {
-                    m_voiceManager->queueAction(ConnectInput, args);
+                    m_voiceManager->doAction(ConnectInput, args);
                 } else {
-                    m_voiceManager->queueAction(ConnectOutput, args);
+                    m_voiceManager->doAction(ConnectOutput, args);
                 }
             } else if (m_lastSelectedUnit != currSelectedUnit &&
                        m_lastSelectedUnitPort.type && currSelectedUnitPort.type &&
@@ -122,51 +126,53 @@ namespace syn {
                     args.id2 = currSelectedUnitPort.id;
                     args.id3 = m_lastSelectedUnit;
                     args.id4 = m_lastSelectedUnitPort.id;
-                    m_voiceManager->queueAction(ConnectInternal, args);
+                    m_voiceManager->doAction(ConnectInternal, args);
                 } else {
                     //connect unit output to unit input
                     args.id1 = m_lastSelectedUnit;
                     args.id2 = m_lastSelectedUnitPort.id;
                     args.id3 = currSelectedUnit;
                     args.id4 = currSelectedUnitPort.id;
-                    m_voiceManager->queueAction(ConnectInternal, args);
+                    m_voiceManager->doAction(ConnectInternal, args);
                 }
             }
         }
-        if (m_lastClickState.R && currSelectedUnit == -1) { // Right clicking on open space            
-            // Open unit builder context menu
-            shared_ptr<IPopupMenu> main_menu = make_shared<IPopupMenu>();
-            vector<shared_ptr<IPopupMenu>> sub_menus;
-            _generateUnitFactoryMenu(main_menu, sub_menus);
-            IPopupMenu* selectedMenu = mPlug->GetGUI()->CreateIPopupMenu(main_menu.get(), x, y);
-            if (selectedMenu) {
-                string unit_name = selectedMenu->GetItemText(selectedMenu->GetChosenItemIdx());
-                _createUnit(unit_name, x, y);
-            }            
-        } else if (m_lastClickState.R && _checkNearestWire()) { // Right clicking on a wire
-			// Open wire context menu if distance to nearest wire is below threshold
-			shared_ptr<IPopupMenu> wire_menu = make_shared<IPopupMenu>();
-			wire_menu->AddItem("Delete", 0);
-			IPopupMenu* selectedMenu = mPlug->GetGUI()->CreateIPopupMenu(wire_menu.get(), x, y);
-			if (selectedMenu == wire_menu.get()) {
-				switch (wire_menu->GetChosenItemIdx()) {
-				case 0:
-					_deleteWire(m_nearestWire.first);
-					break;
-				default:
-					break;
+        if (m_lastClickState.R) { // Right click  
+			if (_checkNearestWire()) { // Right clicking on a wire
+				// Open wire context menu if distance to nearest wire is below threshold
+				shared_ptr<IPopupMenu> wire_menu = make_shared<IPopupMenu>();
+				wire_menu->AddItem("Delete", 0);
+				IPopupMenu* selectedMenu = mPlug->GetGUI()->CreateIPopupMenu(wire_menu.get(), x, y);
+				if (selectedMenu == wire_menu.get()) {
+					switch (wire_menu->GetChosenItemIdx()) {
+					case 0:
+						_deleteWire(m_nearestWire.first);
+						break;
+					default:
+						break;
+					}
+				}
+			} else if (currSelectedUnit >= 0) { // Right clicking on a unit
+				IPopupMenu unitmenu;
+				unitmenu.AddItem("Delete");
+				IPopupMenu* selectedmenu = mPlug->GetGUI()->CreateIPopupMenu(&unitmenu, x, y);
+				if (selectedmenu == &unitmenu) {
+					int selectedItem = selectedmenu->GetChosenItemIdx();
+					if (selectedItem == 0) { // delete
+						_deleteUnit(currSelectedUnit);
+					}
+				}
+			}else if(currSelectedUnit==-1) { // Right clicking on open space     
+				// Open unit builder context menu
+				shared_ptr<IPopupMenu> main_menu = make_shared<IPopupMenu>();
+				vector<shared_ptr<IPopupMenu>> sub_menus;
+				_generateUnitFactoryMenu(main_menu, sub_menus);
+				IPopupMenu* selectedMenu = mPlug->GetGUI()->CreateIPopupMenu(main_menu.get(), x, y);
+				if (selectedMenu) {
+					string unit_name = selectedMenu->GetItemText(selectedMenu->GetChosenItemIdx());
+					_createUnit(unit_name, x, y);
 				}
 			}
-		} else if (m_lastClickState.R && currSelectedUnit >= 0) { // Right clicking on a unit
-            IPopupMenu unitmenu;
-            unitmenu.AddItem("Delete");
-            IPopupMenu* selectedmenu = mPlug->GetGUI()->CreateIPopupMenu(&unitmenu, x, y);
-            if (selectedmenu == &unitmenu) {
-                int selectedItem = selectedmenu->GetChosenItemIdx();
-                if (selectedItem == 0) { // delete
-                    _deleteUnit(currSelectedUnit);
-                }
-            }
         } else if (currSelectedUnit >= 0) { // propogate event to unit if no other actions need to be taken
             m_unitControls.at(currSelectedUnit)->onMouseUp(x, y, pMod);
         }
@@ -179,7 +185,6 @@ namespace syn {
         NDPoint<2, int> currMousePos = NDPoint<2, int>(x, y);
         if (m_lastSelectedUnit >= 0) {
             shared_ptr<UnitControlContainer> unitCtrl = m_unitControls.at(m_lastSelectedUnit);
-            NDPoint<2, int> unitPos = unitCtrl->getPos();
             if (m_currAction == MODIFY_UNIT) {
                 unitCtrl->onMouseDrag(x, y, dX, dY, pMod);
             } 

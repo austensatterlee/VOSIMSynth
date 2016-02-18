@@ -22,7 +22,11 @@ namespace syn {
 		{
 			addInput_("in1");
 			addInput_("in2");
-			m_buffer.resize(m_nBuffers);			
+			m_buffer.resize(m_nBuffers);		
+			m_bufferSize = getParameter(m_pBufferSize).getInt();
+			for (int i = 0; i < m_nBuffers; i++) {
+				m_buffer[i].resize(m_bufferSize);
+			}
 		}
 
 		OscilloscopeUnit(const OscilloscopeUnit& a_rhs) :

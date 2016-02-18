@@ -25,6 +25,8 @@ namespace syn
 		if (m_unitControl->isHit(a_x, a_y)) {
 			m_isControlClicked = true;
 			m_unitControl->onMouseDown(a_x, a_y, a_mouseMod);
+		}else {
+			m_isControlClicked = false;
 		}
 	}
 
@@ -35,14 +37,16 @@ namespace syn
 	}
 
 	void UnitControlContainer::onMouseDrag(int a_x, int a_y, int a_dX, int a_dY, IMouseMod* a_mouseMod) {
-		if (m_isControlClicked)
+		if (m_isControlClicked) { // modify control
 			m_unitControl->onMouseDrag(a_x, a_y, a_dX, a_dY, a_mouseMod);
-		else if (a_mouseMod->L && a_mouseMod->C) { // resize
-			resize(m_size + NDPoint<2, int>(a_dX, a_dY));
-		}
-		else if (a_mouseMod->L) { // move
-			NDPoint<2, int> newUnitPos = getPos() + NDPoint<2, int>(a_dX, a_dY);
-			move(newUnitPos[0], newUnitPos[1]);
+		} else if (a_mouseMod->L) { 
+			if (a_mouseMod->C) { // resize
+				resize(m_size + NDPoint<2, int>(a_dX, a_dY));
+			}
+			else { // move
+				NDPoint<2, int> newUnitPos = getPos() + NDPoint<2, int>(a_dX, a_dY);
+				move(newUnitPos[0], newUnitPos[1]);
+			}
 		}
 	}
 

@@ -145,6 +145,7 @@ namespace syn {
 
 	template <typename T>
 	int CircuitPanel::_createUnit(T prototypeIdentifier, int x, int y) {
+		WDL_MutexLock lock(&mPlug->mMutex);
 		int uid = m_voiceManager->addUnit(prototypeIdentifier);
 		if (m_unitControls.size() != uid)
 			throw logic_error("unit control vector out of sync with circuit");

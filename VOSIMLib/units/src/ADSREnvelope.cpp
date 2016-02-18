@@ -16,6 +16,7 @@ namespace syn {
             m_pSustain(addParameter_(UnitParameter("sustain",0.0,1.0,1.0))),
             m_pRelease(addParameter_(UnitParameter("release",0.0,1.0,0.01)))
     {
+		m_iGate = addInput_("gate");
         addOutput_("out");
     }
 
@@ -75,16 +76,23 @@ namespace syn {
         }
         double output = LERP(m_initial, m_target, m_phase);
         a_outputs.setChannel(0,output);
+
+		if (!m_isActive && a_inputs.getValue(m_iGate) >= 1.0) {
+			trigger();
+		}
+		else if (m_currStage != Release && a_inputs.getValue(m_iGate)<1.0) {
+			release();
+		}
     }
 
-    void ADSREnvelope::onNoteOn_()
+    void ADSREnvelope::trigger()
     {
         m_currStage = Attack;
         m_phase = 0;
         m_isActive = true;
     }
 
-    void ADSREnvelope::onNoteOff_()
+    void ADSREnvelope::release()
     {
         m_currStage = Release;
         m_initial = getOutputChannel(0).get();

@@ -41,18 +41,23 @@ namespace syn
 
 	void Circuit::process_(const SignalBus& inputs, SignalBus& outputs)
 	{
+		// reset all internal components
+		for (int i = 0; i < m_units.size(); i++)
+		{
+			m_units[i]->reset();
+		}
+
         /* Push circuit input signals to internally connected input ports */
         for(int i=0;i< m_inputSignals.getNumChannels(); i++){
             Signal& inputSignal = m_inputSignals.getChannel(i);
             m_externalInputs.push(i, inputSignal);
         }
 
-        // reset all internal components
-        for (int i = 0; i < m_units.size(); i++)
-        {
-            m_units[i].get()->reset();
-			m_units[i].get()->tick();
-        }
+		// tick all internal components
+		for (int i = 0; i < m_units.size(); i++)
+		{
+			m_units[i]->tick();
+		}
 
         /* Push internally connected output signals to circuit output ports */
         for(int i=0;i< m_outputSignals.getNumChannels(); i++){

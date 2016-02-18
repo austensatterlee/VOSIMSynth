@@ -1,14 +1,14 @@
 #define PLUG_MFR "Austen"
-#ifdef _DEBUG
-#define PLUG_NAME "VOSIMSynth-Modular-debug"
+#ifndef NDEBUG
+#define PLUG_NAME "VOSIMProject-debug"
 #else
-#define PLUG_NAME "VOSIMSynth-Modular"
+#define PLUG_NAME "VOSIMProject"
 #endif
 
 #define PLUG_CLASS_NAME VOSIMSynth
 
-#define BUNDLE_MFR "Austen"
-#define BUNDLE_NAME "VOSIMSynth"
+#define BUNDLE_MFR "Austen Satterlee"
+#define BUNDLE_NAME PLUG_NAME
 
 #define PLUG_ENTRY VOSIMSynth_Entry
 #define PLUG_VIEW_ENTRY VOSIMSynth_ViewEntry
@@ -59,20 +59,8 @@ instrument determined by PLUG _IS _INST
 #define PLUG_DOES_STATE_CHUNKS 1
 
 // Unique IDs for each image resource.
-#define KNOB_ID					101
-#define PUSH_2P_ID				102
-#define COLOR_RING_KNOB_ID		103
-#define GREY_KNOB_ID			104
-#define WEDGE_SWITCH_2P_ID		105
-#define TOGGLE_SWITCH_3P_ID		106
 
 // Image resource locations for this plug.
-//#define KNOB_FN				    "resources/img/knob.png"
-//#define PUSH_2P_FN			    "resources/img/2p_push.png"
-//#define COLOR_RING_KNOB_FN	    "resources/img/color_ring_knob.png"
-//#define GREY_KNOB_FN		    "resources/img/grey_knob.png"
-//#define WEDGE_SWITCH_2P_FN	    "resources/img/wedge_switch_2p.png"
-//#define TOGGLE_SWITCH_3P_FN     "resources/img/toggle_switch_3p.png"
 
 // GUI default dimensions
 #define GUI_WIDTH 800

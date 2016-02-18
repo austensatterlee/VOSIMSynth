@@ -40,18 +40,12 @@ namespace syn {
     * Oscillator methods
     *
     ******************************/
-
-    void Oscillator::updatePhaseStep_(const SignalBus& a_inputs, SignalBus& a_outputs)
-    {
-        m_freq = pitchToFreq(m_pitch);
-        m_period = getFs() / m_freq;
-        m_phase_step = 1. / m_period;
-    }
-
-	void Oscillator::onNoteOn_() {
-		m_basePhase = 0.0;
-		sync_();
-    }
+	
+	void Oscillator::updatePhaseStep_()
+	{
+		m_period = getFs() / m_freq;
+		m_phase_step = 1. / m_period;
+	}
 
 	void Oscillator::tickPhase_(double a_phaseOffset)
     {
@@ -67,25 +61,72 @@ namespace syn {
 		m_last_phase = m_phase;
     }
 
-
 	void Oscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
-		double tune = getParameter(m_pTune).getDouble() + a_inputs.getValue(m_iNote);
-		double oct = getParameter(m_pOctave).getInt();
+		
 		double phase_offset = getParameter(m_pPhaseOffset).getDouble() + a_inputs.getValue(m_iPhaseOffset);
 		m_gain = getParameter(m_pGain).getDouble() * a_inputs.getValue(m_iGain);
-		m_pitch = tune + oct * 12;
 
-		updatePhaseStep_(a_inputs, a_outputs);
+		updatePhaseStep_();
 		tickPhase_(phase_offset);
     }
 
+	void TunedOscillator::onNoteOn_() {
+		m_basePhase = 0.0;
+		sync_();
+	}
+
+	void TunedOscillator::updatePhaseStep_()
+	{
+		m_freq = pitchToFreq(m_pitch);
+		Oscillator::updatePhaseStep_();
+	}
+
+	void TunedOscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
+		double tune = getParameter(m_pTune).getDouble() + a_inputs.getValue(m_iNote);
+		double oct = getParameter(m_pOctave).getInt();
+		m_pitch = tune + oct * 12;
+		Oscillator::process_(a_inputs, a_outputs);
+	}
+
     void BasicOscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs)
     {
-		Oscillator::process_(a_inputs, a_outputs);
+		TunedOscillator::process_(a_inputs, a_outputs);
         double output;
         int shape = getParameter(m_pWaveform).getInt();
         output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period);
         a_outputs.setChannel(0, m_gain * output);
+    }
+
+	void LFOOscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
+		// determine frequency
+		if (getParameter(m_pTempoSync).getBool()) {
+			m_freq = getTempo()/60.0*(getParameter(m_pFreq).getDouble() + a_inputs.getValue(m_iFreq));
+		}else {
+			m_freq = getParameter(m_pFreq).getDouble() + a_inputs.getValue(m_iFreq);
+		}
+		// sync
+		if (m_lastSync<1.0 && a_inputs.getValue(m_iSync) >= 1.0) {
+			m_basePhase = 0.0;
+			sync_();
+		}
+		m_lastSync = a_inputs.getValue(m_iSync);
+		Oscillator::process_(a_inputs, a_outputs);
+		double output;
+		int shape = getParameter(m_pWaveform).getInt();
+		output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period);
+		a_outputs.setChannel(0, m_gain * output);
+    }
+
+	void LFOOscillator::onParamChange_(int a_paramId) {
+	    if(a_paramId==m_pTempoSync) {
+			double normFreq = getParameter(m_pFreq).getNorm();
+		    if(getParameter(m_pTempoSync).getBool()) {
+				getParameter_(m_pFreq) = UnitParameter("rate", 1, 16, 1);
+		    }else {
+				getParameter_(m_pFreq) = UnitParameter("freq", 1e-2, 20.0, 1.0);
+		    }
+			setParameterNorm(m_pFreq, normFreq);
+	    }
     }
 }
 

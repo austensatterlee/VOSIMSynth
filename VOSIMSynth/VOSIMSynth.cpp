@@ -53,15 +53,21 @@ void VOSIMSynth::makeInstrument()
     m_unitFactory->addUnitPrototype("Oscillators", new FormantOscillator("Formant"));
 
     m_unitFactory->addUnitPrototype("Modulators", new ADSREnvelope("ADSREnvelope"));
+	m_unitFactory->addUnitPrototype("Modulators", new LFOOscillator("LFO"));
 
-    m_unitFactory->addUnitPrototype("Math", new HalfRectifierUnit("Half Rectifier"));
-	m_unitFactory->addUnitPrototype("Math", new FullRectifierUnit("Full Rectifier"));
-    m_unitFactory->addUnitPrototype("Math", new InvertingUnit("Inverter"));
+    m_unitFactory->addUnitPrototype("DSP", new HalfRectifierUnit("Half Rectifier"));
+	m_unitFactory->addUnitPrototype("DSP", new FullRectifierUnit("Full Rectifier"));
+    m_unitFactory->addUnitPrototype("DSP", new InvertingUnit("Inverter"));
+	m_unitFactory->addUnitPrototype("DSP", new MemoryUnit("Memory"));
+	m_unitFactory->addUnitPrototype("DSP", new GainUnit("Gain"));
+
+	m_unitFactory->addUnitPrototype("Math", new SummerUnit("Summer"));
 	m_unitFactory->addUnitPrototype("Math", new MultiplyUnit("Multiplier"));
 	m_unitFactory->addUnitPrototype("Math", new ConstantUnit("Constant"));
-	m_unitFactory->addUnitPrototype( "Math", new MemoryUnit("Memory"));
 
-    m_unitFactory->addUnitPrototype("MIDI", new MidiNoteUnit("Midi Note"));
+	m_unitFactory->addUnitPrototype("MIDI", new GateUnit("Gate"));
+    m_unitFactory->addUnitPrototype("MIDI", new MidiNoteUnit("Pitch"));
+	m_unitFactory->addUnitPrototype("MIDI", new NormalizedMidiNoteUnit("Normalized Pitch"));
 	m_unitFactory->addUnitPrototype("MIDI", new VelocityUnit("Velocity"));
 
 	m_unitFactory->addUnitPrototype("Visualizer", new OscilloscopeUnit("Oscilloscope"));
@@ -81,8 +87,9 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
     //memset(outputs[0], 0, nFrames * sizeof(double));
     //memset(outputs[1], 0, nFrames * sizeof(double));
     m_voiceManager->setTempo(GetTempo());
+	
     for (int i = 0 ; i < nFrames ; i++) {
-        m_voiceManager->tick(outputs[0][i],outputs[1][i]);
+        m_voiceManager->tick(inputs[0][i],inputs[1][i],outputs[0][i],outputs[1][i]);
     }
     m_MIDIReceiver->Flush(nFrames);
 }

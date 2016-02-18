@@ -114,7 +114,6 @@ namespace syn {
          * Connections to other units are not preserved in the clone.
          */
         Unit* clone() const;
-
     protected:
         /**
          * Called when a parameter has been modified. This function should be overridden
@@ -135,6 +134,9 @@ namespace syn {
 
         virtual void onNoteOff_()
         { };
+
+		template<typename ID>
+		UnitParameter& getParameter_(const ID& a_identifier);
 
         virtual void process_(const SignalBus& a_inputs, SignalBus& a_outputs) = 0;
 
@@ -173,21 +175,19 @@ namespace syn {
         bool _disconnectInput(shared_ptr<Unit> a_fromUnit);
 
         virtual Unit* _clone() const = 0;
-
-    private:
-        friend class Circuit;
-
-        friend class UnitFactory;
-
-        string m_name;
-        bool m_hasTicked;
-        NamedContainer<UnitParameter> m_parameters;
-        SignalBus m_inputSignals;
-        SignalBus m_outputSignals;
-        UnitConnectionBus m_inputConnections;
-        Circuit* m_parent;
-        AudioConfig m_audioConfig;
-        MidiData m_midiData;
+	private:
+		friend class Circuit;
+		friend class UnitFactory;
+		friend class VoiceManager;
+		string m_name;
+		bool m_hasTicked;
+		NamedContainer<UnitParameter> m_parameters;
+		SignalBus m_inputSignals;
+		SignalBus m_outputSignals;
+		UnitConnectionBus m_inputConnections;
+		Circuit* m_parent;
+		AudioConfig m_audioConfig;
+		MidiData m_midiData;
     };
 
 
@@ -207,6 +207,11 @@ namespace syn {
     bool Unit::setInputChannel(const ID& a_identifier, const T& a_val)
     {
         return m_inputSignals.setChannel(a_identifier, a_val);
+    }
+
+	template <typename ID>
+	UnitParameter& Unit::getParameter_(const ID& a_identifier) {
+		return m_parameters[a_identifier];
     };
 
     template<typename ID>

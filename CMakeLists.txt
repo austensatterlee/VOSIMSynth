@@ -1,5 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
-PROJECT(VOSIMSynth)
+PROJECT(VOSIMProject)
 SET(PLUGIN_NAME ${CMAKE_PROJECT_NAME})
 
 #SET(CMAKE_VERBOSE_MAKEFILE ON)
@@ -48,12 +48,12 @@ SET(LIBPNG ${WDL}/libpng)
 SET(ZLIB ${WDL}/zlib)
 SET(VOSIMLIB_DIR VOSIMLib)
 
-#message (WARNING "Path to WDL is ${WDL}")
-#message (WARNING "Path to IPlug is ${IPLUG}")
-#message (WARNING "Path to libpng is ${LIBPNG}")
-#message (WARNING "Path to lice is ${LICE}")
-#message (WARNING "Path to zlib is ${ZLIB}")
-#message (WARNING "Path to VOSIMLib is ${VOSIMLIB_DIR}")
+message (STATUS "Path to WDL is ${WDL}")
+message (STATUS "Path to IPlug is ${IPLUG}")
+message (STATUS "Path to libpng is ${LIBPNG}")
+message (STATUS "Path to lice is ${LICE}")
+message (STATUS "Path to zlib is ${ZLIB}")
+message (STATUS "Path to VOSIMLib is ${VOSIMLIB_DIR}")
 
 SET(IPLUG_SOURCE_FILES
     ${IPLUG}/Containers.h ${IPLUG}/Hosts.cpp ${IPLUG}/Hosts.h ${IPLUG}/IControl.cpp ${IPLUG}/IControl.h
@@ -105,7 +105,7 @@ FILE(GLOB VOSIMLIB_UNIT_SRCS ${VOSIMLIB_DIR}/units/src/*.cpp)
 FILE(GLOB VOSIMLIB_STK_HDRS ${VOSIMLIB_DIR}/external/stk/Mutex.h)
 FILE(GLOB VOSIMLIB_STK_SRCS ${VOSIMLIB_DIR}/external/stk/Mutex.cpp)
 SET(VOSIMLIB_FILES ${VOSIMLIB_HDRS};${VOSIMLIB_UNIT_HDRS};${VOSIMLIB_STK_HDRS})
-SET(VOSIMLIB_FILES ${VOSIMLIB_SRCS};${VOSIMLIB_UNIT_SRCS};${VOSIMLIB_STK_SRCS})
+SET(VOSIMLIB_FILES ${VOSIMLIB_FILES};${VOSIMLIB_SRCS};${VOSIMLIB_UNIT_SRCS};${VOSIMLIB_STK_SRCS})
 
 SET(RESOURCE_FILES)
 
