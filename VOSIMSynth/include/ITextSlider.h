@@ -8,6 +8,12 @@ namespace syn
 	class ITextSlider : public IControl
 	{
 	public:
+		void TextFromTextEntry(const char* txt) override;
+
+		void OnMouseUp(int x, int y, IMouseMod* pMod) override;
+
+		void OnMouseWheel(int x, int y, IMouseMod* pMod, int d) override;
+
 		ITextSlider(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, int a_unitId, int a_paramId, IRECT pR);
 
 		virtual ~ITextSlider()

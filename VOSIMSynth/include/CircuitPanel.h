@@ -26,7 +26,7 @@ namespace syn {
     };
 
     class CircuitPanel : public IControl {
-	public:
+    public:
 
 	    CircuitPanel(IPlugBase* pPlug, IRECT pR, shared_ptr<VoiceManager> a_voiceManager, shared_ptr<UnitFactory>
         a_factory) :
@@ -56,6 +56,8 @@ namespace syn {
         void OnMouseDrag(int x, int y, int dX, int dY, IMouseMod* pMod) override;
 
         void OnMouseDblClick(int x, int y, IMouseMod* pMod) override;
+
+		void OnMouseWheel(int x, int y, IMouseMod* pMod, int d) override;
 
         bool Draw(IGraphics* pGraphics) override;
 	

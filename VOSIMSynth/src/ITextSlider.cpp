@@ -1,41 +1,68 @@
 #include "ITextSlider.h"
 
-syn::ITextSlider::ITextSlider(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, int a_unitId, int a_paramId, IRECT pR):
+syn::ITextSlider::ITextSlider(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, int a_unitId, int a_paramId, IRECT pR) :
 	IControl(a_plug, pR),
 	m_unitId(a_unitId),
 	m_paramId(a_paramId),
 	m_vm(a_vm),
-	m_minSize(0) 
+	m_minSize(0)
 {
 	const UnitParameter& param = m_vm->getUnit(a_unitId).getParameter(a_paramId);
 	m_name = param.getName();
-	mDisablePrompt = false;
+	mValue = param.getNorm();
+}
+
+void syn::ITextSlider::TextFromTextEntry(const char* txt) {
+	const UnitParameter& param = m_vm->getUnit(m_unitId).getParameter(m_paramId);
+	double value = std::stod(txt);
+	MuxArgs params = { m_unitId, m_paramId };
+	params.value = value;
+	m_vm->doAction(ModifyParam, params);
+	mValue = param.getNorm();	
+}
+
+void syn::ITextSlider::OnMouseUp(int x, int y, IMouseMod* pMod) {
+}
+
+void syn::ITextSlider::OnMouseWheel(int x, int y, IMouseMod* pMod, int d) {
+	const UnitParameter& param = m_vm->getUnit(m_unitId).getParameter(m_paramId);
+	mValue = param.getNorm();
+	double scale;
+	if (param.getType() == EParamType::Int) {
+		scale = 1.0 / (param.getMax() - param.getMin());
+	}else {
+		scale = pow(10, -param.getPrecision());
+		if (pMod->C) {
+			scale *= 10;
+		}
+	}
+	mValue += scale*d;
+
+	MuxArgs params = { m_unitId, m_paramId };
+	params.value = mValue;
+	m_vm->doAction(ModifyParamNorm, params);
 	mValue = param.getNorm();
 }
 
 void syn::ITextSlider::OnMouseDblClick(int x, int y, IMouseMod* pMod) {
 	const UnitParameter& param = m_vm->getUnit(m_unitId).getParameter(m_paramId);
-	double defaultValue = param.getDefaultValue();
-    MuxArgs params = {m_unitId, m_paramId};
-    params.value = defaultValue;
-	m_vm->doAction(ModifyParam, params);
-    mValue = param.getNorm();
+	if (pMod->C) {
+		IText entryTextFmt;
+		string entryText = param.getString();
+		mPlug->GetGUI()->CreateTextEntry(this, &entryTextFmt, &mRECT, entryText.c_str());
+	}
+	else {
+		double defaultValue = param.getDefaultValue();
+		MuxArgs params = { m_unitId, m_paramId };
+		params.value = defaultValue;
+		m_vm->doAction(ModifyParam, params);
+		mValue = param.getNorm();
+	}
 }
 
 void syn::ITextSlider::OnMouseDrag(int x, int y, int dX, int dY, IMouseMod* pMod) {
 	const UnitParameter& param = m_vm->getUnit(m_unitId).getParameter(m_paramId);
-	mValue = param.getNorm();
-	// do fine adjustments when shift is held
-	double scale = pMod->S ? 0.1 : 1;
-	// coarse adjustments when ctrl is held
-	if(pMod->C)
-	{
-		scale = 10.0; 
-	}
-	scale /= mRECT.W();
-			
-	double modAmt = dX * scale / 4;
-	mValue += modAmt;
+	mValue = (x - mRECT.L) * (1.0 / mRECT.W());
     MuxArgs params = {m_unitId, m_paramId};
     params.value = mValue;
     m_vm->doAction(ModifyParamNorm, params);

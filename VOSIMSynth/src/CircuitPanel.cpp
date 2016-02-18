@@ -205,7 +205,15 @@ namespace syn {
         m_lastClickState = *pMod;
     }
 
-    bool CircuitPanel::Draw(IGraphics* pGraphics)
+	void CircuitPanel::OnMouseWheel(int x, int y, IMouseMod* pMod, int d) {
+		int currSelectedUnit = getSelectedUnit(x, y);
+		if (currSelectedUnit >= 0) {
+			shared_ptr<UnitControlContainer> unitctrl = m_unitControls.at(currSelectedUnit);
+			unitctrl->onMouseWheel(x, y, pMod, d);
+		}
+    }
+
+	bool CircuitPanel::Draw(IGraphics* pGraphics)
     {
 		WDL_MutexLock lock(&mPlug->mMutex);
         // Local palette

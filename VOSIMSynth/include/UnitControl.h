@@ -25,6 +25,8 @@ namespace syn {
 
 		virtual void onMouseDrag(int a_x, int a_y, int a_dX, int a_dY, IMouseMod* a_mouseMod) {};
 
+		virtual void onMouseWheel(int a_x, int a_y, IMouseMod* a_mouseMod, int a_d) {};
+
 		bool isHit(int a_x, int a_y) const;
 
 		void move(NDPoint<2, int> a_newPos);
@@ -107,6 +109,13 @@ namespace syn {
 		void onMouseDrag(int a_x, int a_y, int a_dX, int a_dY, IMouseMod* a_mouseMod) override {
 			if (m_lastSelectedParam >= 0) {
 				m_paramControls[m_lastSelectedParam].OnMouseDrag(a_x, a_y, a_dX, a_dY, a_mouseMod);
+			}
+		}
+
+		void onMouseWheel(int a_x, int a_y, IMouseMod* a_mouseMod, int a_d) override {
+			int selectedParam = getSelectedParam(a_x, a_y);
+			if (selectedParam >= 0) {
+				m_paramControls[selectedParam].OnMouseWheel(a_x, a_y, a_mouseMod, a_d);
 			}
 		}
 

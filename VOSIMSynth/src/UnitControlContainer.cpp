@@ -50,6 +50,12 @@ namespace syn
 		}
 	}
 
+	void UnitControlContainer::onMouseWheel(int a_x, int a_y, IMouseMod* a_mouseMod, int a_d) {
+		if(m_unitControl->isHit(a_x, a_y)) {
+			m_unitControl->onMouseWheel(a_x, a_y, a_mouseMod, a_d);
+		}
+	}
+
 	void UnitControlContainer::move(int a_newx, int a_newy) {
 		if (a_newx < 0 || a_newy < 0)
 			return;

@@ -108,13 +108,17 @@ namespace syn {
         a_right_output = 0;
         for (VoiceList::const_iterator v = m_voiceStack.begin() ; v != m_voiceStack.end() ; v++) {
             Circuit* voice = m_allVoices[*v].get();
+			m_voiceMutex.lock();
 			voice->m_inputSignals.setChannel(0, a_left_input);
 			voice->m_inputSignals.setChannel(1, a_right_input);
+			m_voiceMutex.unlock();
             if (voice->isActive()) {
+				m_voiceMutex.lock();
                 voice->tick();
                 voice->reset();
                 a_left_output += voice->getOutputChannel(0).get();
                 a_right_output += voice->getOutputChannel(1).get();
+				m_voiceMutex.unlock();
             }
             else {
                 garbage_list.push_back(*v);
@@ -207,7 +211,9 @@ namespace syn {
 
     void VoiceManager::doAction(EMuxAction a_action, const MuxArgs& a_params)
     {
+		m_voiceMutex.lock();
         _processAction(a_action, a_params);
+		m_voiceMutex.unlock();
     }
 
 	unsigned VoiceManager::getTickCount() const {

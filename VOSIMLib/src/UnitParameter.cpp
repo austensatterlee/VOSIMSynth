@@ -5,7 +5,8 @@
 namespace syn {
     UnitParameter::UnitParameter() :
             m_name(""),
-		    m_value(0),
+		    m_value(0), 
+			m_defaultValue(0),
 		    m_min(0),
 		    m_max(1),
             m_type(Null),
@@ -15,11 +16,11 @@ namespace syn {
 
     UnitParameter::UnitParameter(const string &a_name, bool a_defaultValue) :
             m_name(a_name),
-            m_type(Bool),
+            m_value(a_defaultValue),
+            m_defaultValue(a_defaultValue),
             m_min(0),
             m_max(1),
-            m_defaultValue(a_defaultValue),
-            m_value(a_defaultValue),
+            m_type(Bool),
             m_displayPrecision(0),
             m_displayTexts({{0,"Off"},{1,"On"}})
     {
@@ -28,11 +29,11 @@ namespace syn {
     UnitParameter::UnitParameter(const string &a_name, int a_min, int a_max,
                                  int a_defaultValue) :
             m_name(a_name),
-            m_type(Int),
+            m_value(a_defaultValue),
+            m_defaultValue(a_defaultValue),
             m_min(a_min),
             m_max(a_max),
-            m_defaultValue(a_defaultValue),
-            m_value(a_defaultValue),
+            m_type(Int),
             m_displayPrecision(0)
     {
     }
@@ -40,11 +41,11 @@ namespace syn {
     UnitParameter::UnitParameter(const string &a_name,
                                  const vector<string> &a_optionNames) :
             m_name(a_name),
-            m_type(Enum),
+            m_value(2),
+            m_defaultValue(2),
             m_min(0),
             m_max(a_optionNames.size()-1),
-            m_defaultValue(2),
-            m_value(2),
+            m_type(Enum),
             m_displayPrecision(0)
     {
         for (int i = 0; i < a_optionNames.size(); i++) {
@@ -53,14 +54,14 @@ namespace syn {
     }
 
     UnitParameter::UnitParameter(const string &a_name, double a_min, double a_max,
-                                 double a_defaultValue) :
+                                 double a_defaultValue, int a_displayPrecision) :
             m_name(a_name),
-            m_type(Double),
+            m_value(a_defaultValue),
+            m_defaultValue(a_defaultValue),
             m_min(a_min),
             m_max(a_max),
-            m_defaultValue(a_defaultValue),
-            m_value(a_defaultValue),
-            m_displayPrecision(3)
+            m_type(Double),
+            m_displayPrecision(a_displayPrecision)
     {
 
     }
@@ -105,12 +106,16 @@ namespace syn {
         return m_defaultValue;
     }
 
-    bool UnitParameter::getBool() const
+	int UnitParameter::getPrecision() const {
+		return m_displayPrecision;
+    }
+
+	bool UnitParameter::getBool() const
     {
         return m_value > 0.5;
     }
 
-    bool UnitParameter::set(bool a_value)
+    bool UnitParameter::setBool(bool a_value)
     {
         m_value = static_cast<double>(a_value);
         return true;
@@ -127,7 +132,7 @@ namespace syn {
         return intvalue;
     }
 
-    bool UnitParameter::set(int a_value)
+    bool UnitParameter::setInt(int a_value)
     {
         if(a_value < m_min || a_value > m_max)
             return false;
@@ -140,13 +145,40 @@ namespace syn {
         return m_value;
     }
 
-    bool UnitParameter::set(double a_value)
+    bool UnitParameter::setDouble(double a_value)
     {
         if(a_value < m_min || a_value > m_max)
             return false;
         m_value = a_value;
+
+		// detect precision
+		double val = m_value;
+		double frac = val - static_cast<int>(val);
+		int precision = 0;
+		while (frac) {
+			val *= 10;
+			frac = val - static_cast<int>(val);
+			precision++;
+		}
+		m_displayPrecision = precision+1;
+
         return true;
     }
+
+	bool UnitParameter::set(double a_value) {
+	    switch(m_type) {
+	    case Bool:
+			return setBool(a_value);
+	    case Enum:
+	    case Int:
+			return setInt(a_value);
+	    case Double: 
+			return setDouble(a_value);
+		case Null:
+	    default: 
+			return false;
+	    }
+	}
 
     double UnitParameter::getNorm() const
     {

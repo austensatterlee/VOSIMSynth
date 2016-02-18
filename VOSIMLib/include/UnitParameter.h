@@ -28,7 +28,7 @@ namespace syn
         UnitParameter(const string& a_name, bool a_defaultValue);
         UnitParameter(const string& a_name, int a_min, int a_max, int a_defaultValue);
         UnitParameter(const string& a_name, const vector<string>& a_optionNames);
-        UnitParameter(const string& a_name, double a_min, double a_max, double a_defaultValue);
+        UnitParameter(const string& a_name, double a_min, double a_max, double a_defaultValue, int a_displayPrecision=2);
 
 
 		/**
@@ -50,9 +50,12 @@ namespace syn
 
 		double getDefaultValue() const;
 
-        bool set(bool a_value);
-        bool set(int a_value);
-        bool set(double a_value);
+		int getPrecision() const;
+
+        bool setBool(bool a_value);
+        bool setInt(int a_value);
+        bool setDouble(double a_value);
+		bool set(double a_value);
         /**
          * Set the parameter from a number in the range (0,1)
          */
