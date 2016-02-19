@@ -86,6 +86,20 @@ def DSF(f0, fm, a, N, pts=None):
     result[where(denominator)==0]=1.0
     return result/result.max()
 
+def RCCoefs(fc,fs):
+    """
+    fn - normalized frequency
+
+    @returns bcoefs,acoefs
+    """
+    T = 1./fs
+    RC = 1./(2*pi*fc)
+    bcoefs = array([1.,1.])
+    acoefs = array([1.+2*RC/T, 1.-2*RC/T])
+    bcoefs /= acoefs[0]
+    acoefs /= acoefs[0]
+    return bcoefs,acoefs
+
 def GenerateBlit(pts,nharmonics=None):
     """
     Generate a band-limited impulse train using the FFT

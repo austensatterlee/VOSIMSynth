@@ -68,6 +68,8 @@ namespace syn {
 
 		updatePhaseStep_();
 		tickPhase_(phase_offset);
+
+		a_outputs.setChannel(m_oPhase, m_phase);
     }
 
 	void TunedOscillator::onNoteOn_() {
@@ -94,7 +96,7 @@ namespace syn {
         double output;
         int shape = getParameter(m_pWaveform).getInt();
         output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period);
-        a_outputs.setChannel(0, m_gain * output);
+        a_outputs.setChannel(m_oOut, m_gain * output);
     }
 
 	void LFOOscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
@@ -114,7 +116,7 @@ namespace syn {
 		double output;
 		int shape = getParameter(m_pWaveform).getInt();
 		output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period);
-		a_outputs.setChannel(0, m_gain * output);
+		a_outputs.setChannel(m_oOut, m_gain * output);
     }
 
 	void LFOOscillator::onParamChange_(int a_paramId) {

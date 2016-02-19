@@ -146,9 +146,13 @@ namespace syn
         }
     }
 
-    const Unit& Circuit::getUnit(int a_unitId) const
+	Unit& Circuit::getUnit_(int a_unitId) {
+		return *m_units[a_unitId];
+    }
+
+	const Unit& Circuit::getUnit(int a_unitId) const
     {
-        return *(m_units[a_unitId]);
+        return *m_units[a_unitId];
     }
 
     int Circuit::getNumUnits() const

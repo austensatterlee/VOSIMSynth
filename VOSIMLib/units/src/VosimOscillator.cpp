@@ -31,9 +31,9 @@ namespace syn
 			}
 			
 			output = pulseval*abs(pulseval);
-			output *= curr_pulse_gain * sqrt(m_pulse_step / m_phase_step) * m_gain;
+			output *= curr_pulse_gain * sqrt(m_pulse_step / m_phase_step);
 		}
-		a_outputs.setChannel(0,output);
+		a_outputs.setChannel(m_oOut,m_gain*output);
 	}
 
 	void VosimOscillator::updatePhaseStep_()
@@ -74,7 +74,7 @@ namespace syn
 		double sinval = lut_sin.getlinear(formant_phase + 0.5);
 		double cosval = 0.5*(1+lut_sin.getlinear(cos_phase - 0.25));
 		double output = sinval*cosval*sqrt(cos_width);
-        a_outputs.setChannel(0,output * m_gain);
+        a_outputs.setChannel(m_oOut,m_gain*output);
 	}	
 }
 

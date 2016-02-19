@@ -12,6 +12,8 @@ namespace syn
 
 		void OnMouseUp(int x, int y, IMouseMod* pMod) override;
 
+		void OnMouseDown(int x, int y, IMouseMod* pMod) override;
+
 		void OnMouseWheel(int x, int y, IMouseMod* pMod, int d) override;
 
 		ITextSlider(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, int a_unitId, int a_paramId, IRECT pR);
@@ -20,6 +22,8 @@ namespace syn
 		{}
 
 		void OnMouseDblClick(int x, int y, IMouseMod* pMod) override;
+
+		void OnMouseOver(int x, int y, IMouseMod* pMod) override;
 
 		void OnMouseDrag(int x, int y, int dX, int dY, IMouseMod* pMod) override;
 

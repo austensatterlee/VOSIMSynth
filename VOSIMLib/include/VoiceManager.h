@@ -22,6 +22,7 @@ namespace syn {
     enum EMuxAction {
         ModifyParam,
         ModifyParamNorm,
+		ModifyParamPrecision,
         DeleteUnit,
         ConnectInput,
         ConnectOutput,
@@ -63,15 +64,16 @@ namespace syn {
          * Queue an action to be processed before the next sample.
          *
          * The following is a description of parameter signatures corresponding to each possible action:
-         * ModifyParam:         (int unit_id, int param_id, double value)
-         * ModifyParamNorm:     (int unit_id, int param_id, double norm_value)
-         * DeleteUnit:          (int unit_id)
-         * ConnectInput:        (int circuit_input_id, int unit_id, int unit_input_id)
-         * ConnectOutput:       (int circuit_output_id, int unit_id, int output_port_id)
-         * ConnectInternal:     (int from_unit_id, int from_unit_port, int to_unit_id, int to_unit_port)
-         * DisconnectInput:     (int circuit_input_id, int unit_id, int input_port_id)
-         * DisconnectOutput:    (int circuit_output_id, int unit_id, int output_port_id)
-         * DisconnectInternal:  (int from_unit_id, int from_unit_port, int to_unit_id, int to_unit_port
+         * ModifyParam:				(int unit_id, int param_id, double value)
+         * ModifyParamNorm:			(int unit_id, int param_id, double norm_value)
+		 * ModifyParamPrecision:	(int unit_id, int param_id, int new_precision)
+         * DeleteUnit:				(int unit_id)
+         * ConnectInput:			(int circuit_input_id, int unit_id, int unit_input_id)
+         * ConnectOutput:			(int circuit_output_id, int unit_id, int output_port_id)
+         * ConnectInternal:			(int from_unit_id, int from_unit_port, int to_unit_id, int to_unit_port)
+         * DisconnectInput:			(int circuit_input_id, int unit_id, int input_port_id)
+         * DisconnectOutput:		(int circuit_output_id, int unit_id, int output_port_id)
+         * DisconnectInternal:		(int from_unit_id, int from_unit_port, int to_unit_id, int to_unit_port
          */
 		unsigned queueAction(EMuxAction a_action, const MuxArgs& a_params);
 

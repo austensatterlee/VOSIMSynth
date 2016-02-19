@@ -49,8 +49,15 @@ namespace syn {
 
 	void CircuitPanel::OnMouseOver(int x, int y, IMouseMod* pMod)
     {
-        m_lastMousePos = NDPoint<2, int>(x, y);
-        m_nearestWire = getNearestWire(m_lastMousePos[0], m_lastMousePos[1]);
+		int selectedUnit = getSelectedUnit(x, y);
+		if (selectedUnit>=0) { // propogate to unit
+			m_unitControls[selectedUnit]->onMouseOver(x, y, pMod);
+		}else { // detect nearest wire
+			m_lastMousePos = NDPoint<2, int>(x, y);
+			m_nearestWire = getNearestWire(m_lastMousePos[0], m_lastMousePos[1]);			
+		}
+		m_lastMousePos = {x,y};
+		m_lastMouseState = *pMod;
     }
 
     void CircuitPanel::OnMouseDown(int x, int y, IMouseMod* pMod)
@@ -75,10 +82,10 @@ namespace syn {
 				m_currAction = CONNECT;
 			}
 		}
+		m_lastMousePos = { x,y };
+		m_lastMouseState = *pMod;
         m_lastClickPos = m_lastMousePos;
         m_lastClickState = *pMod;
-        m_lastMousePos = m_lastClickPos;
-        m_lastMouseState = *pMod;
     }
 
     int CircuitPanel::_createUnit(string proto_name, int x, int y)
@@ -177,20 +184,21 @@ namespace syn {
             m_unitControls.at(currSelectedUnit)->onMouseUp(x, y, pMod);
         }
         m_currAction = NONE;
+		m_lastMousePos = { x,y };
+		m_lastMouseState = *pMod;
     }
 
     void CircuitPanel::OnMouseDrag(int x, int y, int dX, int dY, IMouseMod* pMod)
     {
 		WDL_MutexLock lock(&mPlug->mMutex);
-        NDPoint<2, int> currMousePos = NDPoint<2, int>(x, y);
         if (m_lastSelectedUnit >= 0) {
             shared_ptr<UnitControlContainer> unitCtrl = m_unitControls.at(m_lastSelectedUnit);
             if (m_currAction == MODIFY_UNIT) {
                 unitCtrl->onMouseDrag(x, y, dX, dY, pMod);
             } 
         }
-        m_lastMousePos = currMousePos;
-        m_lastMouseState = *pMod;
+		m_lastMousePos = { x,y };
+		m_lastMouseState = *pMod;
     }
 
     void CircuitPanel::OnMouseDblClick(int x, int y, IMouseMod* pMod)
@@ -222,6 +230,10 @@ namespace syn {
         IColor out_port_color = {255, 75, 75, 100};
         IText textfmt{12, &COLOR_RED, "Helvetica", IText::kStyleNormal, IText::kAlignNear, 0, IText::kQualityClearType};
 
+		// Handle continuous mouse click events
+		if(m_lastMouseState.L || m_lastMouseState.R) {
+			OnMouseDrag(m_lastMousePos[0], m_lastMousePos[1], 0, 0, &m_lastMouseState);
+		}
 
 		const Circuit& circ = m_voiceManager->getCircuit();
 		int nUnits = circ.getNumUnits();

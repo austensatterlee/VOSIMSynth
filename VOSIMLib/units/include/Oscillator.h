@@ -29,12 +29,13 @@ namespace syn {
 			m_last_phase(0),
 			m_phase_step(0),
 			m_period(1),
-			m_freq(1), m_pGain(addParameter_({ "gain", 0.0, 1.0, 1.0 })),
-			m_pPhaseOffset(addParameter_({ "phase", 0.0, 0.5, 0.0 }))
+			m_freq(1), m_pGain(addParameter_({ "gain scale", 0.0, 1.0, 1.0 })),
+			m_pPhaseOffset(addParameter_({ "phase bias", 0.0, 1.0, 0.0 }))
 		{
 			m_iGain = addInput_("gain");
 			m_iPhaseOffset = addInput_("phase");
-			addOutput_("out");
+			m_oOut = addOutput_("out");
+			m_oPhase = addOutput_("phase");
 		}
 
 		virtual ~Oscillator() {}
@@ -51,6 +52,9 @@ namespace syn {
 		double m_period;
 		double m_freq;
 		double m_gain;
+
+		int m_oOut;
+		int m_oPhase;
 	private:
 		int m_pGain;
 		int m_pPhaseOffset;

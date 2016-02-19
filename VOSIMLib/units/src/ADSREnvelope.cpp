@@ -77,10 +77,10 @@ namespace syn {
         double output = LERP(m_initial, m_target, m_phase);
         a_outputs.setChannel(0,output);
 
-		if (!m_isActive && a_inputs.getValue(m_iGate) >= 1.0) {
+		if ((!m_isActive || m_currStage == Release) && a_inputs.getValue(m_iGate) > 0.0) {
 			trigger();
 		}
-		else if (m_currStage != Release && a_inputs.getValue(m_iGate)<1.0) {
+		else if (m_currStage != Release && a_inputs.getValue(m_iGate)<=0.0) {
 			release();
 		}
     }

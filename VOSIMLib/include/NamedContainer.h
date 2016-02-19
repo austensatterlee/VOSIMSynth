@@ -54,7 +54,7 @@ namespace syn {
 
         size_t size() const;
 
-        int getItemIndex(int a_itemIndex) const;
+	    static int getItemIndex(int a_itemIndex);
 
         int getItemIndex(const string& a_name) const;
 
@@ -146,13 +146,8 @@ namespace syn {
     }
 
     template<typename T>
-    int NamedContainer<T>::getItemIndex(int a_itemIndex) const{
-		int nData = m_data.size();
-        if (a_itemIndex < 0 || a_itemIndex >= nData){
-            return -1;
-        }else{
-            return a_itemIndex;
-        }
+    int NamedContainer<T>::getItemIndex(int a_itemIndex) {
+		return a_itemIndex;
     }
 
     template<typename T>

@@ -50,6 +50,12 @@ namespace syn
 		}
 	}
 
+	void UnitControlContainer::onMouseOver(int a_x, int a_y, IMouseMod* a_mouseMod) {
+		if(m_unitControl->isHit(a_x,a_y)) {
+			m_unitControl->onMouseOver(a_x, a_y, a_mouseMod);
+		}
+	}
+
 	void UnitControlContainer::onMouseWheel(int a_x, int a_y, IMouseMod* a_mouseMod, int a_d) {
 		if(m_unitControl->isHit(a_x, a_y)) {
 			m_unitControl->onMouseWheel(a_x, a_y, a_mouseMod, a_d);

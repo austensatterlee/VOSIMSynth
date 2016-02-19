@@ -27,6 +27,8 @@ namespace syn {
 
 		virtual void onMouseWheel(int a_x, int a_y, IMouseMod* a_mouseMod, int a_d) {};
 
+		virtual void onMouseOver(int a_x, int a_y, IMouseMod* a_mouseMod) {};
+
 		bool isHit(int a_x, int a_y) const;
 
 		void move(NDPoint<2, int> a_newPos);
@@ -60,7 +62,7 @@ namespace syn {
 	};
 
 	class DefaultUnitControl : public UnitControl
-	{		
+	{
 	public:
 		DefaultUnitControl(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, int a_unitId, int a_x, int a_y) :
 			UnitControl(a_plug, a_vm, a_unitId, a_x, a_y),
@@ -92,10 +94,9 @@ namespace syn {
 		}
 
 		void onMouseDown(int a_x, int a_y, IMouseMod* a_mouseMod) override {
-			int selectedParam = getSelectedParam(a_x, a_y);
-			if (selectedParam >= 0) {
-				m_paramControls[selectedParam].OnMouseDown(a_x, a_y, a_mouseMod);
-				m_lastSelectedParam = selectedParam;
+			m_lastSelectedParam = getSelectedParam(a_x, a_y);
+			if (m_lastSelectedParam >= 0) {
+				m_paramControls[m_lastSelectedParam].OnMouseDown(a_x, a_y, a_mouseMod);
 			}
 		}
 
@@ -109,6 +110,13 @@ namespace syn {
 		void onMouseDrag(int a_x, int a_y, int a_dX, int a_dY, IMouseMod* a_mouseMod) override {
 			if (m_lastSelectedParam >= 0) {
 				m_paramControls[m_lastSelectedParam].OnMouseDrag(a_x, a_y, a_dX, a_dY, a_mouseMod);
+			}
+		}
+
+		void onMouseOver(int a_x, int a_y, IMouseMod* a_mouseMod) override {
+			int selectedParam = getSelectedParam(a_x, a_y);
+			if (selectedParam >= 0) {
+				m_paramControls[selectedParam].OnMouseOver(a_x, a_y, a_mouseMod);
 			}
 		}
 

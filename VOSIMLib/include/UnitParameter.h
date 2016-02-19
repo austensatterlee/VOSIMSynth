@@ -51,6 +51,7 @@ namespace syn
 		double getDefaultValue() const;
 
 		int getPrecision() const;
+		void setPrecision(int a_precision);
 
         bool setBool(bool a_value);
         bool setInt(int a_value);

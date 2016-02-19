@@ -52,7 +52,7 @@ namespace syn {
         /**
          * \returns True if any of its internal units are active
          */
-        virtual bool isActive() const;
+	    bool isActive() const override;
 
         const Unit& getUnit(int a_unitId) const;
 
@@ -121,6 +121,8 @@ namespace syn {
 	    void onNoteOn_() override;
 
 	    void onNoteOff_() override;
+
+		Unit& getUnit_(int a_unitId);
 
     private:
 	    string _getClassName() const override {

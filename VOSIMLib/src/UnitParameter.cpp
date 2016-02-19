@@ -110,6 +110,11 @@ namespace syn {
 		return m_displayPrecision;
     }
 
+	void UnitParameter::setPrecision(int a_precision) {
+		if (a_precision >= 0)
+			m_displayPrecision = a_precision;
+    }
+
 	bool UnitParameter::getBool() const
     {
         return m_value > 0.5;
@@ -150,18 +155,6 @@ namespace syn {
         if(a_value < m_min || a_value > m_max)
             return false;
         m_value = a_value;
-
-		// detect precision
-		double val = m_value;
-		double frac = val - static_cast<int>(val);
-		int precision = 0;
-		while (frac) {
-			val *= 10;
-			frac = val - static_cast<int>(val);
-			precision++;
-		}
-		m_displayPrecision = precision+1;
-
         return true;
     }
 

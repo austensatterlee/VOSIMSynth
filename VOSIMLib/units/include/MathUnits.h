@@ -269,7 +269,7 @@ namespace syn {
 	protected:
 		void onParamChange_(int a_paramId) override {
 			if(a_paramId == m_pBufSize) {
-				m_buffer.resize(getParameter(m_pBufSize).getInt(),0);
+				m_buffer.resize(getParameter(m_pBufSize).getInt());
 				m_bufferIndex = 0;
 			}
 		}

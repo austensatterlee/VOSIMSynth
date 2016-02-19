@@ -36,6 +36,8 @@ namespace syn {
 
 		void onMouseDrag(int a_x, int a_y, int a_dX, int a_dY, IMouseMod* a_mouseMod);
 
+		void onMouseOver(int a_x, int a_y, IMouseMod* a_mouseMod);
+
 		virtual void onMouseWheel(int a_x, int a_y, IMouseMod* a_mouseMod, int a_d);
 
 		void move(int a_newx, int a_newy);

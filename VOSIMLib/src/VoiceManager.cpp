@@ -254,6 +254,9 @@ namespace syn {
                 case ModifyParamNorm:
                     voice->setInternalParameterNorm(a_params.id1, a_params.id2, a_params.value);
                     break;
+				case ModifyParamPrecision:
+					voice->getUnit_(a_params.id1).getParameter_(a_params.id2).setPrecision(a_params.id3);
+					break;
                 case DeleteUnit:
                     voice->removeUnit(a_params.id1);
                     break;
@@ -300,7 +303,7 @@ namespace syn {
         return m_instrument->getUnit(a_id);
     }
 
-    void VoiceManager::setFs(double a_newFs)
+	void VoiceManager::setFs(double a_newFs)
     {
         Circuit* voice;
         // Apply action to all voices

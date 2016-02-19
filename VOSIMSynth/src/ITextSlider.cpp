@@ -14,28 +14,55 @@ syn::ITextSlider::ITextSlider(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, 
 
 void syn::ITextSlider::TextFromTextEntry(const char* txt) {
 	const UnitParameter& param = m_vm->getUnit(m_unitId).getParameter(m_paramId);
-	double value = std::stod(txt);
-	MuxArgs params = { m_unitId, m_paramId };
-	params.value = value;
-	m_vm->doAction(ModifyParam, params);
-	mValue = param.getNorm();	
+	try {
+		size_t num_digits;
+		double value = std::stod(txt, &num_digits);
+
+		string str(txt);
+		size_t decimal_pos;
+		// adjust parameter precision
+		decimal_pos = str.find_first_of(".");
+		if(decimal_pos!=string::npos) {
+			m_vm->doAction(ModifyParamPrecision, { m_unitId, m_paramId, static_cast<int>(num_digits) - static_cast<int>(decimal_pos) });
+		}
+
+		MuxArgs params = { m_unitId, m_paramId };
+		params.value = value;
+		m_vm->doAction(ModifyParam, params);
+		mValue = param.getNorm();
+	}catch(std::invalid_argument& e) {
+		// do nothing
+	}	
 }
 
 void syn::ITextSlider::OnMouseUp(int x, int y, IMouseMod* pMod) {
+}
+
+void syn::ITextSlider::OnMouseDown(int x, int y, IMouseMod* pMod) {
+	const UnitParameter& param = m_vm->getUnit(m_unitId).getParameter(m_paramId);
+	if (pMod->C) {
+		IText entryTextFmt;
+		string entryText = param.getString();
+		mPlug->GetGUI()->CreateTextEntry(this, &entryTextFmt, &mRECT, entryText.c_str());
+	}
 }
 
 void syn::ITextSlider::OnMouseWheel(int x, int y, IMouseMod* pMod, int d) {
 	const UnitParameter& param = m_vm->getUnit(m_unitId).getParameter(m_paramId);
 	mValue = param.getNorm();
 	double scale;
-	if (param.getType() == EParamType::Int) {
+	if (param.getType() != Double) {
 		scale = 1.0 / (param.getMax() - param.getMin());
 	}else {
 		scale = pow(10, -param.getPrecision());
 		if (pMod->C) {
 			scale *= 10;
 		}
+		if (pMod->S) {
+			scale *= 0.1;
+		}
 	}
+
 	mValue += scale*d;
 
 	MuxArgs params = { m_unitId, m_paramId };
@@ -46,27 +73,30 @@ void syn::ITextSlider::OnMouseWheel(int x, int y, IMouseMod* pMod, int d) {
 
 void syn::ITextSlider::OnMouseDblClick(int x, int y, IMouseMod* pMod) {
 	const UnitParameter& param = m_vm->getUnit(m_unitId).getParameter(m_paramId);
-	if (pMod->C) {
-		IText entryTextFmt;
-		string entryText = param.getString();
-		mPlug->GetGUI()->CreateTextEntry(this, &entryTextFmt, &mRECT, entryText.c_str());
-	}
-	else {
-		double defaultValue = param.getDefaultValue();
-		MuxArgs params = { m_unitId, m_paramId };
-		params.value = defaultValue;
-		m_vm->doAction(ModifyParam, params);
-		mValue = param.getNorm();
-	}
+	double defaultValue = param.getDefaultValue();
+	MuxArgs params = { m_unitId, m_paramId };
+	params.value = defaultValue;
+	m_vm->doAction(ModifyParam, params);
+	mValue = param.getNorm();	
 }
 
+void syn::ITextSlider::OnMouseOver(int x, int y, IMouseMod* pMod) {}
+
 void syn::ITextSlider::OnMouseDrag(int x, int y, int dX, int dY, IMouseMod* pMod) {
-	const UnitParameter& param = m_vm->getUnit(m_unitId).getParameter(m_paramId);
-	mValue = (x - mRECT.L) * (1.0 / mRECT.W());
-    MuxArgs params = {m_unitId, m_paramId};
-    params.value = mValue;
-    m_vm->doAction(ModifyParamNorm, params);
-    mValue = param.getNorm();
+	if (pMod->L && !pMod->C) {
+		const UnitParameter& param = m_vm->getUnit(m_unitId).getParameter(m_paramId);
+		mValue = param.getNorm();
+		double targetValue = (x - mRECT.L) * (1.0 / mRECT.W());
+		double error = mValue - targetValue;
+		double adjust_speed = 0.5;
+		if (pMod->S)
+			adjust_speed *= 0.1;
+		mValue = mValue - adjust_speed*error;
+		MuxArgs params = { m_unitId, m_paramId };
+		params.value = mValue;
+		m_vm->doAction(ModifyParamNorm, params);
+		mValue = param.getNorm();
+	}
 }
 
 bool syn::ITextSlider::Draw(IGraphics* pGraphics) {
