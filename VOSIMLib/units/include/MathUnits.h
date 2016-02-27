@@ -221,7 +221,7 @@ namespace syn {
 		ConstantUnit(const string& a_name) :
 			Unit(a_name)
 		{
-			addParameter_({ "out",0.0,10.0,1.0 });
+			addParameter_({ "out",-100.0,100.0,1.0 });
 			addOutput_("out");
 		}
 
@@ -243,6 +243,48 @@ namespace syn {
 		}
 
 		Unit* _clone() const override { return new ConstantUnit(*this); }
+	};
+
+	/**
+	* Outputs a constant
+	*/
+	class PanningUnit : public Unit {
+	public:
+		PanningUnit(const string& a_name) :
+			Unit(a_name)
+		{
+			addInput_("in1");
+			addInput_("in2");
+			addInput_("bal");
+			addOutput_("out1");
+			addOutput_("out2");
+			m_pBalance = addParameter_({ "balance",-1.0,1.0,0.0 });
+		}
+
+		PanningUnit(const PanningUnit& a_rhs) :
+			PanningUnit(a_rhs.getName())
+		{
+
+		}
+	protected:
+		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+		{
+			double in1 = a_inputs.getValue(0);
+			double in2 = a_inputs.getValue(1);
+			double balance = 0.5*(getParameter(m_pBalance).getDouble()+a_inputs.getValue(2)+1);
+			balance = CLAMP(balance, 0.0, 1.0);
+			a_outputs.setChannel(0, in1*(balance)+in2*(1 - balance));
+			a_outputs.setChannel(1, in2*(balance)+in1*(1 - balance));
+		};
+	protected:
+		int m_pBalance;
+	private:
+		string _getClassName() const override
+		{
+			return "PanningUnit";
+		}
+
+		Unit* _clone() const override { return new PanningUnit(*this); }
 	};
 
 	/**

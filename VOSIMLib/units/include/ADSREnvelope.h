@@ -38,6 +38,7 @@ namespace syn {
         int m_pDecay;
         int m_pSustain;
         int m_pRelease;
+		int m_pTimeScale;
 
 		int m_iGate;
     };

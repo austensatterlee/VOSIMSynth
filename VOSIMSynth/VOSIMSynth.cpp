@@ -11,7 +11,8 @@ using namespace std;
 const int kNumPrograms = 1;
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
-        : IPLUG_CTOR(0, kNumPrograms, instanceInfo)
+        : IPLUG_CTOR(0, kNumPrograms, instanceInfo),
+	m_tempo(0)
 {
     TRACE;
 
@@ -60,6 +61,7 @@ void VOSIMSynth::makeInstrument()
     m_unitFactory->addUnitPrototype("DSP", new InvertingUnit("Inverter"));
 	m_unitFactory->addUnitPrototype("DSP", new MemoryUnit("Memory"));
 	m_unitFactory->addUnitPrototype("DSP", new GainUnit("Gain"));
+	m_unitFactory->addUnitPrototype("DSP", new PanningUnit("Panner"));
 
 	m_unitFactory->addUnitPrototype("Math", new SummerUnit("Summer"));
 	m_unitFactory->addUnitPrototype("Math", new MultiplyUnit("Multiplier"));
@@ -73,7 +75,7 @@ void VOSIMSynth::makeInstrument()
 	m_unitFactory->addUnitPrototype("Visualizer", new OscilloscopeUnit("Oscilloscope"));
 
     m_voiceManager = make_shared<VoiceManager>(circ, m_unitFactory);
-    m_voiceManager->setMaxVoices(16);
+    m_voiceManager->setMaxVoices(8);
 
     m_MIDIReceiver = make_shared<MIDIReceiver>(shared_ptr<VoiceManager>(m_voiceManager));
 }
@@ -84,10 +86,13 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
     for (int s = 0 ; s < nFrames ; s++) {
         m_MIDIReceiver->advance();
     }
-    //memset(outputs[0], 0, nFrames * sizeof(double));
-    //memset(outputs[1], 0, nFrames * sizeof(double));
-    m_voiceManager->setTempo(GetTempo());
+
+	// If tempo has changed, notify instrument
+	if (m_tempo != GetTempo()) {
+		m_voiceManager->setTempo(GetTempo());
+	}
 	
+	// Process samples
     for (int i = 0 ; i < nFrames ; i++) {
         m_voiceManager->tick(inputs[0][i],inputs[1][i],outputs[0][i],outputs[1][i]);
     }

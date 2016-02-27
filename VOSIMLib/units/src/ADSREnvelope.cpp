@@ -14,7 +14,8 @@ namespace syn {
             m_pAttack(addParameter_(UnitParameter("attack",0.0,1.0,0.01))),
             m_pDecay(addParameter_(UnitParameter("decay",0.0,1.0,0.01))),
             m_pSustain(addParameter_(UnitParameter("sustain",0.0,1.0,1.0))),
-            m_pRelease(addParameter_(UnitParameter("release",0.0,1.0,0.01)))
+            m_pRelease(addParameter_(UnitParameter("release",0.0,1.0,0.01))),
+			m_pTimeScale(addParameter_(UnitParameter("timescale",1,10,1)))
     {
 		m_iGate = addInput_("gate");
         addOutput_("out");
@@ -50,6 +51,7 @@ namespace syn {
             default:
                 throw std::logic_error("Invalid envelope stage");
         }
+		segment_time = segment_time*getParameter(m_pTimeScale).getInt();
         if (!segment_time) { // for zero second segment time, advance phase pointer to next segment
             m_phase += 1;
         } else {
