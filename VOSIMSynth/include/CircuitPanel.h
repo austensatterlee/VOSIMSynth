@@ -6,7 +6,6 @@
 #include "UnitFactory.h"
 #include "Containers.h"
 #include "UnitControl.h"
-#include "stk/Mutex.h"
 #include <memory>
 #include "UnitControlContainer.h"
 

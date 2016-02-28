@@ -499,7 +499,7 @@ namespace syn {
 		// Serialize parameters
 		serialized.Put<unsigned>(&nparams);
 		for (int i = 0; i < nparams;i++) {
-			double paramvalue = unit.getParameter(i).getNorm();
+			double paramvalue = unit.getParameter(i).get<double>();
 			serialized.Put<double>(&paramvalue);
 		}
         return serialized;
@@ -528,7 +528,7 @@ namespace syn {
 			args.id1 = unitId;
 			args.id2 = paramId;
 			args.value = paramvalue;
-			m_voiceManager->doAction(ModifyParamNorm, args);
+			m_voiceManager->doAction(ModifyParam, args);
 		}
 		
         return chunkpos;

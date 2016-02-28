@@ -296,7 +296,7 @@ namespace syn {
 		MemoryUnit(const string& a_name) :
 			Unit(a_name),
 			m_buffer(1,0),
-			m_pBufSize(addParameter_(UnitParameter("samples",1,128,1))),
+			m_pBufSize(addParameter_(UnitParameter("samples",1,16384,1))),
 			m_bufferIndex(0)
 		{
 			addInput_("in");
@@ -311,8 +311,15 @@ namespace syn {
 	protected:
 		void onParamChange_(int a_paramId) override {
 			if(a_paramId == m_pBufSize) {
-				m_buffer.resize(getParameter(m_pBufSize).getInt());
-				m_bufferIndex = 0;
+				int newBufSize = getParameter(m_pBufSize).getInt();
+				if (m_buffer.size() <= newBufSize) {
+					m_buffer.resize(newBufSize);
+				}
+				if (newBufSize == 1) {
+					m_buffer.clear();
+				}
+				m_bufferIndex = MIN(m_bufferIndex, newBufSize-1);
+				
 			}
 		}
 		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override

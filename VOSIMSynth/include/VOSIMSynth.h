@@ -42,6 +42,8 @@ private:
 	shared_ptr<CircuitPanel> m_circuitPanel;
 	shared_ptr<UnitFactory> m_unitFactory;
     IGraphics* pGraphics;
+
+	int m_tempo;
 };
 
 #endif
