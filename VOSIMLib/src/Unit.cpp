@@ -77,9 +77,12 @@ namespace syn {
         m_hasTicked = false;
     }
 
-    int Unit::addInput_(const string& a_name)
+    int Unit::addInput_(const string& a_name, double a_default, Signal::ChannelAccType a_accType)
     {
-        return m_inputSignals.addChannel(a_name);
+        int inputId = m_inputSignals.addChannel(a_name);
+		m_inputSignals.getChannel(inputId).setDefault(a_default);
+		m_inputSignals.getChannel(inputId).setChannelAccType(a_accType);
+		return inputId;
     }
 
     int Unit::addOutput_(const string& a_name)

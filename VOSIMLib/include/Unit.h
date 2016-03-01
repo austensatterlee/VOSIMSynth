@@ -140,7 +140,7 @@ namespace syn {
 
         virtual void process_(const SignalBus& a_inputs, SignalBus& a_outputs) = 0;
 
-        int addInput_(const string& a_name);
+        int addInput_(const string& a_name, double a_default = 0.0, Signal::ChannelAccType a_accType = Signal::ChannelAccType::EAdd);
 
         int addOutput_(const string& a_name);
 
@@ -179,6 +179,7 @@ namespace syn {
 		friend class Circuit;
 		friend class UnitFactory;
 		friend class VoiceManager;
+		friend class UnitConnectionBus;
 		string m_name;
 		bool m_hasTicked;
 		NamedContainer<UnitParameter> m_parameters;

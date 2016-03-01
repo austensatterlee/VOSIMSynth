@@ -68,7 +68,7 @@ namespace syn {
 
         IRECT getPortRect(const CircuitPortVector& a_vec) const;
 
-        CircuitPortVector getSelectedPort(int x, int y);
+        CircuitPortVector getSelectedPort(int x, int y) const;
 
         /**
          * \returns an array containing the port index, and the euclidean distance from the wire.
@@ -141,7 +141,7 @@ namespace syn {
         CircuitPortVector m_lastSelectedCircuitPort;
         pair<ConnectionRecord,int> m_nearestWire = {{ConnectionRecord::Null,0,0,0,0},0};
 
-        int c_portSize = 10;
+        const int c_portSize = 15;
     };
 
 	template <typename T>

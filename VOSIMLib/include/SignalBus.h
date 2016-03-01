@@ -13,18 +13,29 @@ using std::string;
 
 namespace syn{
     class Signal {
+	public:
+		/// Type of accumulation to perform on signal
+		enum ChannelAccType
+		{
+			EAdd = 0,
+			EMul = 1
+		};
     public:
         Signal();
-        Signal(const Signal& a_other);
-        Signal& operator=(const Signal& a_other);
         bool operator==(const Signal& a_rhs) const;
 
         double get() const;
+		void accumulate(const Signal& a_sig);
         void set(const Signal& a_newVal);
         void set(const double& a_newVal);
+		void setDefault(double a_default);
+		void setChannelAccType(ChannelAccType a_accType);
+
         void clear();
     private:
         double m_value;
+		double m_default;
+		ChannelAccType m_accType;
     };
 
     class SignalBus

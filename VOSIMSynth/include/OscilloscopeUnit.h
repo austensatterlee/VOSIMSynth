@@ -17,8 +17,8 @@ namespace syn {
 		OscilloscopeUnit(const string& a_name) :
 			Unit(a_name),
 			m_bufferIndex(0),
-			m_pBufferSize(addParameter_(UnitParameter("buffer size", 2, 1024, 256))),
-			m_nBuffers(2)
+			m_nBuffers(2),
+			m_pBufferSize(addParameter_(UnitParameter("buffer size", 2, 16384, 256)))
 		{
 			addInput_("in1");
 			addInput_("in2");

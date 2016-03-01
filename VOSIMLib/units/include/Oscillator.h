@@ -29,13 +29,13 @@ namespace syn {
 			m_last_phase(0),
 			m_phase_step(0),
 			m_period(1),
-			m_freq(1), m_pGain(addParameter_({ "gain scale", 0.0, 1.0, 1.0 })),
-			m_pPhaseOffset(addParameter_({ "phase bias", 0.0, 1.0, 0.0 }))
+			m_freq(0.0), m_pGain(addParameter_({ "gain", 0.0, 1.0, 1.0 })),
+			m_pPhaseOffset(addParameter_({ "phase", 0.0, 1.0, 0.0 }))
 		{
-			m_iGain = addInput_("gain");
-			m_iPhaseOffset = addInput_("phase");
+			m_iGainAdd = addInput_("g[x]",1.0, Signal::EMul);
+			m_iPhaseAdd = addInput_("ph[+]");
 			m_oOut = addOutput_("out");
-			m_oPhase = addOutput_("phase");
+			m_oPhase = addOutput_("ph");
 		}
 
 		virtual ~Oscillator() {}
@@ -59,8 +59,8 @@ namespace syn {
 		int m_pGain;
 		int m_pPhaseOffset;
 
-		int m_iGain;
-		int m_iPhaseOffset;
+		int m_iGainAdd;
+		int m_iPhaseAdd;
 	};
 
 	class TunedOscillator : public Oscillator
@@ -69,10 +69,10 @@ namespace syn {
 		TunedOscillator(const string& a_name) :
 			Oscillator(a_name),
 			m_pitch(0),
-			m_pTune(addParameter_({ "tune", -12.0, 12.0, 0.0 })),
-			m_pOctave(addParameter_({ "octave", -2, 2, 0 }))
+			m_pTune(addParameter_({ "semi", -12.0, 12.0, 0.0 })),
+			m_pOctave(addParameter_({ "oct", -3, 3, 0 }))
 		{
-			m_iNote = addInput_("note");
+			m_iNote = addInput_("pitch");
 		}
 
 		TunedOscillator(const TunedOscillator& a_rhs) :
@@ -120,10 +120,11 @@ namespace syn {
 			Oscillator(a_name),
 			m_pWaveform(addParameter_(UnitParameter("waveform", WAVE_SHAPE_NAMES))),
 			m_pTempoSync(addParameter_(UnitParameter("tempo sync", false))),
-			m_pFreq(addParameter_(UnitParameter("freq",1e-2,20.0,1.0))),
-			m_iFreq(addInput_("freq")),
+			m_pFreq(addParameter_(UnitParameter("freq",0.0,20.0,1.0))),			
 			m_lastSync(0.0)
 		{
+			m_iFreqAdd = addInput_("freq[+]");
+			m_iFreqMul = addInput_("freq[x]",1.0,Signal::EMul);
 			m_iSync = addInput_("sync");
 		};
 
@@ -135,7 +136,7 @@ namespace syn {
 		int m_pWaveform;
 		int m_pFreq;
 		int m_pTempoSync;
-		int m_iFreq;
+		int m_iFreqAdd, m_iFreqMul;
 		int m_iSync;
 
 		double m_lastSync;

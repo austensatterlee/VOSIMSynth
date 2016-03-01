@@ -69,7 +69,8 @@ namespace syn
 	
 	
 	
-	const BlimpTable lut_blimp_table_offline(BLIMP_TABLE_OFFLINE, 32705, 511, 128);
+	
+	const BlimpTable lut_blimp_table_offline(BLIMP_TABLE_OFFLINE, 525313, 513, 2048);
 	const BlimpTable lut_blimp_table_online(BLIMP_TABLE_ONLINE, 20481, 5, 8192);
 	const LookupTable lut_pitch_table(PITCH_TABLE, 4096, -1, 1, false);
 	const ResampledLookupTable lut_bl_saw(BL_SAW, 2048, lut_blimp_table_online, lut_blimp_table_offline);

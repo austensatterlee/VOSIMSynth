@@ -22,7 +22,8 @@ namespace syn {
 
     void SignalBus::set(SignalBus& a_other)
     {
-        for(int i=0;i< a_other.getNumChannels(); i++){
+		int nSignals = a_other.getNumChannels();
+        for(int i=0;i<nSignals; i++){
             Signal& channel = a_other.getChannel(i);
             setChannel(i, channel);
         }
@@ -30,7 +31,8 @@ namespace syn {
 
     void SignalBus::clear()
     {
-        for(int i=0;i<m_signals.size();i++){
+		int nSignals = m_signals.size();
+        for(int i=0;i<nSignals;i++){
             m_signals[i].clear();
         }
     }
@@ -39,15 +41,8 @@ namespace syn {
      *  Signal methods
      *---------------------*/
 
-    Signal::Signal() : m_value(0)
+    Signal::Signal() : m_value(0), m_default(0), m_accType(EAdd)
     { }
-    Signal::Signal(const Signal& a_other) : m_value(a_other.m_value)
-    { }
-    Signal& Signal::operator=(const Signal& a_other)
-    {
-        set(a_other);
-        return *this;
-    }
 
     bool Signal::operator==(const Signal& a_rhs) const
     {
@@ -59,9 +54,20 @@ namespace syn {
         return m_value;
     }
 
-    void Signal::set(const Signal& a_val)
+	void Signal::accumulate(const Signal& a_sig) {
+	    switch(m_accType) {
+	    case EAdd: 
+			m_value += a_sig.m_value;
+			break;
+	    case EMul:
+			m_value *= a_sig.m_value;
+			break;
+	    }
+	}
+
+	void Signal::set(const Signal& a_val)
     {
-        m_value = a_val.get();
+		*this = Signal(a_val);
     }
 
     void Signal::set(const double& a_newVal)
@@ -69,8 +75,16 @@ namespace syn {
         m_value = a_newVal;
     }
 
-    void Signal::clear()
+	void Signal::setChannelAccType(ChannelAccType a_accType) {
+		m_accType = a_accType;
+    }
+
+	void Signal::setDefault(double a_default) {
+		m_default = a_default;
+    }
+
+	void Signal::clear()
     {
-        m_value = 0;
+        m_value = m_default;
     }
 }

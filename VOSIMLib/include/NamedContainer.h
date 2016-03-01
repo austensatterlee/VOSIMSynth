@@ -63,6 +63,7 @@ namespace syn {
     private:
         vector<T> m_data;
         vector<pair<string, int> > m_names;
+		int m_size = 0;
     };
 
     template<typename T>
@@ -73,6 +74,7 @@ namespace syn {
         int item_index = m_data.size();
         m_data.push_back(a_item);
         m_names.push_back(make_pair(a_name, item_index));
+		m_size = m_data.size();
         return item_index;
     }
 
@@ -93,6 +95,7 @@ namespace syn {
             }
         }
         m_data.erase(m_data.begin() + itemidx);
+		m_size = m_data.size();
         return true;
     }
 
@@ -100,22 +103,14 @@ namespace syn {
     template<typename ID>
     T& NamedContainer<T>::operator[](const ID& a_itemID) {
         int itemidx = getItemIndex(a_itemID);
-        if(itemidx<0){
-            throw std::logic_error("requested item does not exist");
-        }else{
-            return m_data[itemidx];
-        }
+        return m_data[itemidx];
     }
 
     template<typename T>
     template<typename ID>
     const T& NamedContainer<T>::operator[](const ID& a_itemID) const {
         int itemidx = getItemIndex(a_itemID);
-        if(itemidx<0){
-            throw std::logic_error("requested item does not exist");
-        }else{
-            return m_data[itemidx];
-        }
+        return m_data[itemidx];
     }
 
     template<typename T>
@@ -126,16 +121,13 @@ namespace syn {
 
     template<typename T>
     size_t NamedContainer<T>::size() const{
-        return m_data.size();
+        return m_size;
     }
 
     template<typename T>
     template<typename ID>
     string NamedContainer<T>::getItemName(const ID& a_itemID) const{
         int itemidx = getItemIndex(a_itemID);
-        if(itemidx<0){
-            return "";
-        }
         // Check if item was named and, if so, remove its name from the list
         for(int i=0;i<m_names.size();i++){
             if(m_names[i].second==itemidx){

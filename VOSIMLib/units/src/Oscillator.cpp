@@ -43,8 +43,13 @@ namespace syn {
 	
 	void Oscillator::updatePhaseStep_()
 	{
-		m_period = getFs() / m_freq;
-		m_phase_step = 1. / m_period;
+		if (m_freq) {
+			m_period = getFs() / m_freq;
+			m_phase_step = 1. / m_period;
+		} else {
+			m_period = 0.0;
+			m_phase_step = 0.0;
+		}
 	}
 
 	void Oscillator::tickPhase_(double a_phaseOffset)
@@ -63,8 +68,8 @@ namespace syn {
 
 	void Oscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
 		
-		double phase_offset = getParameter(m_pPhaseOffset).getDouble() + a_inputs.getValue(m_iPhaseOffset);
-		m_gain = getParameter(m_pGain).getDouble() * a_inputs.getValue(m_iGain);
+		double phase_offset = getParameter(m_pPhaseOffset).getDouble() + a_inputs.getValue(m_iPhaseAdd);
+		m_gain = getParameter(m_pGain).getDouble() * a_inputs.getValue(m_iGainAdd);
 
 		updatePhaseStep_();
 		tickPhase_(phase_offset);
@@ -102,12 +107,12 @@ namespace syn {
 	void LFOOscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
 		// determine frequency
 		if (getParameter(m_pTempoSync).getBool()) {
-			m_freq = getTempo()/60.0*(getParameter(m_pFreq).getDouble() + a_inputs.getValue(m_iFreq));
+			m_freq = getTempo()/60.0*0.25*a_inputs.getValue(m_iFreqMul)*(getParameter(m_pFreq).getDouble() + a_inputs.getValue(m_iFreqAdd));
 		}else {
-			m_freq = getParameter(m_pFreq).getDouble() + a_inputs.getValue(m_iFreq);
+			m_freq = a_inputs.getValue(m_iFreqMul)*(getParameter(m_pFreq).getDouble() + a_inputs.getValue(m_iFreqAdd));
 		}
 		// sync
-		if (m_lastSync<1.0 && a_inputs.getValue(m_iSync) >= 1.0) {
+		if (m_lastSync<0.5 && a_inputs.getValue(m_iSync) >= 0.5) {
 			m_basePhase = 0.0;
 			sync_();
 		}
@@ -125,7 +130,7 @@ namespace syn {
 		    if(getParameter(m_pTempoSync).getBool()) {
 				getParameter_(m_pFreq) = UnitParameter("rate", 1, 16, 1);
 		    }else {
-				getParameter_(m_pFreq) = UnitParameter("freq", 1e-2, 20.0, 1.0);
+				getParameter_(m_pFreq) = UnitParameter("freq", 0.0, 20.0, 1.0);
 		    }
 			setParameterNorm(m_pFreq, normFreq);
 	    }

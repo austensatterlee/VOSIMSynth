@@ -79,8 +79,8 @@ namespace syn
 	void UnitControlContainer::_resetMinSize() {
 		int nInputs = m_voiceManager->getUnit(m_unitId).getNumInputs();
 		int nOutputs = m_voiceManager->getUnit(m_unitId).getNumOutputs();
-		m_minSize[1] = 15+MAX(c_portSize[1] * nOutputs, c_portSize[1] * nInputs);
-		m_minSize[0] = 2 * (5 + c_portSize[0]);
+		m_minSize[1] = MAX(m_portSize[1] * nOutputs, m_portSize[1] * nInputs);
+		m_minSize[0] = 2 * (c_portPad + m_portSize[0]);
 	}
 
 	void UnitControlContainer::_updateMinSize(NDPoint<2, int> a_newMinSize) {
@@ -93,14 +93,14 @@ namespace syn
 		m_size[1] = MAX(getMinSize()[1], a_newSize[1]);
 		m_rect.R = m_rect.L + m_size[0];
 		m_rect.B = m_rect.T + m_size[1];
-		m_unitControl->move({ m_rect.L + c_portSize[0] + 5, m_rect.T + 10 });
-		m_unitControl->resize({ m_size[0] - 2 * (c_portSize[0] + 5), m_size[1] - 10 });
+		m_unitControl->move({ m_rect.L + m_portSize[0] + c_portPad, m_rect.T + 10 });
+		m_unitControl->resize({ m_size[0] - 2 * (m_portSize[0] + c_portPad), m_size[1] - c_edgePad - 10 });
 	}
 
 	bool UnitControlContainer::draw(IGraphics* pGraphics) {
 		// Local text palette
-		IText textfmt{ 12, &COLOR_BLACK,"Helvetica",IText::kStyleNormal,IText::kAlignNear,0,IText::kQualityClearType };
-		IText centertextfmt{ 12, &COLOR_BLACK,"Helvetica",IText::kStyleNormal,IText::kAlignCenter,0,IText::kQualityClearType };
+		IText textfmt{ 12, &COLOR_BLACK,"Arial",IText::kStyleNormal,IText::kAlignNear,0,IText::kQualityClearType };
+		IText centertextfmt{ 12, &COLOR_BLACK,"Arial",IText::kStyleNormal,IText::kAlignCenter,0,IText::kQualityClearType };
 		// Local color palette
 		IColor outline_color = { 255,0,0,0 };
 		IColor bg_color = { 255,255,255,255 };
@@ -121,7 +121,8 @@ namespace syn
 		pGraphics->DrawIText(&centertextfmt, strbuf, &titleTextRect);
 
 		_resetMinSize();
-		_updateMinSize({ titleTextRect.W(), 0 });
+		_updateMinSize({ m_minSize[0] + titleTextRect.W(), 0 });
+		m_portSize = { 0,0 };
 
 		IRECT portRect;
 		IRECT measureRect;
@@ -129,8 +130,8 @@ namespace syn
 		for (int i = 0; i<nInputPorts; i++) {
 			snprintf(strbuf, 256, "%s", m_voiceManager->getUnit(m_unitId).getInputName(i).c_str());
 			pGraphics->DrawIText(&centertextfmt, strbuf, &measureRect, true);
-			c_portSize[1] = MAX(c_portSize[1], measureRect.H());
-			c_portSize[0] = MAX(c_portSize[0], measureRect.W() + 2);
+			m_portSize[1] = MAX(m_portSize[1], measureRect.H());
+			m_portSize[0] = MAX(m_portSize[0], measureRect.W());
 
 			portRect = getPortRect({ UnitPortVector::Input, i });
 			pGraphics->DrawRect(&input_port_color, &portRect);
@@ -140,8 +141,8 @@ namespace syn
 		for (int i = 0; i<nOutputPorts; i++) {
 			snprintf(strbuf, 256, "%s", m_voiceManager->getUnit(m_unitId).getOutputName(i).c_str());
 			pGraphics->DrawIText(&centertextfmt, strbuf, &measureRect, true);
-			c_portSize[1] = MAX(c_portSize[1], measureRect.H());
-			c_portSize[0] = MAX(c_portSize[0], measureRect.W() + 2);
+			m_portSize[1] = MAX(m_portSize[1], measureRect.H());
+			m_portSize[0] = MAX(m_portSize[0], measureRect.W());
 
 			portRect = getPortRect({ UnitPortVector::Output, i });
 			pGraphics->DrawRect(&output_port_color, &portRect);
@@ -170,14 +171,14 @@ namespace syn
 		switch (a_portVector.type) {
 		case UnitPortVector::Input:
 			nPorts = m_voiceManager->getUnit(m_unitId).getNumInputs();
-			x = m_rect.L + c_portSize[0] / 2 + 1;
-			y = m_rect.T + m_rect.H() / nPorts*portId + c_portSize[1] / 2;
+			x = m_rect.L + m_portSize[0] / 2 + c_portPad;
+			y = m_rect.T + m_rect.H() / nPorts*portId + m_portSize[1] / 2;
 			y += (m_rect.H() - m_rect.H() / (nPorts + 1)*nPorts) / nPorts; // center ports vertically
 			break;
 		case UnitPortVector::Output:
 			nPorts = m_voiceManager->getUnit(m_unitId).getNumOutputs();
-			x = m_rect.L + m_rect.W() - c_portSize[0] / 2 - 1;
-			y = m_rect.T + m_rect.H() / nPorts*portId + c_portSize[1] / 2;
+			x = m_rect.L + m_rect.W() - m_portSize[0] / 2 - c_portPad;
+			y = m_rect.T + m_rect.H() / nPorts*portId + m_portSize[1] / 2;
 			y += (m_rect.H() - m_rect.H() / (nPorts + 1)*nPorts) / nPorts; // center ports vertically
 			break;
 		case UnitPortVector::Null:
@@ -189,7 +190,7 @@ namespace syn
 
 	IRECT UnitControlContainer::getPortRect(UnitPortVector a_portVector) const {
 		NDPoint<2, int> portPos = getPortPos(a_portVector);
-		return IRECT{ portPos[0] - c_portSize[0] / 2,portPos[1] - c_portSize[1] / 2,portPos[0] + c_portSize[0] / 2,portPos[1] + c_portSize[1] / 2 };
+		return IRECT{ portPos[0] - m_portSize[0] / 2,portPos[1] - m_portSize[1] / 2,portPos[0] + m_portSize[0] / 2,portPos[1] + m_portSize[1] / 2 };
 	}
 
 	UnitPortVector UnitControlContainer::getSelectedPort(int x, int y) const {

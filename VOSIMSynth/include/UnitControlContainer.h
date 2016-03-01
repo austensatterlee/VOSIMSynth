@@ -73,7 +73,9 @@ namespace syn {
 		int m_unitId;
 		NDPoint<2, int> m_size;
 		NDPoint<2, int> m_minSize;
-		NDPoint<2, int> c_portSize = { 10,10 };
+		NDPoint<2, int> m_portSize;
+		const int c_portPad = 2;
+		const int c_edgePad = 1;
 		IRECT m_rect;
 		IPlugBase* m_plug;
 		bool m_isControlClicked;

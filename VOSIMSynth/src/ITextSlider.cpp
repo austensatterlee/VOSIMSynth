@@ -1,4 +1,5 @@
 #include "ITextSlider.h"
+#include <DSPMath.h>
 
 syn::ITextSlider::ITextSlider(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, int a_unitId, int a_paramId, IRECT pR) :
 	IControl(a_plug, pR),
@@ -48,11 +49,13 @@ void syn::ITextSlider::OnMouseDown(int x, int y, IMouseMod* pMod) {
 }
 
 void syn::ITextSlider::OnMouseWheel(int x, int y, IMouseMod* pMod, int d) {
+	d = CLAMP(d, -1, 1);
+
 	const UnitParameter& param = m_vm->getUnit(m_unitId).getParameter(m_paramId);
-	mValue = param.getNorm();
+	
 	double scale;
-	if (param.getType() != Double) {
-		scale = 1.0 / (param.getMax() - param.getMin());
+	if (param.getType() != EParamType::Double) {
+		scale = 1.0;
 	}else {
 		scale = pow(10, -param.getPrecision());
 		if (pMod->C) {
@@ -63,11 +66,11 @@ void syn::ITextSlider::OnMouseWheel(int x, int y, IMouseMod* pMod, int d) {
 		}
 	}
 
-	mValue += scale*d;
+	double currValue = param.get<double>() + scale*d;
 
 	MuxArgs params = { m_unitId, m_paramId };
-	params.value = mValue;
-	m_vm->doAction(ModifyParamNorm, params);
+	params.value = currValue;
+	m_vm->doAction(ModifyParam, params);
 	mValue = param.getNorm();
 }
 
@@ -104,8 +107,8 @@ bool syn::ITextSlider::Draw(IGraphics* pGraphics) {
 	IColor bg_color{ 255,100,50,125 };
 	IColor fg_color{ 255,200,150,225 };
 	// Local text palette
-	IText textfmtfar{ 12,&COLOR_WHITE,"Helvetica",IText::kStyleNormal,IText::kAlignFar,0,IText::kQualityClearType };
-	IText textfmtnear{ 12,&COLOR_WHITE,"Helvetica",IText::kStyleNormal,IText::kAlignNear,0,IText::kQualityClearType };
+	IText textfmtfar{ 12,&COLOR_WHITE,"Arial",IText::kStyleNormal,IText::kAlignFar,0,IText::kQualityClearType };
+	IText textfmtnear{ 12,&COLOR_WHITE,"Arial",IText::kStyleNormal,IText::kAlignNear,0,IText::kQualityClearType };
 	// Draw background
 	pGraphics->FillIRect(&bg_color, &mRECT);
 	pGraphics->DrawRect(&COLOR_BLACK, &mRECT);

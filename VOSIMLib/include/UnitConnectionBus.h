@@ -58,6 +58,7 @@ namespace syn
     private:
         typedef vector<UnitConnector> UnitPort;
         vector<UnitPort> m_ports;
+		int m_numPorts = 0;
     };
 }
 

@@ -13,11 +13,12 @@ namespace syn {
                 m_pulse_step(0.0),
 				m_pulse_tune(0),
 				m_num_pulses(1),
-                m_pPulseTune(addParameter_({"fp bias", 0.0, 1.0, 0.0})),
-                m_pNumPulses(addParameter_({"number", 1, 8, 1})),
-                m_pPulseDecay(addParameter_({"decay", 0.0, 1.0, 0.0})) 
+                m_pPulseTune(addParameter_({"fp", 0.0, 1.0, 0.0})),
+                m_pNumPulses(addParameter_({"num", 1, 8, 1})),
+                m_pPulseDecay(addParameter_({"dec", 0.0, 1.0, 0.0})) 
 		{
-			m_iPulseTune = addInput_("fp");
+			m_iPulseTuneAdd = addInput_("fp[+]");
+			m_iPulseTuneMul = addInput_("fp[x]",1.0,Signal::EMul);
         }
 
         VosimOscillator(const VosimOscillator& a_rhs) :
@@ -37,7 +38,8 @@ namespace syn {
     private:
         double m_pulse_step, m_pulse_tune;
 		int m_num_pulses;
-        int m_pPulseTune, m_iPulseTune;
+		int m_pPulseTune;
+		int m_iPulseTuneAdd, m_iPulseTuneMul;
         int m_pNumPulses;
         int m_pPulseDecay;
     };
@@ -47,11 +49,13 @@ namespace syn {
 
         FormantOscillator(string name) :
 			TunedOscillator(name),
-                m_pWidth(addParameter_({"width bias", 0.0, 1.0, 0.0})),
-                m_pFmtpitch(addParameter_({"formant bias", 0.0, 1.0, 0.0}))
+                m_pWidth(addParameter_({"width", 0.0, 1.0, 0.0})),
+                m_pFmt(addParameter_({"fmt", 0.0, 1.0, 0.0}))
         {
-			m_iWidth = addInput_("width");
-			m_iFmtpitch = addInput_("formant");
+			m_iWidthAdd = addInput_("w[+]");
+			m_iWidthMul = addInput_("w[x]",1.0, Signal::EMul);
+			m_iFmtAdd = addInput_("fmt[+]");
+			m_iFmtMul = addInput_("fmt[x]",1.0, Signal::EMul);
         };
 
         FormantOscillator(const FormantOscillator& a_rhs) :
@@ -69,10 +73,12 @@ namespace syn {
 
     private:
         int m_pWidth;
-        int m_pFmtpitch;
+        int m_pFmt;
 
-		int m_iWidth;
-		int m_iFmtpitch;
+		int m_iWidthAdd;
+		int m_iFmtAdd;
+		int m_iWidthMul;
+		int m_iFmtMul;
     };
 }
 

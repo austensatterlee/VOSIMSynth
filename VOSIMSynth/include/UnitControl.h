@@ -4,6 +4,7 @@
 #include "UnitParameter.h"
 #include "NDPoint.h"
 #include "ITextSlider.h"
+#include <DSPMath.h>
 
 namespace syn {
 
@@ -83,7 +84,7 @@ namespace syn {
 				m_paramControls[i].Draw(a_graphics);
 				updateMinSize_({ m_paramControls[i].getMinSize(), 0 });
 			}
-			updateMinSize_({ 0, 10*nParams });
+			updateMinSize_({ 0, c_minParamHeight*nParams });
 		}
 
 		void onMouseDblClick(int a_x, int a_y, IMouseMod* a_mouseMod) override {
@@ -151,7 +152,7 @@ namespace syn {
 			int nParams = m_paramControls.size();
 			if (nParams) {
 				int portY = m_pos[1];
-				int rowsize = m_size[1] / nParams;
+				int rowsize = MAX(c_minParamHeight,m_size[1] / nParams);
 				for (int i = 0; i < nParams; i++) {
 					IRECT param_rect{ m_pos[0], portY, m_pos[0] + m_size[0], portY + rowsize };
 					m_paramControls[i].setRECT(param_rect);
@@ -166,6 +167,8 @@ namespace syn {
 	private:
 		vector<ITextSlider> m_paramControls;
 		int m_lastSelectedParam;
+
+		const int c_minParamHeight = 8;
 	};
 
 }

@@ -499,8 +499,10 @@ namespace syn {
 		// Serialize parameters
 		serialized.Put<unsigned>(&nparams);
 		for (int i = 0; i < nparams;i++) {
-			double paramvalue = unit.getParameter(i).get<double>();
-			serialized.Put<double>(&paramvalue);
+			double paramValue = unit.getParameter(i).get<double>();
+			int paramPrecision = unit.getParameter(i).getPrecision();
+			serialized.Put<double>(&paramValue);
+			serialized.Put<int>(&paramPrecision);
 		}
         return serialized;
     }
@@ -523,12 +525,16 @@ namespace syn {
 		chunkpos = chunk->Get<unsigned>(&nparams, chunkpos);
 		MuxArgs args;
 		for (int paramId = 0; paramId < nparams; paramId++) {
-			double paramvalue;
-			chunkpos = chunk->Get<double>(&paramvalue, chunkpos);
+			double paramValue;
+			int paramPrecision;
+			chunkpos = chunk->Get<double>(&paramValue, chunkpos);
+			chunkpos = chunk->Get<int>(&paramPrecision, chunkpos);
 			args.id1 = unitId;
 			args.id2 = paramId;
-			args.value = paramvalue;
+			args.value = paramValue;
 			m_voiceManager->doAction(ModifyParam, args);
+			args.id3 = paramPrecision;
+			m_voiceManager->doAction(ModifyParamPrecision, args);
 		}
 		
         return chunkpos;
@@ -589,8 +595,7 @@ namespace syn {
                 portPos[1] + c_portSize / 2};
     }
 
-    CircuitPortVector CircuitPanel::getSelectedPort(int x, int y)
-    {
+    CircuitPortVector CircuitPanel::getSelectedPort(int x, int y) const {
         const Circuit& circ = m_voiceManager->getCircuit();
         int nInputPorts = circ.getNumInputs();
         int nOutputPorts = circ.getNumOutputs();

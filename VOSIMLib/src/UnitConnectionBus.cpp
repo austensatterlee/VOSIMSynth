@@ -10,8 +10,9 @@ namespace syn {
     bool UnitConnectionBus::connect(shared_ptr<Unit> a_connectedUnit, int a_connectedPort, int a_localPort)
     {
         UnitConnector conn{a_connectedUnit, a_connectedPort, a_localPort};
-        if(m_ports.size() <= a_localPort){
+        if(m_numPorts <= a_localPort){
             m_ports.resize(a_localPort + 1);
+			m_numPorts = a_localPort + 1;
         }
 
         /* Make sure we don't add duplicate connections */
@@ -28,9 +29,12 @@ namespace syn {
     bool UnitConnectionBus::disconnect(shared_ptr<Unit> a_connectedUnit, int a_connectedPort, int a_localPort)
     {
         UnitConnector conn{a_connectedUnit, a_connectedPort, a_localPort};
+
+#ifndef NDEBUG
         if(m_ports.size() <= a_localPort){
             return false;
         }
+#endif
 
         /* Search for connection in input port */
         UnitPort& port = m_ports[a_localPort];
@@ -48,47 +52,45 @@ namespace syn {
         if(m_ports.size() <= a_localPort){
             return false;
         }
-        const UnitPort& port = m_ports[a_localPort];
-        double newInputValue = a_recipient.get();
-        for(int i=0;i<port.size();i++){
 
-            port[i].connectedUnit->tick();
+        const UnitPort& port = m_ports[a_localPort];
+		int pSize = port.size();
+        for(int i=0;i<pSize;i++){
+			const UnitConnector& conn = port[i];
+			conn.connectedUnit->tick();
 
             // add outputChannel to a_recipient
-            const Signal& outputChannel = port[i].connectedUnit->getOutputChannel(port[i].connectedPort);
-            newInputValue += outputChannel.get();
+            const Signal& outputChannel = conn.connectedUnit->getOutputChannel(conn.connectedPort);
+			a_recipient.accumulate(outputChannel);
         }
-        a_recipient.set(newInputValue);
         return true;
     }
 
     bool UnitConnectionBus::push(int a_localPort, Signal& a_signal) const
     {
-        if(m_ports.size() <= a_localPort){
+        if(m_numPorts <= a_localPort){
             return false;
         }
+
         const UnitPort& port = m_ports[a_localPort];
-        double outputValue = a_signal.get();
-        double inputValue;
-        for(int i=0;i<port.size();i++){
+        for(int i=0;i<m_numPorts;i++){
             // add outputChannel to a_recipient
-            inputValue = port[i].connectedUnit->getInputChannel(port[i].connectedPort).get();
-            port[i].connectedUnit->setInputChannel(port[i].connectedPort, inputValue + outputValue);
+			port[i].connectedUnit->m_inputSignals.getChannel(port[i].connectedPort).accumulate(a_signal);
         }
         return true;
     }
 
     int UnitConnectionBus::numPorts() const
     {
-        return m_ports.size();
+        return m_numPorts;
     }
 
     bool UnitConnectionBus::disconnect(shared_ptr<Unit> a_connectedUnit)
     {
         vector<pair<int,int> > garbage_list;
         // Find all connections referencing this unit and add them to the garbage list
-        for(int i=0;i<m_ports.size();i++){
-            for(int j=0;j<m_ports[i].size();j++){
+        for(int i=0;i<m_numPorts;i++){
+            for(int j=0;j<m_numPorts;j++){
                 if(m_ports[i][j].connectedUnit == a_connectedUnit){
                     garbage_list.push_back(make_pair(i,j));
                 }

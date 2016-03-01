@@ -444,8 +444,8 @@ def main(pargs):
     prefilter_lhalf=[0.0028,-0.0119,0.0322,-0.0709,0.1375,-0.2544,0.4385,-0.6334,1.7224]
     prefilter=make_symmetric_l(prefilter_lhalf)
 
-    offline_intervals = 511
-    offline_res = 128
+    offline_intervals = 513
+    offline_res = 2048
 
     online_intervals = 5
     online_res = 8192
@@ -456,8 +456,8 @@ def main(pargs):
     blsaw = GenerateBLSaw(2048,1024)
     blsaw /= blsaw.max()
 
-    blimp_online = GenerateBlimp(online_intervals,online_res,fc=20e3)
-    blimp_offline = GenerateBlimp(offline_intervals,offline_res,fc=20e3)
+    blimp_online = GenerateBlimp(online_intervals,online_res,fc=18e3)
+    blimp_offline = GenerateBlimp(offline_intervals,offline_res,fc=22e3)
 
     blimp_online = convolve( prefilter, blimp_online, 'same' ) # apply gain to high frequencies
     blimp_offline = convolve( prefilter, blimp_offline, 'same' ) # apply gain to high frequencies

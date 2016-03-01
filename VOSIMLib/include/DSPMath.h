@@ -21,7 +21,7 @@ namespace syn
   }
 
   template<typename T>
-  inline T WRAP(T x, T modulo)
+  T WRAP(T x, T modulo)
   {
 	  if (!modulo)
 		  return x;
@@ -53,5 +53,9 @@ namespace syn
   {
 	  return (pt-closestPointOnLine(pt, a, b)).mag();
   }
+
+  //double removeDC(double curr_sample, double& curr_avg) {
+	  
+  //}
 }
 #endif
