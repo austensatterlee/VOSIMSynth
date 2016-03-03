@@ -33,7 +33,7 @@ namespace syn {
 			m_pPhaseOffset(addParameter_({ "phase", 0.0, 1.0, 0.0 }))
 		{
 			m_iGainAdd = addInput_("g[x]",1.0, Signal::EMul);
-			m_iPhaseAdd = addInput_("ph[+]");
+			m_iPhaseAdd = addInput_("ph");
 			m_oOut = addOutput_("out");
 			m_oPhase = addOutput_("ph");
 		}
@@ -123,7 +123,7 @@ namespace syn {
 			m_pFreq(addParameter_(UnitParameter("freq",0.0,20.0,1.0))),			
 			m_lastSync(0.0)
 		{
-			m_iFreqAdd = addInput_("freq[+]");
+			m_iFreqAdd = addInput_("freq");
 			m_iFreqMul = addInput_("freq[x]",1.0,Signal::EMul);
 			m_iSync = addInput_("sync");
 		};

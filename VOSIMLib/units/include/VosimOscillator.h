@@ -17,7 +17,7 @@ namespace syn {
                 m_pNumPulses(addParameter_({"num", 1, 8, 1})),
                 m_pPulseDecay(addParameter_({"dec", 0.0, 1.0, 0.0})) 
 		{
-			m_iPulseTuneAdd = addInput_("fp[+]");
+			m_iPulseTuneAdd = addInput_("fp");
 			m_iPulseTuneMul = addInput_("fp[x]",1.0,Signal::EMul);
         }
 
@@ -52,9 +52,9 @@ namespace syn {
                 m_pWidth(addParameter_({"width", 0.0, 1.0, 0.0})),
                 m_pFmt(addParameter_({"fmt", 0.0, 1.0, 0.0}))
         {
-			m_iWidthAdd = addInput_("w[+]");
+			m_iWidthAdd = addInput_("w");
 			m_iWidthMul = addInput_("w[x]",1.0, Signal::EMul);
-			m_iFmtAdd = addInput_("fmt[+]");
+			m_iFmtAdd = addInput_("fmt");
 			m_iFmtMul = addInput_("fmt[x]",1.0, Signal::EMul);
         };
 

@@ -24,7 +24,9 @@ void syn::ITextSlider::TextFromTextEntry(const char* txt) {
 		// adjust parameter precision
 		decimal_pos = str.find_first_of(".");
 		if(decimal_pos!=string::npos) {
-			m_vm->doAction(ModifyParamPrecision, { m_unitId, m_paramId, static_cast<int>(num_digits) - static_cast<int>(decimal_pos) });
+			int newParamPrecision = static_cast<int>(num_digits) - static_cast<int>(decimal_pos);
+			newParamPrecision += 1;
+			m_vm->doAction(ModifyParamPrecision, { m_unitId, m_paramId, newParamPrecision });
 		}
 
 		MuxArgs params = { m_unitId, m_paramId };
@@ -70,7 +72,7 @@ void syn::ITextSlider::OnMouseWheel(int x, int y, IMouseMod* pMod, int d) {
 
 	MuxArgs params = { m_unitId, m_paramId };
 	params.value = currValue;
-	m_vm->doAction(ModifyParam, params);
+	m_vm->queueAction(ModifyParam, params);
 	mValue = param.getNorm();
 }
 
@@ -79,7 +81,7 @@ void syn::ITextSlider::OnMouseDblClick(int x, int y, IMouseMod* pMod) {
 	double defaultValue = param.getDefaultValue();
 	MuxArgs params = { m_unitId, m_paramId };
 	params.value = defaultValue;
-	m_vm->doAction(ModifyParam, params);
+	m_vm->queueAction(ModifyParam, params);
 	mValue = param.getNorm();	
 }
 
@@ -97,7 +99,7 @@ void syn::ITextSlider::OnMouseDrag(int x, int y, int dX, int dY, IMouseMod* pMod
 		mValue = mValue - adjust_speed*error;
 		MuxArgs params = { m_unitId, m_paramId };
 		params.value = mValue;
-		m_vm->doAction(ModifyParamNorm, params);
+		m_vm->queueAction(ModifyParamNorm, params);
 		mValue = param.getNorm();
 	}
 }
@@ -135,6 +137,6 @@ bool syn::ITextSlider::Draw(IGraphics* pGraphics) {
 	pGraphics->DrawIText(&textfmtfar, strbuf, &mRECT);
 
 	// Update minimum size if text doesn't fit
-	m_minSize = value_display_size.W() + name_display_size.W() + 10;
+	m_minSize = value_display_size.W() + name_display_size.W() + 1;
 	return true;
 }

@@ -73,7 +73,8 @@ namespace syn
 	}
 
 	NDPoint<2, int> UnitControlContainer::getMinSize() const {
-		return m_minSize + m_unitControl->getMinSize();
+		NDPoint<2,int> controlMinSize = m_unitControl->getMinSize();
+		return controlMinSize + m_minSize + m_titleSize;
 	}
 
 	void UnitControlContainer::_resetMinSize() {
@@ -94,7 +95,7 @@ namespace syn
 		m_rect.R = m_rect.L + m_size[0];
 		m_rect.B = m_rect.T + m_size[1];
 		m_unitControl->move({ m_rect.L + m_portSize[0] + c_portPad, m_rect.T + 10 });
-		m_unitControl->resize({ m_size[0] - 2 * (m_portSize[0] + c_portPad), m_size[1] - c_edgePad - 10 });
+		m_unitControl->resize({ m_size[0] - 2 * (m_portSize[0] + c_portPad), m_size[1] - c_edgePad - m_titleSize[1] });
 	}
 
 	bool UnitControlContainer::draw(IGraphics* pGraphics) {
@@ -119,31 +120,38 @@ namespace syn
 		// Measure title text and resize if necessary
 		pGraphics->DrawIText(&centertextfmt, strbuf, &titleTextRect, true);
 		pGraphics->DrawIText(&centertextfmt, strbuf, &titleTextRect);
+		pGraphics->DrawRect(&COLOR_BLACK, &titleTextRect);
 
 		_resetMinSize();
-		_updateMinSize({ m_minSize[0] + titleTextRect.W(), 0 });
-		m_portSize = { 0,0 };
+		m_titleSize = {titleTextRect.W(),  titleTextRect.H() };
+		m_portSize = { 5,5 };
 
 		IRECT portRect;
 		IRECT measureRect;
-		// Draw input ports
+		// Measure input ports
 		for (int i = 0; i<nInputPorts; i++) {
 			snprintf(strbuf, 256, "%s", m_voiceManager->getUnit(m_unitId).getInputName(i).c_str());
 			pGraphics->DrawIText(&centertextfmt, strbuf, &measureRect, true);
 			m_portSize[1] = MAX(m_portSize[1], measureRect.H());
 			m_portSize[0] = MAX(m_portSize[0], measureRect.W());
-
-			portRect = getPortRect({ UnitPortVector::Input, i });
-			pGraphics->DrawRect(&input_port_color, &portRect);
-			pGraphics->DrawIText(&centertextfmt, strbuf, &portRect);
 		}
-		// Draw output ports
+		// Measure output ports
 		for (int i = 0; i<nOutputPorts; i++) {
 			snprintf(strbuf, 256, "%s", m_voiceManager->getUnit(m_unitId).getOutputName(i).c_str());
 			pGraphics->DrawIText(&centertextfmt, strbuf, &measureRect, true);
 			m_portSize[1] = MAX(m_portSize[1], measureRect.H());
 			m_portSize[0] = MAX(m_portSize[0], measureRect.W());
-
+		}
+		// Draw input ports
+		for (int i = 0; i < nInputPorts; i++) {
+			snprintf(strbuf, 256, "%s", m_voiceManager->getUnit(m_unitId).getInputName(i).c_str());
+			portRect = getPortRect({ UnitPortVector::Input, i });
+			pGraphics->DrawRect(&input_port_color, &portRect);
+			pGraphics->DrawIText(&centertextfmt, strbuf, &portRect);
+		}
+		// Draw output ports
+		for (int i = 0; i < nOutputPorts; i++) {
+			snprintf(strbuf, 256, "%s", m_voiceManager->getUnit(m_unitId).getOutputName(i).c_str());
 			portRect = getPortRect({ UnitPortVector::Output, i });
 			pGraphics->DrawRect(&output_port_color, &portRect);
 			pGraphics->DrawIText(&centertextfmt, strbuf, &portRect);

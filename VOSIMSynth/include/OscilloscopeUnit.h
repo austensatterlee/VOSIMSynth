@@ -51,6 +51,7 @@ namespace syn {
 	class OscilloscopeUnitControl : public UnitControl
 	{
 	public:
+
 		OscilloscopeUnitControl() :
 			UnitControl(),
 			m_yBounds(-1.0, 1.0),
@@ -82,6 +83,15 @@ namespace syn {
 			m_paramControl->onMouseDrag(a_x, a_y, a_dX, a_dY, a_mouseMod);
 		}
 
+		void onMouseWheel(int a_x, int a_y, IMouseMod* a_mouseMod, int a_d) override { 
+			m_paramControl->onMouseWheel(a_x, a_y, a_mouseMod, a_d);
+		}
+
+		void onMouseOver(int a_x, int a_y, IMouseMod* a_mouseMod) override {
+			m_paramControl->onMouseOver(a_x, a_y, a_mouseMod);
+		}
+
+
 		void draw(IGraphics* a_graphics) override 
 		{
 			// Draw background
@@ -91,7 +101,7 @@ namespace syn {
 			updateMinSize_(m_paramControl->getMinSize());
 			NDPoint<2,int> paramControlSize = m_paramControl->getMinSize();			
 
-			IRECT screen_rect = { rect.L,rect.T + paramControlSize[1],rect.R,rect.B };
+			IRECT screen_rect = { rect.L,rect.T + paramControlSize[1]+1,rect.R,rect.B };
 			const OscilloscopeUnit& unit = static_cast<const OscilloscopeUnit&>(m_voiceManager->getUnit(m_unitId));
 			NDPoint<2, int> lastPoint(0,0);
 			NDPoint<2, int> currPoint;

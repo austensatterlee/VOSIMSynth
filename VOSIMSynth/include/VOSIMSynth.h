@@ -13,7 +13,7 @@ using namespace std;
 
 class VOSIMSynth : public IPlug {
 public:
-    VOSIMSynth(IPlugInstanceInfo instanceInfo);
+	VOSIMSynth(IPlugInstanceInfo instanceInfo);
 
     void makeGraphics();
 
@@ -22,19 +22,27 @@ public:
     virtual ~VOSIMSynth()
     { };
 
-    virtual void Reset() override;
+    void Reset() override;
 
     void OnParamChange(int paramIdx) override;
 
-    virtual void ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) override;
+    void ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) override;
 
-    virtual void ProcessMidiMsg(IMidiMsg* pMsg) override;
+    void ProcessMidiMsg(IMidiMsg* pMsg) override;
 
-    virtual bool SerializeState(ByteChunk* pChunk) override;
+    bool SerializeState(ByteChunk* pChunk) override;
 
-    virtual int UnserializeState(ByteChunk* pChunk, int startPos) override;
+    int UnserializeState(ByteChunk* pChunk, int startPos) override;
 
-    virtual void PresetsChangedByHost() override;
+    void PresetsChangedByHost() override;
+
+	void OnIdle() override;
+
+	void OnActivate(bool active) override;
+
+	bool isTransportRunning();
+
+	int getTickCount() const { return m_tickCount; }
 
 private:
     shared_ptr<MIDIReceiver> m_MIDIReceiver;
@@ -44,6 +52,8 @@ private:
     IGraphics* pGraphics;
 
 	int m_tempo;
+	unsigned m_tickCount;
+	ITimeInfo m_timeInfo;
 };
 
 #endif

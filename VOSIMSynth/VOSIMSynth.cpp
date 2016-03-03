@@ -5,6 +5,7 @@
 #include "ADSREnvelope.h"
 #include "MathUnits.h"
 #include "include/OscilloscopeUnit.h"
+#include <Follower.h>
 
 using namespace std;
 
@@ -58,14 +59,15 @@ void VOSIMSynth::makeInstrument()
 
     m_unitFactory->addUnitPrototype("DSP", new HalfRectifierUnit("Half Rectifier"));
 	m_unitFactory->addUnitPrototype("DSP", new FullRectifierUnit("Full Rectifier"));
-    m_unitFactory->addUnitPrototype("DSP", new InvertingUnit("Inverter"));
 	m_unitFactory->addUnitPrototype("DSP", new MemoryUnit("Memory"));
-	m_unitFactory->addUnitPrototype("DSP", new GainUnit("Gain"));
 	m_unitFactory->addUnitPrototype("DSP", new PanningUnit("Panner"));
+	m_unitFactory->addUnitPrototype("DSP", new FollowerUnit("Follower"));
 
 	m_unitFactory->addUnitPrototype("Math", new SummerUnit("Summer"));
 	m_unitFactory->addUnitPrototype("Math", new MultiplyUnit("Multiplier"));
 	m_unitFactory->addUnitPrototype("Math", new ConstantUnit("Constant"));
+	m_unitFactory->addUnitPrototype("Math", new InvertingUnit("Inverter"));
+	m_unitFactory->addUnitPrototype("Math", new GainUnit("Gain"));
 
 	m_unitFactory->addUnitPrototype("MIDI", new GateUnit("Gate"));
     m_unitFactory->addUnitPrototype("MIDI", new MidiNoteUnit("Pitch"));
@@ -96,7 +98,9 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
     for (int i = 0 ; i < nFrames ; i++) {
         m_voiceManager->tick(inputs[0][i],inputs[1][i],outputs[0][i],outputs[1][i]);
     }
+
     m_MIDIReceiver->Flush(nFrames);
+	m_tickCount++;
 }
 
 void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg)
@@ -121,6 +125,17 @@ int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos)
 void VOSIMSynth::PresetsChangedByHost()
 {
     IMutexLock lock(this);
+}
+
+void VOSIMSynth::OnIdle() {
+}
+
+void VOSIMSynth::OnActivate(bool active) {
+}
+
+bool VOSIMSynth::isTransportRunning() {
+	GetTime(&m_timeInfo);
+	return m_timeInfo.mTransportIsRunning;
 }
 
 void VOSIMSynth::Reset()

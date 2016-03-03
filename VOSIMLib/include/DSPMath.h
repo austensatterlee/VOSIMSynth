@@ -53,9 +53,5 @@ namespace syn
   {
 	  return (pt-closestPointOnLine(pt, a, b)).mag();
   }
-
-  //double removeDC(double curr_sample, double& curr_avg) {
-	  
-  //}
 }
 #endif

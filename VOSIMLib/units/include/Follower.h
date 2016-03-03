@@ -29,7 +29,10 @@ namespace syn {
 
 		Unit* _clone() const override { return new FollowerUnit(*this); }
 	private:
-		double w;
+		double m_w;
+		double m_output;
 
+		int m_pAlpha;
+		int m_pBeta;
 	};
 };

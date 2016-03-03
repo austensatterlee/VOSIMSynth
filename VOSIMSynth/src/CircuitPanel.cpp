@@ -1,6 +1,7 @@
 #include "CircuitPanel.h"
 #include <utility>
 #include <DSPMath.h>
+#include <VOSIMSynth.h>
 
 namespace syn {
     void CircuitPanel::_deleteUnit(int unitctrlid)
@@ -228,17 +229,38 @@ namespace syn {
         IColor bg_color = {255, 50, 50, 50};
         IColor in_port_color = {255, 100, 75, 75};
         IColor out_port_color = {255, 75, 75, 100};
-        IText textfmt{12, &COLOR_RED, "Helvetica", IText::kStyleNormal, IText::kAlignNear, 0, IText::kQualityClearType};
+        IText textfmt{12, &COLOR_BLACK, "Helvetica", IText::kStyleNormal, IText::kAlignNear, 0, IText::kQualityClearType};
+		pGraphics->FillIRect(&bg_color, &mRECT);
 
 		// Handle continuous mouse click events
 		if(m_lastMouseState.L || m_lastMouseState.R) {
 			OnMouseDrag(m_lastMousePos[0], m_lastMousePos[1], 0, 0, &m_lastMouseState);
 		}
 
+		/* Debug frame */
+		/*
+		IRECT dbgrect = { 5,5,105,105 };
+		pGraphics->FillIRect(&COLOR_WHITE, &dbgrect);
+		char dbgtxt[256];
+		sprintf(dbgtxt, "vm ticks: %d", m_voiceManager->getTickCount());
+		pGraphics->DrawIText(&textfmt, dbgtxt, &dbgrect);
+		dbgrect.T += 10;
+		sprintf(dbgtxt, "app ticks: %d", ((VOSIMSynth*)mPlug)->getTickCount());
+		pGraphics->DrawIText(&textfmt, dbgtxt, &dbgrect);
+		dbgrect.T += 10;
+		sprintf(dbgtxt, "voices: %d", m_voiceManager->getNumVoices());
+		pGraphics->DrawIText(&textfmt, dbgtxt, &dbgrect);
+		dbgrect.T += 10;
+		sprintf(dbgtxt, "playing: %d", m_voiceManager->isPlaying());
+		pGraphics->DrawIText(&textfmt, dbgtxt, &dbgrect);
+		dbgrect.T += 10;
+		sprintf(dbgtxt, "transport: %d", ((VOSIMSynth*)mPlug)->isTransportRunning());
+		pGraphics->DrawIText(&textfmt, dbgtxt, &dbgrect);
+		*/
+
 		const Circuit& circ = m_voiceManager->getCircuit();
 		int nUnits = circ.getNumUnits();
 		// Draw unit controllers
-        pGraphics->FillIRect(&bg_color, &mRECT);
 		for (int i = 0; i < nUnits;i++) {
 			if (i >= m_unitControls.size())
 				continue;

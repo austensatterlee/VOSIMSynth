@@ -74,7 +74,8 @@ namespace syn {
 		NDPoint<2, int> m_size;
 		NDPoint<2, int> m_minSize;
 		NDPoint<2, int> m_portSize;
-		const int c_portPad = 2;
+		NDPoint<2, int> m_titleSize;
+		const int c_portPad = 3;
 		const int c_edgePad = 1;
 		IRECT m_rect;
 		IPlugBase* m_plug;

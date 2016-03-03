@@ -102,23 +102,20 @@ namespace syn {
 
     void VoiceManager::tick(const double& a_left_input, const double& a_right_input, double& a_left_output, double& a_right_output)
     {
+		m_isPlaying = true;
         _flushActionQueue();
         vector<int> garbage_list;
         a_left_output = 0;
         a_right_output = 0;
         for (VoiceList::const_iterator v = m_voiceStack.begin() ; v != m_voiceStack.end() ; v++) {
             Circuit* voice = m_allVoices[*v].get();
-			m_voiceMutex.lock();
 			voice->m_inputSignals.setChannel(0, a_left_input);
 			voice->m_inputSignals.setChannel(1, a_right_input);
-			m_voiceMutex.unlock();
             if (voice->isActive()) {
-				m_voiceMutex.lock();
                 voice->tick();
                 voice->reset();
                 a_left_output += voice->getOutputChannel(0).get();
                 a_right_output += voice->getOutputChannel(1).get();
-				m_voiceMutex.unlock();
             }
             else {
                 garbage_list.push_back(*v);
@@ -130,6 +127,7 @@ namespace syn {
         }
 		m_voiceMutex.unlock();
 		m_tickCount++;
+		m_isPlaying = false;
     }
 
     int VoiceManager::_getLowestVoiceIndex()
@@ -198,14 +196,22 @@ namespace syn {
 	    return m_maxVoices;
     }
 
-    int VoiceManager::getNumVoices() const {
+	bool VoiceManager::isPlaying() const {
+		return m_isPlaying;
+    }
+
+	int VoiceManager::getNumVoices() const {
 	    return m_numVoices;
     }
 
 	unsigned VoiceManager::queueAction(EMuxAction a_action, const MuxArgs& a_params) {
-        m_queueMutex.lock();
-        m_queuedActions.push_back(make_pair(a_action, a_params));
-        m_queueMutex.unlock();
+		if (m_isPlaying) {
+			m_queueMutex.lock();
+			m_queuedActions.push_back(make_pair(a_action, a_params));
+			m_queueMutex.unlock();
+		}else {
+			doAction(a_action, a_params);
+		}
 		return m_tickCount;
     }
 

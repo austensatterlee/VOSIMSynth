@@ -168,7 +168,7 @@ namespace syn {
 		vector<ITextSlider> m_paramControls;
 		int m_lastSelectedParam;
 
-		const int c_minParamHeight = 8;
+		const int c_minParamHeight = 12;
 	};
 
 }

@@ -6,7 +6,6 @@
 #include "UnitFactory.h"
 #include "stk/Mutex.h"
 #include <map>
-#include <string>
 #include <list>
 #include <memory>
 
@@ -45,10 +44,11 @@ namespace syn {
     class VoiceManager {
     public:
         VoiceManager(shared_ptr<Circuit> a_proto, shared_ptr<UnitFactory> a_factory) :
-                m_numVoices(0),
+				m_numVoices(0),
                 m_maxVoices(0),
-				m_tickCount(0),
-                m_instrument(a_proto),
+                m_tickCount(0),
+				m_isPlaying(false),
+				m_instrument(a_proto), 
                 m_factory(a_factory)
         {
         };
@@ -95,6 +95,8 @@ namespace syn {
 
         int getMaxVoices() const;
 
+		bool isPlaying() const;
+
         const Unit& getUnit(int a_id);
 
 		template<typename T>
@@ -137,6 +139,7 @@ namespace syn {
         int m_numVoices;
         int m_maxVoices;
 		unsigned m_tickCount;
+		bool m_isPlaying;
         VoiceMap m_voiceMap;
         VoiceList m_voiceStack;
         VoiceList m_idleVoiceStack;
