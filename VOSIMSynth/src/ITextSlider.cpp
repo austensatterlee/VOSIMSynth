@@ -26,13 +26,12 @@ void syn::ITextSlider::TextFromTextEntry(const char* txt) {
 		if(decimal_pos!=string::npos) {
 			int newParamPrecision = static_cast<int>(num_digits) - static_cast<int>(decimal_pos);
 			newParamPrecision += 1;
-			m_vm->doAction(ModifyParamPrecision, { m_unitId, m_paramId, newParamPrecision });
+			m_vm->queueAction(ModifyParamPrecision, { m_unitId, m_paramId, newParamPrecision });
 		}
 
 		MuxArgs params = { m_unitId, m_paramId };
 		params.value = value;
-		m_vm->doAction(ModifyParam, params);
-		mValue = param.getNorm();
+		m_vm->queueAction(ModifyParam, params);
 	}catch(std::invalid_argument& e) {
 		// do nothing
 	}	
@@ -73,7 +72,6 @@ void syn::ITextSlider::OnMouseWheel(int x, int y, IMouseMod* pMod, int d) {
 	MuxArgs params = { m_unitId, m_paramId };
 	params.value = currValue;
 	m_vm->queueAction(ModifyParam, params);
-	mValue = param.getNorm();
 }
 
 void syn::ITextSlider::OnMouseDblClick(int x, int y, IMouseMod* pMod) {
@@ -82,7 +80,6 @@ void syn::ITextSlider::OnMouseDblClick(int x, int y, IMouseMod* pMod) {
 	MuxArgs params = { m_unitId, m_paramId };
 	params.value = defaultValue;
 	m_vm->queueAction(ModifyParam, params);
-	mValue = param.getNorm();	
 }
 
 void syn::ITextSlider::OnMouseOver(int x, int y, IMouseMod* pMod) {}
@@ -100,7 +97,6 @@ void syn::ITextSlider::OnMouseDrag(int x, int y, int dX, int dY, IMouseMod* pMod
 		MuxArgs params = { m_unitId, m_paramId };
 		params.value = mValue;
 		m_vm->queueAction(ModifyParamNorm, params);
-		mValue = param.getNorm();
 	}
 }
 
@@ -116,6 +112,7 @@ bool syn::ITextSlider::Draw(IGraphics* pGraphics) {
 	pGraphics->DrawRect(&COLOR_BLACK, &mRECT);
 
     const UnitParameter& param = m_vm->getUnit(m_unitId).getParameter(m_paramId);
+	mValue = param.getNorm();
 	// Draw foreground (filled portion)
 	IRECT filled_irect{ mRECT.L+1,mRECT.T+1,mRECT.L + int(mRECT.W()*param.getNorm()),mRECT.B-1 };
 	pGraphics->FillIRect(&fg_color, &filled_irect);

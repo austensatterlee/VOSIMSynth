@@ -4,18 +4,19 @@
 
 namespace syn {
 
-    double sampleWaveShape(WAVE_SHAPE shape, double phase, double period)
+    double sampleWaveShape(WAVE_SHAPE shape, double phase, double period, bool useNaive)
     {
         double output;
         switch (static_cast<int>(shape)) {
             case SAW_WAVE:
-                output = lut_bl_saw.getresampled(phase, period);
-                break;
-            case NAIVE_SAW_WAVE:
-                if (phase < 0.5)
-                    output = 2 * phase;
-                else
-                    output = 2 * phase - 2;
+				if (useNaive) {
+					if (phase < 0.5)
+						output = 2 * phase;
+					else
+						output = 2 * phase - 2;
+				}else{
+					output = lut_bl_saw.getresampled(phase, period);
+				}
                 break;
             case SINE_WAVE:
                 output = lut_sin.getlinear(phase);
@@ -24,10 +25,10 @@ namespace syn {
                 output = phase <= 0.5 ? 4 * phase - 1 : -4 * (phase - 0.5) + 1;
                 break;
             case SQUARE_WAVE:
-                output = -lut_bl_saw.getresampled(phase + 0.5, period) + lut_bl_saw.getresampled(phase, period);
-                break;
-            case NAIVE_SQUARE_WAVE:
-                output = phase <= 0.5 ? 1 : -1;
+				if (useNaive) 
+					output = phase <= 0.5 ? 1 : -1;
+				else
+					output = -lut_bl_saw.getresampled(phase + 0.5, period) + lut_bl_saw.getresampled(phase, period);
                 break;
             default:
                 output = 0;
@@ -100,7 +101,7 @@ namespace syn {
 		TunedOscillator::process_(a_inputs, a_outputs);
         double output;
         int shape = getParameter(m_pWaveform).getInt();
-        output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period);
+        output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period, false);
         a_outputs.setChannel(m_oOut, m_gain * output);
     }
 
@@ -120,7 +121,7 @@ namespace syn {
 		Oscillator::process_(a_inputs, a_outputs);
 		double output;
 		int shape = getParameter(m_pWaveform).getInt();
-		output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period);
+		output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period, true);
 		a_outputs.setChannel(m_oOut, m_gain * output);
     }
 

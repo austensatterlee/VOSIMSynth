@@ -9,7 +9,7 @@ namespace syn {
 		WDL_MutexLock lock(&mPlug->mMutex);
 
 		// Delete unit from instrument		
-		m_voiceManager->doAction(DeleteUnit, { unitctrlid });
+		m_voiceManager->queueAction(DeleteUnit, { unitctrlid });
 
         // Delete unit controller
 		m_unitControls.erase(m_unitControls.begin()+unitctrlid);
@@ -27,15 +27,15 @@ namespace syn {
 		WDL_MutexLock lock(&mPlug->mMutex);
         switch (a_conn.type) {
             case ConnectionRecord::Internal:
-                m_voiceManager->doAction(DisconnectInternal,
+                m_voiceManager->queueAction(DisconnectInternal,
 	                                            {a_conn.from_id, a_conn.from_port, a_conn.to_id, a_conn.to_port});
                 break;
             case ConnectionRecord::Input:
-                m_voiceManager->doAction(DisconnectInput,
+                m_voiceManager->queueAction(DisconnectInput,
 	                                            {a_conn.from_port, a_conn.to_id, a_conn.to_port});
                 break;
             case ConnectionRecord::Output:
-                m_voiceManager->doAction(DisconnectOutput,
+                m_voiceManager->queueAction(DisconnectOutput,
 	                                            {a_conn.from_port, a_conn.to_id, a_conn.to_port});
                 break;
             case ConnectionRecord::Null:
@@ -111,9 +111,9 @@ namespace syn {
                 args.id2 = m_lastSelectedUnit;
                 args.id3 = m_lastSelectedUnitPort.id;
                 if (m_lastSelectedUnitPort.type == UnitPortVector::Input) {
-                    m_voiceManager->doAction(ConnectInput, args);
+                    m_voiceManager->queueAction(ConnectInput, args);
                 } else {
-                    m_voiceManager->doAction(ConnectOutput, args);
+                    m_voiceManager->queueAction(ConnectOutput, args);
                 }
             } else if (m_lastSelectedCircuitPort.type && m_lastSelectedCircuitPort.type == currSelectedUnitPort.type) {
                 // connect circuit port to unit port
@@ -121,9 +121,9 @@ namespace syn {
                 args.id2 = currSelectedUnit;
                 args.id3 = currSelectedUnitPort.id;
                 if (currSelectedUnitPort.type == UnitPortVector::Input) {
-                    m_voiceManager->doAction(ConnectInput, args);
+                    m_voiceManager->queueAction(ConnectInput, args);
                 } else {
-                    m_voiceManager->doAction(ConnectOutput, args);
+                    m_voiceManager->queueAction(ConnectOutput, args);
                 }
             } else if (m_lastSelectedUnit != currSelectedUnit &&
                        m_lastSelectedUnitPort.type && currSelectedUnitPort.type &&
@@ -134,14 +134,14 @@ namespace syn {
                     args.id2 = currSelectedUnitPort.id;
                     args.id3 = m_lastSelectedUnit;
                     args.id4 = m_lastSelectedUnitPort.id;
-                    m_voiceManager->doAction(ConnectInternal, args);
+                    m_voiceManager->queueAction(ConnectInternal, args);
                 } else {
                     //connect unit output to unit input
                     args.id1 = m_lastSelectedUnit;
                     args.id2 = m_lastSelectedUnitPort.id;
                     args.id3 = currSelectedUnit;
                     args.id4 = currSelectedUnitPort.id;
-                    m_voiceManager->doAction(ConnectInternal, args);
+                    m_voiceManager->queueAction(ConnectInternal, args);
                 }
             }
         }

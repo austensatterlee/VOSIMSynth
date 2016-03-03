@@ -73,7 +73,8 @@ namespace syn {
         }
 
         const UnitPort& port = m_ports[a_localPort];
-        for(int i=0;i<m_numPorts;i++){
+		int pSize = port.size();
+        for(int i=0;i<pSize;i++){
             // add outputChannel to a_recipient
 			port[i].connectedUnit->m_inputSignals.getChannel(port[i].connectedPort).accumulate(a_signal);
         }

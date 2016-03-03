@@ -9,16 +9,14 @@ using namespace std;
 namespace syn {
 	enum WAVE_SHAPE {
 		SAW_WAVE = 0,
-		NAIVE_SAW_WAVE,
 		SINE_WAVE,
 		TRI_WAVE,
-		SQUARE_WAVE,
-		NAIVE_SQUARE_WAVE
+		SQUARE_WAVE
 	};
 
-	const vector<string> WAVE_SHAPE_NAMES{ "Saw", "Naive saw", "Sine", "Tri", "Square", "Naive square" };
+	const vector<string> WAVE_SHAPE_NAMES{ "Saw", "Sine", "Tri", "Square" };
 
-	double sampleWaveShape(WAVE_SHAPE shape, double phase, double period);
+	double sampleWaveShape(WAVE_SHAPE shape, double phase, double period, bool useNaive);
 
 	class Oscillator : public Unit {
 	public:
