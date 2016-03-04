@@ -118,6 +118,7 @@ namespace syn {
 			Oscillator(a_name),
 			m_pWaveform(addParameter_(UnitParameter("waveform", WAVE_SHAPE_NAMES))),
 			m_pTempoSync(addParameter_(UnitParameter("tempo sync", false))),
+			m_pUnipolar(addParameter_(UnitParameter("unipolar", false))),
 			m_pFreq(addParameter_(UnitParameter("freq",0.0,20.0,1.0))),			
 			m_lastSync(0.0)
 		{
@@ -134,6 +135,7 @@ namespace syn {
 		int m_pWaveform;
 		int m_pFreq;
 		int m_pTempoSync;
+		int m_pUnipolar;
 		int m_iFreqAdd, m_iFreqMul;
 		int m_iSync;
 

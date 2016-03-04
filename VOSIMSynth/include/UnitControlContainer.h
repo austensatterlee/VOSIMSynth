@@ -26,41 +26,41 @@ namespace syn {
 			delete m_unitControl;
 		};
 
-		bool draw(IGraphics* pGraphics);
+		virtual bool draw(IGraphics* pGraphics);
 
-		void onMouseDblClick(int a_x, int a_y, IMouseMod* a_mouseMod);
+		virtual void onMouseDblClick(int a_x, int a_y, IMouseMod* a_mouseMod);
 
-		void onMouseDown(int a_x, int a_y, IMouseMod* a_mouseMod);
+		virtual void onMouseDown(int a_x, int a_y, IMouseMod* a_mouseMod);
 
-		void onMouseUp(int a_x, int a_y, IMouseMod* a_mouseMod);
+		virtual void onMouseUp(int a_x, int a_y, IMouseMod* a_mouseMod);
 
-		void onMouseDrag(int a_x, int a_y, int a_dX, int a_dY, IMouseMod* a_mouseMod);
+		virtual void onMouseDrag(int a_x, int a_y, int a_dX, int a_dY, IMouseMod* a_mouseMod);
 
-		void onMouseOver(int a_x, int a_y, IMouseMod* a_mouseMod);
+		virtual void onMouseOver(int a_x, int a_y, IMouseMod* a_mouseMod);
 
 		virtual void onMouseWheel(int a_x, int a_y, IMouseMod* a_mouseMod, int a_d);
 
-		void move(int a_newx, int a_newy);
+		virtual void move(int a_newx, int a_newy);
 
 		virtual NDPoint<2, int> getMinSize() const;
 
-		void resize(NDPoint<2, int> a_newSize);
+		virtual void resize(NDPoint<2, int> a_newSize);
+
+		virtual NDPoint<2, int> getPortPos(UnitPortVector a_portId) const;
+
+		virtual IRECT getPortRect(UnitPortVector a_portVector) const;
 
 		NDPoint<2, int> getPos() const;
 
 		NDPoint<2, int> getSize() const;
 
-		virtual NDPoint<2, int> getPortPos(UnitPortVector a_portId) const;
+		UnitPortVector getSelectedPort(int x, int y) const;
 
-		IRECT getPortRect(UnitPortVector a_portVector) const;
-
-		virtual UnitPortVector getSelectedPort(int x, int y) const;
-
-		void setUnitId(int a_newUnitId);
+		virtual void setUnitId(int a_newUnitId);
 
 		int getUnitId() const;
 
-		bool isHit(int a_x, int a_y);
+		virtual bool isHit(int a_x, int a_y);
 	private:
 		virtual void _resetMinSize();
 		void _updateMinSize(NDPoint<2, int> a_newMinSize);

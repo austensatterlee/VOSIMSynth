@@ -122,7 +122,15 @@ namespace syn {
 		double output;
 		int shape = getParameter(m_pWaveform).getInt();
 		output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period, true);
-		a_outputs.setChannel(m_oOut, m_gain * output);
+		
+		if(getParameter(m_pUnipolar).getBool()) { 
+			// make signal unipolar
+			output = m_gain*0.5*(output+1);
+		}else {
+			// keep signal bipolar
+			output = m_gain*output;
+		}
+		a_outputs.setChannel(m_oOut, output);
     }
 
 	void LFOOscillator::onParamChange_(int a_paramId) {

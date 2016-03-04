@@ -14,6 +14,50 @@ using namespace std;
 
 namespace syn {
 	/**
+	* DC-remover
+	*/
+	class DCRemoverUnit : public Unit {
+	public:
+		DCRemoverUnit(const string& a_name) :
+			Unit(a_name),
+			m_pAlpha(addParameter_(UnitParameter("alpha",0.0,1.0,0.9))),
+			m_w(0.0)
+		{
+			addInput_("in");
+			addOutput_("out");
+		}
+
+		DCRemoverUnit(const DCRemoverUnit& a_rhs) :
+			DCRemoverUnit(a_rhs.getName())
+		{
+
+		}
+
+	protected:
+		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+		{
+			double input = a_inputs.getValue(0);
+			double alpha = getParameter(m_pAlpha).getDouble();
+			// dc removal
+			double old_w = m_w;
+			m_w = input + alpha*m_w;
+			a_outputs.setChannel(0, m_w - old_w);
+		};
+	private:
+		string _getClassName() const override
+		{
+			return "DCRemoverUnit";
+		}
+
+		Unit* _clone() const override { return new DCRemoverUnit(*this); }
+
+	private:
+		double m_w;
+
+		int m_pAlpha;
+	};
+
+	/**
 	 * Full-wave rectifier
 	 */
     class FullRectifierUnit : public Unit {
@@ -118,8 +162,7 @@ namespace syn {
 		MultiplyUnit(const string& a_name) :
 			Unit(a_name)
 		{
-			addInput_("in1");
-			addInput_("in2");
+			addInput_("in[x]",1.0, Signal::EMul);
 			addOutput_("out");
 		}
 
@@ -133,7 +176,6 @@ namespace syn {
 		{
 			double output = 1.0;
 			output *= a_inputs.getValue(0);
-			output *= a_inputs.getValue(1);
 			a_outputs.setChannel(0, output);
 		};
 	private:

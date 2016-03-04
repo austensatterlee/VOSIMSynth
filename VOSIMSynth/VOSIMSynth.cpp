@@ -57,22 +57,23 @@ void VOSIMSynth::makeInstrument()
     m_unitFactory->addUnitPrototype("Modulators", new ADSREnvelope("ADSREnvelope"));
 	m_unitFactory->addUnitPrototype("Modulators", new LFOOscillator("LFO"));
 
-    m_unitFactory->addUnitPrototype("DSP", new HalfRectifierUnit("Half Rectifier"));
-	m_unitFactory->addUnitPrototype("DSP", new FullRectifierUnit("Full Rectifier"));
+    m_unitFactory->addUnitPrototype("DSP", new HalfRectifierUnit("H. Rect"));
+	m_unitFactory->addUnitPrototype("DSP", new FullRectifierUnit("F. Rect"));
 	m_unitFactory->addUnitPrototype("DSP", new MemoryUnit("Memory"));
 	m_unitFactory->addUnitPrototype("DSP", new PanningUnit("Panner"));
 	m_unitFactory->addUnitPrototype("DSP", new FollowerUnit("Follower"));
+	m_unitFactory->addUnitPrototype("DSP", new DCRemoverUnit("DC Trap"));
 
-	m_unitFactory->addUnitPrototype("Math", new SummerUnit("Summer"));
-	m_unitFactory->addUnitPrototype("Math", new MultiplyUnit("Multiplier"));
-	m_unitFactory->addUnitPrototype("Math", new ConstantUnit("Constant"));
-	m_unitFactory->addUnitPrototype("Math", new InvertingUnit("Inverter"));
+	m_unitFactory->addUnitPrototype("Math", new SummerUnit("Sum"));
+	m_unitFactory->addUnitPrototype("Math", new MultiplyUnit("Mult"));
+	m_unitFactory->addUnitPrototype("Math", new ConstantUnit("Const"));
+	m_unitFactory->addUnitPrototype("Math", new InvertingUnit("Invert"));
 	m_unitFactory->addUnitPrototype("Math", new GainUnit("Gain"));
 
 	m_unitFactory->addUnitPrototype("MIDI", new GateUnit("Gate"));
     m_unitFactory->addUnitPrototype("MIDI", new MidiNoteUnit("Pitch"));
-	m_unitFactory->addUnitPrototype("MIDI", new NormalizedMidiNoteUnit("Normalized Pitch"));
-	m_unitFactory->addUnitPrototype("MIDI", new VelocityUnit("Velocity"));
+	m_unitFactory->addUnitPrototype("MIDI", new NormalizedMidiNoteUnit("Norm Pitch"));
+	m_unitFactory->addUnitPrototype("MIDI", new VelocityUnit("Vel"));
 
 	m_unitFactory->addUnitPrototype("Visualizer", new OscilloscopeUnit("Oscilloscope"));
 
