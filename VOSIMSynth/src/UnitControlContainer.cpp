@@ -74,14 +74,20 @@ namespace syn
 
 	NDPoint<2, int> UnitControlContainer::getMinSize() const {
 		NDPoint<2,int> controlMinSize = m_unitControl->getMinSize();
-		return controlMinSize + m_minSize + m_titleSize;
+		controlMinSize[0] = MAX(controlMinSize[0], m_titleSize[0]);
+		controlMinSize[1] = MAX(controlMinSize[1], m_minSize[1]);
+		controlMinSize[0] += m_minSize[0];
+		controlMinSize[1] += m_titleSize[1];
+		return controlMinSize;
 	}
 
 	void UnitControlContainer::_resetMinSize() {
 		int nInputs = m_voiceManager->getUnit(m_unitId).getNumInputs();
 		int nOutputs = m_voiceManager->getUnit(m_unitId).getNumOutputs();
-		m_minSize[1] = MAX(m_portSize[1] * nOutputs, m_portSize[1] * nInputs);
-		m_minSize[0] = 2 * (c_portPad + m_portSize[0]);
+		int lastInPortY = getPortPos({ UnitPortVector::Input, nInputs - 1 })[1];
+		int lastOutPortY = getPortPos({ UnitPortVector::Output, nOutputs - 1 })[1];
+		m_minSize[0] = 2 * (2*c_portPad + m_portSize[0]);
+		m_minSize[1] = MAX(lastInPortY - m_rect.T, lastOutPortY - m_rect.T);
 	}
 
 	void UnitControlContainer::_updateMinSize(NDPoint<2, int> a_newMinSize) {
@@ -94,8 +100,8 @@ namespace syn
 		m_size[1] = MAX(getMinSize()[1], a_newSize[1]);
 		m_rect.R = m_rect.L + m_size[0];
 		m_rect.B = m_rect.T + m_size[1];
-		m_unitControl->move({ m_rect.L + m_portSize[0] + c_portPad, m_rect.T + 10 });
-		m_unitControl->resize({ m_size[0] - 2 * (m_portSize[0] + c_portPad), m_size[1] - c_edgePad - m_titleSize[1] });
+		m_unitControl->move({ m_rect.L + m_portSize[0] + 2*c_portPad, m_rect.T + 10 });
+		m_unitControl->resize({ m_size[0] - 2 * (m_portSize[0] + 2*c_portPad), m_size[1] - c_edgePad - m_titleSize[1] });
 	}
 
 	bool UnitControlContainer::draw(IGraphics* pGraphics) {
@@ -174,20 +180,15 @@ namespace syn
 
 	NDPoint<2, int> UnitControlContainer::getPortPos(UnitPortVector a_portVector) const {
 		int portId = a_portVector.id;
-		int nPorts;
 		int x = 0, y = 0;
 		switch (a_portVector.type) {
 		case UnitPortVector::Input:
-			nPorts = m_voiceManager->getUnit(m_unitId).getNumInputs();
 			x = m_rect.L + m_portSize[0] / 2 + c_portPad;
-			y = m_rect.T + m_rect.H() / nPorts*portId + m_portSize[1] / 2;
-			y += (m_rect.H() - m_rect.H() / (nPorts + 1)*nPorts) / nPorts; // center ports vertically
+			y = m_rect.T + c_portPad + m_portSize[1]*portId + m_portSize[1] / 2;
 			break;
 		case UnitPortVector::Output:
-			nPorts = m_voiceManager->getUnit(m_unitId).getNumOutputs();
 			x = m_rect.L + m_rect.W() - m_portSize[0] / 2 - c_portPad;
-			y = m_rect.T + m_rect.H() / nPorts*portId + m_portSize[1] / 2;
-			y += (m_rect.H() - m_rect.H() / (nPorts + 1)*nPorts) / nPorts; // center ports vertically
+			y = m_rect.T + c_portPad + m_portSize[1] * portId + m_portSize[1] / 2;
 			break;
 		case UnitPortVector::Null:
 		default:

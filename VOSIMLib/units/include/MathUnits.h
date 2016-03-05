@@ -162,7 +162,8 @@ namespace syn {
 		MultiplyUnit(const string& a_name) :
 			Unit(a_name)
 		{
-			addInput_("in[x]",1.0, Signal::EMul);
+			addInput_("in1");
+			addInput_("in2[x]", 1.0, Signal::EMul);
 			addOutput_("out");
 		}
 
@@ -174,8 +175,9 @@ namespace syn {
 	protected:
 		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
 		{
-			double output = 1.0;
-			output *= a_inputs.getValue(0);
+			double output = 0.0;
+			output += a_inputs.getValue(0);
+			output *= a_inputs.getValue(1);
 			a_outputs.setChannel(0, output);
 		};
 	private:
