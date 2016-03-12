@@ -1,3 +1,22 @@
+/*
+Copyright 2016, Austen Satterlee
+
+This file is part of VOSIMProject.
+
+VOSIMProject is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+VOSIMProject is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "UnitControlContainer.h"
 #include <DSPMath.h>
 
@@ -6,13 +25,14 @@ namespace syn
 	UnitControlContainer::UnitControlContainer(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, UnitControl* a_unitControl, int a_unitId, int x, int y) :
 		m_voiceManager(a_vm),
 		m_unitControl(a_unitControl),
+		m_isSelected(false),
 		m_size(0, 0),
 		m_minSize(0, 0),
 		m_plug(a_plug),
 		m_isControlClicked(false)
 	{
-		setUnitId(a_unitId);
-		move(x, y);
+		UnitControlContainer::setUnitId(a_unitId);
+		UnitControlContainer::move(x, y);
 	}
 
 	void UnitControlContainer::onMouseDblClick(int a_x, int a_y, IMouseMod* a_mouseMod) {
@@ -21,23 +41,27 @@ namespace syn
 		}
 	}
 
-	void UnitControlContainer::onMouseDown(int a_x, int a_y, IMouseMod* a_mouseMod) {
-		if (m_unitControl->isHit(a_x, a_y)) {
+	bool UnitControlContainer::onMouseDown(int a_x, int a_y, IMouseMod* a_mouseMod) {
+		if (m_unitControl->isHit(a_x, a_y) && !m_isSelected) {
 			m_isControlClicked = true;
 			m_unitControl->onMouseDown(a_x, a_y, a_mouseMod);
-		}else {
-			m_isControlClicked = false;
+			return true;
 		}
+		m_isControlClicked = false;
+		return false;
 	}
 
-	void UnitControlContainer::onMouseUp(int a_x, int a_y, IMouseMod* a_mouseMod) {
-		if (m_isControlClicked)
-			m_unitControl->onMouseUp(a_x, a_y, a_mouseMod);
+	bool UnitControlContainer::onMouseUp(int a_x, int a_y, IMouseMod* a_mouseMod) {
 		m_isControlClicked = false;
+		if (m_isControlClicked && !m_isSelected) {
+			m_unitControl->onMouseUp(a_x, a_y, a_mouseMod);
+			return true;
+		}
+		return false;
 	}
 
 	void UnitControlContainer::onMouseDrag(int a_x, int a_y, int a_dX, int a_dY, IMouseMod* a_mouseMod) {
-		if (m_isControlClicked) { // modify control
+		if (m_isControlClicked && !m_isSelected) { // modify control
 			m_unitControl->onMouseDrag(a_x, a_y, a_dX, a_dY, a_mouseMod);
 		} else if (a_mouseMod->L) { 
 			if (a_mouseMod->C) { // resize
@@ -110,12 +134,18 @@ namespace syn
 		IText centertextfmt{ 12, &COLOR_BLACK,"Arial",IText::kStyleNormal,IText::kAlignCenter,0,IText::kQualityClearType };
 		// Local color palette
 		IColor outline_color = { 255,0,0,0 };
-		IColor bg_color = { 255,255,255,255 };
+		IColor selected_outline_color = { 255,200,200,0 };
+		IColor bg_color = { 235,255,255,255 };
 		IColor input_port_color{ 255,0,255,0 };
 		IColor output_port_color{ 255,0,0,255 };
 
 		pGraphics->FillIRect(&bg_color, &m_rect);
 		pGraphics->DrawRect(&outline_color, &m_rect);
+		if(m_isSelected) {
+			IRECT outlineRect = m_rect.GetPadded(1);
+			pGraphics->DrawRect(&selected_outline_color, &outlineRect);
+		}
+		
 
 		int nInputPorts = m_voiceManager->getUnit(m_unitId).getNumInputs();
 		int nOutputPorts = m_voiceManager->getUnit(m_unitId).getNumOutputs();
@@ -126,6 +156,7 @@ namespace syn
 		// Measure title text and resize if necessary
 		pGraphics->DrawIText(&centertextfmt, strbuf, &titleTextRect, true);
 		pGraphics->DrawIText(&centertextfmt, strbuf, &titleTextRect);
+		titleTextRect = titleTextRect.GetHPadded(1);
 		pGraphics->DrawRect(&COLOR_BLACK, &titleTextRect);
 
 		_resetMinSize();
@@ -232,7 +263,15 @@ namespace syn
 		return m_unitId;
 	}
 
+	void UnitControlContainer::setIsSelected(bool a_isSelected) {
+		m_isSelected = a_isSelected;
+	}
+
 	bool UnitControlContainer::isHit(int a_x, int a_y) {
 		return m_rect.Contains(a_x, a_y);
+	}
+
+	bool UnitControlContainer::isHit(IRECT& a_rect) {
+		return a_rect.Intersects(&m_rect);
 	}
 }

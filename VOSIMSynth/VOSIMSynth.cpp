@@ -1,3 +1,22 @@
+/*
+Copyright 2016, Austen Satterlee
+
+This file is part of VOSIMProject.
+
+VOSIMProject is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+VOSIMProject is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "VOSIMSynth.h"
 #include "IPlug_include_in_plug_src.h"
 #include "Oscillator.h"
@@ -6,6 +25,9 @@
 #include "MathUnits.h"
 #include "include/OscilloscopeUnit.h"
 #include <Follower.h>
+#include <MemoryUnit.h>
+#include <MidiUnits.h>
+#include <StateVariableFilter.h>
 
 using namespace std;
 
@@ -50,11 +72,13 @@ void VOSIMSynth::makeInstrument()
 {
 	shared_ptr<Circuit> circ = make_shared<Circuit>("main");
     m_unitFactory = make_shared<UnitFactory>();
+	m_unitFactory->addUnitPrototype("Filters", new StateVariableFilter("SVF"));
+
     m_unitFactory->addUnitPrototype("Oscillators", new VosimOscillator("VOSIM"));
     m_unitFactory->addUnitPrototype("Oscillators", new BasicOscillator("Basic"));
     m_unitFactory->addUnitPrototype("Oscillators", new FormantOscillator("Formant"));
 
-    m_unitFactory->addUnitPrototype("Modulators", new ADSREnvelope("ADSREnvelope"));
+    m_unitFactory->addUnitPrototype("Modulators", new ADSREnvelope("ADSR"));
 	m_unitFactory->addUnitPrototype("Modulators", new LFOOscillator("LFO"));
 
     m_unitFactory->addUnitPrototype("DSP", new HalfRectifierUnit("H. Rect"));

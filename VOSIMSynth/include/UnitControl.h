@@ -1,4 +1,24 @@
-#pragma once
+/*
+Copyright 2016, Austen Satterlee
+
+This file is part of VOSIMProject.
+
+VOSIMProject is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+VOSIMProject is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#ifndef __UNITCONTROL__
+#define __UNITCONTROL__
 
 #include "IControl.h"
 #include "UnitParameter.h"
@@ -30,7 +50,7 @@ namespace syn {
 
 		virtual void onMouseOver(int a_x, int a_y, IMouseMod* a_mouseMod) {};
 
-		bool isHit(int a_x, int a_y) const;
+		virtual bool isHit(int a_x, int a_y) const;
 
 		void move(NDPoint<2, int> a_newPos);
 
@@ -138,6 +158,13 @@ namespace syn {
 			return selectedParam;
 		}
 
+		bool isHit(int a_x, int a_y) const override {
+			int nParams = m_paramControls.size();
+			if (!nParams)
+				return false;
+			return UnitControl::isHit(a_x, a_y);
+		}
+
 	protected:
 
 		void onSetUnitId_() override {
@@ -173,3 +200,4 @@ namespace syn {
 
 }
 
+#endif

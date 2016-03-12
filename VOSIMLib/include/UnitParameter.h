@@ -1,9 +1,27 @@
-#ifndef __UnitParameter__
-#define __UnitParameter__
+/*
+Copyright 2016, Austen Satterlee
+
+This file is part of VOSIMProject.
+
+VOSIMProject is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+VOSIMProject is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#ifndef __UNITPARAMETER__
+#define __UNITPARAMETER__
 
 #include <vector>
 #include <map>
-#include <cstring>
 
 using std::string;
 using std::map;
@@ -53,9 +71,6 @@ namespace syn
 		int getPrecision() const;
 		void setPrecision(int a_precision);
 
-        bool setBool(bool a_value);
-        bool setInt(int a_value);
-        bool setDouble(double a_value);
 		bool set(double a_value);
         /**
          * Set the parameter from a number in the range (0,1)
@@ -66,16 +81,24 @@ namespace syn
         T get() const;
 
         bool getBool() const;
+		bool getPrevBool() const;
         int getInt() const;
+		int getPrevInt() const;
         double getDouble() const;
+		double getPrevDouble() const;
+
         /**
         * Get the parameter value as a number in the range (0,1)
         */
         double getNorm() const;
         string getString() const;
 	private:
+		bool _setBool(bool a_value);
+		bool _setInt(int a_value);
+		bool _setDouble(double a_value);
+	private:
         string m_name;
-        double m_value, m_defaultValue;
+        double m_value, m_prevValue, m_defaultValue;
         double m_min, m_max;
         EParamType m_type;
         int m_displayPrecision;

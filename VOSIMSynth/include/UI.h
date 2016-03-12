@@ -1,7 +1,28 @@
+/*
+Copyright 2016, Austen Satterlee
+
+This file is part of VOSIMProject.
+
+VOSIMProject is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+VOSIMProject is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #ifndef __UI__
 #define __UI__
 #include "NDPoint.h"
 #include <IPlug/IPlugStructs.h>
+#include <DSPMath.h>
+
 #define SCREEN_PAD_L 25
 #define X_PAD 10
 #define Y_PAD 32
@@ -21,9 +42,17 @@ namespace syn
 			NDPoint<4>(pt) { }
 
 		IColor getIColor() const {
-			return IColor(255, int(m_pvec[0] * 0xFF), int(m_pvec[1] * 0xFF), int(m_pvec[2] * 0xFF));
+			return IColor(int(m_pvec[0] * 0xFF), int(m_pvec[1] * 0xFF), int(m_pvec[2] * 0xFF), int(m_pvec[3] * 0xFF));
 		}
 	};
+
+	inline IRECT makeIRectFromPoints(int x1, int y1, int x2, int y2) {
+		int L = MIN(x1, x2);
+		int R = MAX(x1, x2);
+		int T = MIN(y1, y2);
+		int B = MAX(y1, y2);
+		return{ L,T,R,B };
+	}
 
 	enum PALETTE
 	{

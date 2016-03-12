@@ -1,3 +1,22 @@
+/*
+Copyright 2016, Austen Satterlee
+
+This file is part of VOSIMProject.
+
+VOSIMProject is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+VOSIMProject is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 /**
  *	 \file UnitControlContainer.h
  *   \brief
@@ -5,7 +24,8 @@
  *   \author Austen Satterlee
  *   \date 02/15/2016
  */
-#pragma once
+#ifndef __UNITCONTROLCONTAINER__
+#define __UNITCONTROLCONTAINER__
 #include "UnitControl.h"
 namespace syn {
 
@@ -30,9 +50,15 @@ namespace syn {
 
 		virtual void onMouseDblClick(int a_x, int a_y, IMouseMod* a_mouseMod);
 
-		virtual void onMouseDown(int a_x, int a_y, IMouseMod* a_mouseMod);
+		/**
+		 * \returns true if the event was propogated to the contained UnitControl
+		 */
+		virtual bool onMouseDown(int a_x, int a_y, IMouseMod* a_mouseMod);
 
-		virtual void onMouseUp(int a_x, int a_y, IMouseMod* a_mouseMod);
+		/**
+		* \returns true if the event was propogated to the contained UnitControl
+		*/
+		virtual bool onMouseUp(int a_x, int a_y, IMouseMod* a_mouseMod);
 
 		virtual void onMouseDrag(int a_x, int a_y, int a_dX, int a_dY, IMouseMod* a_mouseMod);
 
@@ -60,7 +86,11 @@ namespace syn {
 
 		int getUnitId() const;
 
-		virtual bool isHit(int a_x, int a_y);
+		void setIsSelected(bool a_isSelected);
+
+		bool isHit(int a_x, int a_y);
+
+		bool isHit(IRECT& a_rect);
 	private:
 		virtual void _resetMinSize();
 		void _updateMinSize(NDPoint<2, int> a_newMinSize);
@@ -71,6 +101,7 @@ namespace syn {
 		UnitControl* m_unitControl;
 
 		int m_unitId;
+		bool m_isSelected;
 		NDPoint<2, int> m_size;
 		NDPoint<2, int> m_minSize;
 		NDPoint<2, int> m_portSize;
@@ -82,3 +113,4 @@ namespace syn {
 		bool m_isControlClicked;
 	};
 }
+#endif

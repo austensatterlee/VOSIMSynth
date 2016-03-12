@@ -11,3 +11,6 @@ _build/
 *.pyc
 *.bk
 *.swp
+
+inject_license.py
+changelist.txt

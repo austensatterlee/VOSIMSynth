@@ -1,3 +1,22 @@
+/*
+Copyright 2016, Austen Satterlee
+
+This file is part of VOSIMProject.
+
+VOSIMProject is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+VOSIMProject is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "ADSREnvelope.h"
 #include "DSPMath.h"
 
@@ -11,13 +30,19 @@ namespace syn {
             m_initial(0),
             m_target(1),
             m_isActive(false),
-            m_pAttack(addParameter_(UnitParameter("attack",0.0,1.0,0.01))),
-            m_pDecay(addParameter_(UnitParameter("decay",0.0,1.0,0.01))),
-            m_pSustain(addParameter_(UnitParameter("sustain",0.0,1.0,1.0))),
-            m_pRelease(addParameter_(UnitParameter("release",0.0,1.0,0.01))),
+            m_pAttack(addParameter_(UnitParameter("atk",0.0,1.0,0.01))),
+            m_pDecay(addParameter_(UnitParameter("dec",0.0,1.0,0.01))),
+            m_pSustain(addParameter_(UnitParameter("sus",0.0,1.0,1.0))),
+            m_pRelease(addParameter_(UnitParameter("rel",0.0,1.0,0.01))),
 			m_pTimeScale(addParameter_(UnitParameter("timescale",1,10,1)))
     {
 		m_iGate = addInput_("gate");
+		m_iAttack = addInput_("atk");
+		m_iAttackMul = addInput_("atk[x]", 1.0, Signal::EMul);
+		m_iDecay = addInput_("dec");
+		m_iDecayMul = addInput_("dec[x]", 1.0, Signal::EMul);
+		m_iRelease = addInput_("rel");
+		m_iReleaseMul = addInput_("rel[x]", 1.0, Signal::EMul);
         addOutput_("out");
     }
 
@@ -31,22 +56,22 @@ namespace syn {
         double segment_time;
         switch (m_currStage) {
             case Attack:
-                segment_time = getParameter(m_pAttack).getDouble();
+                segment_time = a_inputs.getValue(m_iAttackMul)*(getParameter(m_pAttack).getDouble() + a_inputs.getValue(m_iAttack));
                 m_initial = 0;
                 // skip decay segment if its length is zero
                 m_target = getParameter(m_pDecay).getDouble()!=0 ? 1.0 : getParameter(m_pSustain).getDouble();
                 break;
             case Decay:
-                segment_time = getParameter(m_pDecay).getDouble();
+                segment_time = a_inputs.getValue(m_iDecayMul)*(getParameter(m_pDecay).getDouble() + a_inputs.getValue(m_iDecay));
                 m_target = getParameter(m_pSustain).getDouble();
                 break;
             case Sustain:
                 segment_time = 0;
-                m_initial = getParameter(m_pSustain).getDouble();
+				m_initial = getParameter(m_pSustain).getDouble();
                 m_target = getParameter(m_pSustain).getDouble();
                 break;
             case Release:
-                segment_time = getParameter(m_pRelease).getDouble();
+                segment_time = a_inputs.getValue(m_iReleaseMul)*(getParameter(m_pRelease).getDouble() + a_inputs.getValue(m_iRelease));;
                 break;
             default:
                 throw std::logic_error("Invalid envelope stage");

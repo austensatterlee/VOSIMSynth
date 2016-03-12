@@ -58,7 +58,7 @@ void syn::ITextSlider::OnMouseWheel(int x, int y, IMouseMod* pMod, int d) {
 	if (param.getType() != EParamType::Double) {
 		scale = 1.0;
 	}else {
-		scale = pow(10, -param.getPrecision());
+		scale = pow(10, -param.getPrecision()+1);
 		if (pMod->C) {
 			scale *= 10;
 		}

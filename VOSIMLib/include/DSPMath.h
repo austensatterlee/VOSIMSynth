@@ -1,6 +1,34 @@
+/*
+Copyright 2016, Austen Satterlee
+
+This file is part of VOSIMProject.
+
+VOSIMProject is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+VOSIMProject is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**
+* \file DSPMath.h
+* \brief
+* \details
+* \author Austen Satterlee
+* \date March 6, 2016
+*/
+
 #ifndef __DSPMATH__
 #define __DSPMATH__
 #include "NDPoint.h"
+#include <vector>
 
 #define LERP(A,B,F) (((B)-(A))*(F)+(A))
 #define INVLERP(A,B,X) (((X)-(A))/((B)-(A)))
@@ -36,6 +64,34 @@ namespace syn
 	  }
 	  return newx;
   }
+
+  /**
+  * N-Sample delay
+  */
+  class NSampleDelay
+  {
+  public:
+	  NSampleDelay() :
+		  m_buffer(1, 0),
+		  m_bufferSize(1),
+		  m_bufferIndex(0)
+	  {
+	  };
+
+	  double process(double a_input);
+
+	  double getPastSample(int a_offset);
+
+	  void resizeBuffer(int a_newBufSize);
+
+	  void clearBuffer();
+
+	  int size() const;
+  private:
+	  std::vector<double> m_buffer;
+	  int m_bufferSize;
+	  int m_bufferIndex;
+  };
 
   template <typename T>
   NDPoint<2,T> closestPointOnLine(const NDPoint<2, T>& pt, const NDPoint<2, T>& a, const NDPoint<2, T>& b)

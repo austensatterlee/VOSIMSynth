@@ -1,7 +1,6 @@
 #ifndef __MIDIRECEIVER__
 #define __MIDIRECEIVER__
 
-#include <cstdint>
 #include "IPlug_include_in_plug_hdr.h"
 #include "IMidiQueue.h"
 #include "VoiceManager.h"

@@ -1,10 +1,32 @@
-﻿/**
+﻿/*
+Copyright 2016, Austen Satterlee
+
+This file is part of VOSIMProject.
+
+VOSIMProject is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+VOSIMProject is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**
  * \file MathUnits.h
  * \brief
  * \details
  * \author Austen Satterlee
  * \date 24/01/2016
  */
+
+#ifndef __MATHUNITS__
+#define __MATHUNITS__
 
 #include "Unit.h"
 #include <cmath>
@@ -13,15 +35,52 @@
 using namespace std;
 
 namespace syn {
+	class MovingAverage
+	{
+	public:
+		MovingAverage() : 
+			m_windowSize(1),
+			m_lastOutput(0.0)
+		{
+			m_delay.resizeBuffer(m_windowSize);
+		}
+
+		void setWindowSize(int a_newWindowSize) {
+			m_windowSize = a_newWindowSize;
+			m_delay.resizeBuffer(m_windowSize);
+			m_delay.clearBuffer();
+			m_lastOutput = 0.0;
+		}
+
+		double getWindowSize() const {
+			return m_windowSize;
+		}
+
+		double process(double a_input) {
+			double output = (1.0 / m_windowSize)*(a_input - m_delay.process(a_input)) + m_lastOutput;
+			m_lastOutput = output;
+			return output;
+		}
+
+		double getPastInputSample(int a_offset) {
+			return m_delay.getPastSample(a_offset);
+		}
+
+	private:
+		int m_windowSize;
+		NSampleDelay m_delay;
+		double m_lastOutput;
+	};
+
 	/**
 	* DC-remover
 	*/
-	class DCRemoverUnit : public Unit {
+	class DCRemoverUnit : public Unit {	
 	public:
 		DCRemoverUnit(const string& a_name) :
 			Unit(a_name),
-			m_pAlpha(addParameter_(UnitParameter("alpha",0.0,1.0,0.9))),
-			m_w(0.0)
+			m_pAlpha(addParameter_(UnitParameter("hp",0.0,1.0,0.95))),
+			m_g(0.0)
 		{
 			addInput_("in");
 			addOutput_("out");
@@ -39,10 +98,16 @@ namespace syn {
 			double input = a_inputs.getValue(0);
 			double alpha = getParameter(m_pAlpha).getDouble();
 			// dc removal
-			double old_w = m_w;
-			m_w = input + alpha*m_w;
-			a_outputs.setChannel(0, m_w - old_w);
-		};
+			double last_g = m_g;
+			m_g = input + alpha*last_g;
+			double output = m_g - last_g;
+			a_outputs.setChannel(0, output);
+		}; 
+
+		void onParamChange_(int a_paramId) override {
+			if (a_paramId == m_pAlpha) {
+			}
+		}
 	private:
 		string _getClassName() const override
 		{
@@ -52,9 +117,8 @@ namespace syn {
 		Unit* _clone() const override { return new DCRemoverUnit(*this); }
 
 	private:
-		double m_w;
-
 		int m_pAlpha;
+		double m_g;
 	};
 
 	/**
@@ -151,7 +215,8 @@ namespace syn {
         {
             return "InvertingUnit";
         }
-        virtual Unit* _clone() const { return new InvertingUnit(*this); }
+
+	    Unit* _clone() const override { return new InvertingUnit(*this); }
     };
 
 	/**
@@ -226,7 +291,7 @@ namespace syn {
 	};
 
 	/**
-	* Outputs a constant
+	* Sums incomming signals
 	*/
 	class SummerUnit : public Unit {
 	public:
@@ -260,24 +325,42 @@ namespace syn {
 	/**
 	 * Outputs a constant
 	 */
+	const vector<string> scale_selections = { "1","10","100" };
 	class ConstantUnit : public Unit {
 	public:
 		ConstantUnit(const string& a_name) :
 			Unit(a_name)
 		{
-			addParameter_({ "out",-100.0,100.0,1.0 });
+			addParameter_({ "out",-1.0,1.0,1.0 });
+			addParameter_({ "scale",scale_selections});
 			addOutput_("out");
 		}
 
 		ConstantUnit(const ConstantUnit& a_rhs) :
 			ConstantUnit(a_rhs.getName())
 		{
-
 		}
 	protected:
 		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
 		{
 			double output = getParameter(0).getDouble();
+			int selected_scale = getParameter(1).getInt();
+			double scale = 1.0;
+			switch(selected_scale) {
+			case 0:
+				scale = 1.0;
+				break;
+			case 1:
+				scale = 10.0;
+				break;
+			case 2:
+				scale = 100.0;
+				break;
+			default:
+				scale = 1.0;
+				break;
+			}
+			output = output*scale;
 			a_outputs.setChannel(0, output);
 		};
 	private:
@@ -290,7 +373,7 @@ namespace syn {
 	};
 
 	/**
-	* Outputs a constant
+	* Balances incoming signals between two outputs
 	*/
 	class PanningUnit : public Unit {
 	public:
@@ -330,202 +413,6 @@ namespace syn {
 
 		Unit* _clone() const override { return new PanningUnit(*this); }
 	};
-
-	/**
-	* N-Sample delay
-	*/
-	class MemoryUnit : public Unit {
-	
-	public:
-		MemoryUnit(const string& a_name) :
-			Unit(a_name),
-			m_buffer(1,0),
-			m_pBufSize(addParameter_(UnitParameter("samples",1,16384,1))),
-			m_bufferIndex(0)
-		{
-			addInput_("in");
-			addOutput_("out");
-		}
-
-		MemoryUnit(const MemoryUnit& a_rhs) :
-			MemoryUnit(a_rhs.getName())
-		{
-
-		}
-	protected:
-		void onParamChange_(int a_paramId) override {
-			if(a_paramId == m_pBufSize) {
-				int newBufSize = getParameter(m_pBufSize).getInt();
-				if (m_buffer.size() <= newBufSize) {
-					m_buffer.resize(newBufSize);
-				}
-				if (newBufSize == 1) {
-					m_buffer.clear();
-				}
-				m_bufferIndex = MIN(m_bufferIndex, newBufSize-1);
-				
-			}
-		}
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
-		{
-			if (isnan(m_buffer[m_bufferIndex]) || isinf(m_buffer[m_bufferIndex])) {
-				m_buffer[m_bufferIndex] = 0.0;
-			}
-			double output = m_buffer[m_bufferIndex];
-
-			int bufferSize = getParameter(m_pBufSize).getInt();
-			int bufferWriteIndex = WRAP<int>(m_bufferIndex - bufferSize, bufferSize);
-			m_buffer[bufferWriteIndex] = a_inputs.getValue(0);
-
-			m_bufferIndex++;
-			if (m_bufferIndex >= bufferSize)
-				m_bufferIndex = 0;
-
-			a_outputs.setChannel(0, output);
-		};
-	private:
-		string _getClassName() const override
-		{
-			return "MemoryUnit";
-		}
-
-		Unit* _clone() const override { return new MemoryUnit(*this); }
-	private:
-		vector<double> m_buffer;
-		int m_bufferIndex;
-		int m_pBufSize;
-	};
-
-	//-----------------------------------------------------------------------------------------
-	// MIDI Units
-	//-----------------------------------------------------------------------------------------
-
-	/** 
-	 * Outputs the current midi note
-	 */
-    class MidiNoteUnit : public Unit {
-    public:
-        MidiNoteUnit(const string& a_name) :
-                Unit(a_name)
-        {
-            addOutput_("out");
-        }
-
-        MidiNoteUnit(const MidiNoteUnit& a_rhs) :
-                MidiNoteUnit(a_rhs.getName())
-        {
-
-        }
-
-    protected:
-        void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
-        {
-            a_outputs.setChannel(0, getNote());
-        };
-    private:
-        string _getClassName() const override
-        {
-            return "MidiNoteUnit";
-        }
-
-	    Unit* _clone() const override { return new MidiNoteUnit(*this); }
-    };
-
-	/**
-	* Outputs the current midi note in the range (0.0,1.0)
-	*/
-	class NormalizedMidiNoteUnit : public Unit {
-	public:
-		NormalizedMidiNoteUnit(const string& a_name) :
-			Unit(a_name)
-		{
-			addOutput_("out");
-		}
-
-		NormalizedMidiNoteUnit(const MidiNoteUnit& a_rhs) :
-			NormalizedMidiNoteUnit(a_rhs.getName())
-		{
-
-		}
-
-	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
-		{
-			a_outputs.setChannel(0, getNote()/128.0);
-		};
-	private:
-		string _getClassName() const override
-		{
-			return "NormalizedMidiNoteUnit";
-		}
-
-		Unit* _clone() const override { return new NormalizedMidiNoteUnit(*this); }
-	};
-
-	/**
-	 * Outputs the current velocity
-	 */
-	class VelocityUnit : public Unit {
-	public:
-		VelocityUnit(const string& a_name) :
-			Unit(a_name)
-		{
-			addOutput_("out");
-		}
-
-		VelocityUnit(const MidiNoteUnit& a_rhs) :
-			VelocityUnit(a_rhs.getName())
-		{
-
-		}
-
-	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
-		{
-			a_outputs.setChannel(0, getVelocity()*1./128);
-		};
-	private:
-		string _getClassName() const override
-		{
-			return "VelocityUnit";
-		}
-
-		Unit* _clone() const override { return new VelocityUnit(*this); }
-	};
-
-	/**
-	* Outputs a 1 when a key is pressed, and 0 otherwise
-	*/
-	class GateUnit : public Unit {
-	public:
-		GateUnit(const string& a_name) :
-			Unit(a_name)
-		{
-			addOutput_("out");
-		}
-
-		GateUnit(const MidiNoteUnit& a_rhs) :
-			GateUnit(a_rhs.getName())
-		{
-
-		}
-
-		bool isActive() const override {
-			return isNoteOn();
-		}
-
-	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
-		{
-			a_outputs.setChannel(0, static_cast<double>(isNoteOn()));
-		};
-	private:
-		string _getClassName() const override
-		{
-			return "GateUnit";
-		}
-
-		Unit* _clone() const override { return new GateUnit(*this); }
-	};
 }
 
+#endif
