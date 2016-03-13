@@ -108,6 +108,8 @@ namespace syn {
 
         void noteOff(int a_noteNumber, int a_velocity);
 
+		void sendControlChange(int a_cc, int a_newvalue);
+
         void setMaxVoices(unsigned a_newMax);
 
         int getNumVoices() const;

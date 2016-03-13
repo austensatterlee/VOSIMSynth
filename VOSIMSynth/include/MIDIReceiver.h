@@ -20,21 +20,16 @@ public:
     };
 
     // Returns true if the key with a given index is currently pressed
-    inline bool getKeyStatus(int keyIndex) const
+	bool getKeyStatus(int keyIndex) const
     { return m_keyStatus[keyIndex]; }
 
     void advance();
 
     void onMessageReceived(IMidiMsg* midiMessage);
 
-    inline void Flush(int nFrames)
-    {
-        m_midiQueue.Flush(nFrames);
-        m_offset = 0;
-    }
+	void Flush(int nFrames);
 
-    inline void Resize(int blockSize)
-    { m_midiQueue.Resize(blockSize); }
+	void Resize(int blockSize);
 
 private:
     IMidiQueue m_midiQueue;

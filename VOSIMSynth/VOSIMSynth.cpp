@@ -93,6 +93,8 @@ void VOSIMSynth::makeInstrument()
 	m_unitFactory->addUnitPrototype("Math", new ConstantUnit("Const"));
 	m_unitFactory->addUnitPrototype("Math", new InvertingUnit("Invert"));
 	m_unitFactory->addUnitPrototype("Math", new GainUnit("Gain"));
+	m_unitFactory->addUnitPrototype("Math", new LinToDbUnit("Lin2dB"));
+	m_unitFactory->addUnitPrototype("Math", new LerpUnit("Affine"));
 
 	m_unitFactory->addUnitPrototype("MIDI", new GateUnit("Gate"));
     m_unitFactory->addUnitPrototype("MIDI", new MidiNoteUnit("Pitch"));

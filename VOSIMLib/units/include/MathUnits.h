@@ -31,10 +31,15 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "Unit.h"
 #include <cmath>
 #include <DSPMath.h>
+#include <tables.h>
 
 using namespace std;
 
 namespace syn {
+
+	const vector<string> scale_selections = { "1","10","100" };
+	const vector<double> scale_values = { 1.,10.,100. };
+
 	class MovingAverage
 	{
 	public:
@@ -227,8 +232,8 @@ namespace syn {
 		MultiplyUnit(const string& a_name) :
 			Unit(a_name)
 		{
-			addInput_("in1");
-			addInput_("in2[x]", 1.0, Signal::EMul);
+			addInput_("[+]");
+			addInput_("[x]", 1.0, Signal::EMul);
 			addOutput_("out");
 		}
 
@@ -261,7 +266,8 @@ namespace syn {
 	public:
 		GainUnit(const string& a_name) :
 			Unit(a_name),
-			m_pGain(addParameter_(UnitParameter("gain", 0.0, 10.0, 1.0)))
+			m_pGain(addParameter_(UnitParameter("gain", 0.0, 1.0, 1.0))),
+			m_pScale(addParameter_(UnitParameter("scale",scale_selections)))
 		{
 			addInput_("in");
 			addOutput_("out");
@@ -276,7 +282,7 @@ namespace syn {
 		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
 		{
 			double output = a_inputs.getValue(0);
-			output *= getParameter(m_pGain).getDouble();
+			output *= getParameter(m_pGain).getDouble()*scale_values[getParameter(m_pScale).getInt()];
 			a_outputs.setChannel(0, output);
 		};
 	private:
@@ -287,7 +293,7 @@ namespace syn {
 
 		Unit* _clone() const override { return new GainUnit(*this); }
 	private:
-		int m_pGain;
+		int m_pGain, m_pScale;
 	};
 
 	/**
@@ -298,7 +304,8 @@ namespace syn {
 		SummerUnit(const string& a_name) :
 			Unit(a_name)
 		{
-			addInput_("in");
+			addInput_("[+]");
+			addInput_("[-]");
 			addOutput_("out");
 		}
 
@@ -310,7 +317,7 @@ namespace syn {
 	protected:
 		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
 		{
-			double output = a_inputs.getValue(0);
+			double output = a_inputs.getValue(0) - a_inputs.getValue(1);
 			a_outputs.setChannel(0, output);
 		};
 	private:
@@ -325,7 +332,6 @@ namespace syn {
 	/**
 	 * Outputs a constant
 	 */
-	const vector<string> scale_selections = { "1","10","100" };
 	class ConstantUnit : public Unit {
 	public:
 		ConstantUnit(const string& a_name) :
@@ -346,20 +352,7 @@ namespace syn {
 			double output = getParameter(0).getDouble();
 			int selected_scale = getParameter(1).getInt();
 			double scale = 1.0;
-			switch(selected_scale) {
-			case 0:
-				scale = 1.0;
-				break;
-			case 1:
-				scale = 10.0;
-				break;
-			case 2:
-				scale = 100.0;
-				break;
-			default:
-				scale = 1.0;
-				break;
-			}
+			scale = scale_values[selected_scale];
 			output = output*scale;
 			a_outputs.setChannel(0, output);
 		};
@@ -412,6 +405,91 @@ namespace syn {
 		}
 
 		Unit* _clone() const override { return new PanningUnit(*this); }
+	};
+
+	/**
+	 * Linear to decibals converter
+	 */
+	class LinToDbUnit : public Unit {
+	public:
+		LinToDbUnit(const string& a_name) :
+			Unit(a_name),
+			m_pMinDb(addParameter_(UnitParameter("min dB", -60.0, -3.0, -60.0)))
+		{
+			addInput_("in");
+			addOutput_("out");
+		}
+
+		LinToDbUnit(const SummerUnit& a_rhs) :
+			LinToDbUnit(a_rhs.getName())
+		{
+		}
+	protected:
+		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+		{
+			double input = a_inputs.getValue(0);
+			double output = lin2db(input, getParameter(m_pMinDb).getDouble(), 0.0);
+			a_outputs.setChannel(0, output);
+		};
+	private:
+		string _getClassName() const override
+		{
+			return "LinToDbUnit";
+		}
+
+		Unit* _clone() const override { return new LinToDbUnit(*this); }
+	private:
+		int m_pMinDb;
+	};
+
+	/**
+	* Affine transform
+	*/
+	class LerpUnit : public Unit {
+	public:
+		LerpUnit(const string& a_name) :
+			Unit(a_name)
+		{
+			m_pInputRange = addParameter_(UnitParameter("input", { "bipolar","unipolar" }));
+			m_pMinOutput = addParameter_(UnitParameter("a", -1.0, 1.0, 0.0));
+			m_pMinOutputScale = addParameter_(UnitParameter("a scale", scale_selections));
+			m_pMaxOutput = addParameter_(UnitParameter("b", -1.0, 1.0, 1.0));
+			m_pMaxOutputScale = addParameter_(UnitParameter("b scale", scale_selections));
+			addInput_("in");
+			addOutput_("out");
+		}
+
+		LerpUnit(const SummerUnit& a_rhs) :
+			LerpUnit(a_rhs.getName())
+		{
+		}
+	protected:
+		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+		{
+			double input = a_inputs.getValue(0);
+			double a_scale = scale_values[getParameter(m_pMinOutputScale).getInt()];
+			double a = getParameter(m_pMinOutput).getDouble()*a_scale;
+			double b_scale = scale_values[getParameter(m_pMaxOutputScale).getInt()];
+			double b = getParameter(m_pMaxOutput).getDouble()*b_scale;
+			double output;
+			if (getParameter(m_pInputRange).getInt() == 1) {
+				output = LERP(a, b, input);
+			}else {
+				output = LERP(a, b, 0.5*(input + 1));
+			}
+			a_outputs.setChannel(0, output);
+		};
+	private:
+		string _getClassName() const override
+		{
+			return "LerpUnit";
+		}
+
+		Unit* _clone() const override { return new LerpUnit(*this); }
+	private:
+		int m_pInputRange;
+		int m_pMinOutput, m_pMaxOutput;
+		int m_pMinOutputScale, m_pMaxOutputScale;
 	};
 }
 

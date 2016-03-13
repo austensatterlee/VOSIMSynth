@@ -80,6 +80,8 @@ namespace syn {
 
         int getNumUnits() const;
 
+		void notifyMidiControlChange(int a_cc, int a_value);
+
         /**
          * Retrieves a list of output ports connected to an input port.
          * \returns A vector of pairs of the form {unit_id, port_id}
@@ -140,6 +142,8 @@ namespace syn {
 	    void onNoteOn_() override;
 
 	    void onNoteOff_() override;
+
+		void onMidiControlChange_(int a_cc, int a_value) override;
 
 		Unit& getUnit_(int a_unitId);
 

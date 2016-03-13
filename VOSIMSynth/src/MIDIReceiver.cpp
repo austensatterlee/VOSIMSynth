@@ -27,6 +27,13 @@ void MIDIReceiver::onMessageReceived(IMidiMsg* midiMessage)
     m_midiQueue.Add(midiMessage);
 }
 
+void MIDIReceiver::Flush(int nFrames) {
+	m_midiQueue.Flush(nFrames);
+	m_offset = 0;
+}
+
+void MIDIReceiver::Resize(int blockSize) { m_midiQueue.Resize(blockSize); }
+
 void MIDIReceiver::advance()
 {
   while (!m_midiQueue.Empty())
@@ -55,7 +62,7 @@ void MIDIReceiver::advance()
     }
     else if (status == IMidiMsg::kControlChange)
     {
-      //sendControlChange(*midiMessage);
+      m_vm->sendControlChange(midiMessage->ControlChangeIdx(), midiMessage->ControlChange(midiMessage->ControlChangeIdx()));
     }
     m_midiQueue.Remove();
   }

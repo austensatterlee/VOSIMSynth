@@ -64,7 +64,7 @@ namespace syn
 			double input_fc = a_inputs.getValue(m_iFcMul)*(getParameter(m_pFc).getDouble() + a_inputs.getValue(m_iFcAdd));
 			input_fc = CLAMP(input_fc, 0, 1);
 			double fc = LERP(c_minFreq, c_maxFreq, input_fc);
-			m_F = 2 * lut_sin.getlinear(0.5*fc / getFs());
+			m_F = 2 * lut_sin.getlinear(0.5*fc / (getFs()*c_oversamplingFactor));
 
 			double input_res = a_inputs.getValue(m_iResMul)*(getParameter(m_pRes).getDouble() + a_inputs.getValue(m_iResAdd));
 			input_res = CLAMP(input_res, 0, 1);
@@ -103,7 +103,7 @@ namespace syn
 		double m_F, m_Q;
 
 		const double c_minFreq = 80.0;
-		const double c_maxFreq = 6000.0;
+		const double c_maxFreq = 10000.0;
 		const double c_minRes = 1.0;
 		const double c_maxRes = 10.0;
 		const int c_oversamplingFactor = 8;

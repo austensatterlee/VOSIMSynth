@@ -154,6 +154,9 @@ namespace syn {
         virtual void onNoteOff_()
         { };
 
+		virtual void onMidiControlChange_(int a_cc, int a_value)
+		{ };
+
 		template<typename ID>
 		UnitParameter& getParameter_(const ID& a_identifier);
 

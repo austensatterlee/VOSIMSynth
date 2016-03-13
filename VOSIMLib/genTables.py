@@ -6,40 +6,7 @@ import os,sys
 TABLEDATA_FILE = "include/table_data.h"
 TABLEHDR_FILE = "include/tables.h"
 
-def MakeTableStr(table,name,ctype="const double"):
-    rows = int(sqrt(table.size))
-    cols = int(ceil(sqrt(table.size)))
-    showstr = "{} {}[{}] = {{\n".format(ctype,name,table.size)
-    cellstr = "{:.18f}"
-    ind = 0
-    for i in xrange(rows):
-        if i!=0:
-            showstr+='\n'
-        for j in xrange(cols):
-            showstr+=cellstr.format(table[ind])
-            showstr+=','
-            ind+=1
-            if ind>=table.size:
-                break
-        if ind>table.size:
-            break
-    showstr+="\n};\n"
-    return showstr
-
 def RealCepstrum(n,signal):
-    #realTime = zeros(n)
-    #imagTime = zeros(n)
-
-    #for i in xrange(n):
-        #realTime[i] = signal[i]
-
-    #realFreq,imagFreq = DFT(n,realTime,imagTime)
-    #for i in xrange(n):
-        #realFreq[i] = log(cabs(realFreq[i],imagFreq[i]))
-        #imagFreq[i] = 0
-
-    #realTime,imagTime = InverseDFT(n,realFreq,imagFreq)
-
     freq = fft.fft(signal)
     freq = log(abs(freq))
     realTime = real(fft.ifft(freq))
@@ -59,10 +26,6 @@ def MinimumPhase(n,realCepstrum):
     if ((n%2)==0):
         realTime[nd2] = realCepstrum[nd2]
 
-    #realFreq,imagFreq = DFT(n,realTime,imagTime)
-    #for i in xrange(n):
-        #realFreq[i],imagFreq[i] = cexp(realFreq[i],imagFreq[i])
-    #realTime,imagTime = InverseDFT(n,realFreq,imagFreq)
     freq = exp(fft.fft(realTime))
     realTime = real(fft.ifft(freq))
 
@@ -113,12 +76,12 @@ def GenerateBlit(pts,nharmonics=None):
     blit = blit/blit.max()
     return blit
 
-def GenerateBLSaw(pts,nharmonics=None):
+def GenerateBLSaw(nharmonics,npoints):
     """ Generate band limited sawtooth wave """
-    nfft = pts
-    hpts = nharmonics or pts/2+1
+    nfft = npoints
+    hpts = nharmonics or npoints/2+1
     hind = arange(1,hpts)
-    freqmags = zeros(pts/2+1,dtype=complex128)
+    freqmags = zeros(npoints/2+1,dtype=complex128)
     freqmags[hind] = 1j*1./hind
     blsaw = fft.fftshift(fft.irfft(freqmags,n=nfft))
     return blsaw/blsaw.max()
@@ -157,30 +120,16 @@ def GenerateMinBLEP(nZeroCrossings, nOverSampling):
 
     a = -float(nZeroCrossings)
     b = float(nZeroCrossings)
-    #for i in xrange(n):
-        #r = float(i)/(n-1)
-        #buffer1[i] = SINC( a + (r * (b-a)) )
     x = (a + arange(n)/float(n-1)*(b-a))
     buffer1 = sinc(x)
 
-    #buffer2 = blackman(n)
-    #for i in xrange(n):
-        #buffer1[i] *= buffer2[i]
     buffer1 *= blackman(n)
 
     buffer2 = RealCepstrum(n,buffer1)
     buffer1 = MinimumPhase(n,buffer2)
 
-    #minBLEP = zeros(n)
-    #a = 0
-    #for i in xrange(n):
-        #a += buffer1[i]
-        #minBLEP[i] = a
     minBLEP = buffer1.cumsum()
 
-    #a = 1./minBLEP[n-1]
-    #for i in xrange(n):
-        #minBLEP[i] *= a
     minBLEP/=minBLEP[n-1]
 
     return minBLEP
@@ -191,16 +140,23 @@ def GenerateSine(n):
     c = sin(k*T*2*pi)
     return c
 
-def PitchTable(n,notestart=0,notefinish=128):
-    N = linspace(notestart,notefinish,n)
-    return 440*2**((N-69.)/12.)
+def GeneratePitchTable(notestart,notefinish,npoints):
+    N = linspace(notestart,notefinish,npoints)
+    return N,440*2**((N-69.)/12.)
 
-def InvPitchTable(pitchtable):
+def GenerateInvPitchTable(pitchtable):
     invpitchlen = ceil(len(pitchtable)*1./min(diff(pitchtable)))
     invpitchtable = arange(invpitchlen)[1:]*1./invpitchlen*max(pitchtable)
     return log2(invpitchtable)
 
-def rewriteAutomatedSection(full_text,tag,replacement_text):
+def GenerateDecibalTable(db1,db2,npoints):
+    x = arange(npoints)*1.0/npoints
+    dbx = x*(db2-db1)+db1
+    dbtable = 10**(dbx/20.)
+    return dbx,dbtable
+
+"""Tools"""
+def RewriteAutomatedSection(full_text,tag,replacement_text):
     """
     Finds a portion of text surrounded by:
 
@@ -222,6 +178,26 @@ def rewriteAutomatedSection(full_text,tag,replacement_text):
     result = full_text[:match.start("block")] + replacement_text + full_text[match.end("block"):]
     return result
 
+def MakeTableStr(table,name,ctype="const double"):
+    rows = int(sqrt(table.size))
+    cols = int(ceil(sqrt(table.size)))
+    showstr = "{} {}[{}] = {{\n".format(ctype,name,table.size)
+    cellstr = "{:.18f}"
+    ind = 0
+    for i in xrange(rows):
+        if i!=0:
+            showstr+='\n'
+        for j in xrange(cols):
+            showstr+=cellstr.format(table[ind])
+            showstr+=','
+            ind+=1
+            if ind>=table.size:
+                break
+        if ind>table.size:
+            break
+    showstr+="\n};\n"
+    return showstr
+
 def make_symmetric_r(right_half):
     left_half = list(reversed(right_half))
     return hstack([left_half[:-1],right_half])
@@ -230,7 +206,6 @@ def make_symmetric_l(left_half):
     right_half = list(reversed(left_half))
     return hstack([left_half[:-1],right_half])
 
-"""Tools"""
 def magspec(signal, pts=None, fs=None, logscale=True, **kwargs):
     from matplotlib import pyplot as plt
     pts = pts or len(signal)
@@ -441,23 +416,40 @@ def normalize_power(signal):
 
 def main(pargs):
     v = pargs.verbose
+
+    """Sin table"""
+    SINE_RES = 1024
+    sintable = GenerateSine(SINE_RES)
+    """Pitch table"""
+    PITCH_RES = 1024
+    MIN_PITCH = -128
+    MAX_PITCH = 128
+    pitches,pitchtable = GeneratePitchTable(MIN_PITCH,MAX_PITCH,PITCH_RES)
+    """DB table"""
+    DB_RES = 1024
+    MIN_DB = -60
+    MAX_DB = 0
+    decibals,dbtable = GenerateDecibalTable(MIN_DB,MAX_DB,DB_RES)
+
+    """Prefilter for bandlimited waveforms"""
     prefilter_lhalf=[0.0028,-0.0119,0.0322,-0.0709,0.1375,-0.2544,0.4385,-0.6334,1.7224]
     prefilter=make_symmetric_l(prefilter_lhalf)
 
-    offline_intervals = 513
-    offline_res = 2048
 
-    online_intervals = 5
-    online_res = 8192
-
-    sintable = GenerateSine(8192)
-    pitchtable = PitchTable(4096,-128,128)
-
-    blsaw = GenerateBLSaw(2048,1024)
+    """Bandlimited saw wave"""
+    BLSAW_RES = 2048
+    BLSAW_HARMONICS = BLSAW_RES/2
+    blsaw = GenerateBLSaw(BLSAW_HARMONICS,BLSAW_RES)
     blsaw /= blsaw.max()
 
-    blimp_online = GenerateBlimp(online_intervals,online_res,fc=18e3)
-    blimp_offline = GenerateBlimp(offline_intervals,offline_res,fc=22e3)
+    """Offline and online BLIMP for resampling"""
+    OFFLINE_BLIMP_INTERVALS = 513
+    OFFLINE_BLIMP_RES = 128
+
+    ONLINE_BLIMP_INTERVALS = 5
+    ONLINE_BLIMP_RES = 8192
+    blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS,ONLINE_BLIMP_RES,fc=18e3)
+    blimp_offline = GenerateBlimp(OFFLINE_BLIMP_INTERVALS,OFFLINE_BLIMP_RES,fc=22e3)
 
     blimp_online = convolve( prefilter, blimp_online, 'same' ) # apply gain to high frequencies
     blimp_offline = convolve( prefilter, blimp_offline, 'same' ) # apply gain to high frequencies
@@ -465,6 +457,7 @@ def main(pargs):
     blimp_online /= blimp_online.max()
     blimp_offline /= blimp_offline.max()
 
+    """Generate C++ files"""
     key_order = {
             "LookupTable":['size','input_min','input_max', 'isPeriodic'],
             "ResampledLookupTable":['size','blimp_online','blimp_offline'],
@@ -473,16 +466,16 @@ def main(pargs):
     tables = [
             ['BLIMP_TABLE_OFFLINE',dict(classname="BlimpTable", data=blimp_offline,
                 size=len(blimp_offline),
-                intervals=offline_intervals,
-                res=offline_res)],
+                intervals=OFFLINE_BLIMP_INTERVALS,
+                res=OFFLINE_BLIMP_RES)],
             ['BLIMP_TABLE_ONLINE',dict(classname="BlimpTable", data=blimp_online,
                 size=len(blimp_online),
-                intervals=online_intervals,
-                res=online_res)],
+                intervals=ONLINE_BLIMP_INTERVALS,
+                res=ONLINE_BLIMP_RES)],
             ['PITCH_TABLE',dict(classname="LookupTable", data=pitchtable,
                 size=len(pitchtable),
-                input_min=-1,
-                input_max=1,
+                input_min = MIN_PITCH,
+                input_max = MAX_PITCH,
                 isPeriodic=False)],
             ['BL_SAW',dict(classname="ResampledLookupTable", data=blsaw,
                 size=len(blsaw),
@@ -493,6 +486,11 @@ def main(pargs):
                 input_min = 0,
                 input_max = 1,
                 isPeriodic = True)],
+            ['DB_TABLE',dict(classname="LookupTable",data=dbtable,
+                size=len(dbtable),
+                input_min = MIN_DB,
+                input_max = MAX_DB,
+                isPeriodic = False)]
             ]
     macrodefines = [
             ]
@@ -504,7 +502,7 @@ def main(pargs):
         macrodefine_code += line + "\n"
     # Generate lookup table structures
     tabledata_def = ""
-    tabledata_decl = ""
+    # tabledata_decl = ""
     tableobj_def = ""
     for name,struct in tables:
         tabledata_def += MakeTableStr(struct['data'],name)
@@ -548,8 +546,8 @@ def main(pargs):
 
         if v:
             print "Writing new {}...".format(TABLEHDR_FILE)
-        new_code = rewriteAutomatedSection(old_code,'lut_defs', tabledata_decl+'\n'+tableobj_def)
-        new_code = rewriteAutomatedSection(new_code,'macro_defs', macrodefine_code)
+        new_code = RewriteAutomatedSection(old_code,'lut_defs', tableobj_def)
+        new_code = RewriteAutomatedSection(new_code,'macro_defs', macrodefine_code)
         with open(TABLEHDR_FILE, 'w') as fp:
             fp.write(new_code)
 

@@ -68,7 +68,7 @@ namespace syn {
             m_type(Enum),
             m_displayPrecision(0)
     {
-		m_defaultValue = a_optionNames.size() / 2;
+		m_defaultValue = 0;
 		m_value = m_prevValue = m_defaultValue;
         for (int i = 0; i < a_optionNames.size(); i++) {
             m_displayTexts.push_back({i, a_optionNames[i]});

@@ -91,7 +91,13 @@ namespace syn {
 		m_voiceMutex.unlock();
     }
 
-    void VoiceManager::setMaxVoices(unsigned a_newMax)
+	void VoiceManager::sendControlChange(int a_cc, int a_value) {
+		for (int i = 0; i < m_numVoices;i++) {
+			m_allVoices[i]->notifyMidiControlChange(a_cc, a_value);
+		}
+    }
+
+	void VoiceManager::setMaxVoices(unsigned a_newMax)
     {
 		m_voiceMutex.lock();
         if (a_newMax < 1)
