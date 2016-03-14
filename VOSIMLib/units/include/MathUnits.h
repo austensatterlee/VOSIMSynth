@@ -109,10 +109,6 @@ namespace syn {
 			a_outputs.setChannel(0, output);
 		}; 
 
-		void onParamChange_(int a_paramId) override {
-			if (a_paramId == m_pAlpha) {
-			}
-		}
 	private:
 		string _getClassName() const override
 		{
@@ -302,7 +298,9 @@ namespace syn {
 	class SummerUnit : public Unit {
 	public:
 		SummerUnit(const string& a_name) :
-			Unit(a_name)
+			Unit(a_name),
+			m_pBias(addParameter_(UnitParameter("bias", 0.0, 1.0, 1.0))),
+			m_pScale(addParameter_(UnitParameter("bias scale", scale_selections)))
 		{
 			addInput_("[+]");
 			addInput_("[-]");
@@ -318,6 +316,7 @@ namespace syn {
 		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
 		{
 			double output = a_inputs.getValue(0) - a_inputs.getValue(1);
+			output += getParameter(m_pBias).getDouble()*scale_values[getParameter(m_pScale).getInt()];
 			a_outputs.setChannel(0, output);
 		};
 	private:
@@ -327,6 +326,8 @@ namespace syn {
 		}
 
 		Unit* _clone() const override { return new SummerUnit(*this); }
+	private:
+		int m_pBias, m_pScale;
 	};
 
 	/**
@@ -414,7 +415,7 @@ namespace syn {
 	public:
 		LinToDbUnit(const string& a_name) :
 			Unit(a_name),
-			m_pMinDb(addParameter_(UnitParameter("min dB", -60.0, -3.0, -60.0)))
+			m_pMinDb(addParameter_(UnitParameter("min dB", -60.0, -6.0, -60.0)))
 		{
 			addInput_("in");
 			addOutput_("out");
@@ -451,10 +452,10 @@ namespace syn {
 			Unit(a_name)
 		{
 			m_pInputRange = addParameter_(UnitParameter("input", { "bipolar","unipolar" }));
-			m_pMinOutput = addParameter_(UnitParameter("a", -1.0, 1.0, 0.0));
-			m_pMinOutputScale = addParameter_(UnitParameter("a scale", scale_selections));
-			m_pMaxOutput = addParameter_(UnitParameter("b", -1.0, 1.0, 1.0));
-			m_pMaxOutputScale = addParameter_(UnitParameter("b scale", scale_selections));
+			m_pMinOutput = addParameter_(UnitParameter("min out", -1.0, 1.0, 0.0));
+			m_pMinOutputScale = addParameter_(UnitParameter("min scale", scale_selections));
+			m_pMaxOutput = addParameter_(UnitParameter("max out", -1.0, 1.0, 1.0));
+			m_pMaxOutputScale = addParameter_(UnitParameter("max scale", scale_selections));
 			addInput_("in");
 			addOutput_("out");
 		}

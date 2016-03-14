@@ -165,7 +165,7 @@ namespace syn
         }
     }
 
-	void Circuit::onMidiControlChange_(int a_cc, int a_value) {
+	void Circuit::onMidiControlChange_(int a_cc, double a_value) {
 		for (int i = 0; i<m_units.size(); i++) {
 			m_units[i]->onMidiControlChange_(a_cc, a_value);
 		}
@@ -185,7 +185,7 @@ namespace syn
         return m_units.size();
     }
 
-	void Circuit::notifyMidiControlChange(int a_cc, int a_value) {
+	void Circuit::notifyMidiControlChange(int a_cc, double a_value) {
 		onMidiControlChange_(a_cc, a_value);
     }
 }

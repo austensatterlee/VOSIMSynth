@@ -100,6 +100,7 @@ void VOSIMSynth::makeInstrument()
     m_unitFactory->addUnitPrototype("MIDI", new MidiNoteUnit("Pitch"));
 	m_unitFactory->addUnitPrototype("MIDI", new NormalizedMidiNoteUnit("Norm Pitch"));
 	m_unitFactory->addUnitPrototype("MIDI", new VelocityUnit("Vel"));
+	m_unitFactory->addUnitPrototype("MIDI", new MidiCCUnit("CC"));
 
 	m_unitFactory->addUnitPrototype("Visualizer", new OscilloscopeUnit("Oscilloscope"));
 

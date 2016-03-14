@@ -154,7 +154,7 @@ namespace syn {
         virtual void onNoteOff_()
         { };
 
-		virtual void onMidiControlChange_(int a_cc, int a_value)
+		virtual void onMidiControlChange_(int a_cc, double a_value)
 		{ };
 
 		template<typename ID>

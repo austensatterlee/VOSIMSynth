@@ -108,7 +108,7 @@ namespace syn {
 
         void noteOff(int a_noteNumber, int a_velocity);
 
-		void sendControlChange(int a_cc, int a_newvalue);
+		void sendControlChange(int a_cc, double a_newvalue);
 
         void setMaxVoices(unsigned a_newMax);
 
@@ -157,8 +157,8 @@ namespace syn {
     private:
         typedef list<int> VoiceList;
         typedef map<int, VoiceList> VoiceMap;
-        int m_numVoices;
-        int m_maxVoices;
+        int m_numVoices; /// Number of active voices
+        int m_maxVoices; /// Total number of voices (idle voices + active voices)
 		unsigned m_tickCount;
 		bool m_isPlaying;
         VoiceMap m_voiceMap;

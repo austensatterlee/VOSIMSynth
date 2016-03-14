@@ -91,10 +91,12 @@ namespace syn {
 		m_voiceMutex.unlock();
     }
 
-	void VoiceManager::sendControlChange(int a_cc, int a_value) {
-		for (int i = 0; i < m_numVoices;i++) {
+	void VoiceManager::sendControlChange(int a_cc, double a_value) {
+		// Send control change to all voices
+		for (int i = 0; i < m_maxVoices;i++) {
 			m_allVoices[i]->notifyMidiControlChange(a_cc, a_value);
 		}
+		m_instrument->notifyMidiControlChange(a_cc, a_value);
     }
 
 	void VoiceManager::setMaxVoices(unsigned a_newMax)
@@ -263,9 +265,8 @@ namespace syn {
     {
         Circuit* voice;
         // Apply action to all voices
-        int numVoices = m_allVoices.size();
-        for (int i = 0 ; i <= numVoices ; i++) {
-            if (i == m_allVoices.size()) { // Apply action to prototype voice at end of loop
+        for (int i = 0 ; i <= m_maxVoices ; i++) {
+            if (i == m_maxVoices) { // Apply action to prototype voice at end of loop
                 voice = m_instrument.get();
             } else {
                 voice = m_allVoices[i].get();
@@ -331,31 +332,19 @@ namespace syn {
 
 	void VoiceManager::setFs(double a_newFs)
     {
-        Circuit* voice;
-        // Apply action to all voices
-        int numVoices = m_allVoices.size();
-        for (int i = 0 ; i <= numVoices ; i++) {
-            if (i == m_allVoices.size()) { // Apply action to prototype voice at end of loop
-                voice = m_instrument.get();
-            } else {
-                voice = m_allVoices[i].get();
-            }
-            voice->setFs(a_newFs);
+        // Apply new sampling frequency to all voices
+        for (int i = 0 ; i < m_maxVoices; i++) {
+			m_allVoices[i]->setFs(a_newFs);
         }
+		m_instrument->setFs(a_newFs);
     }
 
     void VoiceManager::setTempo(double a_newTempo)
     {
-        Circuit* voice;
-        // Apply action to all voices
-        int numVoices = m_allVoices.size();
-        for (int i = 0 ; i <= numVoices ; i++) {
-            if (i == m_allVoices.size()) { // Apply action to prototype voice at end of loop
-                voice = m_instrument.get();
-            } else {
-                voice = m_allVoices[i].get();
-            }
-            voice->setTempo(a_newTempo);
+        // Apply new tempo to all voices
+        for (int i = 0 ; i < m_maxVoices; i++) {
+			m_allVoices[i]->setTempo(a_newTempo);
         }
+		m_instrument->setTempo(a_newTempo);
     }
 }
