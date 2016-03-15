@@ -71,9 +71,13 @@ namespace syn
 		int getPrecision() const;
 		void setPrecision(int a_precision);
 
+		/**
+		 * \return true if the parameter value was changed
+		 */
 		bool set(double a_value);
         /**
          * Set the parameter from a number in the range (0,1)
+		 * \return true if the parameter value was changed
          */
         bool setNorm(double a_norm_value);
 

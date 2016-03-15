@@ -427,7 +427,7 @@ def main(pargs):
     pitches,pitchtable = GeneratePitchTable(MIN_PITCH,MAX_PITCH,PITCH_RES)
     """DB table"""
     DB_RES = 2048
-    MIN_DB = -60
+    MIN_DB = -120
     MAX_DB = 0
     decibals,dbtable = GenerateDecibalTable(MIN_DB,MAX_DB,DB_RES)
 

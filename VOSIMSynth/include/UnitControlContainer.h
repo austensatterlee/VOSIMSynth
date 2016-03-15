@@ -66,15 +66,15 @@ namespace syn {
 
 		virtual void onMouseWheel(int a_x, int a_y, IMouseMod* a_mouseMod, int a_d);
 
-		virtual void move(int a_newx, int a_newy);
+		void move(int a_newx, int a_newy);
 
 		virtual NDPoint<2, int> getMinSize() const;
 
-		virtual void resize(NDPoint<2, int> a_newSize);
+		void resize(NDPoint<2, int> a_newSize);
 
 		virtual NDPoint<2, int> getPortPos(UnitPortVector a_portId) const;
 
-		virtual IRECT getPortRect(UnitPortVector a_portVector) const;
+		IRECT getPortRect(UnitPortVector a_portVector) const;
 
 		NDPoint<2, int> getPos() const;
 
@@ -82,7 +82,7 @@ namespace syn {
 
 		UnitPortVector getSelectedPort(int x, int y) const;
 
-		virtual void setUnitId(int a_newUnitId);
+		void setUnitId(int a_newUnitId);
 
 		int getUnitId() const;
 

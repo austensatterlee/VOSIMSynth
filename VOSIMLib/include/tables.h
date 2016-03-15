@@ -20,7 +20,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __TABLES__
 #define __TABLES__
 #include "table_data.h"
-#include "DSPMath.h"
 
 /*::macro_defs::*/
 /*::/macro_defs::*/
@@ -87,26 +86,8 @@ namespace syn
 	const LookupTable lut_pitch_table(PITCH_TABLE, 1024, -128, 128, false);
 	const ResampledLookupTable lut_bl_saw(BL_SAW, 2048, lut_blimp_table_online, lut_blimp_table_offline);
 	const LookupTable lut_sin(SIN, 1024, 0, 1, true);
-	const LookupTable lut_db_table(DB_TABLE, 1024, -60, 0, false);
+	const LookupTable lut_db_table(DB_TABLE, 2048, -120, 0, false);
 	/*::/lut_defs::*/
-
-	inline double pitchToFreq(double pitch)
-	{
-		double freq = lut_pitch_table.getlinear(pitch);
-		if (freq == 0)
-			freq = 1;
-		return freq;
-	}
-
-	inline double lin2db(double lin, double mindb, double maxdb) {
-		double db;
-		if (lin >= 0) {
-			db = lut_db_table.getlinear(LERP(mindb, maxdb, lin));
-		}else {
-			db = -lut_db_table.getlinear(LERP(mindb, maxdb, -lin));
-		}
-		return db;
-	}
 
 	/**
 	 * Retrieve a single sample from table as if it were resampled to have the specified period. 

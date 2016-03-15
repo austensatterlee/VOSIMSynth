@@ -29,6 +29,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __DSPMATH__
 #include "NDPoint.h"
 #include <vector>
+#include "tables.h"
 
 #define LERP(A,B,F) (((B)-(A))*(F)+(A))
 #define INVLERP(A,B,X) (((X)-(A))/((B)-(A)))
@@ -92,6 +93,33 @@ namespace syn
 	  int m_bufferSize;
 	  int m_bufferIndex;
   };
+
+  inline double blackman_harris(int a_k, size_t a_winSize) {
+	  static const double a[4] = { 0.35875, 0.48829, 0.14128, 0.01168 };
+	  double phase = a_k * 1.0 / (a_winSize - 1);
+	  double s1 = lut_sin.getlinear(phase + 0.25);
+	  double s2 = lut_sin.getlinear(2 * phase + 0.25);
+	  double s3 = lut_sin.getlinear(3 * phase + 0.25);
+	  return a[0] - a[1]*s1 + a[2]*s2 - a[3]*s3;
+  }
+
+  inline double pitchToFreq(double pitch) {
+	  double freq = lut_pitch_table.getlinear(pitch);
+	  if (freq == 0)
+		  freq = 1;
+	  return freq;
+  }
+
+  inline double lin2db(double lin, double mindb, double maxdb) {
+	  double db;
+	  if (lin >= 0) {
+		  db = lut_db_table.getlinear(LERP(mindb, maxdb, lin));
+	  }
+	  else {
+		  db = -lut_db_table.getlinear(LERP(mindb, maxdb, -lin));
+	  }
+	  return db;
+  }
 
   template <typename T>
   NDPoint<2,T> closestPointOnLine(const NDPoint<2, T>& pt, const NDPoint<2, T>& a, const NDPoint<2, T>& b)

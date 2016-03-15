@@ -29,9 +29,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __MATHUNITS__
 
 #include "Unit.h"
+#include "DSPMath.h"
 #include <cmath>
-#include <DSPMath.h>
-#include <tables.h>
 
 using namespace std;
 
@@ -299,7 +298,7 @@ namespace syn {
 	public:
 		SummerUnit(const string& a_name) :
 			Unit(a_name),
-			m_pBias(addParameter_(UnitParameter("bias", 0.0, 1.0, 1.0))),
+			m_pBias(addParameter_(UnitParameter("bias", -1.0, 1.0, 0.0))),
 			m_pScale(addParameter_(UnitParameter("bias scale", scale_selections)))
 		{
 			addInput_("[+]");
@@ -352,8 +351,7 @@ namespace syn {
 		{
 			double output = getParameter(0).getDouble();
 			int selected_scale = getParameter(1).getInt();
-			double scale = 1.0;
-			scale = scale_values[selected_scale];
+			double scale = scale_values[selected_scale];
 			output = output*scale;
 			a_outputs.setChannel(0, output);
 		};
@@ -415,7 +413,7 @@ namespace syn {
 	public:
 		LinToDbUnit(const string& a_name) :
 			Unit(a_name),
-			m_pMinDb(addParameter_(UnitParameter("min dB", -60.0, -6.0, -60.0)))
+			m_pMinDb(addParameter_(UnitParameter("min dB", -120.0, 0.0, -120.0)))
 		{
 			addInput_("in");
 			addOutput_("out");

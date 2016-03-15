@@ -25,10 +25,12 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "UnitFactory.h"
 #include "stk/Mutex.h"
 #include <map>
-#include <list>
+#include <queue>
 #include <memory>
+#include <list>
 
 using std::list;
+using std::queue;
 using std::map;
 using std::string;
 using std::shared_ptr;
@@ -180,7 +182,7 @@ namespace syn {
 		int returnId = -1;
 		shared_ptr<Unit> unit = m_factory->createUnit(a_prototypeId);
 		for (int i = 0; i <= numVoices; i++) {
-			if (i == m_allVoices.size()) { // Apply action to prototype voice at end of loop
+			if (i == numVoices) { // Apply action to prototype voice at end of loop
 				voice = m_instrument;
 				returnId = voice->addUnit(unit);
 			}

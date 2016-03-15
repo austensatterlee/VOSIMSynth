@@ -31,8 +31,8 @@ namespace syn
 		m_plug(a_plug),
 		m_isControlClicked(false)
 	{
-		UnitControlContainer::setUnitId(a_unitId);
-		UnitControlContainer::move(x, y);
+		setUnitId(a_unitId);
+		move(x, y);
 	}
 
 	void UnitControlContainer::onMouseDblClick(int a_x, int a_y, IMouseMod* a_mouseMod) {

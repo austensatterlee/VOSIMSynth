@@ -35,6 +35,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "UnitControl.h"
 #include "UnitControlContainer.h"
 #include <memory>
+#include "DefaultUnitControl.h"
 
 #define WIRE_THRESH 5
 
@@ -200,17 +201,18 @@ namespace syn {
 
 	template <typename T>
 	int CircuitPanel::_createUnit(T prototypeIdentifier, int x, int y) {
-		WDL_MutexLock lock(&mPlug->mMutex);
 		int uid = m_voiceManager->addUnit(prototypeIdentifier);
 		if (m_unitControls.size() != uid)
 			throw logic_error("unit control vector out of sync with circuit");
 
 		unsigned classId = m_unitFactory->getClassId(prototypeIdentifier);
 		UnitControl* unitCtrl;
-		if (m_unitControlMap.find(classId) != m_unitControlMap.end())
+		if (m_unitControlMap.find(classId) != m_unitControlMap.end()) {
 			unitCtrl = m_unitControlMap.at(classId)->construct(mPlug, m_voiceManager, uid, x, y);
-		else
-			unitCtrl = new DefaultUnitControl(mPlug, m_voiceManager, uid, x, y);
+		} else {
+			DefaultUnitControl defUnitCtrl;
+			unitCtrl = defUnitCtrl.construct(mPlug, m_voiceManager, uid, x, y);
+		}
 		m_unitControls.push_back(make_shared<UnitControlContainer>(mPlug, m_voiceManager, unitCtrl, uid, x, y));
 		return m_unitControls.size() - 1;
 	}

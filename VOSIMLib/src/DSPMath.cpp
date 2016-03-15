@@ -63,3 +63,4 @@ void syn::NSampleDelay::clearBuffer() {
 int syn::NSampleDelay::size() const {
 	return m_buffer.size();
 }
+

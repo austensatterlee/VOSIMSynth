@@ -19,13 +19,16 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __NDPOINT__
 #define __NDPOINT__
-/**
- * Defines a general purpose point class templated by number of dimensions.
- */
 #include <cstdarg>
+#include <array>
+
+using std::array;
 
 namespace syn
 {
+	/**
+	* Defines a general purpose point class templated by number of dimensions.
+	*/
 	template <int ND = 2, typename T = double>
 	class NDPoint
 	{
@@ -47,15 +50,17 @@ namespace syn
 			std::copy(a_pt.m_pvec, a_pt.m_pvec + ND, m_pvec);
 		}
 
-		template <typename NEW_T>
-		operator NDPoint<ND, NEW_T>()
+		template <typename FROM_T>
+		NDPoint(const NDPoint<ND, FROM_T>& a_pt)
 		{
-			NEW_T tuple[ND];
 			for (int i = 0; i < ND; i++) {
-				tuple[i] = static_cast<NEW_T>(m_pvec[i]);
+				m_pvec[i] = static_cast<T>(a_pt[i]);
 			}
-			return NDPoint<ND, NEW_T>(tuple);
 		}
+
+		NDPoint(const array<T, ND>& a_tuple) {
+			std::copy(&a_tuple[0], &a_tuple[0] + ND, m_pvec);
+		}		
 
 		/**
 		 * Variable argument constructor. Accepts one argument for each dimension.
@@ -323,6 +328,22 @@ namespace syn
 					m_pvec[i] = a_minpt[i];
 				}
 			}
+		}
+
+		static NDPoint<ND, T> max(const NDPoint<ND, T>& a_lhs, const NDPoint<ND, T>& a_rhs) {
+			NDPoint<ND, T> maxpt;
+			for (int i = 0; i < ND;i++) {
+				maxpt[i] = a_lhs[i] > a_rhs[i] ? a_lhs[i] : a_rhs[i];
+			}
+			return maxpt;
+		}
+
+		static NDPoint<ND, T> min(const NDPoint<ND, T>& a_lhs, const NDPoint<ND, T>& a_rhs) {
+			NDPoint<ND, T> minpt;
+			for (int i = 0; i < ND; i++) {
+				minpt[i] = a_lhs[i] < a_rhs[i] ? a_lhs[i] : a_rhs[i];
+			}
+			return minpt;
 		}
 	};
 

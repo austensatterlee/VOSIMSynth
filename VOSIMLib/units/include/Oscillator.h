@@ -21,6 +21,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __OSCILLATOR__
 
 #include "Unit.h"
+#include "DSPMath.h"
 #include <vector>
 
 using namespace std;

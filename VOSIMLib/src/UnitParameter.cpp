@@ -149,6 +149,8 @@ namespace syn {
 
 	bool UnitParameter::_setBool(bool a_value)
     {
+		if (getBool() == a_value)
+			return false;
         m_value = static_cast<double>(a_value);
         return true;
     }
@@ -178,6 +180,8 @@ namespace syn {
     {
         if(a_value < m_min || a_value > m_max)
             return false;
+		if (getInt() == a_value)
+			return false;
         m_value = static_cast<double>(a_value);
         return true;
     }
@@ -195,6 +199,8 @@ namespace syn {
     {
         if(a_value < m_min || a_value > m_max)
             return false;
+		if (m_value == a_value)
+			return false;
         m_value = a_value;
         return true;
     }
@@ -203,7 +209,7 @@ namespace syn {
 		m_prevValue = m_value;
 	    switch(m_type) {
 	    case Bool:
-			return _setBool(a_value);
+			return _setBool(a_value>=0.5);
 	    case Enum:
 	    case Int:
 			return _setInt(a_value);
@@ -223,8 +229,9 @@ namespace syn {
     bool UnitParameter::setNorm(double a_norm_value)
     {
 		m_prevValue = m_value;
-		a_norm_value = CLAMP(a_norm_value, 0, 1);
-        m_value = a_norm_value*(m_max - m_min) + m_min;
+        m_value = CLAMP(a_norm_value, 0, 1)*(m_max - m_min) + m_min;
+		if (m_prevValue == m_value)
+			return false;
         return true;
     }
 

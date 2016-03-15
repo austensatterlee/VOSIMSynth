@@ -24,10 +24,12 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "ADSREnvelope.h"
 #include "MathUnits.h"
 #include "include/OscilloscopeUnit.h"
-#include <Follower.h>
-#include <MemoryUnit.h>
-#include <MidiUnits.h>
-#include <StateVariableFilter.h>
+#include "Follower.h"
+#include "MemoryUnit.h"
+#include "MidiUnits.h"
+#include "StateVariableFilter.h"
+#include "fft.h"
+#include "include/SpectroscopeUnit.h"
 
 using namespace std;
 
@@ -42,6 +44,7 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
     //MakePreset("preset 1", ... );
     //MakeDefaultPreset((char *) "-", kNumPrograms);
 
+	WDL_fft_init();
     makeInstrument();
     makeGraphics();
 }
@@ -62,6 +65,7 @@ void VOSIMSynth::makeGraphics()
     m_circuitPanel = make_shared<CircuitPanel>(this, IRECT{5, 5, GUI_WIDTH - 5, GUI_HEIGHT - 5}, m_voiceManager, m_unitFactory);
 
 	m_circuitPanel->registerUnitControl(make_shared<OscilloscopeUnit>(""), make_shared<OscilloscopeUnitControl>());
+	m_circuitPanel->registerUnitControl(make_shared<SpectroscopeUnit>(""), make_shared<SpectroscopeUnitControl>());
 
     pGraphics->AttachControl(m_circuitPanel.get());
 
@@ -103,6 +107,7 @@ void VOSIMSynth::makeInstrument()
 	m_unitFactory->addUnitPrototype("MIDI", new MidiCCUnit("CC"));
 
 	m_unitFactory->addUnitPrototype("Visualizer", new OscilloscopeUnit("Oscilloscope"));
+	m_unitFactory->addUnitPrototype("Visualizer", new SpectroscopeUnit("Spectroscope"));
 
     m_voiceManager = make_shared<VoiceManager>(circ, m_unitFactory);
     m_voiceManager->setMaxVoices(8);

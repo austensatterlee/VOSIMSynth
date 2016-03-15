@@ -28,25 +28,13 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <Unit.h>
 #include <UnitControl.h>
 #include <DSPMath.h>
+#include "DefaultUnitControl.h"
 
 namespace syn {
 	class OscilloscopeUnit : public Unit
 	{	
 	public:
-		OscilloscopeUnit(const string& a_name) :
-			Unit(a_name),
-			m_bufferIndex(0),
-			m_nBuffers(2),
-			m_pBufferSize(addParameter_(UnitParameter("buffer size", 2, 16384, 256)))
-		{
-			addInput_("in1");
-			addInput_("in2");
-			m_buffer.resize(m_nBuffers);		
-			m_bufferSize = getParameter(m_pBufferSize).getInt();
-			for (int i = 0; i < m_nBuffers; i++) {
-				m_buffer[i].resize(m_bufferSize);
-			}
-		}
+		OscilloscopeUnit(const string& a_name);
 
 		OscilloscopeUnit(const OscilloscopeUnit& a_rhs) :
 			OscilloscopeUnit(a_rhs.getName())
@@ -56,15 +44,23 @@ namespace syn {
 		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
 		
 	private:
-		inline string _getClassName() const override { return "OscilloscopeUnit"; };
+		string _getClassName() const override { return "OscilloscopeUnit"; };
 		Unit* _clone() const override { return new OscilloscopeUnit(*this);  };
+		void _sync();
 	private:
 		friend class OscilloscopeUnitControl;
 		int m_bufferIndex;
 		int m_bufferSize;
 		int m_nBuffers;
 		int m_pBufferSize;
-		vector<vector<double> > m_buffer;
+		int m_pNumPeriods;
+		int m_iPhase;
+		
+		vector<vector<double> > m_buffers;
+
+		double m_lastPhase;
+		int m_lastSync;
+		int m_syncCount;
 	};
 
 	class OscilloscopeUnitControl : public UnitControl
@@ -76,13 +72,6 @@ namespace syn {
 			m_yBounds(-1.0, 1.0),
 			m_paramControl(nullptr)
 		{}
-
-		OscilloscopeUnitControl(IPlugBase* a_plug, const shared_ptr<VoiceManager>& a_vm, int a_unitId, int a_x, int a_y) : 
-			UnitControl(a_plug, a_vm, a_unitId, a_x, a_y),
-			m_yBounds(-1.0, 1.0),
-			m_paramControl(new DefaultUnitControl(a_plug, a_vm, a_unitId, a_x, a_y)) 
-		{}
-
 
 		virtual ~OscilloscopeUnitControl() {
 			if(m_paramControl!=nullptr)
@@ -125,8 +114,8 @@ namespace syn {
 			NDPoint<2, int> lastPoint(0,0);
 			NDPoint<2, int> currPoint;
 			for (int i = 0; i < unit.m_nBuffers; i++) {
-				for (int j = 0; j < unit.m_buffer[i].size(); j++) {
-					currPoint = toScreen({ static_cast<double>(j),unit.m_buffer[i][j] }, screen_rect);
+				for (int j = 0; j < unit.m_buffers[i].size(); j++) {
+					currPoint = toScreen({ static_cast<double>(j),unit.m_buffers[i][j] }, screen_rect);
 					if (j>0)
 						a_graphics->DrawLine(&m_colors[i], static_cast<float>(lastPoint[0]), static_cast<float>(lastPoint[1]), static_cast<float>(currPoint[0]), static_cast<float>(currPoint[1]), 0, true);
 					lastPoint = currPoint;
@@ -145,6 +134,15 @@ namespace syn {
 			m_paramControl->resize({ m_size[0]-1,0 });
 		}
 	private:
+
+		OscilloscopeUnitControl(IPlugBase* a_plug, const shared_ptr<VoiceManager>& a_vm, int a_unitId, int a_x, int a_y) :
+			UnitControl(a_plug, a_vm, a_unitId, a_x, a_y),
+			m_yBounds(-1.0, 1.0)
+		{
+			DefaultUnitControl pctrl;
+			m_paramControl = pctrl.construct(a_plug, a_vm, a_unitId, a_x, a_y);
+		}
+
 		UnitControl* _construct(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, int a_unitId, int a_x, int a_y) const override 
 		{
 			return new OscilloscopeUnitControl(a_plug, a_vm, a_unitId, a_x, a_y);
@@ -163,7 +161,7 @@ namespace syn {
 		}
 	private:
 		NDPoint<2, double> m_yBounds;
-		DefaultUnitControl* m_paramControl;
+		UnitControl* m_paramControl;
 		IColor m_colors[2] = { {255,255,255,255},{255,128,128,255} };
 	};
 }

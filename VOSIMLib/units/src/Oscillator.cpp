@@ -80,7 +80,7 @@ namespace syn {
 		}
         m_phase = m_basePhase + a_phaseOffset;
 		m_phase = WRAP(m_phase,1.0);
-		if (m_phase < m_last_phase) {
+		if (1-(m_last_phase-m_phase) < 0.5) {
 			sync_();
 		}
 		m_last_phase = m_phase;

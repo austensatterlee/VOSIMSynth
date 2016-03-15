@@ -322,7 +322,7 @@ namespace syn {
     {
 		m_voiceMutex.lock();
 		int voiceInd = _getNewestVoiceIndex();
-		m_voiceMutex.unlock();
+		m_voiceMutex.unlock();		
 
 		if(voiceInd>=0) {
 			return m_allVoices[voiceInd]->getUnit(a_id);

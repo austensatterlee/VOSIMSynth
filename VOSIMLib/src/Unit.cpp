@@ -26,15 +26,15 @@ using namespace std;
 namespace syn {
 
     Unit::Unit() :
-            m_parent{nullptr},
             m_name{""},
-            m_hasTicked(false)
+            m_hasTicked(false),
+            m_parent{nullptr}
     { }
 
     Unit::Unit(const string& a_name) :
-            m_parent{nullptr},
             m_name{a_name},
-            m_hasTicked(false)
+            m_hasTicked(false),
+            m_parent{nullptr}
     { }
 
     unsigned int Unit::getClassIdentifier() const
