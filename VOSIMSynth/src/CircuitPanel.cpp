@@ -243,7 +243,6 @@ namespace syn
 	}
 
 	void CircuitPanel::OnMouseDrag(int x, int y, int dX, int dY, IMouseMod* pMod) {
-		WDL_MutexLock lock(&mPlug->mMutex);
 		if (m_lastClickedUnit >= 0) {
 			if (m_currAction == MODIFYING_UNIT) {
 				if (!m_selectedUnits.empty()) {
@@ -262,7 +261,6 @@ namespace syn
 	}
 
 	void CircuitPanel::OnMouseDblClick(int x, int y, IMouseMod* pMod) {
-		WDL_MutexLock lock(&mPlug->mMutex);
 		int currSelectedUnit = getSelectedUnit(x, y);
 		if (currSelectedUnit >= 0) {
 			shared_ptr<UnitControlContainer> unitctrl = m_unitControls.at(currSelectedUnit);
@@ -281,7 +279,6 @@ namespace syn
 	}
 
 	bool CircuitPanel::Draw(IGraphics* pGraphics) {
-		WDL_MutexLock lock(&mPlug->mMutex);
 		// Local palette
 		IColor bg_color = {255, 50, 50, 50};
 		IColor in_port_color = {255, 100, 75, 75};

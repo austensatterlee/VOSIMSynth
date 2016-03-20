@@ -23,7 +23,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "Circuit.h"
 #include "Unit.h"
 #include "UnitFactory.h"
-#include "stk/Mutex.h"
+#include <mutex>
 #include <map>
 #include <queue>
 #include <memory>
@@ -34,7 +34,7 @@ using std::queue;
 using std::map;
 using std::string;
 using std::shared_ptr;
-using stk::Mutex;
+using std::mutex;
 
 namespace syn {
 
@@ -171,7 +171,7 @@ namespace syn {
         shared_ptr<UnitFactory> m_factory;
         list<pair<EMuxAction, MuxArgs> > m_queuedActions;
 
-		Mutex m_queueMutex, m_voiceMutex;
+		mutex m_queueMutex, m_voiceMutex;
     };
 
 	template <typename T>

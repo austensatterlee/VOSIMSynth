@@ -34,10 +34,10 @@ namespace syn
     Circuit::Circuit(const string& a_name) :
             Unit(a_name)
     {
-        addInput_("left in");
-        addInput_("right in");
-        addOutput_("left out");
-        addOutput_("right out");
+        addExternalInput_("left in");
+        addExternalInput_("right in");
+        addExternalOutput_("left out");
+        addExternalOutput_("right out");		
     }
 
     Circuit::Circuit(const Circuit& a_other) :
@@ -68,8 +68,10 @@ namespace syn
 
         /* Push circuit input signals to internally connected input ports */
         for(int i=0;i< m_inputSignals.getNumChannels(); i++){
-            Signal& inputSignal = m_inputSignals.getChannel(i);
-            m_externalInputs.push(i, inputSignal);
+			if (m_inputConnections.numConnections(i)) {
+				Signal& inputSignal = m_inputSignals.getChannel(i);
+				m_externalInputs.push(i, inputSignal);
+			}
         }
 
 		// tick all internal components
@@ -173,6 +175,18 @@ namespace syn
 
 	Unit& Circuit::getUnit_(int a_unitId) {
 		return *m_units[a_unitId];
+    }
+
+	int Circuit::addExternalInput_(const string& a_name) {
+		int inputid = addInput_(a_name);
+		m_externalInputs.addPort();
+		return inputid;
+    }
+
+	int Circuit::addExternalOutput_(const string& a_name) {
+		int outputid = addOutput_(a_name);
+		m_externalOutputs.addPort();
+		return outputid;
     }
 
 	const Unit& Circuit::getUnit(int a_unitId) const

@@ -66,34 +66,6 @@ namespace syn
 	  return newx;
   }
 
-  /**
-  * N-Sample delay
-  */
-  class NSampleDelay
-  {
-  public:
-	  NSampleDelay() :
-		  m_buffer(1, 0),
-		  m_bufferSize(1),
-		  m_bufferIndex(0)
-	  {
-	  };
-
-	  double process(double a_input);
-
-	  double getPastSample(int a_offset);
-
-	  void resizeBuffer(int a_newBufSize);
-
-	  void clearBuffer();
-
-	  int size() const;
-  private:
-	  std::vector<double> m_buffer;
-	  int m_bufferSize;
-	  int m_bufferIndex;
-  };
-
   inline double blackman_harris(int a_k, size_t a_winSize) {
 	  static const double a[4] = { 0.35875, 0.48829, 0.14128, 0.01168 };
 	  double phase = a_k * 1.0 / (a_winSize - 1);

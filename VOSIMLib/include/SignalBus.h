@@ -22,7 +22,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __SIGNALBUS__
 
 #include "NamedContainer.h"
-#include <string>
 #include <vector>
 using std::vector;
 using std::string;

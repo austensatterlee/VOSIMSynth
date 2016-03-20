@@ -31,6 +31,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "Unit.h"
 #include "DSPMath.h"
 #include <cmath>
+#include "MemoryUnit.h"
 
 using namespace std;
 
@@ -77,14 +78,36 @@ namespace syn {
 	};
 
 	/**
-	* DC-remover
-	*/
+	 * Bilinear/trapezoidal integrator
+	 */
+	class BLIntegrator
+	{
+	public:
+		BLIntegrator() : m_state(0), m_normfc(0) {};
+		/**
+		 * Set normalized cutoff frequency in the range (0,1), where 1 is nyquist.
+		 */
+		void setFc(double a_newfc) { m_normfc = a_newfc/2; }		
+		double process(double a_input) {
+			a_input = m_normfc*a_input;
+			m_state = 2 * a_input + m_state;
+			return m_state;
+		}
+	private:
+		double m_state;
+		double m_normfc; /// normalized cutoff frequency
+	};
+
+	/**
+	 * DC-remover
+	 */
 	class DCRemoverUnit : public Unit {	
 	public:
 		DCRemoverUnit(const string& a_name) :
 			Unit(a_name),
-			m_pAlpha(addParameter_(UnitParameter("hp",0.0,1.0,0.95))),
-			m_g(0.0)
+			m_pAlpha(addParameter_(UnitParameter("hp",0.0,1.0,0.995))),
+			m_lastInput(0.0),
+			m_lastOutput(0.0)
 		{
 			addInput_("in");
 			addOutput_("out");
@@ -92,19 +115,18 @@ namespace syn {
 
 		DCRemoverUnit(const DCRemoverUnit& a_rhs) :
 			DCRemoverUnit(a_rhs.getName())
-		{
-
-		}
-
+		{}
 	protected:
 		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
 		{
 			double input = a_inputs.getValue(0);
 			double alpha = getParameter(m_pAlpha).getDouble();
-			// dc removal
-			double last_g = m_g;
-			m_g = input + alpha*last_g;
-			double output = m_g - last_g;
+			double gain = 0.5*(1 + alpha);
+			// dc removal			
+			input = input*gain;
+			double output = input - m_lastInput + alpha*m_lastOutput;
+			m_lastInput = input;
+			m_lastOutput = output;
 			a_outputs.setChannel(0, output);
 		}; 
 
@@ -118,7 +140,48 @@ namespace syn {
 
 	private:
 		int m_pAlpha;
-		double m_g;
+		double m_lastOutput;
+		double m_lastInput;
+	};
+
+
+	/**
+	* 1 Pole Filter (Lag)
+	*/
+	class LagUnit : public Unit
+	{
+	public:
+		LagUnit(const string& a_name) : 
+			Unit(a_name),
+			m_pFc(addParameter_(UnitParameter("fc",0.0,1.0,1.0))),
+			m_state(0.0) 
+		{
+			addInput_("in");
+			m_iFcAdd = addInput_("fc");
+			m_iFcMul = addInput_("fc[x]",1.0,Signal::EMul);
+			addOutput_("out");
+		}
+
+		LagUnit(const LagUnit& a_rhs) : LagUnit(a_rhs.getName()) {}
+	protected:
+		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override {
+			double input = a_inputs.getValue(0);
+			double fc = getParameter(m_pFc).getDouble()*a_inputs.getValue(m_iFcMul)+a_inputs.getValue(m_iFcAdd); // pitch cutoff
+			fc = 10e3*CLAMP(fc, 0.0, 1.0) / getFs();
+			double wc = 2*tan(PI * fc / 2.0);
+			double gain = wc / (1 + wc);
+			double trap_in = gain * (input - m_state);
+			double output = trap_in + m_state;
+			m_state = trap_in + output;
+			a_outputs.setChannel(0, output);
+		}
+	private:
+		string _getClassName() const override { return "LagUnit";  };
+		Unit* _clone() const override { return new LagUnit(*this);  };
+	private:
+		int m_pFc;
+		int m_iFcAdd, m_iFcMul;
+		double m_state;
 	};
 
 	/**
@@ -150,7 +213,8 @@ namespace syn {
         {
             return "FullRectifierUnit";
         }
-        virtual Unit* _clone() const { return new FullRectifierUnit(*this); }
+
+	    Unit* _clone() const override { return new FullRectifierUnit(*this); }
     };
 
 	/**
@@ -183,7 +247,8 @@ namespace syn {
 		{
 			return "HalfRectifierUnit";
 		}
-		virtual Unit* _clone() const { return new HalfRectifierUnit(*this); }
+
+		Unit* _clone() const override { return new HalfRectifierUnit(*this); }
 	};
 
 	/**
@@ -222,54 +287,19 @@ namespace syn {
 	/**
 	 * Multiplies two signals together
 	 */
-	class MultiplyUnit : public Unit {
+	class MACUnit : public Unit {
 	public:
-		MultiplyUnit(const string& a_name) :
+		MACUnit(const string& a_name) :
 			Unit(a_name)
 		{
-			addInput_("[+]");
-			addInput_("[x]", 1.0, Signal::EMul);
-			addOutput_("out");
-		}
-
-		MultiplyUnit(const MultiplyUnit& a_rhs) :
-			MultiplyUnit(a_rhs.getName())
-		{
-
-		}
-	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
-		{
-			double output = 0.0;
-			output += a_inputs.getValue(0);
-			output *= a_inputs.getValue(1);
-			a_outputs.setChannel(0, output);
-		};
-	private:
-		string _getClassName() const override
-		{
-			return "MultiplyUnit";
-		}
-
-		Unit* _clone() const override { return new MultiplyUnit(*this); }
-	};
-
-	/**
-	* Multiplies a signal by a constant
-	*/
-	class GainUnit : public Unit {
-	public:
-		GainUnit(const string& a_name) :
-			Unit(a_name),
-			m_pGain(addParameter_(UnitParameter("gain", 0.0, 1.0, 1.0))),
-			m_pScale(addParameter_(UnitParameter("scale",scale_selections)))
-		{
 			addInput_("in");
-			addOutput_("out");
+			addInput_("a[x]", 1.0, Signal::EMul);
+			addInput_("b[+]");
+			addOutput_("a*in+b");
 		}
 
-		GainUnit(const MultiplyUnit& a_rhs) :
-			GainUnit(a_rhs.getName())
+		MACUnit(const MACUnit& a_rhs) :
+			MACUnit(a_rhs.getName())
 		{
 
 		}
@@ -277,8 +307,47 @@ namespace syn {
 		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
 		{
 			double output = a_inputs.getValue(0);
-			output *= getParameter(m_pGain).getDouble()*scale_values[getParameter(m_pScale).getInt()];
+			output *= a_inputs.getValue(1);
+			output += a_inputs.getValue(2);
 			a_outputs.setChannel(0, output);
+		};
+	private:
+		string _getClassName() const override
+		{
+			return "MACUnit";
+		}
+
+		Unit* _clone() const override { return new MACUnit(*this); }
+	};
+
+	/**
+	 * Applies gain to the difference between the two inputs (like an op amp)
+	 */
+	class GainUnit : public Unit {
+	public:
+		GainUnit(const string& a_name) :
+			Unit(a_name),
+			m_pGain(addParameter_(UnitParameter("gain", 0.0, 1.0, 1.0))),
+			m_pScale(addParameter_(UnitParameter("scale",scale_selections)))			
+		{
+			m_iInput = addInput_("in[+]");
+			m_iInvInput = addInput_("in[-]");
+			m_iGain = addInput_("gain[x]", 1.0, Signal::EMul);
+			addOutput_("out");
+		}
+
+		GainUnit(const GainUnit& a_rhs) :
+			GainUnit(a_rhs.getName())
+		{
+
+		}
+	protected:
+		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+		{
+			double input = a_inputs.getValue(m_iInput) - a_inputs.getValue(m_iInvInput);
+			double gain = getParameter(m_pGain).getDouble()*scale_values[getParameter(m_pScale).getInt()];
+			gain *= a_inputs.getValue(m_iGain);
+			a_outputs.setChannel(0, input*gain);
 		};
 	private:
 		string _getClassName() const override
@@ -289,6 +358,7 @@ namespace syn {
 		Unit* _clone() const override { return new GainUnit(*this); }
 	private:
 		int m_pGain, m_pScale;
+		int m_iGain, m_iInput, m_iInvInput;
 	};
 
 	/**
@@ -377,7 +447,7 @@ namespace syn {
 			addInput_("bal");
 			addOutput_("out1");
 			addOutput_("out2");
-			m_pBalance = addParameter_({ "balance",-1.0,1.0,0.0 });
+			m_pBalance = addParameter_({ "balance",0.0,1.0,0.5 });
 		}
 
 		PanningUnit(const PanningUnit& a_rhs) :
@@ -390,10 +460,10 @@ namespace syn {
 		{
 			double in1 = a_inputs.getValue(0);
 			double in2 = a_inputs.getValue(1);
-			double balance = 0.5*(getParameter(m_pBalance).getDouble()+a_inputs.getValue(2)+1);
+			double balance = getParameter(m_pBalance).getDouble()+a_inputs.getValue(2);
 			balance = CLAMP(balance, 0.0, 1.0);
-			a_outputs.setChannel(0, in1*(balance)+in2*(1 - balance));
-			a_outputs.setChannel(1, in2*(balance)+in1*(1 - balance));
+			a_outputs.setChannel(0,     balance*in1 + (1-balance)*in2);
+			a_outputs.setChannel(1, (1-balance)*in1 +     balance*in2);
 		};
 	protected:
 		int m_pBalance;

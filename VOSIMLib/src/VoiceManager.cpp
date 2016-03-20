@@ -22,7 +22,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 namespace syn {
     int VoiceManager::_createVoice(int a_note, int a_velocity)
     {
-        int vind = _findIdleVoice();
+		int vind = _findIdleVoice();
+
         m_idleVoiceStack.remove(vind);
         m_voiceStack.push_back(vind);
         m_voiceMap[a_note].push_back(vind);
@@ -42,10 +43,11 @@ namespace syn {
     void VoiceManager::_makeIdle(int a_voiceIndex)
     {
         if (m_numVoices > 0) {
-            if (m_voiceMap.find(m_allVoices[a_voiceIndex]->getNote()) != m_voiceMap.end()) {
-                m_voiceMap[m_allVoices[a_voiceIndex]->getNote()].remove(a_voiceIndex);
-                if (m_voiceMap[m_allVoices[a_voiceIndex]->getNote()].empty()) {
-                    m_voiceMap.erase(m_allVoices[a_voiceIndex]->getNote());
+			int note = m_allVoices[a_voiceIndex]->getNote();
+            if (m_voiceMap.find(note) != m_voiceMap.end()) {
+                m_voiceMap[note].remove(a_voiceIndex);
+                if (m_voiceMap[note].empty()) {
+                    m_voiceMap.erase(note);
                 }
                 m_voiceStack.remove(a_voiceIndex);
                 m_idleVoiceStack.push_front(a_voiceIndex);
@@ -178,11 +180,7 @@ namespace syn {
     int VoiceManager::_getNewestVoiceIndex()
     {
         if (m_numVoices > 0) {
-            for (VoiceList::const_reverse_iterator it = m_voiceStack.crbegin() ; it != m_voiceStack.crend() ; ++it) {
-				if (m_allVoices[*it]->isActive()) {
-					return *it;
-				}
-            }
+			return m_voiceStack.back();
         }
         return -1;
     }
@@ -190,11 +188,7 @@ namespace syn {
     int VoiceManager::_getOldestVoiceIndex()
     {
         if (m_numVoices > 0) {
-            for (VoiceList::const_iterator it = m_voiceStack.cbegin() ; it != m_voiceStack.cend() ; ++it) {
-				if (m_allVoices[*it]->isActive()) {
-					return *it;
-				}
-            }
+			return m_voiceStack.front();
         }
         return -1;
     }

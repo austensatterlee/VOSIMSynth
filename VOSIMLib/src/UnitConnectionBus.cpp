@@ -25,11 +25,7 @@ namespace syn {
 
     bool UnitConnectionBus::connect(shared_ptr<Unit> a_connectedUnit, int a_connectedPort, int a_localPort)
     {
-        UnitConnector conn{a_connectedUnit, a_connectedPort, a_localPort};
-        if(m_numPorts <= a_localPort){
-            m_ports.resize(a_localPort + 1);
-			m_numPorts = a_localPort + 1;
-        }
+        UnitConnector conn{a_connectedUnit, a_connectedPort, a_localPort};   
 
         /* Make sure we don't add duplicate connections */
         UnitPort& port = m_ports[a_localPort];
@@ -46,11 +42,9 @@ namespace syn {
     {
         UnitConnector conn{a_connectedUnit, a_connectedPort, a_localPort};
 
-#ifndef NDEBUG
         if(m_ports.size() <= a_localPort){
             return false;
         }
-#endif
 
         /* Search for connection in input port */
         UnitPort& port = m_ports[a_localPort];
@@ -63,12 +57,7 @@ namespace syn {
         return false;
     }
 
-    bool UnitConnectionBus::pull(int a_localPort, Signal& a_recipient) const
-    {
-        if(m_ports.size() <= a_localPort){
-            return false;
-        }
-
+    void UnitConnectionBus::pull(int a_localPort, Signal& a_recipient) const {
         const UnitPort& port = m_ports[a_localPort];
 		int pSize = port.size();
         for(int i=0;i<pSize;i++){
@@ -79,22 +68,15 @@ namespace syn {
             const Signal& outputChannel = conn.connectedUnit->getOutputChannel(conn.connectedPort);
 			a_recipient.accumulate(outputChannel);
         }
-        return true;
     }
 
-    bool UnitConnectionBus::push(int a_localPort, Signal& a_signal) const
-    {
-        if(m_numPorts <= a_localPort){
-            return false;
-        }
-
+    void UnitConnectionBus::push(int a_localPort, Signal& a_signal) const {
         const UnitPort& port = m_ports[a_localPort];
 		int pSize = port.size();
         for(int i=0;i<pSize;i++){
             // add outputChannel to a_recipient
 			port[i].connectedUnit->m_inputSignals.getChannel(port[i].connectedPort).accumulate(a_signal);
         }
-        return true;
     }
 
     int UnitConnectionBus::numPorts() const
@@ -102,7 +84,13 @@ namespace syn {
         return m_numPorts;
     }
 
-    bool UnitConnectionBus::disconnect(shared_ptr<Unit> a_connectedUnit)
+	int UnitConnectionBus::numConnections(int a_portNum) {
+		if (m_numPorts > a_portNum)
+			return m_ports[a_portNum].size();
+		return 0;
+    }
+
+	bool UnitConnectionBus::disconnect(shared_ptr<Unit> a_connectedUnit)
     {
         vector<pair<int,int> > garbage_list;
         // Find all connections referencing this unit and add them to the garbage list

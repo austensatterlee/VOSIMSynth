@@ -1,4 +1,5 @@
 #include "ITextSlider.h"
+#include <string>
 #include <DSPMath.h>
 
 syn::ITextSlider::ITextSlider(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, int a_unitId, int a_paramId, IRECT pR) :

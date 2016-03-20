@@ -30,9 +30,9 @@ namespace syn
 		m_bufferIndex(0),
 		m_nBuffers(2),
 		m_pBufferSize(addParameter_(UnitParameter("buffer size", bufferSizeSelections))),
-		m_pTimeSmooth(addParameter_(UnitParameter("time smooth", 0.0, 1.0, 0.5))),
+		m_pTimeSmooth(addParameter_(UnitParameter("time smooth", 0.0, 1.0, 0.1))),
 		m_samplesSinceLastUpdate(0),
-		m_pUpdatePeriod(addParameter_(UnitParameter("update interval",0.0,1.0,0.0)))
+		m_pUpdatePeriod(addParameter_(UnitParameter("update interval",0.0,1.0,0.5)))
 	{
 		addInput_("in1");
 		addInput_("in2");
@@ -44,11 +44,15 @@ namespace syn
 
 		m_inBufferSize = bufferSizeValues[getParameter(m_pBufferSize).getInt()];
 		m_outBufferSize = m_inBufferSize >> 1;
-		m_window.resize(m_inBufferSize);
 		for (int i = 0; i < m_nBuffers; i++) {
 			m_timeBuffers[i].resize(m_inBufferSize);
 			m_freqBuffers[i].resize(m_inBufferSize);
 			m_outBuffers[i].resize(m_outBufferSize);
+		}
+
+		m_window.resize(m_inBufferSize);
+		for (int i = 0; i < m_inBufferSize; i++) {
+			m_window[i] = blackman_harris(i, m_inBufferSize);
 		}
 	}
 
@@ -78,7 +82,7 @@ namespace syn
 		}
 
 		m_samplesSinceLastUpdate++;
-		int updatePeriod = CLAMP((1-getParameter(m_pUpdatePeriod).getDouble())*m_inBufferSize,0,m_inBufferSize);
+		int updatePeriod = LERP(16,m_inBufferSize, 1 - getParameter(m_pUpdatePeriod).getDouble());
 		if (m_samplesSinceLastUpdate >= updatePeriod) {
 			m_samplesSinceLastUpdate = 0;
 			for (int i = 0; i < m_nBuffers; i++) {
@@ -99,9 +103,9 @@ namespace syn
 				int argoutmin = 0, argoutmax = 0;
 				for (int j = 0; j < m_outBufferSize;j++) {
 					int k = WDL_fft_permute(m_inBufferSize, j);
-					target = sqrt(m_freqBuffers[i][k].re*m_freqBuffers[i][k].re + m_freqBuffers[i][k].im*m_freqBuffers[i][k].im);
-					target = 20 * log10(target+1e-12);
-					m_outBuffers[i][j] = m_outBuffers[i][j] + (1 - timeSmooth)*(target - m_outBuffers[i][j]);
+					target = m_freqBuffers[i][k].re*m_freqBuffers[i][k].re + m_freqBuffers[i][k].im*m_freqBuffers[i][k].im;
+					target = 10 * log10(target+1e-12);
+					m_outBuffers[i][j] = m_outBuffers[i][j] + (1.0/50.0)*(1-timeSmooth)*(target - m_outBuffers[i][j]);
 
 					if(m_outBuffers[i][j]>outmax) {
 						outmax = m_outBuffers[i][j];

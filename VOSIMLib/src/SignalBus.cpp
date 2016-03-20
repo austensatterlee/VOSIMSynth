@@ -64,7 +64,7 @@ namespace syn {
         return m_value == a_rhs.m_value;
     }
 
-    double Signal::get() const
+	double Signal::get() const
     {
         return m_value;
     }

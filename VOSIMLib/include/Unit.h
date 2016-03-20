@@ -248,13 +248,12 @@ namespace syn {
     {
         if (!m_parameters.find(a_identifier))
             return false;
-        if (m_parameters[a_identifier].set(a_value)) {
-            int id = m_parameters.getItemIndex(a_identifier);
-            onParamChange_(id);
-            return true;
-        } else {
-            return false;
-        }
+		if (m_parameters[a_identifier].set(a_value)) {
+			int id = m_parameters.getItemIndex(a_identifier);
+			onParamChange_(id);
+			return true;
+		}
+        return false;
     };
 
     template<typename ID, typename T>
@@ -266,9 +265,8 @@ namespace syn {
             int id = m_parameters.getItemIndex(a_identifier);
             onParamChange_(id);
             return true;
-        } else {
-            return false;
         }
+        return false;        
     }
 
 	template <typename ID>

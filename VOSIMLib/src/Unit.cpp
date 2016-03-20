@@ -81,8 +81,10 @@ namespace syn {
 
         /* Pull signals from inputs */
         for (int i = 0 ; i < m_inputSignals.getNumChannels() ; i++) {
-            Signal& inputChannel = m_inputSignals.getChannel(i);
-            m_inputConnections.pull(i, inputChannel);
+			if (m_inputConnections.numConnections(i)) {
+				Signal& inputChannel = m_inputSignals.getChannel(i);
+				m_inputConnections.pull(i, inputChannel);
+			}
         }
 
         m_outputSignals.clear();
@@ -101,11 +103,12 @@ namespace syn {
         int inputId = m_inputSignals.addChannel(a_name);
 		m_inputSignals.getChannel(inputId).setDefault(a_default);
 		m_inputSignals.getChannel(inputId).setChannelAccType(a_accType);
+		m_inputConnections.addPort();
 		return inputId;
     }
 
     int Unit::addOutput_(const string& a_name)
-    {
+    {		
         return m_outputSignals.addChannel(a_name);
     }
 

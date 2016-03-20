@@ -33,6 +33,35 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 using namespace std;
 
 namespace syn {	
+
+	/**
+	* General N-Sample delay
+	*/
+	class NSampleDelay
+	{
+	public:
+		NSampleDelay() :
+			m_buffer(1, 0),
+			m_bufferSize(1),
+			m_bufferIndex(0)
+		{
+		};
+
+		double process(double a_input);
+
+		double getPastSample(int a_offset);
+
+		void resizeBuffer(int a_newBufSize);
+
+		void clearBuffer();
+
+		int size() const;
+	private:
+		std::vector<double> m_buffer;
+		int m_bufferSize;
+		int m_bufferIndex;
+	};
+
 	class MemoryUnit : public Unit {
 	public:
 		MemoryUnit(const string& a_name) :

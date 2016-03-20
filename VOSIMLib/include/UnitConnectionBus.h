@@ -61,14 +61,16 @@ namespace syn
          * Pull incoming output signals from the specified port into the specified receiving signal.
          * If multiple connections are present at a port, their values are summed.
          */
-        bool pull(int a_localPort, Signal& a_recipient) const;
+        void pull(int a_localPort, Signal& a_recipient) const;
         /**
         * Push the specified output signal into the input signals connected to the specified port.
         */
-        bool push(int a_localPort, Signal& a_signal) const;
+        void push(int a_localPort, Signal& a_signal) const;
+
+		void addPort() { m_ports.push_back({}); m_numPorts += 1;  };
 
         int numPorts() const;
-
+	    int numConnections(int a_portNum);
     private:
         typedef vector<UnitConnector> UnitPort;
         vector<UnitPort> m_ports;

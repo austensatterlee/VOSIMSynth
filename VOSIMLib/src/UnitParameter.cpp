@@ -172,7 +172,7 @@ namespace syn {
 		if (m_prevValue > 0)
 			intvalue = (m_prevValue - intvalue >= 0.5) ? intvalue + 1 : intvalue;
 		else
-			intvalue = (intvalue - m_value >= 0.5) ? intvalue - 1 : intvalue;
+			intvalue = (intvalue - m_prevValue >= 0.5) ? intvalue - 1 : intvalue;
 		return intvalue;
     }
 
@@ -206,14 +206,14 @@ namespace syn {
     }
 
 	bool UnitParameter::set(double a_value) {
-		m_prevValue = m_value;
+		m_prevValue = a_value;
 	    switch(m_type) {
 	    case Bool:
 			return _setBool(a_value>=0.5);
 	    case Enum:
 	    case Int:
 			return _setInt(a_value);
-	    case Double: 
+	    case Double:
 			return _setDouble(a_value);
 		case Null:
 	    default: 
@@ -228,11 +228,10 @@ namespace syn {
 
     bool UnitParameter::setNorm(double a_norm_value)
     {
-		m_prevValue = m_value;
-        m_value = CLAMP(a_norm_value, 0, 1)*(m_max - m_min) + m_min;
-		if (m_prevValue == m_value)
-			return false;
-        return true;
+        double value = CLAMP(a_norm_value, 0, 1)*(m_max - m_min) + m_min;
+		bool retval = set(value);
+		m_value = value;
+		return retval;
     }
 
     string UnitParameter::getString() const

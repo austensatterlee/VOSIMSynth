@@ -66,7 +66,6 @@ namespace syn {
 	class OscilloscopeUnitControl : public UnitControl
 	{
 	public:
-
 		OscilloscopeUnitControl() :
 			UnitControl(),
 			m_yBounds(-1.0, 1.0),
@@ -106,8 +105,8 @@ namespace syn {
 			IRECT rect = { m_pos[0], m_pos[1], m_pos[0] + m_size[0], m_pos[1] + m_size[1] };
 			a_graphics->FillIRect(&COLOR_BLACK, &rect);			
 			m_paramControl->draw(a_graphics);
-			updateMinSize_(m_paramControl->getMinSize());
-			NDPoint<2,int> paramControlSize = m_paramControl->getMinSize();			
+			NDPoint<2, int> paramControlSize = m_paramControl->getMinSize();
+			updateMinSize_(paramControlSize+NDPoint<2,int>(50,50));
 
 			IRECT screen_rect = { rect.L,rect.T + paramControlSize[1]+1,rect.R,rect.B };
 			const OscilloscopeUnit& unit = static_cast<const OscilloscopeUnit&>(m_voiceManager->getUnit(m_unitId));

@@ -77,6 +77,7 @@ void VOSIMSynth::makeInstrument()
 	shared_ptr<Circuit> circ = make_shared<Circuit>("main");
     m_unitFactory = make_shared<UnitFactory>();
 	m_unitFactory->addUnitPrototype("Filters", new StateVariableFilter("SVF"));
+	m_unitFactory->addUnitPrototype("Filters", new LagUnit("Lag"));
 
     m_unitFactory->addUnitPrototype("Oscillators", new VosimOscillator("VOSIM"));
     m_unitFactory->addUnitPrototype("Oscillators", new BasicOscillator("Basic"));
@@ -88,21 +89,21 @@ void VOSIMSynth::makeInstrument()
     m_unitFactory->addUnitPrototype("DSP", new HalfRectifierUnit("H. Rect"));
 	m_unitFactory->addUnitPrototype("DSP", new FullRectifierUnit("F. Rect"));
 	m_unitFactory->addUnitPrototype("DSP", new MemoryUnit("Memory"));
-	m_unitFactory->addUnitPrototype("DSP", new PanningUnit("Panner"));
-	m_unitFactory->addUnitPrototype("DSP", new FollowerUnit("Follower"));
+	m_unitFactory->addUnitPrototype("DSP", new PanningUnit("Pan"));
+	m_unitFactory->addUnitPrototype("DSP", new FollowerUnit("Follow"));
 	m_unitFactory->addUnitPrototype("DSP", new DCRemoverUnit("DC Trap"));
 
 	m_unitFactory->addUnitPrototype("Math", new SummerUnit("Sum"));
-	m_unitFactory->addUnitPrototype("Math", new MultiplyUnit("Mult"));
-	m_unitFactory->addUnitPrototype("Math", new ConstantUnit("Const"));
-	m_unitFactory->addUnitPrototype("Math", new InvertingUnit("Invert"));
 	m_unitFactory->addUnitPrototype("Math", new GainUnit("Gain"));
+	m_unitFactory->addUnitPrototype("Math", new MACUnit("MAC"));
+	m_unitFactory->addUnitPrototype("Math", new InvertingUnit("Inv"));
 	m_unitFactory->addUnitPrototype("Math", new LinToDbUnit("Lin2dB"));
 	m_unitFactory->addUnitPrototype("Math", new LerpUnit("Affine"));
+	m_unitFactory->addUnitPrototype("Math", new ConstantUnit("Const"));
 
 	m_unitFactory->addUnitPrototype("MIDI", new GateUnit("Gate"));
     m_unitFactory->addUnitPrototype("MIDI", new MidiNoteUnit("Pitch"));
-	m_unitFactory->addUnitPrototype("MIDI", new NormalizedMidiNoteUnit("Norm Pitch"));
+	m_unitFactory->addUnitPrototype("MIDI", new NormalizedMidiNoteUnit("Norm. Pitch"));
 	m_unitFactory->addUnitPrototype("MIDI", new VelocityUnit("Vel"));
 	m_unitFactory->addUnitPrototype("MIDI", new MidiCCUnit("CC"));
 

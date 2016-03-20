@@ -61,12 +61,12 @@ namespace syn
 	protected:
 
 		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override {
-			double input_fc = a_inputs.getValue(m_iFcMul)*(getParameter(m_pFc).getDouble() + a_inputs.getValue(m_iFcAdd));
-			input_fc = CLAMP(input_fc, 0, 1);
-			double fc = LERP(c_minFreq, c_maxFreq, input_fc);
+			double input_fc = a_inputs.getValue(m_iFcMul)*getParameter(m_pFc).getDouble() + a_inputs.getValue(m_iFcAdd);
+			input_fc = CLAMP(input_fc, 0, 1)*128;
+			double fc = pitchToFreq(input_fc);
 			m_F = 2 * lut_sin.getlinear(0.5*fc / (getFs()*c_oversamplingFactor));
 
-			double input_res = a_inputs.getValue(m_iResMul)*(getParameter(m_pRes).getDouble() + a_inputs.getValue(m_iResAdd));
+			double input_res = a_inputs.getValue(m_iResMul)*getParameter(m_pRes).getDouble() + a_inputs.getValue(m_iResAdd);
 			input_res = CLAMP(input_res, 0, 1);
 			double res = LERP(c_minRes, c_maxRes, input_res);
 			m_Q = 1.0 / res;

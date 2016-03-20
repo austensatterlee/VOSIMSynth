@@ -23,11 +23,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <IPlug/IPlugStructs.h>
 #include <DSPMath.h>
 
-#define SCREEN_PAD_L 25
-#define X_PAD 10
-#define Y_PAD 32
-#define CELL_SIZE 32
-
 using namespace std;
 
 namespace syn
@@ -35,14 +30,26 @@ namespace syn
 	class ColorPoint : public NDPoint<4>
 	{
 	public:
-		ColorPoint(unsigned int word) :
-			NDPoint<4>(double((word >> 24) & 0xFF) * 1.0 / 0xFF, double((word >> 16) & 0xFF) * 1.0 / 0xFF, double((word >> 8) & 0xFF) * 1.0 / 0xFF, double(word & 0xFF) * 1.0 / 0xFF) {}
+		ColorPoint(unsigned int a_word) :
+			NDPoint<4>(double((a_word >> 24) & 0xFF) * 1.0 / 0xFF, double((a_word >> 16) & 0xFF) * 1.0 / 0xFF, double((a_word >> 8) & 0xFF) * 1.0 / 0xFF, double(a_word & 0xFF) * 1.0 / 0xFF) {}
 
-		ColorPoint(const NDPoint<4>& pt) :
-			NDPoint<4>(pt) { }
+		ColorPoint(const NDPoint<4>& a_pt) :
+			NDPoint<4>(a_pt) { }
+
+		ColorPoint(const IColor& a_color) :
+			ColorPoint(NDPoint<4>(a_color.A,a_color.R, a_color.G, a_color.B))
+		{}
 
 		IColor getIColor() const {
 			return IColor(int(m_pvec[0] * 0xFF), int(m_pvec[1] * 0xFF), int(m_pvec[2] * 0xFF), int(m_pvec[3] * 0xFF));
+		}
+
+		unsigned getInt() const {
+			return (int(m_pvec[0] * 0xFF) << 24) | (int(m_pvec[1] * 0xFF) << 16) | (int(m_pvec[2] * 0xFF) << 8) | int(m_pvec[3] * 0xFF);			
+		}
+
+		operator unsigned() const {
+			return getInt();
 		}
 	};
 

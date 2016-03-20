@@ -127,18 +127,18 @@ namespace syn {
 		void draw(IGraphics* a_graphics) override 
 		{
 			// Draw background
-			IColor bgcolor{ 235,0,0,0 };
+			IColor bgcolor{ 245,5,0,20 };
 			IRECT rect = { m_pos[0], m_pos[1], m_pos[0] + m_size[0], m_pos[1] + m_size[1] };
 			a_graphics->FillIRect(&bgcolor, &rect);			
 			m_paramControl->draw(a_graphics);
-			updateMinSize_(m_paramControl->getMinSize());
-			NDPoint<2,int> paramControlSize = m_paramControl->getMinSize();			
+			NDPoint<2, int> paramControlSize = m_paramControl->getMinSize();
+			updateMinSize_(paramControlSize + NDPoint<2, int>{50, 50});
 
 			IRECT screen_rect = { rect.L,rect.T + paramControlSize[1]+1,rect.R,rect.B };
 
 			///\todo optimize
 			m_unit = static_cast<const SpectroscopeUnit*>(&m_voiceManager->getUnit(m_unitId));
-			m_xBounds = { 0, log2(0.5*m_unit->getFs()) };
+			m_xBounds = { 0, log10(0.5*m_unit->getFs()) };
 
 			NDPoint<2, double> lastPoint(0,0);
 			NDPoint<2, double> currPoint;
@@ -148,7 +148,7 @@ namespace syn {
 			}
 			for (int i = 0; i < m_unit->getNumBuffers(); i++) {
 				for (int j = 0; j < m_unit->getBufferSize(); j++) {
-					currPoint = { log2(j*m_unit->getFs()*0.5/ m_unit->getBufferSize()),m_unit->getBuffer(i)[j] };
+					currPoint = { log10(j*m_unit->getFs()*0.5/ m_unit->getBufferSize()),m_unit->getBuffer(i)[j] };
 					currPoint = toScreen(currPoint,screen_rect);
 					if (j>0)
 						a_graphics->DrawLine(&c_colors[i], static_cast<float>(lastPoint[0]), static_cast<float>(lastPoint[1]), static_cast<float>(currPoint[0]), static_cast<float>(currPoint[1]), 0, true);

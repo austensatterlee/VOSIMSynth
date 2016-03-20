@@ -30,7 +30,7 @@ namespace syn
 	void VosimOscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs)
 	{
         m_num_pulses = getParameter(m_pNumPulses).getInt();
-		m_pulse_tune = CLAMP(a_inputs.getValue(m_iPulseTuneMul)*(getParameter(m_pPulseTune).getDouble() + a_inputs.getValue(m_iPulseTuneAdd)), 0, 1);
+		m_pulse_tune = CLAMP(a_inputs.getValue(m_iPulseTuneMul)*getParameter(m_pPulseTune).getDouble() + a_inputs.getValue(m_iPulseTuneAdd), 0, 1);
 		TunedOscillator::process_(a_inputs, a_outputs);
         double pulse_decay = getParameter(m_pPulseDecay).getDouble();
 
@@ -80,9 +80,9 @@ namespace syn
 			formant_freq = m_freq;
 			cos_width = 1;
 		}else {
-            double fmt_pitch_norm = CLAMP(a_inputs.getValue(m_iFmtMul)*(getParameter(m_pFmt).getDouble() + a_inputs.getValue(m_iFmtAdd)), 0, 1);
+            double fmt_pitch_norm = CLAMP(a_inputs.getValue(m_iFmtMul)*getParameter(m_pFmt).getDouble() + a_inputs.getValue(m_iFmtAdd), 0, 1);
 			formant_freq = LERP(m_freq, MAX_FMT_FREQ, fmt_pitch_norm);
-			cos_width = 1 + 8 * CLAMP(a_inputs.getValue(m_iWidthMul)*(getParameter(m_pWidth).getDouble() + a_inputs.getValue(m_iWidthAdd)), 0, 1);
+			cos_width = 1 + 8 * CLAMP(a_inputs.getValue(m_iWidthMul)*getParameter(m_pWidth).getDouble() + a_inputs.getValue(m_iWidthAdd), 0, 1);
 		}
 
 		double formant_step = formant_freq / getFs();
