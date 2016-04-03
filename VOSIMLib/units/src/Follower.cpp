@@ -23,7 +23,7 @@ syn::FollowerUnit::FollowerUnit(const string& a_name):
 	Unit(a_name),
 	m_w(0.0),
 	m_output(0.0),
-	m_pAlpha(addParameter_(UnitParameter("alpha",0.0,1.0,0.9))),
+	m_pAlpha(addParameter_(UnitParameter("alpha",0.0,1.0,0.995))),
 	m_pBeta(addParameter_(UnitParameter("beta", 0.0,1.0,0.01)))
 {
 	addInput_("in");
@@ -31,7 +31,8 @@ syn::FollowerUnit::FollowerUnit(const string& a_name):
 }
 
 syn::FollowerUnit::FollowerUnit(const FollowerUnit& a_rhs):
-	FollowerUnit(a_rhs.getName()) {}
+	FollowerUnit(a_rhs.getName())
+{}
 
 void syn::FollowerUnit::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
 	double input = a_inputs.getValue(0);

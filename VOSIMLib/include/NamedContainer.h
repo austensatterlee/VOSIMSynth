@@ -22,6 +22,14 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <stdexcept>
 
+#if defined(_MSC_VER)
+#define MSFASTCALL __fastcall
+#define GCCFASTCALL 
+#elif defined(__GNUC__)
+#define MSFASTCALL
+#define GCCFASTCALL __attribute__((fastcall))
+#endif
+
 using std::vector;
 using std::pair;
 using std::make_pair;
@@ -31,7 +39,19 @@ namespace syn {
 
     template<typename T>
     class NamedContainer {
+		vector<T> m_data;
+		vector<pair<string, int> > m_names;
+		int m_size;
     public:
+		NamedContainer() :
+			NamedContainer(16)
+		{
+		}
+		explicit NamedContainer(int a_reservesize) :
+			m_size(0)
+		{
+			m_data.reserve(a_reservesize);
+		}
         virtual ~NamedContainer(){ m_names.clear(); m_data.clear(); }
         /**
          * Add a named item to the container.
@@ -53,8 +73,12 @@ namespace syn {
         template<typename ID>
         T& operator[](const ID& a_itemID);
 
+		T& MSFASTCALL operator[](int a_itemID) GCCFASTCALL;
+
         template<typename ID>
         const T& operator[](const ID& a_itemID) const;
+
+		const T& MSFASTCALL operator[](int a_itemID) const GCCFASTCALL;
 
         /**
          * Verifies if an item is in the container, either by its name, index, or a reference to the item itself.
@@ -66,18 +90,13 @@ namespace syn {
         template<typename ID>
         string getItemName(const ID& a_itemID) const;
 
-        size_t size() const;
+        size_t MSFASTCALL size() GCCFASTCALL const;
 
-	    static int getItemIndex(int a_itemIndex);
+		int getItemIndex(int a_itemIndex) const { return a_itemIndex < m_size ? a_itemIndex : -1; }
 
-        int getItemIndex(const string& a_name) const;
+	    int getItemIndex(const string& a_name) const;
 
         int getItemIndex(const T& a_item) const;
-
-    private:
-        vector<T> m_data;
-        vector<pair<string, int> > m_names;
-		int m_size = 0;
     };
 
     template<typename T>
@@ -96,9 +115,6 @@ namespace syn {
     template<typename ID>
     bool NamedContainer<T>::remove(const ID& a_itemID){
         int itemidx = getItemIndex(a_itemID);
-        if(itemidx<0){
-            return false;
-        }
         // Check if item was named and, if so, remove its name from the list
         for(unsigned i=0;i<m_names.size();i++){
             if(m_names[i].second==itemidx){
@@ -120,14 +136,26 @@ namespace syn {
         return m_data[itemidx];
     }
 
-    template<typename T>
+	template <typename T>
+	T& NamedContainer<T>::operator[](int a_itemID)
+    {
+		return m_data[a_itemID];
+    }
+
+	template<typename T>
     template<typename ID>
     const T& NamedContainer<T>::operator[](const ID& a_itemID) const {
         int itemidx = getItemIndex(a_itemID);
         return m_data[itemidx];
     }
 
-    template<typename T>
+	template <typename T>
+	const T& NamedContainer<T>::operator[](int a_itemID) const
+    {
+		return m_data[a_itemID];
+    }
+
+	template<typename T>
     template<typename ID>
     bool NamedContainer<T>::find(const ID& a_itemID) const{
         return (getItemIndex(a_itemID) >= 0);
@@ -142,18 +170,13 @@ namespace syn {
     template<typename ID>
     string NamedContainer<T>::getItemName(const ID& a_itemID) const{
         int itemidx = getItemIndex(a_itemID);
-        // Check if item was named and, if so, remove its name from the list
+		// Check if item was named and, if so, grab its name from the list
         for(int i=0;i<m_names.size();i++){
             if(m_names[i].second==itemidx){
                 return m_names[i].first;
             }
         }
 		throw std::domain_error("Item does not exist in NamedContainer");
-    }
-
-    template<typename T>
-    int NamedContainer<T>::getItemIndex(int a_itemIndex) {
-		return a_itemIndex;
     }
 
     template<typename T>

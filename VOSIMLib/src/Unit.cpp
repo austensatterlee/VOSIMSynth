@@ -28,13 +28,17 @@ namespace syn {
     Unit::Unit() :
             m_name{""},
             m_hasTicked(false),
-            m_parent{nullptr}
+            m_parent{nullptr},
+			m_audioConfig{},
+			m_midiData{}
     { }
 
     Unit::Unit(const string& a_name) :
             m_name{a_name},
             m_hasTicked(false),
-            m_parent{nullptr}
+            m_parent{nullptr},
+			m_audioConfig{},
+			m_midiData{}
     { }
 
     unsigned int Unit::getClassIdentifier() const
@@ -43,10 +47,55 @@ namespace syn {
         return hash_fn(_getClassName());
     }
 
-    const Circuit* const Unit::getParent() const
-    {
-        return m_parent;
-    }
+	void Unit::setFs(double a_newFs)
+	{
+		m_audioConfig.fs = a_newFs;
+		onFsChange_();
+	}
+
+	void Unit::setTempo(double a_newTempo)
+	{
+		m_audioConfig.tempo = a_newTempo;
+		onTempoChange_();
+	}
+
+	void Unit::noteOn(int a_note, int a_velocity)
+	{
+		m_midiData.note = a_note;
+		m_midiData.velocity = a_velocity;
+		m_midiData.isNoteOn = true;
+		onNoteOn_();
+	}
+
+	void Unit::noteOff(int a_note, int a_velocity)
+	{
+		m_midiData.isNoteOn = false;
+		onNoteOff_();
+	}
+
+	double Unit::getFs() const
+	{
+		return m_audioConfig.fs;
+	}
+
+	double Unit::getTempo() const
+	{
+		return m_audioConfig.tempo;
+	}
+
+	bool Unit::isNoteOn() const {
+		return m_midiData.isNoteOn;
+	}
+
+	int Unit::getNote() const
+	{
+		return m_midiData.note;
+	}
+
+	int Unit::getVelocity() const
+	{
+		return m_midiData.velocity;
+	}
 
     int Unit::getNumParameters() const
     {
@@ -72,6 +121,16 @@ namespace syn {
     {
         m_name = a_name;
     }
+
+	bool Unit::isActive() const
+	{
+		return m_midiData.isNoteOn;
+	}
+
+	const Circuit* Unit::getParent() const
+	{
+		return m_parent;
+	}
 
     void Unit::tick()
     {
@@ -135,61 +194,6 @@ namespace syn {
 
     bool Unit::_disconnectInput(shared_ptr<Unit> a_fromUnit){
         return m_inputConnections.disconnect(a_fromUnit);
-    }
-
-    void Unit::setFs(double a_newFs)
-    {
-        m_audioConfig.fs = a_newFs;
-        onFsChange_();
-    }
-
-    void Unit::setTempo(double a_newTempo)
-    {
-        m_audioConfig.tempo = a_newTempo;
-        onTempoChange_();
-    }
-
-    void Unit::noteOn(int a_note, int a_velocity)
-    {
-        m_midiData.note = a_note;
-        m_midiData.velocity = a_velocity;
-        m_midiData.isNoteOn = true;
-        onNoteOn_();
-    }
-
-    void Unit::noteOff(int a_note, int a_velocity)
-    {
-        m_midiData.isNoteOn = false;
-        onNoteOff_();
-    }
-
-    double Unit::getFs() const
-    {
-        return m_audioConfig.fs;
-    }
-
-    double Unit::getTempo() const
-    {
-        return m_audioConfig.tempo;
-    }
-
-	bool Unit::isNoteOn() const {
-		return m_midiData.isNoteOn;
-    }
-
-	int Unit::getNote() const
-    {
-        return m_midiData.note;
-    }
-
-    int Unit::getVelocity() const
-    {
-        return m_midiData.velocity;
-    }
-
-    bool Unit::isActive() const
-    {
-        return m_midiData.isNoteOn;
     }
 
     Unit* Unit::clone() const

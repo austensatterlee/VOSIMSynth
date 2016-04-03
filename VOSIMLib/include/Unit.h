@@ -62,14 +62,14 @@ namespace syn {
     public:
         Unit();
 
-        Unit(const string& a_name);
+		explicit Unit(const string& a_name);
 
         virtual ~Unit()
         { };
 
-        void tick();
+        void MSFASTCALL tick() GCCFASTCALL;
 
-        void reset();
+        void MSFASTCALL reset() GCCFASTCALL;
 
         void setFs(double a_newFs);
 
@@ -92,7 +92,7 @@ namespace syn {
         //void sendMidiEvent();
         virtual bool isActive() const;
 
-        const Circuit* const getParent() const;
+        const Circuit* getParent() const;
 
         template<typename ID>
         const UnitParameter& getParameter(const ID& a_identifier) const;
@@ -160,7 +160,7 @@ namespace syn {
 		template<typename ID>
 		UnitParameter& getParameter_(const ID& a_identifier);
 
-        virtual void process_(const SignalBus& a_inputs, SignalBus& a_outputs) = 0;
+        virtual void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL = 0;
 
         int addInput_(const string& a_name, double a_default = 0.0, Signal::ChannelAccType a_accType = Signal::ChannelAccType::EAdd);
 

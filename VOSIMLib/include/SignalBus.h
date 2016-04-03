@@ -39,14 +39,14 @@ namespace syn{
         Signal();
         bool operator==(const Signal& a_rhs) const;
 
-        double get() const;
-		void accumulate(const Signal& a_sig);
-        void set(const Signal& a_newVal);
-        void set(const double& a_newVal);
+        double MSFASTCALL get() const GCCFASTCALL;
+		void MSFASTCALL accumulate(const Signal& a_sig) GCCFASTCALL;
+        void MSFASTCALL set(const Signal& a_newVal) GCCFASTCALL;
+        void MSFASTCALL set(const double& a_newVal) GCCFASTCALL;
 		void setDefault(double a_default);
 		void setChannelAccType(ChannelAccType a_accType);
 
-        void clear();
+        void MSFASTCALL clear() GCCFASTCALL;
     private:
         double m_value;
 		double m_default;
@@ -56,30 +56,35 @@ namespace syn{
     class SignalBus
     {
     public:
+		SignalBus()
+			: m_numChannels(0)
+		{}
+
         int addChannel();
         int addChannel(const string& a_name);
-        int getNumChannels() const;
+        int MSFASTCALL getNumChannels() const GCCFASTCALL;
 
-        void set(SignalBus& a_other);
-
-        template<typename ID>
-        double getValue(const ID& a_identifier) const;
+        void MSFASTCALL set(SignalBus& a_other) GCCFASTCALL;
 
         template<typename ID>
-        const Signal& getChannel(const ID& a_identifier) const;
+        double MSFASTCALL getValue(const ID& a_identifier) const GCCFASTCALL;
 
         template<typename ID>
-        Signal& getChannel(const ID& a_identifier);
+        const Signal& MSFASTCALL getChannel(const ID& a_identifier) const GCCFASTCALL;
+
+        template<typename ID>
+        Signal& MSFASTCALL getChannel(const ID& a_identifier) GCCFASTCALL;
 
         template <typename ID,typename T>
-        bool setChannel(const ID& a_identifier, const T& a_newVal);
+        void MSFASTCALL setChannel(const ID& a_identifier, const T& a_newVal) GCCFASTCALL;
 
         template<typename ID>
         string getChannelName(const ID& a_identifier) const;
 
-        void clear();
+        void MSFASTCALL clear() GCCFASTCALL;
     private:
         NamedContainer<Signal> m_signals;
+		int m_numChannels;
     };
 
     template<typename ID>
@@ -95,13 +100,9 @@ namespace syn{
     }
 
     template<typename ID, typename T>
-    bool SignalBus::setChannel(const ID& a_identifier, const T& a_newVal)
-    {
-        if(!m_signals.find(a_identifier))
-            return false;
+    void SignalBus::setChannel(const ID& a_identifier, const T& a_newVal) {
         Signal& sig = m_signals[a_identifier];
         sig.set(a_newVal);
-        return true;
     }
 
     template<typename ID>

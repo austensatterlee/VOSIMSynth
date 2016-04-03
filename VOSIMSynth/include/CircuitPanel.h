@@ -34,8 +34,9 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "Containers.h"
 #include "UnitControl.h"
 #include "UnitControlContainer.h"
-#include <memory>
 #include "DefaultUnitControl.h"
+#include <memory>
+#include <functional>
 
 #define WIRE_THRESH 5
 
@@ -55,7 +56,7 @@ namespace syn {
     class CircuitPanel : public IControl {
     public:
 
-	    CircuitPanel(IPlugBase* pPlug, IRECT pR, shared_ptr<VoiceManager> a_voiceManager, shared_ptr<UnitFactory>
+	    CircuitPanel(IPlugBase* pPlug, IRECT pR, VoiceManager* a_voiceManager, UnitFactory*
         a_factory) :
                 IControl(pPlug, pR),
                 m_voiceManager(a_voiceManager),
@@ -69,12 +70,21 @@ namespace syn {
 				m_lastSelectedUnit(-1)
 		{ };
 
-        ~CircuitPanel()
+        virtual ~CircuitPanel()
         { };
+		
+		typedef function<UnitControl*(IPlugBase*, VoiceManager*, int a_uid)> UnitControlConstructor;
 
-		void registerUnitControl(shared_ptr<Unit> a_unit, shared_ptr<UnitControl> a_unitControl);
+		template <typename UnitType, typename UnitControlType>
+	    void registerUnitControl() {
+			unsigned classId = UnitType("").getClassIdentifier();
+			m_unitControlMap[classId] = [](IPlugBase* a_plug, VoiceManager* a_vm, int a_uid)->UnitControl*
+			{
+				return UnitControl::construct<UnitControlType>(a_plug, a_vm, a_uid);
+			};
+		}
 
-        void OnMouseOver(int x, int y, IMouseMod* pMod) override;
+	    void OnMouseOver(int x, int y, IMouseMod* pMod) override;
 
         void OnMouseDown(int x, int y, IMouseMod* pMod) override;
 
@@ -142,9 +152,9 @@ namespace syn {
 			SELECTING
 		};
 		typedef vector<shared_ptr<UnitControlContainer> > UnitList;
-		shared_ptr<VoiceManager> m_voiceManager;
-		shared_ptr<UnitFactory> m_unitFactory;
-		map<unsigned, shared_ptr<UnitControl> > m_unitControlMap;
+		VoiceManager* m_voiceManager;
+		UnitFactory* m_unitFactory;
+		map<unsigned, UnitControlConstructor> m_unitControlMap;
 		UnitList m_unitControls;
 		NDPoint<2, int> m_lastMousePos;
 		IMouseMod m_lastMouseState;
@@ -173,11 +183,13 @@ namespace syn {
 
         void _deleteWire(ConnectionRecord a_conn) const;
 
-        void _generateUnitFactoryMenu(shared_ptr<IPopupMenu> main_menu, vector<shared_ptr<IPopupMenu>>& sub_menus) const;
+        void _generateUnitFactoryMenu(shared_ptr<IPopupMenu> main_menu, vector<shared_ptr<IPopupMenu> >& sub_menus) const;
 
-        int _createUnit(string proto_name, int x, int y);
+		/**
+		 * Adds a new unit to the Circuit graphs on the audio thread, then adds the respective GUI elements.
+		 */
 		template<typename T>
-	    int _createUnit(T prototypeId, int x, int y);
+	    int _createUnit(T a_prototypeId, const NDPoint<2,int>& a_pos);
 
 	    bool _checkNearestWire() const;
 
@@ -200,20 +212,26 @@ namespace syn {
     };
 
 	template <typename T>
-	int CircuitPanel::_createUnit(T prototypeIdentifier, int x, int y) {
+	int CircuitPanel::_createUnit(T prototypeIdentifier, const NDPoint<2,int>& a_pos) {
+		if(!m_unitFactory->hasClassId(prototypeIdentifier)) {
+			return -1;
+		}
 		int uid = m_voiceManager->addUnit(prototypeIdentifier);
+
+#ifndef NDEBUG
 		if (m_unitControls.size() != uid)
 			throw logic_error("unit control vector out of sync with circuit");
+#endif
 
 		unsigned classId = m_unitFactory->getClassId(prototypeIdentifier);
 		UnitControl* unitCtrl;
 		if (m_unitControlMap.find(classId) != m_unitControlMap.end()) {
-			unitCtrl = m_unitControlMap.at(classId)->construct(mPlug, m_voiceManager, uid, x, y);
+			unitCtrl = m_unitControlMap[classId](mPlug, m_voiceManager, uid);
 		} else {
-			DefaultUnitControl defUnitCtrl;
-			unitCtrl = defUnitCtrl.construct(mPlug, m_voiceManager, uid, x, y);
+			unitCtrl = UnitControl::construct<DefaultUnitControl>(mPlug, m_voiceManager, uid);
 		}
-		m_unitControls.push_back(make_shared<UnitControlContainer>(mPlug, m_voiceManager, unitCtrl, uid, x, y));
+		m_unitControls.push_back(make_shared<UnitControlContainer>(mPlug, m_voiceManager, unitCtrl, uid));
+		m_unitControls.back()->move(a_pos);
 		return m_unitControls.size() - 1;
 	}
 }

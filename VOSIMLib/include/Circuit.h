@@ -67,7 +67,7 @@ namespace syn
 	public:
 		Circuit();
 
-		Circuit(const string& a_name);
+		explicit Circuit(const string& a_name);
 
 		Circuit(const Circuit& a_other);
 
@@ -136,7 +136,7 @@ namespace syn
 		                        a_toInputPort);
 
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
 
 		void onFsChange_() override;
 

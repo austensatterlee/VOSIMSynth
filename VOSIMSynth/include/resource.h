@@ -1,9 +1,14 @@
 #define PLUG_MFR "Austen"
-#ifndef NDEBUG
+#ifdef _DEBUG
 #define PLUG_NAME "VOSIMProject-debug"
 #else
 #define PLUG_NAME "VOSIMProject"
 #endif
+
+#define IDB_KEY_BLACK 101
+#define IDB_KEY_ADG   102
+#define IDB_KEY_BE    103
+#define IDB_KEY_CF    104
 
 #define PLUG_CLASS_NAME VOSIMSynth
 
@@ -27,7 +32,7 @@
 // 4 chars, single quotes. At least one capital letter
 #define PLUG_UNIQUE_ID 'Ipef'
 // make sure this is not the same as BUNDLE_MFR
-#define PLUG_MFR_ID 'Acme'
+#define PLUG_MFR_ID 'Aust'
 
 // ProTools stuff
 
@@ -37,9 +42,9 @@ const int PLUG_TYPE_IDS[2] = { 'EFN1', 'EFN2' };
 const int PLUG_TYPE_IDS_AS[2] = { 'EFA1', 'EFA2' }; // AudioSuite
 #endif
 
-#define PLUG_MFR_PT "Austen\nAusten\nAcme"
+#define PLUG_MFR_PT "Austen\nAusten\nAust"
 #define PLUG_NAME_PT "VOSIMSynth\nIPEF"
-#define PLUG_TYPE_PT "Effect"
+#define PLUG_TYPE_PT "None"
 #define PLUG_DOES_AUDIOSUITE 1
 
 /* PLUG_TYPE_PT can be "None", "EQ", "Dynamics", "PitchShift", "Reverb", "Delay", "Modulation",
@@ -68,7 +73,7 @@ instrument determined by PLUG _IS _INST
 
 // on MSVC, you must define SA_API in the resource editor preprocessor macros as well as the c++ ones
 #if defined(SA_API) && !defined(OS_IOS)
-#include "app_wrapper/app_resource.h"
+#include "app_resource.h"
 #endif
 
 // vst3 stuff
@@ -83,4 +88,3 @@ instrument determined by PLUG _IS _INST
 "Spatial|Fx", "OnlyRT", "OnlyOfflineProcess", "Mono", "Stereo",
 "Surround"
 */
-

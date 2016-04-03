@@ -22,36 +22,147 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "NDPoint.h"
 #include <IPlug/IPlugStructs.h>
 #include <DSPMath.h>
+#include <functional>
 
 using namespace std;
 
 namespace syn
 {
-	class ColorPoint : public NDPoint<4>
+	/**
+	 * Stores an RGB color as a 3-dimenional point.
+	 */
+	class ColorPoint : public NDPoint<3>
 	{
 	public:
+		ColorPoint(const NDPoint<3>& a_pt) :
+			NDPoint<3>(a_pt),
+			m_iColor{ 0xFF, int(a_pt[0] * 0xFF), int(a_pt[1] * 0xFF), int(a_pt[2] * 0xFF) }
+		{
+		}
+
 		ColorPoint(unsigned int a_word) :
-			NDPoint<4>(double((a_word >> 24) & 0xFF) * 1.0 / 0xFF, double((a_word >> 16) & 0xFF) * 1.0 / 0xFF, double((a_word >> 8) & 0xFF) * 1.0 / 0xFF, double(a_word & 0xFF) * 1.0 / 0xFF) {}
-
-		ColorPoint(const NDPoint<4>& a_pt) :
-			NDPoint<4>(a_pt) { }
-
+			ColorPoint(NDPoint<3>(double((a_word >> 16) & 0xFF) * 1.0 / 0xFF, double((a_word >> 8) & 0xFF) * 1.0 / 0xFF, double(a_word & 0xFF) * 1.0 / 0xFF)) {}
+		
 		ColorPoint(const IColor& a_color) :
-			ColorPoint(NDPoint<4>(a_color.A,a_color.R, a_color.G, a_color.B))
-		{}
+			ColorPoint(NDPoint<3>(double(a_color.R), double(a_color.G), double(a_color.B)) / 255.0) {}
 
-		IColor getIColor() const {
-			return IColor(int(m_pvec[0] * 0xFF), int(m_pvec[1] * 0xFF), int(m_pvec[2] * 0xFF), int(m_pvec[3] * 0xFF));
+		const IColor& getIColor() const {
+			return m_iColor;
 		}
 
 		unsigned getInt() const {
-			return (int(m_pvec[0] * 0xFF) << 24) | (int(m_pvec[1] * 0xFF) << 16) | (int(m_pvec[2] * 0xFF) << 8) | int(m_pvec[3] * 0xFF);			
+			return unsigned(0xFF << 24) | unsigned(m_pvec[0] * 0xFF) << 16 | unsigned(m_pvec[1] * 0xFF) << 8 | unsigned(m_pvec[2] * 0xFF);
 		}
 
-		operator unsigned() const {
-			return getInt();
+		LICE_pixel getLicePixel() const {
+			return LICE_RGBA(int(m_pvec[0] * 0xFF), int(m_pvec[1] * 0xFF), int(m_pvec[2] * 0xFF), 0xFF);
 		}
+
+		int R() const {
+			return m_pvec[0] * 0xFF;
+		}
+		int G() const {
+			return m_pvec[1] * 0xFF;
+		}
+		int B() const {
+			return m_pvec[2] * 0xFF;
+		}
+		float r() const {
+			return m_pvec[0];
+		}
+		float g() const {
+			return m_pvec[1];
+		}
+		float b() const {
+			return m_pvec[2];
+		}
+	private:
+		IColor m_iColor;
 	};
+
+	class CachedImage
+	{
+	public:		
+		CachedImage() {}
+
+		/*
+		 Check that the watched values have not changed since the last time this method was called.
+		 If they have, use the provided callable to refresh the cache by passing the cached bitmap as an argument.
+		 The callable should have the signature void(LICE_IBitmap*).
+		 */
+		bool draw(function<void (LICE_IBitmap*)> f) {	
+			bool redraw_cond = isDirty();
+			if (redraw_cond) {
+				f(&m_cachedImage);
+				m_size[0] = m_cachedImage.getWidth();
+				m_size[1] = m_cachedImage.getHeight();
+				m_isFirstUpdate = false;
+			}
+			return redraw_cond;
+		}
+		void blit(LICE_IBitmap* a_dst, const NDPoint<2,int>& a_pos, const NDPoint<2,int>& a_size, double alphaWeight=1.0, int mode=-1) {
+			if(mode<0) {
+				mode = LICE_BLIT_MODE_COPY | LICE_BLIT_FILTER_BILINEAR | LICE_BLIT_USE_ALPHA;
+			}
+			LICE_ScaledBlit(a_dst, &m_cachedImage, a_pos[0], a_pos[1], a_size[0], a_size[1], \
+				0.0f, 0.0f, float(m_size[0]), float(m_size[1]), float(alphaWeight), mode);
+		}
+		void blit(LICE_IBitmap* a_dst, const NDPoint<2,int>& a_pos, double alphaWeight=1.0, int mode=-1) {
+			blit(a_dst, a_pos, m_size, alphaWeight, mode);
+		}
+		template<typename... Args>
+		void resetConds(const Args*... args) {
+			m_conds.clear();
+			addConds(args...);
+		}
+		template<typename First, typename... Rest>
+		void addConds(const First* first,const Rest*... rest) {
+			m_conds.push_back(make_unique<UpdateConditionImplem<First> >(first));
+			addConds(rest...);
+		}
+		template<typename Only>
+		void addConds(const Only* only) {
+			m_conds.push_back(make_unique<UpdateConditionImplem<Only> >(only));
+		}
+		int width() const { return m_size[0]; }
+		int height() const { return m_size[1]; }
+		NDPoint<2, int> size() const { return m_size; }
+		bool isDirty() const { 
+			bool redraw_cond = m_isFirstUpdate;
+			for (int i = 0; i < m_conds.size();i++) {
+				redraw_cond |= m_conds[i]->update();
+			} 
+			return redraw_cond;
+		}
+	private:
+		class UpdateCondition
+		{
+		public:
+			virtual ~UpdateCondition() {}
+			virtual bool update() = 0;
+		};
+
+		template<typename T>
+		class UpdateConditionImplem : public UpdateCondition
+		{		
+			T lastval;
+			const T* currval;
+		public:	
+			explicit UpdateConditionImplem(const T* a_addr) 
+				: currval(a_addr) 
+			{}
+
+			bool update() override {
+				bool result = *currval != lastval;
+				lastval = *currval;
+				return result;
+			}
+		};
+		LICE_SysBitmap m_cachedImage;
+		NDPoint<2,int> m_size;
+		vector<unique_ptr<UpdateCondition> > m_conds;
+		bool m_isFirstUpdate = true;
+	};	
 
 	inline IRECT makeIRectFromPoints(int x1, int y1, int x2, int y2) {
 		int L = MIN(x1, x2);

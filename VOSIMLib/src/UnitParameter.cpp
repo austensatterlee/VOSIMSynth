@@ -61,7 +61,8 @@ namespace syn {
     }
 
     UnitParameter::UnitParameter(const string &a_name,
-                                 const vector<string> &a_optionNames) :
+                                 const vector<string> &a_optionNames,
+								 const vector<double>& a_optionValues) :
             m_name(a_name),
             m_min(0),
             m_max(a_optionNames.size()-1),
@@ -70,8 +71,14 @@ namespace syn {
     {
 		m_defaultValue = 0;
 		m_value = m_prevValue = m_defaultValue;
+		double optionValue;
         for (int i = 0; i < a_optionNames.size(); i++) {
-            m_displayTexts.push_back({i, a_optionNames[i]});
+			if (a_optionValues.empty()) {
+				optionValue = i;
+			} else {
+				optionValue = a_optionValues[i];
+			}
+            m_displayTexts.push_back({optionValue, a_optionNames[i]});
         }
     }
 
@@ -195,6 +202,16 @@ namespace syn {
 		return m_prevValue;
     }
 
+	double UnitParameter::getEnum() const {
+		int idx = getInt();
+		return m_displayTexts[idx].m_value;
+    }
+
+	double UnitParameter::getPrevEnum() const {
+		int idx = getPrevInt();
+		return m_displayTexts[idx].m_value;	
+    }
+
 	bool UnitParameter::_setDouble(double a_value)
     {
         if(a_value < m_min || a_value > m_max)
@@ -237,21 +254,25 @@ namespace syn {
     string UnitParameter::getString() const
     {
         int idx = getInt();
-        // Search for a matching display text
-        for(int i=0;i<m_displayTexts.size();i++){
-            if (idx == m_displayTexts[i].m_value){
-                return m_displayTexts[i].m_text;
-            }
+        // Check for a matching display text
+		if (idx>=0 && idx < m_displayTexts.size()){
+			return m_displayTexts[idx].m_text;
         }
+        
 
         // If no display text is found, return numeral
         char displaytext[MAX_PARAM_STR_LEN];
-        if (m_displayPrecision == 0) {
+        if (getType()!=Double) {
             snprintf(displaytext, MAX_PARAM_STR_LEN, "%d", idx);
         } else {
             double displayValue = getDouble();
-            snprintf(displaytext, MAX_PARAM_STR_LEN, "%.*f", m_displayPrecision, displayValue);
-        }
+			// if precision is set, print out that many digits
+			if (getPrecision() > 0) {
+				snprintf(displaytext, MAX_PARAM_STR_LEN, "%.*f", m_displayPrecision, displayValue);
+			}else {
+				snprintf(displaytext, MAX_PARAM_STR_LEN, "%g", displayValue);
+			}
+        } 
         return string(displaytext);
     }
 }

@@ -27,9 +27,8 @@ namespace syn
 	void CircuitPanel::_deleteUnit(int unitctrlid) {
 		WDL_MutexLock lock(&mPlug->mMutex);
 
-		// Delete unit from instrument		
-		m_voiceManager->queueAction(DeleteUnit, {unitctrlid});
-
+		// Delete unit from instrument
+		m_voiceManager->queueAction(DeleteUnit, { unitctrlid });
 
 		// Update selection
 		for (int i = 0; i < m_selectedUnits.size(); i++) {
@@ -37,7 +36,8 @@ namespace syn
 			if (selectedId == unitctrlid) {
 				m_selectedUnits.erase(m_selectedUnits.begin() + i);
 				i--;
-			} else if (selectedId > unitctrlid) {
+			}
+			else if (selectedId > unitctrlid) {
 				m_selectedUnits[i]--;
 			}
 		}
@@ -46,12 +46,12 @@ namespace syn
 		m_unitControls.erase(m_unitControls.begin() + unitctrlid);
 		for (int i = 0; i < m_unitControls.size(); i++) {
 			if (i >= unitctrlid) {
-				m_unitControls.at(i)->setUnitId(i);
+				m_unitControls[i]->setUnitId(i);
 			}
 		}
 
 		m_lastClickedUnit = -1;
-		m_lastClickedUnitPort = {UnitPortVector::Null, 0};
+		m_lastClickedUnitPort = { UnitPortVector::Null, 0 };
 	}
 
 	void CircuitPanel::_deleteWire(ConnectionRecord a_conn) const {
@@ -59,15 +59,15 @@ namespace syn
 		switch (a_conn.type) {
 		case ConnectionRecord::Internal:
 			m_voiceManager->queueAction(DisconnectInternal,
-				                            {a_conn.from_id, a_conn.from_port, a_conn.to_id, a_conn.to_port});
+			{ a_conn.from_id, a_conn.from_port, a_conn.to_id, a_conn.to_port });
 			break;
 		case ConnectionRecord::Input:
 			m_voiceManager->queueAction(DisconnectInput,
-				                            {a_conn.from_port, a_conn.to_id, a_conn.to_port});
+			{ a_conn.from_port, a_conn.to_id, a_conn.to_port });
 			break;
 		case ConnectionRecord::Output:
 			m_voiceManager->queueAction(DisconnectOutput,
-				                            {a_conn.from_port, a_conn.to_id, a_conn.to_port});
+			{ a_conn.from_port, a_conn.to_id, a_conn.to_port });
 			break;
 		case ConnectionRecord::Null:
 		default:
@@ -75,19 +75,16 @@ namespace syn
 		}
 	}
 
-	void CircuitPanel::registerUnitControl(shared_ptr<Unit> a_unit, shared_ptr<UnitControl> a_unitControl) {
-		m_unitControlMap[a_unit->getClassIdentifier()] = a_unitControl;
-	}
-
 	void CircuitPanel::OnMouseOver(int x, int y, IMouseMod* pMod) {
 		m_lastSelectedUnit = getSelectedUnit(x, y);
 		if (m_lastSelectedUnit >= 0) { // propogate to unit
 			m_unitControls[m_lastSelectedUnit]->onMouseOver(x, y, pMod);
-		} else { // detect nearest wire
+		}
+		else { // detect nearest wire
 			m_lastMousePos = NDPoint<2, int>(x, y);
 			m_nearestWire = _getNearestWire(m_lastMousePos[0], m_lastMousePos[1]);
 		}
-		m_lastMousePos = {x,y};
+		m_lastMousePos = NDPoint<2, int>{ x,y };
 		m_lastMouseState = *pMod;
 	}
 
@@ -100,15 +97,14 @@ namespace syn
 		}
 
 		if (pMod->L) {
-			if (m_lastClickedUnit >= 0) { // clicking on a unit					
-				
-				shared_ptr<UnitControlContainer> unitCtrl = m_unitControls.at(m_lastClickedUnit);
+			if (m_lastClickedUnit >= 0) { // clicking on a unit
+				shared_ptr<UnitControlContainer> unitCtrl = m_unitControls[m_lastClickedUnit];
 				// propogate event to unit
 				if (!unitCtrl->onMouseDown(x, y, pMod)) { // if the only the container was hit
 					if (pMod->S) {
 						if (!isUnitInSelection(m_lastClickedUnit)) { // add unit to selection when shift is pressed
 							m_selectedUnits.push_back(m_lastClickedUnit);
-							m_unitControls.at(m_lastClickedUnit)->setIsSelected(true);
+							m_unitControls[m_lastClickedUnit]->setIsSelected(true);
 						}
 						else { // remove unit already in selection when shift is pressed
 							removeUnitFromSelection(m_lastClickedUnit);
@@ -120,56 +116,58 @@ namespace syn
 
 				if (m_lastClickedUnitPort.type != UnitPortVector::Null) {
 					m_currAction = CONNECTING;
-				} else {
+				}
+				else {
 					m_currAction = MODIFYING_UNIT;
 				}
-			} else if (m_lastClickedCircuitPort.type != CircuitPortVector::Null) { // clicking on a circuit port
+			}
+			else if (m_lastClickedCircuitPort.type != CircuitPortVector::Null) { // clicking on a circuit port
 				m_currAction = CONNECTING;
 				clearUnitSelection();
-			} else { // clicking on open space
+			}
+			else { // clicking on open space
 				m_currAction = SELECTING;
 			}
 		}
-		m_lastMousePos = {x,y};
+		m_lastMousePos = NDPoint<2, int>{ x,y };
 		m_lastMouseState = *pMod;
 		m_lastClickPos = m_lastMousePos;
 		m_lastClickState = *pMod;
 	}
 
-	int CircuitPanel::_createUnit(string proto_name, int x, int y) {
-		int prototypeId = m_unitFactory->getPrototypeId(proto_name);
-		return _createUnit(prototypeId, x, y);
-	}
-
 	void CircuitPanel::OnMouseUp(int x, int y, IMouseMod* pMod) {
 		int currSelectedUnit = getSelectedUnit(x, y);
 		CircuitPortVector currSelectedCircuitPort = getSelectedPort(x, y);
-		UnitPortVector currSelectedUnitPort = {UnitPortVector::Null,0};
+		UnitPortVector currSelectedUnitPort = { UnitPortVector::Null,0 };
 		if (currSelectedUnit >= 0) {
-			currSelectedUnitPort = m_unitControls.at(currSelectedUnit)->getSelectedPort(x, y);
+			currSelectedUnitPort = m_unitControls[currSelectedUnit]->getSelectedPort(x, y);
 		}
 
 		if (m_currAction == CONNECTING) {
-			MuxArgs args;
+			ActionArgs args;
 			if (currSelectedCircuitPort.type && currSelectedCircuitPort.type == m_lastClickedUnitPort.type) { // connect unit port to circuit port
 				args.id1 = currSelectedCircuitPort.id;
 				args.id2 = m_lastClickedUnit;
 				args.id3 = m_lastClickedUnitPort.id;
 				if (m_lastClickedUnitPort.type == UnitPortVector::Input) {
 					m_voiceManager->queueAction(ConnectInput, args);
-				} else {
+				}
+				else {
 					m_voiceManager->queueAction(ConnectOutput, args);
 				}
-			} else if (m_lastClickedCircuitPort.type && m_lastClickedCircuitPort.type == currSelectedUnitPort.type) { // connect circuit port to unit port
+			}
+			else if (m_lastClickedCircuitPort.type && m_lastClickedCircuitPort.type == currSelectedUnitPort.type) { // connect circuit port to unit port
 				args.id1 = m_lastClickedCircuitPort.id;
 				args.id2 = currSelectedUnit;
 				args.id3 = currSelectedUnitPort.id;
 				if (currSelectedUnitPort.type == UnitPortVector::Input) {
 					m_voiceManager->queueAction(ConnectInput, args);
-				} else {
+				}
+				else {
 					m_voiceManager->queueAction(ConnectOutput, args);
 				}
-			} else if (m_lastClickedUnit != currSelectedUnit &&
+			}
+			else if (m_lastClickedUnit != currSelectedUnit &&
 				m_lastClickedUnitPort.type && currSelectedUnitPort.type &&
 				m_lastClickedUnitPort.type != currSelectedUnitPort.type) {
 				if (m_lastClickedUnitPort.type == UnitPortVector::Input) { //connect unit input to unit output
@@ -178,7 +176,8 @@ namespace syn
 					args.id3 = m_lastClickedUnit;
 					args.id4 = m_lastClickedUnitPort.id;
 					m_voiceManager->queueAction(ConnectInternal, args);
-				} else { //connect unit output to unit input
+				}
+				else { //connect unit output to unit input
 					args.id1 = m_lastClickedUnit;
 					args.id2 = m_lastClickedUnitPort.id;
 					args.id3 = currSelectedUnit;
@@ -186,13 +185,15 @@ namespace syn
 					m_voiceManager->queueAction(ConnectInternal, args);
 				}
 			}
-		} else if (m_currAction == SELECTING) {
+		}
+		else if (m_currAction == SELECTING) {
 			IRECT selection = makeIRectFromPoints(m_lastClickPos[0], m_lastClickPos[1], x, y);
 			m_selectedUnits = getUnitSelection(selection);
 			for (int unitId : m_selectedUnits) {
-				m_unitControls.at(unitId)->setIsSelected(true);
+				m_unitControls[unitId]->setIsSelected(true);
 			}
-		} else if (m_lastClickState.R) { // Right click  
+		}
+		else if (m_lastClickState.R) { // Right click
 			if (_checkNearestWire()) { // Right clicking on a wire
 				// Open wire context menu if distance to nearest wire is below threshold
 				shared_ptr<IPopupMenu> wire_menu = make_shared<IPopupMenu>();
@@ -207,7 +208,8 @@ namespace syn
 						break;
 					}
 				}
-			} else if (currSelectedUnit >= 0) { // Right clicking on a unit
+			}
+			else if (currSelectedUnit >= 0) { // Right clicking on a unit
 				IPopupMenu unitmenu;
 				unitmenu.AddItem("Delete");
 				IPopupMenu* selectedmenu = mPlug->GetGUI()->CreateIPopupMenu(&unitmenu, x, y);
@@ -218,27 +220,30 @@ namespace syn
 							while (m_selectedUnits.size() > 0) {
 								_deleteUnit(m_selectedUnits.back());
 							}
-						} else {
+						}
+						else {
 							_deleteUnit(currSelectedUnit);
 						}
 					}
 				}
-			} else if (currSelectedUnit == -1) { // Right clicking on open space     
-				// Open unit builder context menu
+			}
+			else if (currSelectedUnit == -1) { // Right clicking on open space
+			 // Open unit builder context menu
 				shared_ptr<IPopupMenu> main_menu = make_shared<IPopupMenu>();
 				vector<shared_ptr<IPopupMenu>> sub_menus;
 				_generateUnitFactoryMenu(main_menu, sub_menus);
 				IPopupMenu* selectedMenu = mPlug->GetGUI()->CreateIPopupMenu(main_menu.get(), x, y);
 				if (selectedMenu) {
 					string unit_name = selectedMenu->GetItemText(selectedMenu->GetChosenItemIdx());
-					_createUnit(unit_name, x, y);
+					_createUnit(unit_name, NDPoint<2,int>{ x, y });
 				}
 			}
-		} else if (currSelectedUnit >= 0) { // propogate event to unit if no other actions need to be taken
-			m_unitControls.at(currSelectedUnit)->onMouseUp(x, y, pMod);
+		}
+		else if (currSelectedUnit >= 0) { // propogate event to unit if no other actions need to be taken
+			m_unitControls[currSelectedUnit]->onMouseUp(x, y, pMod);
 		}
 		m_currAction = NONE;
-		m_lastMousePos = {x,y};
+		m_lastMousePos = NDPoint<2, int>{ x,y };
 		m_lastMouseState = *pMod;
 	}
 
@@ -247,43 +252,44 @@ namespace syn
 			if (m_currAction == MODIFYING_UNIT) {
 				if (!m_selectedUnits.empty()) {
 					for (int unitId : m_selectedUnits) {
-						shared_ptr<UnitControlContainer> unitCtrl = m_unitControls.at(unitId);
+						shared_ptr<UnitControlContainer> unitCtrl = m_unitControls[unitId];
 						unitCtrl->onMouseDrag(x, y, dX, dY, pMod);
 					}
-				} else {
-					shared_ptr<UnitControlContainer> unitCtrl = m_unitControls.at(m_lastClickedUnit);
+				}
+				else {
+					shared_ptr<UnitControlContainer> unitCtrl = m_unitControls[m_lastClickedUnit];
 					unitCtrl->onMouseDrag(x, y, dX, dY, pMod);
 				}
 			}
 		}
-		m_lastMousePos = {x,y};
+		m_lastMousePos = NDPoint<2, int>{ x,y };
 		m_lastMouseState = *pMod;
 	}
 
 	void CircuitPanel::OnMouseDblClick(int x, int y, IMouseMod* pMod) {
 		int currSelectedUnit = getSelectedUnit(x, y);
 		if (currSelectedUnit >= 0) {
-			shared_ptr<UnitControlContainer> unitctrl = m_unitControls.at(currSelectedUnit);
+			shared_ptr<UnitControlContainer> unitctrl = m_unitControls[currSelectedUnit];
 			unitctrl->onMouseDblClick(x, y, pMod);
 		}
-		m_lastClickPos = {x, y};
+		m_lastClickPos = NDPoint<2, int>{ x, y };
 		m_lastClickState = *pMod;
 	}
 
 	void CircuitPanel::OnMouseWheel(int x, int y, IMouseMod* pMod, int d) {
 		int currSelectedUnit = getSelectedUnit(x, y);
 		if (currSelectedUnit >= 0) {
-			shared_ptr<UnitControlContainer> unitctrl = m_unitControls.at(currSelectedUnit);
+			shared_ptr<UnitControlContainer> unitctrl = m_unitControls[currSelectedUnit];
 			unitctrl->onMouseWheel(x, y, pMod, d);
 		}
 	}
 
 	bool CircuitPanel::Draw(IGraphics* pGraphics) {
 		// Local palette
-		IColor bg_color = {255, 50, 50, 50};
-		IColor in_port_color = {255, 100, 75, 75};
-		IColor out_port_color = {255, 75, 75, 100};
-		IText textfmt{12, &COLOR_BLACK, "Helvetica", IText::kStyleNormal, IText::kAlignNear, 0, IText::kQualityClearType};
+		IColor bg_color = { 255, 50, 50, 50 };
+		IColor in_port_color = { 255, 100, 75, 75 };
+		IColor out_port_color = { 255, 75, 75, 100 };
+		IText textfmt{ 12, &COLOR_BLACK, "Helvetica", IText::kStyleNormal, IText::kAlignNear, 0, IText::kQualityClearType };
 		pGraphics->FillIRect(&bg_color, &mRECT);
 
 		// Handle continuous mouse click events
@@ -318,7 +324,7 @@ namespace syn
 		for (int i = 0; i < nUnits; i++) {
 			if (i >= m_unitControls.size())
 				continue;
-			m_unitControls.at(i)->draw(pGraphics);
+			m_unitControls[i]->draw(pGraphics);
 		}
 
 		// Draw internal connections (connections between units)
@@ -326,19 +332,19 @@ namespace syn
 			int nPorts = circ.getUnit(toUnitId).getNumInputs();
 			for (int toPortId = 0; toPortId < nPorts; toPortId++) {
 				vector<pair<int, int>> connections = circ.getConnectionsToInternalInput(toUnitId, toPortId);
-				UnitPortVector inPort = {UnitPortVector::Input, toPortId};
-				NDPoint<2, int> pt1 = m_unitControls.at(toUnitId)->getPortPos(inPort);
+				UnitPortVector inPort = { UnitPortVector::Input, toPortId };
+				NDPoint<2, int> pt1 = m_unitControls[toUnitId]->getPortPos(inPort);
 				for (int j = 0; j < connections.size(); j++) {
 					int fromUnitId = connections[j].first;
 					int fromPortId = connections[j].second;
 					if (fromUnitId >= m_unitControls.size())
 						continue;
-					UnitPortVector outPort = {UnitPortVector::Output, fromPortId};
-					NDPoint<2, int> pt2 = m_unitControls.at(fromUnitId)->getPortPos(outPort);
+					UnitPortVector outPort = { UnitPortVector::Output, fromPortId };
+					NDPoint<2, int> pt2 = m_unitControls[fromUnitId]->getPortPos(outPort);
 
 					pGraphics->DrawLine(&COLOR_BLACK, pt1[0], pt1[1], pt2[0], pt2[1], nullptr, true);
-					if (_checkNearestWire() && m_nearestWire.record == ConnectionRecord{ConnectionRecord::Internal, fromUnitId,
-						fromPortId, toUnitId, toPortId}) {
+					if (_checkNearestWire() && m_nearestWire.record == ConnectionRecord{ ConnectionRecord::Internal, fromUnitId,
+						fromPortId, toUnitId, toPortId }) {
 						pGraphics->DrawLine(&COLOR_GREEN, pt1[0], pt1[1], pt2[0], pt2[1], nullptr, true);
 					}
 				}
@@ -349,24 +355,24 @@ namespace syn
 		int nInputPorts = circ.getNumInputs();
 		IRECT m_portIRECT;
 		for (int i = 0; i < nInputPorts; i++) {
-			m_portIRECT = getPortRect({CircuitPortVector::Input,i});
+			m_portIRECT = getPortRect({ CircuitPortVector::Input,i });
 			pGraphics->FillIRect(&in_port_color, &m_portIRECT);
 		}
 
 		// Draw wires to circuit input
 		for (int circPortId = 0; circPortId < nInputPorts; circPortId++) {
-			NDPoint<2, int> pt1 = getPortPos({CircuitPortVector::Input, circPortId});
+			NDPoint<2, int> pt1 = getPortPos({ CircuitPortVector::Input, circPortId });
 			vector<pair<int, int>> connections = circ.getConnectionsToCircuitInput(circPortId);
 			for (int j = 0; j < connections.size(); j++) {
 				int toUnitId = connections[j].first;
 				int toPortId = connections[j].second;
 				if (toUnitId >= m_unitControls.size())
 					continue;
-				UnitPortVector toPort = {UnitPortVector::Input, toPortId};
-				NDPoint<2, int> pt2 = m_unitControls.at(toUnitId)->getPortPos(toPort);
+				UnitPortVector toPort = { UnitPortVector::Input, toPortId };
+				NDPoint<2, int> pt2 = m_unitControls[toUnitId]->getPortPos(toPort);
 				pGraphics->DrawLine(&COLOR_BLACK, pt1[0], pt1[1], pt2[0], pt2[1], nullptr, true);
 				if (_checkNearestWire() &&
-					m_nearestWire.record == ConnectionRecord{ConnectionRecord::Input, 0, circPortId, toUnitId, toPortId}) {
+					m_nearestWire.record == ConnectionRecord{ ConnectionRecord::Input, 0, circPortId, toUnitId, toPortId }) {
 					pGraphics->DrawLine(&COLOR_GREEN, pt1[0], pt1[1], pt2[0], pt2[1], nullptr, true);
 				}
 			}
@@ -375,23 +381,23 @@ namespace syn
 		// Draw circuit outputs
 		int nOutputPorts = circ.getNumOutputs();
 		for (int i = 0; i < nOutputPorts; i++) {
-			m_portIRECT = getPortRect({CircuitPortVector::Output,i});
+			m_portIRECT = getPortRect({ CircuitPortVector::Output,i });
 			pGraphics->FillIRect(&out_port_color, &m_portIRECT);
 		}
 		// Draw wires to circuit output
 		for (int circPortId = 0; circPortId < nOutputPorts; circPortId++) {
-			NDPoint<2, int> pt1 = getPortPos({CircuitPortVector::Output, circPortId});
+			NDPoint<2, int> pt1 = getPortPos({ CircuitPortVector::Output, circPortId });
 			vector<pair<int, int>> connections = circ.getConnectionsToCircuitOutput(circPortId);
 			for (int j = 0; j < connections.size(); j++) {
 				int fromUnitId = connections[j].first;
 				int fromPortId = connections[j].second;
 				if (fromUnitId >= m_unitControls.size())
 					continue;
-				UnitPortVector toPort = {UnitPortVector::Output, fromPortId};
-				NDPoint<2, int> pt2 = m_unitControls.at(fromUnitId)->getPortPos(toPort);
+				UnitPortVector toPort = { UnitPortVector::Output, fromPortId };
+				NDPoint<2, int> pt2 = m_unitControls[fromUnitId]->getPortPos(toPort);
 				pGraphics->DrawLine(&COLOR_BLACK, pt1[0], pt1[1], pt2[0], pt2[1], nullptr, true);
 				if (_checkNearestWire() &&
-					m_nearestWire.record == ConnectionRecord{ConnectionRecord::Output, 0, circPortId, fromUnitId, fromPortId}) {
+					m_nearestWire.record == ConnectionRecord{ ConnectionRecord::Output, 0, circPortId, fromUnitId, fromPortId }) {
 					pGraphics->DrawLine(&COLOR_GREEN, pt1[0], pt1[1], pt2[0], pt2[1], nullptr, true);
 				}
 			}
@@ -399,8 +405,9 @@ namespace syn
 
 		if (m_currAction == CONNECTING) {
 			pGraphics->DrawLine(&COLOR_GRAY, m_lastClickPos[0], m_lastClickPos[1], m_lastMousePos[0], m_lastMousePos[1],
-			                    nullptr, true);
-		} else if (m_currAction == SELECTING) {
+				nullptr, true);
+		}
+		else if (m_currAction == SELECTING) {
 			IRECT selection = makeIRectFromPoints(m_lastClickPos[0], m_lastClickPos[1], m_lastMousePos[0], m_lastMousePos[1]);
 			pGraphics->DrawRect(&COLOR_GRAY, &selection);
 		}
@@ -430,14 +437,14 @@ namespace syn
 
 	void CircuitPanel::clearUnitSelection() {
 		for (int unitId : m_selectedUnits) {
-			m_unitControls.at(unitId)->setIsSelected(false);
+			m_unitControls[unitId]->setIsSelected(false);
 		}
 		m_selectedUnits.clear();
 	}
 
 	bool CircuitPanel::addUnitToSelection(int a_unitid) {
-		if(!isUnitInSelection(a_unitid)) {
-			m_unitControls.at(a_unitid)->setIsSelected(true);
+		if (!isUnitInSelection(a_unitid)) {
+			m_unitControls[a_unitid]->setIsSelected(true);
 			m_selectedUnits.push_back(a_unitid);
 			return true;
 		}
@@ -447,7 +454,7 @@ namespace syn
 	bool CircuitPanel::removeUnitFromSelection(int a_unitId) {
 		vector<int>::iterator idx = find(m_selectedUnits.begin(), m_selectedUnits.end(), a_unitId);
 		if (idx != m_selectedUnits.end()) {
-			m_unitControls.at(a_unitId)->setIsSelected(false);
+			m_unitControls[a_unitId]->setIsSelected(false);
 			m_selectedUnits.erase(idx);
 			return true;
 		}
@@ -462,8 +469,8 @@ namespace syn
 		const Circuit& circ = m_voiceManager->getCircuit();
 		double min_dist = -1;
 		double min_input_port_dist = -1;
-		ConnectionRecord min_dist_connection = {ConnectionRecord::Null, 0, 0, 0, 0};
-		NDPoint<2, int> pt = {x, y};
+		ConnectionRecord min_dist_connection = { ConnectionRecord::Null, 0, 0, 0, 0 };
+		NDPoint<2, int> pt( x, y );
 
 		// Check wires between internal units
 		for (shared_ptr<UnitControlContainer> unitControl : m_unitControls) {
@@ -471,22 +478,22 @@ namespace syn
 			int nPorts = circ.getUnit(toUnitId).getNumInputs();
 			for (int toPortId = 0; toPortId < nPorts; toPortId++) {
 				vector<pair<int, int>> connections = circ.getConnectionsToInternalInput(toUnitId, toPortId);
-				UnitPortVector inPort = {UnitPortVector::Input, toPortId};
-				NDPoint<2, int> pt1 = m_unitControls.at(toUnitId)->getPortPos(inPort);
+				UnitPortVector inPort = { UnitPortVector::Input, toPortId };
+				NDPoint<2, int> pt1 = m_unitControls[toUnitId]->getPortPos(inPort);
 				for (int j = 0; j < connections.size(); j++) {
 					int fromUnitId = connections[j].first;
 					if (fromUnitId >= m_unitControls.size())
 						continue;
 					int fromPortId = connections[j].second;
-					UnitPortVector outPort = {UnitPortVector::Output, fromPortId};
-					NDPoint<2, int> pt2 = m_unitControls.at(fromUnitId)->getPortPos(outPort);
+					UnitPortVector outPort = { UnitPortVector::Output, fromPortId };
+					NDPoint<2, int> pt2 = m_unitControls[fromUnitId]->getPortPos(outPort);
 
 					double dist = pointLineDistance(pt, pt1, pt2);
 					if (dist < min_dist || min_dist == -1) {
 						min_dist = dist;
 						min_input_port_dist = closestPointOnLine(pt, pt1, pt2).distFrom(pt1) * (1.0 / pt1.distFrom(pt2));
-						min_dist_connection = {ConnectionRecord::Internal, fromUnitId, fromPortId,
-							toUnitId, toPortId};
+						min_dist_connection = { ConnectionRecord::Internal, fromUnitId, fromPortId,
+							toUnitId, toPortId };
 					}
 				}
 			}
@@ -494,40 +501,40 @@ namespace syn
 		// Check wires to circuit input
 		int nInputPorts = circ.getNumInputs();
 		for (int circPortId = 0; circPortId < nInputPorts; circPortId++) {
-			NDPoint<2, int> pt1 = getPortPos({CircuitPortVector::Input, circPortId});
+			NDPoint<2, int> pt1 = getPortPos({ CircuitPortVector::Input, circPortId });
 			vector<pair<int, int>> connections = circ.getConnectionsToCircuitInput(circPortId);
 			for (int j = 0; j < connections.size(); j++) {
 				int toUnitId = connections[j].first;
 				int toPortId = connections[j].second;
 				if (toUnitId >= m_unitControls.size())
 					continue;
-				UnitPortVector toPort = {UnitPortVector::Input, toPortId};
-				NDPoint<2, int> pt2 = m_unitControls.at(toUnitId)->getPortPos(toPort);
+				UnitPortVector toPort = { UnitPortVector::Input, toPortId };
+				NDPoint<2, int> pt2 = m_unitControls[toUnitId]->getPortPos(toPort);
 				double dist = pointLineDistance(pt, pt1, pt2);
 				if (dist < min_dist || min_dist == -1) {
 					min_dist = dist;
 					min_input_port_dist = closestPointOnLine(pt, pt1, pt2).distFrom(pt1) * (1.0 / pt1.distFrom(pt2));
-					min_dist_connection = {ConnectionRecord::Input, 0, circPortId, toUnitId, toPortId};
+					min_dist_connection = { ConnectionRecord::Input, 0, circPortId, toUnitId, toPortId };
 				}
 			}
 		}
 		// Check wires to circuit output
 		int nOutputPorts = circ.getNumOutputs();
 		for (int circPortId = 0; circPortId < nOutputPorts; circPortId++) {
-			NDPoint<2, int> pt1 = getPortPos({CircuitPortVector::Output, circPortId});
+			NDPoint<2, int> pt1 = getPortPos({ CircuitPortVector::Output, circPortId });
 			vector<pair<int, int>> connections = circ.getConnectionsToCircuitOutput(circPortId);
 			for (int j = 0; j < connections.size(); j++) {
 				int fromUnitId = connections[j].first;
 				int fromPortId = connections[j].second;
 				if (fromUnitId >= m_unitControls.size())
 					continue;
-				UnitPortVector toPort = {UnitPortVector::Output, fromPortId};
-				NDPoint<2, int> pt2 = m_unitControls.at(fromUnitId)->getPortPos(toPort);
+				UnitPortVector toPort = { UnitPortVector::Output, fromPortId };
+				NDPoint<2, int> pt2 = m_unitControls[fromUnitId]->getPortPos(toPort);
 				double dist = pointLineDistance(pt, pt1, pt2);
 				if (dist < min_dist || min_dist == -1) {
 					min_dist = dist;
 					min_input_port_dist = closestPointOnLine(pt, pt1, pt2).distFrom(pt1) * (1.0 / pt1.distFrom(pt2));
-					min_dist_connection = {ConnectionRecord::Output, 0, circPortId, fromUnitId, fromPortId};
+					min_dist_connection = { ConnectionRecord::Output, 0, circPortId, fromUnitId, fromPortId };
 				}
 			}
 		}
@@ -548,7 +555,7 @@ namespace syn
 		int nRecords = connRecords.size();
 		serialized.Put<int>(&nRecords);
 		for (int i = 0; i < nRecords; i++) {
-			const ConnectionRecord& conn = connRecords.at(i);
+			const ConnectionRecord& conn = connRecords[i];
 			serialized.Put(&conn.type);
 			serialized.Put<int>(&conn.from_id);
 			serialized.Put<int>(&conn.from_port);
@@ -580,13 +587,13 @@ namespace syn
 			chunkpos = serialized->Get<int>(&rec.to_port, chunkpos);
 			switch (rec.type) {
 			case ConnectionRecord::Internal:
-				m_voiceManager->doAction(ConnectInternal, {rec.from_id, rec.from_port, rec.to_id, rec.to_port});
+				m_voiceManager->queueAction(ConnectInternal, { rec.from_id, rec.from_port, rec.to_id, rec.to_port });
 				break;
 			case ConnectionRecord::Input:
-				m_voiceManager->doAction(ConnectInput, {rec.from_port, rec.to_id, rec.to_port});
+				m_voiceManager->queueAction(ConnectInput, { rec.from_port, rec.to_id, rec.to_port });
 				break;
 			case ConnectionRecord::Output:
-				m_voiceManager->doAction(ConnectOutput, {rec.from_port, rec.to_id, rec.to_port});
+				m_voiceManager->queueAction(ConnectOutput, { rec.from_port, rec.to_id, rec.to_port });
 				break;
 			case ConnectionRecord::Null:
 			default:
@@ -633,12 +640,14 @@ namespace syn
 
 		unsigned unit_class_id;
 		chunkpos = chunk->Get<unsigned>(&unit_class_id, chunkpos);
-		int unitId = _createUnit(unit_class_id, x, y);
-		m_unitControls[unitId]->resize(NDPoint<2, int>(w, h));
+		int unitId = _createUnit(unit_class_id, NDPoint<2, int>{ x, y });
+		bool success = unitId >= 0;
+		if (success)
+			m_unitControls[unitId]->resize(NDPoint<2, int>(w, h));
 
 		unsigned nparams;
 		chunkpos = chunk->Get<unsigned>(&nparams, chunkpos);
-		MuxArgs args;
+		ActionArgs args;
 		for (int paramId = 0; paramId < nparams; paramId++) {
 			double paramValue;
 			int paramPrecision;
@@ -647,16 +656,18 @@ namespace syn
 			args.id1 = unitId;
 			args.id2 = paramId;
 			args.value = paramValue;
-			m_voiceManager->doAction(ModifyParam, args);
+			if (success)
+				m_voiceManager->queueAction(ModifyParam, args);
 			args.id3 = paramPrecision;
-			m_voiceManager->doAction(ModifyParamPrecision, args);
+			if (success)
+				m_voiceManager->queueAction(ModifyParamPrecision, args);
 		}
 
 		return chunkpos;
 	}
 
 	void CircuitPanel::_generateUnitFactoryMenu(shared_ptr<IPopupMenu> main_menu,
-	                                            vector<shared_ptr<IPopupMenu>>& sub_menus) const {
+		vector<shared_ptr<IPopupMenu>>& sub_menus) const {
 		const set<string>& group_names = m_unitFactory->getGroupNames();
 		int i = 0;
 		for (const string& group_name : group_names) {
@@ -702,8 +713,8 @@ namespace syn
 
 	IRECT CircuitPanel::getPortRect(const CircuitPortVector& a_vec) const {
 		NDPoint<2, int> portPos = getPortPos(a_vec);
-		return {portPos[0] - c_portSize / 2, portPos[1] - c_portSize / 2, portPos[0] + c_portSize / 2,
-			portPos[1] + c_portSize / 2};
+		return{ portPos[0] - c_portSize / 2, portPos[1] - c_portSize / 2, portPos[0] + c_portSize / 2,
+			portPos[1] + c_portSize / 2 };
 	}
 
 	CircuitPortVector CircuitPanel::getSelectedPort(int x, int y) const {
@@ -713,18 +724,17 @@ namespace syn
 
 		IRECT portRect;
 		for (int i = 0; i < nInputPorts; i++) {
-			portRect = getPortRect({CircuitPortVector::Input, i});
+			portRect = getPortRect({ CircuitPortVector::Input, i });
 			if (portRect.Contains(x, y)) {
-				return {CircuitPortVector::Input, i};
+				return{ CircuitPortVector::Input, i };
 			}
 		}
 		for (int i = 0; i < nOutputPorts; i++) {
-			portRect = getPortRect({CircuitPortVector::Output, i});
+			portRect = getPortRect({ CircuitPortVector::Output, i });
 			if (portRect.Contains(x, y)) {
-				return {CircuitPortVector::Output, i};
+				return{ CircuitPortVector::Output, i };
 			}
 		}
-		return {CircuitPortVector::Null, 0};
+		return{ CircuitPortVector::Null, 0 };
 	}
 }
-

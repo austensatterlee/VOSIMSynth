@@ -23,175 +23,197 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "Circuit.h"
 #include "Unit.h"
 #include "UnitFactory.h"
-#include <mutex>
+#include "AtomicContainers.h"
 #include <map>
-#include <queue>
 #include <memory>
-#include <list>
 
-using std::list;
-using std::queue;
+#define MAX_QUEUE_SIZE 64
+#define MAX_VOICES_PER_NOTE 8
+
 using std::map;
 using std::string;
 using std::shared_ptr;
-using std::mutex;
 
-namespace syn {
-
-    /* Modifying actions that should be queued and processed in between samples */
-    enum EMuxAction {
-        ModifyParam,
-        ModifyParamNorm,
+namespace syn
+{
+	/* Modifying actions that should be queued and processed in between samples */
+	enum EActionType
+	{
+		ModifyParam,
+		ModifyParamNorm,
 		ModifyParamPrecision,
-        DeleteUnit,
-        ConnectInput,
-        ConnectOutput,
-        ConnectInternal,
-        DisconnectInput,
-        DisconnectOutput,
-        DisconnectInternal
-    };
+		CreateUnit,
+		DeleteUnit,
+		ConnectInput,
+		ConnectOutput,
+		ConnectInternal,
+		DisconnectInput,
+		DisconnectOutput,
+		DisconnectInternal
+	};
 
-    struct MuxArgs {
-        int id1;
-        int id2;
-        union{
-            int id3;
-            double value;
-        };
-        int id4;
-    };
+	struct ActionArgs
+	{
+		int id1;
+		int id2;
 
-    class VoiceManager {
-    public:
-        VoiceManager(shared_ptr<Circuit> a_proto, shared_ptr<UnitFactory> a_factory) :
-				m_numVoices(0),
-                m_maxVoices(0),
-                m_tickCount(0),
-				m_isPlaying(false),
-				m_instrument(a_proto), 
-                m_factory(a_factory)
-        {
-        };
+		union
+		{
+			int id3;
+			double value;
+		};
 
-        ~VoiceManager()
-        {
-            m_allVoices.clear();
-        }
+		int id4;
+	};
 
-        void tick(const double& a_left_input, const double& a_right_input, double& a_left_output, double& a_right_output);
+	struct ActionMessage
+	{
+		EActionType action;
+		ActionArgs args;
+	};
 
-        /**
-         * Queue an action to be processed before the next sample.
-         *
-         * The following is a description of parameter signatures corresponding to each possible action:
-         * ModifyParam:				(int unit_id, int param_id, double value)
-         * ModifyParamNorm:			(int unit_id, int param_id, double norm_value)
+	class VoiceManager
+	{
+	public:
+		VoiceManager(shared_ptr<Circuit> a_proto, shared_ptr<UnitFactory> a_factory) :
+			m_queuedActions(MAX_QUEUE_SIZE),
+			m_numActiveVoices(0),
+			m_maxVoices(0),
+			m_bufferSize(1),
+			m_tickCount(0),
+			m_isPlaying(false),
+			m_voiceStack(0),
+			m_idleVoiceStack(0),
+			m_garbageList(0),
+			m_instrument(a_proto),
+			m_factory(a_factory) { };
+
+		~VoiceManager() {
+			m_allVoices.clear();
+		}
+
+		void MSFASTCALL tick(const double* a_left_input, const double* a_right_input, double* a_left_output, double* a_right_output) GCCFASTCALL;
+
+		/**
+		 * Queue an action to be processed before the next sample.
+		 *
+		 * The following is a description of parameter signatures corresponding to each possible action:
+		 * ModifyParam:				(int unit_id, int param_id, double value)
+		 * ModifyParamNorm:			(int unit_id, int param_id, double norm_value)
 		 * ModifyParamPrecision:	(int unit_id, int param_id, int new_precision)
-         * DeleteUnit:				(int unit_id)
-         * ConnectInput:			(int circuit_input_id, int unit_id, int unit_input_id)
-         * ConnectOutput:			(int circuit_output_id, int unit_id, int output_port_id)
-         * ConnectInternal:			(int from_unit_id, int from_unit_port, int to_unit_id, int to_unit_port)
-         * DisconnectInput:			(int circuit_input_id, int unit_id, int input_port_id)
-         * DisconnectOutput:		(int circuit_output_id, int unit_id, int output_port_id)
-         * DisconnectInternal:		(int from_unit_id, int from_unit_port, int to_unit_id, int to_unit_port
-         */
-		unsigned queueAction(EMuxAction a_action, const MuxArgs& a_params);
-
-        void doAction(EMuxAction a_action, const MuxArgs& a_params);
+		 * DeleteUnit:				(int unit_id)
+		 * ConnectInput:			(int circuit_input_id, int unit_id, int unit_input_id)
+		 * ConnectOutput:			(int circuit_output_id, int unit_id, int output_port_id)
+		 * ConnectInternal:			(int from_unit_id, int from_unit_port, int to_unit_id, int to_unit_port)
+		 * DisconnectInput:			(int circuit_input_id, int unit_id, int input_port_id)
+		 * DisconnectOutput:		(int circuit_output_id, int unit_id, int output_port_id)
+		 * DisconnectInternal:		(int from_unit_id, int from_unit_port, int to_unit_id, int to_unit_port
+		 */
+		unsigned queueAction(EActionType a_action, const ActionArgs& a_params);
 
 		unsigned getTickCount() const;
 
-        void setFs(double a_newFs);
+		void setFs(double a_newFs);
 
-        void setTempo(double a_newTempo);
+		void setBufferSize(int a_blockSize);
 
-        void noteOn(int a_noteNumber, int a_velocity);
+		void setTempo(double a_newTempo);
 
-        void noteOff(int a_noteNumber, int a_velocity);
+		void noteOn(int a_noteNumber, int a_velocity);
+
+		void noteOff(int a_noteNumber, int a_velocity);
 
 		void sendControlChange(int a_cc, double a_newvalue);
 
-        void setMaxVoices(unsigned a_newMax);
+		void setMaxVoices(unsigned a_newMax);
 
-        int getNumVoices() const;
+		int getNumVoices() const;
 
-        int getMaxVoices() const;
+		int getMaxVoices() const;
+
+		/**
+		 * Get the voice numbers that are currently playing the given note
+		 */
+		vector<int> getNoteVoices(int a_note);
 
 		bool isPlaying() const;
 
-        const Unit& getUnit(int a_id);
+		const Unit& getUnit(int a_id);
 
-		template<typename T>
-        int addUnit(T a_prototypeId);
+		int getNumUnits() const;
 
-        int getNumUnits() const;
+		const Circuit& getCircuit() const;
 
-        const Circuit& getCircuit() const;
+		/** 
+		 * \todo: This method is not thread safe. Instead message passing should be reimplemented in a way that allows the NRT
+		 * thread to be notified when results are available (e.g. to retrieve the unitid). Perhaps a struct with an arbitrary chunk of parameter data,
+		 * a function pointer to the method doing work in the realtime thread, and a function pointer to a method that queues a notification of completion
+		 * for the NRT thread to poll.
+		 */
+		template <typename T>
+		int addUnit(T a_prototypeId);
 
-    private:
-        /**
-         * Processes all actions from the action queue
-         */
-        void _flushActionQueue();
+	private:
+		/**
+		 * Processes all actions from the action queue
+		 */
+		void _flushActionQueue();
 
-        /**
-         * Processes the next action from the action queue
-         */
-        void _processAction(EMuxAction a_action, const MuxArgs& a_params);
+		/**
+		 * Processes the next action from the action queue
+		 */
+		void _processAction(const ActionMessage& a_msg);
 
-        int _createVoice(int a_note, int a_velocity);
+		int _createVoice(int a_note, int a_velocity);
 
-        void _makeIdle();
+		void _makeIdle(int a_voiceIndex);
 
-        void _makeIdle(int a_voiceIndex);
+		int _findIdleVoice();
 
-        int _findIdleVoice();
+		int _getLowestVoiceIndex() const;
 
-        int _getLowestVoiceIndex();
+		int _getNewestVoiceIndex() const;
 
-        int _getNewestVoiceIndex();
+		int _getOldestVoiceIndex() const;
 
-        int _getOldestVoiceIndex();
+		int _getHighestVoiceIndex() const;
 
-        int _getHighestVoiceIndex();
+	private:
+		typedef AtomicQueue<int> VoiceList;
+		typedef map<int, VoiceList> VoiceMap;
 
-    private:
-        typedef list<int> VoiceList;
-        typedef map<int, VoiceList> VoiceMap;
-        int m_numVoices; /// Number of active voices
-        int m_maxVoices; /// Total number of voices (idle voices + active voices)
+		AtomicQueue<ActionMessage> m_queuedActions;
+
+		unsigned m_numActiveVoices; /// Number of active voices
+		unsigned m_maxVoices; /// Total number of voices (idle voices + active voices)
+		unsigned m_bufferSize;
 		unsigned m_tickCount;
 		bool m_isPlaying;
-        VoiceMap m_voiceMap;
-        VoiceList m_voiceStack;
-        VoiceList m_idleVoiceStack;
-        vector<shared_ptr<Circuit> > m_allVoices;
-        shared_ptr<Circuit> m_instrument;
-        shared_ptr<UnitFactory> m_factory;
-        list<pair<EMuxAction, MuxArgs> > m_queuedActions;
 
-		mutex m_queueMutex, m_voiceMutex;
-    };
+		VoiceMap m_voiceMap;
+		VoiceList m_voiceStack;
+		VoiceList m_idleVoiceStack;
+		VoiceList m_garbageList; /// pre-allocated storage for collecting idle voices during audio processing
+		vector<shared_ptr<Circuit>> m_allVoices;
+		shared_ptr<Circuit> m_instrument;
+		shared_ptr<UnitFactory> m_factory;
+	};
 
 	template <typename T>
 	int VoiceManager::addUnit(T a_prototypeId) {
 		shared_ptr<Circuit> voice;
 		// Apply action to all voices
 		int numVoices = m_allVoices.size();
-		int returnId = -1;
+
 		shared_ptr<Unit> unit = m_factory->createUnit(a_prototypeId);
-		for (int i = 0; i <= numVoices; i++) {
-			if (i == numVoices) { // Apply action to prototype voice at end of loop
-				voice = m_instrument;
-				returnId = voice->addUnit(unit);
-			}
-			else {
-				voice = m_allVoices[i];
-				returnId = voice->addUnit(shared_ptr<Unit>(unit->clone()));
-			}
+
+		int returnId = m_instrument->addUnit(unit);
+		for (int i = 0; i < numVoices; i++) {
+			voice = m_allVoices[i];
+			returnId = voice->addUnit(shared_ptr<Unit>(unit->clone()));
 		}
 		return returnId;
 	}
 }
 #endif
+

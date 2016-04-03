@@ -28,8 +28,15 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __DSPMATH__
 #define __DSPMATH__
 #include "NDPoint.h"
-#include <vector>
 #include "tables.h"
+
+#if defined(_MSC_VER)
+#define MSFASTCALL __fastcall
+#define GCCFASTCALL 
+#elif defined(__GNUC__)
+#define MSFASTCALL
+#define GCCFASTCALL __attribute__((fastcall))
+#endif
 
 #define LERP(A,B,F) (((B)-(A))*(F)+(A))
 #define INVLERP(A,B,X) (((X)-(A))/((B)-(A)))
@@ -39,75 +46,68 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn
 {
-  inline int gcd(int a, int b)
-  {
-    int c;
-    while (a != 0)
-    {
-      c = a; a = b%a;  b = c;
-    }
-    return b;
-  }
+	inline int gcd(int a, int b) {
+		while (a != 0) {
+			int c = a;
+			a = b % a;
+			b = c;
+		}
+		return b;
+	}
 
-  template<typename T>
-  T WRAP(T x, T modulo)
-  {
-	  if (!modulo)
-		  return x;
-	  T newx = x;
-	  while(newx >= modulo)
-	  {
-		  newx -= modulo;
-	  }
-	  while(newx<0)
-	  {
-		  newx += modulo;
-	  }
-	  return newx;
-  }
+	template <typename T>
+	T WRAP(T x, T modulo) {
+		if (!modulo)
+			return x;
+		T newx = x;
+		while (newx >= modulo) {
+			newx -= modulo;
+		}
+		while (newx < 0) {
+			newx += modulo;
+		}
+		return newx;
+	}
 
-  inline double blackman_harris(int a_k, size_t a_winSize) {
-	  static const double a[4] = { 0.35875, 0.48829, 0.14128, 0.01168 };
-	  double phase = a_k * 1.0 / (a_winSize - 1);
-	  double s1 = lut_sin.getlinear(phase + 0.25);
-	  double s2 = lut_sin.getlinear(2 * phase + 0.25);
-	  double s3 = lut_sin.getlinear(3 * phase + 0.25);
-	  return a[0] - a[1]*s1 + a[2]*s2 - a[3]*s3;
-  }
+	inline double blackman_harris(int a_k, size_t a_winSize) {
+		static const double a[4] = {0.35875, 0.48829, 0.14128, 0.01168};
+		double phase = a_k * 1.0 / (a_winSize - 1);
+		double s1 = lut_sin.getlinear(phase + 0.25);
+		double s2 = lut_sin.getlinear(2 * phase + 0.25);
+		double s3 = lut_sin.getlinear(3 * phase + 0.25);
+		return a[0] - a[1] * s1 + a[2] * s2 - a[3] * s3;
+	}
 
-  inline double pitchToFreq(double pitch) {
-	  double freq = lut_pitch_table.getlinear(pitch);
-	  if (freq == 0)
-		  freq = 1;
-	  return freq;
-  }
+	inline double pitchToFreq(double pitch) {
+		double freq = lut_pitch_table.getlinear(pitch);
+		if (freq == 0)
+			freq = 1;
+		return freq;
+	}
 
-  inline double lin2db(double lin, double mindb, double maxdb) {
-	  double db;
-	  if (lin >= 0) {
-		  db = lut_db_table.getlinear(LERP(mindb, maxdb, lin));
-	  }
-	  else {
-		  db = -lut_db_table.getlinear(LERP(mindb, maxdb, -lin));
-	  }
-	  return db;
-  }
+	inline double lin2db(double lin, double mindb, double maxdb) {
+		double db;
+		if (lin >= 0) {
+			db = lut_db_table.getlinear(LERP(mindb, maxdb, lin));
+		} else {
+			db = -lut_db_table.getlinear(LERP(mindb, maxdb, -lin));
+		}
+		return db;
+	}
 
-  template <typename T>
-  NDPoint<2,T> closestPointOnLine(const NDPoint<2, T>& pt, const NDPoint<2, T>& a, const NDPoint<2, T>& b)
-  {
-	  
-	  double ablength = a.distFrom(b);
-	  NDPoint<2, double> abnorm = static_cast<NDPoint<2,double>>(a - b) * (1.0/ ablength);
-	  double proj = static_cast<NDPoint<2, double>>(pt - b).dot(abnorm);
-	  proj = CLAMP(proj, 0, ablength);
-	  return b + abnorm*proj;
-  }
+	template <typename T>
+	NDPoint<2, T> closestPointOnLine(const NDPoint<2, T>& pt, const NDPoint<2, T>& a, const NDPoint<2, T>& b) {
 
-  template <typename T>
-  double pointLineDistance(const NDPoint<2,T>& pt, const NDPoint<2,T>& a, const NDPoint<2,T>& b)
-  {
-	  return (pt-closestPointOnLine(pt, a, b)).mag();
-  }
+		double ablength = a.distFrom(b);
+		NDPoint<2, double> abnorm = static_cast<NDPoint<2, double>>(a - b) * (1.0 / ablength);
+		double proj = static_cast<NDPoint<2, double>>(pt - b).dot(abnorm);
+		proj = CLAMP(proj, 0, ablength);
+		return b + abnorm * proj;
+	}
+
+	template <typename T>
+	double pointLineDistance(const NDPoint<2, T>& pt, const NDPoint<2, T>& a, const NDPoint<2, T>& b) {
+		return (pt - closestPointOnLine(pt, a, b)).mag();
+	}
 }
 #endif

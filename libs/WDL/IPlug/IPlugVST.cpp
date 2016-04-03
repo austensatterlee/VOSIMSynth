@@ -343,9 +343,13 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
     #endif
     return 0;
   }
-
-  Trace(TRACELOC, "%d(%s):%d:%d", opCode, VSTOpcodeStr(opCode), idx, (int) value);
-
+  switch (opCode)
+  {
+  case effProcessEvents:
+	  break;
+  default:
+	  Trace(TRACELOC, "%d(%s):%d:%d", opCode, VSTOpcodeStr(opCode), idx, (int)value);
+  }
   switch (opCode)
   {
     case effOpen:

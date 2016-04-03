@@ -40,26 +40,30 @@ namespace syn {
 
 	class Oscillator : public Unit {
 	public:
-		Oscillator(const string& a_name) :
+		explicit Oscillator(const string& a_name) :
 			Unit(a_name),
 			m_basePhase(0),
 			m_phase(0),
 			m_last_phase(0),
 			m_phase_step(0),
 			m_period(1),
-			m_freq(0.0), m_pGain(addParameter_({ "gain", 0.0, 1.0, 1.0 })),
-			m_pPhaseOffset(addParameter_({ "phase", 0.0, 1.0, 0.0 }))
+			m_freq(0.0), 
+			m_gain(0.0),
+			m_bias(0.0),
+			m_oOut(addOutput_("out")),
+			m_oPhase(addOutput_("ph")),
+			m_pGain(addParameter_({ "gain", 0.0, 1.0, 1.0 })),
+			m_pPhaseOffset(addParameter_({ "phase", 0.0, 1.0, 0.0 })),
+			m_pUnipolar(addParameter_(UnitParameter("unipolar", false))),
+			m_iGainMul(addInput_("g[x]",1.0, Signal::EMul)),
+			m_iPhaseAdd(addInput_("ph"))
 		{
-			m_iGainAdd = addInput_("g[x]",1.0, Signal::EMul);
-			m_iPhaseAdd = addInput_("ph");
-			m_oOut = addOutput_("out");
-			m_oPhase = addOutput_("ph");
 		}
 
 		virtual ~Oscillator() {}
 
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
 		virtual void tickPhase_(double a_phaseOffset);
 		virtual void updatePhaseStep_();
 		virtual void sync_() {};
@@ -70,21 +74,23 @@ namespace syn {
 		double m_period;
 		double m_freq;
 		double m_gain;
+		double m_bias;
 
 		int m_oOut;
 		int m_oPhase;
 	private:
 		int m_pGain;
 		int m_pPhaseOffset;
+		int m_pUnipolar;
 
-		int m_iGainAdd;
+		int m_iGainMul;
 		int m_iPhaseAdd;
 	};
 
 	class TunedOscillator : public Oscillator
 	{
 	public:
-		TunedOscillator(const string& a_name) :
+		explicit TunedOscillator(const string& a_name) :
 			Oscillator(a_name),
 			m_pitch(0),
 			m_pTune(addParameter_({ "semi", -12.0, 12.0, 0.0 })),
@@ -93,12 +99,12 @@ namespace syn {
 			m_iNote = addInput_("pitch");
 		}
 
-		TunedOscillator(const TunedOscillator& a_rhs) :
+		explicit TunedOscillator(const TunedOscillator& a_rhs) :
 			TunedOscillator(a_rhs.getName())
 		{}
 
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
 		void updatePhaseStep_() override;
 		void onNoteOn_() override;
 	protected:
@@ -112,20 +118,20 @@ namespace syn {
 
 	class BasicOscillator : public TunedOscillator {
 	public:
-		BasicOscillator(const string& a_name) :
+		explicit BasicOscillator(const string& a_name) :
 			TunedOscillator(a_name),
 			m_pWaveform(addParameter_(UnitParameter("waveform", WAVE_SHAPE_NAMES)))
 		{
 		};
 
-		BasicOscillator(const BasicOscillator& a_rhs) : BasicOscillator(a_rhs.getName())
+		explicit BasicOscillator(const BasicOscillator& a_rhs) : BasicOscillator(a_rhs.getName())
 		{}
 
 		virtual ~BasicOscillator() {};
 	protected:
 		int m_pWaveform;
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
 	private:
 		string _getClassName() const override { return "BasicOscillator"; }
 
@@ -134,34 +140,40 @@ namespace syn {
 
 	class LFOOscillator : public Oscillator {	
 	public:
-		LFOOscillator(const string& a_name) :
-			Oscillator(a_name),
-			m_pWaveform(addParameter_(UnitParameter("waveform", WAVE_SHAPE_NAMES))),
-			m_pTempoSync(addParameter_(UnitParameter("tempo sync", false))),
-			m_pUnipolar(addParameter_(UnitParameter("unipolar", false))),
-			m_pFreq(addParameter_(UnitParameter("freq",0.0,20.0,1.0))),			
+		explicit LFOOscillator(const string& a_name) :
+			Oscillator(a_name),			
+			m_oQuadOut(addOutput_("quad")),
+			m_iFreqAdd(addInput_("freq")),
+			m_iFreqMul(addInput_("freq[x]",1.0,Signal::EMul)),
+			m_iSync(addInput_("sync")),
+			m_syncedFreqParam("rate", 1, 64, 1),
+			m_linFreqParam("freq", 0.0, 80.0, 1.0),
 			m_lastSync(0.0)
 		{
-			m_iFreqAdd = addInput_("freq");
-			m_iFreqMul = addInput_("freq[x]",1.0,Signal::EMul);
-			m_iSync = addInput_("sync");
+			m_pWaveform = addParameter_(UnitParameter("waveform", WAVE_SHAPE_NAMES));
+			m_pFreq = addParameter_(m_linFreqParam);
+			m_pTempoSync = addParameter_(UnitParameter("tempo sync", false));
 		};
 
-		LFOOscillator(const BasicOscillator& a_rhs) : LFOOscillator(a_rhs.getName())
+		explicit LFOOscillator(const BasicOscillator& a_rhs) : LFOOscillator(a_rhs.getName())
 		{}
 
 		virtual ~LFOOscillator() {};
 	protected:
+		int m_oQuadOut;
+
 		int m_pWaveform;
 		int m_pFreq;
 		int m_pTempoSync;
-		int m_pUnipolar;
 		int m_iFreqAdd, m_iFreqMul;
 		int m_iSync;
 
+		UnitParameter m_syncedFreqParam;
+		UnitParameter m_linFreqParam;
+
 		double m_lastSync;
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
 		void onParamChange_(int a_paramId) override;
 	private:
 		string _getClassName() const override { return "LFOOscillator"; }

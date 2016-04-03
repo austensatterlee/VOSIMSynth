@@ -152,7 +152,7 @@ def GenerateInvPitchTable(pitchtable):
 def GenerateDecibalTable(db1,db2,npoints):
     x = arange(npoints)*1.0/npoints
     dbx = x*(db2-db1)+db1
-    dbtable = 10**(dbx/20.)
+    dbtable = exp(dbx/20.)
     return dbx,dbtable
 
 """Tools"""
@@ -418,10 +418,10 @@ def main(pargs):
     v = pargs.verbose
 
     """Sin table"""
-    SINE_RES = 1024
+    SINE_RES = 128
     sintable = GenerateSine(SINE_RES)
     """Pitch table"""
-    PITCH_RES = 1024
+    PITCH_RES = 256
     MIN_PITCH = -128
     MAX_PITCH = 128
     pitches,pitchtable = GeneratePitchTable(MIN_PITCH,MAX_PITCH,PITCH_RES)
@@ -440,14 +440,15 @@ def main(pargs):
     BLSAW_RES = 2048
     BLSAW_HARMONICS = BLSAW_RES/2
     blsaw = GenerateBLSaw(BLSAW_HARMONICS,BLSAW_RES)
+    blimp_online = convolve( prefilter, blsaw, 'same' ) # apply gain to high frequencies
     blsaw /= blsaw.max()
 
     """Offline and online BLIMP for resampling"""
     OFFLINE_BLIMP_INTERVALS = 513
     OFFLINE_BLIMP_RES = 128
 
-    ONLINE_BLIMP_INTERVALS = 5
-    ONLINE_BLIMP_RES = 8192
+    ONLINE_BLIMP_INTERVALS = 11
+    ONLINE_BLIMP_RES = 2048
     blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS,ONLINE_BLIMP_RES,fc=18e3)
     blimp_offline = GenerateBlimp(OFFLINE_BLIMP_INTERVALS,OFFLINE_BLIMP_RES,fc=22e3)
 

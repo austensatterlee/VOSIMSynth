@@ -27,7 +27,7 @@ using namespace std;
 namespace syn {
     class VosimOscillator : public TunedOscillator {
     public:
-        VosimOscillator(string name) :
+        explicit VosimOscillator(string name) :
 			TunedOscillator(name),
                 m_pulse_step(0.0),
 				m_pulse_tune(0),
@@ -45,7 +45,7 @@ namespace syn {
         { }
 
     protected:
-	    void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
+	    void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
         void updatePhaseStep_() override;
 
     private:
@@ -66,7 +66,7 @@ namespace syn {
     class FormantOscillator : public TunedOscillator {
     public:
 
-        FormantOscillator(string name) :
+        explicit FormantOscillator(string name) :
 			TunedOscillator(name),
                 m_pWidth(addParameter_({"width", 0.0, 1.0, 0.0})),
                 m_pFmt(addParameter_({"fmt", 0.0, 1.0, 0.0}))
@@ -82,7 +82,7 @@ namespace syn {
         { }
 
     protected:
-	    void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
+	    void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
 
     private:
         string _getClassName() const override

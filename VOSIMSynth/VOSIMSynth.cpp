@@ -30,6 +30,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "StateVariableFilter.h"
 #include "fft.h"
 #include "include/SpectroscopeUnit.h"
+#include "KeyboardControl.h"
 
 using namespace std;
 
@@ -51,25 +52,29 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 
 void VOSIMSynth::makeGraphics()
 {
-    pGraphics = MakeGraphics(this, GUI_WIDTH, GUI_HEIGHT);
-    pGraphics->HandleMouseOver(true);
+    m_graphics = shared_ptr<IGraphics>(MakeGraphics(this, GUI_WIDTH, GUI_HEIGHT));
+    m_graphics->HandleMouseOver(true);
+	m_graphics->SetStrictDrawing(true);
     IColor bg_color = COLOR_BLACK;
-    pGraphics->AttachPanelBackground(&bg_color);
+    m_graphics->AttachPanelBackground(&bg_color);
+	
+	m_kbdctrl = make_shared<syn::KeyboardControl>(this, m_voiceManager, IRECT{ 1,GUI_HEIGHT - 100,GUI_WIDTH - 1,GUI_HEIGHT - 1 });
+	m_graphics->AttachControl(m_kbdctrl.get());
 
-    // IBitmap wedgeswitch2p = pGraphics->LoadIBitmap(WEDGE_SWITCH_2P_ID, WEDGE_SWITCH_2P_FN, 2);
-    // IBitmap push2p = pGraphics->LoadIBitmap(PUSH_2P_ID, PUSH_2P_FN, 2);
-    // IBitmap colorKnob = pGraphics->LoadIBitmap(COLOR_RING_KNOB_ID, COLOR_RING_KNOB_FN, kColorKnobFrames);
-    // IBitmap toggleswitch3p = pGraphics->LoadIBitmap(TOGGLE_SWITCH_3P_ID, TOGGLE_SWITCH_3P_FN, 3);
-    // IBitmap numberedKnob = pGraphics->LoadIBitmap(KNOB_ID, KNOB_FN, kNumberedKnobFrames);
+    // IBitmap wedgeswitch2p = m_graphics->LoadIBitmap(WEDGE_SWITCH_2P_ID, WEDGE_SWITCH_2P_FN, 2);
+    // IBitmap push2p = m_graphics->LoadIBitmap(PUSH_2P_ID, PUSH_2P_FN, 2);
+    // IBitmap colorKnob = m_graphics->LoadIBitmap(COLOR_RING_KNOB_ID, COLOR_RING_KNOB_FN, kColorKnobFrames);
+    // IBitmap toggleswitch3p = m_graphics->LoadIBitmap(TOGGLE_SWITCH_3P_ID, TOGGLE_SWITCH_3P_FN, 3);
+    // IBitmap numberedKnob = m_graphics->LoadIBitmap(KNOB_ID, KNOB_FN, kNumberedKnobFrames);
 
-    m_circuitPanel = make_shared<CircuitPanel>(this, IRECT{5, 5, GUI_WIDTH - 5, GUI_HEIGHT - 5}, m_voiceManager, m_unitFactory);
+    m_circuitPanel = make_shared<CircuitPanel>(this, IRECT{1, 1, GUI_WIDTH - 1, GUI_HEIGHT - 100}, m_voiceManager.get(), m_unitFactory.get());
 
-	m_circuitPanel->registerUnitControl(make_shared<OscilloscopeUnit>(""), make_shared<OscilloscopeUnitControl>());
-	m_circuitPanel->registerUnitControl(make_shared<SpectroscopeUnit>(""), make_shared<SpectroscopeUnitControl>());
+	m_circuitPanel->registerUnitControl<OscilloscopeUnit, OscilloscopeUnitControl>();
+	m_circuitPanel->registerUnitControl<SpectroscopeUnit, SpectroscopeUnitControl>();
 
-    pGraphics->AttachControl(m_circuitPanel.get());
+    m_graphics->AttachControl(m_circuitPanel.get());
 
-    AttachGraphics(pGraphics);
+    AttachGraphics(m_graphics.get());
 }
 
 void VOSIMSynth::makeInstrument()
@@ -103,7 +108,6 @@ void VOSIMSynth::makeInstrument()
 
 	m_unitFactory->addUnitPrototype("MIDI", new GateUnit("Gate"));
     m_unitFactory->addUnitPrototype("MIDI", new MidiNoteUnit("Pitch"));
-	m_unitFactory->addUnitPrototype("MIDI", new NormalizedMidiNoteUnit("Norm. Pitch"));
 	m_unitFactory->addUnitPrototype("MIDI", new VelocityUnit("Vel"));
 	m_unitFactory->addUnitPrototype("MIDI", new MidiCCUnit("CC"));
 
@@ -111,7 +115,7 @@ void VOSIMSynth::makeInstrument()
 	m_unitFactory->addUnitPrototype("Visualizer", new SpectroscopeUnit("Spectroscope"));
 
     m_voiceManager = make_shared<VoiceManager>(circ, m_unitFactory);
-    m_voiceManager->setMaxVoices(8);
+    m_voiceManager->setMaxVoices(6);
 
     m_MIDIReceiver = make_shared<MIDIReceiver>(shared_ptr<VoiceManager>(m_voiceManager));
 }
@@ -119,6 +123,7 @@ void VOSIMSynth::makeInstrument()
 void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames)
 {
     // Mutex is already locked for us.
+
     for (int s = 0 ; s < nFrames ; s++) {
         m_MIDIReceiver->advance();
     }
@@ -129,9 +134,7 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
 	}
 	
 	// Process samples
-    for (int i = 0 ; i < nFrames ; i++) {
-        m_voiceManager->tick(inputs[0][i],inputs[1][i],outputs[0][i],outputs[1][i]);
-    }
+    m_voiceManager->tick(inputs[0],inputs[1],outputs[0],outputs[1]);
 
     m_MIDIReceiver->Flush(nFrames);
 	m_tickCount++;
@@ -139,7 +142,6 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
 
 void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg)
 {
-    IMutexLock lock(this);
     m_MIDIReceiver->onMessageReceived(pMsg);
 }
 
@@ -152,13 +154,13 @@ bool VOSIMSynth::SerializeState(ByteChunk* pChunk)
 
 int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos)
 {
+	m_unitFactory->resetBuildCounts();
     startPos = m_circuitPanel->unserialize(pChunk, startPos);
     return startPos;
 }
 
 void VOSIMSynth::PresetsChangedByHost()
 {
-    IMutexLock lock(this);
 }
 
 void VOSIMSynth::OnIdle() {
@@ -174,14 +176,12 @@ bool VOSIMSynth::isTransportRunning() {
 
 void VOSIMSynth::Reset()
 {
-    TRACE;
-    IMutexLock lock(this);
     m_MIDIReceiver->Resize(GetBlockSize());
+	m_voiceManager->setBufferSize(GetBlockSize());
     m_voiceManager->setFs(GetSampleRate());
 }
 
 void VOSIMSynth::OnParamChange(int paramIdx)
 {
-    IMutexLock lock(this);
 }
 

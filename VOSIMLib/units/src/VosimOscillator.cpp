@@ -50,9 +50,9 @@ namespace syn
 			}
 			
 			output = pulseval*abs(pulseval);
-			output *= curr_pulse_gain;// *sqrt(m_pulse_step / m_phase_step);
+			output *= curr_pulse_gain*sqrt(m_pulse_step / m_phase_step);
 		}
-		a_outputs.setChannel(m_oOut,m_gain*output);
+		a_outputs.setChannel(m_oOut,m_gain*output + m_bias);
 	}
 
 	void VosimOscillator::updatePhaseStep_()
@@ -62,7 +62,7 @@ namespace syn
 		double min_freq = m_num_pulses*m_freq;
 		int MAX_PULSE_FREQ = 4000;
 		if (min_freq > MAX_PULSE_FREQ) {
-			pulse_freq = m_freq*(m_num_pulses);
+			pulse_freq = min_freq;
 		}
 		else {
 			pulse_freq = LERP(min_freq, MAX_PULSE_FREQ, m_pulse_tune);
@@ -92,8 +92,8 @@ namespace syn
 
 		double sinval = lut_sin.getlinear(formant_phase + 0.5);
 		double cosval = 0.5*(1+lut_sin.getlinear(cos_phase - 0.25));
-		double output = sinval*cosval;// *sqrt(cos_width);
-        a_outputs.setChannel(m_oOut,m_gain*output);
+		double output = sinval*cosval*sqrt(cos_width);
+        a_outputs.setChannel(m_oOut, m_gain*output + m_bias);
 	}	
 }
 

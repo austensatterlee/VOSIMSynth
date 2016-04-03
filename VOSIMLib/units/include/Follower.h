@@ -38,12 +38,12 @@ namespace syn {
 	*/
 	class FollowerUnit : public Unit {
 	public:
-		FollowerUnit(const string& a_name);
+		explicit FollowerUnit(const string& a_name);
 
 		FollowerUnit(const FollowerUnit& a_rhs);
 
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
 	private:
 		string _getClassName() const override
 		{

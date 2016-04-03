@@ -34,14 +34,14 @@ namespace syn {
 	class OscilloscopeUnit : public Unit
 	{	
 	public:
-		OscilloscopeUnit(const string& a_name);
+		explicit OscilloscopeUnit(const string& a_name);
 
 		OscilloscopeUnit(const OscilloscopeUnit& a_rhs) :
 			OscilloscopeUnit(a_rhs.getName())
 		{}
 	protected:
 		void onParamChange_(int a_paramId) override;
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
 		
 	private:
 		string _getClassName() const override { return "OscilloscopeUnit"; };
@@ -66,15 +66,15 @@ namespace syn {
 	class OscilloscopeUnitControl : public UnitControl
 	{
 	public:
-		OscilloscopeUnitControl() :
-			UnitControl(),
+		OscilloscopeUnitControl(IPlugBase* a_plug, VoiceManager* a_voiceManager) :
+			UnitControl(a_plug, a_voiceManager),
 			m_yBounds(-1.0, 1.0),
 			m_paramControl(nullptr)
 		{}
 
 		virtual ~OscilloscopeUnitControl() {
-			if(m_paramControl!=nullptr)
-				delete m_paramControl;
+			delete m_paramControl;
+			m_paramControl = nullptr;			
 		}
 
 		void onMouseDblClick(int a_x, int a_y, IMouseMod* a_mouseMod) override {
@@ -97,7 +97,6 @@ namespace syn {
 		void onMouseOver(int a_x, int a_y, IMouseMod* a_mouseMod) override {
 			m_paramControl->onMouseOver(a_x, a_y, a_mouseMod);
 		}
-
 
 		void draw(IGraphics* a_graphics) override 
 		{
@@ -126,27 +125,14 @@ namespace syn {
 		}
 	protected:
 		void onSetUnitId_() override{
-			m_paramControl->setUnitId(m_unitId);
+			if (m_paramControl) 
+				delete m_paramControl;
+			m_paramControl = UnitControl::construct<DefaultUnitControl>(m_plug, m_voiceManager, m_unitId);
 		};
 		void onChangeRect_() override {
-			m_paramControl->move(m_pos);
-			m_paramControl->resize({ m_size[0]-1,0 });
+			m_paramControl->changeRect(m_pos,{ m_size[0]-1,0 });
 		}
 	private:
-
-		OscilloscopeUnitControl(IPlugBase* a_plug, const shared_ptr<VoiceManager>& a_vm, int a_unitId, int a_x, int a_y) :
-			UnitControl(a_plug, a_vm, a_unitId, a_x, a_y),
-			m_yBounds(-1.0, 1.0)
-		{
-			DefaultUnitControl pctrl;
-			m_paramControl = pctrl.construct(a_plug, a_vm, a_unitId, a_x, a_y);
-		}
-
-		UnitControl* _construct(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, int a_unitId, int a_x, int a_y) const override 
-		{
-			return new OscilloscopeUnitControl(a_plug, a_vm, a_unitId, a_x, a_y);
-		};
-
 		NDPoint<2,int> toScreen(NDPoint<2,double> a_pt, const IRECT& a_screen) {
 			const OscilloscopeUnit& unit = static_cast<const OscilloscopeUnit&>(m_voiceManager->getUnit(m_unitId));
 			NDPoint<2, double> xBounds(0, static_cast<double>(unit.m_bufferSize));

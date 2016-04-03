@@ -18,7 +18,7 @@ namespace syn {
 	 */
     class MidiNoteUnit : public Unit {
     public:
-        MidiNoteUnit(const string& a_name) :
+        explicit MidiNoteUnit(const string& a_name) :
                 Unit(a_name)
         {
             addOutput_("out");
@@ -31,9 +31,9 @@ namespace syn {
         }
 
     protected:
-        void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+        void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
         {
-            a_outputs.setChannel(0, getNote());
+            a_outputs.setChannel(0, getNote()*0.0078125);
         };
     private:
         string _getClassName() const override
@@ -42,60 +42,29 @@ namespace syn {
         }
 
 	    Unit* _clone() const override { return new MidiNoteUnit(*this); }
-    };
-
-	/**
-	* Outputs the current midi note in the range (0.0,1.0)
-	*/
-	class NormalizedMidiNoteUnit : public Unit {
-	public:
-		NormalizedMidiNoteUnit(const string& a_name) :
-			Unit(a_name)
-		{
-			addOutput_("out");
-		}
-
-		NormalizedMidiNoteUnit(const MidiNoteUnit& a_rhs) :
-			NormalizedMidiNoteUnit(a_rhs.getName())
-		{
-
-		}
-
-	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
-		{
-			a_outputs.setChannel(0, getNote()/128.0);
-		};
-	private:
-		string _getClassName() const override
-		{
-			return "NormalizedMidiNoteUnit";
-		}
-
-		Unit* _clone() const override { return new NormalizedMidiNoteUnit(*this); }
-	};
+    };	
 
 	/**
 	 * Outputs the current velocity
 	 */
 	class VelocityUnit : public Unit {
 	public:
-		VelocityUnit(const string& a_name) :
+		explicit VelocityUnit(const string& a_name) :
 			Unit(a_name)
 		{
 			addOutput_("out");
 		}
 
-		VelocityUnit(const MidiNoteUnit& a_rhs) :
+		VelocityUnit(const VelocityUnit& a_rhs) :
 			VelocityUnit(a_rhs.getName())
 		{
 
 		}
 
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
 		{
-			a_outputs.setChannel(0, getVelocity()*1./128);
+			a_outputs.setChannel(0, getVelocity()*0.0078125);
 		};
 	private:
 		string _getClassName() const override
@@ -111,20 +80,20 @@ namespace syn {
 	*/
 	class GateUnit : public Unit {
 	public:
-		GateUnit(const string& a_name) :
+		explicit GateUnit(const string& a_name) :
 			Unit(a_name)
 		{
 			addOutput_("out");
 		}
 
-		GateUnit(const MidiNoteUnit& a_rhs) :
+		GateUnit(const GateUnit& a_rhs) :
 			GateUnit(a_rhs.getName())
 		{
 
 		}
 
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
 		{
 			a_outputs.setChannel(0, static_cast<double>(isNoteOn()));
 		};
@@ -143,7 +112,7 @@ namespace syn {
 	class MidiCCUnit : public Unit {
 	
 	public:
-		MidiCCUnit(const string& a_name) :
+		explicit MidiCCUnit(const string& a_name) :
 			Unit(a_name),
 			m_pCC(addParameter_(UnitParameter("CC", 0, 128, 0))),
 			m_pLearn(addParameter_(UnitParameter("learn", false))),
@@ -152,14 +121,14 @@ namespace syn {
 			addOutput_("out");
 		}
 
-		MidiCCUnit(const MidiNoteUnit& a_rhs) :
+		MidiCCUnit(const MidiCCUnit& a_rhs) :
 			MidiCCUnit(a_rhs.getName())
 		{
 
 		}
 
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
 		{
 			a_outputs.setChannel(0, m_value); // divide by 128
 		};
@@ -167,6 +136,7 @@ namespace syn {
 		void onParamChange_(int a_paramId) override {
 			if(a_paramId==m_pCC) {
 				m_value = 0;
+				setParameter(m_pLearn, false);
 			}
 		}
 

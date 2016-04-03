@@ -22,20 +22,23 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn
 {
-	LookupTable::LookupTable(const double* table, int size, double input_min, double input_max, bool isPeriodic):
-		m_size(size),
-		m_isperiodic(isPeriodic),
-		m_table(table) {
-		m_norm_bias = input_min;
-		m_norm_scale = 1. / (input_max - input_min);
-		m_normalizePhase = !(input_min == 0 && input_max == 1);
+	LookupTable::LookupTable(const double* a_tableptr, int a_size, double a_input_min, double a_input_max, bool a_isPeriodic):
+		m_size(a_size),
+		m_isperiodic(a_isPeriodic),
+		m_table(a_tableptr),
+		m_input_min(a_input_min),
+		m_input_max(a_input_max)
+	{
+		m_norm_bias = a_input_min;
+		m_norm_scale = 1. / (a_input_max - a_input_min);
+		m_normalizePhase = !(a_input_min == 0 && a_input_max == 1);
 		/* Construct difference table for linear interpolation */
-		m_diff_table = new double[size];
-		for (int i = 0; i < size - 1; i++) {
-			m_diff_table[i] = table[i + 1] - table[i];
+		m_diff_table = new double[a_size];
+		for (int i = 0; i < a_size - 1; i++) {
+			m_diff_table[i] = a_tableptr[i + 1] - a_tableptr[i];
 		}
 		/* If table is periodic, the last difference wraps around */
-		if (isPeriodic)
+		if (a_isPeriodic)
 			m_diff_table[m_size - 1] = m_table[0] - m_table[m_size - 1];
 		else
 			m_diff_table[m_size - 1] = 0.0;
@@ -65,11 +68,15 @@ namespace syn
 		return m_table[index];
 	}
 
-	ResampledLookupTable::ResampledLookupTable(const double* table, int size, const BlimpTable& blimp_table_online, const BlimpTable& blimp_table_offline) :
-		LookupTable(table, size, 0, 1, true),
-		m_blimp_table(blimp_table_online)
+	ResampledLookupTable::ResampledLookupTable(const double* a_table, int a_size, const BlimpTable& a_blimp_table_online, const BlimpTable& a_blimp_table_offline) :
+		LookupTable(a_table, a_size, 0, 1, true),
+		m_blimp_table_online(a_blimp_table_online),
+		m_blimp_table_offline(a_blimp_table_offline),
+		m_resampled_sizes(nullptr),
+		m_resampled_tables(nullptr),
+		m_num_resampled_tables(0)
 	{
-		resample_tables(blimp_table_offline);
+		resample_tables(a_blimp_table_offline);
 	}
 
 	void ResampledLookupTable::resample_tables(const BlimpTable& blimp_table_offline)
@@ -91,9 +98,8 @@ namespace syn
 	double ResampledLookupTable::getresampled(double phase, double period) const {
 		int min_size_diff = -1;
 		int min_size_diff_index = 0;
-		int curr_size_diff;
 		for (int i = 0; i < m_num_resampled_tables; i++) {
-			curr_size_diff = m_resampled_sizes[i] - static_cast<int>(period);
+			int curr_size_diff = m_resampled_sizes[i] - static_cast<int>(period);
 			if (curr_size_diff < 0) {
 				break;
 			} 
@@ -102,7 +108,7 @@ namespace syn
 				min_size_diff_index = i;
 			}
 		}
-		return getresampled_single(m_resampled_tables[min_size_diff_index], m_resampled_sizes[min_size_diff_index], phase, period, m_blimp_table);
+		return getresampled_single(m_resampled_tables[min_size_diff_index], m_resampled_sizes[min_size_diff_index], phase, period, m_blimp_table_online);
 	}
 
 	void resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table) {
@@ -141,8 +147,11 @@ namespace syn
 		double filt_sample;
 		int table_index = index;
 		while (filt_phase < blimp_table.size()) {
-			//filt_sample = blimp_table.getraw(static_cast<int>(filt_phase));
-			filt_sample = blimp_table.getlinear(filt_phase/blimp_table.size());
+#ifdef DO_LERP_FOR_SINC
+			filt_sample = blimp_table.getlinear(filt_phase / blimp_table.size());
+#else
+			filt_sample = blimp_table.getraw(static_cast<int>(filt_phase));
+#endif
 			if (table_index < 0) {
 				table_index = size - 1;
 			}
@@ -153,8 +162,11 @@ namespace syn
 		filt_phase = blimp_step - offset;
 		table_index = index + 1;
 		while (filt_phase < blimp_table.size()) {
-			//filt_sample = blimp_table.getraw(static_cast<int>(filt_phase));
+#ifdef DO_LERP_FOR_SINC
 			filt_sample = blimp_table.getlinear(filt_phase / blimp_table.size());
+#else
+			filt_sample = blimp_table.getraw(static_cast<int>(filt_phase));
+#endif
 			if (table_index >= size) {
 				table_index = 0;
 			}

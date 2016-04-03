@@ -64,7 +64,7 @@ namespace syn {
 
 	class MemoryUnit : public Unit {
 	public:
-		MemoryUnit(const string& a_name) :
+		explicit MemoryUnit(const string& a_name) :
 			Unit(a_name),
 			m_pBufSize(addParameter_(UnitParameter("samples", 1, 16384, 1)))
 		{
@@ -76,7 +76,7 @@ namespace syn {
 	protected:
 		void onParamChange_(int a_paramId) override;
 
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
 	private:
 		string _getClassName() const override { return "MemoryUnit"; }
 

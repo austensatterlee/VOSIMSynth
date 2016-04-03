@@ -27,12 +27,16 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "CircuitPanel.h"
 #include "IGraphics.h"
 
+namespace syn{
+	class KeyboardControl;
+}
+
 using namespace syn;
 using namespace std;
 
 class VOSIMSynth : public IPlug {
 public:
-	VOSIMSynth(IPlugInstanceInfo instanceInfo);
+	explicit VOSIMSynth(IPlugInstanceInfo instanceInfo);
 
     void makeGraphics();
 
@@ -68,7 +72,8 @@ private:
 	shared_ptr<VoiceManager> m_voiceManager;
 	shared_ptr<CircuitPanel> m_circuitPanel;
 	shared_ptr<UnitFactory> m_unitFactory;
-    IGraphics* pGraphics;
+    shared_ptr<IGraphics> m_graphics;
+	shared_ptr<KeyboardControl> m_kbdctrl;
 
 	int m_tempo;
 	unsigned m_tickCount;

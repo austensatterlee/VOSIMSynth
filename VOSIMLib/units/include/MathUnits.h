@@ -103,7 +103,7 @@ namespace syn {
 	 */
 	class DCRemoverUnit : public Unit {	
 	public:
-		DCRemoverUnit(const string& a_name) :
+		explicit DCRemoverUnit(const string& a_name) :
 			Unit(a_name),
 			m_pAlpha(addParameter_(UnitParameter("hp",0.0,1.0,0.995))),
 			m_lastInput(0.0),
@@ -117,7 +117,7 @@ namespace syn {
 			DCRemoverUnit(a_rhs.getName())
 		{}
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
 		{
 			double input = a_inputs.getValue(0);
 			double alpha = getParameter(m_pAlpha).getDouble();
@@ -151,7 +151,7 @@ namespace syn {
 	class LagUnit : public Unit
 	{
 	public:
-		LagUnit(const string& a_name) : 
+		explicit LagUnit(const string& a_name) :
 			Unit(a_name),
 			m_pFc(addParameter_(UnitParameter("fc",0.0,1.0,1.0))),
 			m_state(0.0) 
@@ -164,7 +164,7 @@ namespace syn {
 
 		LagUnit(const LagUnit& a_rhs) : LagUnit(a_rhs.getName()) {}
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override {
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override {
 			double input = a_inputs.getValue(0);
 			double fc = getParameter(m_pFc).getDouble()*a_inputs.getValue(m_iFcMul)+a_inputs.getValue(m_iFcAdd); // pitch cutoff
 			fc = 10e3*CLAMP(fc, 0.0, 1.0) / getFs();
@@ -189,7 +189,7 @@ namespace syn {
 	 */
     class FullRectifierUnit : public Unit {
     public:
-		FullRectifierUnit(const string& a_name) :
+		explicit FullRectifierUnit(const string& a_name) :
                 Unit(a_name)
         {
             addInput_("in");
@@ -203,7 +203,7 @@ namespace syn {
         }
 
     protected:
-        void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+        void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
         {
             double input = a_inputs.getValue(0);
             a_outputs.setChannel(0, abs(input));
@@ -222,7 +222,7 @@ namespace syn {
 	*/
 	class HalfRectifierUnit : public Unit {
 	public:
-		HalfRectifierUnit(const string& a_name) :
+		explicit HalfRectifierUnit(const string& a_name) :
 			Unit(a_name)
 		{
 			addInput_("in");
@@ -236,7 +236,7 @@ namespace syn {
 		}
 
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
 		{
 			double input = a_inputs.getValue(0);
 			input = input > 0 ? input : 0;
@@ -256,7 +256,7 @@ namespace syn {
 	 */
     class InvertingUnit : public Unit {
     public:
-        InvertingUnit(const string& a_name) :
+        explicit InvertingUnit(const string& a_name) :
                 Unit(a_name)
         {
             addInput_("in");
@@ -270,7 +270,7 @@ namespace syn {
         }
 
     protected:
-        void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+        void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
         {
             double input = a_inputs.getValue(0);
             a_outputs.setChannel(0, -input);
@@ -289,7 +289,7 @@ namespace syn {
 	 */
 	class MACUnit : public Unit {
 	public:
-		MACUnit(const string& a_name) :
+		explicit MACUnit(const string& a_name) :
 			Unit(a_name)
 		{
 			addInput_("in");
@@ -304,7 +304,7 @@ namespace syn {
 
 		}
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
 		{
 			double output = a_inputs.getValue(0);
 			output *= a_inputs.getValue(1);
@@ -325,10 +325,10 @@ namespace syn {
 	 */
 	class GainUnit : public Unit {
 	public:
-		GainUnit(const string& a_name) :
+		explicit GainUnit(const string& a_name) :
 			Unit(a_name),
 			m_pGain(addParameter_(UnitParameter("gain", 0.0, 1.0, 1.0))),
-			m_pScale(addParameter_(UnitParameter("scale",scale_selections)))			
+			m_pScale(addParameter_(UnitParameter("scale",scale_selections,scale_values)))			
 		{
 			m_iInput = addInput_("in[+]");
 			m_iInvInput = addInput_("in[-]");
@@ -342,10 +342,10 @@ namespace syn {
 
 		}
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
 		{
 			double input = a_inputs.getValue(m_iInput) - a_inputs.getValue(m_iInvInput);
-			double gain = getParameter(m_pGain).getDouble()*scale_values[getParameter(m_pScale).getInt()];
+			double gain = getParameter(m_pGain).getDouble()*getParameter(m_pScale).getEnum();
 			gain *= a_inputs.getValue(m_iGain);
 			a_outputs.setChannel(0, input*gain);
 		};
@@ -366,10 +366,10 @@ namespace syn {
 	*/
 	class SummerUnit : public Unit {
 	public:
-		SummerUnit(const string& a_name) :
+		explicit SummerUnit(const string& a_name) :
 			Unit(a_name),
 			m_pBias(addParameter_(UnitParameter("bias", -1.0, 1.0, 0.0))),
-			m_pScale(addParameter_(UnitParameter("bias scale", scale_selections)))
+			m_pScale(addParameter_(UnitParameter("bias scale", scale_selections, scale_values)))
 		{
 			addInput_("[+]");
 			addInput_("[-]");
@@ -382,10 +382,10 @@ namespace syn {
 
 		}
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
 		{
 			double output = a_inputs.getValue(0) - a_inputs.getValue(1);
-			output += getParameter(m_pBias).getDouble()*scale_values[getParameter(m_pScale).getInt()];
+			output += getParameter(m_pBias).getDouble()*getParameter(m_pScale).getEnum();
 			a_outputs.setChannel(0, output);
 		};
 	private:
@@ -404,7 +404,7 @@ namespace syn {
 	 */
 	class ConstantUnit : public Unit {
 	public:
-		ConstantUnit(const string& a_name) :
+		explicit ConstantUnit(const string& a_name) :
 			Unit(a_name)
 		{
 			addParameter_({ "out",-1.0,1.0,1.0 });
@@ -417,7 +417,7 @@ namespace syn {
 		{
 		}
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
 		{
 			double output = getParameter(0).getDouble();
 			int selected_scale = getParameter(1).getInt();
@@ -439,7 +439,7 @@ namespace syn {
 	*/
 	class PanningUnit : public Unit {
 	public:
-		PanningUnit(const string& a_name) :
+		explicit PanningUnit(const string& a_name) :
 			Unit(a_name)
 		{
 			addInput_("in1");
@@ -456,7 +456,7 @@ namespace syn {
 
 		}
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
 		{
 			double in1 = a_inputs.getValue(0);
 			double in2 = a_inputs.getValue(1);
@@ -481,7 +481,7 @@ namespace syn {
 	 */
 	class LinToDbUnit : public Unit {
 	public:
-		LinToDbUnit(const string& a_name) :
+		explicit LinToDbUnit(const string& a_name) :
 			Unit(a_name),
 			m_pMinDb(addParameter_(UnitParameter("min dB", -120.0, 0.0, -120.0)))
 		{
@@ -489,12 +489,12 @@ namespace syn {
 			addOutput_("out");
 		}
 
-		LinToDbUnit(const SummerUnit& a_rhs) :
+		LinToDbUnit(const LinToDbUnit& a_rhs) :
 			LinToDbUnit(a_rhs.getName())
 		{
 		}
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
 		{
 			double input = a_inputs.getValue(0);
 			double output = lin2db(input, getParameter(m_pMinDb).getDouble(), 0.0);
@@ -516,29 +516,29 @@ namespace syn {
 	*/
 	class LerpUnit : public Unit {
 	public:
-		LerpUnit(const string& a_name) :
+		explicit LerpUnit(const string& a_name) :
 			Unit(a_name)
 		{
 			m_pInputRange = addParameter_(UnitParameter("input", { "bipolar","unipolar" }));
 			m_pMinOutput = addParameter_(UnitParameter("min out", -1.0, 1.0, 0.0));
-			m_pMinOutputScale = addParameter_(UnitParameter("min scale", scale_selections));
+			m_pMinOutputScale = addParameter_(UnitParameter("min scale", scale_selections, scale_values));
 			m_pMaxOutput = addParameter_(UnitParameter("max out", -1.0, 1.0, 1.0));
-			m_pMaxOutputScale = addParameter_(UnitParameter("max scale", scale_selections));
+			m_pMaxOutputScale = addParameter_(UnitParameter("max scale", scale_selections, scale_values));
 			addInput_("in");
 			addOutput_("out");
 		}
 
-		LerpUnit(const SummerUnit& a_rhs) :
+		LerpUnit(const LerpUnit& a_rhs) :
 			LerpUnit(a_rhs.getName())
 		{
 		}
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
 		{
 			double input = a_inputs.getValue(0);
-			double a_scale = scale_values[getParameter(m_pMinOutputScale).getInt()];
+			double a_scale = getParameter(m_pMinOutputScale).getEnum();
 			double a = getParameter(m_pMinOutput).getDouble()*a_scale;
-			double b_scale = scale_values[getParameter(m_pMaxOutputScale).getInt()];
+			double b_scale = getParameter(m_pMaxOutputScale).getEnum();
 			double b = getParameter(m_pMaxOutput).getDouble()*b_scale;
 			double output;
 			if (getParameter(m_pInputRange).getInt() == 1) {

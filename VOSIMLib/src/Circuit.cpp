@@ -25,19 +25,18 @@ using std::unordered_set;
 
 namespace syn
 {
-
-
     Circuit::Circuit() :
     Circuit("")
     {}
 
     Circuit::Circuit(const string& a_name) :
-            Unit(a_name)
+            Unit(a_name),
+			m_units(256)
     {
         addExternalInput_("left in");
         addExternalInput_("right in");
         addExternalOutput_("left out");
-        addExternalOutput_("right out");		
+        addExternalOutput_("right out");	
     }
 
     Circuit::Circuit(const Circuit& a_other) :
@@ -189,8 +188,7 @@ namespace syn
 		return outputid;
     }
 
-	const Unit& Circuit::getUnit(int a_unitId) const
-    {
+	const Unit& Circuit::getUnit(int a_unitId) const {
         return *m_units[a_unitId];
     }
 

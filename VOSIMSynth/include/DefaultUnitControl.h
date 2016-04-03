@@ -26,8 +26,8 @@ namespace syn {
 	class DefaultUnitControl : public UnitControl
 	{
 	public:
-		DefaultUnitControl() :
-			UnitControl(),
+		DefaultUnitControl(IPlugBase* a_plug, VoiceManager* a_voiceManager) :
+			UnitControl(a_plug,a_voiceManager),
 			m_lastSelectedParam(-1)
 		{}
 
@@ -50,14 +50,9 @@ namespace syn {
 		bool isHit(int a_x, int a_y) const override;
 
 	protected:
-
 		void onSetUnitId_() override;
 
 		void onChangeRect_() override;
-	private:
-		DefaultUnitControl(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, int a_unitId, int a_x, int a_y);
-
-		UnitControl* _construct(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, int a_unitId, int a_x, int a_y) const override;
 	private:
 		vector<ITextSlider> m_paramControls;
 		int m_lastSelectedParam;

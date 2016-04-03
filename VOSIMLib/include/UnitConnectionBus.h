@@ -61,16 +61,16 @@ namespace syn
          * Pull incoming output signals from the specified port into the specified receiving signal.
          * If multiple connections are present at a port, their values are summed.
          */
-        void pull(int a_localPort, Signal& a_recipient) const;
+        void MSFASTCALL pull(int a_localPort, Signal& a_recipient) const GCCFASTCALL;
         /**
         * Push the specified output signal into the input signals connected to the specified port.
         */
-        void push(int a_localPort, Signal& a_signal) const;
+        void MSFASTCALL push(int a_localPort, Signal& a_signal) const GCCFASTCALL;
 
 		void addPort() { m_ports.push_back({}); m_numPorts += 1;  };
 
-        int numPorts() const;
-	    int numConnections(int a_portNum);
+        int MSFASTCALL numPorts() const GCCFASTCALL;
+	    int MSFASTCALL numConnections(int a_portNum) const GCCFASTCALL;
     private:
         typedef vector<UnitConnector> UnitPort;
         vector<UnitPort> m_ports;

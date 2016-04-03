@@ -22,17 +22,16 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn
 {
-	UnitControlContainer::UnitControlContainer(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, UnitControl* a_unitControl, int a_unitId, int x, int y) :
+	UnitControlContainer::UnitControlContainer(IPlugBase* a_plug, VoiceManager* a_vm, UnitControl* a_unitControl, int a_unitId) :
+		m_plug(a_plug),
 		m_voiceManager(a_vm),
 		m_unitControl(a_unitControl),
 		m_isSelected(false),
 		m_size(0, 0),
 		m_minSize(0, 0),
-		m_plug(a_plug),
 		m_isControlClicked(false)
 	{
 		setUnitId(a_unitId);
-		move(x, y);
 	}
 
 	void UnitControlContainer::onMouseDblClick(int a_x, int a_y, IMouseMod* a_mouseMod) {
@@ -69,7 +68,7 @@ namespace syn
 			}
 			else { // move
 				NDPoint<2, int> newUnitPos = getPos() + NDPoint<2, int>(a_dX, a_dY);
-				move(newUnitPos[0], newUnitPos[1]);
+				move(newUnitPos);
 			}
 		}
 	}
@@ -86,13 +85,11 @@ namespace syn
 		}
 	}
 
-	void UnitControlContainer::move(int a_newx, int a_newy) {
-		if (a_newx < 0 || a_newy < 0)
-			return;
-		m_rect.L = a_newx;
-		m_rect.T = a_newy;
-		m_rect.R = a_newx + m_size[0];
-		m_rect.B = a_newy + m_size[1];
+	void UnitControlContainer::move(const NDPoint<2,int>& a_newPos) {
+		m_rect.L = a_newPos[0];
+		m_rect.T = a_newPos[1];
+		m_rect.R = a_newPos[0] + m_size[0];
+		m_rect.B = a_newPos[1] + m_size[1];
 		resize(m_size);
 	}
 
@@ -124,14 +121,13 @@ namespace syn
 		m_size[1] = MAX(getMinSize()[1], a_newSize[1]);
 		m_rect.R = m_rect.L + m_size[0];
 		m_rect.B = m_rect.T + m_size[1];
-		m_unitControl->move({ m_rect.L + m_portSize[0] + 2*c_portPad, m_rect.T + 10 });
-		m_unitControl->resize({ m_size[0] - 2 * (m_portSize[0] + 2*c_portPad), m_size[1] - c_edgePad - m_titleSize[1] });
+		m_unitControl->changeRect({ m_rect.L + m_portSize[0] + 2*c_portPad, m_rect.T + 10 },
+					{ m_size[0] - 2 * (m_portSize[0] + 2*c_portPad), m_size[1] - c_edgePad - m_titleSize[1] });
 	}
 
 	bool UnitControlContainer::draw(IGraphics* pGraphics) {
 		// Local text palette
-		IText textfmt{ 12, &COLOR_BLACK,"Arial",IText::kStyleNormal,IText::kAlignNear,0,IText::kQualityClearType };
-		IText centertextfmt{ 12, &COLOR_BLACK,"Arial",IText::kStyleNormal,IText::kAlignCenter,0,IText::kQualityClearType };
+		IText centertextfmt{ 12, &COLOR_BLACK,0,IText::kStyleNormal,IText::kAlignCenter,0,IText::kQualityClearType };
 		// Local color palette
 		IColor outline_color = { 255,0,0,0 };
 		IColor selected_outline_color = { 255,200,200,0 };
@@ -226,6 +222,10 @@ namespace syn
 			break;
 		}
 		return NDPoint<2, int>(x, y);
+	}
+
+	void UnitControlContainer::rotate90() {
+		return; // not yet implemented
 	}
 
 	IRECT UnitControlContainer::getPortRect(UnitPortVector a_portVector) const {

@@ -45,7 +45,7 @@ namespace syn
         UnitParameter();
         UnitParameter(const string& a_name, bool a_defaultValue);
         UnitParameter(const string& a_name, int a_min, int a_max, int a_defaultValue);
-        UnitParameter(const string& a_name, const vector<string>& a_optionNames);
+        UnitParameter(const string& a_name, const vector<string>& a_optionNames, const vector<double>& a_optionValues={});
         UnitParameter(const string& a_name, double a_min, double a_max, double a_defaultValue, int a_displayPrecision=2);
 
 
@@ -81,6 +81,9 @@ namespace syn
          */
         bool setNorm(double a_norm_value);
 
+		/**
+		 * Automatically retrieves the parameter value according to its type.
+		 */
         template<typename T>
         T get() const;
 
@@ -90,6 +93,8 @@ namespace syn
 		int getPrevInt() const;
         double getDouble() const;
 		double getPrevDouble() const;
+		double getEnum() const;
+		double getPrevEnum() const;
 
         /**
         * Get the parameter value as a number in the range (0,1)
@@ -109,7 +114,7 @@ namespace syn
 
 		struct DisplayText
 		{
-			int m_value;
+			double m_value;
 			string m_text;
 		};
 
@@ -120,18 +125,18 @@ namespace syn
     T UnitParameter::get() const{
         switch(m_type){
             case Bool:
-                return (T)getBool();
+                return static_cast<T>(getBool());
             case Enum:
             case Int:
-                return (T)getInt();
+                return static_cast<T>(getInt());
             case Double:
-                return (T)getDouble();
+                return static_cast<T>(getDouble());
             case Null:
             default:
-                return (T)NULL;
+                return static_cast<T>(NULL);
         }
     }
-}
+};
 #endif // __UnitParameter__
 
 

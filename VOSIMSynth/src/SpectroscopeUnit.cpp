@@ -22,17 +22,18 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn
 {
-	const vector<string> bufferSizeSelections = {"128","256","512","1024","2048","4096","8192"};
-	const vector<int> bufferSizeValues = {128,256,512,1024,2048,4096,8192};
+	const vector<string> bufferSizeSelections = { "128","256","512","1024","2048","4096" };
+	const vector<double> bufferSizeValues = {128,256,512,1024,2048,4096};
 
 	SpectroscopeUnit::SpectroscopeUnit(const string& a_name) :
 		Unit(a_name),
 		m_bufferIndex(0),
 		m_nBuffers(2),
-		m_pBufferSize(addParameter_(UnitParameter("buffer size", bufferSizeSelections))),
+		m_pBufferSize(addParameter_(UnitParameter("buffer size", bufferSizeSelections, bufferSizeValues))),
 		m_pTimeSmooth(addParameter_(UnitParameter("time smooth", 0.0, 1.0, 0.1))),
+		m_pUpdatePeriod(addParameter_(UnitParameter("update interval",0.0,1.0,0.5))),
 		m_samplesSinceLastUpdate(0),
-		m_pUpdatePeriod(addParameter_(UnitParameter("update interval",0.0,1.0,0.5)))
+		m_isActive(true)
 	{
 		addInput_("in1");
 		addInput_("in2");
@@ -42,7 +43,7 @@ namespace syn
 		m_outBuffers.resize(m_nBuffers);
 		m_outBufferExtrema.resize(m_nBuffers);
 
-		m_inBufferSize = bufferSizeValues[getParameter(m_pBufferSize).getInt()];
+		m_inBufferSize = getParameter(m_pBufferSize).getEnum();
 		m_outBufferSize = m_inBufferSize >> 1;
 		for (int i = 0; i < m_nBuffers; i++) {
 			m_timeBuffers[i].resize(m_inBufferSize);
@@ -58,7 +59,7 @@ namespace syn
 
 	void SpectroscopeUnit::onParamChange_(int a_paramId) {
 		if (a_paramId == m_pBufferSize) {
-			int newBufferSize = bufferSizeValues[getParameter(m_pBufferSize).getInt()];
+			int newBufferSize = getParameter(m_pBufferSize).getEnum();
 			m_inBufferSize = newBufferSize;
 			m_outBufferSize = newBufferSize >> 1;
 			m_bufferIndex = MIN(m_bufferIndex, m_inBufferSize-1);
@@ -83,7 +84,7 @@ namespace syn
 
 		m_samplesSinceLastUpdate++;
 		int updatePeriod = LERP(16,m_inBufferSize, 1 - getParameter(m_pUpdatePeriod).getDouble());
-		if (m_samplesSinceLastUpdate >= updatePeriod) {
+		if (m_samplesSinceLastUpdate >= updatePeriod && m_isActive) {
 			m_samplesSinceLastUpdate = 0;
 			for (int i = 0; i < m_nBuffers; i++) {
 				// Copy from input buffers to freq buffers
@@ -98,12 +99,11 @@ namespace syn
 
 				// Copy freq magnitudes to output buffers
 				double timeSmooth = getParameter(m_pTimeSmooth).getDouble();
-				double target;
 				double outmin = INFINITY, outmax = -INFINITY;
 				int argoutmin = 0, argoutmax = 0;
 				for (int j = 0; j < m_outBufferSize;j++) {
 					int k = WDL_fft_permute(m_inBufferSize, j);
-					target = m_freqBuffers[i][k].re*m_freqBuffers[i][k].re + m_freqBuffers[i][k].im*m_freqBuffers[i][k].im;
+					double target = m_freqBuffers[i][k].re*m_freqBuffers[i][k].re + m_freqBuffers[i][k].im*m_freqBuffers[i][k].im;
 					target = 10 * log10(target+1e-12);
 					m_outBuffers[i][j] = m_outBuffers[i][j] + (1.0/50.0)*(1-timeSmooth)*(target - m_outBuffers[i][j]);
 

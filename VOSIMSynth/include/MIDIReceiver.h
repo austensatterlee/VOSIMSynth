@@ -10,9 +10,9 @@
  */
 class MIDIReceiver {
 public:
-    MIDIReceiver(shared_ptr<syn::VoiceManager> a_vm) :
-            m_vm(a_vm),
-            m_offset(0)
+	explicit MIDIReceiver(shared_ptr<syn::VoiceManager> a_vm) :
+            m_offset(0),
+            m_vm(a_vm)
     {
         for (int i = 0 ; i < s_keyCount ; i++) {
             m_keyStatus[i] = false;

@@ -19,7 +19,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __NDPOINT__
 #define __NDPOINT__
-#include <cstdarg>
 #include <array>
 
 using std::array;
@@ -32,6 +31,17 @@ namespace syn
 	template <int ND = 2, typename T = double>
 	class NDPoint
 	{
+	private:
+		template<typename FROM_T,typename... Rest>
+		void _fill_vec(int i, const FROM_T& first, const Rest&... rest) {
+			m_pvec[i] = static_cast<T>(first);
+			_fill_vec(i + 1, rest...);
+		}
+
+		template<typename FROM_T>
+		void _fill_vec(int i, const FROM_T& only) {
+			m_pvec[i] = static_cast<T>(only);
+		}
 	protected:
 		T m_pvec[ND];
 	public:
@@ -40,14 +50,12 @@ namespace syn
 			memset(m_pvec, 0, ND * sizeof(T));
 		}
 
-		NDPoint(const T a_tuple[ND])
+		template<typename FROM_T>
+		NDPoint(const FROM_T a_tuple[ND])
 		{
-			std::copy(a_tuple, a_tuple + ND, m_pvec);
-		}
-
-		NDPoint(const NDPoint<ND, T>& a_pt)
-		{
-			std::copy(a_pt.m_pvec, a_pt.m_pvec + ND, m_pvec);
+			for (int i = 0; i < ND; i++) {
+				m_pvec[i] = static_cast<T>(a_tuple[i]);
+			}
 		}
 
 		template <typename FROM_T>
@@ -57,24 +65,21 @@ namespace syn
 				m_pvec[i] = static_cast<T>(a_pt[i]);
 			}
 		}
-
-		NDPoint(const array<T, ND>& a_tuple) {
-			std::copy(&a_tuple[0], &a_tuple[0] + ND, m_pvec);
+		
+		template<typename FROM_T>
+		NDPoint(const array<FROM_T, ND>& a_tuple) {
+			for (int i = 0; i < ND; i++) {
+				m_pvec[i] = static_cast<T>(a_tuple[i]);
+			}
 		}		
 
 		/**
 		 * Variable argument constructor. Accepts one argument for each dimension.
 		 */
-		NDPoint(T a_n1, ...)
+		template<typename... Args>		
+		NDPoint(const Args&... args)
 		{
-			va_list vl;
-			va_start(vl, a_n1);
-			T value = a_n1;
-			for (int i = 0; i < ND; i++) {
-				m_pvec[i] = value;
-				value = va_arg(vl, T);
-			}
-			va_end(vl);
+			_fill_vec(0,args...);
 		}
 
 		/**

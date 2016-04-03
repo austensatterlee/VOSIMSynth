@@ -28,9 +28,9 @@ namespace syn
 		// Draw user controls
 		for (int i = 0; i < nParams; i++) {
 			m_paramControls[i].Draw(a_graphics);
-			updateMinSize_({ m_paramControls[i].getMinSize(), 0 });
+			updateMinSize_(NDPoint<2, int>{ m_paramControls[i].getMinSize(), 0 });
 		}
-		updateMinSize_({ 0, c_minParamHeight*nParams });
+		updateMinSize_(NDPoint<2, int>{ 0, c_minParamHeight*nParams });
 	}
 
 	void DefaultUnitControl::onMouseDblClick(int a_x, int a_y, IMouseMod* a_mouseMod) {
@@ -106,24 +106,10 @@ namespace syn
 			int rowsize = MAX(c_minParamHeight,m_size[1] / nParams);
 			for (int i = 0; i < nParams; i++) {
 				IRECT param_rect{ m_pos[0], portY, m_pos[0] + m_size[0], portY + rowsize };
-				m_paramControls[i].setRECT(param_rect);
+				m_paramControls[i].changeRect(param_rect);
 				portY += rowsize;
 			}
 		}
-	}
-
-	DefaultUnitControl::DefaultUnitControl(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, int a_unitId, int a_x, int a_y):
-		UnitControl(a_plug, a_vm, a_unitId, a_x, a_y),
-		m_lastSelectedParam(-1) {
-		int nParams = m_voiceManager->getUnit(m_unitId).getNumParameters();
-		m_paramControls.clear();
-		for (int i = 0; i < nParams; i++) {
-			m_paramControls.push_back(ITextSlider(m_plug, m_voiceManager, m_unitId, i, IRECT{ 0, 0, 0, 0 }));
-		}
-	}
-
-	UnitControl* DefaultUnitControl::_construct(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, int a_unitId, int a_x, int a_y) const {
-		return new DefaultUnitControl(a_plug, a_vm, a_unitId, a_x, a_y);
 	}
 }
 

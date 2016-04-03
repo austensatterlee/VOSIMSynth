@@ -38,7 +38,7 @@ using std::array;
 
 namespace syn {
 	class SpectroscopeUnit : public Unit
-	{	
+	{
 	public:
 		SpectroscopeUnit(const string& a_name);
 
@@ -65,7 +65,7 @@ namespace syn {
 		}
 	protected:
 		void onParamChange_(int a_paramId) override;
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
 		
 	private:
 		string _getClassName() const override { return "SpectroscopeUnit"; };
@@ -84,23 +84,19 @@ namespace syn {
 		vector<vector<double> > m_outBuffers;
 		vector<array<int,2> > m_outBufferExtrema;
 		vector<double> m_window;
+		bool m_isActive;
 	};
 
 	class SpectroscopeUnitControl : public UnitControl
 	{
 	public:
-		SpectroscopeUnitControl() :
-			UnitControl(),
+		SpectroscopeUnitControl(IPlugBase* a_plug, VoiceManager* a_voiceManager) :
+			UnitControl(a_plug, a_voiceManager),
 			m_xBounds(0,1),
 			m_yBounds(c_defaultYBounds),
 			m_paramControl(nullptr),
 			m_unit(nullptr)			
 		{}
-
-		virtual ~SpectroscopeUnitControl() {
-			if(m_paramControl!=nullptr)
-				delete m_paramControl;
-		}
 
 		void onMouseDblClick(int a_x, int a_y, IMouseMod* a_mouseMod) override {
 			m_paramControl->onMouseDblClick(a_x, a_y, a_mouseMod);
@@ -127,7 +123,7 @@ namespace syn {
 		void draw(IGraphics* a_graphics) override 
 		{
 			// Draw background
-			IColor bgcolor{ 245,5,0,20 };
+			IColor bgcolor{ 225,5,0,20 };
 			IRECT rect = { m_pos[0], m_pos[1], m_pos[0] + m_size[0], m_pos[1] + m_size[1] };
 			a_graphics->FillIRect(&bgcolor, &rect);			
 			m_paramControl->draw(a_graphics);
@@ -137,7 +133,8 @@ namespace syn {
 			IRECT screen_rect = { rect.L,rect.T + paramControlSize[1]+1,rect.R,rect.B };
 
 			///\todo optimize
-			m_unit = static_cast<const SpectroscopeUnit*>(&m_voiceManager->getUnit(m_unitId));
+			const SpectroscopeUnit* unit = static_cast<const SpectroscopeUnit*>(&m_voiceManager->getUnit(m_unitId));
+			m_unit = unit;
 			m_xBounds = { 0, log10(0.5*m_unit->getFs()) };
 
 			NDPoint<2, double> lastPoint(0,0);
@@ -161,12 +158,12 @@ namespace syn {
 		}
 	protected:
 		void onSetUnitId_() override{
-			m_paramControl->setUnitId(m_unitId);
+			m_paramControl.reset(construct<DefaultUnitControl>(m_plug, m_voiceManager, m_unitId));
+			onChangeRect_();
 		};
 
 		void onChangeRect_() override {
-			m_paramControl->move(m_pos);
-			m_paramControl->resize({ m_size[0]-1,0 });
+			m_paramControl->changeRect(m_pos, { m_size[0] - 1,0 });
 		}
 
 		void resetYBounds_() {
@@ -179,21 +176,6 @@ namespace syn {
 		}
 
 	private:
-		SpectroscopeUnitControl(IPlugBase* a_plug, const shared_ptr<VoiceManager>& a_vm, int a_unitId, int a_x, int a_y) :
-			UnitControl(a_plug, a_vm, a_unitId, a_x, a_y),
-			m_xBounds(0, 1),
-			m_yBounds(c_defaultYBounds),
-			m_unit(nullptr)
-		{
-			DefaultUnitControl pctrl;
-			m_paramControl = pctrl.construct(a_plug, a_vm, a_unitId, a_x, a_y);
-		}
-
-		UnitControl* _construct(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, int a_unitId, int a_x, int a_y) const override 
-		{
-			return new SpectroscopeUnitControl(a_plug, a_vm, a_unitId, a_x, a_y);
-		};
-
 		NDPoint<2,int> toScreen(NDPoint<2,double> a_pt, const IRECT& a_screen) {
 			a_pt[0] = CLAMP(a_pt[0], m_xBounds[0], m_xBounds[1]);
 			a_pt[1] = CLAMP(a_pt[1], m_yBounds[0], m_yBounds[1]);
@@ -206,7 +188,7 @@ namespace syn {
 	private:
 		NDPoint<2, double> m_xBounds,m_yBounds;
 		const NDPoint<2, double> c_defaultYBounds = { -60.0,6.0 };
-		UnitControl* m_paramControl;
+		shared_ptr<UnitControl> m_paramControl;
 		const IColor c_colors[2] = { {255,255,255,255},{255,128,128,255} };
 		const SpectroscopeUnit* m_unit;
 	};

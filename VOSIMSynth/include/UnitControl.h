@@ -23,16 +23,23 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "IControl.h"
 #include "NDPoint.h"
 #include "ITextSlider.h"
+#include <type_traits>
 
 namespace syn {
 
 	class UnitControl
 	{
 	public:
-		UnitControl();
+		UnitControl(IPlugBase* a_plug, VoiceManager* a_voiceManager) :
+			m_voiceManager(a_voiceManager),
+			m_unitId(-1),
+			m_plug(a_plug)
+		{}
 
 		/// This method should be used to create new UnitControl instances
-		UnitControl* construct(IPlugBase* a_mPlug, shared_ptr<VoiceManager> a_voiceManager, int a_uid, int a_x, int a_y) const;
+		template<typename T>
+		static typename enable_if< is_base_of<UnitControl, T>::value, T* >::type
+		construct(IPlugBase* a_plug, VoiceManager* a_voiceManager, int a_uid);
 
 		virtual ~UnitControl() {}
 
@@ -52,9 +59,7 @@ namespace syn {
 
 		virtual bool isHit(int a_x, int a_y) const;
 
-		void move(NDPoint<2, int> a_newPos);
-
-		void resize(NDPoint<2, int> a_newSize);
+		void changeRect(NDPoint<2, int> a_newPos, NDPoint<2, int> a_newSize);
 
 		NDPoint<2, int> getMinSize() const;
 
@@ -62,8 +67,6 @@ namespace syn {
 
 		virtual int getSelectedParam(int a_x, int a_y);
 	protected:
-		UnitControl(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, int a_unitId, int a_x, int a_y);
-
 		void updateMinSize_(NDPoint<2, int> a_newMinSize);
 
 		void resetMinSize_();
@@ -71,16 +74,22 @@ namespace syn {
 		virtual void onSetUnitId_() {};
 		virtual void onChangeRect_() {};
 	protected:
-		shared_ptr<VoiceManager> m_voiceManager;
+		VoiceManager* m_voiceManager;
 		int m_unitId;
 		NDPoint<2, int> m_pos;
 		NDPoint<2, int> m_size;
 		IPlugBase* m_plug;
 	private:
-		virtual UnitControl* _construct(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, int a_unitId, int a_x, int a_y) const = 0;
-	private:
 		NDPoint<2, int> m_minSize;
 	};
+
+	template <typename T>
+	typename std::enable_if<std::is_base_of<UnitControl, T>::value, T*>::type 
+	UnitControl::construct(IPlugBase* a_plug, VoiceManager* a_voiceManager, int a_uid) {
+		UnitControl* ret = new T(a_plug, a_voiceManager);
+		ret->setUnitId(a_uid);
+		return static_cast<T*>(ret);
+	}
 }
 
 #endif

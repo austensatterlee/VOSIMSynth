@@ -22,17 +22,18 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 namespace syn {
     int SignalBus::addChannel()
     {
-        return m_signals.add("",Signal());
+        return addChannel("");
     }
 
     int SignalBus::addChannel(const string& a_name)
     {
+		m_numChannels++;
         return m_signals.add(a_name, Signal());
     }
 
     int SignalBus::getNumChannels() const
     {
-        return m_signals.size();
+        return m_numChannels;
     }
 
     void SignalBus::set(SignalBus& a_other)
@@ -64,7 +65,7 @@ namespace syn {
         return m_value == a_rhs.m_value;
     }
 
-	double Signal::get() const
+	double MSFASTCALL Signal::get() const
     {
         return m_value;
     }

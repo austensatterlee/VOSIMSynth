@@ -60,6 +60,7 @@ namespace syn {
     void UnitConnectionBus::pull(int a_localPort, Signal& a_recipient) const {
         const UnitPort& port = m_ports[a_localPort];
 		int pSize = port.size();
+		a_recipient.clear();
         for(int i=0;i<pSize;i++){
 			const UnitConnector& conn = port[i];
 			conn.connectedUnit->tick();
@@ -84,7 +85,7 @@ namespace syn {
         return m_numPorts;
     }
 
-	int UnitConnectionBus::numConnections(int a_portNum) {
+	int UnitConnectionBus::numConnections(int a_portNum) const {
 		if (m_numPorts > a_portNum)
 			return m_ports[a_portNum].size();
 		return 0;

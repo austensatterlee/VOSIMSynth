@@ -1,6 +1,6 @@
 # Doxygen
 doc/
-_build/
+_build*/
 
 # IDEA
 .idea/

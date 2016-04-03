@@ -32,12 +32,12 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 namespace syn {
     class ADSREnvelope : public Unit {
     public:
-        ADSREnvelope(const string& name);
+        explicit ADSREnvelope(const string& name);
 
         ADSREnvelope(const ADSREnvelope& a_rhs);
 
     protected:
-	    void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
+	    void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
 
     public:
         virtual bool isActive() const override;

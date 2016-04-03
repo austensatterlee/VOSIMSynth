@@ -40,10 +40,9 @@ namespace syn {
 
 	class UnitControlContainer {
 	public:
-		UnitControlContainer(IPlugBase* a_plug, shared_ptr<VoiceManager> a_vm, UnitControl* a_unitControl, int a_unitId, int x, int y);
+		UnitControlContainer(IPlugBase* a_plug, VoiceManager* a_vm, UnitControl* a_unitControl, int a_unitId);
 
 		virtual ~UnitControlContainer() {
-			delete m_unitControl;
 		};
 
 		virtual bool draw(IGraphics* pGraphics);
@@ -66,13 +65,15 @@ namespace syn {
 
 		virtual void onMouseWheel(int a_x, int a_y, IMouseMod* a_mouseMod, int a_d);
 
-		void move(int a_newx, int a_newy);
+		void move(const NDPoint<2,int>& a_newPos);
 
 		virtual NDPoint<2, int> getMinSize() const;
 
 		void resize(NDPoint<2, int> a_newSize);
 
-		virtual NDPoint<2, int> getPortPos(UnitPortVector a_portId) const;
+		NDPoint<2, int> getPortPos(UnitPortVector a_portId) const;
+
+		void rotate90();
 
 		IRECT getPortRect(UnitPortVector a_portVector) const;
 
@@ -97,19 +98,20 @@ namespace syn {
 	private:
 		friend class CircuitPanel;
 
-		shared_ptr<VoiceManager> m_voiceManager;
-		UnitControl* m_unitControl;
-
+		IPlugBase* m_plug;
+		VoiceManager* m_voiceManager;
+		unique_ptr<UnitControl> m_unitControl;
 		int m_unitId;
 		bool m_isSelected;
+
+		const int c_portPad = 3;
+		const int c_edgePad = 1;
 		NDPoint<2, int> m_size;
 		NDPoint<2, int> m_minSize;
 		NDPoint<2, int> m_portSize;
-		NDPoint<2, int> m_titleSize;
-		const int c_portPad = 3;
-		const int c_edgePad = 1;
+		NDPoint<2, int> m_titleSize;			
+		int m_port_orientation;
 		IRECT m_rect;
-		IPlugBase* m_plug;
 		bool m_isControlClicked;
 	};
 }

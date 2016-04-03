@@ -41,11 +41,11 @@ namespace syn
 		double XBuf[nX];
 		double YBuf[nY];
 		int xBufInd, yBufInd;
-		int m_pInput;
 	public:
-		Filter(string a_name, const double& a_X[nX], const double& a_Y[nY]) :
-				Unit(a_name),
-			m_pInput(addParameter_(UnitParameter("input", -1.0, 1.0, 0.0)))
+		Filter(string a_name, const double a_X[nX], const double a_Y[nY]) :
+			Unit(a_name),
+			xBufInd(0),
+			yBufInd(0)
 		{
             addInput_("in");
             addOutput_("out");
@@ -63,7 +63,7 @@ namespace syn
 		virtual ~Filter() { };
 
 	protected:
-		void process_(const SignalBus& a_inputs, SignalBus& a_outputs) override;
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
         void reset_() {
             memset(YBuf, 0, nY * sizeof(double));
             memset(XBuf, 0, nX * sizeof(double));
