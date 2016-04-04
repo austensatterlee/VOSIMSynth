@@ -46,7 +46,7 @@ namespace syn {
 
     protected:
 	    void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
-        void updatePhaseStep_() override;
+        void MSFASTCALL updatePhaseStep_() GCCFASTCALL override;
 
     private:
         string _getClassName() const override

@@ -63,10 +63,10 @@ namespace syn {
 		virtual ~Oscillator() {}
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
-		virtual void tickPhase_(double a_phaseOffset);
-		virtual void updatePhaseStep_();
-		virtual void sync_() {};
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;		
+		virtual void MSFASTCALL tickPhase_(double a_phaseOffset) GCCFASTCALL;
+		virtual void MSFASTCALL updatePhaseStep_() GCCFASTCALL;
+		virtual void MSFASTCALL sync_() GCCFASTCALL {};
 	protected:
 		double m_basePhase;
 		double m_phase, m_last_phase;
@@ -104,8 +104,8 @@ namespace syn {
 		{}
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
-		void updatePhaseStep_() override;
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) override GCCFASTCALL;
+		void MSFASTCALL updatePhaseStep_() override GCCFASTCALL;
 		void onNoteOn_() override;
 	protected:
 		double m_pitch;
@@ -146,7 +146,9 @@ namespace syn {
 			m_iFreqAdd(addInput_("freq")),
 			m_iFreqMul(addInput_("freq[x]",1.0,Signal::EMul)),
 			m_iSync(addInput_("sync")),
-			m_syncedFreqParam("rate", 1, 64, 1),
+			m_syncedFreqParam("rate",
+			{"1/64","1/32","3/64","1/16","3/32","1/8","1/4","3/8","1/2","3/4","1","3/2","2"},
+			{ 1.0/64,1.0/32,3.0/64,1.0/16,3.0/32,1.0/8,1.0/4,3.0/8,1.0/2,3.0/4,1.0,3.0/2,2}, 0),
 			m_linFreqParam("freq", 0.0, 80.0, 1.0),
 			m_lastSync(0.0)
 		{

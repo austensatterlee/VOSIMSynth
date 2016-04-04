@@ -62,14 +62,15 @@ namespace syn {
 
     UnitParameter::UnitParameter(const string &a_name,
                                  const vector<string> &a_optionNames,
-								 const vector<double>& a_optionValues) :
+								 const vector<double>& a_optionValues,
+								 int a_defaultOption) :
             m_name(a_name),
             m_min(0),
             m_max(a_optionNames.size()-1),
             m_type(Enum),
             m_displayPrecision(0)
     {
-		m_defaultValue = 0;
+		m_defaultValue = a_defaultOption;
 		m_value = m_prevValue = m_defaultValue;
 		double optionValue;
         for (int i = 0; i < a_optionNames.size(); i++) {
@@ -251,7 +252,12 @@ namespace syn {
 		return retval;
     }
 
-    string UnitParameter::getString() const
+	bool UnitParameter::setFromString(const string& a_str)
+	{
+		return false; // NOT IMPLEMENTED
+	}
+
+	string UnitParameter::getString() const
     {
         int idx = getInt();
         // Check for a matching display text

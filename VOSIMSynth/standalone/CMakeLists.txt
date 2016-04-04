@@ -1,4 +1,5 @@
 # Standalone app
+cmake_minimum_required(VERSION 3.3)
 SET(APP_NAME "${CMAKE_PROJECT_NAME}-app")
 
 SET(ASIO_DIR ${LIBS_DIR}/ASIO_SDK)
@@ -50,7 +51,7 @@ IF(WIN32)
     ${WDL_FILES}
     )
 
-  TARGET_LINK_LIBRARIES(${APP_NAME} LICELib IPlugLib)
+  TARGET_LINK_LIBRARIES(${APP_NAME} LICELib IPlugLib VOSIMLib)
 
   TARGET_LINK_LIBRARIES(${APP_NAME} dsound winmm comctl32 wininet)
 ENDIF()

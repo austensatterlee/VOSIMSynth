@@ -426,8 +426,8 @@ def main(pargs):
     MAX_PITCH = 128
     pitches,pitchtable = GeneratePitchTable(MIN_PITCH,MAX_PITCH,PITCH_RES)
     """DB table"""
-    DB_RES = 2048
-    MIN_DB = -120
+    DB_RES = 256
+    MIN_DB = -90
     MAX_DB = 0
     decibals,dbtable = GenerateDecibalTable(MIN_DB,MAX_DB,DB_RES)
 
@@ -445,11 +445,11 @@ def main(pargs):
 
     """Offline and online BLIMP for resampling"""
     OFFLINE_BLIMP_INTERVALS = 513
-    OFFLINE_BLIMP_RES = 128
+    OFFLINE_BLIMP_RES = 2048
 
     ONLINE_BLIMP_INTERVALS = 11
     ONLINE_BLIMP_RES = 2048
-    blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS,ONLINE_BLIMP_RES,fc=18e3)
+    blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS,ONLINE_BLIMP_RES,fc=20e3)
     blimp_offline = GenerateBlimp(OFFLINE_BLIMP_INTERVALS,OFFLINE_BLIMP_RES,fc=22e3)
 
     blimp_online = convolve( prefilter, blimp_online, 'same' ) # apply gain to high frequencies

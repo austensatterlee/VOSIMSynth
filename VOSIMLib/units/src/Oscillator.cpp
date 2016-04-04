@@ -132,7 +132,7 @@ namespace syn {
 	void LFOOscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
 		// determine frequency
 		if (getParameter(m_pTempoSync).getBool()) {
-			m_freq = getTempo()/60.0*0.0625*a_inputs.getValue(m_iFreqMul)*(getParameter(m_pFreq).getDouble() + a_inputs.getValue(m_iFreqAdd));
+			m_freq = getTempo()/60.0*1./(a_inputs.getValue(m_iFreqMul)*(getParameter(m_pFreq).getEnum() + a_inputs.getValue(m_iFreqAdd)));
 		}else {
 			m_freq = a_inputs.getValue(m_iFreqMul)*(getParameter(m_pFreq).getDouble() + a_inputs.getValue(m_iFreqAdd));
 		}

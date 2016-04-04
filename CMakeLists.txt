@@ -2,6 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
 project(VOSIMProject C CXX)
 
 set(PLUGIN_NAME ${CMAKE_PROJECT_NAME})
+
 set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
@@ -140,21 +141,13 @@ set(PROJECT_SRCS ${PROJECT_SRCS};${VOSIMSYNTH_DIR}/vosimsynth.cpp)
 file(GLOB PROJECT_HDRS ${VOSIMSYNTH_DIR}/include/*.h)
 set(PROJECT_FILES ${PROJECT_SRCS};${PROJECT_HDRS})
 
-##
-# VOSIMLib source files
-##
-file(GLOB VOSIMLIB_HDRS ${VOSIMLIB_DIR}/include/*.h)
-file(GLOB VOSIMLIB_SRCS ${VOSIMLIB_DIR}/src/*.cpp)
-file(GLOB VOSIMLIB_UNIT_HDRS ${VOSIMLIB_DIR}/units/include/*.h)
-file(GLOB VOSIMLIB_UNIT_SRCS ${VOSIMLIB_DIR}/units/src/*.cpp)
-set(VOSIMLIB_FILES ${VOSIMLIB_HDRS};${VOSIMLIB_UNIT_HDRS})
-set(VOSIMLIB_FILES ${VOSIMLIB_FILES};${VOSIMLIB_SRCS};${VOSIMLIB_UNIT_SRCS})
-
 set(RESOURCE_FILES ${VOSIMSYNTH_DIR}/vosimsynth.rc ${VOSIMSYNTH_DIR}/include/resource.h)
 set_source_files_properties(${VOSIMSYNTH_DIR}/vosimsynth.rc LANGUAGE RC)
 
-# Add lice and iplug projects
+# LICE
 add_subdirectory(${LICE_DIR} LICELib)
+
+# IPlug
 add_subdirectory(${IPLUG_DIR} IPlugLib)
 
 # Add boost
@@ -164,11 +157,16 @@ find_package(Boost)
 message(STATUS "Boost include dirs (post-search): ${Boost_INCLUDE_DIRS}")
 include_directories(${Boost_INCLUDE_DIRS})
 
+# VOSIMLib
+add_subdirectory(${VOSIMLIB_DIR} VOSIMLib)
+
 # Include directories
-include_directories(${WDL_DIR})
+include_directories(${VOSIMSYNTH_DIR}/include)
+
 include_directories(${VOSIMLIB_DIR}/include)
 include_directories(${VOSIMLIB_DIR}/units/include)
-include_directories(${VOSIMSYNTH_DIR}/include)
+
+include_directories(${WDL_DIR})
 include_directories(${IPLUG_DIR})
 include_directories(${LICE_DIR})
 
@@ -178,11 +176,6 @@ add_subdirectory(${STANDALONE_DIR} standalone)
 add_definitions(-DVST_API -DDLL_BUILD -DVST_FORCE_DEPRECATED)
 
 # add source groups ("filters" for MSVC)
-source_group(VOSIMLib FILES ${VOSIMLIB_SRCS})
-source_group(VOSIMLib\\include FILES ${VOSIMLIB_HDRS})
-source_group(VOSIMLib-units FILES ${VOSIMLIB_UNIT_SRCS})
-source_group(VOSIMLib-units\\include FILES ${VOSIMLIB_UNIT_HDRS})
-
 source_group(VOSIMSynth\\include FILES ${PROJECT_HDRS})
 source_group(VOSIMSynth FILES ${PROJECT_SRCS})
 source_group(Resources FILES ${RESOURCE_FILES})
@@ -196,12 +189,7 @@ add_library(${PLUGIN_NAME} SHARED
   ${WDL_FILES}
   )
 
-target_link_libraries(${PLUGIN_NAME} LICELib IPlugLib)
-
-#add_library(VOSIMLIB STATIC IMPORTED)
-#get_filename_component(VOSIMLIB_PATH ${VOSIMLIB_DIR}/build/release/libvosimlib.a absolute)
-#set_target_properties(VOSIMLIB PROPERTIES IMPORTED_LOCATION ${VOSIMLIB_PATH})
-#target_link_libraries(${PLUGIN_NAME} VOSIMLIB)
+target_link_libraries(${PLUGIN_NAME} VOSIMLib LICELib IPlugLib)
 
 if (WIN32)
   target_link_libraries(${PLUGIN_NAME} comctl32 wininet)

@@ -42,10 +42,10 @@ namespace syn
 	class UnitParameter
 	{
 	public:
-        UnitParameter();
+		UnitParameter();
         UnitParameter(const string& a_name, bool a_defaultValue);
         UnitParameter(const string& a_name, int a_min, int a_max, int a_defaultValue);
-        UnitParameter(const string& a_name, const vector<string>& a_optionNames, const vector<double>& a_optionValues={});
+        UnitParameter(const string& a_name, const vector<string>& a_optionNames, const vector<double>& a_optionValues={}, int a_defaultOption=0);
         UnitParameter(const string& a_name, double a_min, double a_max, double a_defaultValue, int a_displayPrecision=2);
 
 
@@ -80,6 +80,7 @@ namespace syn
 		 * \return true if the parameter value was changed
          */
         bool setNorm(double a_norm_value);
+		bool setFromString(const string& a_str);
 
 		/**
 		 * Automatically retrieves the parameter value according to its type.
