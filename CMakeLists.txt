@@ -1,141 +1,90 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
-project(VOSIMProject C CXX)
+project(VOSIMProject)
+enable_language(C CXX RC)
 
 set(PLUGIN_NAME ${CMAKE_PROJECT_NAME})
 
 set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-# edit available configrations to make them available in ide that support
-# multiple-configuration (for example visual studio)
-# has to be between "project" and "enable_language" to work as intended!
-if(CMAKE_CONFIGURATION_TYPES)
-  list(APPEND CMAKE_CONFIGURATION_TYPES DBGTRACE RELDBGTRACE)
-  list(REMOVE_DUPLICATES CMAKE_CONFIGURATION_TYPES)
-  set(CMAKE_CONFIGURATION_TYPES ${CMAKE_CONFIGURATION_TYPES} CACHE STRING 
-    "append user-defined configuration to list of configurations to make it usable in visual studio" FORCE)
-endif()
+# define source directories
+set(LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs CACHE PATH "")
+set(ALLOY_DIR ${LIBS_DIR}/alloy CACHE PATH "")
+set(CEREAL_DIR ${LIBS_DIR}/cereal CACHE PATH "")
+set(WDL_DIR ${LIBS_DIR}/wdl CACHE PATH "")
+set(IPLUG_DIR ${WDL_DIR}/iplug CACHE PATH "")
+set(VOSIMLIB_DIR ${CMAKE_SOURCE_DIR}/vosimlib CACHE PATH "")
+set(VOSIMSYNTH_DIR ${CMAKE_SOURCE_DIR}/vosimsynth CACHE PATH "")
+set(STANDALONE_DIR ${VOSIMSYNTH_DIR}/standalone CACHE PATH "")
 
-
-if (MINGW)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++0x -fpermissive -wno-unknown-pragmas")
-  # seems to be used in the whole c::b project
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wno-write-strings")
-  # compile the runtime as static (this will make sure that libgcc_s_seh-1.dll et al. won't show up in DEPENDENCY walker)
-  set(CMAKE_SHARED_LINKER_FLAGS "-static -static-libgcc -static-libstdc++")
-  set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++")
-
-  if (WIN32)
-    # some flags apparently needed to compile with gcc
-    add_definitions(-Dstricmp=strcasecmp)
-    add_definitions(-DWIN32)
-    add_definitions(-DNTDDI_VERSION=0x05010000)
-    add_definitions(-D_WIN32_WINNT=0x0501)
-    add_definitions(-DWINVER=0x0501)
-    add_definitions(-D_WIN32_IE=0x0500)
-  endif()
-
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -ffast-math  -D__NO_INLINE__")
-
-  set(CMAKE_RC_COMPILER_INIT windres)
-  enable_language(RC)
-  set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> <FLAGS> -O coff <DEFINES> -i <SOURCE> -o <OBJECT>")
-endif (MINGW)
-
-if(MSVC)
-  # Runtime library
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
-  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MT")
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
-
-  # Disable some warnings
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4996 /wd4224 /wd4244 /wd4091 /wd4018")
-  # /Ox full opt
-  # /Ob2 any suitable inline function expansion
-  # /Oi enable intrinsics
-  # /Ot favor fast code
-  # /GL whole program optimization
-  # /arch:SSE2 simd extensions
-  # /fp:fast fast floating point model
-  # /Qpar enable parallel code gen
-  # /Oy omit frame pointers
-  # /GT fiber-safe optimizations
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox /Ob2 /Oi /Ot /GL /arch:SSE2 /fp:fast /Qpar /Oy /GT")
-  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /Ob2 /Oi /arch:SSE2 /fp:fast /GT")
-
-  # linker optimizations
-  # /LTCG link time code generation
-  # /OPT:REF remove code that is never referenced
-  set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /LTCG /INCREMENTAL:NO /OPT:REF")
-  set(CMAKE_SHARED_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG /INCREMENTAL:NO /OPT:REF")
-
-  add_definitions(-D_SCL_SECURE_NO_WARNINGS)
-endif()
-
-# configurations for all compilers
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUGLIBPNG")
-add_definitions(-DWDL_FFT_REALSIZE=8)
-add_definitions(-DPNG_NO_ASSEMBLER_CODE -DPNG_LIBPNG_SPECIALBUILD)
-add_definitions(-D_CRT_SECURE_NO_DEPRECATE) 
-
-# enable tracer build configurations
-set(CMAKE_CXX_FLAGS_RELDBGTRACE "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DTRACER_BUILD")
-set(CMAKE_EXE_LINKER_FLAGS_RELDBGTRACE "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO}")
-set(CMAKE_SHARED_LINKER_FLAGS_RELDBGTRACE "${CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO}")
-
-mark_as_advanced(
-  CMAKE_CXX_FLAGS_RELDBGTRACE
-  CMAKE_EXE_LINKER_FLAGS_RELDBGTRACE
-  CMAKE_SHARED_LINKER_FLAGS_RELDBGTRACE 
-  )
-
-set(CMAKE_CXX_FLAGS_DBGTRACE "${CMAKE_CXX_FLAGS_DEBUG} -DTRACER_BUILD")
-set(CMAKE_EXE_LINKER_FLAGS_DBGTRACE "${CMAKE_EXE_LINKER_FLAGS_DEBUG}")
-set(CMAKE_SHARED_LINKER_FLAGS_DBGTRACE "${CMAKE_SHARED_LINKER_FLAGS_DEBUG}")
-
-mark_as_advanced(
-  CMAKE_CXX_FLAGS_DBGTRACE
-  CMAKE_EXE_LINKER_FLAGS_DBGTRACE
-  CMAKE_SHARED_LINKER_FLAGS_DBGTRACE 
-  )
-
-# message(STATUS "dbgtrace flags: ")
-# message(STATUS "cxx: ${CMAKE_CXX_FLAGS_DBGTRACE}")
-# message(STATUS "exe linker: ${CMAKE_EXE_LINKER_FLAGS_DBGTRACE}")
-# message(STATUS "shared linker: ${CMAKE_SHARED_LINKER_FLAGS_DBGTRACE}")
-# message(STATUS "dbgtrace flags: ")
-# message(STATUS "cxx: ${CMAKE_CXX_FLAGS_RELDBGTRACE}")
-# message(STATUS "exe linker: ${CMAKE_EXE_LINKER_FLAGS_RELDBGTRACE}")
-# message(STATUS "shared linker: ${CMAKE_SHARED_LINKER_FLAGS_RELDBGTRACE}")
-
-# begin collecting sources
-set(LIBS_DIR ${CMAKE_SOURCE_DIR}/libs)
-set(WDL_DIR ${LIBS_DIR}/wdl)
-set(LICE_DIR ${WDL_DIR}/lice)
-set(IPLUG_DIR ${WDL_DIR}/iplug)
-set(VOSIMLIB_DIR ${CMAKE_SOURCE_DIR}/vosimlib)
-set(VOSIMSYNTH_DIR ${CMAKE_SOURCE_DIR}/vosimsynth)
-set(STANDALONE_DIR ${VOSIMSYNTH_DIR}/standalone)
-
+message (STATUS "Path to alloy is ${ALLOY_DIR}")
+message (STATUS "Path to cereal is ${CEREAL_DIR}")
 message (STATUS "Path to wdl is ${WDL_DIR}")
-message (STATUS "Path to lice is ${LICE_DIR}")
 message (STATUS "Path to iplug is ${IPLUG_DIR}")
 message (STATUS "Path to vosimlib is ${VOSIMLIB_DIR}")
 message (STATUS "Path to vosimsynth is ${VOSIMSYNTH_DIR}")
 message (STATUS "Path to vosimsynth standalone is ${STANDALONE_DIR}")
+
 message (STATUS "Build tool is ${CMAKE_BUILD_TOOL}")
-message (STATUS "Build type is ${CMAKE_BUILD_TYPE}")
 message (STATUS "System is ${CMAKE_SYSTEM_NAME}")
 
-##
+# Build alloy
+set(ALLOY_BUILD_EXAMPLE OFF CACHE BOOL "")
+add_subdirectory(${ALLOY_DIR} "libs/alloy")
+
+if (MINGW)
+  set(CMAKE_CXX_FLAGS "-std=gnu++0x -fpermissive -wno-unknown-pragmas-wno-write-strings" CACHE STRING "")
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math  -D__NO_INLINE__" CACHE STRING "")
+  # compile the runtime as static (this will make sure that libgcc_s_seh-1.dll et al. won't show up in DEPENDENCY walker)
+  set(CMAKE_SHARED_LINKER_FLAGS "-static -static-libgcc -static-libstdc++" CACHE STRING "")
+  set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++" CACHE STRING "")
+
+  set(CMAKE_RC_COMPILER_INIT windres CACHE STRING "" FORCE)
+  set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> <FLAGS> -O coff <DEFINES> -i <SOURCE> -o <OBJECT>" CACHE STRING "")
+
+  # some flags apparently needed to compile with gcc
+  add_definitions(-Dstricmp=strcasecmp -DWIN32 -DNTDDI_VERSION=0x05010000 -D_WIN32_WINNT=0x0501 -DWINVER=0x0501 -D_WIN32_IE=0x0500) 
+endif (MINGW)
+
+if(MSVC)
+  # Runtime library
+  set(MSVC_REL /EHsc /MT)
+  set(MSVC_DEB /EHsc /MT)
+
+  # Disable some warnings
+  set(MSVC_DISABLED_WARNINGS /wd4996 /wd4224 /wd4244 /wd4091 /wd4018)
+  add_compile_options("$<$<CONFIG:Debug>:${MSVC_DISABLED_WARNINGS}>")
+  # /Ox full opt                        /Ob2 any suitable inline function expansion
+  # /Oi enable intrinsics               /Ot favor fast code
+  # /GL whole program optimization      /arch:SSE2 simd extensions
+  # /fp:fast fast floating point model  /Qpar enable parallel code gen
+  # /Oy omit frame pointers             /GT fiber-safe optimizations
+  list(APPEND MSVC_REL /Ox /Ob2 /Oi /Ot /GL /arch:SSE2 /fp:fast /Qpar /Oy /GT)
+  set(MSVC_RDEB /Ob2 /Oi /arch:SSE2 /fp:fast /GT)
+  add_compile_options("$<$<CONFIG:Release>:${MSVC_REL}>")
+  add_compile_options("$<$<CONFIG:RelWithDebInfo>:${MSVC_RDEB}>")
+
+  # Linker optimizations
+  # /LTCG link time code generation
+  # /OPT:REF remove code that is never referenced
+  set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "/LTCG /INCREMENTAL:NO /OPT:REF")
+  set(CMAKE_SHARED_EXE_LINKER_FLAGS_RELEASE "/LTCG /INCREMENTAL:NO /OPT:REF")
+endif()
+
+# configurations for all compilers
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG" CACHE STRING "")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUGLIBPNG" CACHE STRING "")
+add_definitions(-DWDL_FFT_REALSIZE=8)
+add_definitions(-DPNG_NO_ASSEMBLER_CODE -DPNG_LIBPNG_SPECIALBUILD) 
+
+################################
+# Collect sources
+################################
+
 # WDL source files
-##
 set(WDL_FILES ${WDL_DIR}/fft.c ${WDL_DIR}/fft.h)
 
-##
 # VOSIMSynth source files
-##
 file(GLOB PROJECT_SRCS ${VOSIMSYNTH_DIR}/src/*.cpp)
 set(PROJECT_SRCS ${PROJECT_SRCS};${VOSIMSYNTH_DIR}/vosimsynth.cpp)
 file(GLOB PROJECT_HDRS ${VOSIMSYNTH_DIR}/include/*.h)
@@ -144,11 +93,9 @@ set(PROJECT_FILES ${PROJECT_SRCS};${PROJECT_HDRS})
 set(RESOURCE_FILES ${VOSIMSYNTH_DIR}/vosimsynth.rc ${VOSIMSYNTH_DIR}/include/resource.h)
 set_source_files_properties(${VOSIMSYNTH_DIR}/vosimsynth.rc LANGUAGE RC)
 
-# LICE
-add_subdirectory(${LICE_DIR} LICELib)
-
-# IPlug
-add_subdirectory(${IPLUG_DIR} IPlugLib)
+################################
+# Compile dependencies
+################################
 
 # Add boost
 set(Boost_NO_BOOST_CMAKE True)
@@ -160,15 +107,24 @@ include_directories(${Boost_INCLUDE_DIRS})
 # VOSIMLib
 add_subdirectory(${VOSIMLIB_DIR} VOSIMLib)
 
-# Include directories
+################################
+# Include header directories
+################################
 include_directories(${VOSIMSYNTH_DIR}/include)
 
 include_directories(${VOSIMLIB_DIR}/include)
 include_directories(${VOSIMLIB_DIR}/units/include)
 
+include_directories(${CEREAL_DIR}/include)
+include_directories(${ALLOY_DIR}/include/core)
+if(WIN32)
+  include_directories(${ALLOY_DIR}/ext/glew/include ${ALLOY_DIR}/ext/glfw/include)
+endif()
 include_directories(${WDL_DIR})
 include_directories(${IPLUG_DIR})
-include_directories(${LICE_DIR})
+
+# IPlug
+add_subdirectory(${IPLUG_DIR} "libs/IPlugLib")
 
 # Add standalone project
 add_subdirectory(${STANDALONE_DIR} standalone)
@@ -184,12 +140,11 @@ source_group(WDL FILES ${WDL_FILES})
 
 add_library(${PLUGIN_NAME} SHARED
   ${PROJECT_FILES}
-  ${VOSIMLIB_FILES}
   ${RESOURCE_FILES}
   ${WDL_FILES}
   )
 
-target_link_libraries(${PLUGIN_NAME} VOSIMLib LICELib IPlugLib)
+target_link_libraries(${PLUGIN_NAME} VOSIMLib IPlugLib alloy)
 
 if (WIN32)
   target_link_libraries(${PLUGIN_NAME} comctl32 wininet)
