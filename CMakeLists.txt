@@ -111,6 +111,7 @@ mark_as_advanced(
 
 # begin collecting sources
 set(LIBS_DIR ${CMAKE_SOURCE_DIR}/libs)
+set(CEREAL_DIR ${LIBS_SIR}/cereal)
 set(WDL_DIR ${LIBS_DIR}/wdl)
 set(LICE_DIR ${WDL_DIR}/lice)
 set(IPLUG_DIR ${WDL_DIR}/iplug)
@@ -118,6 +119,7 @@ set(VOSIMLIB_DIR ${CMAKE_SOURCE_DIR}/vosimlib)
 set(VOSIMSYNTH_DIR ${CMAKE_SOURCE_DIR}/vosimsynth)
 set(STANDALONE_DIR ${VOSIMSYNTH_DIR}/standalone)
 
+message (STATUS "Path to cereal is ${CEREAL_DIR}")
 message (STATUS "Path to wdl is ${WDL_DIR}")
 message (STATUS "Path to lice is ${LICE_DIR}")
 message (STATUS "Path to iplug is ${IPLUG_DIR}")
@@ -161,6 +163,8 @@ include_directories(${Boost_INCLUDE_DIRS})
 add_subdirectory(${VOSIMLIB_DIR} VOSIMLib)
 
 # Include directories
+include_directories(${CEREAL_DIR})
+
 include_directories(${VOSIMSYNTH_DIR}/include)
 
 include_directories(${VOSIMLIB_DIR}/include)
