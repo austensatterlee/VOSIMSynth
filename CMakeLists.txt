@@ -9,28 +9,28 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # define source directories
 set(LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs CACHE PATH "")
-set(ALLOY_DIR ${LIBS_DIR}/alloy CACHE PATH "")
 set(CEREAL_DIR ${LIBS_DIR}/cereal CACHE PATH "")
+set(NANOVG_DIR ${LIBS_DIR}/nanovg CACHE PATH "")
 set(WDL_DIR ${LIBS_DIR}/wdl CACHE PATH "")
 set(IPLUG_DIR ${WDL_DIR}/iplug CACHE PATH "")
+set(LICE_DIR ${WDL_DIR}/lice CACHE PATH "")
 set(VOSIMLIB_DIR ${CMAKE_SOURCE_DIR}/vosimlib CACHE PATH "")
 set(VOSIMSYNTH_DIR ${CMAKE_SOURCE_DIR}/vosimsynth CACHE PATH "")
 set(STANDALONE_DIR ${VOSIMSYNTH_DIR}/standalone CACHE PATH "")
+SET(VST2_SDK ${LIBS_DIR}/VST_SDK)
 
-message (STATUS "Path to alloy is ${ALLOY_DIR}")
 message (STATUS "Path to cereal is ${CEREAL_DIR}")
+message (STATUS "Path to nanovg is ${nanovg}")
 message (STATUS "Path to wdl is ${WDL_DIR}")
 message (STATUS "Path to iplug is ${IPLUG_DIR}")
+message (STATUS "Path to lice is ${LICE_DIR}")
 message (STATUS "Path to vosimlib is ${VOSIMLIB_DIR}")
 message (STATUS "Path to vosimsynth is ${VOSIMSYNTH_DIR}")
 message (STATUS "Path to vosimsynth standalone is ${STANDALONE_DIR}")
+message (STATUS "Path to VST2SDK is ${VST2_SDK}")
 
 message (STATUS "Build tool is ${CMAKE_BUILD_TOOL}")
 message (STATUS "System is ${CMAKE_SYSTEM_NAME}")
-
-# Build alloy
-set(ALLOY_BUILD_EXAMPLE OFF CACHE BOOL "")
-add_subdirectory(${ALLOY_DIR} "libs/alloy")
 
 if (MINGW)
   set(CMAKE_CXX_FLAGS "-std=gnu++0x -fpermissive -wno-unknown-pragmas-wno-write-strings" CACHE STRING "")
@@ -49,11 +49,12 @@ endif (MINGW)
 if(MSVC)
   # Runtime library
   set(MSVC_REL /EHsc /MT)
-  set(MSVC_DEB /EHsc /MT)
+  set(MSVC_RDEB /EHsc /MT)
+  set(MSVC_DEB /EHsc /MTd)
 
   # Disable some warnings
   set(MSVC_DISABLED_WARNINGS /wd4996 /wd4224 /wd4244 /wd4091 /wd4018)
-  add_compile_options("$<$<CONFIG:Debug>:${MSVC_DISABLED_WARNINGS}>")
+  add_compile_options("${MSVC_DISABLED_WARNINGS}")
   # /Ox full opt                        /Ob2 any suitable inline function expansion
   # /Oi enable intrinsics               /Ot favor fast code
   # /GL whole program optimization      /arch:SSE2 simd extensions
@@ -63,12 +64,13 @@ if(MSVC)
   set(MSVC_RDEB /Ob2 /Oi /arch:SSE2 /fp:fast /GT)
   add_compile_options("$<$<CONFIG:Release>:${MSVC_REL}>")
   add_compile_options("$<$<CONFIG:RelWithDebInfo>:${MSVC_RDEB}>")
+  add_compile_options("$<$<CONFIG:Debug>:${MSVC_DEB}>")
 
   # Linker optimizations
   # /LTCG link time code generation
   # /OPT:REF remove code that is never referenced
   set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "/LTCG /INCREMENTAL:NO /OPT:REF")
-  set(CMAKE_SHARED_EXE_LINKER_FLAGS_RELEASE "/LTCG /INCREMENTAL:NO /OPT:REF")
+  set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/LTCG /INCREMENTAL:NO /OPT:REF")
 endif()
 
 # configurations for all compilers
@@ -77,14 +79,23 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUGLIBPNG" CACHE ST
 add_definitions(-DWDL_FFT_REALSIZE=8)
 add_definitions(-DPNG_NO_ASSEMBLER_CODE -DPNG_LIBPNG_SPECIALBUILD) 
 
+
 ################################
 # Collect sources
 ################################
 
-# WDL source files
+##
+# WDL 
+##
 set(WDL_FILES ${WDL_DIR}/fft.c ${WDL_DIR}/fft.h)
 
-# VOSIMSynth source files
+##
+# libs
+##
+
+##
+# VOSIMSynth 
+##
 file(GLOB PROJECT_SRCS ${VOSIMSYNTH_DIR}/src/*.cpp)
 set(PROJECT_SRCS ${PROJECT_SRCS};${VOSIMSYNTH_DIR}/vosimsynth.cpp)
 file(GLOB PROJECT_HDRS ${VOSIMSYNTH_DIR}/include/*.h)
@@ -93,41 +104,106 @@ set(PROJECT_FILES ${PROJECT_SRCS};${PROJECT_HDRS})
 set(RESOURCE_FILES ${VOSIMSYNTH_DIR}/vosimsynth.rc ${VOSIMSYNTH_DIR}/include/resource.h)
 set_source_files_properties(${VOSIMSYNTH_DIR}/vosimsynth.rc LANGUAGE RC)
 
+##
+# IPlug source files
+##
+SET(IPLUG_FILES
+  ${IPLUG_DIR}/Containers.h ${IPLUG_DIR}/Hosts.cpp ${IPLUG_DIR}/Hosts.h
+  ${IPLUG_DIR}/IControl.cpp ${IPLUG_DIR}/IControl.h
+  ${IPLUG_DIR}/IGraphics.cpp ${IPLUG_DIR}/IGraphics.h
+  ${IPLUG_DIR}/IParam.cpp ${IPLUG_DIR}/IParam.h ${IPLUG_DIR}/IPlugBase.cpp
+  ${IPLUG_DIR}/IPlugBase.h ${IPLUG_DIR}/IPlugOSDetect.h
+  ${IPLUG_DIR}/IPlugStructs.cpp ${IPLUG_DIR}/IPlugStructs.h
+  ${IPLUG_DIR}/IPlugVST.cpp ${IPLUG_DIR}/IPlugVST.h
+  ${IPLUG_DIR}/IPlug_Prefix.pch ${IPLUG_DIR}/IPlug_include_in_plug_hdr.h
+  ${IPLUG_DIR}/IPlug_include_in_plug_src.h ${IPLUG_DIR}/IPopupMenu.cpp
+  ${IPLUG_DIR}/IPopupMenu.h ${IPLUG_DIR}/Log.cpp ${IPLUG_DIR}/Log.h
+)
+
+IF (WIN32)
+  ADD_DEFINITIONS(-D__OS_WINDOWS__)
+  LIST(APPEND IPLUG_FILES ${IPLUG_DIR}/IGraphicsWin.cpp;${IPLUG_DIR}/IGraphicsWin.h)
+ELSEIF (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  ADD_DEFINITIONS(-D__OS_MACOSX__)
+  LIST(APPEND IPLUG_FILES ${IPLUG_DIR}/IGraphicsCarbon.h;${IPLUG_DIR}/IGraphicsMac.h;${IPLUG_DIR}/IGraphicsMac.cpp)
+ENDIF ()
+
+##
+# GL3W
+##
+# file(GLOB GL3W_FILES ${PLUGIN_NAME} ${}/include/GL/*.h)
+
+##
+# NanoVG source files
+##
+add_definitions(-DNANOVG_GL3_IMPLEMENTATION)
+file(GLOB NANOVG_FILES ${NANOVG_DIR}/src/*.c ${NANOVG_DIR}/src/*.h)
+
 ################################
 # Compile dependencies
 ################################
 
+list(APPEND CMAKE_PREFIX_PATH "C:/Program Files (x86)/glew" CACHED PATH "")
+list(APPEND CMAKE_PREFIX_PATH "C:/Program Files/sfml" CACHED PATH "")
+
+set(BUILD_SHARED_LIBS false)
+
 # Add boost
 set(Boost_NO_BOOST_CMAKE True)
 set(Boost_DETAILED_FAILURE_MSG True)
-find_package(Boost)
-message(STATUS "Boost include dirs (post-search): ${Boost_INCLUDE_DIRS}")
+find_package(Boost REQUIRED)
+message(STATUS "Boost include dirs: ${Boost_INCLUDE_DIRS}")
 include_directories(${Boost_INCLUDE_DIRS})
 
-# VOSIMLib
-add_subdirectory(${VOSIMLIB_DIR} VOSIMLib)
+set(SFML_STATIC true)
+set(SFML_STATIC_LIBRARIES true)
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
+
+# find SFML
+find_package(SFML 2 REQUIRED system window graphics)
+include_directories(${SFML_INCLUDE_DIR})
+list(APPEND ADDITIONAL_LIBRARIES ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
+message(STATUS "SFML libs: ${SFML_DEPENDENCIES} ${SFML_LIBRARIES}" )
+
+# find glew
+find_package(glew REQUIRED)
+add_definitions(-DGLEW_MX -DGLEW_STATIC)
+include_directories(${GLEW_INCLUDE_DIR})
+list(APPEND ADDITIONAL_LIBRARIES ${GLEW_LIBRARY})
+message(STATUS "GLEW libs: ${GLEW_LIBRARY}" )
+
+# find OpenGL
+find_package(OpenGL REQUIRED)
+include_directories(${OPENGL_INCLUDE_DIR})
+list(APPEND ADDITIONAL_LIBRARIES ${OPENGL_LIBRARIES})
+message(STATUS "OPENGL libs: ${OPENGL_LIBRARIES}" )
+
+
 
 ################################
 # Include header directories
 ################################
-include_directories(${VOSIMSYNTH_DIR}/include)
-
-include_directories(${VOSIMLIB_DIR}/include)
-include_directories(${VOSIMLIB_DIR}/units/include)
 
 include_directories(${CEREAL_DIR}/include)
-include_directories(${ALLOY_DIR}/include/core)
-if(WIN32)
-  include_directories(${ALLOY_DIR}/ext/glew/include ${ALLOY_DIR}/ext/glfw/include)
-endif()
+include_directories(${NANOVG_DIR}/src)
 include_directories(${WDL_DIR})
 include_directories(${IPLUG_DIR})
+include_directories(${LICE_DIR})
+include_directories(${VOSIMSYNTH_DIR}/include)
+
+# LICE
+add_subdirectory(${LICE_DIR} "libs/LICELib")
 
 # IPlug
-add_subdirectory(${IPLUG_DIR} "libs/IPlugLib")
+# add_subdirectory(${IPLUG_DIR} "libs/IPlugLib")
+
+# VOSIMLib
+include_directories(${VOSIMLIB_DIR}/include)
+include_directories(${VOSIMLIB_DIR}/units/include)
+add_subdirectory(${VOSIMLIB_DIR} VOSIMLib)
 
 # Add standalone project
-add_subdirectory(${STANDALONE_DIR} standalone)
+add_subdirectory(${STANDALONE_DIR} "standalone")
 
 add_definitions(-DVST_API -DDLL_BUILD -DVST_FORCE_DEPRECATED)
 
@@ -136,15 +212,19 @@ source_group(VOSIMSynth\\include FILES ${PROJECT_HDRS})
 source_group(VOSIMSynth FILES ${PROJECT_SRCS})
 source_group(Resources FILES ${RESOURCE_FILES})
 source_group(WDL FILES ${WDL_FILES})
-
+source_group(IPlug FILES ${IPLUG_FILES})
+source_group(WDL FILES ${WDL_FILES})
 
 add_library(${PLUGIN_NAME} SHARED
   ${PROJECT_FILES}
   ${RESOURCE_FILES}
   ${WDL_FILES}
+  ${IPLUG_FILES}
+  ${NANOVG_FILES}
   )
 
-target_link_libraries(${PLUGIN_NAME} VOSIMLib IPlugLib alloy)
+target_link_libraries(${PLUGIN_NAME} ${ADDITIONAL_LIBRARIES})
+target_link_libraries(${PLUGIN_NAME} VOSIMLib LICELib)
 
 if (WIN32)
   target_link_libraries(${PLUGIN_NAME} comctl32 wininet)

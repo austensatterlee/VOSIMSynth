@@ -213,12 +213,29 @@ EHost IPlugVST::GetHost()
   return host;
 }
 
-void IPlugVST::AttachGraphics(aly::Application* pGraphics)
+void IPlugVST::AttachGraphics(IGraphics* pGraphics)
 {
   if (pGraphics)
   {
     IPlugBase::AttachGraphics(pGraphics);
     mAEffect.flags |= effFlagsHasEditor;
+    mEditRect.left = mEditRect.top = 0;
+    mEditRect.right = pGraphics->Width();
+    mEditRect.bottom = pGraphics->Height();
+  }
+}
+
+void IPlugVST::ResizeGraphics(int w, int h)
+{
+  IGraphics* pGraphics = GetGUI();
+
+  if (pGraphics)
+  {
+    mEditRect.left = mEditRect.top = 0;
+    mEditRect.right = pGraphics->Width();
+    mEditRect.bottom = pGraphics->Height();
+
+    OnWindowResize();
   }
 }
 
@@ -371,11 +388,46 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
       }
       return 0;
     }
+      //could implement effGetParameterProperties to group parameters, but can't find a host that supports it
+//    case effGetParameterProperties:
+//    {
+//      if (idx >= 0 && idx < _this->NParams())
+//      {
+//        VstParameterProperties* props = (VstParameterProperties*) ptr;
+//        
+//        props->flags = kVstParameterSupportsDisplayCategory;
+//        props->category = idx+1;
+//        props->numParametersInCategory = 1;
+//        strcpy(props->categoryLabel, "test");
+//      }
+//      return 1;
+//    }
     case effString2Parameter:
     {
-		// \todo
-		// return _this->SetParamFromString(idx,(char*)ptr);          
-		return 0;
+      if (idx >= 0 && idx < _this->NParams())
+      {
+        if (ptr)
+        {
+          double v;
+          IParam* pParam = _this->GetParam(idx);
+          if (pParam->GetNDisplayTexts())
+          {
+            int vi;
+            if (!pParam->MapDisplayText((char*)ptr, &vi)) return 0;
+            v = (double)vi;
+          }
+          else
+          {
+            v = atof((char*)ptr);
+            if (pParam->DisplayIsNegated()) v = -v;
+          }
+          if (_this->GetGUI()) _this->GetGUI()->SetParameterFromPlug(idx, v, false);
+          pParam->Set(v);
+          _this->OnParamChange(idx);
+        }
+        return 1;
+      }
+      return 0;
     }
     case effSetSampleRate:
     {
@@ -414,11 +466,38 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
     }
     case effEditOpen:
     {
-	  return _this->OnGUIOpen();
+      IGraphics* pGraphics = _this->GetGUI();
+      
+      if (pGraphics)
+      {
+        #ifdef _WIN32
+          if (!pGraphics->OpenWindow(ptr)) pGraphics=0;
+        #else   // OSX, check if we are in a Cocoa VST host
+          #if defined(__LP64__)
+          if (!pGraphics->OpenWindow(ptr)) pGraphics=0;
+          #else
+          bool iscocoa = (_this->mHasVSTExtensions&VSTEXT_COCOA);
+          if (iscocoa && !pGraphics->OpenWindow(ptr)) pGraphics=0;
+          if (!iscocoa && !pGraphics->OpenWindow(ptr, 0)) pGraphics=0;
+          #endif
+        #endif
+        if (pGraphics)
+        {
+          _this->OnGUIOpen();
+          return 1;
+        }
+      }
+      return 0;
     }
     case effEditClose:
     {
-		return _this->OnGUIClose();
+      if (_this->GetGUI())
+      {
+        _this->OnGUIClose();
+        _this->GetGUI()->CloseWindow();
+        return 1;
+      }
+      return 0;
     }
     case __effIdentifyDeprecated:
     {
@@ -812,9 +891,11 @@ float VSTCALLBACK IPlugVST::VSTGetParameter(AEffect *pEffect, VstInt32 idx)
   Trace(TRACELOC, "%d", idx);
   IPlugVST* _this = (IPlugVST*) pEffect->object;
   IMutexLock lock(_this);
-  // \todo
-  //return (float)_this->GetNormalizedParam(idx);
-  return 0;
+  if (idx >= 0 && idx < _this->NParams())
+  {
+    return (float) _this->GetParam(idx)->GetNormalized();
+  }
+  return 0.0f;
 }
 
 void VSTCALLBACK IPlugVST::VSTSetParameter(AEffect *pEffect, VstInt32 idx, float value)
@@ -822,6 +903,13 @@ void VSTCALLBACK IPlugVST::VSTSetParameter(AEffect *pEffect, VstInt32 idx, float
   Trace(TRACELOC, "%d:%f", idx, value);
   IPlugVST* _this = (IPlugVST*) pEffect->object;
   IMutexLock lock(_this);
-  // \todo
-  //_this->SetNormalizedParam(idx,value);    
+  if (idx >= 0 && idx < _this->NParams())
+  {
+    if (_this->GetGUI())
+    {
+      _this->GetGUI()->SetParameterFromPlug(idx, value, true);
+    }
+    _this->GetParam(idx)->SetNormalized(value);
+    _this->OnParamChange(idx);
+  }
 }

@@ -20,7 +20,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __ATOMICCONTAINERS__
 #define __ATOMICCONTAINERS__
 
-
+#include <mutex>
 #include <atomic>
 #include <stdexcept>
 
@@ -91,6 +91,7 @@ namespace syn
 		std::atomic<qindex_t> m_left_index; /// Elements exit via the front of the queue
 		std::atomic<qindex_t> m_right_index; /// Elements enter via the back of the queue
 		T* m_data;
+		std::mutex m_resizeMutex;
 	};
 
 	template <typename T>
@@ -109,7 +110,10 @@ namespace syn
 
 	template <typename T>
 	AtomicQueue<T>::~AtomicQueue() {
-		free(m_data);
+		
+		if (m_data) {
+			free(m_data);
+		}
 		m_data = nullptr;
 	}
 
@@ -275,8 +279,10 @@ namespace syn
 
 	template <typename T>
 	bool AtomicQueue<T>::unsafe_resize(unsigned a_maxsize) {
+		std::lock_guard<std::mutex> lock(m_resizeMutex);
 		if (!a_maxsize)
 			return false;
+
 		a_maxsize = next_power_of_2(a_maxsize+1);
 		a_maxsize = a_maxsize >= 256 ? 256 : a_maxsize;
 		uint8_t newsize = static_cast<uint8_t>(a_maxsize);

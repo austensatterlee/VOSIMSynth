@@ -4,6 +4,8 @@
 #include <wininet.h>
 #include <Shlobj.h>
 #include <commctrl.h>
+#include "nanovg.h"
+#include "nanovg_gl.h"
 
 #ifdef RTAS_API
   #include "PlugInUtils.h"
@@ -45,340 +47,6 @@ inline IMouseMod GetMouseMod(WPARAM wParam)
                    GetKeyState(VK_MENU) < 0
 #endif
                    );
-}
-
-// static
-LRESULT CALLBACK IGraphicsWin::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-  if (msg == WM_CREATE)
-  {
-    LPCREATESTRUCT lpcs = (LPCREATESTRUCT) lParam;
-    SetWindowLongPtr(hWnd, GWLP_USERDATA, (LPARAM) (lpcs->lpCreateParams));
-    int mSec = int(1000.0 / sFPS);
-    SetTimer(hWnd, IPLUG_TIMER_ID, mSec, NULL);
-    SetFocus(hWnd); // gets scroll wheel working straight away
-    return 0;
-  }
-
-  IGraphicsWin* pGraphics = (IGraphicsWin*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
-  char txt[MAX_PARAM_LEN];
-  double v;
-
-  if (!pGraphics || hWnd != pGraphics->mPlugWnd)
-  {
-    return DefWindowProc(hWnd, msg, wParam, lParam);
-  }
-  if (pGraphics->mParamEditWnd && pGraphics->mParamEditMsg == kEditing)
-  {
-    if (msg == WM_RBUTTONDOWN || (msg == WM_LBUTTONDOWN))
-    {
-      pGraphics->mParamEditMsg = kCancel;
-      return 0;
-    }
-    return DefWindowProc(hWnd, msg, wParam, lParam);
-  }
-
-  switch (msg)
-  {
-
-    case WM_TIMER:
-    {
-      if (wParam == IPLUG_TIMER_ID)
-      {
-
-        if (pGraphics->mParamEditWnd && pGraphics->mParamEditMsg != kNone)
-        {
-          switch (pGraphics->mParamEditMsg)
-          {
-            case kCommit:
-            {
-              SendMessage(pGraphics->mParamEditWnd, WM_GETTEXT, MAX_PARAM_LEN, (LPARAM) txt);
-
-              if(pGraphics->mEdParam)
-              {
-                IParam::EParamType type = pGraphics->mEdParam->Type();
-
-                if ( type == IParam::kTypeEnum || type == IParam::kTypeBool)
-                {
-                  int vi = 0;
-                  pGraphics->mEdParam->MapDisplayText(txt, &vi);
-                  v = (double) vi;
-                }
-                else
-                {
-                  v = atof(txt);
-                  if (pGraphics->mEdParam->DisplayIsNegated())
-                  {
-                    v = -v;
-                  }
-                }
-                pGraphics->mEdControl->SetValueFromUserInput(pGraphics->mEdParam->GetNormalized(v));
-              }
-              else
-              {
-                pGraphics->mEdControl->TextFromTextEntry(txt);
-              }
-              // Fall through.
-            }
-            case kCancel:
-            {
-              SetWindowLongPtr(pGraphics->mParamEditWnd, GWLP_WNDPROC, (LPARAM) pGraphics->mDefEditProc);
-              DestroyWindow(pGraphics->mParamEditWnd);
-              pGraphics->mParamEditWnd = 0;
-              pGraphics->mEdParam = 0;
-              pGraphics->mEdControl = 0;
-              pGraphics->mDefEditProc = 0;
-            }
-            break;
-          }
-          pGraphics->mParamEditMsg = kNone;
-          return 0; // TODO: check this!
-        }
-
-        IRECT dirtyR;
-        if (pGraphics->IsDirty(&dirtyR))
-        {
-          RECT r = { dirtyR.L, dirtyR.T, dirtyR.R, dirtyR.B };
-
-          InvalidateRect(hWnd, &r, FALSE);
-
-          if (pGraphics->mParamEditWnd)
-          {
-            IRECT* notDirtyR = pGraphics->mEdControl->GetRECT();
-            RECT r2 = { notDirtyR->L, notDirtyR->T, notDirtyR->R, notDirtyR->B };
-            ValidateRect(hWnd, &r2); // make sure we dont redraw the edit box area
-            UpdateWindow(hWnd);
-            pGraphics->mParamEditMsg = kUpdate;
-          }
-          else
-          {
-            UpdateWindow(hWnd);
-          }
-        }
-      }
-      return 0;
-    }
-
-    case WM_RBUTTONDOWN:
-    case WM_LBUTTONDOWN:
-    case WM_MBUTTONDOWN:
-      pGraphics->HideTooltip();
-      if (pGraphics->mParamEditWnd)
-      {
-        pGraphics->mParamEditMsg = kCommit;
-        return 0;
-      }
-      SetFocus(hWnd); // Added to get keyboard focus again when user clicks in window
-      SetCapture(hWnd);
-#ifdef RTAS_API
-      // pass ctrl-start-alt-click or ctrl-start-click to host window (Pro Tools)
-      if ((IsControlKeyDown() && IsOptionKeyDown() && IsCommandKeyDown() ) || (IsControlKeyDown() && IsCommandKeyDown()))
-      {
-        HWND rootHWnd = GetAncestor( hWnd, GA_ROOT);
-
-        union point
-        {
-          long lp;
-          struct
-          {
-            short x;
-            short y;
-          } s;
-        } mousePoint;
-
-        // Get global coordinates of local window
-        RECT childRect;
-        GetWindowRect(hWnd, &childRect);
-
-        // Convert global coords to parent window coords
-        POINT p;
-        p.x = childRect.left;
-        p.y = childRect.top;
-
-        ScreenToClient(rootHWnd, &p);
-
-        // offset the local click-event coordinates to the parent window's values
-        mousePoint.lp = lParam;
-        mousePoint.s.x += p.x;
-        mousePoint.s.y += p.y;
-
-        if( pGraphics->GetParamIdxForPTAutomation(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)) > -1)
-        {
-          // Send converted coords to parent window's event handler for regular processing
-          LRESULT result = SendMessage(rootHWnd, msg, wParam, mousePoint.lp);
-        }
-
-        return 0;
-      }
-#endif
-      pGraphics->OnMouseDown(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), &GetMouseMod(wParam));
-      return 0;
-
-    case WM_MOUSEMOVE:
-    {
-      if (!(wParam & (MK_LBUTTON | MK_RBUTTON)))
-      {
-        if (pGraphics->OnMouseOver(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), &GetMouseMod(wParam)))
-        {
-          TRACKMOUSEEVENT eventTrack = { sizeof(TRACKMOUSEEVENT), TME_LEAVE, hWnd, HOVER_DEFAULT };
-          if (pGraphics->TooltipsEnabled()) 
-          {
-            int c = pGraphics->GetMouseOver();
-            if (c != pGraphics->mTooltipIdx) 
-            {
-              if (c >= 0) eventTrack.dwFlags |= TME_HOVER;
-              pGraphics->mTooltipIdx = c;
-              pGraphics->HideTooltip();
-            }
-          }
-
-          TrackMouseEvent(&eventTrack);
-        }
-      }
-      else if (GetCapture() == hWnd && !pGraphics->mParamEditWnd)
-      {
-        pGraphics->OnMouseDrag(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), &GetMouseMod(wParam));
-      }
-
-      return 0;
-    }
-    case WM_MOUSEHOVER: 
-    {
-      pGraphics->ShowTooltip();
-		  return 0;
-    }
-    case WM_MOUSELEAVE:
-    {
-      pGraphics->HideTooltip();
-      pGraphics->OnMouseOut();
-      return 0;
-    }
-    case WM_LBUTTONUP:
-    case WM_RBUTTONUP:
-    {
-      ReleaseCapture();
-      pGraphics->OnMouseUp(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), &GetMouseMod(wParam));
-      return 0;
-    }
-    case WM_LBUTTONDBLCLK:
-    {
-      if (pGraphics->OnMouseDblClick(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), &GetMouseMod(wParam)))
-      {
-        SetCapture(hWnd);
-      }
-      return 0;
-    }
-    case WM_MOUSEWHEEL:
-    {
-
-      if (pGraphics->mParamEditWnd)
-      {
-        pGraphics->mParamEditMsg = kCancel;
-        return 0;
-      }
-      else
-      {
-        int d = GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA;
-        int x = GET_X_LPARAM(lParam), y = GET_Y_LPARAM(lParam);
-        RECT r;
-        GetWindowRect(hWnd, &r);
-        pGraphics->OnMouseWheel(x - r.left, y - r.top, &GetMouseMod(wParam), d);
-        return 0;
-      }
-    }
-
-    case WM_KEYDOWN:
-    {
-      bool handle = true;
-      int key;
-
-      if (wParam == VK_SPACE) key = KEY_SPACE;
-      else if (wParam == VK_UP) key = KEY_UPARROW;
-      else if (wParam == VK_DOWN) key = KEY_DOWNARROW;
-      else if (wParam == VK_LEFT) key = KEY_LEFTARROW;
-      else if (wParam == VK_RIGHT) key = KEY_RIGHTARROW;
-      else if (wParam >= '0' && wParam <= '9') key = KEY_DIGIT_0+wParam-'0';
-      else if (wParam >= 'A' && wParam <= 'Z') key = KEY_ALPHA_A+wParam-'A';
-      else if (wParam >= 'a' && wParam <= 'z') key = KEY_ALPHA_A+wParam-'a';
-      else handle = false;
-
-      if (handle)
-      {
-        POINT p;
-        GetCursorPos(&p);
-        ScreenToClient(hWnd, &p);
-        handle = pGraphics->OnKeyDown(p.x, p.y, key);
-      }
-
-      if (!handle)
-      {
-        HWND rootHWnd = GetAncestor( hWnd, GA_ROOT);
-        SendMessage(rootHWnd, WM_KEYDOWN, wParam, lParam);
-        return DefWindowProc(hWnd, msg, wParam, lParam);
-      }
-      else
-        return 0;
-    }
-    case WM_KEYUP:
-    {
-      HWND rootHWnd = GetAncestor(hWnd, GA_ROOT);
-      SendMessage(rootHWnd, msg, wParam, lParam);
-      return DefWindowProc(hWnd, msg, wParam, lParam);
-    }
-    case WM_PAINT:
-    {
-      RECT r;
-      if (GetUpdateRect(hWnd, &r, FALSE))
-      {
-        IRECT ir(r.left, r.top, r.right, r.bottom);
-        pGraphics->Draw(&ir);
-      }
-      return 0;
-    }
-
-    case WM_CTLCOLOREDIT:
-    {
-
-      if(!pGraphics->mEdControl)
-        return 0;
-
-      IText* pText = pGraphics->mEdControl->GetText();
-      HDC dc = (HDC) wParam;
-      SetBkColor(dc, RGB(pText->mTextEntryBGColor.R, pText->mTextEntryBGColor.G, pText->mTextEntryBGColor.B));
-      SetTextColor(dc, RGB(pText->mTextEntryFGColor.R, pText->mTextEntryFGColor.G, pText->mTextEntryFGColor.B));
-      SetBkMode(dc, OPAQUE);
-      return (BOOL)GetStockObject(DC_BRUSH);
-    }
-
-    case WM_CLOSE:
-    {
-      pGraphics->CloseWindow();
-      return 0;
-    }
-#ifdef RTAS_API
-    case WM_MEASUREITEM :
-    {
-      HWND rootHWnd =  GetAncestor( hWnd, GA_ROOT );
-      LRESULT result = SendMessage(rootHWnd, msg, wParam, lParam);
-      return result;
-    }
-    case WM_DRAWITEM :
-    {
-      HWND rootHWnd =  GetAncestor( hWnd, GA_ROOT );
-      LRESULT result = SendMessage(rootHWnd, msg, wParam, lParam);
-      return result;
-    }
-#endif
-    case WM_SETFOCUS:
-    {
-      return 0;
-    }
-    case WM_KILLFOCUS:
-    {
-      return 0;
-    }
-  }
-  return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
 // static
@@ -484,16 +152,15 @@ LRESULT CALLBACK IGraphicsWin::ParamEditProc(HWND hWnd, UINT msg, WPARAM wParam,
 }
 
 IGraphicsWin::IGraphicsWin(IPlugBase* pPlug, int w, int h, int refreshFPS)
-  : IGraphics(pPlug, w, h, refreshFPS), mPlugWnd(0), mParamEditWnd(0),
-    mPID(0), mParentWnd(0), mMainWnd(0), mCustomColorStorage(0),
-    mEdControl(0), mEdParam(0), mDefEditProc(0), mParamEditMsg(kNone),
-    mTooltipWnd(0), mShowingTooltip(false), mTooltipIdx(-1),
-    mHInstance(0)
+  : IGraphics(pPlug, w, h, refreshFPS), mHInstance(0), mPlugWnd(0),
+    mParamEditWnd(0), mTooltipWnd(0), mEdControl(0), mEdParam(0), mDefEditProc(0),
+    mParamEditMsg(kNone), mShowingTooltip(false), mTooltipIdx(-1), mCustomColorStorage(0),
+    mPID(0), mParentWnd(0), mMainWnd(0)
 {}
 
 IGraphicsWin::~IGraphicsWin()
 {
-  CloseWindow();
+  IGraphicsWin::CloseWindow();
   FREE_NULL(mCustomColorStorage);
 }
 
@@ -622,11 +289,11 @@ int IGraphicsWin::ShowMessageBox(const char* pText, const char* pCaption, int ty
 
 bool IGraphicsWin::DrawScreen(IRECT* pR)
 {
-  PAINTSTRUCT ps;
-  HWND hWnd = (HWND) GetWindow();
-  HDC dc = BeginPaint(hWnd, &ps);
-  BitBlt(dc, pR->L, pR->T, pR->W(), pR->H(), mDrawBitmap->getDC(), pR->L, pR->T, SRCCOPY);
-  EndPaint(hWnd, &ps);
+	  PAINTSTRUCT ps;
+	  HWND hWnd = (HWND) GetWindow();
+	  HDC dc = BeginPaint(hWnd, &ps);
+	  BitBlt(dc, pR->L, pR->T, pR->W(), pR->H(), mDrawBitmap->getDC(), pR->L, pR->T, SRCCOPY);
+	  EndPaint(hWnd, &ps);
   return true;
 }
 
@@ -649,48 +316,131 @@ void* IGraphicsWin::OpenWindow(void* pParentWnd)
 
   if (nWndClassReg++ == 0)
   {
-    WNDCLASS wndClass = { CS_DBLCLKS, WndProc, 0, 0, mHInstance, 0, LoadCursor(NULL, IDC_ARROW), 0, 0, wndClassName };
+    WNDCLASS wndClass = { CS_DBLCLKS | CS_OWNDC , DefWindowProc , 0, 0, mHInstance, 0, LoadCursor(NULL, IDC_ARROW), 0, 0, wndClassName };
     RegisterClass(&wndClass);
   }
 
   sFPS = FPS();
-  mPlugWnd = CreateWindow(wndClassName, "IPlug", WS_CHILD | WS_VISIBLE, // | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+
+  mPlugWnd = CreateWindow(wndClassName, "IPlug", WS_CHILD, // | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
                           x, y, w, h, (HWND) pParentWnd, 0, mHInstance, this);
-  //SetWindowLong(mPlugWnd, GWL_USERDATA, (LPARAM) this);
+
 
   if (!mPlugWnd && --nWndClassReg == 0)
   {
-    UnregisterClass(wndClassName, mHInstance);
-  }
-  else
-  {
-    SetAllControlsDirty();
+	  UnregisterClass(wndClassName, mHInstance);
   }
 
-  if (mPlugWnd && TooltipsEnabled())
-  {
-    bool ok = false;
-    static const INITCOMMONCONTROLSEX iccex = { sizeof(INITCOMMONCONTROLSEX), ICC_TAB_CLASSES };
+  sf::ContextSettings settings;
+  settings.depthBits = 24;
+  settings.stencilBits = 8;
+  settings.antialiasingLevel = 2; // Optional  
 
-    if (InitCommonControlsEx(&iccex))
-    {
-      mTooltipWnd = CreateWindowEx(0, TOOLTIPS_CLASS, NULL, WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,
-                                   CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, mPlugWnd, NULL, mHInstance, NULL);
-      if (mTooltipWnd)
-      {
-        SetWindowPos(mTooltipWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-        TOOLINFO ti = { TTTOOLINFOA_V2_SIZE, TTF_IDISHWND | TTF_SUBCLASS, mPlugWnd, (UINT_PTR)mPlugWnd };
-        ti.lpszText = (LPTSTR)NULL;
-        SendMessage(mTooltipWnd, TTM_ADDTOOL, 0, (LPARAM)&ti);
-        ok = true;
-      }
-    }
+  m_sfmlWindow = new sf::RenderWindow(mPlugWnd, settings);
+  m_sfmlWindow->setActive(false);
 
-    if (!ok) EnableTooltips(ok);
-  }
+  m_drawThread = std::thread([&,this] {\
+	  // Make context active
+	  m_sfmlWindow->setActive(true);
+
+	// Initialize glew
+	glewExperimental = GL_TRUE;
+	if (glewInit() != GLEW_OK) {
+		printf("Could not init glew.\n");
+		return -1;
+	}
+	// GLEW generates GL error because it calls glGetString(GL_EXTENSIONS), we'll consume it here.
+	glGetError();
+
+	// Setup NanoVG context
+		NVGcontext* vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES | NVG_DEBUG);
+  
+	  sf::CircleShape myshape(100.f);
+	  myshape.setFillColor(sf::Color::Green);
+
+	  sf::Time updateDelay = sf::milliseconds(16);
+
+	  bool running = true;
+	  while (running)
+	  {
+		  // check all the window's events that were triggered since the last iteration of the loop
+		  sf::Event event;
+		  while (m_sfmlWindow->pollEvent(event))
+		  {
+			  // "close requested" event: we close the window
+			  switch (event.type) {
+			  case sf::Event::Closed:
+				  m_sfmlWindow->setActive(false); 
+				  running = false;
+			  case sf::Event::Resized: 
+				  glViewport(0, 0, event.size.width, event.size.height);
+			  case sf::Event::LostFocus: break;
+			  case sf::Event::GainedFocus: break;
+			  case sf::Event::TextEntered: break;
+			  case sf::Event::KeyPressed: break;
+			  case sf::Event::KeyReleased: break;
+			  case sf::Event::MouseWheelMoved: break;
+			  case sf::Event::MouseWheelScrolled: break;
+			  case sf::Event::MouseButtonPressed: break;
+			  case sf::Event::MouseButtonReleased: break;
+			  case sf::Event::MouseMoved: 
+				  m_cursor[0] = event.mouseMove.x;
+				  m_cursor[1] = event.mouseMove.y;
+			  case sf::Event::MouseEntered: break;
+			  case sf::Event::MouseLeft: break;
+			  case sf::Event::JoystickButtonPressed: break;
+			  case sf::Event::JoystickButtonReleased: break;
+			  case sf::Event::JoystickMoved: break;
+			  case sf::Event::JoystickConnected: break;
+			  case sf::Event::JoystickDisconnected: break;
+			  case sf::Event::TouchBegan: break;
+			  case sf::Event::TouchMoved: break;
+			  case sf::Event::TouchEnded: break;
+			  case sf::Event::SensorChanged: break;
+			  default: break;
+			  }
+		  }
+
+
+		  glClearColor(0, 0, 0, 0);
+		  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		  
+		  // Drop shadow
+		  nvgBeginFrame(vg, m_sfmlWindow->getSize().x, m_sfmlWindow->getSize().y, 1.0);
+		  nvgBeginPath(vg);
+		  nvgRect(vg, 100.f, 100.f - 10, 120.f, 130.f);
+		  nvgFillColor(vg, nvgRGBA(255, 255, 255, 255));
+		  nvgFill(vg);
+		  nvgEndFrame(vg);
+
+//		  m_sfmlWindow->pushGLStates();
+//		  m_sfmlWindow->draw(myshape);
+//		  m_sfmlWindow->popGLStates();
+
+		  m_sfmlWindow->display(); 
+
+		  m_frameCount++;
+		  sf::sleep(updateDelay);
+	  } // end event-handler loop
+	nvgDeleteGL3(vg);
+  });
 
   return mPlugWnd;
 }
+
+void IGraphicsWin::CloseWindow()
+{
+	if (mPlugWnd)
+	{
+		m_sfmlWindow->close();
+
+		if (--nWndClassReg == 0)
+		{
+			UnregisterClass(wndClassName, mHInstance);
+		}
+	}
+}
+
 
 #define MAX_CLASSNAME_LEN 128
 void GetWndClassName(HWND hWnd, WDL_String* pStr)
@@ -761,28 +511,6 @@ IRECT IGraphicsWin::GetWindowRECT()
 void IGraphicsWin::SetWindowTitle(char* str)
 {
   SetWindowText(mPlugWnd, str);
-}
-
-void IGraphicsWin::CloseWindow()
-{
-  if (mPlugWnd)
-  {
-    if (mTooltipWnd)
-    {
-      DestroyWindow(mTooltipWnd);
-      mTooltipWnd = 0;
-      mShowingTooltip = false;
-      mTooltipIdx = -1;
-    }
-
-    DestroyWindow(mPlugWnd);
-    mPlugWnd = 0;
-
-    if (--nWndClassReg == 0)
-    {
-      UnregisterClass(wndClassName, mHInstance);
-    }
-  }
 }
 
 IPopupMenu* IGraphicsWin::GetItemMenu(long idx, long &idxInMenu, long &offsetIdx, IPopupMenu* pMenu)

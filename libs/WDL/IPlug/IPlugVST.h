@@ -52,7 +52,7 @@ public:
 
 protected:
   void HostSpecificInit();
-  void AttachGraphics(aly::Application* pGraphics);
+  void AttachGraphics(IGraphics* pGraphics);
   void SetLatency(int samples);
   bool SendMidiMsg(IMidiMsg* pMsg);
   bool SendSysEx(ISysEx* pSysEx);

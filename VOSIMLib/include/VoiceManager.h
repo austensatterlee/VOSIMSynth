@@ -24,8 +24,12 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "Unit.h"
 #include "UnitFactory.h"
 #include "AtomicContainers.h"
+#include <boost/lockfree/spsc_queue.hpp>
+#include <boost/lockfree/queue.hpp>
+#include <boost/lockfree/policies.hpp>
 #include <map>
 #include <memory>
+#include <SFML/Window/Keyboard.hpp>
 
 #define MAX_QUEUE_SIZE 64
 #define MAX_VOICES_PER_NOTE 8
@@ -33,6 +37,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 using std::map;
 using std::string;
 using std::shared_ptr;
+using boost::lockfree::spsc_queue;
+using boost::lockfree::capacity;
 
 namespace syn
 {
@@ -69,13 +75,13 @@ namespace syn
 	struct ActionMessage
 	{
 		EActionType action;
-		ActionArgs args;
+		ActionArgs args;		
 	};
 
 	class VoiceManager
 	{
 	public:
-		VoiceManager(shared_ptr<Circuit> a_proto, shared_ptr<UnitFactory> a_factory) :
+		VoiceManager(shared_ptr<Circuit> a_proto, UnitFactory* a_factory) :
 			m_queuedActions(MAX_QUEUE_SIZE),
 			m_numActiveVoices(0),
 			m_maxVoices(0),
@@ -179,10 +185,10 @@ namespace syn
 		int _getHighestVoiceIndex() const;
 
 	private:
-		typedef AtomicQueue<int> VoiceList;
-		typedef map<int, VoiceList> VoiceMap;
+		typedef AtomicQueue<int> VoiceIndexList;
+		typedef map<int, AtomicQueue<int> > VoiceMap;
 
-		AtomicQueue<ActionMessage> m_queuedActions;
+		spsc_queue<ActionMessage> m_queuedActions;
 
 		unsigned m_numActiveVoices; /// Number of active voices
 		unsigned m_maxVoices; /// Total number of voices (idle voices + active voices)
@@ -191,12 +197,12 @@ namespace syn
 		bool m_isPlaying;
 
 		VoiceMap m_voiceMap;
-		VoiceList m_voiceStack;
-		VoiceList m_idleVoiceStack;
-		VoiceList m_garbageList; /// pre-allocated storage for collecting idle voices during audio processing
-		vector<shared_ptr<Circuit>> m_allVoices;
+		VoiceIndexList m_voiceStack;
+		VoiceIndexList m_idleVoiceStack;
+		VoiceIndexList m_garbageList; /// pre-allocated storage for collecting idle voices during audio processing
+		vector<shared_ptr<Circuit> > m_allVoices;
 		shared_ptr<Circuit> m_instrument;
-		shared_ptr<UnitFactory> m_factory;
+		UnitFactory* m_factory;
 	};
 
 	template <typename T>
@@ -205,7 +211,7 @@ namespace syn
 		// Apply action to all voices
 		int numVoices = m_allVoices.size();
 
-		shared_ptr<Unit> unit = m_factory->createUnit(a_prototypeId);
+		shared_ptr<Unit> unit = shared_ptr<Unit>(m_factory->createUnit(a_prototypeId));
 
 		int returnId = m_instrument->addUnit(unit);
 		for (int i = 0; i < numVoices; i++) {

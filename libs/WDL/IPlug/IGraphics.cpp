@@ -179,7 +179,8 @@ IGraphics::IGraphics(IPlugBase* pPlug, int w, int h, int refreshFPS)
   , mHiddenMousePointX(-1)
   , mHiddenMousePointY(-1)
   , mEnableTooltips(false)
-  , mShowControlBounds(false)
+  , mShowControlBounds(false), 
+	m_sfmlWindow(nullptr)
 {
   mFPS = (refreshFPS > 0 ? refreshFPS : DEFAULT_FPS);
 }

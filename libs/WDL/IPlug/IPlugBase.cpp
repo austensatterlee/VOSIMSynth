@@ -1,6 +1,7 @@
 #include "IPlugBase.h"
 #ifndef OS_IOS
-#include "Alloy.h"
+#include "IGraphics.h"
+#include "IControl.h"
 #endif
 #include <math.h>
 #include <stdio.h>
@@ -224,11 +225,19 @@ void IPlugBase::SetHost(const char* host, int version)
   Trace(TRACELOC, "host_%sknown:%s:%s", (mHost == kHostUnknown ? "un" : ""), host, vStr);
 }
 #ifndef OS_IOS
-void IPlugBase::AttachGraphics(aly::Application* pGraphics)
+void IPlugBase::AttachGraphics(IGraphics* pGraphics)
 {
   if (pGraphics)
   {
-    WDL_MutexLock lock(&mMutex);        
+    WDL_MutexLock lock(&mMutex);
+    int i, n = mParams.GetSize();
+    
+    for (i = 0; i < n; ++i)
+    {
+      pGraphics->SetParameterFromPlug(i, GetParam(i)->GetNormalized(), true);
+    }
+    
+    pGraphics->PrepDraw();
     mGraphics = pGraphics;
   }
 }
@@ -934,6 +943,20 @@ bool IPlugBase::CompareState(const unsigned char* incomingState, int startPos)
   return isEqual;
 }
 
+#ifndef OS_IOS
+void IPlugBase::RedrawParamControls()
+{
+  if (mGraphics)
+  {
+    int i, n = mParams.GetSize();
+    for (i = 0; i < n; ++i)
+    {
+      double v = mParams.Get(i)->Value();
+      mGraphics->SetParameterFromPlug(i, v, false);
+    }
+  }
+}
+#endif
 void IPlugBase::DirtyParameters()
 {
   WDL_MutexLock lock(&mMutex);

@@ -88,8 +88,8 @@ namespace syn
             return names;
         }
 
-        shared_ptr<Unit> createUnit(int a_protoNum) const {
-            shared_ptr<Unit> unit = shared_ptr<Unit>(m_prototypes[a_protoNum]->prototype->clone());
+        Unit* createUnit(int a_protoNum) const {
+            Unit* unit = m_prototypes[a_protoNum]->prototype->clone();
             char namebuf[MAX_UNIT_STR_LEN];
             snprintf(namebuf, 256, "%s_%d", unit->getName().c_str(), m_prototypes[a_protoNum]->build_count);
             string newname = namebuf;
@@ -98,12 +98,12 @@ namespace syn
             return unit;
         }
 
-        shared_ptr<Unit> createUnit(unsigned a_classIdentifier) const {
+        Unit* createUnit(unsigned a_classIdentifier) const {
             int protonum = getPrototypeIdx_(a_classIdentifier);
             return createUnit(protonum);
         }
 
-		shared_ptr<Unit> createUnit(string a_name) const {
+		Unit* createUnit(string a_name) const {
 			int protonum = getPrototypeIdx_(a_name);
 			return createUnit(protonum);
 		}
@@ -128,7 +128,7 @@ namespace syn
 			return m_prototypes[getPrototypeIdx_(a_protoName)]->prototype->getClassIdentifier();
         }
 
-	    unsigned getClassId(unsigned a_protoNum) const {
+	    static unsigned getClassId(unsigned a_protoNum) {
             return a_protoNum;
         }
 

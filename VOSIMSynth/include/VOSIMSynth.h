@@ -25,7 +25,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "VoiceManager.h"
 #include "UnitFactory.h"
 #include "CircuitPanel.h"
-#include "IGraphics.h"
 
 namespace syn{
 	class KeyboardControl;
@@ -42,8 +41,17 @@ public:
 
     void makeInstrument();
 
-    virtual ~VOSIMSynth()
-    { };
+    virtual ~VOSIMSynth() {
+	    if(m_voiceManager)
+			DELETE_NULL(m_voiceManager);
+		// this will get deleted by IGraphics
+//		if (m_circuitPanel)
+//			DELETE_NULL(m_circuitPanel);
+		if (m_unitFactory)
+			DELETE_NULL(m_unitFactory);
+		if (m_MIDIReceiver)
+			DELETE_NULL(m_MIDIReceiver);
+    };
 
     void Reset() override;
 
@@ -67,13 +75,15 @@ public:
 
 	int getTickCount() const { return m_tickCount; }
 
+	void OnGUIOpen() override;
+
+	void OnGUIClose() override;
+
 private:
-    shared_ptr<MIDIReceiver> m_MIDIReceiver;
-	shared_ptr<VoiceManager> m_voiceManager;
-	shared_ptr<CircuitPanel> m_circuitPanel;
-	shared_ptr<UnitFactory> m_unitFactory;
-    shared_ptr<IGraphics> m_graphics;
-	shared_ptr<KeyboardControl> m_kbdctrl;
+    MIDIReceiver* m_MIDIReceiver;
+	VoiceManager* m_voiceManager;
+	CircuitPanel* m_circuitPanel;
+	UnitFactory* m_unitFactory;
 
 	int m_tempo;
 	unsigned m_tickCount;

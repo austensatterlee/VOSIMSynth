@@ -10,7 +10,6 @@
 #include "Hosts.h"
 #include "Log.h"
 #include "NChanDelay.h"
-#include "AlloyApplication.h"
 
 // Uncomment to enable IPlug::OnIdle() and IGraphics::OnGUIIdle().
 // #define USE_IDLE_CALLS
@@ -57,10 +56,10 @@ public:
   virtual void ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames);
   virtual void ProcessSingleReplacing(float** inputs, float** outputs, int nFrames);
 
-  /// Should handle opening the GUI
-  virtual bool OnGUIOpen() { TRACE; return true; }
-  /// Should handle closing the GUI
-  virtual bool OnGUIClose() { TRACE; return true; }
+  // In case the audio processing thread needs to do anything when the GUI opens
+  // (like for example, set some state dependent initial values for controls).
+  virtual void OnGUIOpen() { TRACE; }
+  virtual void OnGUIClose() { TRACE; }
 
   // This is an idle call from the audio processing thread, as opposed to
   // IGraphics::OnGUIIdle which is called from the GUI thread.
@@ -102,8 +101,7 @@ public:
 
   int NParams() { return mParams.GetSize(); }
   IParam* GetParam(int idx) { return mParams.Get(idx); }
-
-	aly::Application* GetGUI() { return mGraphics; }
+  IGraphics* GetGUI() { return mGraphics; }
 
   const char* GetEffectName() { return mEffectName; }
   int GetEffectVersion(bool decimal);   // Decimal = VVVVRRMM, otherwise 0xVVVVRRMM.
@@ -196,7 +194,7 @@ protected:
   void SetHost(const char* host, int version);   // Version = 0xVVVVRRMM.
   virtual void HostSpecificInit() { return; };
   #ifndef OS_IOS
-  virtual void AttachGraphics(aly::Application* pGraphics);
+  virtual void AttachGraphics(IGraphics* pGraphics);
   #endif
 
   // If latency changes after initialization (often not supported by the host).
@@ -333,7 +331,7 @@ protected:
   WDL_PtrList<const char> mParamGroups;
 
 private:
-	aly::Application* mGraphics;
+  IGraphics* mGraphics;
   WDL_PtrList<IParam> mParams;
   WDL_PtrList<IPreset> mPresets;
   WDL_TypedBuf<double*> mInData, mOutData;

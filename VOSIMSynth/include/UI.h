@@ -100,15 +100,19 @@ namespace syn
 			}
 			return redraw_cond;
 		}
-		void blit(LICE_IBitmap* a_dst, const NDPoint<2,int>& a_pos, const NDPoint<2,int>& a_size, double alphaWeight=1.0, int mode=-1) {
-			if(mode<0) {
-				mode = LICE_BLIT_MODE_COPY | LICE_BLIT_FILTER_BILINEAR | LICE_BLIT_USE_ALPHA;
-			}
-			LICE_ScaledBlit(a_dst, &m_cachedImage, a_pos[0], a_pos[1], a_size[0], a_size[1], \
-				0.0f, 0.0f, float(m_size[0]), float(m_size[1]), float(alphaWeight), mode);
+		/**
+		 * Set a_size[1] negative to flip the bitmap vertically
+		 */
+		void blit(LICE_IBitmap* a_dst, const NDPoint<2,int>& a_pos, const NDPoint<2,int>& a_size, double a_alphaWeight=1.0, int a_mode=-1) {
+			if(a_mode<0) {
+				a_mode = LICE_BLIT_MODE_COPY | LICE_BLIT_FILTER_BILINEAR | LICE_BLIT_USE_ALPHA;
+			}			
+			LICE_WrapperBitmap wbmp{ m_cachedImage.getBits(), m_cachedImage.getWidth(), m_cachedImage.getHeight(), m_cachedImage.getRowSpan(), a_size[1] < 0 };
+			LICE_ScaledBlit(a_dst, &wbmp, a_pos[0], a_pos[1], a_size[0], abs(a_size[1]), \
+				0.0f, 0.0f, float(m_size[0]), float(m_size[1]), float(a_alphaWeight), a_mode);
 		}
-		void blit(LICE_IBitmap* a_dst, const NDPoint<2,int>& a_pos, double alphaWeight=1.0, int mode=-1) {
-			blit(a_dst, a_pos, m_size, alphaWeight, mode);
+		void blit(LICE_IBitmap* a_dst, const NDPoint<2,int>& a_pos, double a_alphaWeight=1.0, int a_mode=-1) {
+			blit(a_dst, a_pos, m_size, a_alphaWeight, a_mode);
 		}
 		template<typename... Args>
 		void resetConds(const Args*... args) {
@@ -133,6 +137,9 @@ namespace syn
 				redraw_cond |= m_conds[i]->update();
 			} 
 			return redraw_cond;
+		}
+		void setDirty() {
+			m_isFirstUpdate = true;
 		}
 	private:
 		class UpdateCondition

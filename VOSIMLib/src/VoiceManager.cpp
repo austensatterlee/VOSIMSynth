@@ -221,7 +221,7 @@ namespace syn
 	vector<int> VoiceManager::getNoteVoices(int a_note) {
 		vector<int> voices;
 		if (m_voiceMap.find(a_note) != m_voiceMap.end()) {
-			const VoiceList& vlist = m_voiceMap[a_note];
+			const VoiceIndexList& vlist = m_voiceMap[a_note];
 			unsigned off = 0;
 			int vnum;
 			while (vlist.peek(vnum, off++)) {
@@ -242,7 +242,7 @@ namespace syn
 
 	unsigned VoiceManager::queueAction(EActionType a_action, const ActionArgs& a_params) {
 		if (m_isPlaying) {
-			m_queuedActions.push_right({a_action, a_params});
+			m_queuedActions.push({a_action, a_params});
 		} else {
 			_processAction({a_action, a_params});
 		}
@@ -255,7 +255,7 @@ namespace syn
 
 	void VoiceManager::_flushActionQueue() {
 		ActionMessage msg;
-		while (m_queuedActions.pop_left(msg)) {
+		while (m_queuedActions.pop(&msg)) {
 			_processAction(msg);
 		}
 	}

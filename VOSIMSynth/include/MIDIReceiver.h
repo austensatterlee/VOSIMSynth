@@ -10,7 +10,7 @@
  */
 class MIDIReceiver {
 public:
-	explicit MIDIReceiver(shared_ptr<syn::VoiceManager> a_vm) :
+	explicit MIDIReceiver(syn::VoiceManager* a_vm) :
             m_offset(0),
             m_vm(a_vm)
     {
@@ -36,7 +36,7 @@ private:
     static const int s_keyCount = 128;
     bool m_keyStatus[s_keyCount]; // array of on/off for each key (index is note number)
     int m_offset;
-    shared_ptr<syn::VoiceManager> m_vm;
+    syn::VoiceManager* m_vm;
 };
 
 #endif

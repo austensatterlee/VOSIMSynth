@@ -52,35 +52,27 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 
 void VOSIMSynth::makeGraphics()
 {
-    m_graphics = shared_ptr<IGraphics>(MakeGraphics(this, GUI_WIDTH, GUI_HEIGHT));
-    m_graphics->HandleMouseOver(true);
-	m_graphics->SetStrictDrawing(true);
-    IColor bg_color = COLOR_BLACK;
-    m_graphics->AttachPanelBackground(&bg_color);
+	IGraphics* graphics = MakeGraphics(this, GUI_WIDTH, GUI_HEIGHT, 60);
+	graphics->SetStrictDrawing(true);
+	graphics->HandleMouseOver(true);
 	
-	m_kbdctrl = make_shared<syn::KeyboardControl>(this, m_voiceManager, IRECT{ 1,GUI_HEIGHT - 100,GUI_WIDTH - 1,GUI_HEIGHT - 1 });
-	m_graphics->AttachControl(m_kbdctrl.get());
+	AttachGraphics(graphics);
 
-    // IBitmap wedgeswitch2p = m_graphics->LoadIBitmap(WEDGE_SWITCH_2P_ID, WEDGE_SWITCH_2P_FN, 2);
-    // IBitmap push2p = m_graphics->LoadIBitmap(PUSH_2P_ID, PUSH_2P_FN, 2);
-    // IBitmap colorKnob = m_graphics->LoadIBitmap(COLOR_RING_KNOB_ID, COLOR_RING_KNOB_FN, kColorKnobFrames);
-    // IBitmap toggleswitch3p = m_graphics->LoadIBitmap(TOGGLE_SWITCH_3P_ID, TOGGLE_SWITCH_3P_FN, 3);
-    // IBitmap numberedKnob = m_graphics->LoadIBitmap(KNOB_ID, KNOB_FN, kNumberedKnobFrames);
+    IColor bg_color = COLOR_BLACK;
+	
+	//m_kbdctrl = new syn::KeyboardControl(this, m_voiceManager, IRECT{ 1,GUI_HEIGHT - 100,GUI_WIDTH - 1,GUI_HEIGHT - 1 });
+	//m_graphics->AttachControl(m_kbdctrl.get());
 
-    m_circuitPanel = make_shared<CircuitPanel>(this, IRECT{1, 1, GUI_WIDTH - 1, GUI_HEIGHT - 100}, m_voiceManager.get(), m_unitFactory.get());
-
+    m_circuitPanel = new CircuitPanel(this, IRECT{1, 1, GUI_WIDTH - 1, GUI_HEIGHT - 100}, m_voiceManager, m_unitFactory);
 	m_circuitPanel->registerUnitControl<OscilloscopeUnit, OscilloscopeUnitControl>();
 	m_circuitPanel->registerUnitControl<SpectroscopeUnit, SpectroscopeUnitControl>();
 
-    m_graphics->AttachControl(m_circuitPanel.get());
-
-    AttachGraphics(m_graphics.get());
+	graphics->AttachControl(m_circuitPanel);
 }
 
 void VOSIMSynth::makeInstrument()
 {
-	shared_ptr<Circuit> circ = make_shared<Circuit>("main");
-    m_unitFactory = make_shared<UnitFactory>();
+    m_unitFactory = new UnitFactory();
 	m_unitFactory->addUnitPrototype("Filters", new StateVariableFilter("SVF"));
 	m_unitFactory->addUnitPrototype("Filters", new LagUnit("Lag"));
 
@@ -114,10 +106,10 @@ void VOSIMSynth::makeInstrument()
 	m_unitFactory->addUnitPrototype("Visualizer", new OscilloscopeUnit("Oscilloscope"));
 	m_unitFactory->addUnitPrototype("Visualizer", new SpectroscopeUnit("Spectroscope"));
 
-    m_voiceManager = make_shared<VoiceManager>(circ, m_unitFactory);
+    m_voiceManager = new VoiceManager(make_shared<Circuit>("main"), m_unitFactory);
     m_voiceManager->setMaxVoices(6);
 
-    m_MIDIReceiver = make_shared<MIDIReceiver>(shared_ptr<VoiceManager>(m_voiceManager));
+	m_MIDIReceiver = new MIDIReceiver(m_voiceManager);
 }
 
 void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames)
@@ -167,6 +159,13 @@ void VOSIMSynth::OnIdle() {
 }
 
 void VOSIMSynth::OnActivate(bool active) {
+}
+
+void VOSIMSynth::OnGUIOpen() {
+}
+
+void VOSIMSynth::OnGUIClose() {
+	
 }
 
 bool VOSIMSynth::isTransportRunning() {
