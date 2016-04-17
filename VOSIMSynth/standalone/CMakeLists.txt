@@ -38,6 +38,7 @@ source_group(Resources FILES ${RESOURCE_FILES})
 source_group(WDL FILES ${WDL_FILES})
 source_group(IPlug FILES ${IPLUG_FILES} ${IPLUG_STANDALONE_FILES})
 source_group(NanoVG FILES ${NANOVG_FILES})
+source_group(sftools FILES ${SFTOOLS_FILES})
 
 IF(WIN32)
   ADD_DEFINITIONS(-DSA_API -D__WINDOWS_DS__ -D__WINDOWS_MM__ -D__WINDOWS_ASIO__)
@@ -52,6 +53,7 @@ IF(WIN32)
     ${IPLUG_FILES}
     ${IPLUG_STANDALONE_FILES}
     ${NANOVG_FILES}
+    ${SFTOOLS_FILES}
     )
 
   target_link_libraries(${APP_NAME} ${ADDITIONAL_LIBRARIES})

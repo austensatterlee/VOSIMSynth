@@ -4,8 +4,6 @@
 #include <wininet.h>
 #include <Shlobj.h>
 #include <commctrl.h>
-#include "nanovg.h"
-#include "nanovg_gl.h"
 
 #ifdef RTAS_API
   #include "PlugInUtils.h"
@@ -213,48 +211,6 @@ void IGraphicsWin::ForceEndUserEdit()
 
 void IGraphicsWin::Resize(int w, int h)
 {
-  if (w == Width() && h == Height()) return;
-
-  int dw = w - Width(), dh = h - Height();
-  IGraphics::Resize(w, h);
-
-  if (WindowIsOpen())
-  {
-    HWND pParent = 0, pGrandparent = 0;
-    int plugW = 0, plugH = 0, parentW = 0, parentH = 0, grandparentW = 0, grandparentH = 0;
-    GetWindowSize(mPlugWnd, &plugW, &plugH);
-
-    if (IsChildWindow(mPlugWnd))
-    {
-      pParent = GetParent(mPlugWnd);
-      GetWindowSize(pParent, &parentW, &parentH);
-
-      if (IsChildWindow(pParent))
-      {
-        pGrandparent = GetParent(pParent);
-        GetWindowSize(pGrandparent, &grandparentW, &grandparentH);
-      }
-    }
-
-    SetWindowPos(mPlugWnd, 0, 0, 0, plugW + dw, plugH + dh, SETPOS_FLAGS);
-
-    // don't want to touch the host window in VST3 or RTAS
-    if(mPlug->GetAPI() != kAPIVST3 && mPlug->GetAPI() != kAPIRTAS)
-    {
-      if(pParent)
-      {
-        SetWindowPos(pParent, 0, 0, 0, parentW + dw, parentH + dh, SETPOS_FLAGS);
-      }
-
-      if(pGrandparent)
-      {
-        SetWindowPos(pGrandparent, 0, 0, 0, grandparentW + dw, grandparentH + dh, SETPOS_FLAGS);
-      }
-    }
-
-    RECT r = { 0, 0, Width(), Height() };
-    InvalidateRect(mPlugWnd, &r, FALSE);
-  }
 }
 
 void IGraphicsWin::HideMouseCursor()
@@ -331,100 +287,6 @@ void* IGraphicsWin::OpenWindow(void* pParentWnd)
 	  UnregisterClass(wndClassName, mHInstance);
   }
 
-  sf::ContextSettings settings;
-  settings.depthBits = 24;
-  settings.stencilBits = 8;
-  settings.antialiasingLevel = 2; // Optional  
-
-  m_sfmlWindow = new sf::RenderWindow(mPlugWnd, settings);
-  m_sfmlWindow->setActive(false);
-
-  m_drawThread = std::thread([&,this] {\
-	  // Make context active
-	  m_sfmlWindow->setActive(true);
-
-	// Initialize glew
-	glewExperimental = GL_TRUE;
-	if (glewInit() != GLEW_OK) {
-		printf("Could not init glew.\n");
-		return -1;
-	}
-	// GLEW generates GL error because it calls glGetString(GL_EXTENSIONS), we'll consume it here.
-	glGetError();
-
-	// Setup NanoVG context
-		NVGcontext* vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES | NVG_DEBUG);
-  
-	  sf::CircleShape myshape(100.f);
-	  myshape.setFillColor(sf::Color::Green);
-
-	  sf::Time updateDelay = sf::milliseconds(16);
-
-	  bool running = true;
-	  while (running)
-	  {
-		  // check all the window's events that were triggered since the last iteration of the loop
-		  sf::Event event;
-		  while (m_sfmlWindow->pollEvent(event))
-		  {
-			  // "close requested" event: we close the window
-			  switch (event.type) {
-			  case sf::Event::Closed:
-				  m_sfmlWindow->setActive(false); 
-				  running = false;
-			  case sf::Event::Resized: 
-				  glViewport(0, 0, event.size.width, event.size.height);
-			  case sf::Event::LostFocus: break;
-			  case sf::Event::GainedFocus: break;
-			  case sf::Event::TextEntered: break;
-			  case sf::Event::KeyPressed: break;
-			  case sf::Event::KeyReleased: break;
-			  case sf::Event::MouseWheelMoved: break;
-			  case sf::Event::MouseWheelScrolled: break;
-			  case sf::Event::MouseButtonPressed: break;
-			  case sf::Event::MouseButtonReleased: break;
-			  case sf::Event::MouseMoved: 
-				  m_cursor[0] = event.mouseMove.x;
-				  m_cursor[1] = event.mouseMove.y;
-			  case sf::Event::MouseEntered: break;
-			  case sf::Event::MouseLeft: break;
-			  case sf::Event::JoystickButtonPressed: break;
-			  case sf::Event::JoystickButtonReleased: break;
-			  case sf::Event::JoystickMoved: break;
-			  case sf::Event::JoystickConnected: break;
-			  case sf::Event::JoystickDisconnected: break;
-			  case sf::Event::TouchBegan: break;
-			  case sf::Event::TouchMoved: break;
-			  case sf::Event::TouchEnded: break;
-			  case sf::Event::SensorChanged: break;
-			  default: break;
-			  }
-		  }
-
-
-		  glClearColor(0, 0, 0, 0);
-		  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-		  
-		  // Drop shadow
-		  nvgBeginFrame(vg, m_sfmlWindow->getSize().x, m_sfmlWindow->getSize().y, 1.0);
-		  nvgBeginPath(vg);
-		  nvgRect(vg, 100.f, 100.f - 10, 120.f, 130.f);
-		  nvgFillColor(vg, nvgRGBA(255, 255, 255, 255));
-		  nvgFill(vg);
-		  nvgEndFrame(vg);
-
-//		  m_sfmlWindow->pushGLStates();
-//		  m_sfmlWindow->draw(myshape);
-//		  m_sfmlWindow->popGLStates();
-
-		  m_sfmlWindow->display(); 
-
-		  m_frameCount++;
-		  sf::sleep(updateDelay);
-	  } // end event-handler loop
-	nvgDeleteGL3(vg);
-  });
-
   return mPlugWnd;
 }
 
@@ -432,7 +294,6 @@ void IGraphicsWin::CloseWindow()
 {
 	if (mPlugWnd)
 	{
-		m_sfmlWindow->close();
 
 		if (--nWndClassReg == 0)
 		{

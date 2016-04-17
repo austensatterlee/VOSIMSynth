@@ -21,9 +21,25 @@
 // All version ints are stored as 0xVVVVRRMM: V = version, R = revision, M = minor revision.
 
 class IGraphics;
+namespace syn {
+	class VOSIMWindow;
+}
 
 class IPlugBase
 {
+
+	// Changes made by Austen (4/11)
+private:
+	syn::VOSIMWindow* m_appWindow;
+protected:
+	virtual void AttachAppWindow(syn::VOSIMWindow* a_appWindow) {
+		m_appWindow = a_appWindow;
+	}
+public:
+	syn::VOSIMWindow* GetAppWindow() const {
+		return m_appWindow;
+	}
+	// End changes made by Austen (4/11)
 public:
   // Use IPLUG_CTOR instead of calling directly (defined in IPlug_include_in_plug_src.h).
   IPlugBase(int nParams,

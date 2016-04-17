@@ -1,10 +1,6 @@
 #include "resource.h"
 
 IDI_ICON1 ICON DISCARDABLE "resources/VOSIMSynth.ico"
-IDB_KEY_BLACK PNG "resources/piano/key_black.png"
-IDB_KEY_ADG PNG "resources/piano/key_adg.png"
-IDB_KEY_BE PNG "resources/piano/key_be.png"
-IDB_KEY_CF PNG "resources/piano/key_cf.png"
 
 #ifdef SA_API
 //Standalone stuff

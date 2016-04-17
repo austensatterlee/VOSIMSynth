@@ -200,18 +200,7 @@ namespace syn
 
 		bool Draw(IGraphics* pGraphics) override {
 			LICE_SysBitmap* canvas = pGraphics->GetDrawBitmap();
-			m_adgKey.draw([&](LICE_IBitmap* a_dst) {
-				loadKeyBmp_(a_dst, IDB_KEY_ADG, pGraphics);
-			});
-			m_beKey.draw([&](LICE_IBitmap* a_dst) {
-				loadKeyBmp_(a_dst, IDB_KEY_BE, pGraphics);
-			});
-			m_cfKey.draw([&](LICE_IBitmap* a_dst) {
-				loadKeyBmp_(a_dst, IDB_KEY_CF, pGraphics);
-			});
-			m_blkKey.draw([&](LICE_IBitmap* a_dst) {
-				loadKeyBmp_(a_dst, IDB_KEY_BLACK, pGraphics);
-			});
+			
 			setNumKeys(m_numKeys);
 
 			// Draw keyboard
@@ -246,19 +235,8 @@ namespace syn
 					keysize = getKeySize(keyidx);
 					IRECT overlay{ m_keyPosVec[keyidx][0], m_keyPosVec[keyidx][1], int(m_keyPosVec[keyidx][0] + keysize[0]), int(m_keyPosVec[keyidx][1] + keysize[1]) };
 					IChannelBlend blend{ IChannelBlend::kBlendNone, 0.5 };
-					ColorPoint overcolor = &src == &m_blkKey ? COLOR_WHITE : COLOR_BLACK;
-					ColorPoint textcolor = 0xFFFFFFFF - overcolor.getInt();
-					IText textfmt{ &textcolor.getIColor() };
-
-					// Draw rect overlay
-					pGraphics->FillIRect(&overcolor.getIColor(), &overlay, &blend);
-					
-					char* voicetxtptr = voicetxt;
-					voicetxtptr += sprintf(voicetxtptr, "Voices:\n");
-					for (int i = 0; i < noteVoices.size();i++) {
-						voicetxtptr+=snprintf(voicetxtptr, (voicetxt+64)-voicetxtptr, "%d\n", noteVoices[i]);
-					}
-					pGraphics->DrawIText(&textfmt, voicetxt, &overlay);
+					Color overcolor = &src == &m_blkKey ? Color(255, 255, 255, 255) : Color(0,0,0,255);
+					Color textcolor = Color(255, 255, 255, 255) - overcolor;
 				}
 			}
 			m_drawCnt++;

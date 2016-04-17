@@ -24,11 +24,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "MIDIReceiver.h"
 #include "VoiceManager.h"
 #include "UnitFactory.h"
-#include "CircuitPanel.h"
-
-namespace syn{
-	class KeyboardControl;
-}
 
 using namespace syn;
 using namespace std;
@@ -41,17 +36,7 @@ public:
 
     void makeInstrument();
 
-    virtual ~VOSIMSynth() {
-	    if(m_voiceManager)
-			DELETE_NULL(m_voiceManager);
-		// this will get deleted by IGraphics
-//		if (m_circuitPanel)
-//			DELETE_NULL(m_circuitPanel);
-		if (m_unitFactory)
-			DELETE_NULL(m_unitFactory);
-		if (m_MIDIReceiver)
-			DELETE_NULL(m_MIDIReceiver);
-    };
+	virtual ~VOSIMSynth();
 
     void Reset() override;
 
@@ -82,8 +67,8 @@ public:
 private:
     MIDIReceiver* m_MIDIReceiver;
 	VoiceManager* m_voiceManager;
-	CircuitPanel* m_circuitPanel;
 	UnitFactory* m_unitFactory;
+	VOSIMWindow* m_vosimWindow;
 
 	int m_tempo;
 	unsigned m_tickCount;

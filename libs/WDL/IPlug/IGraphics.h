@@ -5,18 +5,6 @@
 #include "IPopupMenu.h"
 #include "IControl.h"
 #include "../lice/lice.h"
-#include <functional>
-/// 
-#include <thread>
-
-#include <GL/glew.h>
-#include <SFML/Graphics.hpp>
-#include <SFML/Window.hpp>
-#include <SFML/OpenGL.hpp>
-
-#include <boost/lockfree/spsc_queue.hpp>
-#include <boost/lockfree/policies.hpp>
-#include <NDPoint.h>
 
 // Specialty stuff for calling in to Reaper for Lice functionality.
 #ifdef REAPER_SPECIAL
@@ -285,18 +273,6 @@ private:
   int mMouseCapture, mMouseOver, mMouseX, mMouseY, mLastClickedParam;
   bool mHandleMouseOver, mStrict, mEnableTooltips, mShowControlBounds;
   IControl* mKeyCatcher;
-
-
-/// Stuff added by Austen (4/8)
-public:
-	sf::RenderWindow* GetSFWindow() const { return m_sfmlWindow; }
-
-protected:
-  sf::RenderWindow* m_sfmlWindow;
-  std::thread m_drawThread;
-  syn::NDPoint<2, double> m_cursor;
-  unsigned m_frameCount;
-  boost::lockfree::spsc_queue<std::function<void(sf::RenderWindow*)>, boost::lockfree::capacity<100> > m_drawQueue;
 };
 
 #endif

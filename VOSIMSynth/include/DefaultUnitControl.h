@@ -23,43 +23,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "UnitControl.h"
 
 namespace syn {
-	class DefaultUnitControl : public UnitControl
-	{
-	public:
-		DefaultUnitControl(IPlugBase* a_plug, VoiceManager* a_voiceManager) :
-			UnitControl(a_plug,a_voiceManager),
-			m_lastSelectedParam(-1)
-		{}
-
-		void draw(IGraphics* a_graphics) override;
-
-		void onMouseDblClick(int a_x, int a_y, IMouseMod* a_mouseMod) override;
-
-		void onMouseDown(int a_x, int a_y, IMouseMod* a_mouseMod) override;
-
-		void onMouseUp(int a_x, int a_y, IMouseMod* a_mouseMod) override;
-
-		void onMouseDrag(int a_x, int a_y, int a_dX, int a_dY, IMouseMod* a_mouseMod) override;
-
-		void onMouseOver(int a_x, int a_y, IMouseMod* a_mouseMod) override;
-
-		void onMouseWheel(int a_x, int a_y, IMouseMod* a_mouseMod, int a_d) override;
-
-		int getSelectedParam(int a_x, int a_y) override;
-
-		bool isHit(int a_x, int a_y) const override;
-
-	protected:
-		void onSetUnitId_() override;
-
-		void onChangeRect_() override;
-	private:
-		vector<ITextSlider> m_paramControls;
-		int m_lastSelectedParam;
-
-		const int c_minParamHeight = 12;
-	};
-
+	
 }
 
 #endif

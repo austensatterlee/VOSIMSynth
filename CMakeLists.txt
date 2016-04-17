@@ -8,7 +8,7 @@ set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # define source directories
-set(LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs CACHE PATH "")
+set(LIBS_DIR ${CMAKE_SOURCE_DIR}/libs CACHE PATH "")
 set(CEREAL_DIR ${LIBS_DIR}/cereal CACHE PATH "")
 set(NANOVG_DIR ${LIBS_DIR}/nanovg CACHE PATH "")
 set(WDL_DIR ${LIBS_DIR}/wdl CACHE PATH "")
@@ -17,10 +17,14 @@ set(LICE_DIR ${WDL_DIR}/lice CACHE PATH "")
 set(VOSIMLIB_DIR ${CMAKE_SOURCE_DIR}/vosimlib CACHE PATH "")
 set(VOSIMSYNTH_DIR ${CMAKE_SOURCE_DIR}/vosimsynth CACHE PATH "")
 set(STANDALONE_DIR ${VOSIMSYNTH_DIR}/standalone CACHE PATH "")
-SET(VST2_SDK ${LIBS_DIR}/VST_SDK)
+set(VST2_SDK ${LIBS_DIR}/VST_SDK CACHE PATH "")
+set(SFTOOLS_DIR ${LIBS_DIR}/sftools CACHE PATH "")
+set(EIGEN_DIR ${LIBS_DIR}/eigen CACHE PATH "")
+set(RESOURCES_DIR ${VOSIMSYNTH_DIR}/resources CACHE PATH "")
 
 message (STATUS "Path to cereal is ${CEREAL_DIR}")
-message (STATUS "Path to nanovg is ${nanovg}")
+message (STATUS "Path to nanovg is ${NANOVG_DIR}")
+message (STATUS "Path to sftools is ${SFTOOLS_DIR}")
 message (STATUS "Path to wdl is ${WDL_DIR}")
 message (STATUS "Path to iplug is ${IPLUG_DIR}")
 message (STATUS "Path to lice is ${LICE_DIR}")
@@ -104,10 +108,32 @@ set(PROJECT_FILES ${PROJECT_SRCS};${PROJECT_HDRS})
 set(RESOURCE_FILES ${VOSIMSYNTH_DIR}/vosimsynth.rc ${VOSIMSYNTH_DIR}/include/resource.h)
 set_source_files_properties(${VOSIMSYNTH_DIR}/vosimsynth.rc LANGUAGE RC)
 
+# compile resources into C code to be compiled into the exe
+add_executable(bin2c ${RESOURCES_DIR}/bin2c.c)
+set(RES_BIN vosimsynth_resources.cpp vosimsynth_resources.h)
+set(bin2c_cmdline ${RES_BIN})
+file(GLOB_RECURSE resources ${RESOURCES_DIR} *.ttf *.png)
+
+foreach(file ${resources})
+  list(APPEND bin2c_cmdline ${file})
+endforeach()
+
+# Run bin2c on resource files
+add_custom_command(
+  OUTPUT ${RES_BIN}
+  COMMAND bin2c ARGS ${bin2c_cmdline}
+  DEPENDS bin2c ${resources}
+  COMMENT "Running bin2c"
+  PRE_BUILD VERBATIM)
+
+list(APPEND RESOURCE_FILES ${CMAKE_CURRENT_BINARY_DIR}/vosimsynth_resources.cpp)
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 ##
 # IPlug source files
 ##
-SET(IPLUG_FILES
+set(IPLUG_FILES
   ${IPLUG_DIR}/Containers.h ${IPLUG_DIR}/Hosts.cpp ${IPLUG_DIR}/Hosts.h
   ${IPLUG_DIR}/IControl.cpp ${IPLUG_DIR}/IControl.h
   ${IPLUG_DIR}/IGraphics.cpp ${IPLUG_DIR}/IGraphics.h
@@ -120,31 +146,36 @@ SET(IPLUG_FILES
   ${IPLUG_DIR}/IPopupMenu.h ${IPLUG_DIR}/Log.cpp ${IPLUG_DIR}/Log.h
 )
 
-IF (WIN32)
-  ADD_DEFINITIONS(-D__OS_WINDOWS__)
-  LIST(APPEND IPLUG_FILES ${IPLUG_DIR}/IGraphicsWin.cpp;${IPLUG_DIR}/IGraphicsWin.h)
-ELSEIF (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  ADD_DEFINITIONS(-D__OS_MACOSX__)
-  LIST(APPEND IPLUG_FILES ${IPLUG_DIR}/IGraphicsCarbon.h;${IPLUG_DIR}/IGraphicsMac.h;${IPLUG_DIR}/IGraphicsMac.cpp)
-ENDIF ()
-
-##
-# GL3W
-##
-# file(GLOB GL3W_FILES ${PLUGIN_NAME} ${}/include/GL/*.h)
+if (WIN32)
+  add_definitions(-D__OS_WINDOWS__)
+  list(APPEND IPLUG_FILES ${IPLUG_DIR}/IGraphicsWin.cpp;${IPLUG_DIR}/IGraphicsWin.h)
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  add_definitions(-D__OS_MACOSX__)
+  list(APPEND IPLUG_FILES ${IPLUG_DIR}/IGraphicsCarbon.h;${IPLUG_DIR}/IGraphicsMac.h;${IPLUG_DIR}/IGraphicsMac.cpp)
+endif ()
 
 ##
 # NanoVG source files
 ##
-add_definitions(-DNANOVG_GL3_IMPLEMENTATION)
+add_definitions(-DNANOVG_GL3_IMPLEMENTATION -DNANOVG_GLEW)
 file(GLOB NANOVG_FILES ${NANOVG_DIR}/src/*.c ${NANOVG_DIR}/src/*.h)
+
+##
+# sftools source files
+##
+file(GLOB SFTOOLS_FILES ${SFTOOLS_DIR}/include/sftools/*.hpp
+  ${SFTOOLS_DIR}/include/sftools/Animation/*.hpp
+  ${SFTOOLS_DIR}/include/sftools/ResourceManager/*.hpp
+  ${SFTOOLS_DIR}/include/sftools/Common/*.hpp
+  ${SFTOOLS_DIR}/include/sftools/Singleton/*.hpp)
 
 ################################
 # Compile dependencies
 ################################
 
-list(APPEND CMAKE_PREFIX_PATH "C:/Program Files (x86)/glew" CACHED PATH "")
-list(APPEND CMAKE_PREFIX_PATH "C:/Program Files/sfml" CACHED PATH "")
+list(APPEND CMAKE_PREFIX_PATH "C:/Program Files (x86)/glew")
+list(APPEND CMAKE_PREFIX_PATH "C:/Program Files/sfml")
+list(REMOVE_DUPLICATES CMAKE_PREFIX_PATH)
 
 set(BUILD_SHARED_LIBS false)
 
@@ -152,33 +183,35 @@ set(BUILD_SHARED_LIBS false)
 set(Boost_NO_BOOST_CMAKE True)
 set(Boost_DETAILED_FAILURE_MSG True)
 find_package(Boost REQUIRED)
-message(STATUS "Boost include dirs: ${Boost_INCLUDE_DIRS}")
+#message(STATUS "Boost include dirs: ${Boost_INCLUDE_DIRS}")
 include_directories(${Boost_INCLUDE_DIRS})
 
 set(SFML_STATIC true)
 set(SFML_STATIC_LIBRARIES true)
+add_definitions(-DSFTOOLS_NO_AUDIO)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
 # find SFML
 find_package(SFML 2 REQUIRED system window graphics)
 include_directories(${SFML_INCLUDE_DIR})
 list(APPEND ADDITIONAL_LIBRARIES ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
-message(STATUS "SFML libs: ${SFML_DEPENDENCIES} ${SFML_LIBRARIES}" )
+#message(STATUS "SFML libs: ${SFML_DEPENDENCIES} ${SFML_LIBRARIES}" )
 
 # find glew
 find_package(glew REQUIRED)
 add_definitions(-DGLEW_MX -DGLEW_STATIC)
 include_directories(${GLEW_INCLUDE_DIR})
+#message(STATUS "GLEW libs: ${GLEW_LIBRARY}" )
+string(REGEX REPLACE "(.*)\\.(.*)" "\\1$<$<CONFIG:Debug>:d>.\\2" GLEW_LIBRARY "${GLEW_LIBRARY}")
 list(APPEND ADDITIONAL_LIBRARIES ${GLEW_LIBRARY})
-message(STATUS "GLEW libs: ${GLEW_LIBRARY}" )
 
 # find OpenGL
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIR})
 list(APPEND ADDITIONAL_LIBRARIES ${OPENGL_LIBRARIES})
-message(STATUS "OPENGL libs: ${OPENGL_LIBRARIES}" )
+#message(STATUS "OPENGL libs: ${OPENGL_LIBRARIES}" )
 
-
+list(REMOVE_DUPLICATES ADDITIONAL_LIBRARIES)
 
 ################################
 # Include header directories
@@ -190,6 +223,8 @@ include_directories(${WDL_DIR})
 include_directories(${IPLUG_DIR})
 include_directories(${LICE_DIR})
 include_directories(${VOSIMSYNTH_DIR}/include)
+include_directories(${SFTOOLS_DIR}/include)
+include_directories(${EIGEN_DIR})
 
 # LICE
 add_subdirectory(${LICE_DIR} "libs/LICELib")
@@ -213,7 +248,8 @@ source_group(VOSIMSynth FILES ${PROJECT_SRCS})
 source_group(Resources FILES ${RESOURCE_FILES})
 source_group(WDL FILES ${WDL_FILES})
 source_group(IPlug FILES ${IPLUG_FILES})
-source_group(WDL FILES ${WDL_FILES})
+source_group(NanoVG FILES ${NANOVG_FILES})
+source_group(sftools FILES ${SFTOOLS_FILES})
 
 add_library(${PLUGIN_NAME} SHARED
   ${PROJECT_FILES}
@@ -221,6 +257,7 @@ add_library(${PLUGIN_NAME} SHARED
   ${WDL_FILES}
   ${IPLUG_FILES}
   ${NANOVG_FILES}
+  ${SFTOOLS_FILES}
   )
 
 target_link_libraries(${PLUGIN_NAME} ${ADDITIONAL_LIBRARIES})

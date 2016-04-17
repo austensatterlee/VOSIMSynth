@@ -1,5 +1,6 @@
 #include "IPlugVST.h"
 #include "IGraphics.h"
+#include "VOSIMWindow.h"
 #include <stdio.h>
 
 const int VST_VERSION = 2400;
@@ -213,27 +214,38 @@ EHost IPlugVST::GetHost()
   return host;
 }
 
-void IPlugVST::AttachGraphics(IGraphics* pGraphics)
-{
-  if (pGraphics)
-  {
-    IPlugBase::AttachGraphics(pGraphics);
-    mAEffect.flags |= effFlagsHasEditor;
-    mEditRect.left = mEditRect.top = 0;
-    mEditRect.right = pGraphics->Width();
-    mEditRect.bottom = pGraphics->Height();
-  }
+void IPlugVST::AttachAppWindow(syn::VOSIMWindow* a_vosimWindow) {
+	  if (a_vosimWindow)
+	  {
+	    IPlugBase::AttachAppWindow(a_vosimWindow);
+	    mAEffect.flags |= effFlagsHasEditor;
+	    mEditRect.left = mEditRect.top = 0;
+	    mEditRect.right = (VstInt16)a_vosimWindow->size()[0];
+	    mEditRect.bottom = (VstInt16)a_vosimWindow->size()[1];
+	  }
 }
+
+//void IPlugVST::AttachGraphics(IGraphics* pGraphics)
+//{
+//  if (pGraphics)
+//  {
+//    IPlugBase::AttachGraphics(pGraphics);
+//    mAEffect.flags |= effFlagsHasEditor;
+//    mEditRect.left = mEditRect.top = 0;
+//    mEditRect.right = pGraphics->Width();
+//    mEditRect.bottom = pGraphics->Height();
+//  }
+//}
 
 void IPlugVST::ResizeGraphics(int w, int h)
 {
-  IGraphics* pGraphics = GetGUI();
+	syn::VOSIMWindow* vosimWindow = GetAppWindow();
 
-  if (pGraphics)
+  if (vosimWindow)
   {
     mEditRect.left = mEditRect.top = 0;
-    mEditRect.right = pGraphics->Width();
-    mEditRect.bottom = pGraphics->Height();
+	mEditRect.right = (VstInt16)vosimWindow->size()[0];
+	mEditRect.bottom = (VstInt16)vosimWindow->size()[1];
 
     OnWindowResize();
   }
@@ -456,7 +468,7 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
     }
     case effEditGetRect:
     {
-      if (ptr && _this->GetGUI())
+      if (ptr && _this->GetAppWindow())
       {
         *(ERect**) ptr = &(_this->mEditRect);
         return 1;
@@ -466,19 +478,28 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
     }
     case effEditOpen:
     {
-      IGraphics* pGraphics = _this->GetGUI();
+	   syn::VOSIMWindow* pGraphics = _this->GetAppWindow();
       
-      if (pGraphics)
-      {
-        #ifdef _WIN32
-          if (!pGraphics->OpenWindow(ptr)) pGraphics=0;
-        #else   // OSX, check if we are in a Cocoa VST host
-          #if defined(__LP64__)
-          if (!pGraphics->OpenWindow(ptr)) pGraphics=0;
-          #else
-          bool iscocoa = (_this->mHasVSTExtensions&VSTEXT_COCOA);
-          if (iscocoa && !pGraphics->OpenWindow(ptr)) pGraphics=0;
-          if (!iscocoa && !pGraphics->OpenWindow(ptr, 0)) pGraphics=0;
+	  if (pGraphics)
+	  {
+		  bool newWindowSuccess;
+#ifdef _WIN32
+		  newWindowSuccess = pGraphics->OpenWindow((HWND)ptr);
+		  if (!newWindowSuccess) pGraphics = 0;
+#else   // OSX, check if we are in a Cocoa VST host
+#if defined(__LP64__)
+		  newWindowPtr = pGraphics->OpenWindow(ptr);
+		  if (!newWindowPtr) pGraphics = 0;
+#else
+		  bool iscocoa = (_this->mHasVSTExtensions&VSTEXT_COCOA);
+		  if (iscocoa) {
+			  newWindowPtr = pGraphics->OpenWindow(ptr);
+			  if (!newWindowPtr) pGraphics = 0;
+		}else {
+			  newWindowPtr = pGraphics->OpenWindow(ptr,0);
+			  if (!newWindowPtr) pGraphics = 0;
+		}
+          
           #endif
         #endif
         if (pGraphics)
@@ -491,10 +512,10 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
     }
     case effEditClose:
     {
-      if (_this->GetGUI())
+      if (_this->GetAppWindow())
       {
         _this->OnGUIClose();
-        _this->GetGUI()->CloseWindow();
+        _this->GetAppWindow()->CloseWindow();
         return 1;
       }
       return 0;

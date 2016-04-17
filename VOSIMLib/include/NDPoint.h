@@ -20,6 +20,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __NDPOINT__
 #define __NDPOINT__
 #include <array>
+#include <eigen/Core>
 
 using std::array;
 
@@ -32,7 +33,7 @@ namespace syn
 	class NDPoint
 	{
 	private:
-		template<typename FROM_T,typename... Rest>
+		template<typename FROM_T, typename... Rest>
 		void _fill_vec(int i, const FROM_T& first, const Rest&... rest) {
 			m_pvec[i] = static_cast<T>(first);
 			_fill_vec(i + 1, rest...);
@@ -65,21 +66,28 @@ namespace syn
 				m_pvec[i] = static_cast<T>(a_pt[i]);
 			}
 		}
-		
+
 		template<typename FROM_T>
 		NDPoint(const array<FROM_T, ND>& a_tuple) {
 			for (int i = 0; i < ND; i++) {
 				m_pvec[i] = static_cast<T>(a_tuple[i]);
 			}
-		}		
+		}
 
 		/**
 		 * Variable argument constructor. Accepts one argument for each dimension.
 		 */
-		template<typename... Args>		
+		template<typename... Args>
 		NDPoint(const Args&... args)
 		{
-			_fill_vec(0,args...);
+			_fill_vec(0, args...);
+		}
+
+		template<typename FROM_T>
+		NDPoint(const Eigen::Matrix<FROM_T,ND,1>& a_vec) {
+			for (int i = 0; i < ND;i++) {
+				m_pvec[i] = static_cast<T>(a_vec[i]);
+			}
 		}
 
 		/**
@@ -335,7 +343,7 @@ namespace syn
 			}
 		}
 
-		static NDPoint<ND, T> max(const NDPoint<ND, T>& a_lhs, const NDPoint<ND, T>& a_rhs) {
+		static NDPoint<ND, T> NDPtMax(const NDPoint<ND, T>& a_lhs, const NDPoint<ND, T>& a_rhs) {
 			NDPoint<ND, T> maxpt;
 			for (int i = 0; i < ND;i++) {
 				maxpt[i] = a_lhs[i] > a_rhs[i] ? a_lhs[i] : a_rhs[i];
@@ -343,7 +351,7 @@ namespace syn
 			return maxpt;
 		}
 
-		static NDPoint<ND, T> min(const NDPoint<ND, T>& a_lhs, const NDPoint<ND, T>& a_rhs) {
+		static NDPoint<ND, T> NDPtMin(const NDPoint<ND, T>& a_lhs, const NDPoint<ND, T>& a_rhs) {
 			NDPoint<ND, T> minpt;
 			for (int i = 0; i < ND; i++) {
 				minpt[i] = a_lhs[i] < a_rhs[i] ? a_lhs[i] : a_rhs[i];

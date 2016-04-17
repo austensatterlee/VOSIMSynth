@@ -5,11 +5,6 @@
 #define PLUG_NAME "VOSIMProject"
 #endif
 
-#define IDB_KEY_BLACK 101
-#define IDB_KEY_ADG   102
-#define IDB_KEY_BE    103
-#define IDB_KEY_CF    104
-
 #define PLUG_CLASS_NAME VOSIMSynth
 
 #define BUNDLE_MFR "Austen Satterlee"

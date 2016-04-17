@@ -12,6 +12,10 @@ struct IPlugInstanceInfo
 
 class IPlugVST : public IPlugBase
 {
+	
+protected:
+	// Added by Austen 4/11
+	void AttachAppWindow(syn::VOSIMWindow* a_vosimWindow) override;
 public:
   IPlugVST(IPlugInstanceInfo instanceInfo,
            int nParams,
@@ -52,7 +56,7 @@ public:
 
 protected:
   void HostSpecificInit();
-  void AttachGraphics(IGraphics* pGraphics);
+  //void AttachGraphics(IGraphics* pGraphics);
   void SetLatency(int samples);
   bool SendMidiMsg(IMidiMsg* pMsg);
   bool SendSysEx(ISysEx* pSysEx);

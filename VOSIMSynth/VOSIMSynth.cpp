@@ -30,6 +30,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "StateVariableFilter.h"
 #include "fft.h"
 #include "include/SpectroscopeUnit.h"
+#include "VOSIMWindow.h"
 #include "KeyboardControl.h"
 
 using namespace std;
@@ -52,22 +53,18 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 
 void VOSIMSynth::makeGraphics()
 {
-	IGraphics* graphics = MakeGraphics(this, GUI_WIDTH, GUI_HEIGHT, 60);
-	graphics->SetStrictDrawing(true);
-	graphics->HandleMouseOver(true);
+	m_vosimWindow = new VOSIMWindow(GUI_WIDTH, GUI_HEIGHT);
 	
-	AttachGraphics(graphics);
-
-    IColor bg_color = COLOR_BLACK;
+	AttachAppWindow(m_vosimWindow);
 	
 	//m_kbdctrl = new syn::KeyboardControl(this, m_voiceManager, IRECT{ 1,GUI_HEIGHT - 100,GUI_WIDTH - 1,GUI_HEIGHT - 1 });
 	//m_graphics->AttachControl(m_kbdctrl.get());
 
-    m_circuitPanel = new CircuitPanel(this, IRECT{1, 1, GUI_WIDTH - 1, GUI_HEIGHT - 100}, m_voiceManager, m_unitFactory);
-	m_circuitPanel->registerUnitControl<OscilloscopeUnit, OscilloscopeUnitControl>();
-	m_circuitPanel->registerUnitControl<SpectroscopeUnit, SpectroscopeUnitControl>();
+//    m_circuitPanel = new CircuitPanel(this, IRECT{1, 1, GUI_WIDTH - 1, GUI_HEIGHT - 100}, m_voiceManager, m_unitFactory);
+//	m_circuitPanel->registerUnitControl<OscilloscopeUnit, OscilloscopeUnitControl>();
+//	m_circuitPanel->registerUnitControl<SpectroscopeUnit, SpectroscopeUnitControl>();
 
-	graphics->AttachControl(m_circuitPanel);
+//	graphics->AttachControl(m_circuitPanel);
 }
 
 void VOSIMSynth::makeInstrument()
@@ -112,6 +109,20 @@ void VOSIMSynth::makeInstrument()
 	m_MIDIReceiver = new MIDIReceiver(m_voiceManager);
 }
 
+VOSIMSynth::~VOSIMSynth() {
+	if(m_voiceManager)
+	DELETE_NULL(m_voiceManager);
+	// this will get deleted by IGraphics
+	//		if (m_circuitPanel)
+	//			DELETE_NULL(m_circuitPanel);
+	if (m_vosimWindow)
+	DELETE_NULL(m_vosimWindow);
+	if (m_unitFactory)
+	DELETE_NULL(m_unitFactory);
+	if (m_MIDIReceiver)
+	DELETE_NULL(m_MIDIReceiver);
+}
+
 void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames)
 {
     // Mutex is already locked for us.
@@ -139,15 +150,15 @@ void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg)
 
 bool VOSIMSynth::SerializeState(ByteChunk* pChunk)
 {
-    ByteChunk serialized = m_circuitPanel->serialize();
-    pChunk->PutChunk(&serialized);
+    //ByteChunk serialized = m_circuitPanel->serialize();
+    //pChunk->PutChunk(&serialized);
     return true;
 }
 
 int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos)
 {
-	m_unitFactory->resetBuildCounts();
-    startPos = m_circuitPanel->unserialize(pChunk, startPos);
+	//m_unitFactory->resetBuildCounts();
+    //startPos = m_circuitPanel->unserialize(pChunk, startPos);
     return startPos;
 }
 

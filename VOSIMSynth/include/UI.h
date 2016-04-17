@@ -19,65 +19,107 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __UI__
 #define __UI__
-#include "NDPoint.h"
 #include <IPlug/IPlugStructs.h>
 #include <DSPMath.h>
 #include <functional>
+#include <eigen/Core>
+#include <nanovg.h>
+#include <vector>
+#include <memory>
 
-using namespace std;
+using namespace std; 
 
 namespace syn
 {
-	/**
-	 * Stores an RGB color as a 3-dimenional point.
-	 */
-	class ColorPoint : public NDPoint<3>
-	{
+	using Eigen::Vector2f;
+	using Eigen::Vector3f;
+	using Eigen::Vector4f;
+	using Eigen::Vector2i;
+	using Eigen::Vector3i;
+	using Eigen::Vector4i;
+	using Eigen::Matrix3f;
+	using Eigen::Matrix4f;
+	using Eigen::VectorXf;
+	using Eigen::MatrixXf;
+
+	typedef Eigen::Matrix<uint32_t, Eigen::Dynamic, Eigen::Dynamic> MatrixXu;
+
+	/// Stores an RGBA color value
+	class Color : public Eigen::Matrix<float, 4, 1, Eigen::DontAlign> {
+		typedef Eigen::Matrix<float,4,1,Eigen::DontAlign> Base;
 	public:
-		ColorPoint(const NDPoint<3>& a_pt) :
-			NDPoint<3>(a_pt),
-			m_iColor{ 0xFF, int(a_pt[0] * 0xFF), int(a_pt[1] * 0xFF), int(a_pt[2] * 0xFF) }
-		{
+		Color() : Color(0, 0, 0, 0) {}
+
+		Color(const Eigen::Vector4f &color) : Base(color) { }
+
+		Color(const Eigen::Vector3f &color, float alpha)
+			: Color(color(0), color(1), color(2), alpha) { }
+
+		Color(const Eigen::Vector3i &color, int alpha)
+			: Color(color.cast<float>() / 255.f, alpha / 255.f) { }
+
+		Color(const Eigen::Vector3f &color) : Color(color, 1.0f) {}
+
+		Color(const Eigen::Vector3i &color)
+			: Color(static_cast<Vector3f>(color.cast<float>() / 255.f)) { }
+
+		Color(const Eigen::Vector4i &color)
+			: Color(static_cast<Vector4f>(color.cast<float>() / 255.f)) { }
+
+		Color(float intensity, float alpha)
+			: Color(Vector3f::Constant(intensity), alpha) { }
+
+		Color(int intensity, int alpha)
+			: Color(Vector3i::Constant(intensity), alpha) { }
+
+		Color(float r, float g, float b, float a) : Color(Vector4f(r, g, b, a)) { }
+
+		Color(int r, int g, int b, int a) : Color(Vector4i(r, g, b, a)) { }
+
+		/// Construct a color vector from MatrixBase (needed to play nice with Eigen)
+		template <typename Derived> Color(const Eigen::MatrixBase<Derived>& p)
+			: Base(p) { }
+
+		/// Assign a color vector from MatrixBase (needed to play nice with Eigen)
+		template <typename Derived> Color &operator=(const Eigen::MatrixBase<Derived>& p) {
+			this->Base::operator=(p);
+			return *this;
 		}
 
-		ColorPoint(unsigned int a_word) :
-			ColorPoint(NDPoint<3>(double((a_word >> 16) & 0xFF) * 1.0 / 0xFF, double((a_word >> 8) & 0xFF) * 1.0 / 0xFF, double(a_word & 0xFF) * 1.0 / 0xFF)) {}
-		
-		ColorPoint(const IColor& a_color) :
-			ColorPoint(NDPoint<3>(double(a_color.R), double(a_color.G), double(a_color.B)) / 255.0) {}
+		/// Return a reference to the red channel
+		float &r() { return x(); }
+		/// Return a reference to the red channel (const version)
+		const float &r() const { return x(); }
+		/// Return a reference to the green channel
+		float &g() { return y(); }
+		/// Return a reference to the green channel (const version)
+		const float &g() const { return y(); }
+		/// Return a reference to the blue channel
+		float &b() { return z(); }
+		/// Return a reference to the blue channel (const version)
+		const float &b() const { return z(); }
 
-		const IColor& getIColor() const {
-			return m_iColor;
+		Color contrastingColor() const {
+			float luminance = cwiseProduct(Color(0.299f, 0.587f, 0.144f, 0.f)).sum();
+			return Color(luminance < 0.5f ? 1.f : 0.f, 1.f);
 		}
 
-		unsigned getInt() const {
-			return unsigned(0xFF << 24) | unsigned(m_pvec[0] * 0xFF) << 16 | unsigned(m_pvec[1] * 0xFF) << 8 | unsigned(m_pvec[2] * 0xFF);
-		}
+		inline operator const NVGcolor &() const;
+	};
 
-		LICE_pixel getLicePixel() const {
-			return LICE_RGBA(int(m_pvec[0] * 0xFF), int(m_pvec[1] * 0xFF), int(m_pvec[2] * 0xFF), 0xFF);
-		}
+	inline Color::operator const struct NVGcolor&() const {
+		return reinterpret_cast<const NVGcolor &>(*this->data());
+	}
 
-		int R() const {
-			return m_pvec[0] * 0xFF;
-		}
-		int G() const {
-			return m_pvec[1] * 0xFF;
-		}
-		int B() const {
-			return m_pvec[2] * 0xFF;
-		}
-		float r() const {
-			return m_pvec[0];
-		}
-		float g() const {
-			return m_pvec[1];
-		}
-		float b() const {
-			return m_pvec[2];
-		}
-	private:
-		IColor m_iColor;
+	/* Cursor shapes */
+	enum class Cursor {
+		Arrow = 0,
+		IBeam,
+		Crosshair,
+		Hand,
+		HResize,
+		VResize,
+		CursorCount
 	};
 
 	class CachedImage
@@ -178,45 +220,6 @@ namespace syn
 		int B = MAX(y1, y2);
 		return{ L,T,R,B };
 	}
-
-	enum PALETTE
-	{
-		PRIMARY = 0,
-		SECONDARY,
-		TERTIARY,
-		COMPLEMENT
-	};
-
-	const ColorPoint globalPalette[4][5] = {
-		{
-			0x3F51B5,
-			0x5C6BC0,
-			0x7986CB,
-			0x9FA8DA,
-			0xC5CAE9,
-		},
-		{
-			0x2196F3,
-			0x42A5F5,
-			0x64B5F6,
-			0x90CAF9,
-			0xBBDEFB
-		},
-		{
-			0x4CAF50,
-			0x66BB6A,
-			0x81C784,
-			0xA5D6A7,
-			0xC8E6C9
-		},
-		{
-			0x80D8FF,
-			0x40C4FF,
-			0x00B0FF,
-			0x0091EA,
-			0x01579B
-		}
-	};
 }
 #endif
 
