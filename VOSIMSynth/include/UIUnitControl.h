@@ -1,6 +1,4 @@
 /*
-Copyright 2016, Austen Satterlee
-
 This file is part of VOSIMProject.
 
 VOSIMProject is free software: you can redistribute it and/or modify
@@ -14,23 +12,37 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
+along with VOSIMProject.  If not, see <http://www.gnu.org/licenses/>.
+
+Copyright 2016, Austen Satterlee
 */
 
-#ifndef __ITEXTSLIDER__
-#define __ITEXTSLIDER__
+/**
+*  \file UIUnitControl.h
+*  \brief
+*  \details
+*  \author Austen Satterlee
+*  \date 04/2016
+*/
 
-#include "VoiceManager.h"
-#include "UI.h"
-#include <memory>
-
-using std::shared_ptr;
+#ifndef __UIUNITCONTROL__
+#define __UIUNITCONTROL__
+#include "UIComponent.h"
+#include <VoiceManager.h>
 
 namespace syn
 {
-	class ITextSlider
+	class UIUnitControl : public UIComponent
 	{
-
+	public:
+		UIUnitControl(VOSIMWindow* a_window, UIComponent* a_parent, VoiceManager* a_vm, int a_unitId) :
+			UIComponent{a_window, a_parent},
+			m_vm(a_vm),
+			m_unitId(a_unitId)
+		{}
+	protected:
+		VoiceManager* m_vm;
+		int m_unitId;
 	};
 }
 #endif

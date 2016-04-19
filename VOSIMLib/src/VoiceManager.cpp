@@ -240,11 +240,11 @@ namespace syn
 		return m_numActiveVoices;
 	}
 
-	unsigned VoiceManager::queueAction(EActionType a_action, const ActionArgs& a_params) {
+	unsigned VoiceManager::queueAction(ActionMessage a_msg) {
 		if (m_isPlaying) {
-			m_queuedActions.push({a_action, a_params});
+			m_queuedActions.push(a_msg);
 		} else {
-			_processAction({a_action, a_params});
+			_processAction(a_msg);
 		}
 		return m_tickCount;
 	}
@@ -262,8 +262,6 @@ namespace syn
 
 	void VoiceManager::_processAction(const ActionMessage& a_msg) {
 		Circuit* voice;
-		const EActionType& a_action = a_msg.action;
-		const ActionArgs& a_params = a_msg.args;
 		// Apply action to all voices
 		for (int i = 0; i <= m_maxVoices; i++) {
 			if (i == m_maxVoices) { // Reserve last loop for applying action to prototype voice
@@ -271,40 +269,7 @@ namespace syn
 			} else {
 				voice = m_allVoices[i].get();
 			}
-			switch (a_action) {
-			case ModifyParam:
-				voice->setInternalParameter(a_params.id1, a_params.id2, a_params.value);
-				break;
-			case ModifyParamNorm:
-				voice->setInternalParameterNorm(a_params.id1, a_params.id2, a_params.value);
-				break;
-			case ModifyParamPrecision:
-				voice->getUnit_(a_params.id1).getParameter_(a_params.id2).setPrecision(a_params.id3);
-				break;
-			case DeleteUnit:
-				voice->removeUnit(a_params.id1);
-				break;
-			case ConnectInput:
-				voice->connectInputs(a_params.id1, a_params.id2, a_params.id3);
-				break;
-			case ConnectOutput:
-				voice->connectOutputs(a_params.id1, a_params.id2, a_params.id3);
-				break;
-			case ConnectInternal:
-				voice->connectInternal(a_params.id1, a_params.id2, a_params.id3, a_params.id4);
-				break;
-			case DisconnectInput:
-				voice->disconnectInputs(a_params.id1, a_params.id2, a_params.id3);
-				break;
-			case DisconnectOutput:
-				voice->disconnectOutputs(a_params.id1, a_params.id2, a_params.id3);
-				break;
-			case DisconnectInternal:
-				voice->disconnectInternal(a_params.id1, a_params.id2, a_params.id3, a_params.id4);
-				break;
-			default:
-				throw std::domain_error("Invalid queued action");
-			}
+			a_msg(voice);
 		}
 	}
 

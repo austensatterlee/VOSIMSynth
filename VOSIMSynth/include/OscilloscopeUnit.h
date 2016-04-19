@@ -26,9 +26,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
 #include <Unit.h>
-#include <UnitControl.h>
 #include <DSPMath.h>
-#include "DefaultUnitControl.h"
 
 namespace syn {
 	class OscilloscopeUnit : public Unit

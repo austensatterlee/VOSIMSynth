@@ -33,6 +33,12 @@ namespace syn
             Unit(a_name),
 			m_units(256)
     {
+		shared_ptr<PassthroughUnit> inputUnit = make_shared<PassthroughUnit>("inputs");
+		shared_ptr<PassthroughUnit> outputUnit = make_shared<PassthroughUnit>("outputs");
+		m_units.add("inputs", inputUnit);
+		m_units.add("outputs", outputUnit);
+		m_inputUnit = inputUnit.get();
+		m_outputUnit = outputUnit.get();
         addExternalInput_("left in");
         addExternalInput_("right in");
         addExternalOutput_("left out");
@@ -47,13 +53,7 @@ namespace syn
         }
         for(int i=0;i<a_other.m_connectionRecords.size();i++){
             const ConnectionRecord& rec = a_other.m_connectionRecords[i];
-            if(rec.type == ConnectionRecord::Input){
-                connectInputs(rec.from_port, rec.to_id, rec.to_port);
-            }else if(rec.type == ConnectionRecord::Output){
-                connectOutputs(rec.from_port, rec.to_id, rec.to_port);
-            }else if(rec.type == ConnectionRecord::Internal){
-                connectInternal(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
-            }
+            connectInternal(rec.from_id, rec.from_port, rec.to_id, rec.to_port);            
         }
     }
 
@@ -65,13 +65,8 @@ namespace syn
 			m_units[i]->reset();
 		}
 
-        /* Push circuit input signals to internally connected input ports */
-        for(int i=0;i< m_inputSignals.getNumChannels(); i++){
-			if (m_inputConnections.numConnections(i)) {
-				Signal& inputSignal = m_inputSignals.getChannel(i);
-				m_externalInputs.push(i, inputSignal);
-			}
-        }
+		/* Push external input data into internal input unit */
+		m_inputUnit->m_inputSignals.set(m_inputSignals);
 
 		// tick all internal components
 		for (int i = 0; i < m_units.size(); i++)
@@ -80,10 +75,7 @@ namespace syn
 		}
 
         /* Push internally connected output signals to circuit output ports */
-        for(int i=0;i< m_outputSignals.getNumChannels(); i++){
-            Signal& outputSignal = m_outputSignals.getChannel(i);
-            m_externalOutputs.pull(i, outputSignal);
-        }
+		m_outputSignals.set(m_outputUnit->m_outputSignals);
 	}
 
     int Circuit::addUnit(shared_ptr<Unit> a_unit)
@@ -96,28 +88,6 @@ namespace syn
         a_unit->setTempo(getTempo());
         a_unit->m_midiData = m_midiData;
         return retval;
-    }
-
-    vector<pair<int, int> > Circuit::getConnectionsToCircuitInput(int a_circuitInputPort) const{
-        vector<pair<int, int> > connectedPorts;
-        for(int i=0;i<m_connectionRecords.size();i++){
-            const ConnectionRecord& conn = m_connectionRecords[i];
-            if(conn.type==ConnectionRecord::Input && conn.from_port == a_circuitInputPort){
-                connectedPorts.push_back(make_pair(conn.to_id,conn.to_port));
-            }
-        }
-        return connectedPorts;
-    };
-
-    vector<pair<int, int> > Circuit::getConnectionsToCircuitOutput(int a_circuitOutputPort) const{
-        vector<pair<int, int> > connectedPorts;
-        for(int i=0;i<m_connectionRecords.size();i++){
-            const ConnectionRecord& conn = m_connectionRecords[i];
-            if(conn.type==ConnectionRecord::Output && conn.from_port == a_circuitOutputPort){
-                connectedPorts.push_back(make_pair(conn.to_id,conn.to_port));
-            }
-        }
-        return connectedPorts;
     }
 
 	const vector<ConnectionRecord>& Circuit::getConnectionRecords() const {
@@ -178,13 +148,13 @@ namespace syn
 
 	int Circuit::addExternalInput_(const string& a_name) {
 		int inputid = addInput_(a_name);
-		m_externalInputs.addPort();
+		m_inputUnit->addInput_("");
 		return inputid;
     }
 
 	int Circuit::addExternalOutput_(const string& a_name) {
 		int outputid = addOutput_(a_name);
-		m_externalOutputs.addPort();
+		m_outputUnit->addOutput_("");
 		return outputid;
     }
 

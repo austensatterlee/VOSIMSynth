@@ -42,41 +42,8 @@ using boost::lockfree::capacity;
 
 namespace syn
 {
-	/* Modifying actions that should be queued and processed in between samples */
-	enum EActionType
-	{
-		ModifyParam,
-		ModifyParamNorm,
-		ModifyParamPrecision,
-		CreateUnit,
-		DeleteUnit,
-		ConnectInput,
-		ConnectOutput,
-		ConnectInternal,
-		DisconnectInput,
-		DisconnectOutput,
-		DisconnectInternal
-	};
-
-	struct ActionArgs
-	{
-		int id1;
-		int id2;
-
-		union
-		{
-			int id3;
-			double value;
-		};
-
-		int id4;
-	};
-
-	struct ActionMessage
-	{
-		EActionType action;
-		ActionArgs args;		
-	};
+	/* Actions that should be queued and processed in between samples */
+	typedef std::function<void(Circuit*)> ActionMessage;
 
 	class VoiceManager
 	{
@@ -100,22 +67,7 @@ namespace syn
 
 		void MSFASTCALL tick(const double* a_left_input, const double* a_right_input, double* a_left_output, double* a_right_output) GCCFASTCALL;
 
-		/**
-		 * Queue an action to be processed before the next sample.
-		 *
-		 * The following is a description of parameter signatures corresponding to each possible action:
-		 * ModifyParam:				(int unit_id, int param_id, double value)
-		 * ModifyParamNorm:			(int unit_id, int param_id, double norm_value)
-		 * ModifyParamPrecision:	(int unit_id, int param_id, int new_precision)
-		 * DeleteUnit:				(int unit_id)
-		 * ConnectInput:			(int circuit_input_id, int unit_id, int unit_input_id)
-		 * ConnectOutput:			(int circuit_output_id, int unit_id, int output_port_id)
-		 * ConnectInternal:			(int from_unit_id, int from_unit_port, int to_unit_id, int to_unit_port)
-		 * DisconnectInput:			(int circuit_input_id, int unit_id, int input_port_id)
-		 * DisconnectOutput:		(int circuit_output_id, int unit_id, int output_port_id)
-		 * DisconnectInternal:		(int from_unit_id, int from_unit_port, int to_unit_id, int to_unit_port
-		 */
-		unsigned queueAction(EActionType a_action, const ActionArgs& a_params);
+		unsigned queueAction(ActionMessage a_action);
 
 		unsigned getTickCount() const;
 

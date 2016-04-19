@@ -1,40 +1,40 @@
 ﻿/*
-This file is part of VOSIMProject.
+ This file is part of VOSIMProject.
+ 
+ VOSIMProject is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ VOSIMProject is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with VOSIMProject.  If not, see <http://www.gnu.org/licenses/>.
+ 
+ Copyright 2016, Austen Satterlee
+ */
 
-VOSIMProject is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-VOSIMProject is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with VOSIMProject.  If not, see <http://www.gnu.org/licenses/>.
-
-Copyright 2016, Austen Satterlee
-*/
-
-/** \file UIComponent.h
-*  \brief
-*  \details
-*  \author Austen Satterlee
-*  \date 04/2016
-*/
+/**
+ *  \file UIComponent.h
+ *  \brief  
+ *  \details
+ *  \author Austen Satterlee
+ *  \date 04/2016
+ */
 
 #ifndef __UICOMPONENT__
 #define __UICOMPONENT__
 
-#include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 
 #include <thread>
-#includue "UIComponent.h"
 #include <NDPoint.h>
 
 #include "nanovg.h"
+#include <Theme.h>
 
 namespace syn
 {
@@ -45,90 +45,77 @@ namespace syn
 		sf::Time time;
 	};
 
+	class VOSIMWindow;
+
 	class UIComponent
 	{
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		UIComponent() :
-			m_parent(nullptr), m_visible(false), m_focused(false) {}
-
-		UIComponent(const UIComponent& a_other);
+		UIComponent(VOSIMWindow* a_window, UIComponent* a_parent);
 
 		virtual ~UIComponent() {}
 
-		void recursiveDraw(NVGcontext* a_nvg) {
-			nvgStrokeWidth(a_nvg, 1.0f);
-			nvgBeginPath(a_nvg);
-			nvgRect(a_nvg, m_pos[0] - 0.5f, m_pos[1] - 0.5f, m_size[0] + 1, m_size[1] + 1);
-			nvgStrokeColor(a_nvg, nvgRGBA(255, 0, 0, 255));
-			nvgStroke(a_nvg);
+		void recursiveDraw(NVGcontext* a_nvg);
+		
+		void addChild(UIComponent* a_newChild);
 
-			draw(a_nvg);
+		shared_ptr<UIComponent> getChild(int i);
 
-			nvgTranslate(a_nvg, m_pos[0], m_pos[1]);
-			for (std::shared_ptr<UIComponent> child : m_children) {
-				child->recursiveDraw(a_nvg);
-			}
-			nvgTranslate(a_nvg, -m_pos[0], -m_pos[1]);
-		}
+		int numChildren() const {return m_children.size();}
 
-		void handleEvent(sf::Event a_event) { }
+		UIComponent* parent() const {return m_parent;}
 
-		void addChild(UIComponent* a_newChild) {
-			if (a_newChild->getParent())
-				return;
-			std::shared_ptr<UIComponent> a_newChildPtr(a_newChild);
-			if (std::find(m_children.begin(), m_children.end(), a_newChildPtr) == m_children.end()) {
-				a_newChild->m_parent = this;
-				m_children.push_back(a_newChildPtr);
-			}
-		}
+		void setParent(UIComponent* a_parent) {m_parent = a_parent;}
 
-		std::shared_ptr<UIComponent> getChild(int i) {
-			if (i >= m_children.size())
-				return nullptr;
-			return m_children[i];
-		}
+		bool contains(const Vector2i& a_pt);
 
-		int numChildren() const {
-			return m_children.size();
-		}
+		UIComponent* findChild(const Vector2i& a_pt);
 
-		UIComponent* getParent() const {
-			return m_parent;
-		}
+		Vector2i getRelPos() const {return m_pos;}
 
-		NDPoint<2, int> getPos() const {
-			return m_pos;
-		}
+		void setRelPos(const Vector2i& a_pos) {m_pos = a_pos;}
 
-		void setPos(const NDPoint<2, int>& a_pos) {
-			m_pos = a_pos;
-		}
+		Vector2i getAbsPos() const {return m_parent ? m_parent->getAbsPos() + m_pos : m_pos;}
 
-		void move(const NDPoint<2, int>& a_dist) {
-			m_pos += a_dist;
-		}
+		void move(const Vector2i& a_dist) {m_pos += a_dist;}
 
-		NDPoint<2, int> getSize() const {
-			return m_size;
-		}
+		Vector2i size() const {return m_size;}
 
-		void setSize(const NDPoint<2, int>& a_size) {
-			m_size = a_size;
-		}
+		Vector2i calcAutoSize() const;
 
-		void grow(const NDPoint<2, int>& a_amt);
+		void setSize(const Vector2i& a_size) {m_size = a_size;}
+
+		void grow(const Vector2i& a_amt) { m_size += a_amt; }
+
+		shared_ptr<Theme> theme() const {return m_theme;}
+
+		void setTheme(shared_ptr<Theme> a_theme) {m_theme = a_theme;}
+
+		bool visible() const {return m_visible;}
+
+		void setVisible(bool a_visible) {m_visible = a_visible;}
+
+		virtual bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
+		virtual bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
+		virtual bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
+		virtual bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
+		virtual bool onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt);
+		virtual void onFocusEvent(bool a_isFocused);
+
 
 	protected:
 		virtual void draw(NVGcontext* a_nvg) {};
 
 	protected:
 		UIComponent* m_parent;
-		std::vector<std::shared_ptr<UIComponent>> m_children;
+		VOSIMWindow* m_window;
+		vector<shared_ptr<UIComponent>> m_children;
 
 		bool m_visible, m_focused;
-		NDPoint<2, int> m_pos, m_size, m_fixedSize;
+		shared_ptr<Theme> m_theme;
+		Vector2i m_pos, m_size, m_fixedSize;
 	};
 };
 #endif
+

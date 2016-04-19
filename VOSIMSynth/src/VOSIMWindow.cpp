@@ -19,7 +19,7 @@ sf::WindowHandle syn::VOSIMWindow::sys_CreateChildWindow(sf::WindowHandle a_syst
 	int x = 0, y = 0, w = m_size[0], h = m_size[1];
 
 	if (nWndClassReg++ == 0) {
-		WNDCLASS wndClass = { CS_OWNDC | CS_DROPSHADOW , DefWindowProc , 0, 0, gHInstance, 0, LoadCursor(NULL, IDC_ARROW), 0, 0, wndClassName};
+		WNDCLASS wndClass = { CS_OWNDC | CS_DROPSHADOW, DefWindowProc , 0, 0, gHInstance, 0, LoadCursor(NULL, IDC_ARROW), 0, 0, wndClassName};
 		RegisterClass(&wndClass);
 	}
 
@@ -64,14 +64,10 @@ void syn::VOSIMWindow::drawThreadFunc() {
 			b1->setSize({ 200, 200 });
 		}
 
-		PerfGraph fps, cpuGraph, gpuGraph;
-		GPUtimer gpuTimer;
+		PerfGraph fps, cpuGraph;
 
 		initGraph(&fps, GRAPH_RENDER_FPS, "Frame Time");
 		initGraph(&cpuGraph, GRAPH_RENDER_MS, "CPU Time");
-		initGraph(&gpuGraph, GRAPH_RENDER_MS, "GPU Time");
-
-		initGPUTimer(&gpuTimer);
 
 		sftools::Chronometer timer;
 		timer.resume();
@@ -97,8 +93,6 @@ void syn::VOSIMWindow::drawThreadFunc() {
 
 			m_frameCount = (m_frameCount + 1);
 
-			m_sfmlWindow->display();
-
 			// check all the window's events that were triggered since the last iteration of the loop
 			while (m_running && m_sfmlWindow->pollEvent(event)) {
 				// "close requested" event: we close the window
@@ -123,36 +117,37 @@ void syn::VOSIMWindow::drawThreadFunc() {
 				case Event::MouseWheelScrolled:
 				{
 					m_lastScroll = { event.mouseWheelScroll, timer.getElapsedTime() };
-					UIComponent* scrollComponent = m_root->findChild(m_cursor).get();
-					if (scrollComponent)
-						scrollComponent->onMouseScroll(cursorPos(), diffCursorPos(), event.mouseWheelScroll.delta);
+					m_root->onMouseScroll(cursorPos(), diffCursorPos(), event.mouseWheelScroll.delta);
 				}
 					break;
 				case Event::MouseButtonPressed:
 					m_lastClick = { event.mouseButton, timer.getElapsedTime() };
 					m_isClicked = true;
-					m_draggingComponent = m_root->findChild(m_cursor).get();
-					m_root->onMouseDown(cursorPos(), diffCursorPos());
+					
+					m_draggingComponent = m_root->findChild(m_cursor);
+					if (m_draggingComponent == m_root)
+						m_draggingComponent = nullptr;
+					if (m_draggingComponent && !m_draggingComponent->onMouseDown(cursorPos() - m_draggingComponent->parent()->getAbsPos(), diffCursorPos()))
+						m_draggingComponent = nullptr;
 					break;
 				case Event::MouseButtonReleased:
 					m_lastClick = { event.mouseButton, timer.getElapsedTime() };
 					if (m_draggingComponent)
 						m_draggingComponent->onMouseUp(cursorPos() - m_draggingComponent->parent()->getAbsPos(), diffCursorPos());
 					if(!m_draggingComponent) {
+						m_root->onMouseUp(cursorPos(), diffCursorPos());
 						setFocus(nullptr);
 					}
 					m_draggingComponent = nullptr;
 					m_isClicked = false;
 					break;
 				case Event::MouseMoved:
-				{ 
-					updateCursorPos( { event.mouseMove.x,event.mouseMove.y } );
-					if (m_draggingComponent)
-						m_draggingComponent->onMouseDrag(cursorPos()-m_draggingComponent->parent()->getAbsPos(), diffCursorPos() );
-					else {
-						UIComponent* a_hoverComponent = m_root->findChild(m_cursor).get();
-						if (a_hoverComponent)
-							a_hoverComponent->onMouseMove(cursorPos(), diffCursorPos());
+				{
+					updateCursorPos({ event.mouseMove.x,event.mouseMove.y });
+					if (m_draggingComponent) {
+						m_draggingComponent->onMouseDrag(cursorPos() - m_draggingComponent->parent()->getAbsPos(), diffCursorPos());
+					} else {
+						m_root->onMouseMove(cursorPos(), diffCursorPos());
 					}
 				}
 					break;
@@ -160,6 +155,8 @@ void syn::VOSIMWindow::drawThreadFunc() {
 					break;
 				}
 			} // end event-handler loop
+
+			m_sfmlWindow->display();
 		}
 		nvgDeleteGL3(vg);
 }
