@@ -36,6 +36,8 @@ Copyright 2016, Austen Satterlee
 
 #include "nanovg.h"
 #include <UIComponent.h>
+#include <UnitFactory.h>
+#include <VoiceManager.h>
 
 using sf::Event;
 
@@ -45,7 +47,7 @@ namespace syn
 	{
 	public:
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-		VOSIMWindow(int a_width, int a_height) :
+		VOSIMWindow(int a_width, int a_height, VoiceManager* a_vm, UnitFactory* a_unitFactory) :
 			m_size(a_width,a_height),
 			m_cursor({0,0}),
 			m_isClicked(false), 
@@ -54,8 +56,9 @@ namespace syn
 			m_focused(nullptr), 
 			m_root(nullptr), 
 			m_sfmlWindow(nullptr),
-			m_frameCount(0) 
-		{	
+			m_frameCount(0),
+			m_vm(a_vm),
+			m_unitFactory(a_unitFactory) {
 		}
 
 		virtual ~VOSIMWindow() {
@@ -111,6 +114,9 @@ namespace syn
 		sf::RenderWindow* m_sfmlWindow;
 		std::thread m_drawThread;
 		unsigned m_frameCount;
+
+		VoiceManager* m_vm;
+		UnitFactory* m_unitFactory;
 	};
 }
 #endif

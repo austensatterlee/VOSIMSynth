@@ -33,19 +33,38 @@ Copyright 2016, Austen Satterlee
 
 namespace syn
 {
-	class UIUnitControlContainer : public UIComponent
+	class UIUnitPort : public UIComponent
 	{
 	public:
-		UIUnitControlContainer(VOSIMWindow* a_window, UIComponent* a_parent, VoiceManager* a_vm, int a_unitId, UIUnitControl* a_unitControl) :
-			UIComponent{a_window, a_parent},
-			m_vm(a_vm),
-			m_unitId(a_unitId),
-			m_unitControl(a_unitControl)
-		{}
+		UIUnitPort(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_portNum, bool a_isInput)
+			: UIComponent{ a_window }, m_vm(a_vm), m_unitId(a_unitId), m_portNum(a_portNum), m_isInput(a_isInput),m_autoWidth(0) {}
+		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		Vector2i calcAutoSize() const override;
+	protected:
+		void draw(NVGcontext* a_nvg) override;
 	protected:
 		VoiceManager* m_vm;
 		int m_unitId;
-		UIUnitControl* m_unitControl;
+		int m_portNum;
+		bool m_isInput;
+		int m_autoWidth;
 	};
+
+	class UIUnitControlContainer : public UIComponent
+	{
+	public:
+		UIUnitControlContainer(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, UIUnitControl* a_unitControl);
+
+	protected:
+		void draw(NVGcontext* a_nvg) override;
+		VoiceManager* m_vm;
+		int m_unitId;
+		UIUnitControl* m_unitControl;
+		vector<UIUnitPort*> m_inPorts;
+		vector<UIUnitPort*> m_outPorts;
+	};
+
 }
 #endif

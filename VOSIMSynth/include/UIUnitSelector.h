@@ -28,15 +28,33 @@ Copyright 2016, Austen Satterlee
 #ifndef __UIUNITSELECTOR__
 #define __UIUNITSELECTOR__
 #include "nanovg.h"
-#include <UIComponent.h>
+#include "UIComponent.h"
+#include "UnitFactory.h"
 
 namespace syn
 {
 	class UIUnitSelector : public UIComponent
 	{
 	public:
-		UIUnitSelector(VOSIMWindow* a_window, UIComponent* a_parent)
-			: UIComponent{a_window, a_parent} {}
+		UIUnitSelector(VOSIMWindow* a_window, UnitFactory* a_unitFactory)
+			: UIComponent{a_window}, m_autoWidth(0), m_autoHeight(0), m_currGroup(-1), m_currPrototype(-1), m_highlightedRow(-1), m_unitFactory(a_unitFactory) {}
+
+		Vector2i calcAutoSize() const override;
+		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		int selectedGroup() { return m_currGroup; }
+		int selectedPrototype() { return m_currPrototype; }
+		void setSelectedGroup(int a_group) { m_currGroup = a_group; }
+		void setSelectedPrototype(int a_proto) { m_currPrototype = a_proto; }
+	protected:
+		void draw(NVGcontext* a_nvg) override;
+	private:
+		int m_autoWidth, m_autoHeight;
+		int m_currGroup, m_currPrototype;
+		int m_highlightedRow;
+
+		float m_fontSize = 14;
+		UnitFactory* m_unitFactory;
 	};
 }
 #endif

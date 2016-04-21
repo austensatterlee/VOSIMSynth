@@ -51,7 +51,10 @@ namespace syn
 			addInput_("in");
 			addOutput_("out");
 		}
-		PassthroughUnit(const PassthroughUnit& a_other);
+		PassthroughUnit(const PassthroughUnit& a_other) :
+		PassthroughUnit(a_other.getName())
+		{
+		};
 	protected:
 		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override {
 			for(int i=0;i<a_inputs.getNumChannels();i++) {
@@ -254,8 +257,7 @@ namespace syn
 		bool result = toUnit->_connectInput(fromUnit, a_fromOutputPort, a_toInputPort);
 		// record the connection upon success
 		if (result) {
-			m_connectionRecords.push_back({ConnectionRecord::Internal, fromUnitId, a_fromOutputPort, toUnitId,
-				a_toInputPort});
+			m_connectionRecords.push_back({fromUnitId, a_fromOutputPort, toUnitId,a_toInputPort});
 		}
 		return result;
 	}

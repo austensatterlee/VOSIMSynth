@@ -35,9 +35,11 @@ namespace syn {
 	{
 	public:
 
-		UIWindow(VOSIMWindow* a_window, UIComponent* a_parent, const string& a_title = "Untitled")
-			: UIComponent{ a_window, a_parent },
-			m_title{ a_title } {}
+		UIWindow(VOSIMWindow* a_window, const string& a_title = "Untitled")
+			: UIComponent{ a_window },
+			m_title{ a_title },
+			m_isCollapsed(false)
+		{}
 
 		~UIWindow() override
 		{};
@@ -45,10 +47,18 @@ namespace syn {
 		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 
 		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+
+		void toggleCollapsed();
+		void collapse();
+		void expand();
+		Vector2i calcAutoSize() const override;
 	protected:
-		void draw(NVGcontext* a_nvg) override;
+		void draw(NVGcontext* a_nvg) override;	
 	protected:
 		string m_title;
+		bool m_isCollapsed;
+		Vector2i m_oldSize;
+		int m_autoWidth;
 	};
 }
 #endif

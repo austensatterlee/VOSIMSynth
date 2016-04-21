@@ -53,7 +53,7 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 
 void VOSIMSynth::makeGraphics()
 {
-	m_vosimWindow = new VOSIMWindow(GUI_WIDTH, GUI_HEIGHT);
+	m_vosimWindow = new VOSIMWindow(GUI_WIDTH, GUI_HEIGHT, m_voiceManager, m_unitFactory);
 	
 	AttachAppWindow(m_vosimWindow);
 	

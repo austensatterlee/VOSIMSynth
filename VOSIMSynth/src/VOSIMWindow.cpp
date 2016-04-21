@@ -3,6 +3,9 @@
 #include <SFML/OpenGL.hpp>
 #include "nanovg_gl.h"
 #include <Theme.h>
+#include <UIWindow.h>
+#include <UIUnitSelector.h>
+#include <UICircuitPanel.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -52,17 +55,14 @@ void syn::VOSIMWindow::drawThreadFunc() {
 		// Setup NanoVG context
 		NVGcontext* vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES | NVG_DEBUG);
 
-		m_root = new UIComponent(this,nullptr);
+		m_root = new UIComponent(this);
 		m_root->setTheme(make_shared<Theme>(vg));
 		m_root->setSize(m_size);
 		
-		for (int i = 0; i < 10; i++) {
-			UIComponent* b1 = new UIWindow(this,m_root);
-			int x = rand() % m_size[0];
-			int y = rand() % m_size[1];
-			b1->setRelPos({ x, y });
-			b1->setSize({ 200, 200 });
-		}
+		
+		UICircuitPanel* circuitPanel = new UICircuitPanel{ this, m_vm, m_unitFactory };
+		circuitPanel->setSize(m_size);
+		m_root->addChild(circuitPanel); 		
 
 		PerfGraph fps, cpuGraph;
 
@@ -129,6 +129,10 @@ void syn::VOSIMWindow::drawThreadFunc() {
 						m_draggingComponent = nullptr;
 					if (m_draggingComponent && !m_draggingComponent->onMouseDown(cursorPos() - m_draggingComponent->parent()->getAbsPos(), diffCursorPos()))
 						m_draggingComponent = nullptr;
+					if (m_draggingComponent)
+						setFocus(m_draggingComponent);
+					else
+						setFocus(nullptr);
 					break;
 				case Event::MouseButtonReleased:
 					m_lastClick = { event.mouseButton, timer.getElapsedTime() };
@@ -163,6 +167,8 @@ void syn::VOSIMWindow::drawThreadFunc() {
 
 void syn::VOSIMWindow::setFocus(UIComponent* a_comp) {
 	if(a_comp && a_comp!=m_focused) {
+		if(m_focused) 
+			m_focused->onFocusEvent(false);
 		m_focused = a_comp;
 		m_focused->onFocusEvent(true);
 	}else if(a_comp==nullptr && a_comp!=m_focused) {

@@ -31,6 +31,9 @@ namespace syn {
 		Color mTextColorShadow;
 		Color mIconColor;
 
+		/* Action colors */
+		Color mHighlightedTextColor;
+
 		/* Button colors */
 		Color mButtonGradientTopFocused;
 		Color mButtonGradientBotFocused;

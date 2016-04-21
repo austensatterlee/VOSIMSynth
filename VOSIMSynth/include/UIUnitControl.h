@@ -35,8 +35,8 @@ namespace syn
 	class UIUnitControl : public UIComponent
 	{
 	public:
-		UIUnitControl(VOSIMWindow* a_window, UIComponent* a_parent, VoiceManager* a_vm, int a_unitId) :
-			UIComponent{a_window, a_parent},
+		UIUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId) :
+			UIComponent{a_window},
 			m_vm(a_vm),
 			m_unitId(a_unitId)
 		{}

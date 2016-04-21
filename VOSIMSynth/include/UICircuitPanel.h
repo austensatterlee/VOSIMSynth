@@ -37,11 +37,7 @@ namespace syn {
 	class UICircuitPanel : public UIComponent
 	{
 	public:
-		UICircuitPanel(VOSIMWindow* a_window, UIComponent* a_parent, VoiceManager* a_vm, UnitFactory* a_unitFactory) :
-			UIComponent{a_window, a_parent},
-			m_vm(a_vm),
-			m_unitFactory(a_unitFactory)
-			{}
+		UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, UnitFactory* a_unitFactory);
 
 	protected:
 		void draw(NVGcontext* a_nvg) override;

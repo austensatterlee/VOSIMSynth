@@ -26,12 +26,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
 #include "Unit.h"
-#include "UnitControl.h"
 #include "DSPMath.h"
 #include "fft.h"
 #include <array>
 #include <vector>
-#include "DefaultUnitControl.h"
 
 using std::vector;
 using std::array;

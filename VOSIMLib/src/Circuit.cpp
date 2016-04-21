@@ -148,13 +148,13 @@ namespace syn
 
 	int Circuit::addExternalInput_(const string& a_name) {
 		int inputid = addInput_(a_name);
-		m_inputUnit->addInput_("");
+		m_inputUnit->addInput_(a_name);
 		return inputid;
     }
 
 	int Circuit::addExternalOutput_(const string& a_name) {
 		int outputid = addOutput_(a_name);
-		m_outputUnit->addOutput_("");
+		m_outputUnit->addOutput_(a_name);
 		return outputid;
     }
 

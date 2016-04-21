@@ -49,10 +49,11 @@ namespace syn
 
 	class UIComponent
 	{
+		friend class VOSIMWindow;
 	public:
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		UIComponent(VOSIMWindow* a_window, UIComponent* a_parent);
+		UIComponent(VOSIMWindow* a_window);
 
 		virtual ~UIComponent() {}
 
@@ -66,8 +67,6 @@ namespace syn
 
 		UIComponent* parent() const {return m_parent;}
 
-		void setParent(UIComponent* a_parent) {m_parent = a_parent;}
-
 		bool contains(const Vector2i& a_pt);
 
 		UIComponent* findChild(const Vector2i& a_pt);
@@ -80,13 +79,13 @@ namespace syn
 
 		void move(const Vector2i& a_dist) {m_pos += a_dist;}
 
-		Vector2i size() const {return m_size;}
+		Vector2i size() const { return m_size; }
 
-		Vector2i calcAutoSize() const;
+		virtual Vector2i calcAutoSize() const;
 
-		void setSize(const Vector2i& a_size) {m_size = a_size;}
+		void setSize(const Vector2i& a_size) { m_size = a_size; onResize(); }
 
-		void grow(const Vector2i& a_amt) { m_size += a_amt; }
+		void grow(const Vector2i& a_amt) { m_size += a_amt; onResize(); }
 
 		shared_ptr<Theme> theme() const {return m_theme;}
 
@@ -101,6 +100,7 @@ namespace syn
 		virtual bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
 		virtual bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
 		virtual bool onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt);
+		virtual void onResize() {};
 		virtual void onFocusEvent(bool a_isFocused);
 
 
@@ -112,7 +112,7 @@ namespace syn
 		VOSIMWindow* m_window;
 		vector<shared_ptr<UIComponent>> m_children;
 
-		bool m_visible, m_focused;
+		bool m_visible, m_focused, m_autoSize;
 		shared_ptr<Theme> m_theme;
 		Vector2i m_pos, m_size, m_fixedSize;
 	};

@@ -35,8 +35,8 @@ namespace syn
 	class UITextSlider : public UIComponent
 	{	
 	public:
-		UITextSlider(VOSIMWindow* a_window, UIComponent* a_parent, VoiceManager* a_vm, int a_unitId, int a_paramId) :
-			UIComponent{ a_window, a_parent },
+		UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId) :
+			UIComponent{ a_window },
 			m_vm(a_vm),
 			m_unitId(a_unitId),
 			m_paramId(a_paramId),
