@@ -128,6 +128,10 @@ namespace syn
 			return m_prototypes[getPrototypeIdx_(a_protoName)]->prototype->getClassIdentifier();
         }
 
+		unsigned getClassId(int a_protoNum) const {
+			return m_prototypes[a_protoNum]->prototype->getClassIdentifier();
+        }
+
 	    static unsigned getClassId(unsigned a_protoNum) {
             return a_protoNum;
         }

@@ -1,4 +1,6 @@
 #include "UIUnitSelector.h"
+#include <eigen/src/Core/util/ForwardDeclarations.h>
+#include <eigen/src/Core/util/ForwardDeclarations.h>
 
 Eigen::Vector2i syn::UIUnitSelector::calcAutoSize() const {
 	return{ m_autoWidth, m_autoHeight };
@@ -12,10 +14,13 @@ bool syn::UIUnitSelector::onMouseDown(const Vector2i& a_relCursor, const Vector2
 	for (string gName : gNames) {
 		vector<string> pNames = m_unitFactory->getPrototypeNames(gName);
 		if(cursor.y()<(row+1)*m_fontSize) {
-			if (m_currGroup == group)
+			if (m_currGroup == group) 
 				m_currGroup = -1;
-			else
+			else {
 				m_currGroup = group;
+				m_currPrototype = -1;
+				m_currPrototypeName = "";
+			}
 			return true;
 		}
 		if (group == m_currGroup) {
@@ -23,6 +28,7 @@ bool syn::UIUnitSelector::onMouseDown(const Vector2i& a_relCursor, const Vector2
 				row++;	
 				if (cursor.y()<(row + 1) * m_fontSize) {
 					m_currPrototype = j;
+					m_currPrototypeName = pNames[j];
 					return true;
 				}
 			}
@@ -30,6 +36,9 @@ bool syn::UIUnitSelector::onMouseDown(const Vector2i& a_relCursor, const Vector2
 		row++;
 		group++;
 	}
+	m_currGroup = -1;
+	m_currPrototype = -1;
+	m_currPrototypeName = "";
 	return false;
 }
 
@@ -59,6 +68,12 @@ bool syn::UIUnitSelector::onMouseMove(const Vector2i& a_relCursor, const Vector2
 	return false;
 }
 
+bool syn::UIUnitSelector::onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) {
+	if(!a_isEntering)
+		m_highlightedRow = -1;
+	return true;
+}
+
 void syn::UIUnitSelector::draw(NVGcontext* a_nvg) {
 	nvgSave(a_nvg);
 
@@ -74,19 +89,19 @@ void syn::UIUnitSelector::draw(NVGcontext* a_nvg) {
 		vector<string> pNames = m_unitFactory->getPrototypeNames(gName);
 		nvgFontFace(a_nvg, "sans-bold");
 		if (m_highlightedRow==row)
-			nvgFillColor(a_nvg, m_theme->mHighlightedTextColor);
+			nvgFillColor(a_nvg, theme()->mHighlightedTextColor);
 		else
-			nvgFillColor(a_nvg, m_theme->mTextColor);
+			nvgFillColor(a_nvg, theme()->mTextColor);
 		m_autoWidth = MAX(m_autoWidth, nvgText(a_nvg, 0, row * m_fontSize, gName.c_str(), nullptr));
 		if (group == m_currGroup) {
 			nvgFontFace(a_nvg, "sans");
 			for (int j = 0; j < pNames.size(); j++) {
 				row++;
-				if (m_highlightedRow==row)
-					nvgFillColor(a_nvg, m_theme->mHighlightedTextColor);
+				if (m_highlightedRow==row || m_currPrototype==j)
+					nvgFillColor(a_nvg, theme()->mHighlightedTextColor);
 				else
-					nvgFillColor(a_nvg, m_theme->mTextColor);
-				m_autoWidth = MAX(m_autoWidth, nvgText(a_nvg, 0, row * m_fontSize, pNames[j].c_str(), nullptr));
+					nvgFillColor(a_nvg, theme()->mTextColor);
+				m_autoWidth = MAX(m_autoWidth, m_indentAmt+nvgText(a_nvg, m_indentAmt, row * m_fontSize, pNames[j].c_str(), nullptr));
 			}
 		}
 		row++;

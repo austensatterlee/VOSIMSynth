@@ -35,17 +35,12 @@
 
 #include "nanovg.h"
 #include <Theme.h>
+#include "VOSIMWindow.h"
+#include <eigen/src/Core/util/ForwardDeclarations.h>
+#include <eigen/src/Core/util/ForwardDeclarations.h>
 
 namespace syn
 {
-	template <typename T>
-	struct Timestamped
-	{
-		T data;
-		sf::Time time;
-	};
-
-	class VOSIMWindow;
 
 	class UIComponent
 	{
@@ -60,6 +55,9 @@ namespace syn
 		void recursiveDraw(NVGcontext* a_nvg);
 		
 		void addChild(UIComponent* a_newChild);
+
+		bool removeChild(UIComponent* a_child);
+		bool removeChild(int a_index);
 
 		shared_ptr<UIComponent> getChild(int i);
 
@@ -76,27 +74,28 @@ namespace syn
 		void setRelPos(const Vector2i& a_pos) {m_pos = a_pos;}
 
 		Vector2i getAbsPos() const {return m_parent ? m_parent->getAbsPos() + m_pos : m_pos;}
+		Vector2i getAbsCenter() const { return getAbsPos() + m_size / 2.0; }
 
 		void move(const Vector2i& a_dist) {m_pos += a_dist;}
 
 		Vector2i size() const { return m_size; }
 
-		virtual Vector2i calcAutoSize() const;
-
 		void setSize(const Vector2i& a_size) { m_size = a_size; onResize(); }
 
 		void grow(const Vector2i& a_amt) { m_size += a_amt; onResize(); }
 
-		shared_ptr<Theme> theme() const {return m_theme;}
-
-		void setTheme(shared_ptr<Theme> a_theme) {m_theme = a_theme;}
+		shared_ptr<Theme> theme() const {return m_window->theme();}
 
 		bool visible() const {return m_visible;}
 
 		void setVisible(bool a_visible) {m_visible = a_visible;}
 
+		void setAutosize(bool a_autosize) { m_autoSize = a_autosize; }
+
+		virtual Vector2i calcAutoSize() const;
 		virtual bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
 		virtual bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
+		virtual bool onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering);
 		virtual bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
 		virtual bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
 		virtual bool onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt);
@@ -113,7 +112,6 @@ namespace syn
 		vector<shared_ptr<UIComponent>> m_children;
 
 		bool m_visible, m_focused, m_autoSize;
-		shared_ptr<Theme> m_theme;
 		Vector2i m_pos, m_size, m_fixedSize;
 	};
 };

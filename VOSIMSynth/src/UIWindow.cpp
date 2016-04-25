@@ -2,13 +2,16 @@
 #include "VosimWindow.h"
 
 bool syn::UIWindow::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+	if (UIComponent::onMouseDrag(a_relCursor, a_diffCursor))
+		return true;
 	move(a_diffCursor);
 	return true;
 }
 
 bool syn::UIWindow::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
-
-	if (a_relCursor.y() - m_pos.y() < m_theme->mWindowHeaderHeight) {
+	if (UIComponent::onMouseDown(a_relCursor, a_diffCursor))
+		return true;
+	if (a_relCursor.y() - m_pos.y() < theme()->mWindowHeaderHeight) {
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
 			return true;
 		} else if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
@@ -29,7 +32,7 @@ void syn::UIWindow::toggleCollapsed() {
 void syn::UIWindow::collapse() {
 	m_isCollapsed = true;
 	m_oldSize = m_size;
-	setSize({ m_size[0],m_theme->mWindowHeaderHeight });
+	setSize({ m_size[0],theme()->mWindowHeaderHeight });
 	for(int i=0;i<m_children.size();i++) {
 		m_children[i]->setVisible(false);
 	}
@@ -48,22 +51,22 @@ Eigen::Vector2i syn::UIWindow::calcAutoSize() const {
 	size[0] = MAX(size[0], m_autoWidth);
 	for(shared_ptr<UIComponent> child : m_children) {
 		if (child->visible()) {
-			size = size.cwiseMax(child->size()+Vector2i{0,m_theme->mWindowHeaderHeight});
+			size = size.cwiseMax(child->size()+Vector2i{0,theme()->mWindowHeaderHeight});
 		}
 	}
 	return size;
 }
 
 void syn::UIWindow::draw(NVGcontext* a_nvg) {
-	int ds = m_theme->mWindowDropShadowSize, cr = m_theme->mWindowCornerRadius;
-	int hh = m_theme->mWindowHeaderHeight;
+	int ds = theme()->mWindowDropShadowSize, cr = theme()->mWindowCornerRadius;
+	int hh = theme()->mWindowHeaderHeight;
 
 	/* Draw window */
 	nvgSave(a_nvg);
 	nvgBeginPath(a_nvg);
 	nvgRoundedRect(a_nvg, 0, 0, m_size[0], m_size[1], cr);
 
-	nvgFillColor(a_nvg, m_focused ? m_theme->mWindowFillFocused : m_theme->mWindowFillUnfocused);
+	nvgFillColor(a_nvg, m_focused ? theme()->mWindowFillFocused : theme()->mWindowFillUnfocused);
 
 	nvgFill(a_nvg);
 
@@ -85,8 +88,8 @@ void syn::UIWindow::draw(NVGcontext* a_nvg) {
 		NVGpaint headerPaint = nvgLinearGradient(
 			a_nvg, 0, 0, 0,
 			0 + hh,
-			m_theme->mWindowHeaderGradientTop,
-			m_theme->mWindowHeaderGradientBot);
+			theme()->mWindowHeaderGradientTop,
+			theme()->mWindowHeaderGradientBot);
 
 		nvgBeginPath(a_nvg);
 		nvgRoundedRect(a_nvg, 0, 0, m_size.x(), hh, cr);
@@ -96,7 +99,7 @@ void syn::UIWindow::draw(NVGcontext* a_nvg) {
 
 		nvgBeginPath(a_nvg);
 		nvgRoundedRect(a_nvg, 0, 0, m_size.x(), hh, cr);
-		nvgStrokeColor(a_nvg, m_theme->mWindowHeaderSepTop);
+		nvgStrokeColor(a_nvg, theme()->mWindowHeaderSepTop);
 		nvgScissor(a_nvg, 0, 0, m_size.x(), 0.5f);
 		nvgStroke(a_nvg);
 		nvgResetScissor(a_nvg);
@@ -104,7 +107,7 @@ void syn::UIWindow::draw(NVGcontext* a_nvg) {
 		nvgBeginPath(a_nvg);
 		nvgMoveTo(a_nvg, 0 + 0.5f, 0 + hh - 1.5f);
 		nvgLineTo(a_nvg, 0 + m_size.x() - 0.5f, 0 + hh - 1.5);
-		nvgStrokeColor(a_nvg, m_theme->mWindowHeaderSepBot);
+		nvgStrokeColor(a_nvg, theme()->mWindowHeaderSepBot);
 		nvgStroke(a_nvg);
 
 		nvgFontSize(a_nvg, 18.0f);
@@ -112,13 +115,13 @@ void syn::UIWindow::draw(NVGcontext* a_nvg) {
 		nvgTextAlign(a_nvg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
 
 		nvgFontBlur(a_nvg, 2);
-		nvgFillColor(a_nvg, m_theme->mDropShadow);
+		nvgFillColor(a_nvg, theme()->mDropShadow);
 		nvgText(a_nvg, 0 + m_size.x() / 2,
 			0 + hh / 2, m_title.c_str(), nullptr);
 
 		nvgFontBlur(a_nvg, 0);
-		nvgFillColor(a_nvg, m_focused ? m_theme->mWindowTitleFocused
-			                    : m_theme->mWindowTitleUnfocused);
+		nvgFillColor(a_nvg, m_focused ? theme()->mWindowTitleFocused
+			                    : theme()->mWindowTitleUnfocused);
 		m_autoWidth = MAX(m_autoWidth,10+nvgText(a_nvg, 0 + m_size.x() / 2, 0 + hh / 2 - 1,
 		        m_title.c_str(), nullptr));
 	}

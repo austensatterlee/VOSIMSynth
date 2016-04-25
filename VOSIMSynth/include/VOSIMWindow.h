@@ -35,19 +35,35 @@ Copyright 2016, Austen Satterlee
 #include <NDPoint.h>
 
 #include "nanovg.h"
-#include <UIComponent.h>
 #include <UnitFactory.h>
 #include <VoiceManager.h>
+#include <Theme.h>
+#include <perf.h>
+#include <sftools/Chronometer.hpp>
 
 using sf::Event;
 
 namespace syn
 {
+	class UIComponent;
+
+	class UICircuitPanel;
+
+	template <typename T>
+	struct Timestamped
+	{
+		T data;
+		sf::Time time;
+	};
+
 	class VOSIMWindow
 	{
 	public:
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-		VOSIMWindow(int a_width, int a_height, VoiceManager* a_vm, UnitFactory* a_unitFactory) :
+		VOSIMWindow(int a_width, int a_height, VoiceManager* a_vm, UnitFactory* a_unitFactory) : 
+			m_hinstance(0),
+			m_childHandle1(nullptr),
+			m_childHandle2(nullptr),
 			m_size(a_width,a_height),
 			m_cursor({0,0}),
 			m_isClicked(false), 
@@ -58,18 +74,12 @@ namespace syn
 			m_sfmlWindow(nullptr),
 			m_frameCount(0),
 			m_vm(a_vm),
-			m_unitFactory(a_unitFactory) {
+			m_unitFactory(a_unitFactory),
+			m_circuitPanel(nullptr), 
+			m_vg(nullptr) {
 		}
 
-		virtual ~VOSIMWindow() {
-			if (m_sfmlWindow) {
-				m_sfmlWindow->close();
-				delete m_sfmlWindow;
-			}
-			if(m_root) {
-				delete m_root;
-			}
-		}
+		virtual ~VOSIMWindow();
 
 		sf::RenderWindow* GetWindow() const {
 			return m_sfmlWindow;
@@ -84,21 +94,28 @@ namespace syn
 		Vector2i diffCursorPos() const {return m_dCursor;}
 		const Timestamped<Event::MouseButtonEvent>& lastClickEvent() const { return m_lastClick; }
 		const Timestamped<Event::MouseWheelScrollEvent>& lastScrollEvent() const { return m_lastScroll; }
+		shared_ptr<Theme> theme() const { return m_theme; }
+		UICircuitPanel* getCircuitPanel() const { return m_circuitPanel; }
 
 		bool OpenWindow(sf::WindowHandle a_system_window);
 		void CloseWindow();
+#ifdef _WIN32
+		static LRESULT CALLBACK drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam);
+#endif
+	public:
+		HINSTANCE m_hinstance;
 	private:
 		/**
 		* Creates a child window from the given system window handle.
 		* \returns the system window handle for the child window.
 		*/
 		sf::WindowHandle sys_CreateChildWindow(sf::WindowHandle a_system_window);
-		void drawThreadFunc();
 		void updateCursorPos(const Vector2i& newPos) {
 			m_dCursor = newPos - m_cursor;
 			m_cursor = newPos;
 		}
 	private:
+		sf::WindowHandle m_childHandle1, m_childHandle2;
 		Vector2i m_size;
 		Vector2i m_cursor;
 		Vector2i m_dCursor;
@@ -117,6 +134,15 @@ namespace syn
 
 		VoiceManager* m_vm;
 		UnitFactory* m_unitFactory;
+
+		UICircuitPanel* m_circuitPanel;
+
+		shared_ptr<Theme> m_theme;
+
+		PerfGraph m_fpsGraph, m_cpuGraph;
+		sftools::Chronometer m_timer;
+
+		NVGcontext* m_vg;
 	};
 }
 #endif

@@ -37,16 +37,26 @@ namespace syn
 	public:
 		UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId) :
 			UIComponent{ a_window },
+			m_value(0.0),
 			m_vm(a_vm),
 			m_unitId(a_unitId),
 			m_paramId(a_paramId),
-			m_value(0.0)
+			m_autoWidth(0)
 		{}
+
+		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		bool onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) override;
+		Vector2i calcAutoSize() const override;
+	protected:
+		void draw(NVGcontext* a_nvg) override;
 	private:
 		double m_value;
 		VoiceManager* m_vm;
 		int m_unitId;
 		int m_paramId;
+
+		int m_autoWidth;
 	};
 }
 #endif

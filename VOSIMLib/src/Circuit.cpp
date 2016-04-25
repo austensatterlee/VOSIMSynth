@@ -37,8 +37,8 @@ namespace syn
 		shared_ptr<PassthroughUnit> outputUnit = make_shared<PassthroughUnit>("outputs");
 		m_units.add("inputs", inputUnit);
 		m_units.add("outputs", outputUnit);
-		m_inputUnit = inputUnit.get();
-		m_outputUnit = outputUnit.get();
+		m_inputUnit = inputUnit;
+		m_outputUnit = outputUnit;
         addExternalInput_("left in");
         addExternalInput_("right in");
         addExternalOutput_("left out");
@@ -149,12 +149,14 @@ namespace syn
 	int Circuit::addExternalInput_(const string& a_name) {
 		int inputid = addInput_(a_name);
 		m_inputUnit->addInput_(a_name);
+		m_inputUnit->addOutput_(a_name);
 		return inputid;
     }
 
 	int Circuit::addExternalOutput_(const string& a_name) {
 		int outputid = addOutput_(a_name);
 		m_outputUnit->addOutput_(a_name);
+		m_outputUnit->addInput_(a_name);
 		return outputid;
     }
 
@@ -162,7 +164,15 @@ namespace syn
         return *m_units[a_unitId];
     }
 
-    int Circuit::getNumUnits() const
+	int Circuit::getInputUnitId() const {
+		return getUnitId(m_inputUnit);
+    }
+
+	int Circuit::getOutputUnitId() const {
+		return getUnitId(m_outputUnit);
+    }
+
+	int Circuit::getNumUnits() const
     {
         return m_units.size();
     }

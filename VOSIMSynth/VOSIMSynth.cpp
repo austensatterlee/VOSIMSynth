@@ -54,7 +54,7 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 void VOSIMSynth::makeGraphics()
 {
 	m_vosimWindow = new VOSIMWindow(GUI_WIDTH, GUI_HEIGHT, m_voiceManager, m_unitFactory);
-	
+	m_vosimWindow->m_hinstance = gHInstance;
 	AttachAppWindow(m_vosimWindow);
 	
 	//m_kbdctrl = new syn::KeyboardControl(this, m_voiceManager, IRECT{ 1,GUI_HEIGHT - 100,GUI_WIDTH - 1,GUI_HEIGHT - 1 });
@@ -167,6 +167,7 @@ void VOSIMSynth::PresetsChangedByHost()
 }
 
 void VOSIMSynth::OnIdle() {
+	m_voiceManager->onIdle();
 }
 
 void VOSIMSynth::OnActivate(bool active) {

@@ -25,11 +25,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "UnitFactory.h"
 #include "AtomicContainers.h"
 #include <boost/lockfree/spsc_queue.hpp>
-#include <boost/lockfree/queue.hpp>
 #include <boost/lockfree/policies.hpp>
 #include <map>
 #include <memory>
-#include <SFML/Window/Keyboard.hpp>
+#include <Containers.h>
 
 #define MAX_QUEUE_SIZE 64
 #define MAX_VOICES_PER_NOTE 8
@@ -43,7 +42,11 @@ using boost::lockfree::capacity;
 namespace syn
 {
 	/* Actions that should be queued and processed in between samples */
-	typedef std::function<void(Circuit*)> ActionMessage;
+	struct ActionMessage
+	{
+		void(*action)(Circuit*, bool, ByteChunk*);
+		ByteChunk data;
+	};
 
 	class VoiceManager
 	{
@@ -67,7 +70,7 @@ namespace syn
 
 		void MSFASTCALL tick(const double* a_left_input, const double* a_right_input, double* a_left_output, double* a_right_output) GCCFASTCALL;
 
-		unsigned queueAction(ActionMessage a_action);
+		unsigned queueAction(ActionMessage* a_action);
 
 		unsigned getTickCount() const;
 
@@ -96,6 +99,8 @@ namespace syn
 
 		bool isPlaying() const;
 
+		void onIdle();
+
 		const Unit& getUnit(int a_id);
 
 		int getNumUnits() const;
@@ -120,7 +125,7 @@ namespace syn
 		/**
 		 * Processes the next action from the action queue
 		 */
-		void _processAction(const ActionMessage& a_msg);
+		void _processAction(ActionMessage* a_msg);
 
 		int _createVoice(int a_note, int a_velocity);
 
@@ -140,7 +145,7 @@ namespace syn
 		typedef AtomicQueue<int> VoiceIndexList;
 		typedef map<int, AtomicQueue<int> > VoiceMap;
 
-		spsc_queue<ActionMessage> m_queuedActions;
+		spsc_queue<ActionMessage*> m_queuedActions;
 
 		unsigned m_numActiveVoices; /// Number of active voices
 		unsigned m_maxVoices; /// Total number of voices (idle voices + active voices)

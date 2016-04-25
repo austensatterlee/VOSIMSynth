@@ -12,7 +12,7 @@
 #include "NChanDelay.h"
 
 // Uncomment to enable IPlug::OnIdle() and IGraphics::OnGUIIdle().
-// #define USE_IDLE_CALLS
+#define USE_IDLE_CALLS
 
 #define MAX_EFFECT_NAME_LEN 128
 #define DEFAULT_BLOCK_SIZE 1024

@@ -21,7 +21,7 @@ namespace syn {
 		mTextColorShadow = Color(0, 160);
 		mIconColor = mTextColor;
 
-		mHighlightedTextColor = Color(255, 200);
+		mHighlightedTextColor = Color(255, 250);
 
 		mButtonGradientTopFocused = Color(64, 255);
 		mButtonGradientBotFocused = Color(48, 255);

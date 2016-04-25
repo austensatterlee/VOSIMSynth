@@ -236,16 +236,16 @@ namespace syn
 		return m_isPlaying;
 	}
 
+	void VoiceManager::onIdle() {
+		_flushActionQueue();
+	}
+
 	int VoiceManager::getNumVoices() const {
 		return m_numActiveVoices;
 	}
 
-	unsigned VoiceManager::queueAction(ActionMessage a_msg) {
-		if (m_isPlaying) {
-			m_queuedActions.push(a_msg);
-		} else {
-			_processAction(a_msg);
-		}
+	unsigned VoiceManager::queueAction(ActionMessage* a_msg) {		
+		m_queuedActions.push(a_msg);		
 		return m_tickCount;
 	}
 
@@ -254,13 +254,13 @@ namespace syn
 	}
 
 	void VoiceManager::_flushActionQueue() {
-		ActionMessage msg;
-		while (m_queuedActions.pop(&msg)) {
+		ActionMessage* msg;
+		while (m_queuedActions.pop(msg)) {
 			_processAction(msg);
 		}
 	}
 
-	void VoiceManager::_processAction(const ActionMessage& a_msg) {
+	void VoiceManager::_processAction(ActionMessage* a_msg) {
 		Circuit* voice;
 		// Apply action to all voices
 		for (int i = 0; i <= m_maxVoices; i++) {
@@ -269,8 +269,9 @@ namespace syn
 			} else {
 				voice = m_allVoices[i].get();
 			}
-			a_msg(voice);
+			a_msg->action(voice, i==m_maxVoices, &a_msg->data);
 		}
+		delete a_msg;
 	}
 
 	const Circuit& VoiceManager::getCircuit() const {

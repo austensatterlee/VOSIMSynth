@@ -32,19 +32,32 @@ Copyright 2016, Austen Satterlee
 #include <UnitFactory.h>
 #include <VoiceManager.h>
 #include "UIUnitControlContainer.h"
+#include "UIUnitSelector.h"
 
 namespace syn {
 	class UICircuitPanel : public UIComponent
 	{
 	public:
 		UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, UnitFactory* a_unitFactory);
-
+		bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		bool onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) override;
+		UIUnitControlContainer* getUnit(const Vector2i& a_pt) const;
+		UIUnitControlContainer* findUnit(int a_unitId) const;
+		void requestAddConnection(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);
+		void onResize() override;
 	protected:
 		void draw(NVGcontext* a_nvg) override;
+
+		void onAddUnit_(unsigned a_classId, int a_unitId);
+		void requestAddUnit_(unsigned a_classId);
 	private:		
-		vector<shared_ptr<UIUnitControlContainer> > m_unitControls;
+		vector<UIUnitControlContainer*> m_unitControls;
 		VoiceManager* m_vm;
 		UnitFactory* m_unitFactory;
+		UIUnitSelector* m_unitSelector;
+		UIUnitControlContainer* m_inputs;
+		UIUnitControlContainer* m_outputs;
 	};
 }
 #endif

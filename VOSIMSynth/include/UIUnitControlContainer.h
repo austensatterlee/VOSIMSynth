@@ -42,6 +42,9 @@ namespace syn
 		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		Vector2i calcAutoSize() const override;
+		int getUnitId() const { return m_unitId; }
+		int getPortId() const { return m_portNum; }
+		bool isInput() const { return m_isInput; }
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 	protected:
@@ -50,20 +53,34 @@ namespace syn
 		int m_portNum;
 		bool m_isInput;
 		int m_autoWidth;
+
+		bool m_isDragging = false;
+
+		int m_textHeight = 14;
 	};
 
 	class UIUnitControlContainer : public UIComponent
 	{
 	public:
 		UIUnitControlContainer(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, UIUnitControl* a_unitControl);
-
+		Vector2i calcAutoSize() const override;
+		void onResize() override;
+		int getUnitId() const { return m_unitId; }
+		UIUnitPort* getSelectedInPort(const Vector2i& a_relPos) const;
+		UIUnitPort* getSelectedOutPort(const Vector2i& a_relPos) const;
+		const vector<UIUnitPort*>& getInPorts() const { return m_inPorts; }
+		const vector<UIUnitPort*>& getOutPorts() const { return m_outPorts; }
 	protected:
 		void draw(NVGcontext* a_nvg) override;
+	protected:
 		VoiceManager* m_vm;
 		int m_unitId;
 		UIUnitControl* m_unitControl;
 		vector<UIUnitPort*> m_inPorts;
 		vector<UIUnitPort*> m_outPorts;
+
+		int m_inWidth;
+		int m_outWidth;
 	};
 
 }

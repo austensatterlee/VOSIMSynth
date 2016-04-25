@@ -38,8 +38,8 @@ namespace syn {
 		UIWindow(VOSIMWindow* a_window, const string& a_title = "Untitled")
 			: UIComponent{ a_window },
 			m_title{ a_title },
-			m_isCollapsed(false)
-		{}
+			m_isCollapsed(false), 
+			m_autoWidth(0) {}
 
 		~UIWindow() override
 		{};

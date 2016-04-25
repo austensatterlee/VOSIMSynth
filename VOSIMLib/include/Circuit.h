@@ -48,8 +48,6 @@ namespace syn
 	public:
 		explicit PassthroughUnit(const string& a_name) :
 			Unit(a_name) {
-			addInput_("in");
-			addOutput_("out");
 		}
 		PassthroughUnit(const PassthroughUnit& a_other) :
 		PassthroughUnit(a_other.getName())
@@ -94,6 +92,9 @@ namespace syn
 		bool isActive() const override;
 
 		const Unit& getUnit(int a_unitId) const;
+
+		int getInputUnitId() const;
+		int getOutputUnitId() const;
 
 		template <typename UID>
 		int getUnitId(const UID& a_unitIdentifier) const;
@@ -169,8 +170,8 @@ namespace syn
 		 **/
 		NamedContainer<shared_ptr<Unit>> m_units;
 		vector<ConnectionRecord> m_connectionRecords;
-		PassthroughUnit* m_inputUnit;
-		PassthroughUnit* m_outputUnit;
+		shared_ptr<PassthroughUnit> m_inputUnit;
+		shared_ptr<PassthroughUnit> m_outputUnit;
 	};
 
 	template <typename UID>

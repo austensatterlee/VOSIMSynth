@@ -30,6 +30,8 @@ Copyright 2016, Austen Satterlee
 #include "nanovg.h"
 #include "UIComponent.h"
 #include "UnitFactory.h"
+#include <eigen/src/Core/util/ForwardDeclarations.h>
+#include <eigen/src/Core/util/ForwardDeclarations.h>
 
 namespace syn
 {
@@ -42,8 +44,10 @@ namespace syn
 		Vector2i calcAutoSize() const override;
 		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		int selectedGroup() { return m_currGroup; }
-		int selectedPrototype() { return m_currPrototype; }
+		bool onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) override;
+		int selectedGroup() const { return m_currGroup; }
+		int selectedPrototype() const { return m_currPrototype; }
+		string selectedPrototypeName() const { return m_currPrototypeName; }
 		void setSelectedGroup(int a_group) { m_currGroup = a_group; }
 		void setSelectedPrototype(int a_proto) { m_currPrototype = a_proto; }
 	protected:
@@ -51,9 +55,11 @@ namespace syn
 	private:
 		int m_autoWidth, m_autoHeight;
 		int m_currGroup, m_currPrototype;
+		string m_currPrototypeName;
 		int m_highlightedRow;
 
-		float m_fontSize = 14;
+		float m_fontSize = 16;
+		int m_indentAmt = 5;
 		UnitFactory* m_unitFactory;
 	};
 }

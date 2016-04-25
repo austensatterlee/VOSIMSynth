@@ -3,7 +3,7 @@
 namespace syn
 {
 	UIComponent::UIComponent(VOSIMWindow* a_window):
-		m_parent(nullptr), m_window(a_window), m_visible(true), m_focused(false), m_autoSize(true), m_theme(nullptr), m_pos(0,0)
+		m_parent(nullptr), m_window(a_window), m_visible(true), m_focused(false), m_autoSize(true), m_pos(0,0), m_size(0,0)
 	{
 	}
 
@@ -37,9 +37,25 @@ namespace syn
 		shared_ptr<UIComponent> a_newChildPtr(a_newChild);
 		if (find(m_children.begin(), m_children.end(), a_newChildPtr) == m_children.end()) {
 			a_newChild->m_parent = this;
-			a_newChild->m_theme = m_theme;
 			m_children.push_back(a_newChildPtr);
 		}
+	}
+
+	bool UIComponent::removeChild(UIComponent* a_child) {
+		for(int i=0;i<m_children.size();i++) {
+			if(m_children[i].get()==a_child) {
+				m_children.erase(m_children.cbegin() + i);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool UIComponent::removeChild(int a_index) {
+		if (a_index < 0 || a_index >= m_children.size())
+			return false;
+		m_children.erase(m_children.cbegin() + a_index);
+		return true;
 	}
 
 	shared_ptr<UIComponent> UIComponent::getChild(int i) {
@@ -73,9 +89,17 @@ namespace syn
 		for (shared_ptr<UIComponent> child : m_children) {
 			if (!child->visible())
 				continue;
-			if (child->contains(a_relCursor - m_pos) && child->onMouseMove(a_relCursor - m_pos, a_diffCursor))
+			bool hasMouse = child->contains(a_relCursor - m_pos);
+			bool hadMouse = child->contains(a_relCursor - m_pos - a_diffCursor);
+			if (hasMouse != hadMouse)
+				child->onMouseEnter(a_relCursor - m_pos, a_diffCursor, hasMouse);
+			if (hasMouse && child->onMouseMove(a_relCursor - m_pos, a_diffCursor))
 				return true;
 		}
+		return false;
+	}
+
+	bool UIComponent::onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) {		
 		return false;
 	}
 
