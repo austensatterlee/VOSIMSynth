@@ -8,11 +8,13 @@ namespace syn
 	}
 
 	void UIComponent::recursiveDraw(NVGcontext* a_nvg) {
+#ifdef DRAW_COMPONENT_BOUNDS
 		nvgStrokeWidth(a_nvg, 1.0f);
 		nvgBeginPath(a_nvg);
-		nvgRect(a_nvg, m_pos[0] - 0.5f, m_pos[1] - 0.5f, m_size[0] + 1, m_size[1] + 1);
+		nvgRect(a_nvg, m_pos[0] - 0.5f, m_pos[1] - 0.5f, size()[0] + 1, size()[1] + 1);
 		nvgStrokeColor(a_nvg, nvgRGBA(100, 0, 0, 255));
 		nvgStroke(a_nvg);
+#endif
 
 
 		nvgTranslate(a_nvg, m_pos[0], m_pos[1]);
@@ -44,6 +46,8 @@ namespace syn
 	bool UIComponent::removeChild(UIComponent* a_child) {
 		for(int i=0;i<m_children.size();i++) {
 			if(m_children[i].get()==a_child) {
+				if (m_window->getFocused() == a_child)
+					m_window->clearFocus();
 				m_children.erase(m_children.cbegin() + i);
 				return true;
 			}
@@ -64,7 +68,7 @@ namespace syn
 
 	bool UIComponent::contains(const Vector2i& a_pt) {
 		auto pt = (a_pt - m_pos).array();			
-		return (pt >= 0).all() && (pt <= m_size.array()).all();
+		return (pt >= 0).all() && (pt <= size().array()).all();
 	}
 
 	UIComponent* UIComponent::findChild(const Vector2i& a_pt) {

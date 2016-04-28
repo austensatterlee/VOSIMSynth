@@ -57,7 +57,7 @@ namespace syn
 	private:
 		vector<UITextSlider*> m_paramControls;
 
-		int m_controlHeight = 20;
+		int m_controlHeight = 14;
 	};
 }
 #endif

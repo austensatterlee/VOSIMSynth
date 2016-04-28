@@ -47,7 +47,7 @@ void syn::UIWindow::expand() {
 }
 
 Eigen::Vector2i syn::UIWindow::calcAutoSize() const {
-	Vector2i size = m_size;	
+	Vector2i size = this->size();	
 	size[0] = MAX(size[0], m_autoWidth);
 	for(shared_ptr<UIComponent> child : m_children) {
 		if (child->visible()) {

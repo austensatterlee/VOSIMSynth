@@ -90,7 +90,18 @@ namespace syn
         return retval;
     }
 
-	const vector<ConnectionRecord>& Circuit::getConnectionRecords() const {
+	bool Circuit::addUnit(shared_ptr<Unit> a_unit, int a_unitId) {
+		bool retval = m_units.add(a_unit.get()->getName(), a_unitId, a_unit);
+		if (!retval)
+			return false;
+		a_unit->_setParent(this);
+		a_unit->setFs(getFs());
+		a_unit->setTempo(getTempo());
+		a_unit->m_midiData = m_midiData;
+		return true;
+    }
+
+	const vector<ConnectionRecord>& Circuit::getConnections() const {
 		return m_connectionRecords;
     };
 
@@ -101,8 +112,9 @@ namespace syn
 
     bool Circuit::isActive() const
     {
-        for(int i=0;i<m_units.size();i++){
-            if (m_units[i]->isActive())
+		auto units = m_units.data();
+		for (auto it = units.begin(); it != units.end(); ++it) {
+            if (it->second->isActive())
                 return true;
         }
         return false;
@@ -110,35 +122,40 @@ namespace syn
 
     void Circuit::onFsChange_()
     {
-        for(int i=0;i<m_units.size();i++){
-            m_units[i]->setFs(getFs());
+		auto units = m_units.data();
+		for (auto it = units.begin(); it != units.end(); ++it) {
+            it->second->setFs(getFs());
         }
     }
 
     void Circuit::onTempoChange_()
     {
-        for(int i=0;i<m_units.size();i++){
-            m_units[i]->setTempo(getTempo());
+		auto units = m_units.data();
+		for (auto it = units.begin(); it != units.end(); ++it) {
+           it->second->setTempo(getTempo());
         }
     }
 
     void Circuit::onNoteOn_()
     {
-        for(int i=0;i<m_units.size();i++){
-            m_units[i]->noteOn(getNote(),getVelocity());
+		auto units = m_units.data();
+		for (auto it = units.begin(); it != units.end(); ++it) {
+            it->second->noteOn(getNote(),getVelocity());
         }
     }
 
     void Circuit::onNoteOff_()
     {
-        for(int i=0;i<m_units.size();i++){
-            m_units[i]->noteOff(getNote(),getVelocity());
+		auto units = m_units.data();
+		for (auto it = units.begin(); it != units.end(); ++it) {
+            it->second->noteOff(getNote(),getVelocity());
         }
     }
 
 	void Circuit::onMidiControlChange_(int a_cc, double a_value) {
-		for (int i = 0; i<m_units.size(); i++) {
-			m_units[i]->onMidiControlChange_(a_cc, a_value);
+		auto units = m_units.data();
+		for (auto it = units.begin(); it != units.end(); ++it) {
+			it->second->onMidiControlChange_(a_cc, a_value);
 		}
     }
 

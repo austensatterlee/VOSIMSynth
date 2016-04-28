@@ -27,7 +27,7 @@ Copyright 2016, Austen Satterlee
 
 #ifndef __UIUNITCONTROLCONTAINER__
 #define __UIUNITCONTROLCONTAINER__
-#include "UIComponent.h"
+#include "UIWindow.h"
 #include <VoiceManager.h>
 #include "UIUnitControl.h"
 
@@ -59,7 +59,7 @@ namespace syn
 		int m_textHeight = 14;
 	};
 
-	class UIUnitControlContainer : public UIComponent
+	class UIUnitControlContainer : public UIWindow
 	{
 	public:
 		UIUnitControlContainer(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, UIUnitControl* a_unitControl);
@@ -70,8 +70,7 @@ namespace syn
 		UIUnitPort* getSelectedOutPort(const Vector2i& a_relPos) const;
 		const vector<UIUnitPort*>& getInPorts() const { return m_inPorts; }
 		const vector<UIUnitPort*>& getOutPorts() const { return m_outPorts; }
-	protected:
-		void draw(NVGcontext* a_nvg) override;
+		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 	protected:
 		VoiceManager* m_vm;
 		int m_unitId;

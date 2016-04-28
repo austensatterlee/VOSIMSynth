@@ -4,7 +4,7 @@ bool syn::UITextSlider::onMouseDrag(const Vector2i& a_relCursor, const Vector2i&
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
 		const UnitParameter& param = m_vm->getUnit(m_unitId).getParameter(m_paramId);
 		m_value = param.getNorm();
-		double targetValue = (a_relCursor[0] - m_pos[0]) * (1.0 / m_size[0]);
+		double targetValue = (a_relCursor[0] - m_pos[0]) * (1.0 / size()[0]);
 		double error = m_value - targetValue;
 		double adjust_speed = 0.5;
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift))
@@ -74,7 +74,7 @@ bool syn::UITextSlider::onMouseScroll(const Vector2i& a_relCursor, const Vector2
 }
 
 Eigen::Vector2i syn::UITextSlider::calcAutoSize() const {
-	return{ m_autoWidth, m_size[1] };
+	return{ m_autoWidth, size()[1] };
 }
 
 void syn::UITextSlider::draw(NVGcontext* a_nvg) {
@@ -86,24 +86,24 @@ void syn::UITextSlider::draw(NVGcontext* a_nvg) {
 	nvgSave(a_nvg);
 	nvgBeginPath(a_nvg);
 	nvgFillColor(a_nvg, Color(Vector3f{ 0.0f,0.0f,0.0f }));
-	nvgRect(a_nvg, 0, 0, m_size[0], m_size[1]);
+	nvgRect(a_nvg, 0, 0, size()[0], size()[1]);
 	nvgFill(a_nvg);
 
 	nvgFillColor(a_nvg, Color(Vector3f{ 0.4f,0.1f,0.7f }));
 	nvgBeginPath(a_nvg);
-	float fgWidth = m_size[0] * m_value;
-	nvgRect(a_nvg, 0, 0, fgWidth, m_size[1]);
+	float fgWidth = size()[0] * m_value;
+	nvgRect(a_nvg, 0, 0, fgWidth, size()[1]);
 	nvgFill(a_nvg);
 
 	nvgFillColor(a_nvg, Color(Vector3f{ 1.0f,1.0f,1.0f }));
-	nvgFontSize(a_nvg, (float)m_size[1]);
+	nvgFontSize(a_nvg, (float)size()[1]);
 	nvgTextAlign(a_nvg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
 	textWidth += 5 + (int)nvgText(a_nvg, 0, 0, paramName.c_str(), NULL);
 
 	nvgTextAlign(a_nvg, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
 	float bounds[4] = { 0,0,0,0 };
 	nvgTextBounds(a_nvg, 0, 0, valueStr.c_str(), NULL, bounds);
-	int textPosX = m_size[0];
+	int textPosX = size()[0];
 	nvgText(a_nvg, textPosX, 0, valueStr.c_str(), NULL);
 	textWidth += 5 + bounds[2] - bounds[0];
 

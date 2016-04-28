@@ -80,7 +80,7 @@ void syn::UIUnitSelector::draw(NVGcontext* a_nvg) {
 	nvgFontSize(a_nvg, m_fontSize);
 	nvgTextAlign(a_nvg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
 
-	nvgFontBlur(a_nvg, 0.1);
+	nvgFontBlur(a_nvg, 0.1f);
 
 	int row = 0;
 	int group = 0;

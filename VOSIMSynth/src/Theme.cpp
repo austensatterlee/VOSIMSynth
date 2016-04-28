@@ -7,8 +7,8 @@ namespace syn {
 		mButtonFontSize = 20;
 		mTextBoxFontSize = 20;
 		mWindowCornerRadius = 2;
-		mWindowHeaderHeight = 30;
-		mWindowDropShadowSize = 10;
+		mWindowHeaderHeight = 20;
+		mWindowDropShadowSize = 5;
 		mButtonCornerRadius = 2;
 
 		mDropShadow = Color(0, 128);

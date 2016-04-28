@@ -28,10 +28,11 @@ Copyright 2016, Austen Satterlee
 #ifndef __MAINWINDOW__
 #define __MAINWINDOW__
 
+//#define DRAW_COMPONENT_BOUNDS
+
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 
-#include <thread>
 #include <NDPoint.h>
 
 #include "nanovg.h"
@@ -40,6 +41,7 @@ Copyright 2016, Austen Satterlee
 #include <Theme.h>
 #include <perf.h>
 #include <sftools/Chronometer.hpp>
+#include <mutex>
 
 using sf::Event;
 
@@ -68,6 +70,7 @@ namespace syn
 			m_cursor({0,0}),
 			m_isClicked(false), 
 			m_running(false), 
+			m_isInitialized(false),
 			m_draggingComponent(nullptr), 
 			m_focused(nullptr), 
 			m_root(nullptr), 
@@ -76,7 +79,9 @@ namespace syn
 			m_vm(a_vm),
 			m_unitFactory(a_unitFactory),
 			m_circuitPanel(nullptr), 
-			m_vg(nullptr) {
+			m_vg(nullptr),
+			m_view(0,0,a_width,a_height)
+		{
 		}
 
 		virtual ~VOSIMWindow();
@@ -85,35 +90,51 @@ namespace syn
 			return m_sfmlWindow;
 		}
 
-		NDPoint<2, double> size() const {
+		Vector2i getSize() const {
 			return m_size;
 		}
 
 		void setFocus(UIComponent* a_comp);
-		Vector2i cursorPos() const { return m_cursor; }
-		Vector2i diffCursorPos() const {return m_dCursor;}
+		Vector2i cursorPos() const;
+
+		Vector2i diffCursorPos() const;
+
 		const Timestamped<Event::MouseButtonEvent>& lastClickEvent() const { return m_lastClick; }
 		const Timestamped<Event::MouseWheelScrollEvent>& lastScrollEvent() const { return m_lastScroll; }
 		shared_ptr<Theme> theme() const { return m_theme; }
 		UICircuitPanel* getCircuitPanel() const { return m_circuitPanel; }
+		UIComponent* getFocused() const { return m_focused; }
+		void clearFocus() { setFocus(nullptr); }
+
+		Vector2i toWorldCoords(const Vector2i& a_pix) const;
+		Vector2i toPixelCoords(const Vector2i& a_world) const;
+
+		void setViewSize(const Vector2i& a_size);
+		void setViewPos(const Vector2i& a_size);
+		Vector2i getViewSize() const;
 
 		bool OpenWindow(sf::WindowHandle a_system_window);
 		void CloseWindow();
+
+		void save(ByteChunk* a_data) const;
+		int  load(ByteChunk* a_data, int startPos);
+
+		bool isInitialized() const { return m_isInitialized; }
+
+		void reset();
+
 #ifdef _WIN32
 		static LRESULT CALLBACK drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam);
-#endif
 	public:
 		HINSTANCE m_hinstance;
+#endif
 	private:
 		/**
 		* Creates a child window from the given system window handle.
 		* \returns the system window handle for the child window.
 		*/
 		sf::WindowHandle sys_CreateChildWindow(sf::WindowHandle a_system_window);
-		void updateCursorPos(const Vector2i& newPos) {
-			m_dCursor = newPos - m_cursor;
-			m_cursor = newPos;
-		}
+		void updateCursorPos(const Vector2i& newPos);
 	private:
 		sf::WindowHandle m_childHandle1, m_childHandle2;
 		Vector2i m_size;
@@ -124,12 +145,12 @@ namespace syn
 	
 		bool m_isClicked;
 		bool m_running;
+		bool m_isInitialized;
 		UIComponent* m_draggingComponent;
 		UIComponent* m_focused;
 		UIComponent* m_root;
 
 		sf::RenderWindow* m_sfmlWindow;
-		std::thread m_drawThread;
 		unsigned m_frameCount;
 
 		VoiceManager* m_vm;
@@ -143,6 +164,9 @@ namespace syn
 		sftools::Chronometer m_timer;
 
 		NVGcontext* m_vg;
+
+		Vector4i m_view;
+		double m_zoom = 1.0;		
 	};
 }
 #endif

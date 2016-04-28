@@ -103,6 +103,8 @@ void VOSIMSynth::makeInstrument()
 	m_unitFactory->addUnitPrototype("Visualizer", new OscilloscopeUnit("Oscilloscope"));
 	m_unitFactory->addUnitPrototype("Visualizer", new SpectroscopeUnit("Spectroscope"));
 
+	m_unitFactory->addUnitPrototype("", new PassthroughUnit("Passthrough"));
+
     m_voiceManager = new VoiceManager(make_shared<Circuit>("main"), m_unitFactory);
     m_voiceManager->setMaxVoices(6);
 
@@ -111,16 +113,13 @@ void VOSIMSynth::makeInstrument()
 
 VOSIMSynth::~VOSIMSynth() {
 	if(m_voiceManager)
-	DELETE_NULL(m_voiceManager);
-	// this will get deleted by IGraphics
-	//		if (m_circuitPanel)
-	//			DELETE_NULL(m_circuitPanel);
+		DELETE_NULL(m_voiceManager);
 	if (m_vosimWindow)
-	DELETE_NULL(m_vosimWindow);
+		DELETE_NULL(m_vosimWindow);
 	if (m_unitFactory)
-	DELETE_NULL(m_unitFactory);
+		DELETE_NULL(m_unitFactory);
 	if (m_MIDIReceiver)
-	DELETE_NULL(m_MIDIReceiver);
+		DELETE_NULL(m_MIDIReceiver);
 }
 
 void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames)
@@ -150,16 +149,49 @@ void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg)
 
 bool VOSIMSynth::SerializeState(ByteChunk* pChunk)
 {
-    //ByteChunk serialized = m_circuitPanel->serialize();
-    //pChunk->PutChunk(&serialized);
-    return true;
+	if (m_vosimWindow->isInitialized()) {
+		m_voiceManager->save(pChunk);
+		m_vosimWindow->save(pChunk);
+		return true;
+	}
+    return false;
 }
 
 int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos)
 {
-	//m_unitFactory->resetBuildCounts();
-    //startPos = m_circuitPanel->unserialize(pChunk, startPos);
-    return startPos;
+	if (m_vosimWindow->isInitialized()) {
+		m_unitFactory->resetBuildCounts();
+
+//		ActionMessage* msg = new ActionMessage();
+//		msg->action = [](Circuit* a_circ, bool a_isLast, ByteChunk* a_data)
+//		{
+//			if (a_isLast) {
+//				int* chunkStartPos;
+//				ByteChunk* chunk;
+//				VoiceManager* vm;
+//				VOSIMWindow* vw;
+//
+//				int localStartPos = 0;
+//				localStartPos = a_data->Get<int*>(&chunkStartPos, localStartPos);
+//				localStartPos = a_data->Get<ByteChunk*>(&chunk, localStartPos);
+//				localStartPos = a_data->Get<VoiceManager*>(&vm, localStartPos);
+//				localStartPos = a_data->Get<VOSIMWindow*>(&vw, localStartPos);
+//
+//				*chunkStartPos = vm->load(chunk, *chunkStartPos);
+//				*chunkStartPos = vw->load(chunk, *chunkStartPos);
+//			}
+//		};
+//		int* startPosAddr = &startPos;
+//		msg->data.Put<int*>(&startPosAddr);
+//		msg->data.Put<ByteChunk*>(&pChunk);
+//		msg->data.Put<VoiceManager*>(&m_voiceManager);
+//		msg->data.Put<VOSIMWindow*>(&m_vosimWindow);
+		m_vosimWindow->reset();
+		startPos = m_voiceManager->load(pChunk, startPos);
+		startPos = m_vosimWindow->load(pChunk, startPos);
+
+	}
+	return startPos;
 }
 
 void VOSIMSynth::PresetsChangedByHost()

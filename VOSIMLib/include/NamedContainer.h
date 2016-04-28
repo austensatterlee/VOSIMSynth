@@ -21,6 +21,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __NAMEDCONTAINER__
 #include <vector>
 #include <stdexcept>
+#include <unordered_map>
 
 #if defined(_MSC_VER)
 #define MSFASTCALL __fastcall
@@ -34,30 +35,46 @@ using std::vector;
 using std::pair;
 using std::make_pair;
 using std::string;
+using std::unordered_map;
+
 
 namespace syn {
 
     template<typename T>
     class NamedContainer {
-		vector<T> m_data;
-		vector<pair<string, int> > m_names;
-		int m_size;
+		typedef int key_t;
+		unordered_map<key_t,T> m_data;
+		vector<pair<string, key_t> > m_names;
+		size_t m_size;
+		key_t m_nextid;
     public:
 		NamedContainer() :
 			NamedContainer(16)
 		{
 		}
-		explicit NamedContainer(int a_reservesize) :
-			m_size(0)
+
+		explicit NamedContainer(size_t a_reservesize) :
+			m_size(0),
+			m_nextid(0)
 		{
 			m_data.reserve(a_reservesize);
 		}
+
         virtual ~NamedContainer(){ m_names.clear(); m_data.clear(); }
+
         /**
          * Add a named item to the container.
          * \returns The items index in the container, or -1 if the item or name already exists.
          */
         int add(const string& a_name, const T& a_item);
+
+		/**
+		* Add a named item to the container using the requested id.
+		* \returns True upon success, or false if the item or name already exists or the index is already in use.
+		*/
+		bool add(const string& a_name, int a_id, const T& a_item);
+
+		const unordered_map<key_t, T>& data() const { return m_data; }
 
         /**
          * Remove an item from the container, either by its name, index, or a reference to the item itself.
@@ -71,14 +88,14 @@ namespace syn {
          * \returns A reference to the item
          */
         template<typename ID>
-        T& operator[](const ID& a_itemID);
+        T& MSFASTCALL operator[](const ID& a_itemID) GCCFASTCALL;
 
-		T& MSFASTCALL operator[](int a_itemID) GCCFASTCALL;
+		T& MSFASTCALL operator[](key_t a_itemID) GCCFASTCALL;
 
         template<typename ID>
-        const T& operator[](const ID& a_itemID) const;
+        const T& MSFASTCALL operator[](const ID& a_itemID) const GCCFASTCALL;
 
-		const T& MSFASTCALL operator[](int a_itemID) const GCCFASTCALL;
+		const T& MSFASTCALL operator[](key_t a_itemID) const GCCFASTCALL;
 
         /**
          * Verifies if an item is in the container, either by its name, index, or a reference to the item itself.
@@ -92,26 +109,40 @@ namespace syn {
 
         size_t MSFASTCALL size() GCCFASTCALL const;
 
-		int getItemIndex(int a_itemIndex) const { return a_itemIndex < m_size ? a_itemIndex : -1; }
+		int getItemIndex(key_t a_itemId) const { return m_data.find(a_itemId)!=m_data.end() ? a_itemId : -1; }
 
-	    int getItemIndex(const string& a_name) const;
+		int getItemIndex(const string& a_name) const;
 
-        int getItemIndex(const T& a_item) const;
+		int getItemIndex(const T& a_item) const;
+
+	    vector<int> getIds() const;
+
+	    vector<string> getNames() const;
+    private:
+		key_t _getNextId();
     };
 
     template<typename T>
-    int NamedContainer<T>::add(const string& a_name, const T& a_item){
-        if( find(a_name) ){
-            return -1;
-        }
-        int item_index = m_data.size();
-        m_data.push_back(a_item);
-        m_names.push_back(make_pair(a_name, item_index));
-		m_size = m_data.size();
-        return item_index;
+    int NamedContainer<T>::add(const string& a_name, const T& a_item){        
+		int item_id = _getNextId();
+		if (!add(a_name, item_id, a_item))
+			return -1;
+        return item_id;
     }
 
-    template<typename T>
+	template <typename T>
+	bool NamedContainer<T>::add(const string& a_name, int a_id, const T& a_item) {
+		if (find(a_name))
+			return false;
+		if (find(a_id))
+			return false;
+		m_data[a_id] = a_item;
+		m_names.push_back(make_pair(a_name, a_id));
+		m_size = m_data.size();
+		return true;
+    }
+
+	template<typename T>
     template<typename ID>
     bool NamedContainer<T>::remove(const ID& a_itemID){
         int itemidx = getItemIndex(a_itemID);
@@ -119,14 +150,12 @@ namespace syn {
         for(unsigned i=0;i<m_names.size();i++){
             if(m_names[i].second==itemidx){
                 m_names.erase(m_names.begin()+i);
-                i--;
-            }else if(m_names[i].second>itemidx){
-                m_names[i].second--;
+				break;
             }
         }
-        m_data.erase(m_data.begin() + itemidx);
+        int nerased = m_data.erase(itemidx);
 		m_size = m_data.size();
-        return true;
+        return nerased==1;
     }
 
     template<typename T>
@@ -137,7 +166,7 @@ namespace syn {
     }
 
 	template <typename T>
-	T& NamedContainer<T>::operator[](int a_itemID)
+	T& NamedContainer<T>::operator[](key_t a_itemID)
     {
 		return m_data[a_itemID];
     }
@@ -150,9 +179,9 @@ namespace syn {
     }
 
 	template <typename T>
-	const T& NamedContainer<T>::operator[](int a_itemID) const
+	const T& NamedContainer<T>::operator[](key_t a_itemID) const
     {
-		return m_data[a_itemID];
+		return m_data.at(a_itemID);
     }
 
 	template<typename T>
@@ -192,14 +221,38 @@ namespace syn {
 
     template<typename T>
     int NamedContainer<T>::getItemIndex(const T& a_item) const{
-		int nNames = m_names.size();
-        for(int i=0;i<nNames;i++){
-            int itemidx = m_names[i].second;
-            if(m_data[itemidx] == a_item){
-                return itemidx;
-            }
-        }
+		for(auto it = m_data.begin();it!=m_data.end(); ++it) {
+			if (it->second == a_item)
+				return it->first;
+		}
         return -1;
+    }
+
+	template <typename T>
+	vector<int> NamedContainer<T>::getIds() const {
+		vector<int> ids(m_data.size());
+		int i = 0;
+		for (auto it = m_data.begin(); it != m_data.end(); ++it) {
+			ids[i] = it->first;
+			i++;
+		}
+		return ids;
+	}
+
+	template <typename T>
+	vector<string> NamedContainer<T>::getNames() const {
+		vector<string> names(m_names.size());
+		for (int i = 0; i < m_names.size(); i++) {
+			names[i] = m_names[i].first;
+		}
+		return names;
+	}
+
+	template <typename T>
+	typename NamedContainer<T>::key_t NamedContainer<T>::_getNextId() {
+		while (find(m_nextid))
+			m_nextid++;
+		return m_nextid;
     }
 }
 

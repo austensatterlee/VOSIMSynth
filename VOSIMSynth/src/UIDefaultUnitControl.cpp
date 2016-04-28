@@ -13,10 +13,10 @@ Eigen::Vector2i syn::DefaultUnitControl::calcAutoSize() const {
 }
 
 void syn::DefaultUnitControl::onResize() {
-	m_size[0] = MAX(m_size[0], calcAutoSize()[0]);
+	m_size[0] = MAX(size()[0], calcAutoSize()[0]);
 	
 	for (UITextSlider* child : m_paramControls) {		
-		child->setSize({ m_size[0],child->size()[1] });
+		child->setSize({ size()[0],child->size()[1] });
 	}
 }
 

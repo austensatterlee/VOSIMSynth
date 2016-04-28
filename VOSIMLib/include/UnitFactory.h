@@ -24,6 +24,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <memory>
 #include <set>
 #include <unordered_map>
+#include <Containers.h>
 
 #define MAX_UNIT_STR_LEN 256
 
@@ -75,7 +76,12 @@ namespace syn
         }
 
         set<string> getGroupNames() const {
-            return m_group_names;
+			set<string> groupnames;
+			for(string groupname:  m_group_names) {
+				if (groupname != "")
+					groupnames.insert(groupname);
+			}
+            return groupnames;
         }
 
         vector<string> getPrototypeNames(const string& group) const {
@@ -140,6 +146,54 @@ namespace syn
             for (shared_ptr<FactoryPrototype> prototype : m_prototypes) {
 				prototype->build_count = 0;
             }
+        }
+
+	    static void saveUnit(const Unit* a_unit, int a_unitId, ByteChunk* a_data) {
+			unsigned classId = a_unit->getClassIdentifier();
+			a_data->Put<unsigned>(&classId);
+			a_data->Put<int>(&a_unitId);
+			a_data->PutStr(a_unit->getName().c_str());
+			int nParams = a_unit->getNumParameters();
+			a_data->Put<int>(&nParams);
+			for(int i=0;i<nParams;i++) {
+				double val = a_unit->getParameter(i).getDouble();
+				int prec = a_unit->getParameter(i).getPrecision();
+				a_data->Put<double>(&val);
+				a_data->Put<int>(&prec);
+			}
+        }
+
+		int loadUnit(ByteChunk* a_data, int a_startPos, Unit** a_unit, int* a_unitId) const {
+			int startPos = a_startPos;
+
+			unsigned classId;
+			startPos = a_data->Get<unsigned>(&classId, startPos);
+
+			int unitId;
+			startPos = a_data->Get<int>(&unitId, startPos);
+
+			WDL_String tmp_unitName;
+			startPos = a_data->GetStr(&tmp_unitName, startPos);
+			string unitName = tmp_unitName.Get();
+
+			int nParams;
+			startPos = a_data->Get<int>(&nParams, startPos);
+
+			*a_unit = createUnit(classId);
+			(*a_unit)->_setName(unitName);
+			*a_unitId = unitId;
+			for(int i=0;i<nParams;i++) {
+				double val;
+				int prec;
+				startPos = a_data->Get<double>(&val, startPos);
+				startPos = a_data->Get<int>(&prec, startPos);
+				(*a_unit)->getParameter_(i).set(val);
+				(*a_unit)->getParameter_(i).setPrecision(prec);
+			}
+			for(int i=0;i<nParams;i++) {
+				(*a_unit)->onParamChange_(i);
+			}
+			return startPos;
         }
     protected:
 		int getPrototypeIdx_(const string& a_name) const {

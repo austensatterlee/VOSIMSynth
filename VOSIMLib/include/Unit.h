@@ -24,7 +24,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "SignalBus.h"
 #include "UnitConnectionBus.h"
 #include "NamedContainer.h"
-#include <vector>
 #include <memory>
 
 using std::shared_ptr;

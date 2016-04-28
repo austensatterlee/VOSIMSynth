@@ -220,8 +220,8 @@ void IPlugVST::AttachAppWindow(syn::VOSIMWindow* a_vosimWindow) {
 	    IPlugBase::AttachAppWindow(a_vosimWindow);
 	    mAEffect.flags |= effFlagsHasEditor;
 	    mEditRect.left = mEditRect.top = 0;
-	    mEditRect.right = (VstInt16)a_vosimWindow->size()[0];
-	    mEditRect.bottom = (VstInt16)a_vosimWindow->size()[1];
+	    mEditRect.right = (VstInt16)a_vosimWindow->getSize()[0];
+	    mEditRect.bottom = (VstInt16)a_vosimWindow->getSize()[1];
 	  }
 }
 
@@ -244,8 +244,8 @@ void IPlugVST::ResizeGraphics(int w, int h)
   if (vosimWindow)
   {
     mEditRect.left = mEditRect.top = 0;
-	mEditRect.right = (VstInt16)vosimWindow->size()[0];
-	mEditRect.bottom = (VstInt16)vosimWindow->size()[1];
+	mEditRect.right = (VstInt16)vosimWindow->getSize()[0];
+	mEditRect.bottom = (VstInt16)vosimWindow->getSize()[1];
 
     OnWindowResize();
   }

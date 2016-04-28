@@ -110,7 +110,7 @@ namespace syn
 		template <typename UID>
 		vector<pair<int, int>> getConnectionsToInternalInput(const UID& a_unitIdentifier, int a_portid) const;
 
-		const vector<ConnectionRecord>& getConnectionRecords() const;
+		const vector<ConnectionRecord>& getConnections() const;
 
 		template <typename UID, typename PID>
 		double getInternalParameter(const UID& a_unitIdentifier, const PID& a_paramIdentifier) const;
@@ -125,6 +125,8 @@ namespace syn
 		 * \returns The id assigned to the newly added unit, or -1 on failure
 		 */
 		int addUnit(shared_ptr<Unit> a_unit);
+
+		bool addUnit(shared_ptr<Unit> a_unit, int a_unitId);
 
 		template <typename ID>
 		bool removeUnit(const ID& a_identifier);
@@ -153,6 +155,7 @@ namespace syn
 		Unit& getUnit_(int a_unitId);
 
 		int addExternalInput_(const string& a_name);
+
 		int addExternalOutput_(const string& a_name);
 
 	private:
@@ -220,6 +223,9 @@ namespace syn
 			return false;
 		shared_ptr<Unit> unit = m_units[a_unitIdentifier];
 		int unitId = m_units.getItemIndex(a_unitIdentifier);
+		// Don't allow deletion of input or output unit
+		if (unit == m_inputUnit || unit == m_outputUnit)
+			return false;
 		// Erase connections
 		for (int i = 0; i < m_connectionRecords.size(); i++) {
 			const ConnectionRecord& rec = m_connectionRecords[i];
@@ -228,14 +234,7 @@ namespace syn
 				// disconnect methods remove the connection record from the list, so we need to decrement our index to
 				// compensate
 				i--;
-			} else {
-				if (rec.to_id > unitId) { // drop unit id's to compensate for the removed unit
-					m_connectionRecords[i].to_id -= 1;
-				}
-				if (rec.from_id > unitId) { // drop unit id's to compensate for the removed unit
-					m_connectionRecords[i].from_id -= 1;
-				}
-			}			
+			}
 		}
 		m_units.remove(a_unitIdentifier);
 		return true;
@@ -280,8 +279,7 @@ namespace syn
 		bool result = toUnit->_disconnectInput(fromUnit, a_fromOutputPort, a_toInputPort);
 		// find and remove the associated connection record upon successful removal
 		if (result) {
-			ConnectionRecord record = {ConnectionRecord::Internal, fromId, a_fromOutputPort, toId,
-				a_toInputPort};
+			ConnectionRecord record = {fromId, a_fromOutputPort, toId, a_toInputPort};
 			for (unsigned i = 0; i < m_connectionRecords.size(); i++) {
 				if (m_connectionRecords[i] == record) {
 					m_connectionRecords.erase(m_connectionRecords.begin() + i);

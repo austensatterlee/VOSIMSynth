@@ -41,7 +41,12 @@ using boost::lockfree::capacity;
 
 namespace syn
 {
-	/* Actions that should be queued and processed in between samples */
+	/**
+	 * Used to pass messages to a voice manager via VoiceManager::queueAction
+	 * The action function pointer will be called once for each voice (with the corresponding circuit passed as the first parameter).
+	 * On the last voice, the second parameter will be true.
+	 * The third parameter is a pointer to the ByteChunk stored in this structure.
+	 */
 	struct ActionMessage
 	{
 		void(*action)(Circuit*, bool, ByteChunk*);
@@ -70,6 +75,9 @@ namespace syn
 
 		void MSFASTCALL tick(const double* a_left_input, const double* a_right_input, double* a_left_output, double* a_right_output) GCCFASTCALL;
 
+		/**
+		 * Safely queue a function to be called on the real-time thread in between samples.
+		 */
 		unsigned queueAction(ActionMessage* a_action);
 
 		unsigned getTickCount() const;
@@ -108,13 +116,13 @@ namespace syn
 		const Circuit& getCircuit() const;
 
 		/** 
-		 * \todo: This method is not thread safe. Instead message passing should be reimplemented in a way that allows the NRT
-		 * thread to be notified when results are available (e.g. to retrieve the unitid). Perhaps a struct with an arbitrary chunk of parameter data,
-		 * a function pointer to the method doing work in the realtime thread, and a function pointer to a method that queues a notification of completion
-		 * for the NRT thread to poll.
+		 * \note This method is not thread safe. Use the queueAction method to queue a function that creates a new unit instead.
 		 */
 		template <typename T>
 		int addUnit(T a_prototypeId);
+
+		void save(ByteChunk* a_data) const;
+		int  load(ByteChunk* a_data, int startPos);
 
 	private:
 		/**

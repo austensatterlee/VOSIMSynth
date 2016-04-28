@@ -36,8 +36,6 @@
 #include "nanovg.h"
 #include <Theme.h>
 #include "VOSIMWindow.h"
-#include <eigen/src/Core/util/ForwardDeclarations.h>
-#include <eigen/src/Core/util/ForwardDeclarations.h>
 
 namespace syn
 {
@@ -65,16 +63,16 @@ namespace syn
 
 		UIComponent* parent() const {return m_parent;}
 
-		bool contains(const Vector2i& a_pt);
+		virtual bool contains(const Vector2i& a_pt);
 
 		UIComponent* findChild(const Vector2i& a_pt);
 
 		Vector2i getRelPos() const {return m_pos;}
 
 		void setRelPos(const Vector2i& a_pos) {m_pos = a_pos;}
-
-		Vector2i getAbsPos() const {return m_parent ? m_parent->getAbsPos() + m_pos : m_pos;}
-		Vector2i getAbsCenter() const { return getAbsPos() + m_size / 2.0; }
+		
+		Vector2i getAbsPos() const {return m_parent ? m_parent->getAbsPos() + getRelPos() : getRelPos();}
+		Vector2i getAbsCenter() const { return getAbsPos() + size() / 2.0; }
 
 		void move(const Vector2i& a_dist) {m_pos += a_dist;}
 
@@ -112,7 +110,7 @@ namespace syn
 		vector<shared_ptr<UIComponent>> m_children;
 
 		bool m_visible, m_focused, m_autoSize;
-		Vector2i m_pos, m_size, m_fixedSize;
+		Vector2i m_pos, m_size;
 	};
 };
 #endif

@@ -97,7 +97,6 @@ namespace syn
 
 	template <typename T>
 	NDPoint<2, T> closestPointOnLine(const NDPoint<2, T>& pt, const NDPoint<2, T>& a, const NDPoint<2, T>& b) {
-
 		double ablength = a.distFrom(b);
 		NDPoint<2, double> abnorm = static_cast<NDPoint<2, double>>(a - b) * (1.0 / ablength);
 		double proj = static_cast<NDPoint<2, double>>(pt - b).dot(abnorm);
