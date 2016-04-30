@@ -48,8 +48,9 @@ namespace syn
     Circuit::Circuit(const Circuit& a_other) :
             Circuit(a_other.getName())
     {
-        for(int i=0;i<a_other.m_units.size();i++){
-            addUnit(shared_ptr<Unit>(a_other.m_units[i]->clone()));
+		vector<int> unitIds = a_other.m_units.getIds();
+        for(int i=0;i<unitIds.size();i++){
+            addUnit(shared_ptr<Unit>(a_other.m_units[unitIds[i]]->clone()));
         }
         for(int i=0;i<a_other.m_connectionRecords.size();i++){
             const ConnectionRecord& rec = a_other.m_connectionRecords[i];
@@ -62,7 +63,7 @@ namespace syn
 		// reset all internal components
 		for (int i = 0; i < m_units.size(); i++)
 		{
-			m_units[i]->reset();
+			m_units.getItemByIndex(i)->reset();
 		}
 
 		/* Push external input data into internal input unit */
@@ -71,7 +72,7 @@ namespace syn
 		// tick all internal components
 		for (int i = 0; i < m_units.size(); i++)
 		{
-			m_units[i]->tick();
+			m_units.getItemByIndex(i)->tick();
 		}
 
         /* Push internally connected output signals to circuit output ports */

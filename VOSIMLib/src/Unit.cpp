@@ -174,7 +174,7 @@ namespace syn {
     int Unit::addParameter_(const UnitParameter& a_param)
     {
         int indx = m_parameters.add(a_param.getName(), a_param);
-        return m_parameters.getItemIndex(indx);
+        return m_parameters.getItemId(indx);
     }
 
     void Unit::_setParent(Circuit* a_new_parent)

@@ -248,7 +248,7 @@ namespace syn {
         if (!m_parameters.find(a_identifier))
             return false;
 		if (m_parameters[a_identifier].set(a_value)) {
-			int id = m_parameters.getItemIndex(a_identifier);
+			int id = m_parameters.getItemId(a_identifier);
 			onParamChange_(id);
 			return true;
 		}
@@ -261,7 +261,7 @@ namespace syn {
         if (!m_parameters.find(a_identifier))
             return false;
         if (m_parameters[a_identifier].setNorm(a_value)) {
-            int id = m_parameters.getItemIndex(a_identifier);
+            int id = m_parameters.getItemId(a_identifier);
             onParamChange_(id);
             return true;
         }

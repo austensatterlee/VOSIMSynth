@@ -18,7 +18,7 @@ namespace syn
 
 
 		nvgTranslate(a_nvg, m_pos[0], m_pos[1]);
-
+		nvgSave(a_nvg);
 		draw(a_nvg);
 		
 		for (int i = m_children.size() - 1; i >= 0;i--) {
@@ -26,6 +26,7 @@ namespace syn
 			if(child->m_visible)
 				child->recursiveDraw(a_nvg);
 		}
+		nvgRestore(a_nvg);
 		nvgTranslate(a_nvg, -m_pos[0], -m_pos[1]);
 
 		if(m_autoSize) {
@@ -66,6 +67,14 @@ namespace syn
 		return m_children[i];
 	}
 
+	shared_ptr<UIComponent> UIComponent::getChild(UIComponent* a_comp) {
+		for(int i=0;i<m_children.size();i++) {
+			if (m_children[i].get() == a_comp)
+				return m_children[i];
+		}
+		return nullptr;
+	}
+
 	bool UIComponent::contains(const Vector2i& a_pt) {
 		auto pt = (a_pt - m_pos).array();			
 		return (pt >= 0).all() && (pt <= size().array()).all();
@@ -103,7 +112,8 @@ namespace syn
 		return false;
 	}
 
-	bool UIComponent::onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) {		
+	bool UIComponent::onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) {
+		m_hovered = a_isEntering;
 		return false;
 	}
 

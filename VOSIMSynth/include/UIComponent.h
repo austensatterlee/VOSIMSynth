@@ -58,8 +58,11 @@ namespace syn
 		bool removeChild(int a_index);
 
 		shared_ptr<UIComponent> getChild(int i);
+		shared_ptr<UIComponent> getChild(UIComponent* a_comp);
 
 		int numChildren() const {return m_children.size();}
+
+		vector<shared_ptr<UIComponent> >& children() { return m_children; }
 
 		UIComponent* parent() const {return m_parent;}
 
@@ -109,7 +112,7 @@ namespace syn
 		VOSIMWindow* m_window;
 		vector<shared_ptr<UIComponent>> m_children;
 
-		bool m_visible, m_focused, m_autoSize;
+		bool m_visible, m_focused, m_hovered, m_autoSize;
 		Vector2i m_pos, m_size;
 	};
 };

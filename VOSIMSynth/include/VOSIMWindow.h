@@ -103,6 +103,7 @@ namespace syn
 		const Timestamped<Event::MouseWheelScrollEvent>& lastScrollEvent() const { return m_lastScroll; }
 		shared_ptr<Theme> theme() const { return m_theme; }
 		UICircuitPanel* getCircuitPanel() const { return m_circuitPanel; }
+		UnitFactory* getUnitFactory() const { return m_unitFactory; }
 		UIComponent* getFocused() const { return m_focused; }
 		void clearFocus() { setFocus(nullptr); }
 

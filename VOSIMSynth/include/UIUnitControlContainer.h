@@ -30,6 +30,7 @@ Copyright 2016, Austen Satterlee
 #include "UIWindow.h"
 #include <VoiceManager.h>
 #include "UIUnitControl.h"
+#include "UIButton.h"
 
 namespace syn
 {
@@ -61,6 +62,7 @@ namespace syn
 
 	class UIUnitControlContainer : public UIWindow
 	{
+	friend class UICircuitPanel;
 	public:
 		UIUnitControlContainer(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, UIUnitControl* a_unitControl);
 		Vector2i calcAutoSize() const override;
@@ -71,12 +73,16 @@ namespace syn
 		const vector<UIUnitPort*>& getInPorts() const { return m_inPorts; }
 		const vector<UIUnitPort*>& getOutPorts() const { return m_outPorts; }
 		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		void close();
+	protected:
+		void draw(NVGcontext* a_nvg) override;
 	protected:
 		VoiceManager* m_vm;
 		int m_unitId;
 		UIUnitControl* m_unitControl;
 		vector<UIUnitPort*> m_inPorts;
 		vector<UIUnitPort*> m_outPorts;
+		UIButton* m_closeButton;
 
 		int m_inWidth;
 		int m_outWidth;

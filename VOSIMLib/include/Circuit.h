@@ -38,7 +38,7 @@ namespace syn
 		int to_port;
 
 		bool operator==(const ConnectionRecord& a_other) const {
-			bool res = (from_port == a_other.from_port) && (to_id == a_other.to_id && to_port == a_other.to_port);			
+			bool res = (from_id == a_other.from_id && from_port == a_other.from_port && to_id == a_other.to_id && to_port == a_other.to_port);			
 			return res;
 		}
 	};
@@ -192,7 +192,7 @@ namespace syn
 
 	template <typename UID>
 	int Circuit::getUnitId(const UID& a_unitIdentifier) const {
-		return m_units.getItemIndex(a_unitIdentifier);
+		return m_units.getItemId(a_unitIdentifier);
 	}
 
 	template <typename UID, typename PID, typename T>
@@ -222,19 +222,21 @@ namespace syn
 		if (!m_units.find(a_unitIdentifier))
 			return false;
 		shared_ptr<Unit> unit = m_units[a_unitIdentifier];
-		int unitId = m_units.getItemIndex(a_unitIdentifier);
+		int unitId = m_units.getItemId(a_unitIdentifier);
 		// Don't allow deletion of input or output unit
 		if (unit == m_inputUnit || unit == m_outputUnit)
 			return false;
 		// Erase connections
+		vector<ConnectionRecord> garbageList;
 		for (int i = 0; i < m_connectionRecords.size(); i++) {
 			const ConnectionRecord& rec = m_connectionRecords[i];
 			if (unitId == rec.to_id || unitId == rec.from_id) {
-				disconnectInternal(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
-				// disconnect methods remove the connection record from the list, so we need to decrement our index to
-				// compensate
-				i--;
+				garbageList.push_back(rec);
 			}
+		}
+		for(int i=0;i<garbageList.size();i++) {
+			const ConnectionRecord& rec = garbageList[i];
+			disconnectInternal(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
 		}
 		m_units.remove(a_unitIdentifier);
 		return true;
@@ -243,8 +245,8 @@ namespace syn
 	template <typename ID>
 	bool Circuit::connectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier,
 	                              int a_toInputPort) {
-		int fromUnitId = m_units.getItemIndex(a_fromIdentifier);
-		int toUnitId = m_units.getItemIndex(a_toIdentifier);
+		int fromUnitId = m_units.getItemId(a_fromIdentifier);
+		int toUnitId = m_units.getItemId(a_toIdentifier);
 		if (!m_units.find(fromUnitId) || !m_units.find(toUnitId))
 			return false;
 
@@ -265,8 +267,8 @@ namespace syn
 	template <typename ID>
 	bool Circuit::disconnectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier,
 	                                 int a_toInputPort) {
-		int fromId = m_units.getItemIndex(a_fromIdentifier);
-		int toId = m_units.getItemIndex(a_toIdentifier);
+		int fromId = m_units.getItemId(a_fromIdentifier);
+		int toId = m_units.getItemId(a_toIdentifier);
 		if (!m_units.find(fromId) || !m_units.find(toId))
 			return false;
 

@@ -51,7 +51,7 @@ Eigen::Vector2i syn::UIWindow::calcAutoSize() const {
 	size[0] = MAX(size[0], m_autoWidth);
 	for(shared_ptr<UIComponent> child : m_children) {
 		if (child->visible()) {
-			size = size.cwiseMax(child->size()+Vector2i{0,theme()->mWindowHeaderHeight});
+			size = size.cwiseMax(child->size()+child->getRelPos()+Vector2i::Ones()*5);
 		}
 	}
 	return size;
@@ -110,11 +110,11 @@ void syn::UIWindow::draw(NVGcontext* a_nvg) {
 		nvgStrokeColor(a_nvg, theme()->mWindowHeaderSepBot);
 		nvgStroke(a_nvg);
 
-		nvgFontSize(a_nvg, 18.0f);
+		nvgFontSize(a_nvg, 16.0f);
 		nvgFontFace(a_nvg, "sans-bold");
 		nvgTextAlign(a_nvg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
 
-		nvgFontBlur(a_nvg, 2);
+		nvgFontBlur(a_nvg, 1);
 		nvgFillColor(a_nvg, theme()->mDropShadow);
 		nvgText(a_nvg, 0 + m_size.x() / 2,
 			0 + hh / 2, m_title.c_str(), nullptr);

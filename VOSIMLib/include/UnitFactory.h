@@ -109,8 +109,8 @@ namespace syn
             return createUnit(protonum);
         }
 
-		Unit* createUnit(string a_name) const {
-			int protonum = getPrototypeIdx_(a_name);
+		Unit* createUnit(string a_prototypeName) const {
+			int protonum = getPrototypeIdx_(a_prototypeName);
 			return createUnit(protonum);
 		}
 

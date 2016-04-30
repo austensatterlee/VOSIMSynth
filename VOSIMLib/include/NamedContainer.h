@@ -42,11 +42,10 @@ namespace syn {
 
     template<typename T>
     class NamedContainer {
-		typedef int key_t;
-		unordered_map<key_t,T> m_data;
-		vector<pair<string, key_t> > m_names;
+		vector<pair<int,T> > m_data;
+		vector<pair<string, int> > m_names;
 		size_t m_size;
-		key_t m_nextid;
+		int m_nextid;
     public:
 		NamedContainer() :
 			NamedContainer(16)
@@ -74,7 +73,7 @@ namespace syn {
 		*/
 		bool add(const string& a_name, int a_id, const T& a_item);
 
-		const unordered_map<key_t, T>& data() const { return m_data; }
+		const vector<pair<int,T> >& data() const { return m_data; }
 
         /**
          * Remove an item from the container, either by its name, index, or a reference to the item itself.
@@ -90,12 +89,16 @@ namespace syn {
         template<typename ID>
         T& MSFASTCALL operator[](const ID& a_itemID) GCCFASTCALL;
 
-		T& MSFASTCALL operator[](key_t a_itemID) GCCFASTCALL;
+		T& MSFASTCALL operator[](int a_itemID) GCCFASTCALL;
+
+		T& MSFASTCALL getItemByIndex(int a_itemIdx) GCCFASTCALL;
 
         template<typename ID>
         const T& MSFASTCALL operator[](const ID& a_itemID) const GCCFASTCALL;
 
-		const T& MSFASTCALL operator[](key_t a_itemID) const GCCFASTCALL;
+		const T& MSFASTCALL operator[](int a_itemID) const GCCFASTCALL;
+
+		const T& MSFASTCALL getItemByIndex(int a_itemIdx) const GCCFASTCALL;
 
         /**
          * Verifies if an item is in the container, either by its name, index, or a reference to the item itself.
@@ -107,19 +110,23 @@ namespace syn {
         template<typename ID>
         string getItemName(const ID& a_itemID) const;
 
+		template<typename ID>
+		int getItemId(const ID& a_itemID) const;
+
         size_t MSFASTCALL size() GCCFASTCALL const;
 
-		int getItemIndex(key_t a_itemId) const { return m_data.find(a_itemId)!=m_data.end() ? a_itemId : -1; }
+	    vector<int> getIds() const;
+
+	    vector<string> getNames() const;
+		
+    private:
+		int getItemIndex(int a_itemId) const;
 
 		int getItemIndex(const string& a_name) const;
 
 		int getItemIndex(const T& a_item) const;
 
-	    vector<int> getIds() const;
-
-	    vector<string> getNames() const;
-    private:
-		key_t _getNextId();
+		int _getNextId();
     };
 
     template<typename T>
@@ -136,7 +143,7 @@ namespace syn {
 			return false;
 		if (find(a_id))
 			return false;
-		m_data[a_id] = a_item;
+		m_data.push_back(make_pair(a_id,a_item));
 		m_names.push_back(make_pair(a_name, a_id));
 		m_size = m_data.size();
 		return true;
@@ -146,42 +153,58 @@ namespace syn {
     template<typename ID>
     bool NamedContainer<T>::remove(const ID& a_itemID){
         int itemidx = getItemIndex(a_itemID);
+		if (itemidx == -1)
+			return false;
+		int itemid = m_data[itemidx].first;
         // Check if item was named and, if so, remove its name from the list
         for(unsigned i=0;i<m_names.size();i++){
-            if(m_names[i].second==itemidx){
+            if(m_names[i].second== itemid){
                 m_names.erase(m_names.begin()+i);
 				break;
             }
         }
-        int nerased = m_data.erase(itemidx);
+        m_data.erase(m_data.begin()+itemidx);
 		m_size = m_data.size();
-        return nerased==1;
+		m_nextid = itemid;
+        return true;
     }
 
     template<typename T>
     template<typename ID>
     T& NamedContainer<T>::operator[](const ID& a_itemID) {
         int itemidx = getItemIndex(a_itemID);
-        return m_data[itemidx];
+        return m_data[itemidx].second;
     }
 
 	template <typename T>
-	T& NamedContainer<T>::operator[](key_t a_itemID)
+	T& NamedContainer<T>::operator[](int a_itemID)
     {
-		return m_data[a_itemID];
+		int itemidx = getItemIndex(a_itemID);
+		return m_data[itemidx].second;
+    }
+
+	template <typename T>
+	T& NamedContainer<T>::getItemByIndex(int a_itemIdx) {
+		return m_data[a_itemIdx].second;
     }
 
 	template<typename T>
     template<typename ID>
     const T& NamedContainer<T>::operator[](const ID& a_itemID) const {
         int itemidx = getItemIndex(a_itemID);
-        return m_data[itemidx];
+        return m_data[itemidx].second;
     }
 
 	template <typename T>
-	const T& NamedContainer<T>::operator[](key_t a_itemID) const
+	const T& NamedContainer<T>::operator[](int a_itemID) const
     {
-		return m_data.at(a_itemID);
+		int itemidx = getItemIndex(a_itemID);
+		return m_data[itemidx].second;
+    }
+
+	template <typename T>
+	const T& NamedContainer<T>::getItemByIndex(int a_itemIdx) const {
+		return m_data[a_itemIdx].second;
     }
 
 	template<typename T>
@@ -195,25 +218,41 @@ namespace syn {
         return m_size;
     }
 
-    template<typename T>
+	template <typename T>
+	int NamedContainer<T>::getItemIndex(int a_itemId) const {
+		for (int i = 0; i < m_data.size(); i++) {
+			if (m_data[i].first == a_itemId)
+				return i;
+		}
+		return -1;
+	}
+
+	template<typename T>
     template<typename ID>
     string NamedContainer<T>::getItemName(const ID& a_itemID) const{
         int itemidx = getItemIndex(a_itemID);
+		int itemid = m_data[itemidx].first;
 		// Check if item was named and, if so, grab its name from the list
         for(int i=0;i<m_names.size();i++){
-            if(m_names[i].second==itemidx){
+            if(m_names[i].second== itemid){
                 return m_names[i].first;
             }
         }
 		throw std::domain_error("Item does not exist in NamedContainer");
     }
 
-    template<typename T>
+	template <typename T>
+	template <typename ID>
+	int NamedContainer<T>::getItemId(const ID& a_itemID) const {
+		return m_data[getItemIndex(a_itemID)].first;
+    }
+
+	template<typename T>
     int NamedContainer<T>::getItemIndex(const string& a_name) const{
 		int nNames = m_names.size();
         for(int i=0;i<nNames;i++){
             if(m_names[i].first == a_name){
-                return m_names[i].second;
+                return getItemIndex(m_names[i].second);
             }
         }
         return -1;
@@ -221,9 +260,9 @@ namespace syn {
 
     template<typename T>
     int NamedContainer<T>::getItemIndex(const T& a_item) const{
-		for(auto it = m_data.begin();it!=m_data.end(); ++it) {
-			if (it->second == a_item)
-				return it->first;
+		for (int i = 0; i < m_data.size();i++) {
+			if (m_data[i].second == a_item)
+				return i;
 		}
         return -1;
     }
@@ -231,10 +270,8 @@ namespace syn {
 	template <typename T>
 	vector<int> NamedContainer<T>::getIds() const {
 		vector<int> ids(m_data.size());
-		int i = 0;
-		for (auto it = m_data.begin(); it != m_data.end(); ++it) {
-			ids[i] = it->first;
-			i++;
+		for (int i = 0; i < m_data.size();i++) {
+			ids[i] = m_data[i].first;
 		}
 		return ids;
 	}
@@ -249,7 +286,8 @@ namespace syn {
 	}
 
 	template <typename T>
-	typename NamedContainer<T>::key_t NamedContainer<T>::_getNextId() {
+	int NamedContainer<T>::_getNextId() {
+		m_nextid = 0;
 		while (find(m_nextid))
 			m_nextid++;
 		return m_nextid;

@@ -17,6 +17,15 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+/**
+*  \file UI.h
+*  \brief Common UI functions and definitions
+*  \details Partly derived from NanoGUI source: https://github.com/wjakob/nanogui
+*  \author Austen Satterlee
+*  \date 04/2016
+*/
+
 #ifndef __UI__
 #define __UI__
 #include <IPlug/IPlugStructs.h>
@@ -110,6 +119,38 @@ namespace syn
 	inline Color::operator const struct NVGcolor&() const {
 		return reinterpret_cast<const NVGcolor &>(*this->data());
 	}
+
+	/// Determine whether an icon ID is a texture loaded via nvgImageIcon
+	inline bool nvgIsImageIcon(int value) { return value < 1024; }
+
+	/// Determine whether an icon ID is a font-based icon (e.g. from the entypo.ttf font)
+	inline bool nvgIsFontIcon(int value) { return value >= 1024; }
+
+	/**
+	 * \brief Open a native file open/save dialog.
+	 *
+	 * \param filetypes
+	 *     Pairs of permissible formats with descriptions like
+	 *     <tt>("png", "Portable Network Graphics")</tt>
+	 */
+	extern std::string file_dialog(const std::vector<std::pair<std::string, std::string>> &filetypes, bool save);
+
+	/**
+	* \brief Convert a single UTF32 character code to UTF8
+	*
+	* NanoGUI uses this to convert the icon character codes
+	* defined in entypo.h
+	*/
+	extern std::array<char, 8> utf8(int c);
+
+	/// Load a directory of PNG images and upload them to the GPU (suitable for use with ImagePanel)
+	extern std::vector<std::pair<int, std::string>>
+		loadImageDirectory(NVGcontext *ctx, const std::string &path);
+
+	/// Convenience function for instanting a PNG icon from the application's data segment (via bin2c)
+	#define nvgImageIcon(ctx, name) nanogui::__nanogui_get_image(ctx, #name, name##_png, name##_png_size)
+	/// Helper function used by nvgImageIcon
+	extern int __nanogui_get_image(NVGcontext *ctx, const std::string &name, uint8_t *data, uint32_t size);
 
 	/* Cursor shapes */
 	enum class Cursor {

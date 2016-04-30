@@ -29,6 +29,13 @@ syn::UIUnitControlContainer::UIUnitControlContainer(VOSIMWindow* a_window, Voice
 		m_outPorts[i]->setAutosize(false);
 		this->addChild(m_outPorts[i]);
 	}
+
+	m_closeButton = new UIButton(a_window, "", 0xE729);
+	m_closeButton->setCallback([&]() {this->close(); });
+	m_closeButton->setRelPos({ 1,1 });
+	m_closeButton->setSize({ 25,theme()->mWindowHeaderHeight-4 });
+	m_closeButton->setFontSize(10);
+	addChild(m_closeButton);	
 }
 
 Eigen::Vector2i syn::UIUnitControlContainer::calcAutoSize() const {
@@ -47,7 +54,7 @@ Eigen::Vector2i syn::UIUnitControlContainer::calcAutoSize() const {
 		outHeight += portSize[1];
 	}
 	Vector2i unitCtrlSize = m_unitControl->calcAutoSize();
-	return{ outWidth + inWidth + unitCtrlSize[0],theme()->mWindowHeaderHeight+MAX(outHeight,MAX(unitCtrlSize[1],inHeight)) };
+	return{ MAX(m_autoWidth+25,outWidth + inWidth + unitCtrlSize[0]),theme()->mWindowHeaderHeight+MAX(outHeight,MAX(unitCtrlSize[1],inHeight)) };
 }
 
 void syn::UIUnitControlContainer::onResize() {
@@ -80,6 +87,8 @@ void syn::UIUnitControlContainer::onResize() {
 		m_outPorts[i]->setRelPos({ size()[0] - m_outWidth, theme()->mWindowHeaderHeight+i * portHeight });
 		m_outPorts[i]->setSize({ m_outWidth,portHeight });
 	}
+
+
 }
 
 syn::UIUnitPort* syn::UIUnitControlContainer::getSelectedInPort(const Vector2i& a_pt) const {
@@ -104,6 +113,15 @@ bool syn::UIUnitControlContainer::onMouseDown(const Vector2i& a_relCursor, const
 	if (UIComponent::onMouseDown(a_relCursor, a_diffCursor))
 		return true;
 	return true;
+}
+
+void syn::UIUnitControlContainer::close() {
+	m_window->getCircuitPanel()->requestDeleteUnit(m_unitId);
+}
+
+void syn::UIUnitControlContainer::draw(NVGcontext* a_nvg) {
+	UIWindow::draw(a_nvg);
+
 }
 
 bool syn::UIUnitPort::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {

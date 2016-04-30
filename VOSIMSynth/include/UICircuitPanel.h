@@ -73,6 +73,7 @@ namespace syn {
 		UIUnitControlContainer* findUnit(int a_unitId) const;
 		void requestAddConnection(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);
 		void requestDeleteConnection(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);	
+		void requestDeleteUnit(int a_unitId);
 		void onResize() override;
 		UIWire* getSelectedWire() const { return m_selectedWire; }
 		void setSelectedWire(UIWire* a_wire);

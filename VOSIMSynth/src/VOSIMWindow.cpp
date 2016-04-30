@@ -230,12 +230,25 @@ syn::VOSIMWindow::~VOSIMWindow() {
 
 void syn::VOSIMWindow::setFocus(UIComponent* a_comp) {
 	if (a_comp && a_comp != m_focused) {
-		if (m_focused)
-			m_focused->onFocusEvent(false);
+		if (m_focused) {
+			UIComponent* losingFocus = m_focused;
+			while (losingFocus != nullptr) {
+				losingFocus->onFocusEvent(false);
+				losingFocus = losingFocus->parent();
+			}
+		}
 		m_focused = a_comp;
-		m_focused->onFocusEvent(true);
+		UIComponent* gainingFocus = m_focused;
+		while (gainingFocus != nullptr) {
+			gainingFocus->onFocusEvent(true);
+			gainingFocus = gainingFocus->parent();
+		}
 	} else if (a_comp == nullptr && a_comp != m_focused) {
-		m_focused->onFocusEvent(false);
+		UIComponent* losingFocus = m_focused;
+		while (losingFocus != nullptr) {
+			losingFocus->onFocusEvent(false);
+			losingFocus = losingFocus->parent();
+		}
 		m_focused = nullptr;
 	}
 }
@@ -346,19 +359,14 @@ int syn::VOSIMWindow::load(ByteChunk* a_data, int startPos) {
 		startPos = a_data->Get<int>(&reservedBytes, startPos);
 		startPos += reservedBytes;
 
-		UIUnitControl* unitctrl = new DefaultUnitControl(this, m_vm, unitId);
-		UIUnitControlContainer* unitctrlcontainer = new UIUnitControlContainer(this, m_vm, unitId, unitctrl);
-		unitctrlcontainer->setRelPos(pos);
-		units.push_back(unitctrlcontainer);
-		m_circuitPanel->addChild(unitctrlcontainer);
+		m_circuitPanel->onAddUnit_(m_vm->getUnit(unitId).getClassIdentifier(), unitId);
+		m_circuitPanel->findUnit(unitId)->setRelPos(pos);
 	}
 	// Add wires
 	const vector<ConnectionRecord>& records = m_vm->getCircuit().getConnections();
 	for (int i=0;i<records.size();i++) {
 		const ConnectionRecord& rec = records[i];
-		UIWire* wire = new UIWire(this, rec.from_id, rec.from_port, rec.to_id, rec.to_port);
-		wires.push_back(wire);
-		m_circuitPanel->addChild(wire);
+		m_circuitPanel->onAddConnection_(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
 	}
 	return startPos;
 };
