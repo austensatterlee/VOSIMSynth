@@ -42,7 +42,7 @@ namespace syn
 		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		Vector2i calcAutoSize() const override;
+		Vector2i calcAutoSize(NVGcontext* a_nvg) const override;
 		int getUnitId() const { return m_unitId; }
 		int getPortId() const { return m_portNum; }
 		bool isInput() const { return m_isInput; }
@@ -65,7 +65,7 @@ namespace syn
 	friend class UICircuitPanel;
 	public:
 		UIUnitControlContainer(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, UIUnitControl* a_unitControl);
-		Vector2i calcAutoSize() const override;
+		Vector2i calcAutoSize(NVGcontext* a_nvg) const override;
 		void onResize() override;
 		int getUnitId() const { return m_unitId; }
 		UIUnitPort* getSelectedInPort(const Vector2i& a_relPos) const;
@@ -73,9 +73,10 @@ namespace syn
 		const vector<UIUnitPort*>& getInPorts() const { return m_inPorts; }
 		const vector<UIUnitPort*>& getOutPorts() const { return m_outPorts; }
 		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		void close();
+		void close() const;
 	protected:
 		void draw(NVGcontext* a_nvg) override;
+		void handleResize_(NVGcontext* a_nvg);
 	protected:
 		VoiceManager* m_vm;
 		int m_unitId;
@@ -86,6 +87,8 @@ namespace syn
 
 		int m_inWidth;
 		int m_outWidth;
+
+		bool m_isSizeDirty = true;
 	};
 
 }

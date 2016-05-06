@@ -56,6 +56,13 @@ void VOSIMSynth::makeGraphics()
 	m_vosimWindow = new VOSIMWindow(GUI_WIDTH, GUI_HEIGHT, m_voiceManager, m_unitFactory);
 	m_vosimWindow->m_hinstance = gHInstance;
 	AttachAppWindow(m_vosimWindow);
+
+	m_vosimWindow->registerUnitControl<OscilloscopeUnit>([](VOSIMWindow* a_window,VoiceManager* a_vm,int a_unitId)->UIUnitControl*{
+		return new OscilloscopeUnitControl(a_window, a_vm, a_unitId);
+	});
+	m_vosimWindow->registerUnitControl<SpectroscopeUnit>([](VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId)->UIUnitControl* {
+		return new SpectroscopeUnitControl(a_window, a_vm, a_unitId);
+	});
 	
 	//m_kbdctrl = new syn::KeyboardControl(this, m_voiceManager, IRECT{ 1,GUI_HEIGHT - 100,GUI_WIDTH - 1,GUI_HEIGHT - 1 });
 	//m_graphics->AttachControl(m_kbdctrl.get());

@@ -161,6 +161,12 @@ namespace syn
 				a_data->Put<double>(&val);
 				a_data->Put<int>(&prec);
 			}
+			int reserved = 64;
+			a_data->Put<int>(&reserved);
+			for(int i=0;i<reserved;i++) {
+				char reservedByte = 0;
+				a_data->Put<char>(&reservedByte);
+			}
         }
 
 		int loadUnit(ByteChunk* a_data, int a_startPos, Unit** a_unit, int* a_unitId) const {
@@ -193,6 +199,9 @@ namespace syn
 			for(int i=0;i<nParams;i++) {
 				(*a_unit)->onParamChange_(i);
 			}
+			int reserved;
+			startPos = a_data->Get<int>(&reserved, startPos);
+			startPos += reserved;
 			return startPos;
         }
     protected:

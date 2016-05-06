@@ -77,8 +77,6 @@ namespace syn {
 	}
 
 	void UIButton::draw(NVGcontext *ctx) {
-		UIComponent::draw(ctx);
-
 		NVGcolor gradTop = theme()->mButtonGradientTopFocused;
 		NVGcolor gradBot = theme()->mButtonGradientBotUnfocused;
 
@@ -93,8 +91,8 @@ namespace syn {
 
 		nvgBeginPath(ctx);
 
-		nvgRoundedRect(ctx, m_pos.x() + 1, m_pos.y() + 1.0f, m_size.x() - 2,
-			m_size.y() - 2, theme()->mButtonCornerRadius - 1);
+		nvgRoundedRect(ctx, 1, 1.0f, size().x() - 2,
+			size().y() - 2, theme()->mButtonCornerRadius - 1);
 
 		if (mBackgroundColor.w() != 0) {
 			nvgFillColor(ctx, Color(mBackgroundColor.head<3>(), 1.f));
@@ -108,21 +106,21 @@ namespace syn {
 			}
 		}
 
-		NVGpaint bg = nvgLinearGradient(ctx, m_pos.x(), m_pos.y(), m_pos.x(),
-			m_pos.y() + m_size.y(), gradTop, gradBot);
+		NVGpaint bg = nvgLinearGradient(ctx, 0, 0, 0,
+			0 + size().y(), gradTop, gradBot);
 
 		nvgFillPaint(ctx, bg);
 		nvgFill(ctx);
 
 		nvgBeginPath(ctx);
-		nvgRoundedRect(ctx, m_pos.x() + 0.5f, m_pos.y() + (mPushed ? 0.5f : 1.5f), m_size.x() - 1,
-			m_size.y() - 1 - (mPushed ? 0.0f : 1.0f), theme()->mButtonCornerRadius);
+		nvgRoundedRect(ctx, 0 + 0.5f, 0 + (mPushed ? 0.5f : 1.5f), size().x() - 1,
+			size().y() - 1 - (mPushed ? 0.0f : 1.0f), theme()->mButtonCornerRadius);
 		nvgStrokeColor(ctx, theme()->mBorderLight);
 		nvgStroke(ctx);
 
 		nvgBeginPath(ctx);
-		nvgRoundedRect(ctx, m_pos.x() + 0.5f, m_pos.y() + 0.5f, m_size.x() - 1,
-			m_size.y() - 2, theme()->mButtonCornerRadius);
+		nvgRoundedRect(ctx, 0 + 0.5f, 0 + 0.5f, size().x() - 1,
+			size().y() - 2, theme()->mButtonCornerRadius);
 		nvgStrokeColor(ctx, theme()->mBorderDark);
 		nvgStroke(ctx);
 
@@ -131,7 +129,7 @@ namespace syn {
 		nvgFontFace(ctx, "sans-bold");
 		float tw = nvgTextBounds(ctx, 0, 0, mCaption.c_str(), nullptr, nullptr);
 
-		Vector2f center = m_pos.cast<float>() + m_size.cast<float>() * 0.5f;
+		Vector2f center = size().cast<float>() * 0.5f;
 		Vector2f textPos(center.x() - tw * 0.5f, center.y() - 1);
 		NVGcolor textColor =
 			mTextColor.w() == 0 ? theme()->mTextColor : mTextColor;
@@ -155,7 +153,7 @@ namespace syn {
 				iw = w * ih / h;
 			}
 			if (mCaption != "")
-				iw += m_size.y() * 0.15f;
+				iw += size().y() * 0.15f;
 			nvgFillColor(ctx, textColor);
 			nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
 			Vector2f iconPos = center;
@@ -170,10 +168,10 @@ namespace syn {
 				iconPos.x() += tw * 0.5f;
 			}
 			else if (mIconPosition == IconPosition::Left) {
-				iconPos.x() = m_pos.x() + 8;
+				iconPos.x() = 0 + 8;
 			}
 			else if (mIconPosition == IconPosition::Right) {
-				iconPos.x() = m_pos.x() + m_size.x() - iw - 8;
+				iconPos.x() = 0 + size().x() - iw - 8;
 			}
 
 			if (nvgIsFontIcon(mIcon)) {

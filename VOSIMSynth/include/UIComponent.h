@@ -93,7 +93,7 @@ namespace syn
 
 		void setAutosize(bool a_autosize) { m_autoSize = a_autosize; }
 
-		virtual Vector2i calcAutoSize() const;
+		virtual Vector2i calcAutoSize(NVGcontext* a_nvg) const;
 		virtual bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
 		virtual bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
 		virtual bool onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering);
@@ -114,6 +114,45 @@ namespace syn
 
 		bool m_visible, m_focused, m_hovered, m_autoSize;
 		Vector2i m_pos, m_size;
+	};
+
+	class UIResizeHandle : public UIComponent
+	{
+	public:
+		UIResizeHandle(VOSIMWindow* a_window)
+			: UIComponent{a_window} {}
+
+		Vector2i calcAutoSize(NVGcontext* a_nvg) const override {
+			return{ 10,10 };
+		}
+
+		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override { 
+			m_dragCallback(a_relCursor, a_diffCursor);
+			return true;
+		}
+
+		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override {
+			return true;
+		}
+
+		void setDragCallback(const std::function<void(const Vector2i&, const Vector2i&)>& a_callback) {
+			m_dragCallback = a_callback;
+		}
+
+	protected:
+		void draw(NVGcontext* a_nvg) override {
+			nvgBeginPath(a_nvg);
+			nvgStrokeColor(a_nvg, Color(Vector3i{ 255,255,255 }));
+			nvgMoveTo(a_nvg, 0.0f, size()[1]);
+			nvgLineTo(a_nvg, size()[0], 0.0f);
+			nvgMoveTo(a_nvg, size()[0]/3.0f, size()[1]);
+			nvgLineTo(a_nvg, size()[0], size()[1]/3.0f);
+			nvgMoveTo(a_nvg, size()[0] * 2.0f / 3.0f, size()[1]);
+			nvgLineTo(a_nvg, size()[0], size()[1] * 2.0f / 3.0f);
+			nvgStroke(a_nvg);
+		}
+	private:
+		std::function<void(const Vector2i& a_relCursor, const Vector2i& a_diffCursor)> m_dragCallback;
 	};
 };
 #endif

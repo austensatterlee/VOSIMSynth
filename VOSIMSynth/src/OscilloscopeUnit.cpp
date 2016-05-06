@@ -77,4 +77,69 @@ namespace syn {
 			m_syncCount = 0;
 		}
 	}
+
+	OscilloscopeUnitControl::OscilloscopeUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId):
+		UIUnitControl{a_window, a_vm, a_unitId},
+		m_defCtrl(new DefaultUnitControl(a_window, a_vm, a_unitId)),
+		m_resizeHandle(new UIResizeHandle(a_window)),
+		m_yBounds{-1,1},
+		m_screenSize{0,0},
+		m_screenPos{0,0}
+	{
+		addChild(m_defCtrl);
+		addChild(m_resizeHandle);
+		m_resizeHandle->setDragCallback([&](const Vector2i& a_relPos, const Vector2i& a_diffPos)
+		{
+			m_screenSize += a_diffPos;
+		});
+	}
+
+	Vector2i OscilloscopeUnitControl::toPixCoords(const Vector2f& a_sample) {
+		double unitY = (a_sample[1] - m_yBounds[0]) / (m_yBounds[1] - m_yBounds[0]);
+		int screenY = -unitY * m_screenSize[1] + m_screenPos[1]+m_screenSize[1];
+
+		const OscilloscopeUnit* unit = static_cast<const OscilloscopeUnit*>(&m_vm->getUnit(m_unitId));
+		double unitX = a_sample[0] / unit->m_bufferSize;
+		int screenX = unitX * m_screenSize[0] + m_screenPos[0];
+
+		return {screenX, screenY};
+	}
+
+	Vector2i OscilloscopeUnitControl::calcAutoSize(NVGcontext* a_nvg) const {
+		Vector2i screenSize{ MAX(m_screenSize[0],100),MAX(m_screenSize[1],50) };
+		Vector2i defCtrlSize = m_defCtrl->calcAutoSize(a_nvg);
+		return{ MAX(defCtrlSize[0],screenSize[0]),defCtrlSize[1] + screenSize[1] + m_resizeHandle->size()[1] };
+	}
+
+	void OscilloscopeUnitControl::onResize() {
+		m_screenPos = { 0,m_defCtrl->size()[1] };
+		m_screenSize = size() - Vector2i{0,m_defCtrl->size()[1] + m_resizeHandle->size()[1]};
+		m_defCtrl->setSize({ size()[0],m_defCtrl->size()[1] });
+		m_resizeHandle->setRelPos(size() - m_resizeHandle->size());
+	}
+
+	void OscilloscopeUnitControl::draw(NVGcontext* a_nvg) {
+		const OscilloscopeUnit* unit = static_cast<const OscilloscopeUnit*>(&m_vm->getUnit(m_unitId));
+
+		// Draw background
+		nvgBeginPath(a_nvg);
+		nvgFillColor(a_nvg, Color(0.0f,1.0f));
+		nvgRect(a_nvg, m_screenPos[0], m_screenPos[1], m_screenSize[0], m_screenSize[1]);
+		nvgFill(a_nvg);
+
+		// Draw paths
+		for(int i=0;i<unit->m_nBuffers;i++) {
+			Color color = m_colors[i%m_colors.size()];
+			nvgBeginPath(a_nvg);
+			nvgStrokeColor(a_nvg, color);
+			for(int j=0;j<unit->m_bufferSize;j++) {
+				Vector2i screenPt = toPixCoords({ j,unit->m_buffers[i][j] });
+				if(j==0)
+					nvgMoveTo(a_nvg, screenPt[0], screenPt[1]);
+				else
+					nvgLineTo(a_nvg, screenPt[0], screenPt[1]);
+			}
+			nvgStroke(a_nvg);
+		}
+	}
 }

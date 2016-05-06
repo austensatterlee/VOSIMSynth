@@ -41,7 +41,6 @@ Copyright 2016, Austen Satterlee
 #include <Theme.h>
 #include <perf.h>
 #include <sftools/Chronometer.hpp>
-#include <mutex>
 
 using sf::Event;
 
@@ -50,6 +49,8 @@ namespace syn
 	class UIComponent;
 
 	class UICircuitPanel;
+
+	class UIUnitControl;
 
 	template <typename T>
 	struct Timestamped
@@ -124,6 +125,11 @@ namespace syn
 
 		void reset();
 
+		template<typename UnitType>
+		void registerUnitControl(std::function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)> a_unitControlConstructor);
+
+		UIUnitControl* createUnitControl(unsigned a_classId, int a_unitId);
+
 #ifdef _WIN32
 		static LRESULT CALLBACK drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam);
 	public:
@@ -168,7 +174,15 @@ namespace syn
 
 		Vector4i m_view;
 		double m_zoom = 1.0;		
+
+		std::map<unsigned, std::function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)> > m_unitControlMap;
 	};
+
+	template <typename UnitType>
+	void VOSIMWindow::registerUnitControl(std::function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)> a_unitControlConstructor) {
+		unsigned unitClassId = UnitType("").getClassIdentifier();
+		m_unitControlMap[unitClassId] = a_unitControlConstructor;
+	}
 }
 #endif
 

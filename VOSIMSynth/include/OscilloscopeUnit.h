@@ -27,6 +27,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 #include <Unit.h>
 #include <DSPMath.h>
+#include "UIUnitControl.h"
+#include "UIDefaultUnitControl.h"
 
 namespace syn {
 	class OscilloscopeUnit : public Unit
@@ -59,6 +61,26 @@ namespace syn {
 		double m_lastPhase;
 		int m_lastSync;
 		int m_syncCount;
+	};
+
+	class OscilloscopeUnitControl : public UIUnitControl
+	{
+	public:
+		OscilloscopeUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId);
+
+		Vector2i toPixCoords(const Vector2f& a_sample);
+		Vector2i calcAutoSize(NVGcontext* a_nvg) const override;
+		void onResize() override;
+	protected:
+		void draw(NVGcontext* a_nvg) override;
+	private:
+		DefaultUnitControl* m_defCtrl;
+		UIResizeHandle* m_resizeHandle;
+
+		Vector2f m_yBounds;
+		Vector2i m_screenPos;
+		Vector2i m_screenSize;
+		vector<Color> m_colors = { { 255,255,255,255 },{ 255,128,128,255 } };
 	};
 
 }

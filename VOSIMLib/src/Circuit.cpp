@@ -50,7 +50,7 @@ namespace syn
     {
 		vector<int> unitIds = a_other.m_units.getIds();
         for(int i=0;i<unitIds.size();i++){
-            addUnit(shared_ptr<Unit>(a_other.m_units[unitIds[i]]->clone()));
+            addUnit(shared_ptr<Unit>(a_other.m_units[unitIds[i]]->clone()),unitIds[i]);
         }
         for(int i=0;i<a_other.m_connectionRecords.size();i++){
             const ConnectionRecord& rec = a_other.m_connectionRecords[i];

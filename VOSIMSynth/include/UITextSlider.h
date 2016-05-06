@@ -47,7 +47,7 @@ namespace syn
 		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		bool onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) override;
-		Vector2i calcAutoSize() const override;
+		Vector2i calcAutoSize(NVGcontext* a_nvg) const override;
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 	private:

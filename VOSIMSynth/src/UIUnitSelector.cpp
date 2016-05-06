@@ -1,8 +1,6 @@
 #include "UIUnitSelector.h"
-#include <eigen/src/Core/util/ForwardDeclarations.h>
-#include <eigen/src/Core/util/ForwardDeclarations.h>
 
-Eigen::Vector2i syn::UIUnitSelector::calcAutoSize() const {
+Eigen::Vector2i syn::UIUnitSelector::calcAutoSize(NVGcontext* a_nvg) const {
 	return{ m_autoWidth, m_autoHeight };
 }
 

@@ -73,7 +73,7 @@ bool syn::UITextSlider::onMouseScroll(const Vector2i& a_relCursor, const Vector2
 	return true;
 }
 
-Eigen::Vector2i syn::UITextSlider::calcAutoSize() const {
+Eigen::Vector2i syn::UITextSlider::calcAutoSize(NVGcontext* a_nvg) const {
 	return{ m_autoWidth, size()[1] };
 }
 

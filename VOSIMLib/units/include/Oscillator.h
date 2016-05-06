@@ -149,7 +149,7 @@ namespace syn {
 			m_syncedFreqParam("rate",
 			{"1/64","1/32","3/64","1/16","3/32","1/8","1/4","3/8","1/2","3/4","1","3/2","2"},
 			{ 1.0/64,1.0/32,3.0/64,1.0/16,3.0/32,1.0/8,1.0/4,3.0/8,1.0/2,3.0/4,1.0,3.0/2,2}, 0),
-			m_linFreqParam("freq", 0.0, 80.0, 1.0),
+			m_linFreqParam("freq", 0.0, 30.0, 1.0),
 			m_lastSync(0.0)
 		{
 			m_pWaveform = addParameter_(UnitParameter("waveform", WAVE_SHAPE_NAMES));

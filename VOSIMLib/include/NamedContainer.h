@@ -43,6 +43,7 @@ namespace syn {
     template<typename T>
     class NamedContainer {
 		vector<pair<int,T> > m_data;
+		vector<int> m_indices; /// Maps IDs to indices (a value of -1 at position 'k' means the ID 'k' is not in the container)
 		vector<pair<string, int> > m_names;
 		size_t m_size;
 		int m_nextid;
@@ -57,6 +58,8 @@ namespace syn {
 			m_nextid(0)
 		{
 			m_data.reserve(a_reservesize);
+			m_names.reserve(a_reservesize);
+			m_indices.reserve(a_reservesize);
 		}
 
         virtual ~NamedContainer(){ m_names.clear(); m_data.clear(); }
@@ -69,6 +72,7 @@ namespace syn {
 
 		/**
 		* Add a named item to the container using the requested id.
+		* Don't use exceedingly high IDs. The memory usage of this object is proportional to the highest ID.
 		* \returns True upon success, or false if the item or name already exists or the index is already in use.
 		*/
 		bool add(const string& a_name, int a_id, const T& a_item);
@@ -145,6 +149,9 @@ namespace syn {
 			return false;
 		m_data.push_back(make_pair(a_id,a_item));
 		m_names.push_back(make_pair(a_name, a_id));
+		if(a_id>=m_indices.size())
+			m_indices.resize(a_id+1, -1);
+		m_indices[a_id] = m_data.size() - 1;
 		m_size = m_data.size();
 		return true;
     }
@@ -158,13 +165,19 @@ namespace syn {
 		int itemid = m_data[itemidx].first;
         // Check if item was named and, if so, remove its name from the list
         for(unsigned i=0;i<m_names.size();i++){
-            if(m_names[i].second== itemid){
+            if(m_names[i].second==itemid){
                 m_names.erase(m_names.begin()+i);
 				break;
             }
         }
         m_data.erase(m_data.begin()+itemidx);
+		// Update the index map for elements that were moved
+		for (unsigned i = itemidx; i<m_data.size(); i++) {
+			int tmpid = m_data[i].first;
+			m_indices[tmpid]--;
+		}
 		m_size = m_data.size();
+		m_indices[itemid] = -1;
 		m_nextid = itemid;
         return true;
     }
@@ -220,11 +233,7 @@ namespace syn {
 
 	template <typename T>
 	int NamedContainer<T>::getItemIndex(int a_itemId) const {
-		for (int i = 0; i < m_data.size(); i++) {
-			if (m_data[i].first == a_itemId)
-				return i;
-		}
-		return -1;
+		return a_itemId>=m_indices.size() ? -1 : m_indices[a_itemId];
 	}
 
 	template<typename T>

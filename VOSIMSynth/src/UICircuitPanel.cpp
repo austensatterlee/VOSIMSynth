@@ -112,6 +112,8 @@ syn::UICircuitPanel::UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, U
 	onAddUnit_(circ.getUnit(circ.getInputUnitId()).getClassIdentifier(), circ.getInputUnitId());
 	m_inputs = m_unitControls.back();
 	m_inputs->removeChild(m_inputs->m_closeButton);
+	delete m_inputs->m_closeButton;
+	m_inputs->m_closeButton = nullptr;
 	const vector<UIUnitPort*>& inputPorts = m_inputs->getInPorts();
 	for(UIUnitPort* port : inputPorts) {
 		port->setVisible(false);
@@ -119,6 +121,8 @@ syn::UICircuitPanel::UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, U
 	onAddUnit_(circ.getUnit(circ.getOutputUnitId()).getClassIdentifier(), circ.getOutputUnitId());
 	m_outputs = m_unitControls.back();
 	m_outputs->removeChild(m_outputs->m_closeButton);
+	delete m_outputs->m_closeButton;
+	m_outputs->m_closeButton = nullptr;
 	const vector<UIUnitPort*>& outputPorts = m_outputs->getOutPorts();
 	for (UIUnitPort* port : outputPorts) {
 		port->setVisible(false);
@@ -307,7 +311,7 @@ void syn::UICircuitPanel::onDeleteConnection_(int a_fromUnit, int a_fromPort, in
 }
 
 void syn::UICircuitPanel::onAddUnit_(unsigned a_classId, int a_unitId) {
-	UIUnitControl* unitctrl = new DefaultUnitControl(m_window, m_vm, a_unitId);
+	UIUnitControl* unitctrl = m_window->createUnitControl(a_classId, a_unitId);
 	UIUnitControlContainer* unitctrlcontainer = new UIUnitControlContainer(m_window, m_vm, a_unitId, unitctrl);
 	unitctrlcontainer->setRelPos(m_window->cursorPos() - m_pos);
 	addChild(unitctrlcontainer);

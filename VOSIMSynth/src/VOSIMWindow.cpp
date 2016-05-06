@@ -55,6 +55,14 @@ void syn::VOSIMWindow::reset() {
 	m_circuitPanel->reset();
 }
 
+syn::UIUnitControl* syn::VOSIMWindow::createUnitControl(unsigned a_classId, int a_unitId) {
+	if (m_unitControlMap.find(a_classId) != m_unitControlMap.end()) {
+		return m_unitControlMap[a_classId](this, m_vm, a_unitId);
+	} else {
+		return new DefaultUnitControl(this, m_vm, a_unitId);
+	}
+}
+
 LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam) {	
 	Event event;
 	double cpuStartTime, dCpuTime;
@@ -64,11 +72,11 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 		VOSIMWindow* _this = (VOSIMWindow*)GetWindowLongPtr(Handle, GWLP_USERDATA);
 
 		if (_this->m_sfmlWindow) {
-			int mSec = int(1000.0 / 120.0);
+			int mSec = int(1000.0 / 60.0);
 			SetTimer(Handle, 2, mSec, NULL);
 
 			_this->m_sfmlWindow->setActive(true);
-			_this->m_sfmlWindow->setFramerateLimit(60);
+			//_this->m_sfmlWindow->setFramerateLimit(60);
 
 			// Initialize glew
 			glewExperimental = GL_TRUE;
@@ -82,7 +90,11 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 
 			// Setup NanoVG context
 			if (!_this->m_vg) {
-				_this->m_vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES | NVG_DEBUG);
+#ifndef NDEBUG
+				_this->m_vg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_DEBUG);
+#else
+				_this->m_vg = nvgCreateGL3(NVG_STENCIL_STROKES);
+#endif
 			}
 			if (!_this->m_theme) {
 				_this->m_theme = make_shared<Theme>(_this->m_vg);
@@ -117,7 +129,6 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 	case WM_TIMER:
 		glClearColor(255, 200, 200, 255);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-		glViewport(0, 0, _this->getSize()[0], _this->getSize()[1]);
 
 		cpuStartTime = _this->m_timer.getElapsedTime().asSeconds();
 
@@ -125,10 +136,11 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 		_this->m_root->recursiveDraw(_this->m_vg);
 		renderGraph(_this->m_vg, 5, 5, &_this->m_fpsGraph);
 		renderGraph(_this->m_vg, 5 + 200 + 5, 5, &_this->m_cpuGraph);
-		nvgEndFrame(_this->m_vg);
 
 		// Measure the CPU time taken excluding swap buffers (as the swap may wait for GPU)
 		dCpuTime = _this->m_timer.getElapsedTime().asSeconds() - cpuStartTime;
+
+		nvgEndFrame(_this->m_vg);
 
 		updateGraph(&_this->m_fpsGraph, dCpuTime);
 		updateGraph(&_this->m_cpuGraph, dCpuTime);
@@ -149,6 +161,7 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 				_this->m_sfmlWindow->setActive(false);
 				break;
 			case Event::Resized:
+				glViewport(0, 0, _this->getSize()[0], _this->getSize()[1]);
 				break;
 			case Event::LostFocus:
 				break;

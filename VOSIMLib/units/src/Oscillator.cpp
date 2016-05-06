@@ -86,8 +86,7 @@ namespace syn {
 		m_last_phase = m_phase;
     }
 
-	void Oscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
-		
+	void Oscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {		
 		double phase_offset = getParameter(m_pPhaseOffset).getDouble() + a_inputs.getValue(m_iPhaseAdd);
 		m_gain = getParameter(m_pGain).getDouble() * a_inputs.getValue(m_iGainMul);
 		m_bias = 0;
@@ -156,13 +155,13 @@ namespace syn {
 
 	void LFOOscillator::onParamChange_(int a_paramId) {
 	    if(a_paramId==m_pTempoSync) {
-			double normFreq = getParameter(m_pFreq).getNorm();
+			double normFreq = getParameter(m_pFreq).getDouble();
 		    if(getParameter(m_pTempoSync).getBool()) {
 				getParameter_(m_pFreq) = m_syncedFreqParam;
 		    }else {
 				getParameter_(m_pFreq) = m_linFreqParam;
 		    }
-			setParameterNorm(m_pFreq, normFreq);
+			setParameter(m_pFreq, normFreq);
 	    }
     }
 }

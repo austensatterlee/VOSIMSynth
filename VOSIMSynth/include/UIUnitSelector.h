@@ -41,7 +41,7 @@ namespace syn
 		UIUnitSelector(VOSIMWindow* a_window, UnitFactory* a_unitFactory)
 			: UIComponent{a_window}, m_autoWidth(0), m_autoHeight(0), m_currGroup(-1), m_currPrototype(-1), m_highlightedRow(-1), m_unitFactory(a_unitFactory) {}
 
-		Vector2i calcAutoSize() const override;
+		Vector2i calcAutoSize(NVGcontext* a_nvg) const override;
 		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		bool onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) override;

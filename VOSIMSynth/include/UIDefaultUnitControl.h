@@ -50,7 +50,7 @@ namespace syn
 				paramControl->setAutosize(false);
 			}
 		}
-		Vector2i calcAutoSize() const override;
+		Vector2i calcAutoSize(NVGcontext* a_nvg) const override;
 		void onResize() override;
 	protected:
 		void draw(NVGcontext* a_nvg) override;
@@ -58,6 +58,7 @@ namespace syn
 		vector<UITextSlider*> m_paramControls;
 
 		int m_controlHeight = 14;
+		bool m_isSizeDirty = true;
 	};
 }
 #endif

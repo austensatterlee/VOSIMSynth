@@ -38,8 +38,9 @@ namespace syn {
 		UIWindow(VOSIMWindow* a_window, const string& a_title = "Untitled")
 			: UIComponent{ a_window },
 			m_title{ a_title },
-			m_isCollapsed(false), 
-			m_autoWidth(0) {}
+			m_isCollapsed(false),
+			m_titleWidth(0)
+		{}
 
 		~UIWindow() override
 		{};
@@ -51,14 +52,14 @@ namespace syn {
 		void toggleCollapsed();
 		void collapse();
 		void expand();
-		Vector2i calcAutoSize() const override;
+		Vector2i calcAutoSize(NVGcontext* a_nvg) const override;
 	protected:
 		void draw(NVGcontext* a_nvg) override;	
 	protected:
 		string m_title;
 		bool m_isCollapsed;
 		Vector2i m_oldSize;
-		int m_autoWidth;
+		int m_titleWidth;
 	};
 }
 #endif

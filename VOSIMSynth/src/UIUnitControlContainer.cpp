@@ -9,8 +9,7 @@ syn::UIUnitControlContainer::UIUnitControlContainer(VOSIMWindow* a_window, Voice
 	m_inWidth(0),
 	m_outWidth(0)
 {
-	a_unitControl->setRelPos({ 50, theme()->mWindowHeaderHeight });
-	a_unitControl->setAutosize(false);
+	a_unitControl->setRelPos({ 0, theme()->mWindowHeaderHeight });
 	this->addChild(a_unitControl);
 
 	const Unit& unit = m_vm->getUnit(m_unitId);
@@ -32,63 +31,36 @@ syn::UIUnitControlContainer::UIUnitControlContainer(VOSIMWindow* a_window, Voice
 
 	m_closeButton = new UIButton(a_window, "", 0xE729);
 	m_closeButton->setCallback([&]() {this->close(); });
-	m_closeButton->setRelPos({ 1,1 });
 	m_closeButton->setSize({ 25,theme()->mWindowHeaderHeight-4 });
 	m_closeButton->setFontSize(10);
 	addChild(m_closeButton);	
 }
 
-Eigen::Vector2i syn::UIUnitControlContainer::calcAutoSize() const {
+Eigen::Vector2i syn::UIUnitControlContainer::calcAutoSize(NVGcontext* a_nvg) const {
 	int inWidth = 0;
 	int inHeight = 0;
 	for(UIUnitPort* port : m_inPorts) {
-		Vector2i portSize = port->size();
+		Vector2i portSize = port->calcAutoSize(a_nvg);
 		inWidth = MAX(inWidth, portSize[0]);
 		inHeight += portSize[1];
 	}
 	int outWidth = 0;
 	int outHeight = 0;
 	for (UIUnitPort* port : m_outPorts) {
-		Vector2i portSize = port->size();
+		Vector2i portSize = port->calcAutoSize(a_nvg);
 		outWidth = MAX(outWidth, portSize[0]);
 		outHeight += portSize[1];
 	}
-	Vector2i unitCtrlSize = m_unitControl->calcAutoSize();
-	return{ MAX(m_autoWidth+25,outWidth + inWidth + unitCtrlSize[0]),theme()->mWindowHeaderHeight+MAX(outHeight,MAX(unitCtrlSize[1],inHeight)) };
+	Vector2i unitCtrlSize = m_unitControl->calcAutoSize(a_nvg);
+	int autoWidth = m_titleWidth;
+	if(m_closeButton) {
+		autoWidth += m_closeButton->size()[0] + 5;
+	}
+	return{ MAX(autoWidth,outWidth + inWidth + unitCtrlSize[0]),theme()->mWindowHeaderHeight+MAX(outHeight,MAX(unitCtrlSize[1],inHeight)) };
 }
 
 void syn::UIUnitControlContainer::onResize() {
-	const Unit& unit = m_vm->getUnit(m_unitId);
-	m_inWidth = 0;
-	m_outWidth = 0;
-	int portHeight = 0;
-	for (UIUnitPort* port : m_inPorts) {
-		Vector2i portSize = port->calcAutoSize();
-		m_inWidth = MAX(m_inWidth, portSize[0]);
-		portHeight = MAX(portHeight, portSize[1]);
-	}
-	for (UIUnitPort* port : m_outPorts) {
-		Vector2i portSize = port->calcAutoSize();
-		m_outWidth = MAX(m_outWidth, portSize[0]);
-		portHeight = MAX(portHeight, portSize[1]);
-	}
-	Vector2i unitCtrlSize = m_unitControl->calcAutoSize();
-	m_unitControl->setRelPos({ m_inWidth, theme()->mWindowHeaderHeight });
-	m_unitControl->setSize({ unitCtrlSize[0],size()[1] });
-
-	int nIn = unit.getNumInputs();
-	int nOut = unit.getNumOutputs();
-	for (int i = 0; i < nIn; i++) {
-		m_inPorts[i]->setRelPos({ 1,theme()->mWindowHeaderHeight + i * portHeight });
-		m_inPorts[i]->setSize({ m_inWidth,portHeight });
-	}
-
-	for (int i = 0; i < nOut; i++) {
-		m_outPorts[i]->setRelPos({ size()[0] - m_outWidth, theme()->mWindowHeaderHeight+i * portHeight });
-		m_outPorts[i]->setSize({ m_outWidth,portHeight });
-	}
-
-
+	m_isSizeDirty = true;	
 }
 
 syn::UIUnitPort* syn::UIUnitControlContainer::getSelectedInPort(const Vector2i& a_pt) const {
@@ -115,13 +87,50 @@ bool syn::UIUnitControlContainer::onMouseDown(const Vector2i& a_relCursor, const
 	return true;
 }
 
-void syn::UIUnitControlContainer::close() {
+void syn::UIUnitControlContainer::close() const {
 	m_window->getCircuitPanel()->requestDeleteUnit(m_unitId);
 }
 
 void syn::UIUnitControlContainer::draw(NVGcontext* a_nvg) {
 	UIWindow::draw(a_nvg);
+	if(m_isSizeDirty) {
+		handleResize_(a_nvg);
+		m_isSizeDirty = false;
+	}
+}
 
+void syn::UIUnitControlContainer::handleResize_(NVGcontext* a_nvg) {
+	const Unit& unit = m_vm->getUnit(m_unitId);
+	m_inWidth = 0;
+	m_outWidth = 0;
+	int portHeight = 0;
+	for (UIUnitPort* port : m_inPorts) {
+		Vector2i portSize = port->calcAutoSize(a_nvg);
+		m_inWidth = MAX(m_inWidth, portSize[0]);
+		portHeight = MAX(portHeight, portSize[1]);
+	}
+	for (UIUnitPort* port : m_outPorts) {
+		Vector2i portSize = port->calcAutoSize(a_nvg);
+		m_outWidth = MAX(m_outWidth, portSize[0]);
+		portHeight = MAX(portHeight, portSize[1]);
+	}
+	m_unitControl->setRelPos({ m_inWidth, theme()->mWindowHeaderHeight });
+
+	int nIn = unit.getNumInputs();
+	int nOut = unit.getNumOutputs();
+	for (int i = 0; i < nIn; i++) {
+		m_inPorts[i]->setRelPos({ 1,theme()->mWindowHeaderHeight + i * portHeight });
+		m_inPorts[i]->setSize({ m_inWidth,portHeight });
+	}
+
+	for (int i = 0; i < nOut; i++) {
+		m_outPorts[i]->setRelPos({ size()[0] - m_outWidth, theme()->mWindowHeaderHeight + i * portHeight });
+		m_outPorts[i]->setSize({ m_outWidth,portHeight });
+	}
+
+	if(m_closeButton) {
+		m_closeButton->setRelPos({ size()[0] - m_closeButton->size()[0],1 });
+	}
 }
 
 bool syn::UIUnitPort::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
@@ -150,7 +159,7 @@ bool syn::UIUnitPort::onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_d
 	return true;
 }
 
-Eigen::Vector2i syn::UIUnitPort::calcAutoSize() const {
+Eigen::Vector2i syn::UIUnitPort::calcAutoSize(NVGcontext* a_nvg) const {
 	return{ m_autoWidth, m_textHeight };
 }
 

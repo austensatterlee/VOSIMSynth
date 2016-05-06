@@ -46,15 +46,14 @@ void syn::UIWindow::expand() {
 	}
 }
 
-Eigen::Vector2i syn::UIWindow::calcAutoSize() const {
-	Vector2i size = this->size();	
-	size[0] = MAX(size[0], m_autoWidth);
+Eigen::Vector2i syn::UIWindow::calcAutoSize(NVGcontext* a_nvg) const {
+	Vector2i autoSize{ m_titleWidth,theme()->mWindowHeaderHeight };
 	for(shared_ptr<UIComponent> child : m_children) {
 		if (child->visible()) {
-			size = size.cwiseMax(child->size()+child->getRelPos()+Vector2i::Ones()*5);
+			autoSize = autoSize.cwiseMax(child->size()+child->getRelPos()+Vector2i::Ones()*5);
 		}
 	}
-	return size;
+	return autoSize;
 }
 
 void syn::UIWindow::draw(NVGcontext* a_nvg) {
@@ -112,18 +111,24 @@ void syn::UIWindow::draw(NVGcontext* a_nvg) {
 
 		nvgFontSize(a_nvg, 16.0f);
 		nvgFontFace(a_nvg, "sans-bold");
-		nvgTextAlign(a_nvg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+		nvgTextAlign(a_nvg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
 
 		nvgFontBlur(a_nvg, 1);
 		nvgFillColor(a_nvg, theme()->mDropShadow);
-		nvgText(a_nvg, 0 + m_size.x() / 2,
-			0 + hh / 2, m_title.c_str(), nullptr);
+		nvgText(a_nvg, 2, 0 + hh / 2, m_title.c_str(), nullptr);
 
 		nvgFontBlur(a_nvg, 0);
 		nvgFillColor(a_nvg, m_focused ? theme()->mWindowTitleFocused
 			                    : theme()->mWindowTitleUnfocused);
-		m_autoWidth = MAX(m_autoWidth,10+nvgText(a_nvg, 0 + m_size.x() / 2, 0 + hh / 2 - 1,
-		        m_title.c_str(), nullptr));
+		nvgText(a_nvg, 2, 0 + hh / 2 - 1, m_title.c_str(), nullptr);
+
+		// Calculate title width
+		float bounds[4];
+		nvgSave(a_nvg);
+		nvgTextAlign(a_nvg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+		nvgTextBounds(a_nvg, 0, 0, m_title.c_str(), nullptr, bounds);
+		nvgRestore(a_nvg);
+		m_titleWidth = 2 + bounds[2] - bounds[0];
 	}
 
 	nvgRestore(a_nvg);

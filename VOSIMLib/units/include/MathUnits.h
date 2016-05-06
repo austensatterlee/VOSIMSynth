@@ -444,10 +444,12 @@ namespace syn {
 		{
 			addInput_("in1");
 			addInput_("in2");
-			addInput_("bal");
+			addInput_("bal1");
+			addInput_("bal2");
 			addOutput_("out1");
 			addOutput_("out2");
-			m_pBalance = addParameter_({ "balance",0.0,1.0,0.5 });
+			m_pBalance1 = addParameter_({ "bal1",0.0,1.0,0.5 });
+			m_pBalance2 = addParameter_({ "bal2",0.0,1.0,0.5 });
 		}
 
 		PanningUnit(const PanningUnit& a_rhs) :
@@ -460,13 +462,15 @@ namespace syn {
 		{
 			double in1 = a_inputs.getValue(0);
 			double in2 = a_inputs.getValue(1);
-			double balance = getParameter(m_pBalance).getDouble()+a_inputs.getValue(2);
-			balance = CLAMP(balance, 0.0, 1.0);
-			a_outputs.setChannel(0,     balance*in1 + (1-balance)*in2);
-			a_outputs.setChannel(1, (1-balance)*in1 +     balance*in2);
+			double bal1 = getParameter(m_pBalance1).getDouble()+a_inputs.getValue(2);
+			double bal2 = getParameter(m_pBalance2).getDouble()+a_inputs.getValue(3);
+			bal1 = CLAMP(bal1, 0.0, 1.0);
+			bal2 = CLAMP(bal2, 0.0, 1.0);
+			a_outputs.setChannel(0,      bal1 *in1  + bal2*in2);
+			a_outputs.setChannel(1, (1 - bal1)*in1  + (1-bal2)*in2);
 		};
 	protected:
-		int m_pBalance;
+		int m_pBalance1, m_pBalance2;
 	private:
 		string _getClassName() const override
 		{

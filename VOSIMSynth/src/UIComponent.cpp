@@ -30,7 +30,7 @@ namespace syn
 		nvgTranslate(a_nvg, -m_pos[0], -m_pos[1]);
 
 		if(m_autoSize) {
-			setSize(calcAutoSize());
+			setSize(calcAutoSize(a_nvg));
 		}
 	}
 
@@ -89,12 +89,11 @@ namespace syn
 		return contains(a_pt) ? this : nullptr;
 	}
 
-	Vector2i UIComponent::calcAutoSize() const {
+	Vector2i UIComponent::calcAutoSize(NVGcontext* a_nvg) const {
 		return m_size;
 	}
 
-	bool UIComponent::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
-			
+	bool UIComponent::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {			
 		return false;
 	}
 

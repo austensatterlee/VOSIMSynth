@@ -30,6 +30,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "fft.h"
 #include <array>
 #include <vector>
+#include "UIUnitControl.h"
+#include "UIDefaultUnitControl.h"
 
 using std::vector;
 using std::array;
@@ -83,6 +85,30 @@ namespace syn {
 		vector<array<int,2> > m_outBufferExtrema;
 		vector<double> m_window;
 		bool m_isActive;
+	};
+
+	class SpectroscopeUnitControl : public UIUnitControl
+	{
+	public:
+		SpectroscopeUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId);
+
+		Vector2i toPixCoords(const Vector2f& a_sample);
+
+		Vector2i calcAutoSize(NVGcontext* a_nvg) const override;
+
+		void onResize() override;
+
+	protected:
+		void draw(NVGcontext* a_nvg) override;
+
+	private:
+		DefaultUnitControl* m_defCtrl;
+		UIResizeHandle* m_resizeHandle;
+
+		Vector2f m_yBounds;
+		Vector2i m_screenPos;
+		Vector2i m_screenSize;
+		vector<Color> m_colors = { { 255,255,255,255 },{ 255,128,128,255 } };
 	};
 
 }
