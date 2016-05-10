@@ -1,11 +1,12 @@
 # Doxygen
 doc/
-_build*/
 
 # IDEA
 .idea/
 
 # Custom
+_*/
+_*.*
 *.bak
 *.pdf
 *.pyc
@@ -14,3 +15,4 @@ _build*/
 
 inject_license.py
 changelist.txt
+

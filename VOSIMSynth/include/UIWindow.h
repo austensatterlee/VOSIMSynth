@@ -29,37 +29,40 @@ Copyright 2016, Austen Satterlee
 #define __UIWINDOW__
 #include "nanovg.h"
 #include <UIComponent.h>
+#include "UILabel.h"
+#include "UICell.h"
 
 namespace syn {
 	class UIWindow : public UIComponent
 	{
 	public:
 
-		UIWindow(VOSIMWindow* a_window, const string& a_title = "Untitled")
-			: UIComponent{ a_window },
-			m_title{ a_title },
-			m_isCollapsed(false),
-			m_titleWidth(0)
-		{}
+		UIWindow(VOSIMWindow* a_window, const string& a_title = "Untitled");
 
-		~UIWindow() override
-		{};
+		void addChildToHeader(UIComponent* a_newChild) const;
+
+		void addChildToBody(UIComponent* a_newChild) const;
 
 		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 
-		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+
+		void notifyChildResized(UIComponent* a_child) override;
 
 		void toggleCollapsed();
 		void collapse();
 		void expand();
-		Vector2i calcAutoSize(NVGcontext* a_nvg) const override;
 	protected:
-		void draw(NVGcontext* a_nvg) override;	
+		void draw(NVGcontext* a_nvg) override;
+	private:
+		void _onResize() override;
 	protected:
-		string m_title;
+		UILabel* m_title;
+		UICol* m_col;
+		UIRow* m_bodyRow;
+		UIRow* m_headerRow;
 		bool m_isCollapsed;
-		Vector2i m_oldSize;
-		int m_titleWidth;
+		Vector2i m_oldSize, m_oldMinSize;
 	};
 }
 #endif

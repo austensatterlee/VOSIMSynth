@@ -69,10 +69,13 @@ namespace syn {
 		OscilloscopeUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId);
 
 		Vector2i toPixCoords(const Vector2f& a_sample);
-		Vector2i calcAutoSize(NVGcontext* a_nvg) const override;
-		void onResize() override;
+
 	protected:
 		void draw(NVGcontext* a_nvg) override;
+
+	private:
+		void _onResize() override;
+
 	private:
 		DefaultUnitControl* m_defCtrl;
 		UIResizeHandle* m_resizeHandle;

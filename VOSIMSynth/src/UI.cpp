@@ -72,6 +72,33 @@ namespace syn {
 		return result;
 	}
 
+Color colorFromHSL(float H, float S, float L) {
+	float chroma = (1 - abs(2 * L - 1)) * S;
+	float Hprime = fmod(H, 1.0) * 6.0;
+	float X = chroma * (1 - abs(fmod(Hprime, 2.0f) - 1));
+	Vector3f rgb;
+	if (Hprime < 1) {
+		rgb = { chroma,X,0 };
+	}
+	else if (Hprime < 2) {
+		rgb = { X,chroma,0 };
+	}
+	else if (Hprime < 3) {
+		rgb = { 0,chroma,X };
+	}
+	else if (Hprime < 4) {
+		rgb = { 0,X,chroma };
+	}
+	else if (Hprime < 5) {
+		rgb = { X,0,chroma };
+	}
+	else {
+		rgb = { chroma,0,X };
+	}
+	rgb += Vector3f::Ones() * (L - 0.5f * chroma);
+	return Color(rgb);
+}
+
 #if !defined(__APPLE__)
 	std::string file_dialog(const std::vector<std::pair<std::string, std::string>> &filetypes, bool save) {
 #define FILE_DIALOG_MAX_BUFFER 1024

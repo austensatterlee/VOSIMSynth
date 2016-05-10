@@ -11,7 +11,7 @@ namespace syn {
 		m_fontSize = theme()->mButtonFontSize;
 	}
 
-	bool UIButton::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+	UIComponent* UIButton::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
 		UIComponent::onMouseDown(a_relCursor, a_diffCursor);
 
 		if (mEnabled) {
@@ -54,9 +54,9 @@ namespace syn {
 			
 			if (pushedBackup != mPushed && mChangeCallback)
 				mChangeCallback(mPushed);
-			return true;
+			return this;
 		}
-		return false;
+		return nullptr;
 	}
 
 	bool UIButton::onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {

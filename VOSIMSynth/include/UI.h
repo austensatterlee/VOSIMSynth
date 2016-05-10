@@ -120,6 +120,14 @@ namespace syn
 		return reinterpret_cast<const NVGcolor &>(*this->data());
 	}
 
+	/**
+	 * Converts an HSL value to an RGB color
+	 * \param H A hue value in the range (0,1)
+	 * \param S A saturation value in the range (0,1)
+	 * \param L A lightness value in the range (0,1)
+	 */
+	Color colorFromHSL(float H, float S, float L);
+
 	/// Determine whether an icon ID is a texture loaded via nvgImageIcon
 	inline bool nvgIsImageIcon(int value) { return value < 1024; }
 

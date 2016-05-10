@@ -20,6 +20,16 @@ namespace syn {
 		int mWindowDropShadowSize;
 		int mButtonCornerRadius;
 
+		/* Text slider parameters */
+		int mTextSliderFontSize;
+
+		/* Port parameters */
+		int mPortFontSize;
+
+		/* Unit selector */
+		int mUnitSelectorProtoFontSize;
+		int mUnitSelectorGroupFontSize;
+
 		/* Generic colors */
 		Color mDropShadow;
 		Color mTransparent;

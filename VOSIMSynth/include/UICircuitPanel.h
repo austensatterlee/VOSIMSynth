@@ -33,6 +33,8 @@ Copyright 2016, Austen Satterlee
 #include <VoiceManager.h>
 #include "UIUnitControlContainer.h"
 #include "UIUnitSelector.h"
+#include <eigen/src/Core/util/ForwardDeclarations.h>
+#include <eigen/src/Core/util/ForwardDeclarations.h>
 
 namespace syn {
 
@@ -43,10 +45,9 @@ namespace syn {
 			: UIComponent{a_window}, m_fromUnit(a_fromUnit), m_fromPort(a_fromPort), m_toUnit(a_toUnit), m_toPort(a_toPort) {}
 
 		bool contains(const Vector2i& a_pt) override;
-		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		bool onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) override;
+		void onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) override;
 		bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		int fromUnit() const { return m_fromUnit; }
 		int fromPort() const { return m_fromPort; }
 		int toUnit() const { return m_toUnit; }
@@ -67,14 +68,13 @@ namespace syn {
 	public:
 		UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, UnitFactory* a_unitFactory);
 		bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		bool onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) override;
 		UIUnitControlContainer* getUnit(const Vector2i& a_pt) const;
 		UIUnitControlContainer* findUnit(int a_unitId) const;
 		void requestAddConnection(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);
 		void requestDeleteConnection(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);	
 		void requestDeleteUnit(int a_unitId);
-		void onResize() override;
 		UIWire* getSelectedWire() const { return m_selectedWire; }
 		void setSelectedWire(UIWire* a_wire);
 		void clearSelectedWire(UIWire* a_wire);
@@ -86,6 +86,8 @@ namespace syn {
 		void onDeleteConnection_(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);
 		void onAddUnit_(unsigned a_classId, int a_unitId);
 		void requestAddUnit_(unsigned a_classId);
+	private:
+		void _onResize() override;
 	private:		
 		vector<UIUnitControlContainer*> m_unitControls;
 		vector<UIWire*> m_wires;

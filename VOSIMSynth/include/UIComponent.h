@@ -36,10 +36,10 @@
 #include "nanovg.h"
 #include <Theme.h>
 #include "VOSIMWindow.h"
+#include <eigen/src/Core/util/ForwardDeclarations.h>
 
 namespace syn
 {
-
 	class UIComponent
 	{
 		friend class VOSIMWindow;
@@ -51,88 +51,113 @@ namespace syn
 		virtual ~UIComponent() {}
 
 		void recursiveDraw(NVGcontext* a_nvg);
-		
+
 		void addChild(UIComponent* a_newChild);
+		void addChild(shared_ptr<UIComponent> a_newChild);
 
 		bool removeChild(UIComponent* a_child);
 		bool removeChild(int a_index);
 
 		shared_ptr<UIComponent> getChild(int i);
 		shared_ptr<UIComponent> getChild(UIComponent* a_comp);
+		int getChildIndex(UIComponent* a_comp);
 
-		int numChildren() const {return m_children.size();}
+		int numChildren() const;
 
-		vector<shared_ptr<UIComponent> >& children() { return m_children; }
+		vector<shared_ptr<UIComponent>>& children();
 
-		UIComponent* parent() const {return m_parent;}
+		UIComponent* parent() const;
 
 		virtual bool contains(const Vector2i& a_pt);
 
 		UIComponent* findChild(const Vector2i& a_pt);
+		UIComponent* findChildRecursive(const Vector2i& a_pt);
 
-		Vector2i getRelPos() const {return m_pos;}
+		Vector2i getRelPos() const;
 
-		void setRelPos(const Vector2i& a_pos) {m_pos = a_pos;}
-		
-		Vector2i getAbsPos() const {return m_parent ? m_parent->getAbsPos() + getRelPos() : getRelPos();}
-		Vector2i getAbsCenter() const { return getAbsPos() + size() / 2.0; }
+		void setRelPos(const Vector2i& a_pos);
 
-		void move(const Vector2i& a_dist) {m_pos += a_dist;}
+		Vector2i getAbsPos() const;
 
-		Vector2i size() const { return m_size; }
+		Vector2i getAbsCenter() const;
 
-		void setSize(const Vector2i& a_size) { m_size = a_size; onResize(); }
+		void move(const Vector2i& a_dist);
 
-		void grow(const Vector2i& a_amt) { m_size += a_amt; onResize(); }
+		Vector2i size() const;
 
-		shared_ptr<Theme> theme() const {return m_window->theme();}
+		Vector2i minSize() const;
 
-		bool visible() const {return m_visible;}
+		Vector2i maxSize() const;
 
-		void setVisible(bool a_visible) {m_visible = a_visible;}
+		/**
+		 * Attempts to set the component's size, obeying the component's min and max size constraints.
+		 * To leave a dimensions the same, set it to -1.
+		 */
+		void setSize(const Vector2i& a_size);
 
-		void setAutosize(bool a_autosize) { m_autoSize = a_autosize; }
+		void grow(const Vector2i& a_amt);
 
-		virtual Vector2i calcAutoSize(NVGcontext* a_nvg) const;
+		shared_ptr<Theme> theme() const;
+
+		bool visible() const;
+
+		void setVisible(bool a_visible);
+
 		virtual bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
 		virtual bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
-		virtual bool onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering);
-		virtual bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
+		virtual void onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering);
+		virtual UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
 		virtual bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
 		virtual bool onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt);
-		virtual void onResize() {};
-		virtual void onFocusEvent(bool a_isFocused);
 
+		virtual void notifyChildResized(UIComponent* a_child) {};
+
+		virtual void onFocusEvent(bool a_isFocused);
 
 	protected:
 		virtual void draw(NVGcontext* a_nvg) {};
+
+		/**
+		* Sets minimum size constraint. To unconstrain a dimension, set it to a negative number.
+		*/
+		void setMinSize_(const Vector2i& a_minSize);
+
+		/**
+		* Sets maximum size constraint. To unconstrain a dimension, set it to a negative number.
+		*/
+		void setMaxSize_(const Vector2i& a_maxSize);
+	private:
+		virtual void _onAddChild(shared_ptr<UIComponent> a_newchild) {};
+		virtual void _onRemoveChild() {};
+		virtual void _onResize() {};
 
 	protected:
 		UIComponent* m_parent;
 		VOSIMWindow* m_window;
 		vector<shared_ptr<UIComponent>> m_children;
 
-		bool m_visible, m_focused, m_hovered, m_autoSize;
+		bool m_visible, m_focused, m_hovered;
 		Vector2i m_pos, m_size;
+		Vector2i m_minSize, m_maxSize;
+	private:
+		Vector2i m_visibleSize;
 	};
 
 	class UIResizeHandle : public UIComponent
 	{
 	public:
 		UIResizeHandle(VOSIMWindow* a_window)
-			: UIComponent{a_window} {}
-
-		Vector2i calcAutoSize(NVGcontext* a_nvg) const override {
-			return{ 10,10 };
+			: UIComponent{a_window} {
+			setMinSize_({10,10});
 		}
 
-		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override { 
+		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override {
 			m_dragCallback(a_relCursor, a_diffCursor);
 			return true;
 		}
 
-		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override {
-			return true;
+		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override {
+			return this;
 		}
 
 		void setDragCallback(const std::function<void(const Vector2i&, const Vector2i&)>& a_callback) {
@@ -142,18 +167,18 @@ namespace syn
 	protected:
 		void draw(NVGcontext* a_nvg) override {
 			nvgBeginPath(a_nvg);
-			nvgStrokeColor(a_nvg, Color(Vector3i{ 255,255,255 }));
+			nvgStrokeColor(a_nvg, Color(Vector3i{255,255,255}));
 			nvgMoveTo(a_nvg, 0.0f, size()[1]);
 			nvgLineTo(a_nvg, size()[0], 0.0f);
-			nvgMoveTo(a_nvg, size()[0]/3.0f, size()[1]);
-			nvgLineTo(a_nvg, size()[0], size()[1]/3.0f);
+			nvgMoveTo(a_nvg, size()[0] / 3.0f, size()[1]);
+			nvgLineTo(a_nvg, size()[0], size()[1] / 3.0f);
 			nvgMoveTo(a_nvg, size()[0] * 2.0f / 3.0f, size()[1]);
 			nvgLineTo(a_nvg, size()[0], size()[1] * 2.0f / 3.0f);
 			nvgStroke(a_nvg);
 		}
+
 	private:
 		std::function<void(const Vector2i& a_relCursor, const Vector2i& a_diffCursor)> m_dragCallback;
 	};
 };
 #endif
-

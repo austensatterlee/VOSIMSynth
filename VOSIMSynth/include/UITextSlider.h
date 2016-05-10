@@ -35,19 +35,11 @@ namespace syn
 	class UITextSlider : public UIComponent
 	{	
 	public:
-		UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId) :
-			UIComponent{ a_window },
-			m_value(0.0),
-			m_vm(a_vm),
-			m_unitId(a_unitId),
-			m_paramId(a_paramId),
-			m_autoWidth(0)
-		{}
+		UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId);
 
 		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		bool onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) override;
-		Vector2i calcAutoSize(NVGcontext* a_nvg) const override;
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 	private:
@@ -55,8 +47,6 @@ namespace syn
 		VoiceManager* m_vm;
 		int m_unitId;
 		int m_paramId;
-
-		int m_autoWidth;
 	};
 }
 #endif

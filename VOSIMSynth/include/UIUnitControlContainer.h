@@ -31,18 +31,17 @@ Copyright 2016, Austen Satterlee
 #include <VoiceManager.h>
 #include "UIUnitControl.h"
 #include "UIButton.h"
+#include "UICell.h"
 
 namespace syn
 {
 	class UIUnitPort : public UIComponent
 	{
 	public:
-		UIUnitPort(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_portNum, bool a_isInput)
-			: UIComponent{ a_window }, m_vm(a_vm), m_unitId(a_unitId), m_portNum(a_portNum), m_isInput(a_isInput),m_autoWidth(0) {}
+		UIUnitPort(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_portNum, bool a_isInput);
 		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		Vector2i calcAutoSize(NVGcontext* a_nvg) const override;
 		int getUnitId() const { return m_unitId; }
 		int getPortId() const { return m_portNum; }
 		bool isInput() const { return m_isInput; }
@@ -53,11 +52,10 @@ namespace syn
 		int m_unitId;
 		int m_portNum;
 		bool m_isInput;
-		int m_autoWidth;
 
 		bool m_isDragging = false;
 
-		int m_textHeight = 14;
+		int m_textHeight = 12;
 	};
 
 	class UIUnitControlContainer : public UIWindow
@@ -65,18 +63,13 @@ namespace syn
 	friend class UICircuitPanel;
 	public:
 		UIUnitControlContainer(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, UIUnitControl* a_unitControl);
-		Vector2i calcAutoSize(NVGcontext* a_nvg) const override;
-		void onResize() override;
 		int getUnitId() const { return m_unitId; }
 		UIUnitPort* getSelectedInPort(const Vector2i& a_relPos) const;
 		UIUnitPort* getSelectedOutPort(const Vector2i& a_relPos) const;
 		const vector<UIUnitPort*>& getInPorts() const { return m_inPorts; }
 		const vector<UIUnitPort*>& getOutPorts() const { return m_outPorts; }
-		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		void close() const;
-	protected:
-		void draw(NVGcontext* a_nvg) override;
-		void handleResize_(NVGcontext* a_nvg);
 	protected:
 		VoiceManager* m_vm;
 		int m_unitId;
@@ -84,11 +77,9 @@ namespace syn
 		vector<UIUnitPort*> m_inPorts;
 		vector<UIUnitPort*> m_outPorts;
 		UIButton* m_closeButton;
-
-		int m_inWidth;
-		int m_outWidth;
-
-		bool m_isSizeDirty = true;
+		
+		UIRow* m_row;
+		UICol* m_cols[3];
 	};
 
 }

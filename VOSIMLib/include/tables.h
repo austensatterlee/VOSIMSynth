@@ -92,12 +92,12 @@ namespace syn
 	};
 
 	/*::lut_defs::*/	
-	const BlimpTable lut_blimp_table_offline(BLIMP_TABLE_OFFLINE, 32833, 513, 128);
+	const BlimpTable lut_blimp_table_offline(BLIMP_TABLE_OFFLINE, 525313, 513, 2048);
 	const BlimpTable lut_blimp_table_online(BLIMP_TABLE_ONLINE, 11265, 11, 2048);
 	const LookupTable lut_pitch_table(PITCH_TABLE, 256, -128, 128, false);
 	const ResampledLookupTable lut_bl_saw(BL_SAW, 2048, lut_blimp_table_online, lut_blimp_table_offline);
 	const LookupTable lut_sin(SIN, 128, 0, 1, true);
-	const LookupTable lut_db_table(DB_TABLE, 2048, -120, 0, false);
+	const LookupTable lut_db_table(DB_TABLE, 256, -90, 0, false);
 	/*::/lut_defs::*/
 
 	/**

@@ -30,8 +30,6 @@ Copyright 2016, Austen Satterlee
 #include "nanovg.h"
 #include "UIComponent.h"
 #include "UnitFactory.h"
-#include <eigen/src/Core/util/ForwardDeclarations.h>
-#include <eigen/src/Core/util/ForwardDeclarations.h>
 
 namespace syn
 {
@@ -41,15 +39,14 @@ namespace syn
 		UIUnitSelector(VOSIMWindow* a_window, UnitFactory* a_unitFactory)
 			: UIComponent{a_window}, m_autoWidth(0), m_autoHeight(0), m_currGroup(-1), m_currPrototype(-1), m_highlightedRow(-1), m_unitFactory(a_unitFactory) {}
 
-		Vector2i calcAutoSize(NVGcontext* a_nvg) const override;
-		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		bool onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) override;
 		int selectedGroup() const { return m_currGroup; }
 		int selectedPrototype() const { return m_currPrototype; }
 		string selectedPrototypeName() const { return m_currPrototypeName; }
 		void setSelectedGroup(int a_group) { m_currGroup = a_group; }
 		void setSelectedPrototype(int a_proto) { m_currPrototype = a_proto; }
+		int highlightedRow() const { return m_hovered ? m_highlightedRow : -1; }
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 	private:
@@ -58,7 +55,6 @@ namespace syn
 		string m_currPrototypeName;
 		int m_highlightedRow;
 
-		float m_fontSize = 16;
 		int m_indentAmt = 5;
 		UnitFactory* m_unitFactory;
 	};

@@ -28,6 +28,7 @@ Copyright 2016, Austen Satterlee
 #ifndef __UIDEFAULTUNITCONTROL__
 #define __UIDEFAULTUNITCONTROL__
 #include "UIUnitControl.h"
+#include "UITextSlider.h"
 
 namespace syn
 {
@@ -36,28 +37,17 @@ namespace syn
 	class DefaultUnitControl : public UIUnitControl
 	{
 	public:
-		DefaultUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId)
-			: UIUnitControl{ a_window, a_vm, a_unitId }
-		{
-			const Unit&	unit = a_vm->getUnit(a_unitId);
-			int nParams = unit.getNumParameters();
-			for (int i = 0; i<nParams; i++) {
-				UITextSlider* paramControl = new UITextSlider(m_window, m_vm, m_unitId, i);
-				addChild(paramControl);
-				m_paramControls.push_back(paramControl);
-				paramControl->setSize({ 0,m_controlHeight });
-				paramControl->setRelPos({ 0,i*m_controlHeight });
-				paramControl->setAutosize(false);
-			}
-		}
-		Vector2i calcAutoSize(NVGcontext* a_nvg) const override;
-		void onResize() override;
+		DefaultUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId);
+
 	protected:
 		void draw(NVGcontext* a_nvg) override;
+
+	private:
+		void _onResize() override;
+
 	private:
 		vector<UITextSlider*> m_paramControls;
 
-		int m_controlHeight = 14;
 		bool m_isSizeDirty = true;
 	};
 }

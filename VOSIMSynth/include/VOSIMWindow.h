@@ -28,8 +28,6 @@ Copyright 2016, Austen Satterlee
 #ifndef __MAINWINDOW__
 #define __MAINWINDOW__
 
-//#define DRAW_COMPONENT_BOUNDS
-
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 
@@ -105,6 +103,7 @@ namespace syn
 		shared_ptr<Theme> theme() const { return m_theme; }
 		UICircuitPanel* getCircuitPanel() const { return m_circuitPanel; }
 		UnitFactory* getUnitFactory() const { return m_unitFactory; }
+		NVGcontext* getContext() const { return m_vg; }
 		UIComponent* getFocused() const { return m_focused; }
 		void clearFocus() { setFocus(nullptr); }
 

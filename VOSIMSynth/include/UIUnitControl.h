@@ -29,7 +29,6 @@ Copyright 2016, Austen Satterlee
 #define __UIUNITCONTROL__
 #include "UIComponent.h"
 #include <VoiceManager.h>
-#include "UITextSlider.h"
 
 namespace syn
 {

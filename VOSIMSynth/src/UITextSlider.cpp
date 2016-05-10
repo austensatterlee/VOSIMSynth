@@ -1,5 +1,29 @@
 #include "UITextSlider.h"
 
+syn::UITextSlider::UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId):
+	UIComponent{a_window},
+	m_value(0.0),
+	m_vm(a_vm),
+	m_unitId(a_unitId),
+	m_paramId(a_paramId) 
+{
+	string paramName = m_vm->getUnit(m_unitId).getParameter(m_paramId).getName();
+	string valueStr = m_vm->getUnit(m_unitId).getParameter(m_paramId).getString();
+	int textWidth = 0;
+	float bounds[4];
+	NVGcontext* nvg = m_window->getContext();
+	nvgFontSize(nvg, theme()->mTextSliderFontSize);
+	nvgTextAlign(nvg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+	// Calculate size of name text
+	nvgTextBounds(nvg, 0, 0, paramName.c_str(), NULL, bounds);
+	textWidth += 2 + bounds[2] - bounds[0];
+	// Calculate size of value text
+	nvgTextBounds(nvg, 0, 0, valueStr.c_str(), NULL, bounds);
+	textWidth += 2 + bounds[2] - bounds[0];
+
+	setMinSize_(Vector2i{ textWidth, -1});
+}
+
 bool syn::UITextSlider::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
 		const UnitParameter& param = m_vm->getUnit(m_unitId).getParameter(m_paramId);
@@ -31,8 +55,8 @@ bool syn::UITextSlider::onMouseDrag(const Vector2i& a_relCursor, const Vector2i&
 	return false;
 }
 
-bool syn::UITextSlider::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
-	return true;
+syn::UIComponent* syn::UITextSlider::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+	return this;
 }
 
 bool syn::UITextSlider::onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) {
@@ -73,17 +97,12 @@ bool syn::UITextSlider::onMouseScroll(const Vector2i& a_relCursor, const Vector2
 	return true;
 }
 
-Eigen::Vector2i syn::UITextSlider::calcAutoSize(NVGcontext* a_nvg) const {
-	return{ m_autoWidth, size()[1] };
-}
-
 void syn::UITextSlider::draw(NVGcontext* a_nvg) {
 	int textWidth = 0;
 	string paramName = m_vm->getUnit(m_unitId).getParameter(m_paramId).getName();
 	string valueStr = m_vm->getUnit(m_unitId).getParameter(m_paramId).getString();
 	m_value = m_vm->getUnit(m_unitId).getParameter(m_paramId).getNorm();
 
-	nvgSave(a_nvg);
 	nvgBeginPath(a_nvg);
 	nvgFillColor(a_nvg, Color(Vector3f{ 0.0f,0.0f,0.0f }));
 	nvgRect(a_nvg, 0, 0, size()[0], size()[1]);
@@ -96,18 +115,11 @@ void syn::UITextSlider::draw(NVGcontext* a_nvg) {
 	nvgFill(a_nvg);
 
 	nvgFillColor(a_nvg, Color(Vector3f{ 1.0f,1.0f,1.0f }));
-	nvgFontSize(a_nvg, (float)size()[1]);
+	nvgFontSize(a_nvg, theme()->mTextSliderFontSize);
 	nvgTextAlign(a_nvg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-	textWidth += 5 + (int)nvgText(a_nvg, 0, 0, paramName.c_str(), NULL);
+	nvgText(a_nvg, 0, 0, paramName.c_str(), NULL);
 
 	nvgTextAlign(a_nvg, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
-	float bounds[4] = { 0,0,0,0 };
-	nvgTextBounds(a_nvg, 0, 0, valueStr.c_str(), NULL, bounds);
-	int textPosX = size()[0];
-	nvgText(a_nvg, textPosX, 0, valueStr.c_str(), NULL);
-	textWidth += 5 + bounds[2] - bounds[0];
+	nvgText(a_nvg, size()[0], 0, valueStr.c_str(), NULL);
 
-	nvgRestore(a_nvg);
-
-	m_autoWidth = textWidth;
 }

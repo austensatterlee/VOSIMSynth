@@ -93,7 +93,7 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 #ifndef NDEBUG
 				_this->m_vg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_DEBUG);
 #else
-				_this->m_vg = nvgCreateGL3(NVG_STENCIL_STROKES);
+				_this->m_vg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_ANTIALIAS);
 #endif
 			}
 			if (!_this->m_theme) {
@@ -127,10 +127,10 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 	case WM_PAINT:
 		break;
 	case WM_TIMER:
-		glClearColor(255, 200, 200, 255);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
 		cpuStartTime = _this->m_timer.getElapsedTime().asSeconds();
+		Color bgColor = colorFromHSL(0.0, 0.5+0.5*sin(cpuStartTime), 0.25);
+		glClearColor(bgColor.r(), bgColor.g(), bgColor.b(), 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		nvgBeginFrame(_this->m_vg, _this->getSize()[0], _this->getSize()[1], 1.0);
 		_this->m_root->recursiveDraw(_this->m_vg);
@@ -191,10 +191,8 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 				_this->m_lastClick = {event.mouseButton, _this->m_timer.getElapsedTime()};
 				_this->m_isClicked = true;
 
-				_this->m_draggingComponent = _this->m_root->findChild(_this->m_cursor);
+				_this->m_draggingComponent = _this->m_root->onMouseDown(_this->cursorPos(), _this->diffCursorPos());
 				if (_this->m_draggingComponent == _this->m_root)
-					_this->m_draggingComponent = nullptr;
-				if (_this->m_draggingComponent && !_this->m_draggingComponent->onMouseDown(_this->cursorPos() - _this->m_draggingComponent->parent()->getAbsPos(), _this->diffCursorPos()))
 					_this->m_draggingComponent = nullptr;
 				if (_this->m_draggingComponent)
 					_this->setFocus(_this->m_draggingComponent);

@@ -36,15 +36,15 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 using std::vector;
 using std::array;
 
-namespace syn {
+namespace syn
+{
 	class SpectroscopeUnit : public Unit
 	{
 	public:
 		SpectroscopeUnit(const string& a_name);
 
 		SpectroscopeUnit(const SpectroscopeUnit& a_rhs) :
-			SpectroscopeUnit(a_rhs.getName())
-		{}
+			SpectroscopeUnit(a_rhs.getName()) {}
 
 		size_t getNumBuffers() const {
 			return m_nBuffers;
@@ -58,18 +58,25 @@ namespace syn {
 			return &m_outBuffers[a_bufInd][0];
 		}
 
-		array<double,2> getBufferExtrema(int a_bufInd) const {
+		array<double, 2> getBufferExtrema(int a_bufInd) const {
 			double bufmin = m_outBuffers[a_bufInd][m_outBufferExtrema[a_bufInd][0]];
 			double bufmax = m_outBuffers[a_bufInd][m_outBufferExtrema[a_bufInd][1]];
-			return { bufmin, bufmax };
+			return {bufmin, bufmax};
 		}
+
 	protected:
 		void onParamChange_(int a_paramId) override;
 		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
-		
+
 	private:
-		string _getClassName() const override { return "SpectroscopeUnit"; };
-		Unit* _clone() const override { return new SpectroscopeUnit(*this);  };
+		string _getClassName() const override {
+			return "SpectroscopeUnit";
+		};
+
+		Unit* _clone() const override {
+			return new SpectroscopeUnit(*this);
+		};
+
 	private:
 		friend class SpectroscopeUnitControl;
 		int m_bufferIndex;
@@ -78,11 +85,11 @@ namespace syn {
 		int m_pBufferSize, m_pTimeSmooth, m_pUpdatePeriod;
 
 		int m_samplesSinceLastUpdate;
-		
-		vector<vector<double> > m_timeBuffers;
-		vector<vector<WDL_FFT_COMPLEX> > m_freqBuffers;
-		vector<vector<double> > m_outBuffers;
-		vector<array<int,2> > m_outBufferExtrema;
+
+		vector<vector<double>> m_timeBuffers;
+		vector<vector<WDL_FFT_COMPLEX>> m_freqBuffers;
+		vector<vector<double>> m_outBuffers;
+		vector<array<int, 2>> m_outBufferExtrema;
 		vector<double> m_window;
 		bool m_isActive;
 	};
@@ -94,12 +101,11 @@ namespace syn {
 
 		Vector2i toPixCoords(const Vector2f& a_sample);
 
-		Vector2i calcAutoSize(NVGcontext* a_nvg) const override;
-
-		void onResize() override;
-
 	protected:
 		void draw(NVGcontext* a_nvg) override;
+
+	private:
+		void _onResize() override;
 
 	private:
 		DefaultUnitControl* m_defCtrl;
@@ -108,7 +114,6 @@ namespace syn {
 		Vector2f m_yBounds;
 		Vector2i m_screenPos;
 		Vector2i m_screenSize;
-		vector<Color> m_colors = { { 255,255,255,255 },{ 255,128,128,255 } };
+		vector<Color> m_colors = {{255,255,255,255},{255,128,128,255}};
 	};
-
 }

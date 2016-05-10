@@ -2,6 +2,8 @@
 #include <VoiceManager.h>
 #include <UIWindow.h>
 #include <UIDefaultUnitControl.h>
+#include <eigen/src/Core/util/ForwardDeclarations.h>
+#include <eigen/src/Core/util/ForwardDeclarations.h>
 
 bool syn::UIWire::contains(const Vector2i& a_pt) {
 	NDPoint<2, int> pt{ a_pt[0],a_pt[1] };
@@ -11,16 +13,13 @@ bool syn::UIWire::contains(const Vector2i& a_pt) {
 	return distance < 5;
 }
 
-bool syn::UIWire::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
-	return true;
-}
+void syn::UIWire::onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) {
+	UIComponent::onMouseEnter(a_relCursor, a_diffCursor, a_isEntering);
 
-bool syn::UIWire::onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) {
 	if(a_isEntering)
 		m_window->getCircuitPanel()->setSelectedWire(this);
 	else
 		m_window->getCircuitPanel()->clearSelectedWire(this);
-	return true;
 }
 
 bool syn::UIWire::onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
@@ -46,7 +45,7 @@ bool syn::UIWire::onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffC
 	return true;
 }
 
-bool syn::UIWire::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+syn::UIComponent* syn::UIWire::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
 	Vector2i frompt = fromPt();
 	Vector2i topt = toPt();
 
@@ -54,7 +53,7 @@ bool syn::UIWire::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_dif
 	int distanceToOutput = (a_relCursor - frompt).squaredNorm();
 	m_isDragging = true;
 	m_isDraggingInput = distanceToInput < distanceToOutput;
-	return true;
+	return this;
 }
 
 Eigen::Vector2i syn::UIWire::fromPt() const {
@@ -111,8 +110,7 @@ syn::UICircuitPanel::UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, U
 	const Circuit& circ = m_vm->getCircuit();
 	onAddUnit_(circ.getUnit(circ.getInputUnitId()).getClassIdentifier(), circ.getInputUnitId());
 	m_inputs = m_unitControls.back();
-	m_inputs->removeChild(m_inputs->m_closeButton);
-	delete m_inputs->m_closeButton;
+	m_inputs->m_headerRow->removeChild(m_inputs->m_closeButton);
 	m_inputs->m_closeButton = nullptr;
 	const vector<UIUnitPort*>& inputPorts = m_inputs->getInPorts();
 	for(UIUnitPort* port : inputPorts) {
@@ -120,8 +118,7 @@ syn::UICircuitPanel::UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, U
 	}
 	onAddUnit_(circ.getUnit(circ.getOutputUnitId()).getClassIdentifier(), circ.getOutputUnitId());
 	m_outputs = m_unitControls.back();
-	m_outputs->removeChild(m_outputs->m_closeButton);
-	delete m_outputs->m_closeButton;
+	m_outputs->m_headerRow->removeChild(m_outputs->m_closeButton);
 	m_outputs->m_closeButton = nullptr;
 	const vector<UIUnitPort*>& outputPorts = m_outputs->getOutPorts();
 	for (UIUnitPort* port : outputPorts) {
@@ -135,16 +132,17 @@ bool syn::UICircuitPanel::onMouseMove(const Vector2i& a_relCursor, const Vector2
 	return false;
 }
 
-bool syn::UICircuitPanel::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
-	if (UIComponent::onMouseDown(a_relCursor, a_diffCursor))
-		return true;
+syn::UIComponent* syn::UICircuitPanel::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+	UIComponent* child = UIComponent::onMouseDown(a_relCursor, a_diffCursor);
+	if (child) return child;
+
 	if (m_unitSelector->selectedGroup()>=0 && m_unitSelector->selectedPrototype()>=0) {
 		unsigned classId = m_unitFactory->getClassId(m_unitSelector->selectedPrototypeName());
 		requestAddUnit_(classId);
 		m_unitSelector->setSelectedPrototype(-1);
-		return true;
+		return this;
 	}
-	return false;
+	return nullptr;
 }
 
 bool syn::UICircuitPanel::onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) {
@@ -261,9 +259,9 @@ void syn::UICircuitPanel::requestDeleteUnit(int a_unitId) {
 	m_vm->queueAction(msg);
 }
 
-void syn::UICircuitPanel::onResize() {
-	m_inputs->setRelPos({ 50,size()[1] / 2 });
-	m_outputs->setRelPos({ size()[0] - 100,size()[1] / 2 });
+void syn::UICircuitPanel::_onResize() {
+	m_inputs->setRelPos({ 5, size()[1] / 2 - m_inputs->size()[1]/2 });
+	m_outputs->setRelPos({ size()[0] - m_outputs->size()[0] - 5, size()[1] / 2 - m_outputs->size()[1]/2 });
 }
 
 void syn::UICircuitPanel::setSelectedWire(UIWire* a_wire) {

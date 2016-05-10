@@ -83,7 +83,7 @@ namespace syn
 		void setButtonGroup(const std::vector<UIButton *> &buttonGroup) { mButtonGroup = buttonGroup; }
 		const std::vector<UIButton *> &buttonGroup() const { return mButtonGroup; }
 
-		bool onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 
 		void setFontSize(int a_fontSize) { m_fontSize = a_fontSize; }

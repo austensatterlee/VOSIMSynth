@@ -44,6 +44,16 @@ namespace syn {
 		mWindowPopup = Color(50, 255);
 		mWindowPopupTransparent = Color(50, 0);
 
+		/* Text slider */
+		mTextSliderFontSize = 12;
+
+		/* Port */
+		mPortFontSize = 12;
+
+		/* Unit selector */
+		mUnitSelectorProtoFontSize = 16;
+		mUnitSelectorGroupFontSize = 18;
+
 		mFontNormal = nvgCreateFontMem(ctx, "sans", roboto_regular_ttf,
 			roboto_regular_ttf_size, 0);
 		mFontBold = nvgCreateFontMem(ctx, "sans-bold", roboto_bold_ttf,
