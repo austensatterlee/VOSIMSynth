@@ -427,7 +427,7 @@ def main(pargs):
     pitches,pitchtable = GeneratePitchTable(MIN_PITCH,MAX_PITCH,PITCH_RES)
     """DB table"""
     DB_RES = 256
-    MIN_DB = -90
+    MIN_DB = -120
     MAX_DB = 0
     decibals,dbtable = GenerateDecibalTable(MIN_DB,MAX_DB,DB_RES)
 
@@ -437,7 +437,7 @@ def main(pargs):
 
 
     """Bandlimited saw wave"""
-    BLSAW_RES = 2048
+    BLSAW_RES = 8192
     BLSAW_HARMONICS = BLSAW_RES/2
     blsaw = GenerateBLSaw(BLSAW_HARMONICS,BLSAW_RES)
     blimp_online = convolve( prefilter, blsaw, 'same' ) # apply gain to high frequencies
@@ -452,8 +452,8 @@ def main(pargs):
     blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS,ONLINE_BLIMP_RES,fc=20e3)
     blimp_offline = GenerateBlimp(OFFLINE_BLIMP_INTERVALS,OFFLINE_BLIMP_RES,fc=22e3)
 
-    blimp_online = convolve( prefilter, blimp_online, 'same' ) # apply gain to high frequencies
-    blimp_offline = convolve( prefilter, blimp_offline, 'same' ) # apply gain to high frequencies
+    # blimp_online = convolve( prefilter, blimp_online, 'same' ) # apply gain to high frequencies
+    # blimp_offline = convolve( prefilter, blimp_offline, 'same' ) # apply gain to high frequencies
 
     blimp_online /= blimp_online.max()
     blimp_offline /= blimp_offline.max()

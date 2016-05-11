@@ -36,7 +36,9 @@
 #include "nanovg.h"
 #include <Theme.h>
 #include "VOSIMWindow.h"
-#include <eigen/src/Core/util/ForwardDeclarations.h>
+#include <list>
+
+using std::list;
 
 namespace syn
 {
@@ -100,19 +102,37 @@ namespace syn
 		shared_ptr<Theme> theme() const;
 
 		bool visible() const;
+		bool focused() const;
+
+		bool hovered() const;
 
 		void setVisible(bool a_visible);
 
 		virtual bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
 		virtual bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
 		virtual void onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering);
-		virtual UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
+		virtual UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick);
 		virtual bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
 		virtual bool onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt);
+		virtual bool onTextEntered(sf::Uint32 a_unicode);
+		virtual bool onKeyDown(const sf::Event::KeyEvent& a_key);
+		virtual bool onKeyUp(const sf::Event::KeyEvent& a_key);
 
 		virtual void notifyChildResized(UIComponent* a_child) {};
 
 		virtual void onFocusEvent(bool a_isFocused);
+
+		void bringToFront(UIComponent* a_child);
+		void pushToBack(UIComponent* a_child);
+
+		int getZOrder(UIComponent* a_child);
+
+		/**
+		 * Sets a components z-order. 
+		 * If the component already has the given z-order, it is brought to the front of that z-order.
+		 * \param toFront When true, pushes the component to the front of the z-order, and pushes to the back otherwise.
+		 */
+		void setZOrder(UIComponent* a_child, int a_zorder, bool toFront=true);
 
 	protected:
 		virtual void draw(NVGcontext* a_nvg) {};
@@ -135,6 +155,8 @@ namespace syn
 		UIComponent* m_parent;
 		VOSIMWindow* m_window;
 		vector<shared_ptr<UIComponent>> m_children;
+		map<int,list<shared_ptr<UIComponent>>> m_ZPlanes;
+		map<UIComponent*, int> m_ZPlaneMap;
 
 		bool m_visible, m_focused, m_hovered;
 		Vector2i m_pos, m_size;
@@ -156,11 +178,11 @@ namespace syn
 			return true;
 		}
 
-		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override {
+		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override {
 			return this;
 		}
 
-		void setDragCallback(const std::function<void(const Vector2i&, const Vector2i&)>& a_callback) {
+		void setDragCallback(const function<void(const Vector2i&, const Vector2i&)>& a_callback) {
 			m_dragCallback = a_callback;
 		}
 
@@ -178,7 +200,7 @@ namespace syn
 		}
 
 	private:
-		std::function<void(const Vector2i& a_relCursor, const Vector2i& a_diffCursor)> m_dragCallback;
+		function<void(const Vector2i& a_relCursor, const Vector2i& a_diffCursor)> m_dragCallback;
 	};
 };
 #endif

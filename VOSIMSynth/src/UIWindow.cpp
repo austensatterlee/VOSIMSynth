@@ -13,6 +13,7 @@ syn::UIWindow::UIWindow(VOSIMWindow* a_window, const string& a_title):
 	m_bodyRow->setRelPos({ 0,theme()->mWindowHeaderHeight });
 	m_col->addChild(m_headerRow);
 	m_col->addChild(m_bodyRow);
+	m_col->setPadding({ 5,5,5,5 });
 
 	m_title = new UILabel(a_window);
 	m_title->setText(a_title);
@@ -20,7 +21,7 @@ syn::UIWindow::UIWindow(VOSIMWindow* a_window, const string& a_title):
 	m_title->setFontColor(theme()->mTextColor);
 	addChildToHeader(m_title);
 
-	m_headerRow->setGreedyChild(m_title);
+	m_headerRow->setGreedyChild(m_title, NVG_ALIGN_LEFT);
 	m_headerRow->setSelfResizePolicy(UICell::SNONE);
 	m_headerRow->setSize({ -1,theme()->mWindowHeaderHeight });
 
@@ -45,8 +46,8 @@ bool syn::UIWindow::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_d
 	return true;
 }
 
-syn::UIComponent* syn::UIWindow::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
-	UIComponent* child = UIComponent::onMouseDown(a_relCursor, a_diffCursor);
+syn::UIComponent* syn::UIWindow::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+	UIComponent* child = UIComponent::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
 	if (child) return child;
 
 	if (a_relCursor.y() - m_pos.y() < theme()->mWindowHeaderHeight) {
@@ -143,7 +144,7 @@ void syn::UIWindow::draw(NVGcontext* a_nvg) {
 }
 
 void syn::UIWindow::_onResize() {
-	m_col->setSize(size());
+	m_col->setSize(size()-m_col->getRelPos());
 	m_headerRow->pack();
 	m_bodyRow->pack();
 }

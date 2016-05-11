@@ -47,7 +47,7 @@ namespace syn {
 		bool contains(const Vector2i& a_pt) override;
 		void onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) override;
 		bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		int fromUnit() const { return m_fromUnit; }
 		int fromPort() const { return m_fromPort; }
 		int toUnit() const { return m_toUnit; }
@@ -68,7 +68,7 @@ namespace syn {
 	public:
 		UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, UnitFactory* a_unitFactory);
 		bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		bool onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) override;
 		UIUnitControlContainer* getUnit(const Vector2i& a_pt) const;
 		UIUnitControlContainer* findUnit(int a_unitId) const;

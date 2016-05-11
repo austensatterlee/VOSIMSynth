@@ -29,6 +29,7 @@ Copyright 2016, Austen Satterlee
 #define __UITEXTSLIDER__
 #include "UIComponent.h"
 #include <VoiceManager.h>
+#include "UITextBox.h"
 
 namespace syn
 {
@@ -38,15 +39,24 @@ namespace syn
 		UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId);
 
 		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		bool onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) override;
+		bool setValueFromString(const string& a_str);
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 	private:
+		void _onResize() override;
+		void _updateValue();
+		void _updateMinSize();
+	private:
 		double m_value;
+		string m_valueStr, m_paramName;
 		VoiceManager* m_vm;
+		UITextBox* m_textBox;
 		int m_unitId;
 		int m_paramId;
+
+		bool m_isValueDirty = false;
 	};
 }
 #endif

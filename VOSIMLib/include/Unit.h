@@ -103,6 +103,9 @@ namespace syn {
         bool setParameterNorm(const ID& a_identifier, const T& a_value);
 
 		template<typename ID>
+		bool setParameterPrecision(const ID& a_identifier, int a_value);
+
+		template<typename ID>
 		string getInputName(const ID& a_identifier) const;
 
 		template<typename ID>
@@ -266,6 +269,14 @@ namespace syn {
             return true;
         }
         return false;        
+    }
+
+	template <typename ID>
+	bool Unit::setParameterPrecision(const ID& a_identifier, int a_precision) {
+		if (!m_parameters.find(a_identifier))
+			return false;
+		m_parameters[a_identifier].setPrecision(a_precision);
+		return true;
     }
 
 	template <typename ID>

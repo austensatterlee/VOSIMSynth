@@ -2,7 +2,7 @@
 #include "Theme.h"
 
 namespace syn {
-	UIButton::UIButton(VOSIMWindow* a_window, const std::string &caption, int icon)
+	UIButton::UIButton(VOSIMWindow* a_window, const string &caption, int icon)
 		: UIComponent(a_window), mCaption(caption), mIcon(icon),
 		mIconPosition(IconPosition::LeftCentered), mPushed(false),
 		mFlags(NormalButton), mBackgroundColor(Color(0, 0)),
@@ -11,8 +11,8 @@ namespace syn {
 		m_fontSize = theme()->mButtonFontSize;
 	}
 
-	UIComponent* UIButton::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
-		UIComponent::onMouseDown(a_relCursor, a_diffCursor);
+	UIComponent* UIButton::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+		UIComponent::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
 
 		if (mEnabled) {
 			bool pushedBackup = mPushed;

@@ -2,8 +2,8 @@
 #include <map>
 
 namespace syn {
-	std::array<char, 8> utf8(int c) {
-		std::array<char, 8> seq;
+	array<char, 8> utf8(int c) {
+		array<char, 8> seq;
 		int n = 0;
 		if (c < 0x80) n = 1;
 		else if (c < 0x800) n = 2;
@@ -23,21 +23,21 @@ namespace syn {
 		return seq;
 	}
 
-	int __nanogui_get_image(NVGcontext *ctx, const std::string &name, uint8_t *data, uint32_t size) {
-		static map<std::string, int> iconCache;
+	int __nanogui_get_image(NVGcontext *ctx, const string &name, uint8_t *data, uint32_t size) {
+		static map<string, int> iconCache;
 		auto it = iconCache.find(name);
 		if (it != iconCache.end())
 			return it->second;
 		int iconID = nvgCreateImageMem(ctx, 0, data, size);
 		if (iconID == 0)
-			throw std::runtime_error("Unable to load resource data.");
+			throw runtime_error("Unable to load resource data.");
 		iconCache[name] = iconID;
 		return iconID;
 	}
 
-	std::vector<std::pair<int, std::string>>
-		loadImageDirectory(NVGcontext *ctx, const std::string &path) {
-		std::vector<std::pair<int, std::string> > result;
+	vector<pair<int, string>>
+		loadImageDirectory(NVGcontext *ctx, const string &path) {
+		vector<pair<int, string> > result;
 #if !defined(_WIN32)
 		DIR *dp = opendir(path.c_str());
 		if (!dp)
@@ -47,21 +47,21 @@ namespace syn {
 			const char *fname = ep->d_name;
 #else
 		WIN32_FIND_DATA ffd;
-		std::string searchPath = path + "/*.*";
+		string searchPath = path + "/*.*";
 		HANDLE handle = FindFirstFileA(searchPath.c_str(), &ffd);
 		if (handle == INVALID_HANDLE_VALUE)
-			throw std::runtime_error("Could not open image directory!");
+			throw runtime_error("Could not open image directory!");
 		do {
 			const char *fname = ffd.cFileName;
 #endif
 			if (strstr(fname, "png") == nullptr)
 				continue;
-			std::string fullName = path + "/" + std::string(fname);
+			string fullName = path + "/" + string(fname);
 			int img = nvgCreateImage(ctx, fullName.c_str(), 0);
 			if (img == 0)
-				throw std::runtime_error("Could not open image data!");
+				throw runtime_error("Could not open image data!");
 			result.push_back(
-				std::make_pair(img, fullName.substr(0, fullName.length() - 4)));
+				make_pair(img, fullName.substr(0, fullName.length() - 4)));
 #if !defined(_WIN32)
 		}
 		closedir(dp);
@@ -100,7 +100,7 @@ Color colorFromHSL(float H, float S, float L) {
 }
 
 #if !defined(__APPLE__)
-	std::string file_dialog(const std::vector<std::pair<std::string, std::string>> &filetypes, bool save) {
+	string file_dialog(const vector<pair<string, string>> &filetypes, bool save) {
 #define FILE_DIALOG_MAX_BUFFER 1024
 #if defined(_WIN32)
 		OPENFILENAME ofn;
@@ -112,7 +112,7 @@ Color colorFromHSL(float H, float S, float L) {
 		ofn.nMaxFile = FILE_DIALOG_MAX_BUFFER;
 		ofn.nFilterIndex = 1;
 
-		std::string filter;
+		string filter;
 
 		if (!save && filetypes.size() > 1) {
 			filter.append("Supported file types (");
@@ -155,7 +155,7 @@ Color colorFromHSL(float H, float S, float L) {
 			if (GetOpenFileNameA(&ofn) == FALSE)
 				return "";
 		}
-		return std::string(ofn.lpstrFile);
+		return string(ofn.lpstrFile);
 #else
 		char buffer[FILE_DIALOG_MAX_BUFFER];
 		std::string cmd = "/usr/bin/zenity --file-selection ";

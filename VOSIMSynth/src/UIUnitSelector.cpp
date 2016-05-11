@@ -1,6 +1,6 @@
 #include "UIUnitSelector.h"
 
-syn::UIComponent* syn::UIUnitSelector::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+syn::UIComponent* syn::UIUnitSelector::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	int row = 0;
 	int group = 0;
 	set<string> gNames = m_unitFactory->getGroupNames();
@@ -98,7 +98,7 @@ void syn::UIUnitSelector::draw(NVGcontext* a_nvg) {
 					nvgFillColor(a_nvg, theme()->mHighlightedTextColor);
 				else
 					nvgFillColor(a_nvg, theme()->mTextColor);
-				m_autoWidth = MAX(m_autoWidth, m_indentAmt + 5 + nvgText(a_nvg, m_indentAmt, m_autoHeight, pNames[j].c_str(), nullptr));
+				m_autoWidth = MAX(m_autoWidth, 5 + nvgText(a_nvg, m_indentAmt, m_autoHeight, pNames[j].c_str(), nullptr));
 				m_autoHeight += protoFontSize;
 			}
 		}

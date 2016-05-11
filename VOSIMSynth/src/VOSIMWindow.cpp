@@ -22,21 +22,26 @@ sf::WindowHandle syn::VOSIMWindow::sys_CreateChildWindow(sf::WindowHandle a_syst
 	int x = 0, y = 0, w = m_size[0], h = m_size[1];
 
 	if (nWndClassReg++ == 0) {
-		WNDCLASS wndClass = {CS_DBLCLKS | CS_OWNDC , drawFunc, 0, 0, m_hinstance, 0, LoadCursor(NULL, IDC_ARROW), 0, 0, wndClassName};
+		WNDCLASS wndClass = {NULL, drawFunc, 0, 0, m_hinstance, 0, LoadCursor(NULL, IDC_ARROW), 0, 0, wndClassName};
 		RegisterClass(&wndClass);
 	}
 
-	m_childHandle1 = CreateWindow(wndClassName, "IPlug2", WS_CHILD, // | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
-		x, y, w, h, (HWND)a_system_window, 0, m_hinstance, this);
+//	m_childHandle1 = CreateWindow("EDIT", "IPlug2", WS_CHILD | WS_VISIBLE, // | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+//		x, y, w, h, (HWND)a_system_window, 0, m_hinstance, this);
 
 	sf::ContextSettings settings;
-	settings.depthBits = 24;
+	settings.depthBits = 32;
 	settings.stencilBits = 8;
 	settings.antialiasingLevel = 8; // Optional  
-	m_sfmlWindow = new sf::RenderWindow(m_childHandle1, settings);
+	m_sfmlWindow = new sf::RenderWindow(sf::VideoMode(w,h), "", sf::Style::None, settings);
+	m_childHandle1 = m_sfmlWindow->getSystemHandle();
+	SetWindowLongW(m_childHandle1, GWL_STYLE, GetWindowLongW(m_childHandle1, GWL_STYLE) | WS_CHILD);
+
 
 	m_childHandle2 = CreateWindow(wndClassName, "IPlug", WS_CHILD, // | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
 		x, y, w, h, (HWND)a_system_window, 0, m_hinstance, this);
+
+	SetParent(m_childHandle1, a_system_window);	
 
 	if ((!m_childHandle2 || !m_childHandle1) && --nWndClassReg == 0) {
 		UnregisterClass(wndClassName, m_hinstance);
@@ -76,7 +81,9 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 			SetTimer(Handle, 2, mSec, NULL);
 
 			_this->m_sfmlWindow->setActive(true);
-			//_this->m_sfmlWindow->setFramerateLimit(60);
+			_this->m_sfmlWindow->requestFocus();
+			_this->m_sfmlWindow->setFramerateLimit(60);
+			_this->m_sfmlWindow->setPosition({ 0,0 });
 
 			// Initialize glew
 			glewExperimental = GL_TRUE;
@@ -124,8 +131,6 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 	VOSIMWindow* _this = (VOSIMWindow*)GetWindowLongPtr(Handle, GWLP_USERDATA);
 
 	switch (Message) {
-	case WM_PAINT:
-		break;
 	case WM_TIMER:
 		cpuStartTime = _this->m_timer.getElapsedTime().asSeconds();
 		Color bgColor = colorFromHSL(0.0, 0.5+0.5*sin(cpuStartTime), 0.25);
@@ -164,14 +169,30 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 				glViewport(0, 0, _this->getSize()[0], _this->getSize()[1]);
 				break;
 			case Event::LostFocus:
+				_this->m_sfmlWindow->setActive(false);
 				break;
 			case Event::GainedFocus:
+				_this->m_sfmlWindow->setActive(true);
 				break;
 			case Event::TextEntered:
+				if (event.text.unicode >= 32 && event.text.unicode <= 126) {
+					if (!_this->m_focusPath.empty()) {
+						for (auto it = ++_this->m_focusPath.rbegin(); it != _this->m_focusPath.rend(); ++it)
+							if ((*it)->focused()) (*it)->onTextEntered(event.text.unicode);
+					}
+				}
 				break;
 			case Event::KeyPressed:
-				break;
+				if (!_this->m_focusPath.empty()) {
+					for (auto it = ++_this->m_focusPath.rbegin() ; it != _this->m_focusPath.rend(); ++it)
+						if ((*it)->focused()) (*it)->onKeyDown(event.key);
+				}
+				break;			
 			case Event::KeyReleased:
+				if (!_this->m_focusPath.empty()) {
+					for (auto it = ++_this->m_focusPath.rbegin() ; it != _this->m_focusPath.rend(); ++it)
+						if ((*it)->focused()) (*it)->onKeyUp(event.key);
+				}
 				break;
 			case Event::MouseWheelScrolled:
 				{
@@ -188,17 +209,19 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 				}
 				break;
 			case Event::MouseButtonPressed:
-				_this->m_lastClick = {event.mouseButton, _this->m_timer.getElapsedTime()};
+			{
 				_this->m_isClicked = true;
 
-				_this->m_draggingComponent = _this->m_root->onMouseDown(_this->cursorPos(), _this->diffCursorPos());
+				_this->m_draggingComponent = _this->m_root->onMouseDown(_this->cursorPos(), _this->diffCursorPos(), (_this->m_timer.getElapsedTime().asSeconds() - _this->m_lastClick.time.asSeconds() < 0.25));
 				if (_this->m_draggingComponent == _this->m_root)
 					_this->m_draggingComponent = nullptr;
 				if (_this->m_draggingComponent)
 					_this->setFocus(_this->m_draggingComponent);
 				else
 					_this->setFocus(nullptr);
+				_this->m_lastClick = { event.mouseButton, _this->m_timer.getElapsedTime() };
 				break;
+			}
 			case Event::MouseButtonReleased:
 				_this->m_lastClick = {event.mouseButton, _this->m_timer.getElapsedTime()};
 				if (_this->m_draggingComponent)
@@ -213,9 +236,9 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 			case Event::MouseMoved:
 
 				_this->updateCursorPos({event.mouseMove.x - 1,event.mouseMove.y - 2});
-				if (!_this->m_draggingComponent) {
-					_this->m_root->onMouseMove(_this->cursorPos(), _this->diffCursorPos());
-				} else {
+				_this->m_root->onMouseMove(_this->cursorPos(), _this->diffCursorPos());
+
+				if(_this->m_draggingComponent) {
 					_this->m_draggingComponent->onMouseDrag(_this->cursorPos() - _this->m_draggingComponent->parent()->getAbsPos(), _this->diffCursorPos());
 				}
 				break;
@@ -240,27 +263,23 @@ syn::VOSIMWindow::~VOSIMWindow() {
 }
 
 void syn::VOSIMWindow::setFocus(UIComponent* a_comp) {
-	if (a_comp && a_comp != m_focused) {
-		if (m_focused) {
-			UIComponent* losingFocus = m_focused;
-			while (losingFocus != nullptr) {
-				losingFocus->onFocusEvent(false);
-				losingFocus = losingFocus->parent();
-			}
+	if (a_comp && a_comp != getFocused()) {
+		while (!m_focusPath.empty()) {
+			m_focusPath.front()->onFocusEvent(false);
+			m_focusPath.pop_front();
 		}
-		m_focused = a_comp;
-		UIComponent* gainingFocus = m_focused;
+
+		UIComponent* gainingFocus = a_comp;
 		while (gainingFocus != nullptr) {
 			gainingFocus->onFocusEvent(true);
+			m_focusPath.push_back(gainingFocus);
 			gainingFocus = gainingFocus->parent();
 		}
-	} else if (a_comp == nullptr && a_comp != m_focused) {
-		UIComponent* losingFocus = m_focused;
-		while (losingFocus != nullptr) {
-			losingFocus->onFocusEvent(false);
-			losingFocus = losingFocus->parent();
+	} else if (a_comp == nullptr) {
+		while (!m_focusPath.empty()) {
+			m_focusPath.front()->onFocusEvent(false);
+			m_focusPath.pop_front();
 		}
-		m_focused = nullptr;
 	}
 }
 

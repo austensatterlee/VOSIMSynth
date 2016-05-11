@@ -121,6 +121,9 @@ namespace syn
 		template <typename UID, typename PID, typename T>
 		bool setInternalParameterNorm(const UID& a_unitIdentifier, const PID& a_paramIdentifier, const T& a_value);
 
+		template <typename UID, typename PID>
+		bool setInternalParameterPrecision(const UID& a_unitIdentifier, const PID& a_paramIdentifier, int a_precision);
+
 		/**
 		 * \returns The id assigned to the newly added unit, or -1 on failure
 		 */
@@ -207,6 +210,13 @@ namespace syn
 		if (!m_units.find(a_unitIdentifier))
 			return false;
 		return m_units[a_unitIdentifier]->setParameterNorm(a_paramIdentifier, a_value);
+	}
+
+	template <typename UID, typename PID>
+	bool Circuit::setInternalParameterPrecision(const UID& a_unitIdentifier, const PID& a_paramIdentifier, int a_precision) {
+		if (!m_units.find(a_unitIdentifier))
+			return false;
+		return m_units[a_unitIdentifier]->setParameterPrecision(a_paramIdentifier, a_precision);
 	};
 
 

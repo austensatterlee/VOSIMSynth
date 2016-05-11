@@ -71,7 +71,6 @@ namespace syn
 			m_running(false), 
 			m_isInitialized(false),
 			m_draggingComponent(nullptr), 
-			m_focused(nullptr), 
 			m_root(nullptr), 
 			m_sfmlWindow(nullptr),
 			m_frameCount(0),
@@ -93,7 +92,6 @@ namespace syn
 			return m_size;
 		}
 
-		void setFocus(UIComponent* a_comp);
 		Vector2i cursorPos() const;
 
 		Vector2i diffCursorPos() const;
@@ -104,7 +102,8 @@ namespace syn
 		UICircuitPanel* getCircuitPanel() const { return m_circuitPanel; }
 		UnitFactory* getUnitFactory() const { return m_unitFactory; }
 		NVGcontext* getContext() const { return m_vg; }
-		UIComponent* getFocused() const { return m_focused; }
+		void setFocus(UIComponent* a_comp);
+		UIComponent* getFocused() const { return m_focusPath.empty() ? nullptr : m_focusPath.front(); }
 		void clearFocus() { setFocus(nullptr); }
 
 		Vector2i toWorldCoords(const Vector2i& a_pix) const;
@@ -125,7 +124,7 @@ namespace syn
 		void reset();
 
 		template<typename UnitType>
-		void registerUnitControl(std::function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)> a_unitControlConstructor);
+		void registerUnitControl(function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)> a_unitControlConstructor);
 
 		UIUnitControl* createUnitControl(unsigned a_classId, int a_unitId);
 
@@ -153,7 +152,7 @@ namespace syn
 		bool m_running;
 		bool m_isInitialized;
 		UIComponent* m_draggingComponent;
-		UIComponent* m_focused;
+		list<UIComponent*> m_focusPath;
 		UIComponent* m_root;
 
 		sf::RenderWindow* m_sfmlWindow;
@@ -174,11 +173,11 @@ namespace syn
 		Vector4i m_view;
 		double m_zoom = 1.0;		
 
-		std::map<unsigned, std::function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)> > m_unitControlMap;
+		map<unsigned, function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)> > m_unitControlMap;
 	};
 
 	template <typename UnitType>
-	void VOSIMWindow::registerUnitControl(std::function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)> a_unitControlConstructor) {
+	void VOSIMWindow::registerUnitControl(function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)> a_unitControlConstructor) {
 		unsigned unitClassId = UnitType("").getClassIdentifier();
 		m_unitControlMap[unitClassId] = a_unitControlConstructor;
 	}

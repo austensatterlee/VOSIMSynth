@@ -25,6 +25,10 @@ namespace syn {
 
 		/* Port parameters */
 		int mPortFontSize;
+		Color mInputPortBG;
+		Color mInputPortHighlightedBG;
+		Color mOutputPortBG;
+		Color mOutputPortHighlightedBG;
 
 		/* Unit selector */
 		int mUnitSelectorProtoFontSize;

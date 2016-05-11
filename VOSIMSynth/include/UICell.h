@@ -18,19 +18,24 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
- *  \file UILayout.h
+ *  \file UICell.h
  *  \brief
  *  \details
  *  \author Austen Satterlee
  *  \date 05/2016
  */
 
-#ifndef __UILAYOUT__
-#define __UILAYOUT__
+#ifndef __UICELL__
+#define __UICELL__
 #include "UIComponent.h"
 
 namespace syn
 {
+	/**
+	 * Basic layout management unit. Automatically position children along one dimension. 
+	 * The sizing of itself and its children is automatically managed according to the specified ChildResizePolicy and SelfResizePolicy.
+	 * UIRow and UICol objects can be embedded into one another to create flexible grid layouts.
+	 */
 	class UICell : public UIComponent
 	{
 	public:
@@ -52,16 +57,27 @@ namespace syn
 
 	public:
 		UICell(VOSIMWindow* a_window)
-			: UIComponent(a_window), m_greedyChild(nullptr), m_childResizePolicy(CNONE), m_selfResizePolicy(SFIT), m_greedyChildAlign(NVG_ALIGN_TOP), m_padding{ 0,0,0,0 }
-		{}
+			: UIComponent(a_window), m_greedyChild(nullptr), m_childResizePolicy(CNONE), m_selfResizePolicy(SFIT), m_greedyChildAlign(NVG_ALIGN_TOP), m_padding{ 0,0,0,0 }, m_childSpacing(1) {}
 
 		void notifyChildResized(UIComponent* a_child) override {
 			pack();
 		}
 
+		/**
+		 * Recomputes the layout. Note that in most cases packing is done automatically when the cell is changed.
+		 */
 		virtual void pack() = 0;
 
-		void setGreedyChild(UIComponent* a_child, int a_align = NVG_ALIGN_TOP) {
+		/**
+		 * Specifies one of the children to be the greedy child.
+		 *
+		 * The division of the greedy child will expand to take up any extra space.
+		 * While the size of the child itself is not changed, the cell spaces the children as if it were.
+		 * The alignment parameter specifies where to place the child within the extra space.
+		 *
+		 * \param a_align For cols: One of NVG_ALIGN_TOP, NVG_ALIGN_BOTTOM, NVG_ALIGN_MIDDLE. For rows: One of NVG_ALIGN_LEFT, NVG_ALIGN_CENTER, NVG_ALIGN_RIGHT.
+		 */
+		void setGreedyChild(UIComponent* a_child, int a_align) {
 			if (m_greedyChild != a_child || m_greedyChildAlign != a_align) {
 				m_greedyChild = a_child;
 				m_greedyChildAlign = a_align;
@@ -69,6 +85,20 @@ namespace syn
 			}
 		}
 
+		/**
+		 * The child resize policy specifies how the children are resized relative to each other.
+		 * 		 
+		 * CMIN			Children are set to their minimum sizes.
+		 * CNONE		Children are never resized.
+		 * CMATCHMIN	Children are made as small as possible under the constraint that they all have the same size.
+		 * CMATCHMAX	Children are made as large as possible under the constraint that they all have the same size.
+		 * CMAX			Children are made as large as possible.
+		 *
+		 * Note that only one dimension of the children is touched. UIRow's will change its children's heights, UICol's will change their widths.
+		 * Also note that the behavior of CMATCHMAX and CMATCH is constrained by the self resizing policy in that children will not be made larger
+		 * than the size of the cell. (\see setSelfResizePolicy).
+		 *
+		 */
 		void setChildResizePolicy(ChildResizePolicy a_policy) {
 			if (m_childResizePolicy != a_policy) {
 				m_childResizePolicy = a_policy;
@@ -76,6 +106,14 @@ namespace syn
 			}
 		}
 
+		/**
+		* The self resize policy specifies how the cell resizes itself and how it computes its minimum size.
+		*
+		* SMIN			Minimum size is computed using the minimum sizes of the children. The cell resizes itself to its minimum size.
+		* SNONE			Minimum size is computed using the current sizes of the children. The cell does not resize itself.
+		* SFIT			Minimum size is computed using the current sizes of the children. The cell resizes itself to its minimum size.
+		*
+		*/
 		void setSelfResizePolicy(SelfResizePolicy a_policy) {
 			if (m_selfResizePolicy != a_policy) {
 				m_selfResizePolicy = a_policy;
@@ -83,9 +121,24 @@ namespace syn
 			}
 		}
 
+		/**
+		 * Specifies how much space to leave around the cell's edges.
+		 *
+		 * \param a_padding A 4-dimensional vector in {left, top, right, bottom} order.
+		 */
 		void setPadding(const Vector4i& a_padding) {
 			if (m_padding != a_padding) {
 				m_padding = a_padding;
+				pack();
+			}
+		}
+
+		/**
+		 * Specifies how much space to leave in between children.
+		 */
+		void setChildrenSpacing(int a_padAmt) {
+			if (m_childSpacing != a_padAmt) {
+				m_childSpacing = a_padAmt;
 				pack();
 			}
 		}
@@ -98,33 +151,43 @@ namespace syn
 		SelfResizePolicy m_selfResizePolicy;
 		int m_greedyChildAlign;
 		Vector4i m_padding;
+		int m_childSpacing;
 	};
 
+	/**
+	 * Positions children vertically.
+	 */
 	class UICol : public UICell
 	{
 	public:
 		UICol(VOSIMWindow* a_window)
 			: UICell(a_window), m_maxChildWidth(0), m_minChildWidth(0) {}
+		
+		void onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) override {
+			UIComponent::onMouseEnter(a_relCursor, a_diffCursor, a_isEntering);
+			
+		}
 
 		void pack() override {
-			int y = m_padding[1];
+			// Reposition units and compute min and max child dimensions
 			m_maxChildWidth = 0;
 			m_minChildWidth = 0;
-			// Reposition units
+			int y = m_padding[1];
 			for (shared_ptr<UIComponent> child : m_children) {
-				child->setRelPos({0,y});
+				child->setRelPos({m_padding[0],y});
 				y += child->size()[1];
 				m_maxChildWidth = MAX(m_maxChildWidth, child->size()[0]);
-				m_minChildWidth = MAX(m_minChildWidth, child->minSize()[0]);				
+				m_minChildWidth = MAX(m_minChildWidth, child->minSize()[0]);
 			}
 
 			// Update cell minimum size
+			Vector2i pad_wh = Vector2i{ m_padding[0] + m_padding[2],m_padding[1] + m_padding[3] };
 			int width;
 			if (m_selfResizePolicy == SMIN) 
 				width = m_minChildWidth;
 			else
 				width = m_maxChildWidth;
-			setMinSize_({width + m_padding[0] + m_padding[2],y + m_padding[1] + m_padding[3]});
+			setMinSize_(Vector2i{width,y}+pad_wh);
 
 			Vector2i freeSpace = size() - minSize();
 			// Shrink cell according to resize policy
@@ -134,7 +197,7 @@ namespace syn
 
 			// If there's extra space left over, expand the greedy child
 			// If there is no greedy child, shrink the cell to get rid of the extra space
-			freeSpace = size() - minSize();
+			freeSpace = size()-pad_wh-minSize();
 			int extraHeight = freeSpace[1];
 			if (m_selfResizePolicy == SNONE && m_greedyChild && extraHeight>0) {
 				int greedyCellHeight = m_greedyChild->size()[1] + extraHeight;
@@ -148,6 +211,7 @@ namespace syn
 				case NVG_ALIGN_MIDDLE:
 					greedyCellShift = (greedyCellHeight - m_greedyChild->size()[1]) / 2;
 					break;
+				case NVG_ALIGN_LEFT:
 				default:
 					greedyCellShift = 0;
 				}
@@ -170,23 +234,27 @@ namespace syn
 					child->setSize(child->minSize());
 					break;
 				case CMATCHMIN:
-					child->setSize({ m_minChildWidth, child->size()[1] });
+					child->setSize({ m_minChildWidth, -1 });
 					break;
 				case CMATCHMAX:
-					child->setSize({ m_maxChildWidth, child->size()[1] });
+					child->setSize({ MIN(size()[0] - m_padding[0] - m_padding[2],m_maxChildWidth), -1 });
 					break;
 				case CMAX:
-					child->setSize({ size()[0] - m_padding[0] - m_padding[2], child->size()[1] });
+					child->setSize({ size()[0] - m_padding[0] - m_padding[2], -1 });
 					break;
 				default: break;
 				}
 			}			
 		}
+	
 	private:
 		int m_maxChildWidth;
 		int m_minChildWidth;
 	};
 
+	/**
+	 * Positions children horizontally.
+	 */
 	class UIRow : public UICell
 	{
 	public:
@@ -194,26 +262,28 @@ namespace syn
 			: UICell(a_window), m_maxChildHeight(0), m_minChildHeight(0) {}
 
 		void pack() override {
-			int x = m_padding[0];
+			// Reposition units and compute min and max child dimensions
 			m_maxChildHeight = 0;
 			m_minChildHeight = 0;
+			int x = m_padding[0];
 			for (shared_ptr<UIComponent> child : m_children) {
-				child->setRelPos({x,0});
+				child->setRelPos({x,m_padding[1]});
 				x += child->size()[0];
 				m_maxChildHeight = MAX(m_maxChildHeight, child->size()[1]);
 				m_minChildHeight = MAX(m_minChildHeight, child->minSize()[1]);
 			}
 
 			// Update cell minimum size
+			Vector2i pad_wh = Vector2i{ m_padding[0] + m_padding[2],m_padding[1] + m_padding[3] };
 			int height;
 			if (m_selfResizePolicy == SMIN)
 				height = m_minChildHeight;
 			else
 				height = m_maxChildHeight;
-			setMinSize_({ x + m_padding[0] + m_padding[2],height + m_padding[1] + m_padding[3] });
+			setMinSize_(Vector2i{ x,height }+pad_wh);
 			
 			// Shrink cell according to resize policy
-			Vector2i freeSpace = size() - minSize();
+			Vector2i freeSpace = size() - pad_wh - minSize();
 			if (m_selfResizePolicy != SNONE && freeSpace.any()) {
 				setSize(minSize());
 			}
@@ -258,7 +328,7 @@ namespace syn
 					child->setSize({ child->size()[0], m_minChildHeight });
 					break;
 				case CMATCHMAX:
-					child->setSize({ child->size()[0], m_maxChildHeight });
+					child->setSize({ child->size()[0], MIN(size()[1] - m_padding[1] - m_padding[3],m_maxChildHeight) });
 					break;
 				case CMAX:
 					child->setSize({ child->size()[0], size()[1] - m_padding[1] - m_padding[3] });

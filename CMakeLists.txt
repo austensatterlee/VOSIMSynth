@@ -9,7 +9,6 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # define source directories
 set(LIBS_DIR ${CMAKE_SOURCE_DIR}/libs CACHE PATH "")
-set(CEREAL_DIR ${LIBS_DIR}/cereal CACHE PATH "")
 set(NANOVG_DIR ${LIBS_DIR}/nanovg CACHE PATH "")
 set(WDL_DIR ${LIBS_DIR}/wdl CACHE PATH "")
 set(IPLUG_DIR ${WDL_DIR}/iplug CACHE PATH "")
@@ -22,7 +21,6 @@ set(SFTOOLS_DIR ${LIBS_DIR}/sftools CACHE PATH "")
 set(EIGEN_DIR ${LIBS_DIR}/eigen CACHE PATH "")
 set(RESOURCES_DIR ${VOSIMSYNTH_DIR}/resources CACHE PATH "")
 
-message (STATUS "Path to cereal is ${CEREAL_DIR}")
 message (STATUS "Path to nanovg is ${NANOVG_DIR}")
 message (STATUS "Path to sftools is ${SFTOOLS_DIR}")
 message (STATUS "Path to wdl is ${WDL_DIR}")
@@ -53,7 +51,7 @@ endif (MINGW)
 if(MSVC)
   # Runtime library
   set(MSVC_REL /EHsc /MT)
-  set(MSVC_RDEB /EHsc /MT)
+  set(MSVC_RDEB /EHsc /MTd)
   set(MSVC_DEB /EHsc /MTd)
 
   # Disable some warnings
@@ -66,7 +64,7 @@ if(MSVC)
   # /fp:fast fast floating point model  /Qpar enable parallel code gen
   # /Oy omit frame pointers             /GT fiber-safe optimizations
   list(APPEND MSVC_REL /Ox /Ob2 /Oi /Ot /GL /arch:SSE2 /fp:fast /Qpar /Oy /GT)
-  set(MSVC_RDEB /Ob2 /Oi /arch:SSE2 /fp:fast /GT)
+  list(APPEND MSVC_RDEB /Ob2 /Oi /arch:SSE2 /fp:fast /GT)
   add_compile_options("$<$<CONFIG:Release>:${MSVC_REL}>")
   add_compile_options("$<$<CONFIG:RelWithDebInfo>:${MSVC_RDEB}>")
   add_compile_options("$<$<CONFIG:Debug>:${MSVC_DEB}>")
@@ -195,8 +193,12 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 # find SFML
 find_package(SFML 2 REQUIRED system window graphics)
 include_directories(${SFML_INCLUDE_DIR})
-list(APPEND ADDITIONAL_LIBRARIES ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
-#message(STATUS "SFML libs: ${SFML_DEPENDENCIES} ${SFML_LIBRARIES}" )
+set(SFML_DBG_LIBS ${SFML_SYSTEM_LIBRARY_DEBUG} ${SFML_WINDOW_LIBRARY_DEBUG} ${SFML_GRAPHICS_LIBRARY_DEBUG})
+set(SFML_REL_LIBS ${SFML_SYSTEM_LIBRARY_RELEASE} ${SFML_WINDOW_LIBRARY_RELEASE} ${SFML_GRAPHICS_LIBRARY_RELEASE})
+list(APPEND ADDITIONAL_LIBRARIES ${SFML_DEPENDENCIES})
+message(STATUS "SFML debug libs: ${SFML_DBG_LIBS}" )
+message(STATUS "SFML release libs: ${SFML_REL_LIBS}" )
+message(STATUS "SFML deps: ${SFML_DEPENDENCIES}" )
 
 # find glew
 find_package(glew REQUIRED)
@@ -218,7 +220,6 @@ list(REMOVE_DUPLICATES ADDITIONAL_LIBRARIES)
 # Include header directories
 ################################
 
-include_directories(${CEREAL_DIR}/include)
 include_directories(${NANOVG_DIR}/src)
 include_directories(${WDL_DIR})
 include_directories(${IPLUG_DIR})
@@ -261,7 +262,7 @@ add_library(${PLUGIN_NAME} SHARED
   ${SFTOOLS_FILES}
   )
 
-target_link_libraries(${PLUGIN_NAME} ${ADDITIONAL_LIBRARIES})
+target_link_libraries(${PLUGIN_NAME} ${ADDITIONAL_LIBRARIES} "$<$<CONFIG:Release>:${SFML_REL_LIBS}>" "$<$<NOT:$<CONFIG:Release>>:${SFML_DBG_LIBS}>")
 target_link_libraries(${PLUGIN_NAME} VOSIMLib LICELib)
 
 if (WIN32)

@@ -40,7 +40,7 @@ namespace syn
 	public:
 		UIUnitPort(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_portNum, bool a_isInput);
 		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		int getUnitId() const { return m_unitId; }
 		int getPortId() const { return m_portNum; }
@@ -68,7 +68,7 @@ namespace syn
 		UIUnitPort* getSelectedOutPort(const Vector2i& a_relPos) const;
 		const vector<UIUnitPort*>& getInPorts() const { return m_inPorts; }
 		const vector<UIUnitPort*>& getOutPorts() const { return m_outPorts; }
-		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		void close() const;
 	protected:
 		VoiceManager* m_vm;

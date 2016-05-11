@@ -2,15 +2,14 @@
 #include <VoiceManager.h>
 #include <UIWindow.h>
 #include <UIDefaultUnitControl.h>
-#include <eigen/src/Core/util/ForwardDeclarations.h>
-#include <eigen/src/Core/util/ForwardDeclarations.h>
+#include <UITextBox.h>
 
 bool syn::UIWire::contains(const Vector2i& a_pt) {
 	NDPoint<2, int> pt{ a_pt[0],a_pt[1] };
 	NDPoint<2, int> frompt{ fromPt()[0], fromPt()[1] };
 	NDPoint<2, int> topt{ toPt()[0], toPt()[1] };
 	double distance = pointLineDistance(pt, frompt, topt);
-	return distance < 5;
+	return distance < 5 && !m_window->getCircuitPanel()->getUnit(a_pt);
 }
 
 void syn::UIWire::onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) {
@@ -45,7 +44,7 @@ bool syn::UIWire::onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffC
 	return true;
 }
 
-syn::UIComponent* syn::UIWire::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+syn::UIComponent* syn::UIWire::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	Vector2i frompt = fromPt();
 	Vector2i topt = toPt();
 
@@ -101,11 +100,17 @@ syn::UICircuitPanel::UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, U
 	m_selectedWire(nullptr)
 {
 	m_unitSelector = new UIUnitSelector{ m_window, m_unitFactory };
+	UITextBox* testTxtBox = new UITextBox(m_window);
+	UICol* unitSelectorLayout = new UICol(m_window);
 	UIWindow* unitSelectorWindow = new UIWindow{ m_window,"Unit Selector" };
 	unitSelectorWindow->setRelPos({ 5,45 });
-	m_unitSelector->setRelPos({ 5, theme()->mWindowHeaderHeight });
+	unitSelectorLayout->setRelPos({ 5, theme()->mWindowHeaderHeight });
 	addChild(unitSelectorWindow);
-	unitSelectorWindow->addChild(m_unitSelector);
+	unitSelectorWindow->addChildToBody(unitSelectorLayout);
+
+	unitSelectorLayout->addChild(testTxtBox);
+	unitSelectorLayout->addChild(m_unitSelector);
+	unitSelectorLayout->setChildResizePolicy(UICell::CMATCHMAX);
 
 	const Circuit& circ = m_vm->getCircuit();
 	onAddUnit_(circ.getUnit(circ.getInputUnitId()).getClassIdentifier(), circ.getInputUnitId());
@@ -132,11 +137,11 @@ bool syn::UICircuitPanel::onMouseMove(const Vector2i& a_relCursor, const Vector2
 	return false;
 }
 
-syn::UIComponent* syn::UICircuitPanel::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
-	UIComponent* child = UIComponent::onMouseDown(a_relCursor, a_diffCursor);
+syn::UIComponent* syn::UICircuitPanel::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+	UIComponent* child = UIComponent::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
 	if (child) return child;
 
-	if (m_unitSelector->selectedGroup()>=0 && m_unitSelector->selectedPrototype()>=0) {
+	if (m_unitSelector->selectedPrototype()>=0) {
 		unsigned classId = m_unitFactory->getClassId(m_unitSelector->selectedPrototypeName());
 		requestAddUnit_(classId);
 		m_unitSelector->setSelectedPrototype(-1);
@@ -295,6 +300,7 @@ void syn::UICircuitPanel::onAddConnection_(int a_fromUnit, int a_fromPort, int a
 	UIWire* wire = new UIWire(m_window, a_fromUnit, a_fromPort, a_toUnit, a_toPort);
 	m_wires.push_back(wire);
 	addChild(wire);
+	setZOrder(wire, -1);
 }
 
 void syn::UICircuitPanel::onDeleteConnection_(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort) {
@@ -326,10 +332,12 @@ void syn::UICircuitPanel::requestAddUnit_(unsigned a_classId) {
 			int pos = 0;
 			pos = a_data->Get<UICircuitPanel*>(&self,pos);
 			pos = a_data->Get<UnitFactory*>(&unitFactory, pos);
-			pos = a_data->Get<Unit*>(&unit, pos);
-			int unitId = a_circuit->addUnit(shared_ptr<Unit>(unit->clone()));
-			if (a_isLast)
+			pos = a_data->Get<Unit*>(&unit, pos);			
+			int unitId = a_circuit->addUnit(shared_ptr<Unit>(unit->clone()));			
+			if (a_isLast) {
 				self->onAddUnit_(unit->getClassIdentifier(), unitId);
+				delete unit;
+			}
 		};
 
 	UICircuitPanel* self = this;

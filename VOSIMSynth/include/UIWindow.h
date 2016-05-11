@@ -45,7 +45,7 @@ namespace syn {
 
 		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 
-		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 
 		void notifyChildResized(UIComponent* a_child) override;
 

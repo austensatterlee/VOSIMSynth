@@ -48,10 +48,10 @@ namespace syn
 			Right
 		};
 
-		UIButton(VOSIMWindow* a_window, const std::string &caption = "Untitled", int icon = 0);
+		UIButton(VOSIMWindow* a_window, const string &caption = "Untitled", int icon = 0);
 
-		const std::string &caption() const { return mCaption; }
-		void setCaption(const std::string &caption) { mCaption = caption; }
+		const string &caption() const { return mCaption; }
+		void setCaption(const string &caption) { mCaption = caption; }
 
 		const Color &backgroundColor() const { return mBackgroundColor; }
 		void setBackgroundColor(const Color &backgroundColor) { mBackgroundColor = backgroundColor; }
@@ -72,25 +72,25 @@ namespace syn
 		void setPushed(bool pushed) { mPushed = pushed; }
 
 		/// Set the push callback (for any type of button)
-		std::function<void()> callback() const { return mCallback; }
-		void setCallback(const std::function<void()> &callback) { mCallback = callback; }
+		function<void()> callback() const { return mCallback; }
+		void setCallback(const function<void()> &callback) { mCallback = callback; }
 
 		/// Set the change callback (for toggle buttons)
-		std::function<void(bool)> changeCallback() const { return mChangeCallback; }
-		void setChangeCallback(const std::function<void(bool)> &callback) { mChangeCallback = callback; }
+		function<void(bool)> changeCallback() const { return mChangeCallback; }
+		void setChangeCallback(const function<void(bool)> &callback) { mChangeCallback = callback; }
 
 		/// Set the button group (for radio buttons)
-		void setButtonGroup(const std::vector<UIButton *> &buttonGroup) { mButtonGroup = buttonGroup; }
-		const std::vector<UIButton *> &buttonGroup() const { return mButtonGroup; }
+		void setButtonGroup(const vector<UIButton *> &buttonGroup) { mButtonGroup = buttonGroup; }
+		const vector<UIButton *> &buttonGroup() const { return mButtonGroup; }
 
-		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 
 		void setFontSize(int a_fontSize) { m_fontSize = a_fontSize; }
 	protected:
 		void draw(NVGcontext *ctx) override;
 	protected:
-		std::string mCaption;
+		string mCaption;
 		int mIcon;
 		int m_fontSize;
 		IconPosition mIconPosition;
@@ -99,9 +99,9 @@ namespace syn
 		Color mBackgroundColor;
 		Color mTextColor;
 		bool mEnabled;
-		std::function<void()> mCallback;
-		std::function<void(bool)> mChangeCallback;
-		std::vector<UIButton *> mButtonGroup;
+		function<void()> mCallback;
+		function<void(bool)> mChangeCallback;
+		vector<UIButton *> mButtonGroup;
 	};
 }
 #endif

@@ -29,6 +29,7 @@ Copyright 2016, Austen Satterlee
 #define __UIDEFAULTUNITCONTROL__
 #include "UIUnitControl.h"
 #include "UITextSlider.h"
+#include "UICell.h"
 
 namespace syn
 {
@@ -38,17 +39,14 @@ namespace syn
 	{
 	public:
 		DefaultUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId);
-
-	protected:
-		void draw(NVGcontext* a_nvg) override;
+		void notifyChildResized(UIComponent* a_child) override;
 
 	private:
 		void _onResize() override;
 
 	private:
 		vector<UITextSlider*> m_paramControls;
-
-		bool m_isSizeDirty = true;
+		UICol* m_col;
 	};
 }
 #endif

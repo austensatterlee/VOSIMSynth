@@ -32,10 +32,13 @@ namespace syn
 		nvgSave(a_nvg);
 		draw(a_nvg);
 		
-		for (int i = m_children.size() - 1; i >= 0;i--) {
-			shared_ptr<UIComponent> child = m_children[i];
-			if(child->m_visible)
-				child->recursiveDraw(a_nvg);
+		for (auto zplane_iter = m_ZPlanes.rbegin(); zplane_iter !=m_ZPlanes.rend(); ++zplane_iter) {
+			const list<shared_ptr<UIComponent>>& zplane = zplane_iter->second;
+			for (auto zorder_iter = zplane.rbegin(); zorder_iter != zplane.rend(); ++zorder_iter) {
+				shared_ptr<UIComponent> child = *zorder_iter;
+				if (child->m_visible)
+					child->recursiveDraw(a_nvg);
+			}
 		}
 		nvgRestore(a_nvg);
 		nvgTranslate(a_nvg, -m_pos[0], -m_pos[1]);
@@ -54,6 +57,11 @@ namespace syn
 		if (find(m_children.begin(), m_children.end(), a_newChild) == m_children.end()) {
 			a_newChild->m_parent = this;
 			m_children.push_back(a_newChild);
+
+			// Push to front of z-order stack
+			m_ZPlanes[0].push_front(a_newChild);
+			m_ZPlaneMap[a_newChild.get()] = 0;
+
 			_onAddChild(a_newChild);
 		}
 	}
@@ -72,7 +80,16 @@ namespace syn
 			return false;
 		if (m_window->getFocused() == m_children[a_index].get())
 			m_window->clearFocus();
+
+		shared_ptr<UIComponent> child = m_children[a_index];
+
+		// Remove from z-order stack
+		int zorder = m_ZPlaneMap[child.get()];
+		m_ZPlaneMap.erase(child.get());
+		m_ZPlanes[zorder].remove(child);
+
 		m_children.erase(m_children.cbegin() + a_index);
+		
 		_onRemoveChild();
 		return true;
 	}
@@ -153,6 +170,26 @@ namespace syn
 		return m_visible;
 	}
 
+	bool UIComponent::focused() const {
+		return m_focused;
+	}
+
+	bool UIComponent::hovered() const {
+		return m_hovered;
+	}
+
+	bool UIComponent::onTextEntered(sf::Uint32 a_unicode) {
+		return false;
+	}
+
+	bool UIComponent::onKeyDown(const sf::Event::KeyEvent& a_key) {
+		return false;
+	}
+
+	bool UIComponent::onKeyUp(const sf::Event::KeyEvent& a_key) {
+		return false;
+	}
+
 	void UIComponent::setVisible(bool a_visible) {
 		if (a_visible) {
 			m_visibleSize = m_size;
@@ -171,18 +208,22 @@ namespace syn
 
 	UIComponent* UIComponent::findChild(const Vector2i& a_pt) {
 		Vector2i relPt = a_pt - m_pos;
-		for (shared_ptr<UIComponent> child : m_children) {
-			if (child->visible() && child->contains(relPt))
-				return child.get();
+		for (auto const& kv : m_ZPlanes) {
+			for (shared_ptr<UIComponent> child : kv.second) {
+				if (child->visible() && child->contains(relPt))
+					return child.get();
+			}
 		}
 		return contains(a_pt) ? this : nullptr;
 	}
 
 	UIComponent* UIComponent::findChildRecursive(const Vector2i& a_pt) {
 		Vector2i relPt = a_pt - m_pos;
-		for(shared_ptr<UIComponent> child : m_children) {
-			if (child->visible() && child->contains(relPt))
-				return child->findChildRecursive(relPt);			
+		for (auto const& kv : m_ZPlanes) {
+			for (shared_ptr<UIComponent> child : kv.second) {
+				if (child->visible() && child->contains(relPt))
+					return child->findChildRecursive(relPt);
+			}
 		}
 		return contains(a_pt) ? this : nullptr;
 	}
@@ -225,15 +266,17 @@ namespace syn
 	}
 
 	bool UIComponent::onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
-		for (shared_ptr<UIComponent> child : m_children) {
-			if (!child->visible())
-				continue;
-			bool hasMouse = child->contains(a_relCursor - m_pos);
-			bool hadMouse = child->contains(a_relCursor - m_pos - a_diffCursor);
-			if (hasMouse != hadMouse)
-				child->onMouseEnter(a_relCursor - m_pos, a_diffCursor, hasMouse);
-			if ((hasMouse || hadMouse) && child->onMouseMove(a_relCursor - m_pos, a_diffCursor))
-				return true;
+		for (auto const& kv : m_ZPlanes) {
+			for (shared_ptr<UIComponent> child : kv.second) {
+				if (!child->visible())
+					continue;
+				bool hasMouse = child->contains(a_relCursor - m_pos);
+				bool hadMouse = child->contains(a_relCursor - m_pos - a_diffCursor);
+				if (hasMouse != hadMouse)
+					child->onMouseEnter(a_relCursor - m_pos, a_diffCursor, hasMouse);
+				if (hasMouse || hadMouse)
+					child->onMouseMove(a_relCursor - m_pos, a_diffCursor);
+			}
 		}
 		return false;
 	}
@@ -242,39 +285,74 @@ namespace syn
 		m_hovered = a_isEntering;
 	}
 
-	UIComponent* UIComponent::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
-		for (shared_ptr<UIComponent> child : m_children) {
-			if (!child->visible())
-				continue;
-			if (child->contains(a_relCursor - m_pos)) {
-				UIComponent* ret = child->onMouseDown(a_relCursor - m_pos, a_diffCursor);
-				if (ret) return ret;
+	UIComponent* UIComponent::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+		for (auto const& kv : m_ZPlanes) {
+			for (shared_ptr<UIComponent> child : kv.second) {
+				if (!child->visible())
+					continue;
+				if (child->contains(a_relCursor - m_pos)) {
+					UIComponent* ret = child->onMouseDown(a_relCursor - m_pos, a_diffCursor, a_isDblClick);
+					if (ret) return ret;
+				}
 			}
 		}
 		return nullptr;
 	}
 
 	bool UIComponent::onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
-		for (shared_ptr<UIComponent> child : m_children) {
-			if (!child->visible())
-				continue;
-			if (child->contains(a_relCursor - m_pos) && child->onMouseUp(a_relCursor - m_pos, a_diffCursor))
-				return true;
+		for (auto const& kv : m_ZPlanes) {
+			for (shared_ptr<UIComponent> child : kv.second) {
+				if (!child->visible())
+					continue;
+				if (child->contains(a_relCursor - m_pos) && child->onMouseUp(a_relCursor - m_pos, a_diffCursor))
+					return true;
+			}
 		}
 		return false;
 	}
 
 	bool UIComponent::onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) {
-		for (shared_ptr<UIComponent> child : m_children) {
-			if (!child->visible())
-				continue;
-			if (child->contains(a_relCursor - m_pos) && child->onMouseScroll(a_relCursor - m_pos, a_diffCursor, a_scrollAmt))
-				return true;
+		for (auto const& kv : m_ZPlanes) {
+			for (shared_ptr<UIComponent> child : kv.second) {
+				if (!child->visible())
+					continue;
+				if (child->contains(a_relCursor - m_pos) && child->onMouseScroll(a_relCursor - m_pos, a_diffCursor, a_scrollAmt))
+					return true;
+			}
 		}
 		return false;
 	}
 
 	void UIComponent::onFocusEvent(bool a_isFocused) {
 		m_focused = a_isFocused;
+		if (parent())
+			parent()->bringToFront(this);
+	}
+
+	void UIComponent::bringToFront(UIComponent* a_child) {
+		int frontZOrder = 0;
+		setZOrder(a_child, frontZOrder);
+	}
+
+	void UIComponent::pushToBack(UIComponent* a_child) {
+		int backZOrder = m_ZPlanes.rbegin()->first;
+		setZOrder(a_child, backZOrder, false);
+	}
+
+	int UIComponent::getZOrder(UIComponent* a_child) {
+		return m_ZPlaneMap[a_child];
+	}
+
+	void UIComponent::setZOrder(UIComponent* a_child, int a_newZOrder, bool toFront) {
+		shared_ptr<UIComponent> child = getChild(a_child);
+		if (child) {
+			int oldZOrder = getZOrder(child.get());
+			m_ZPlanes[oldZOrder].remove(child);
+			if(toFront)
+				m_ZPlanes[a_newZOrder].push_front(child);
+			else
+				m_ZPlanes[a_newZOrder].push_back(child);
+			m_ZPlaneMap[child.get()] = a_newZOrder;
+		}
 	}
 }

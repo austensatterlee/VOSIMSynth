@@ -55,24 +55,24 @@ namespace syn
 
 	/// Stores an RGBA color value
 	class Color : public Eigen::Matrix<float, 4, 1, Eigen::DontAlign> {
-		typedef Eigen::Matrix<float,4,1,Eigen::DontAlign> Base;
+		typedef Matrix<float,4,1,Eigen::DontAlign> Base;
 	public:
 		Color() : Color(0, 0, 0, 0) {}
 
-		Color(const Eigen::Vector4f &color) : Base(color) { }
+		Color(const Vector4f &color) : Base(color) { }
 
-		Color(const Eigen::Vector3f &color, float alpha)
+		Color(const Vector3f &color, float alpha)
 			: Color(color(0), color(1), color(2), alpha) { }
 
-		Color(const Eigen::Vector3i &color, int alpha)
+		Color(const Vector3i &color, int alpha)
 			: Color(color.cast<float>() / 255.f, alpha / 255.f) { }
 
-		Color(const Eigen::Vector3f &color) : Color(color, 1.0f) {}
+		Color(const Vector3f &color) : Color(color, 1.0f) {}
 
-		Color(const Eigen::Vector3i &color)
+		Color(const Vector3i &color)
 			: Color(static_cast<Vector3f>(color.cast<float>() / 255.f)) { }
 
-		Color(const Eigen::Vector4i &color)
+		Color(const Vector4i &color)
 			: Color(static_cast<Vector4f>(color.cast<float>() / 255.f)) { }
 
 		Color(float intensity, float alpha)
@@ -86,11 +86,11 @@ namespace syn
 		Color(int r, int g, int b, int a) : Color(Vector4i(r, g, b, a)) { }
 
 		/// Construct a color vector from MatrixBase (needed to play nice with Eigen)
-		template <typename Derived> Color(const Eigen::MatrixBase<Derived>& p)
+		template <typename Derived> Color(const MatrixBase<Derived>& p)
 			: Base(p) { }
 
 		/// Assign a color vector from MatrixBase (needed to play nice with Eigen)
-		template <typename Derived> Color &operator=(const Eigen::MatrixBase<Derived>& p) {
+		template <typename Derived> Color &operator=(const MatrixBase<Derived>& p) {
 			this->Base::operator=(p);
 			return *this;
 		}
@@ -141,7 +141,7 @@ namespace syn
 	 *     Pairs of permissible formats with descriptions like
 	 *     <tt>("png", "Portable Network Graphics")</tt>
 	 */
-	extern std::string file_dialog(const std::vector<std::pair<std::string, std::string>> &filetypes, bool save);
+	extern string file_dialog(const vector<pair<string, string>> &filetypes, bool save);
 
 	/**
 	* \brief Convert a single UTF32 character code to UTF8
@@ -149,16 +149,16 @@ namespace syn
 	* NanoGUI uses this to convert the icon character codes
 	* defined in entypo.h
 	*/
-	extern std::array<char, 8> utf8(int c);
+	extern array<char, 8> utf8(int c);
 
 	/// Load a directory of PNG images and upload them to the GPU (suitable for use with ImagePanel)
-	extern std::vector<std::pair<int, std::string>>
-		loadImageDirectory(NVGcontext *ctx, const std::string &path);
+	extern vector<pair<int, string>>
+		loadImageDirectory(NVGcontext *ctx, const string &path);
 
 	/// Convenience function for instanting a PNG icon from the application's data segment (via bin2c)
 	#define nvgImageIcon(ctx, name) nanogui::__nanogui_get_image(ctx, #name, name##_png, name##_png_size)
 	/// Helper function used by nvgImageIcon
-	extern int __nanogui_get_image(NVGcontext *ctx, const std::string &name, uint8_t *data, uint32_t size);
+	extern int __nanogui_get_image(NVGcontext *ctx, const string &name, uint8_t *data, uint32_t size);
 
 	/* Cursor shapes */
 	enum class Cursor {
