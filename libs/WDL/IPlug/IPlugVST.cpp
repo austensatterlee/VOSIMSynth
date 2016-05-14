@@ -1,5 +1,4 @@
 #include "IPlugVST.h"
-#include "IGraphics.h"
 #include "VOSIMWindow.h"
 #include <stdio.h>
 
@@ -215,14 +214,14 @@ EHost IPlugVST::GetHost()
 }
 
 void IPlugVST::AttachAppWindow(syn::VOSIMWindow* a_vosimWindow) {
-	  if (a_vosimWindow)
-	  {
-	    IPlugBase::AttachAppWindow(a_vosimWindow);
-	    mAEffect.flags |= effFlagsHasEditor;
-	    mEditRect.left = mEditRect.top = 0;
-	    mEditRect.right = (VstInt16)a_vosimWindow->getSize()[0];
-	    mEditRect.bottom = (VstInt16)a_vosimWindow->getSize()[1];
-	  }
+      if (a_vosimWindow)
+      {
+        IPlugBase::AttachAppWindow(a_vosimWindow);
+        mAEffect.flags |= effFlagsHasEditor;
+        mEditRect.left = mEditRect.top = 0;
+        mEditRect.right = (VstInt16)a_vosimWindow->getSize()[0];
+        mEditRect.bottom = (VstInt16)a_vosimWindow->getSize()[1];
+      }
 }
 
 //void IPlugVST::AttachGraphics(IGraphics* pGraphics)
@@ -239,13 +238,13 @@ void IPlugVST::AttachAppWindow(syn::VOSIMWindow* a_vosimWindow) {
 
 void IPlugVST::ResizeGraphics(int w, int h)
 {
-	syn::VOSIMWindow* vosimWindow = GetAppWindow();
+    syn::VOSIMWindow* vosimWindow = GetAppWindow();
 
   if (vosimWindow)
   {
     mEditRect.left = mEditRect.top = 0;
-	mEditRect.right = (VstInt16)vosimWindow->getSize()[0];
-	mEditRect.bottom = (VstInt16)vosimWindow->getSize()[1];
+    mEditRect.right = (VstInt16)vosimWindow->getSize()[0];
+    mEditRect.bottom = (VstInt16)vosimWindow->getSize()[1];
 
     OnWindowResize();
   }
@@ -358,9 +357,9 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
   switch (opCode)
   {
   case effProcessEvents:
-	  break;
+      break;
   default:
-	  Trace(TRACELOC, "%d(%s):%d:%d", opCode, VSTOpcodeStr(opCode), idx, (int)value);
+      Trace(TRACELOC, "%d(%s):%d:%d", opCode, VSTOpcodeStr(opCode), idx, (int)value);
   }
   switch (opCode)
   {
@@ -378,26 +377,29 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
     }
     case effGetParamLabel:
     {
-      if (idx >= 0 && idx < _this->NParams())
-      {
-        strcpy((char*) ptr, _this->GetParam(idx)->GetLabelForHost());
-      }
+        // \todo
+//      if (idx >= 0 && idx < _this->NParams())
+//      {
+//        strcpy((char*) ptr, _this->GetParam(idx)->GetLabelForHost());
+//      }
       return 0;
     }
     case effGetParamDisplay:
     {
-      if (idx >= 0 && idx < _this->NParams())
-      {
-        _this->GetParam(idx)->GetDisplayForHost((char*) ptr);
-      }
+        // \todo
+//      if (idx >= 0 && idx < _this->NParams())
+//      {
+//        _this->GetParam(idx)->GetDisplayForHost((char*) ptr);
+//      }
       return 0;
     }
     case effGetParamName:
     {
-      if (idx >= 0 && idx < _this->NParams())
-      {
-        strcpy((char*) ptr, _this->GetParam(idx)->GetNameForHost());
-      }
+        // \todo
+//      if (idx >= 0 && idx < _this->NParams())
+//      {
+//        strcpy((char*) ptr, _this->GetParam(idx)->GetNameForHost());
+//      }
       return 0;
     }
       //could implement effGetParameterProperties to group parameters, but can't find a host that supports it
@@ -416,29 +418,30 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
 //    }
     case effString2Parameter:
     {
-      if (idx >= 0 && idx < _this->NParams())
-      {
-        if (ptr)
-        {
-          double v;
-          IParam* pParam = _this->GetParam(idx);
-          if (pParam->GetNDisplayTexts())
-          {
-            int vi;
-            if (!pParam->MapDisplayText((char*)ptr, &vi)) return 0;
-            v = (double)vi;
-          }
-          else
-          {
-            v = atof((char*)ptr);
-            if (pParam->DisplayIsNegated()) v = -v;
-          }
-          if (_this->GetGUI()) _this->GetGUI()->SetParameterFromPlug(idx, v, false);
-          pParam->Set(v);
-          _this->OnParamChange(idx);
-        }
-        return 1;
-      }
+    // \todo
+//      if (idx >= 0 && idx < _this->NParams())
+//      {
+//        if (ptr)
+//        {
+//          double v;
+//          IParam* pParam = _this->GetParam(idx);
+//          if (pParam->GetNDisplayTexts())
+//          {
+//            int vi;
+//            if (!pParam->MapDisplayText((char*)ptr, &vi)) return 0;
+//            v = (double)vi;
+//          }
+//          else
+//          {
+//            v = atof((char*)ptr);
+//            if (pParam->DisplayIsNegated()) v = -v;
+//          }
+//          if (_this->GetGUI()) _this->GetGUI()->SetParameterFromPlug(idx, v, false);
+//          pParam->Set(v);
+//          _this->OnParamChange(idx);
+//        }
+//        return 1;
+//      }
       return 0;
     }
     case effSetSampleRate:
@@ -478,27 +481,27 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
     }
     case effEditOpen:
     {
-	   syn::VOSIMWindow* pGraphics = _this->GetAppWindow();
+       syn::VOSIMWindow* pGraphics = _this->GetAppWindow();
       
-	  if (pGraphics)
-	  {
-		  bool newWindowSuccess;
+      if (pGraphics)
+      {
+          bool newWindowSuccess;
 #ifdef _WIN32
-		  newWindowSuccess = pGraphics->OpenWindow((HWND)ptr);
-		  if (!newWindowSuccess) pGraphics = 0;
+          newWindowSuccess = pGraphics->OpenWindow((HWND)ptr);
+          if (!newWindowSuccess) pGraphics = 0;
 #else   // OSX, check if we are in a Cocoa VST host
 #if defined(__LP64__)
-		  newWindowPtr = pGraphics->OpenWindow(ptr);
-		  if (!newWindowPtr) pGraphics = 0;
+          newWindowPtr = pGraphics->OpenWindow(ptr);
+          if (!newWindowPtr) pGraphics = 0;
 #else
-		  bool iscocoa = (_this->mHasVSTExtensions&VSTEXT_COCOA);
-		  if (iscocoa) {
-			  newWindowPtr = pGraphics->OpenWindow(ptr);
-			  if (!newWindowPtr) pGraphics = 0;
-		}else {
-			  newWindowPtr = pGraphics->OpenWindow(ptr,0);
-			  if (!newWindowPtr) pGraphics = 0;
-		}
+          bool iscocoa = (_this->mHasVSTExtensions&VSTEXT_COCOA);
+          if (iscocoa) {
+              newWindowPtr = pGraphics->OpenWindow(ptr);
+              if (!newWindowPtr) pGraphics = 0;
+        }else {
+              newWindowPtr = pGraphics->OpenWindow(ptr,0);
+              if (!newWindowPtr) pGraphics = 0;
+        }
           
           #endif
         #endif
@@ -783,7 +786,8 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
       {
         if (value >= 0 && value < _this->NParams())
         {
-          _this->GetParam(value)->GetDisplayForHost((double) opt, true, (char*) ptr);
+            // \todo
+//          _this->GetParam(value)->GetDisplayForHost((double) opt, true, (char*) ptr);
         }
         return 0xbeef;
       }
@@ -792,10 +796,11 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
       {
         if (value >= 0 && value < _this->NParams())
         {
-          if (_this->GetParam(value)->Type() != IParam::kTypeDouble)
-          {
-            return 0xbeef;
-          }
+            // \todo
+//          if (_this->GetParam(value)->Type() != IParam::kTypeDouble)
+//          {
+//            return 0xbeef;
+//          }
         }
       }
 
@@ -832,8 +837,8 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
     {
       if (ptr)
       {
-        int idx = _this->GetCurrentPresetIdx();
-        strcpy((char*) ptr, _this->GetPresetName(idx));
+        int psetidx = _this->GetCurrentPresetIdx();
+        strcpy((char*) ptr, _this->GetPresetName(psetidx));
       }
       return 0;
     }
@@ -912,10 +917,11 @@ float VSTCALLBACK IPlugVST::VSTGetParameter(AEffect *pEffect, VstInt32 idx)
   Trace(TRACELOC, "%d", idx);
   IPlugVST* _this = (IPlugVST*) pEffect->object;
   IMutexLock lock(_this);
-  if (idx >= 0 && idx < _this->NParams())
-  {
-    return (float) _this->GetParam(idx)->GetNormalized();
-  }
+  // \todo
+//  if (idx >= 0 && idx < _this->NParams())
+//  {
+//    return (float) _this->GetParam(idx)->GetNormalized();
+//  }
   return 0.0f;
 }
 
@@ -924,13 +930,14 @@ void VSTCALLBACK IPlugVST::VSTSetParameter(AEffect *pEffect, VstInt32 idx, float
   Trace(TRACELOC, "%d:%f", idx, value);
   IPlugVST* _this = (IPlugVST*) pEffect->object;
   IMutexLock lock(_this);
-  if (idx >= 0 && idx < _this->NParams())
-  {
-    if (_this->GetGUI())
-    {
-      _this->GetGUI()->SetParameterFromPlug(idx, value, true);
-    }
-    _this->GetParam(idx)->SetNormalized(value);
-    _this->OnParamChange(idx);
-  }
+  // \todo
+//  if (idx >= 0 && idx < _this->NParams())
+//  {
+//    if (_this->GetGUI())
+//    {
+//      _this->GetGUI()->SetParameterFromPlug(idx, value, true);
+//    }
+//    _this->GetParam(idx)->SetNormalized(value);
+//    _this->OnParamChange(idx);
+//  }
 }

@@ -28,12 +28,11 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __MEMORYUNIT__
 
 #include "Unit.h"
-#include <DSPMath.h>
 
 using namespace std;
 
-namespace syn {	
-
+namespace syn
+{
 	/**
 	* General N-Sample delay
 	*/
@@ -43,9 +42,7 @@ namespace syn {
 		NSampleDelay() :
 			m_buffer(1, 0),
 			m_bufferSize(1),
-			m_bufferIndex(0)
-		{
-		};
+			m_bufferIndex(0) { };
 
 		double process(double a_input);
 
@@ -57,34 +54,30 @@ namespace syn {
 
 		int size() const;
 	private:
-		std::vector<double> m_buffer;
+		vector<double> m_buffer;
 		int m_bufferSize;
 		int m_bufferIndex;
 	};
 
-	class MemoryUnit : public Unit {
+	class MemoryUnit : public Unit
+	{
 	public:
-		explicit MemoryUnit(const string& a_name) :
-			Unit(a_name),
-			m_pBufSize(addParameter_(UnitParameter("samples", 1, 16384, 1)))
-		{
-			addInput_("in");
-			addOutput_("out");
-		}
-		MemoryUnit(const MemoryUnit& a_rhs) :
-			MemoryUnit(a_rhs.getName()) {}
+		explicit MemoryUnit(const string& a_name);
+
+		MemoryUnit(const MemoryUnit& a_rhs);
+
 	protected:
 		void onParamChange_(int a_paramId) override;
 
 		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
 	private:
-		string _getClassName() const override { return "MemoryUnit"; }
+		string _getClassName() const override;
 
-		Unit* _clone() const override { return new MemoryUnit(*this); }
+		Unit* _clone() const override;
+
 	private:
 		NSampleDelay m_delay;
 		int m_pBufSize;
 	};
 }
 #endif
-

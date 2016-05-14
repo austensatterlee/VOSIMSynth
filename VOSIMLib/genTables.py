@@ -418,15 +418,15 @@ def main(pargs):
     v = pargs.verbose
 
     """Sin table"""
-    SINE_RES = 128
+    SINE_RES = 1024
     sintable = GenerateSine(SINE_RES)
     """Pitch table"""
-    PITCH_RES = 256
+    PITCH_RES = 1024
     MIN_PITCH = -128
     MAX_PITCH = 128
     pitches,pitchtable = GeneratePitchTable(MIN_PITCH,MAX_PITCH,PITCH_RES)
     """DB table"""
-    DB_RES = 256
+    DB_RES = 1024
     MIN_DB = -120
     MAX_DB = 0
     decibals,dbtable = GenerateDecibalTable(MIN_DB,MAX_DB,DB_RES)
@@ -447,13 +447,11 @@ def main(pargs):
     OFFLINE_BLIMP_INTERVALS = 513
     OFFLINE_BLIMP_RES = 2048
 
-    ONLINE_BLIMP_INTERVALS = 11
-    ONLINE_BLIMP_RES = 2048
+    ONLINE_BLIMP_INTERVALS = 5
+    ONLINE_BLIMP_RES = 1024
+
     blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS,ONLINE_BLIMP_RES,fc=20e3)
     blimp_offline = GenerateBlimp(OFFLINE_BLIMP_INTERVALS,OFFLINE_BLIMP_RES,fc=22e3)
-
-    # blimp_online = convolve( prefilter, blimp_online, 'same' ) # apply gain to high frequencies
-    # blimp_offline = convolve( prefilter, blimp_offline, 'same' ) # apply gain to high frequencies
 
     blimp_online /= blimp_online.max()
     blimp_offline /= blimp_offline.max()

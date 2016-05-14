@@ -1,13 +1,10 @@
 #include "IPlugBase.h"
-#ifndef OS_IOS
-#include "IGraphics.h"
-#include "IControl.h"
-#endif
 #include <math.h>
 #include <stdio.h>
 #include <time.h>
 #include "../wdlendian.h"
 #include "../base64encdec.h"
+#include "VOSIMWindow.h"
 
 #ifndef VstInt32
   #ifdef WIN32
@@ -68,7 +65,8 @@ IPlugBase::IPlugBase(int nParams,
                      bool plugDoesChunks,
                      bool plugIsInst,
                      EAPI plugAPI)
-  : mUniqueID(uniqueID)
+  : m_appWindow(nullptr),
+    mUniqueID(uniqueID)
   , mMfrID(mfrID)
   , mVersion(vendorVersion)
   , mSampleRate(DEFAULT_SAMPLE_RATE)
@@ -77,7 +75,6 @@ IPlugBase::IPlugBase(int nParams,
   , mHost(kHostUninit)
   , mHostVersion(0)
   , mStateChunks(plugDoesChunks)
-  , mGraphics(0)
   , mCurrentPresetIdx(0)
   , mIsInst(plugIsInst)
   , mDoesMIDI(plugDoesMidi)
@@ -88,10 +85,10 @@ IPlugBase::IPlugBase(int nParams,
 {
   Trace(TRACELOC, "%s:%s", effectName, CurrentTime());
 
-  for (int i = 0; i < nParams; ++i)
-  {
-    mParams.Add(new IParam);
-  }
+//  for (int i = 0; i < nParams; ++i)
+//  {
+//    mParams.Add(new IParam);
+//  }
 
   for (int i = 0; i < nPresets; ++i)
   {
@@ -152,10 +149,7 @@ IPlugBase::IPlugBase(int nParams,
 IPlugBase::~IPlugBase()
 {
   TRACE;
-  #ifndef OS_IOS
-  DELETE_NULL(mGraphics);
-  #endif
-  mParams.Empty(true);
+  DELETE_NULL(m_appWindow);
   mPresets.Empty(true);
   mInChannels.Empty(true);
   mOutChannels.Empty(true);
@@ -224,24 +218,6 @@ void IPlugBase::SetHost(const char* host, int version)
   GetVersionStr(version, vStr);
   Trace(TRACELOC, "host_%sknown:%s:%s", (mHost == kHostUnknown ? "un" : ""), host, vStr);
 }
-#ifndef OS_IOS
-void IPlugBase::AttachGraphics(IGraphics* pGraphics)
-{
-  if (pGraphics)
-  {
-    WDL_MutexLock lock(&mMutex);
-    int i, n = mParams.GetSize();
-    
-    for (i = 0; i < n; ++i)
-    {
-      pGraphics->SetParameterFromPlug(i, GetParam(i)->GetNormalized(), true);
-    }
-    
-    pGraphics->PrepDraw();
-    mGraphics = pGraphics;
-  }
-}
-#endif
 
 // Decimal = VVVVRRMM, otherwise 0xVVVVRRMM.
 int IPlugBase::GetEffectVersion(bool decimal)
@@ -533,19 +509,17 @@ void IPlugBase::SetLatency(int samples)
 // this is over-ridden for AAX
 void IPlugBase::SetParameterFromGUI(int idx, double normalizedValue)
 {
-  Trace(TRACELOC, "%d:%f", idx, normalizedValue);
-  WDL_MutexLock lock(&mMutex);
-  GetParam(idx)->SetNormalized(normalizedValue);
-  InformHostOfParamChange(idx, normalizedValue);
-  OnParamChange(idx);
+    // \todo although not really since this is possible (without locks) in VoiceManager
+//  Trace(TRACELOC, "%d:%f", idx, normalizedValue);
+//  WDL_MutexLock lock(&mMutex);
+//  GetParam(idx)->SetNormalized(normalizedValue);
+//  InformHostOfParamChange(idx, normalizedValue);
+//  OnParamChange(idx);
 }
 
 void IPlugBase::OnParamReset()
 {
-  for (int i = 0; i < mParams.GetSize(); ++i)
-  {
-    OnParamChange(i);
-  }
+  // \todo
   //Reset();
 }
 
@@ -615,90 +589,6 @@ void IPlugBase::MakeDefaultPreset(char* name, int nPresets)
       pPreset->mInitialized = true;
       strcpy(pPreset->mName, (name ? name : "Empty"));
       SerializeState(&(pPreset->mChunk));
-    }
-  }
-}
-
-#define GET_PARAM_FROM_VARARG(paramType, vp, v) \
-{ \
-  v = 0.0; \
-  switch (paramType) { \
-    case IParam::kTypeBool: \
-    case IParam::kTypeInt: \
-    case IParam::kTypeEnum: { \
-      v = (double) va_arg(vp, int); \
-      break; \
-    } \
-    case IParam::kTypeDouble: \
-    default: { \
-      v = (double) va_arg(vp, double); \
-      break; \
-    } \
-  } \
-}
-
-void IPlugBase::MakePreset(char* name, ...)
-{
-  IPreset* pPreset = GetNextUninitializedPreset(&mPresets);
-  if (pPreset)
-  {
-    pPreset->mInitialized = true;
-    strcpy(pPreset->mName, name);
-
-    int i, n = mParams.GetSize();
-
-    double v = 0.0;
-    va_list vp;
-    va_start(vp, name);
-    for (i = 0; i < n; ++i)
-    {
-      GET_PARAM_FROM_VARARG(GetParam(i)->Type(), vp, v);
-      pPreset->mChunk.Put(&v);
-    }
-  }
-}
-
-#define PARAM_UNINIT 99.99e-9
-
-void IPlugBase::MakePresetFromNamedParams(char* name, int nParamsNamed, ...)
-{
-  TRACE;
-  IPreset* pPreset = GetNextUninitializedPreset(&mPresets);
-  if (pPreset)
-  {
-    pPreset->mInitialized = true;
-    strcpy(pPreset->mName, name);
-
-    int i = 0, n = mParams.GetSize();
-
-    WDL_TypedBuf<double> vals;
-    vals.Resize(n);
-    double* pV = vals.Get();
-    for (i = 0; i < n; ++i, ++pV)
-    {
-      *pV = PARAM_UNINIT;
-    }
-
-    va_list vp;
-    va_start(vp, nParamsNamed);
-    for (int i = 0; i < nParamsNamed; ++i)
-    {
-      int paramIdx = (int) va_arg(vp, int);
-      // This assert will fire if any of the passed-in param values do not match
-      // the type that the param was initialized with (int for bool, int, enum; double for double).
-      assert(paramIdx >= 0 && paramIdx < n);
-      GET_PARAM_FROM_VARARG(GetParam(paramIdx)->Type(), vp, *(vals.Get() + paramIdx));
-    }
-    va_end(vp);
-
-    pV = vals.Get();
-    for (int i = 0; i < n; ++i, ++pV)
-    {
-      if (*pV == PARAM_UNINIT)        // Any that weren't explicitly set, use the defaults.
-      {
-        *pV = GetParam(i)->Value();
-      }
-      pPreset->mChunk.Put(pV);
     }
   }
 }
@@ -891,119 +781,127 @@ int IPlugBase::UnserializePresets(ByteChunk* pChunk, int startPos)
 
 bool IPlugBase::SerializeParams(ByteChunk* pChunk)
 {
-  TRACE;
-
-  WDL_MutexLock lock(&mMutex);
-  bool savedOK = true;
-  int i, n = mParams.GetSize();
-  for (i = 0; i < n && savedOK; ++i)
-  {
-    IParam* pParam = mParams.Get(i);
-    Trace(TRACELOC, "%d %s %f", i, pParam->GetNameForHost(), pParam->Value());
-    double v = pParam->Value();
-    savedOK &= (pChunk->Put(&v) > 0);
-  }
-  return savedOK;
+// \todo
+    return false;
+//  TRACE;
+//
+//  WDL_MutexLock lock(&mMutex);
+//  bool savedOK = true;
+//  int i, n = mParams.GetSize();
+//  for (i = 0; i < n && savedOK; ++i)
+//  {
+//    IParam* pParam = mParams.Get(i);
+//    Trace(TRACELOC, "%d %s %f", i, pParam->GetNameForHost(), pParam->Value());
+//    double v = pParam->Value();
+//    savedOK &= (pChunk->Put(&v) > 0);
+//  }
+//  return savedOK;
 }
 
 int IPlugBase::UnserializeParams(ByteChunk* pChunk, int startPos)
 {
-  TRACE;
-
-  WDL_MutexLock lock(&mMutex);
-  int i, n = mParams.GetSize(), pos = startPos;
-  for (i = 0; i < n && pos >= 0; ++i)
-  {
-    IParam* pParam = mParams.Get(i);
-    double v = 0.0;
-    Trace(TRACELOC, "%d %s %f", i, pParam->GetNameForHost(), pParam->Value());
-    pos = pChunk->Get(&v, pos);
-    pParam->Set(v);
-  }
-  OnParamReset();
-  return pos;
+// \todo
+    return startPos;
+//  TRACE;
+//
+//  WDL_MutexLock lock(&mMutex);
+//  int i, n = mParams.GetSize(), pos = startPos;
+//  for (i = 0; i < n && pos >= 0; ++i)
+//  {
+//    IParam* pParam = mParams.Get(i);
+//    double v = 0.0;
+//    Trace(TRACELOC, "%d %s %f", i, pParam->GetNameForHost(), pParam->Value());
+//    pos = pChunk->Get(&v, pos);
+//    pParam->Set(v);
+//  }
+//  OnParamReset();
+//  return pos;
 }
 
 bool IPlugBase::CompareState(const unsigned char* incomingState, int startPos)
 {
-  bool isEqual = true;
-  
-  const double* data = (const double*) incomingState + startPos;
-  
-  // dirty hack here because protools treats param values as 32 bit int and in IPlug they are 64bit float
-  // if we memcmp() the incoming state with the current they may have tiny differences due to the quantization
-  for (int i = 0; i < NParams(); i++)
-  {
-    float v = (float) GetParam(i)->Value();
-    float vi = (float) *(data++);
-    
-    isEqual &= (fabsf(v - vi) < 0.00001);
-  }
-  
-  return isEqual;
+	return false;
+//  bool isEqual = true;
+//  
+//  const double* data = (const double*) incomingState + startPos;
+//  
+//  // dirty hack here because protools treats param values as 32 bit int and in IPlug they are 64bit float
+//  // if we memcmp() the incoming state with the current they may have tiny differences due to the quantization
+//  for (int i = 0; i < NParams(); i++)
+//  {
+//    float v = (float) GetParam(i)->Value();
+//    float vi = (float) *(data++);
+//    
+//    isEqual &= (fabsf(v - vi) < 0.00001);
+//  }
+//  
+//  return isEqual;
 }
 
 #ifndef OS_IOS
 void IPlugBase::RedrawParamControls()
 {
-  if (mGraphics)
-  {
-    int i, n = mParams.GetSize();
-    for (i = 0; i < n; ++i)
-    {
-      double v = mParams.Get(i)->Value();
-      mGraphics->SetParameterFromPlug(i, v, false);
-    }
-  }
+// \todo
+//  if (mGraphics)
+//  {
+//    int i, n = mParams.GetSize();
+//    for (i = 0; i < n; ++i)
+//    {
+//      double v = mParams.Get(i)->Value();
+//      mGraphics->SetParameterFromPlug(i, v, false);
+//    }
+//  }
 }
 #endif
 void IPlugBase::DirtyParameters()
 {
-  WDL_MutexLock lock(&mMutex);
-
-  for (int p = 0; p < NParams(); p++)
-  {
-    double normalizedValue = GetParam(p)->GetNormalized();
-    InformHostOfParamChange(p, normalizedValue);
-  }
+// \todo
+//  WDL_MutexLock lock(&mMutex);
+//
+//  for (int p = 0; p < NParams(); p++)
+//  {
+//    double normalizedValue = GetParam(p)->GetNormalized();
+//    InformHostOfParamChange(p, normalizedValue);
+//  }
 }
 
 void IPlugBase::DumpPresetSrcCode(const char* filename, const char* paramEnumNames[])
 {
-// static bool sDumped = false;
-  bool sDumped = false;
-
-  if (!sDumped)
-  {
-    sDumped = true;
-    int i, n = NParams();
-    FILE* fp = fopen(filename, "w");
-    fprintf(fp, "  MakePresetFromNamedParams(\"name\", %d", n);
-    for (i = 0; i < n; ++i)
-    {
-      IParam* pParam = GetParam(i);
-      char paramVal[32];
-      switch (pParam->Type())
-      {
-        case IParam::kTypeBool:
-          sprintf(paramVal, "%s", (pParam->Bool() ? "true" : "false"));
-          break;
-        case IParam::kTypeInt:
-          sprintf(paramVal, "%d", pParam->Int());
-          break;
-        case IParam::kTypeEnum:
-          sprintf(paramVal, "%d", pParam->Int());
-          break;
-        case IParam::kTypeDouble:
-        default:
-          sprintf(paramVal, "%.6f", pParam->Value());
-          break;
-      }
-      fprintf(fp, ",\n    %s, %s", paramEnumNames[i], paramVal);
-    }
-    fprintf(fp, ");\n");
-    fclose(fp);
-  }
+// \todo
+//// static bool sDumped = false;
+//  bool sDumped = false;
+//
+//  if (!sDumped)
+//  {
+//    sDumped = true;
+//    int i, n = NParams();
+//    FILE* fp = fopen(filename, "w");
+//    fprintf(fp, "  MakePresetFromNamedParams(\"name\", %d", n);
+//    for (i = 0; i < n; ++i)
+//    {
+//      IParam* pParam = GetParam(i);
+//      char paramVal[32];
+//      switch (pParam->Type())
+//      {
+//        case IParam::kTypeBool:
+//          sprintf(paramVal, "%s", (pParam->Bool() ? "true" : "false"));
+//          break;
+//        case IParam::kTypeInt:
+//          sprintf(paramVal, "%d", pParam->Int());
+//          break;
+//        case IParam::kTypeEnum:
+//          sprintf(paramVal, "%d", pParam->Int());
+//          break;
+//        case IParam::kTypeDouble:
+//        default:
+//          sprintf(paramVal, "%.6f", pParam->Value());
+//          break;
+//      }
+//      fprintf(fp, ",\n    %s, %s", paramEnumNames[i], paramVal);
+//    }
+//    fprintf(fp, ");\n");
+//    fclose(fp);
+//  }
 }
 
 #ifndef MAX_BLOB_LENGTH
@@ -1154,13 +1052,14 @@ bool IPlugBase::SaveProgramAsFXP(WDL_String* fileName)
       pgm.Put(&numParams);
       pgm.PutBytes(prgName, 28); // not PutStr (we want all 28 bytes)
 
-      for (int i = 0; i< NParams(); i++)
-      {
-        WDL_EndianFloat v32;
-        v32.f = (float) mParams.Get(i)->GetNormalized();
-        unsigned int swapped = WDL_bswap32(v32.int32);
-        pgm.Put(&swapped);
-      }
+//\todo
+//      for (int i = 0; i< NParams(); i++)
+//      {
+//        WDL_EndianFloat v32;
+//        v32.f = (float) mParams.Get(i)->GetNormalized();
+//        unsigned int swapped = WDL_bswap32(v32.int32);
+//        pgm.Put(&swapped);
+//      }
     }
 
     fwrite(pgm.GetBytes(), pgm.Size(), 1, fp);
@@ -1253,17 +1152,17 @@ bool IPlugBase::SaveBankAsFXB(WDL_String* fileName)
         bnk.PutBytes(prgName, 28);
 
         int pos = 0;
-
-        for (int i = 0; i< NParams(); i++)
-        {
-          double v = 0.0;
-          pos = pPreset->mChunk.Get(&v, pos);
-
-          WDL_EndianFloat v32;
-          v32.f = (float) mParams.Get(i)->GetNormalized(v);
-          unsigned int swapped = WDL_bswap32(v32.int32);
-          bnk.Put(&swapped);
-        }
+// \todo
+//        for (int i = 0; i< NParams(); i++)
+//        {
+//          double v = 0.0;
+//          pos = pPreset->mChunk.Get(&v, pos);
+//
+//          WDL_EndianFloat v32;
+//          v32.f = (float) mParams.Get(i)->GetNormalized(v);
+//          unsigned int swapped = WDL_bswap32(v32.int32);
+//          bnk.Put(&swapped);
+//        }
       }
     }
 
@@ -1345,13 +1244,14 @@ bool IPlugBase::LoadProgramFromFXP(WDL_String* fileName)
       }
       else if (fxpMagic == 'FxCk')
       {
-        for (int i = 0; i< NParams(); i++)
-        {
-          WDL_EndianFloat v32;
-          pos = pgm.Get(&v32.int32, pos);
-          v32.int32 = WDL_bswap_if_le(v32.int32);
-          mParams.Get(i)->SetNormalized((double) v32.f);
-        }
+// \todo
+//        for (int i = 0; i< NParams(); i++)
+//        {
+//          WDL_EndianFloat v32;
+//          pos = pgm.Get(&v32.int32, pos);
+//          v32.int32 = WDL_bswap_if_le(v32.int32);
+//          mParams.Get(i)->SetNormalized((double) v32.f);
+//        }
 
         ModifyCurrentPreset(prgName);
         RestorePreset(GetCurrentPresetIdx());
@@ -1476,14 +1376,14 @@ bool IPlugBase::LoadBankFromFXB(WDL_String* fileName)
           pos = bnk.GetBytes(prgName, 28, pos);
 
           RestorePreset(i);
-
-          for (int j = 0; j< NParams(); j++)
-          {
-            WDL_EndianFloat v32;
-            pos = bnk.Get(&v32.int32, pos);
-            v32.int32 = WDL_bswap_if_le(v32.int32);
-            mParams.Get(j)->SetNormalized((double) v32.f);
-          }
+// \todo
+//          for (int j = 0; j< NParams(); j++)
+//          {
+//            WDL_EndianFloat v32;
+//            pos = bnk.Get(&v32.int32, pos);
+//            v32.int32 = WDL_bswap_if_le(v32.int32);
+//            mParams.Get(j)->SetNormalized((double) v32.f);
+//          }
 
           ModifyCurrentPreset(prgName);
         }

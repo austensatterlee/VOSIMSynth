@@ -244,8 +244,8 @@ namespace syn
 		return m_numActiveVoices;
 	}
 
-	unsigned VoiceManager::queueAction(ActionMessage* a_msg) {		
-		m_queuedActions.push(a_msg);		
+	unsigned VoiceManager::queueAction(ActionMessage* a_msg) {
+		m_queuedActions.push(a_msg);
 		return m_tickCount;
 	}
 
@@ -269,7 +269,7 @@ namespace syn
 			} else {
 				voice = m_allVoices[i].get();
 			}
-			a_msg->action(voice, i==m_maxVoices, &a_msg->data);
+			a_msg->action(voice, i == m_maxVoices, &a_msg->data);
 		}
 		delete a_msg;
 	}
@@ -282,7 +282,7 @@ namespace syn
 		vector<int> unitIds = m_instrument->m_units.getIds();
 		int nUnits = unitIds.size();
 		a_data->Put<int>(&nUnits);
-		for (int i = 0;i<nUnits;i++) {
+		for (int i = 0; i < nUnits; i++) {
 			int unitid = unitIds[i];
 			const Unit& unit = m_instrument->getUnit(unitid);
 			m_factory->saveUnit(&unit, unitid, a_data);
@@ -290,7 +290,7 @@ namespace syn
 		const vector<ConnectionRecord>& connections = m_instrument->getConnections();
 		int nConnections = connections.size();
 		a_data->Put<int>(&nConnections);
-		for (int i = 0;i<connections.size();i++) {
+		for (int i = 0; i < connections.size(); i++) {
 			const ConnectionRecord& record = connections[i];
 			a_data->Put<ConnectionRecord>(&record);
 		}
@@ -298,20 +298,20 @@ namespace syn
 
 	int VoiceManager::load(ByteChunk* a_data, int startPos) {
 		vector<int> unitIds = m_instrument->m_units.getIds();
-		for(int i=0;i<unitIds.size();i++) {
+		for (int i = 0; i < unitIds.size(); i++) {
 			m_instrument->removeUnit(unitIds[i]);
 		}
 
 		int nUnits, nConnections;
 		startPos = a_data->Get<int>(&nUnits, startPos);
-		for(int i=0;i<nUnits;i++) {
+		for (int i = 0; i < nUnits; i++) {
 			Unit* unit;
 			int unitId;
 			startPos = m_factory->loadUnit(a_data, startPos, &unit, &unitId);
 			m_instrument->addUnit(shared_ptr<Unit>(unit), unitId);
 		}
 		startPos = a_data->Get<int>(&nConnections, startPos);
-		for(int i=0;i<nConnections;i++) {
+		for (int i = 0; i < nConnections; i++) {
 			ConnectionRecord record;
 			startPos = a_data->Get<ConnectionRecord>(&record, startPos);
 			m_instrument->connectInternal(record.from_id, record.from_port, record.to_id, record.to_port);
@@ -353,4 +353,3 @@ namespace syn
 		m_instrument->setTempo(a_newTempo);
 	}
 }
-

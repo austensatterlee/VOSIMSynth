@@ -31,64 +31,120 @@ Copyright 2016, Austen Satterlee
 
 namespace syn
 {
-	class UIButton : public UIComponent {
+	class UIButton : public UIComponent
+	{
 	public:
 		/// Flags to specify the button behavior (can be combined with binary OR)
-		enum Flags {
+		enum Flags
+		{
 			NormalButton = 1,
 			RadioButton = 2,
 			ToggleButton = 4,
 			PopupButton = 8
 		};
 
-		enum class IconPosition {
+		enum class IconPosition
+		{
 			Left,
 			LeftCentered,
 			RightCentered,
 			Right
 		};
 
-		UIButton(VOSIMWindow* a_window, const string &caption = "Untitled", int icon = 0);
+		UIButton(VOSIMWindow* a_window, const string& caption = "Untitled", int icon = 0);
 
-		const string &caption() const { return mCaption; }
-		void setCaption(const string &caption) { mCaption = caption; }
+		const string& caption() const {
+			return mCaption;
+		}
 
-		const Color &backgroundColor() const { return mBackgroundColor; }
-		void setBackgroundColor(const Color &backgroundColor) { mBackgroundColor = backgroundColor; }
+		void setCaption(const string& caption) {
+			mCaption = caption;
+		}
 
-		const Color &textColor() const { return mTextColor; }
-		void setTextColor(const Color &textColor) { mTextColor = textColor; }
+		const Color& backgroundColor() const {
+			return mBackgroundColor;
+		}
 
-		int icon() const { return mIcon; }
-		void setIcon(int icon) { mIcon = icon; }
+		void setBackgroundColor(const Color& backgroundColor) {
+			mBackgroundColor = backgroundColor;
+		}
 
-		int flags() const { return mFlags; }
-		void setFlags(int buttonFlags) { mFlags = buttonFlags; }
+		const Color& textColor() const {
+			return mTextColor;
+		}
 
-		IconPosition iconPosition() const { return mIconPosition; }
-		void setIconPosition(IconPosition iconPosition) { mIconPosition = iconPosition; }
+		void setTextColor(const Color& textColor) {
+			mTextColor = textColor;
+		}
 
-		bool pushed() const { return mPushed; }
-		void setPushed(bool pushed) { mPushed = pushed; }
+		int icon() const {
+			return mIcon;
+		}
+
+		void setIcon(int icon) {
+			mIcon = icon;
+		}
+
+		int flags() const {
+			return mFlags;
+		}
+
+		void setFlags(int buttonFlags) {
+			mFlags = buttonFlags;
+		}
+
+		IconPosition iconPosition() const {
+			return mIconPosition;
+		}
+
+		void setIconPosition(IconPosition iconPosition) {
+			mIconPosition = iconPosition;
+		}
+
+		bool pushed() const {
+			return mPushed;
+		}
+
+		void setPushed(bool pushed) {
+			mPushed = pushed;
+		}
 
 		/// Set the push callback (for any type of button)
-		function<void()> callback() const { return mCallback; }
-		void setCallback(const function<void()> &callback) { mCallback = callback; }
+		function<void()> callback() const {
+			return mCallback;
+		}
+
+		void setCallback(const function<void()>& callback) {
+			mCallback = callback;
+		}
 
 		/// Set the change callback (for toggle buttons)
-		function<void(bool)> changeCallback() const { return mChangeCallback; }
-		void setChangeCallback(const function<void(bool)> &callback) { mChangeCallback = callback; }
+		function<void(bool)> changeCallback() const {
+			return mChangeCallback;
+		}
+
+		void setChangeCallback(const function<void(bool)>& callback) {
+			mChangeCallback = callback;
+		}
 
 		/// Set the button group (for radio buttons)
-		void setButtonGroup(const vector<UIButton *> &buttonGroup) { mButtonGroup = buttonGroup; }
-		const vector<UIButton *> &buttonGroup() const { return mButtonGroup; }
+		void setButtonGroup(const vector<UIButton *>& buttonGroup) {
+			mButtonGroup = buttonGroup;
+		}
+
+		const vector<UIButton *>& buttonGroup() const {
+			return mButtonGroup;
+		}
 
 		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 
-		void setFontSize(int a_fontSize) { m_fontSize = a_fontSize; }
+		void setFontSize(int a_fontSize) {
+			m_fontSize = a_fontSize;
+		}
+
 	protected:
-		void draw(NVGcontext *ctx) override;
+		void draw(NVGcontext* ctx) override;
 	protected:
 		string mCaption;
 		int mIcon;

@@ -1,12 +1,12 @@
 ﻿#include "UIComponent.h"
+
 //#define DRAW_COMPONENT_BOUNDS
 
 namespace syn
 {
 	UIComponent::UIComponent(VOSIMWindow* a_window):
 		m_parent(nullptr), m_window(a_window), m_visible(true), m_focused(false), m_hovered(false),
-		m_pos(0,0), m_size(0,0), m_minSize(-1,-1), m_maxSize(-1,-1)
-	{
+		m_pos(0, 0), m_size(0, 0), m_minSize(-1, -1), m_maxSize(-1, -1) {
 		setVisible(true);
 	}
 
@@ -31,8 +31,8 @@ namespace syn
 		nvgTranslate(a_nvg, m_pos[0], m_pos[1]);
 		nvgSave(a_nvg);
 		draw(a_nvg);
-		
-		for (auto zplane_iter = m_ZPlanes.rbegin(); zplane_iter !=m_ZPlanes.rend(); ++zplane_iter) {
+
+		for (auto zplane_iter = m_ZPlanes.rbegin(); zplane_iter != m_ZPlanes.rend(); ++zplane_iter) {
 			const list<shared_ptr<UIComponent>>& zplane = zplane_iter->second;
 			for (auto zorder_iter = zplane.rbegin(); zorder_iter != zplane.rend(); ++zorder_iter) {
 				shared_ptr<UIComponent> child = *zorder_iter;
@@ -67,8 +67,8 @@ namespace syn
 	}
 
 	bool UIComponent::removeChild(UIComponent* a_child) {
-		for(int i=0;i<m_children.size();i++) {
-			if(m_children[i].get()==a_child) {
+		for (int i = 0; i < m_children.size(); i++) {
+			if (m_children[i].get() == a_child) {
 				return removeChild(i);
 			}
 		}
@@ -89,7 +89,7 @@ namespace syn
 		m_ZPlanes[zorder].remove(child);
 
 		m_children.erase(m_children.cbegin() + a_index);
-		
+
 		_onRemoveChild();
 		return true;
 	}
@@ -99,7 +99,7 @@ namespace syn
 	}
 
 	shared_ptr<UIComponent> UIComponent::getChild(UIComponent* a_comp) {
-		for(int i=0;i<m_children.size();i++) {
+		for (int i = 0; i < m_children.size(); i++) {
 			if (m_children[i].get() == a_comp)
 				return m_children[i];
 		}
@@ -107,7 +107,7 @@ namespace syn
 	}
 
 	int UIComponent::getChildIndex(UIComponent* a_comp) {
-		for(int i=0;i<m_children.size();i++) {
+		for (int i = 0; i < m_children.size(); i++) {
 			if (m_children[i].get() == a_comp)
 				return i;
 		}
@@ -193,16 +193,17 @@ namespace syn
 	void UIComponent::setVisible(bool a_visible) {
 		if (a_visible) {
 			m_visibleSize = m_size;
-			setSize({ 0,0 });
-		}
-		else {
+			setSize({0,0});
+		} else {
 			setSize(m_visibleSize);
+			if(focused())
+				m_window->clearFocus();
 		}
 		m_visible = a_visible;
 	}
 
 	bool UIComponent::contains(const Vector2i& a_pt) {
-		auto pt = (a_pt - m_pos).array();			
+		auto pt = (a_pt - m_pos).array();
 		return (pt >= 0).all() && (pt <= size().array()).all();
 	}
 
@@ -261,7 +262,7 @@ namespace syn
 		setSize(m_size);
 	}
 
-	bool UIComponent::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {			
+	bool UIComponent::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
 		return false;
 	}
 
@@ -292,7 +293,8 @@ namespace syn
 					continue;
 				if (child->contains(a_relCursor - m_pos)) {
 					UIComponent* ret = child->onMouseDown(a_relCursor - m_pos, a_diffCursor, a_isDblClick);
-					if (ret) return ret;
+					if (ret)
+						return ret;
 				}
 			}
 		}
@@ -348,7 +350,7 @@ namespace syn
 		if (child) {
 			int oldZOrder = getZOrder(child.get());
 			m_ZPlanes[oldZOrder].remove(child);
-			if(toFront)
+			if (toFront)
 				m_ZPlanes[a_newZOrder].push_front(child);
 			else
 				m_ZPlanes[a_newZOrder].push_back(child);

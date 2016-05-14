@@ -51,13 +51,13 @@ namespace syn
 		enum SelfResizePolicy
 		{
 			SMIN,
-			SNONE,			
+			SNONE,
 			SFIT
 		};
 
 	public:
 		UICell(VOSIMWindow* a_window)
-			: UIComponent(a_window), m_greedyChild(nullptr), m_childResizePolicy(CNONE), m_selfResizePolicy(SFIT), m_greedyChildAlign(NVG_ALIGN_TOP), m_padding{ 0,0,0,0 }, m_childSpacing(1) {}
+			: UIComponent(a_window), m_greedyChild(nullptr), m_childResizePolicy(CNONE), m_selfResizePolicy(SFIT), m_greedyChildAlign(NVG_ALIGN_TOP), m_padding{0,0,0,0}, m_childSpacing(1) {}
 
 		void notifyChildResized(UIComponent* a_child) override {
 			pack();
@@ -143,7 +143,9 @@ namespace syn
 			}
 		}
 
-		const Vector4i& padding() const { return m_padding; }
+		const Vector4i& padding() const {
+			return m_padding;
+		}
 
 	protected:
 		UIComponent* m_greedyChild;
@@ -162,11 +164,6 @@ namespace syn
 	public:
 		UICol(VOSIMWindow* a_window)
 			: UICell(a_window), m_maxChildWidth(0), m_minChildWidth(0) {}
-		
-		void onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) override {
-			UIComponent::onMouseEnter(a_relCursor, a_diffCursor, a_isEntering);
-			
-		}
 
 		void pack() override {
 			// Reposition units and compute min and max child dimensions
@@ -175,19 +172,19 @@ namespace syn
 			int y = m_padding[1];
 			for (shared_ptr<UIComponent> child : m_children) {
 				child->setRelPos({m_padding[0],y});
-				y += child->size()[1];
+				y += child->size()[1] + m_childSpacing;
 				m_maxChildWidth = MAX(m_maxChildWidth, child->size()[0]);
 				m_minChildWidth = MAX(m_minChildWidth, child->minSize()[0]);
 			}
 
 			// Update cell minimum size
-			Vector2i pad_wh = Vector2i{ m_padding[0] + m_padding[2],m_padding[1] + m_padding[3] };
+			Vector2i pad_wh = Vector2i{m_padding[0] + m_padding[2],m_padding[1] + m_padding[3]};
 			int width;
-			if (m_selfResizePolicy == SMIN) 
+			if (m_selfResizePolicy == SMIN)
 				width = m_minChildWidth;
 			else
 				width = m_maxChildWidth;
-			setMinSize_(Vector2i{width,y}+pad_wh);
+			setMinSize_(Vector2i{width,y - m_childSpacing} + pad_wh);
 
 			Vector2i freeSpace = size() - minSize();
 			// Shrink cell according to resize policy
@@ -197,9 +194,9 @@ namespace syn
 
 			// If there's extra space left over, expand the greedy child
 			// If there is no greedy child, shrink the cell to get rid of the extra space
-			freeSpace = size()-pad_wh-minSize();
+			freeSpace = size() - pad_wh - minSize();
 			int extraHeight = freeSpace[1];
-			if (m_selfResizePolicy == SNONE && m_greedyChild && extraHeight>0) {
+			if (m_selfResizePolicy == SNONE && m_greedyChild && extraHeight > 0) {
 				int greedyCellHeight = m_greedyChild->size()[1] + extraHeight;
 
 				// Align child if it doesn't take up the whole cell
@@ -223,30 +220,31 @@ namespace syn
 					shared_ptr<UIComponent> child = m_children[i];
 					child->move({0, extraHeight});
 				}
-			} 
+			}
 		}
 
 	private:
 		void _onResize() override {
 			for (shared_ptr<UIComponent> child : m_children) {
-				switch(m_childResizePolicy) {
+				switch (m_childResizePolicy) {
 				case CMIN:
 					child->setSize(child->minSize());
 					break;
 				case CMATCHMIN:
-					child->setSize({ m_minChildWidth, -1 });
+					child->setSize({m_minChildWidth, -1});
 					break;
 				case CMATCHMAX:
-					child->setSize({ MIN(size()[0] - m_padding[0] - m_padding[2],m_maxChildWidth), -1 });
+					child->setSize({MIN(size()[0] - m_padding[0] - m_padding[2],m_maxChildWidth), -1});
 					break;
 				case CMAX:
-					child->setSize({ size()[0] - m_padding[0] - m_padding[2], -1 });
+					child->setSize({size()[0] - m_padding[0] - m_padding[2], -1});
 					break;
 				default: break;
 				}
-			}			
+			}
+			pack();
 		}
-	
+
 	private:
 		int m_maxChildWidth;
 		int m_minChildWidth;
@@ -268,20 +266,20 @@ namespace syn
 			int x = m_padding[0];
 			for (shared_ptr<UIComponent> child : m_children) {
 				child->setRelPos({x,m_padding[1]});
-				x += child->size()[0];
+				x += child->size()[0] + m_childSpacing;
 				m_maxChildHeight = MAX(m_maxChildHeight, child->size()[1]);
 				m_minChildHeight = MAX(m_minChildHeight, child->minSize()[1]);
 			}
 
 			// Update cell minimum size
-			Vector2i pad_wh = Vector2i{ m_padding[0] + m_padding[2],m_padding[1] + m_padding[3] };
+			Vector2i pad_wh = Vector2i{m_padding[0] + m_padding[2],m_padding[1] + m_padding[3]};
 			int height;
 			if (m_selfResizePolicy == SMIN)
 				height = m_minChildHeight;
 			else
 				height = m_maxChildHeight;
-			setMinSize_(Vector2i{ x,height }+pad_wh);
-			
+			setMinSize_(Vector2i{x - m_childSpacing,height} + pad_wh);
+
 			// Shrink cell according to resize policy
 			Vector2i freeSpace = size() - pad_wh - minSize();
 			if (m_selfResizePolicy != SNONE && freeSpace.any()) {
@@ -292,7 +290,7 @@ namespace syn
 			// If there is no greedy child, shrink the cell to get rid of the extra space
 			freeSpace = size() - minSize();
 			int extraWidth = freeSpace[0];
-			if (m_selfResizePolicy == SNONE && m_greedyChild && extraWidth>0) {
+			if (m_selfResizePolicy == SNONE && m_greedyChild && extraWidth > 0) {
 				int greedyCellWidth = m_greedyChild->size()[0] + extraWidth;
 
 				// Align child if it doesn't take up the whole cell
@@ -317,6 +315,7 @@ namespace syn
 				}
 			}
 		}
+
 	private:
 		void _onResize() override {
 			for (shared_ptr<UIComponent> child : m_children) {
@@ -325,19 +324,21 @@ namespace syn
 					child->setSize(child->minSize());
 					break;
 				case CMATCHMIN:
-					child->setSize({ child->size()[0], m_minChildHeight });
+					child->setSize({child->size()[0], m_minChildHeight});
 					break;
 				case CMATCHMAX:
-					child->setSize({ child->size()[0], MIN(size()[1] - m_padding[1] - m_padding[3],m_maxChildHeight) });
+					child->setSize({child->size()[0], MIN(size()[1] - m_padding[1] - m_padding[3],m_maxChildHeight)});
 					break;
 				case CMAX:
-					child->setSize({ child->size()[0], size()[1] - m_padding[1] - m_padding[3] });
+					child->setSize({child->size()[0], size()[1] - m_padding[1] - m_padding[3]});
 					break;
 				default: break;
 				}
-				
+
 			}
+			pack();
 		}
+
 	private:
 		int m_maxChildHeight;
 		int m_minChildHeight;

@@ -1,14 +1,12 @@
 #include "VOSIMWindow.h"
-#include <GL/glew.h>
-#include <SFML/OpenGL.hpp>
+#include "GL/glew.h"
+#include "SFML/OpenGL.hpp"
 #include "nanovg_gl.h"
-#include <Theme.h>
-#include <UIUnitSelector.h>
-#include <UICircuitPanel.h>
-#include <UIComponent.h>
-#include <sftools/Chronometer.hpp>
-#include <perf.h>
-#include <UIDefaultUnitControl.h>
+#include "Theme.h"
+#include "UICircuitPanel.h"
+#include "UIComponent.h"
+#include "UIDefaultUnitControl.h"
+#include "UIUnitControlContainer.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -22,29 +20,29 @@ sf::WindowHandle syn::VOSIMWindow::sys_CreateChildWindow(sf::WindowHandle a_syst
 	int x = 0, y = 0, w = m_size[0], h = m_size[1];
 
 	if (nWndClassReg++ == 0) {
-		WNDCLASS wndClass = {NULL, drawFunc, 0, 0, m_hinstance, 0, LoadCursor(NULL, IDC_ARROW), 0, 0, wndClassName};
+		WNDCLASS wndClass = {NULL, drawFunc, 0, 0, m_HInstance, 0, LoadCursor(NULL, IDC_ARROW), 0, 0, wndClassName};
 		RegisterClass(&wndClass);
 	}
 
-//	m_childHandle1 = CreateWindow("EDIT", "IPlug2", WS_CHILD | WS_VISIBLE, // | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
-//		x, y, w, h, (HWND)a_system_window, 0, m_hinstance, this);
+	//	m_childHandle1 = CreateWindow("EDIT", "IPlug2", WS_CHILD | WS_VISIBLE, // | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+	//		x, y, w, h, (HWND)a_system_window, 0, m_HInstance, this);
 
 	sf::ContextSettings settings;
 	settings.depthBits = 32;
 	settings.stencilBits = 8;
 	settings.antialiasingLevel = 8; // Optional  
-	m_sfmlWindow = new sf::RenderWindow(sf::VideoMode(w,h), "", sf::Style::None, settings);
+	m_sfmlWindow = new sf::RenderWindow(sf::VideoMode(w, h), "", sf::Style::None, settings);
 	m_childHandle1 = m_sfmlWindow->getSystemHandle();
 	SetWindowLongW(m_childHandle1, GWL_STYLE, GetWindowLongW(m_childHandle1, GWL_STYLE) | WS_CHILD);
 
 
 	m_childHandle2 = CreateWindow(wndClassName, "IPlug", WS_CHILD, // | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
-		x, y, w, h, (HWND)a_system_window, 0, m_hinstance, this);
+		x, y, w, h, (HWND)a_system_window, 0, m_HInstance, this);
 
-	SetParent(m_childHandle1, a_system_window);	
+	SetParent(m_childHandle1, a_system_window);
 
 	if ((!m_childHandle2 || !m_childHandle1) && --nWndClassReg == 0) {
-		UnregisterClass(wndClassName, m_hinstance);
+		UnregisterClass(wndClassName, m_HInstance);
 	}
 
 	return m_childHandle2;
@@ -68,7 +66,7 @@ syn::UIUnitControl* syn::VOSIMWindow::createUnitControl(unsigned a_classId, int 
 	}
 }
 
-LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam) {	
+LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam) {
 	Event event;
 	double cpuStartTime, dCpuTime;
 	if (Message == WM_CREATE) {
@@ -83,7 +81,7 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 			_this->m_sfmlWindow->setActive(true);
 			_this->m_sfmlWindow->requestFocus();
 			_this->m_sfmlWindow->setFramerateLimit(60);
-			_this->m_sfmlWindow->setPosition({ 0,0 });
+			_this->m_sfmlWindow->setPosition({0,0});
 
 			// Initialize glew
 			glewExperimental = GL_TRUE;
@@ -133,7 +131,7 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 	switch (Message) {
 	case WM_TIMER:
 		cpuStartTime = _this->m_timer.getElapsedTime().asSeconds();
-		Color bgColor = colorFromHSL(0.0, 0.5+0.5*sin(cpuStartTime), 0.25);
+		Color bgColor = colorFromHSL(0.0, 0.5 + 0.5 * sin(cpuStartTime), 0.25);
 		glClearColor(bgColor.r(), bgColor.g(), bgColor.b(), 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -178,20 +176,23 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 				if (event.text.unicode >= 32 && event.text.unicode <= 126) {
 					if (!_this->m_focusPath.empty()) {
 						for (auto it = ++_this->m_focusPath.rbegin(); it != _this->m_focusPath.rend(); ++it)
-							if ((*it)->focused()) (*it)->onTextEntered(event.text.unicode);
+							if ((*it)->focused())
+								(*it)->onTextEntered(event.text.unicode);
 					}
 				}
 				break;
 			case Event::KeyPressed:
 				if (!_this->m_focusPath.empty()) {
-					for (auto it = ++_this->m_focusPath.rbegin() ; it != _this->m_focusPath.rend(); ++it)
-						if ((*it)->focused()) (*it)->onKeyDown(event.key);
+					for (auto it = ++_this->m_focusPath.rbegin(); it != _this->m_focusPath.rend(); ++it)
+						if ((*it)->focused())
+							(*it)->onKeyDown(event.key);
 				}
-				break;			
+				break;
 			case Event::KeyReleased:
 				if (!_this->m_focusPath.empty()) {
-					for (auto it = ++_this->m_focusPath.rbegin() ; it != _this->m_focusPath.rend(); ++it)
-						if ((*it)->focused()) (*it)->onKeyUp(event.key);
+					for (auto it = ++_this->m_focusPath.rbegin(); it != _this->m_focusPath.rend(); ++it)
+						if ((*it)->focused())
+							(*it)->onKeyUp(event.key);
 				}
 				break;
 			case Event::MouseWheelScrolled:
@@ -209,7 +210,7 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 				}
 				break;
 			case Event::MouseButtonPressed:
-			{
+				{
 				_this->m_isClicked = true;
 
 				_this->m_draggingComponent = _this->m_root->onMouseDown(_this->cursorPos(), _this->diffCursorPos(), (_this->m_timer.getElapsedTime().asSeconds() - _this->m_lastClick.time.asSeconds() < 0.25));
@@ -219,9 +220,9 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 					_this->setFocus(_this->m_draggingComponent);
 				else
 					_this->setFocus(nullptr);
-				_this->m_lastClick = { event.mouseButton, _this->m_timer.getElapsedTime() };
+				_this->m_lastClick = {event.mouseButton, _this->m_timer.getElapsedTime()};
 				break;
-			}
+				}
 			case Event::MouseButtonReleased:
 				_this->m_lastClick = {event.mouseButton, _this->m_timer.getElapsedTime()};
 				if (_this->m_draggingComponent)
@@ -238,7 +239,7 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 				_this->updateCursorPos({event.mouseMove.x - 1,event.mouseMove.y - 2});
 				_this->m_root->onMouseMove(_this->cursorPos(), _this->diffCursorPos());
 
-				if(_this->m_draggingComponent) {
+				if (_this->m_draggingComponent) {
 					_this->m_draggingComponent->onMouseDrag(_this->cursorPos() - _this->m_draggingComponent->parent()->getAbsPos(), _this->diffCursorPos());
 				}
 				break;
@@ -354,9 +355,9 @@ void syn::VOSIMWindow::save(ByteChunk* a_data) const {
 	const vector<UIUnitControlContainer*>& units = m_circuitPanel->getUnits();
 	int nUnits = units.size() - 2; // skip input/output units
 	a_data->Put<int>(&nUnits);
-	for(int i=0;i<nUnits;i++) {
-		int unitId = units[i+2]->getUnitId();
-		Vector2i pos = units[i+2]->getRelPos();
+	for (int i = 0; i < nUnits; i++) {
+		int unitId = units[i + 2]->getUnitId();
+		Vector2i pos = units[i + 2]->getRelPos();
 		a_data->Put<int>(&unitId);
 		a_data->Put<Vector2i>(&pos);
 		// reserved
@@ -379,7 +380,7 @@ int syn::VOSIMWindow::load(ByteChunk* a_data, int startPos) {
 	// Add units
 	int nUnits;
 	startPos = a_data->Get<int>(&nUnits, startPos);
-	for (int i = 0; i<nUnits; i++) {
+	for (int i = 0; i < nUnits; i++) {
 		int unitId;
 		Vector2i pos;
 		startPos = a_data->Get<int>(&unitId, startPos);
@@ -394,7 +395,7 @@ int syn::VOSIMWindow::load(ByteChunk* a_data, int startPos) {
 	}
 	// Add wires
 	const vector<ConnectionRecord>& records = m_vm->getCircuit().getConnections();
-	for (int i=0;i<records.size();i++) {
+	for (int i = 0; i < records.size(); i++) {
 		const ConnectionRecord& rec = records[i];
 		m_circuitPanel->onAddConnection_(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
 	}

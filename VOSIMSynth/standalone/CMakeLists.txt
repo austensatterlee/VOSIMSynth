@@ -56,7 +56,10 @@ IF(WIN32)
     ${SFTOOLS_FILES}
     )
 
-  target_link_libraries(${APP_NAME} ${ADDITIONAL_LIBRARIES})
-  target_link_libraries(${APP_NAME} VOSIMLib LICELib)
+  target_link_libraries(${APP_NAME} ${ADDITIONAL_LIBRARIES}
+    "$<$<CONFIG:Release>:${SFML_REL_LIBS}>"
+    "$<$<NOT:$<CONFIG:Release>>:${SFML_DBG_LIBS}>"
+    VOSIMLib
+    )
   target_link_libraries(${APP_NAME} dsound winmm comctl32 wininet)
 ENDIF()

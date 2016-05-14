@@ -27,12 +27,12 @@ Copyright 2016, Austen Satterlee
 
 #ifndef __UIUNITSELECTOR__
 #define __UIUNITSELECTOR__
-#include "nanovg.h"
 #include "UIComponent.h"
-#include "UnitFactory.h"
 
 namespace syn
 {
+	class UnitFactory;
+
 	class UIUnitSelector : public UIComponent
 	{
 	public:
@@ -41,12 +41,31 @@ namespace syn
 
 		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		int selectedGroup() const { return m_currGroup; }
-		int selectedPrototype() const { return m_currPrototype; }
-		string selectedPrototypeName() const { return m_currPrototypeName; }
-		void setSelectedGroup(int a_group) { m_currGroup = a_group; }
-		void setSelectedPrototype(int a_proto) { m_currPrototype = a_proto; }
-		int highlightedRow() const { return m_hovered ? m_highlightedRow : -1; }
+
+		int selectedGroup() const {
+			return m_currGroup;
+		}
+
+		int selectedPrototype() const {
+			return m_currPrototype;
+		}
+
+		string selectedPrototypeName() const {
+			return m_currPrototypeName;
+		}
+
+		void setSelectedGroup(int a_group) {
+			m_currGroup = a_group;
+		}
+
+		void setSelectedPrototype(int a_proto) {
+			m_currPrototype = a_proto;
+		}
+
+		int highlightedRow() const {
+			return m_hovered ? m_highlightedRow : -1;
+		}
+
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 	private:

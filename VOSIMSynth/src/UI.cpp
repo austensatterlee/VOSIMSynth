@@ -1,29 +1,47 @@
 #include "UI.h"
 #include <map>
+#include <array>
 
-namespace syn {
+namespace syn
+{
 	array<char, 8> utf8(int c) {
 		array<char, 8> seq;
 		int n = 0;
-		if (c < 0x80) n = 1;
-		else if (c < 0x800) n = 2;
-		else if (c < 0x10000) n = 3;
-		else if (c < 0x200000) n = 4;
-		else if (c < 0x4000000) n = 5;
-		else if (c <= 0x7fffffff) n = 6;
+		if (c < 0x80)
+			n = 1;
+		else if (c < 0x800)
+			n = 2;
+		else if (c < 0x10000)
+			n = 3;
+		else if (c < 0x200000)
+			n = 4;
+		else if (c < 0x4000000)
+			n = 5;
+		else if (c <= 0x7fffffff)
+			n = 6;
 		seq[n] = '\0';
 		switch (n) {
-		case 6: seq[5] = 0x80 | (c & 0x3f); c = c >> 6; c |= 0x4000000;
-		case 5: seq[4] = 0x80 | (c & 0x3f); c = c >> 6; c |= 0x200000;
-		case 4: seq[3] = 0x80 | (c & 0x3f); c = c >> 6; c |= 0x10000;
-		case 3: seq[2] = 0x80 | (c & 0x3f); c = c >> 6; c |= 0x800;
-		case 2: seq[1] = 0x80 | (c & 0x3f); c = c >> 6; c |= 0xc0;
+		case 6: seq[5] = 0x80 | (c & 0x3f);
+			c = c >> 6;
+			c |= 0x4000000;
+		case 5: seq[4] = 0x80 | (c & 0x3f);
+			c = c >> 6;
+			c |= 0x200000;
+		case 4: seq[3] = 0x80 | (c & 0x3f);
+			c = c >> 6;
+			c |= 0x10000;
+		case 3: seq[2] = 0x80 | (c & 0x3f);
+			c = c >> 6;
+			c |= 0x800;
+		case 2: seq[1] = 0x80 | (c & 0x3f);
+			c = c >> 6;
+			c |= 0xc0;
 		case 1: seq[0] = c;
 		}
 		return seq;
 	}
 
-	int __nanogui_get_image(NVGcontext *ctx, const string &name, uint8_t *data, uint32_t size) {
+	int __nanogui_get_image(NVGcontext* ctx, const string& name, uint8_t* data, uint32_t size) {
 		static map<string, int> iconCache;
 		auto it = iconCache.find(name);
 		if (it != iconCache.end())
@@ -35,9 +53,8 @@ namespace syn {
 		return iconID;
 	}
 
-	vector<pair<int, string>>
-		loadImageDirectory(NVGcontext *ctx, const string &path) {
-		vector<pair<int, string> > result;
+	vector<pair<int, string>> loadImageDirectory(NVGcontext* ctx, const string& path) {
+		vector<pair<int, string>> result;
 #if !defined(_WIN32)
 		DIR *dp = opendir(path.c_str());
 		if (!dp)
@@ -52,7 +69,7 @@ namespace syn {
 		if (handle == INVALID_HANDLE_VALUE)
 			throw runtime_error("Could not open image directory!");
 		do {
-			const char *fname = ffd.cFileName;
+			const char* fname = ffd.cFileName;
 #endif
 			if (strstr(fname, "png") == nullptr)
 				continue;
@@ -72,35 +89,30 @@ namespace syn {
 		return result;
 	}
 
-Color colorFromHSL(float H, float S, float L) {
-	float chroma = (1 - abs(2 * L - 1)) * S;
-	float Hprime = fmod(H, 1.0) * 6.0;
-	float X = chroma * (1 - abs(fmod(Hprime, 2.0f) - 1));
-	Vector3f rgb;
-	if (Hprime < 1) {
-		rgb = { chroma,X,0 };
+	Color colorFromHSL(float H, float S, float L) {
+		float chroma = (1 - abs(2 * L - 1)) * S;
+		float Hprime = fmod(H, 1.0) * 6.0;
+		float X = chroma * (1 - abs(fmod(Hprime, 2.0f) - 1));
+		Vector3f rgb;
+		if (Hprime < 1) {
+			rgb = {chroma,X,0};
+		} else if (Hprime < 2) {
+			rgb = {X,chroma,0};
+		} else if (Hprime < 3) {
+			rgb = {0,chroma,X};
+		} else if (Hprime < 4) {
+			rgb = {0,X,chroma};
+		} else if (Hprime < 5) {
+			rgb = {X,0,chroma};
+		} else {
+			rgb = {chroma,0,X};
+		}
+		rgb += Vector3f::Ones() * (L - 0.5f * chroma);
+		return Color(rgb);
 	}
-	else if (Hprime < 2) {
-		rgb = { X,chroma,0 };
-	}
-	else if (Hprime < 3) {
-		rgb = { 0,chroma,X };
-	}
-	else if (Hprime < 4) {
-		rgb = { 0,X,chroma };
-	}
-	else if (Hprime < 5) {
-		rgb = { X,0,chroma };
-	}
-	else {
-		rgb = { chroma,0,X };
-	}
-	rgb += Vector3f::Ones() * (L - 0.5f * chroma);
-	return Color(rgb);
-}
 
 #if !defined(__APPLE__)
-	string file_dialog(const vector<pair<string, string>> &filetypes, bool save) {
+	string file_dialog(const vector<pair<string, string>>& filetypes, bool save) {
 #define FILE_DIALOG_MAX_BUFFER 1024
 #if defined(_WIN32)
 		OPENFILENAME ofn;
@@ -149,8 +161,7 @@ Color colorFromHSL(float H, float S, float L) {
 			ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 			if (GetSaveFileNameA(&ofn) == FALSE)
 				return "";
-		}
-		else {
+		} else {
 			ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 			if (GetOpenFileNameA(&ofn) == FALSE)
 				return "";

@@ -1,9 +1,6 @@
 #ifndef _PLUGINHOSTS_
 #define _PLUGINHOSTS_
 
-#include <stdlib.h>
-#include <string.h>
-
 enum EAPI
 {
   kAPIVST2 = 0,

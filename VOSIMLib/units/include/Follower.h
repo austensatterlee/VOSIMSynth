@@ -28,15 +28,16 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __FOLLOWER__
 
 #include "Unit.h"
-#include "DSPMath.h"
 
 using namespace std;
 
-namespace syn {
+namespace syn
+{
 	/**
 	* Full-wave rectifier
 	*/
-	class FollowerUnit : public Unit {
+	class FollowerUnit : public Unit
+	{
 	public:
 		explicit FollowerUnit(const string& a_name);
 
@@ -45,12 +46,14 @@ namespace syn {
 	protected:
 		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
 	private:
-		string _getClassName() const override
-		{
+		string _getClassName() const override {
 			return "FollowerUnit";
 		}
 
-		Unit* _clone() const override { return new FollowerUnit(*this); }
+		Unit* _clone() const override {
+			return new FollowerUnit(*this);
+		}
+
 	private:
 		double m_w;
 		double m_output;

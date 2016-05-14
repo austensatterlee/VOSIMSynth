@@ -27,12 +27,10 @@ Copyright 2016, Austen Satterlee
 
 #ifndef __UIWINDOW__
 #define __UIWINDOW__
-#include "nanovg.h"
-#include <UIComponent.h>
-#include "UILabel.h"
-#include "UICell.h"
+#include "UIComponent.h"
 
-namespace syn {
+namespace syn
+{
 	class UIWindow : public UIComponent
 	{
 	public:

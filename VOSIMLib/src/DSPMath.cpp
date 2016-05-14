@@ -25,5 +25,38 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 * \date March 6, 2016
 */
 
-#include <DSPMath.h>
+#include "DSPMath.h"
+#include <tables.h>
 
+int syn::gcd(int a, int b) {
+	while (a != 0) {
+		int c = a;
+		a = b % a;
+		b = c;
+	}
+	return b;
+}
+
+double syn::blackman_harris(int a_k, size_t a_winSize) {
+	static const double a[4] = {0.35875, 0.48829, 0.14128, 0.01168};
+	double phase = a_k * 1.0 / (a_winSize - 1);
+	double s1 = lut_sin.getlinear(phase + 0.25);
+	double s2 = lut_sin.getlinear(2 * phase + 0.25);
+	double s3 = lut_sin.getlinear(3 * phase + 0.25);
+	return a[0] - a[1] * s1 + a[2] * s2 - a[3] * s3;
+}
+
+double syn::pitchToFreq(double pitch) {
+	double freq = lut_pitch_table.getlinear(pitch);
+	return freq;
+}
+
+double syn::lin2db(double lin, double mindb, double maxdb) {
+	double db;
+	if (lin >= 0) {
+		db = lut_db_table.getlinear(LERP(mindb, maxdb, lin));
+	} else {
+		db = -lut_db_table.getlinear(LERP(mindb, maxdb, -lin));
+	}
+	return db;
+}

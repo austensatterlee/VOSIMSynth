@@ -38,7 +38,7 @@ namespace syn
 		int to_port;
 
 		bool operator==(const ConnectionRecord& a_other) const {
-			bool res = (from_id == a_other.from_id && from_port == a_other.from_port && to_id == a_other.to_id && to_port == a_other.to_port);			
+			bool res = (from_id == a_other.from_id && from_port == a_other.from_port && to_id == a_other.to_id && to_port == a_other.to_port);
 			return res;
 		}
 	};
@@ -47,27 +47,29 @@ namespace syn
 	{
 	public:
 		explicit PassthroughUnit(const string& a_name) :
-			Unit(a_name) {
-		}
+			Unit(a_name) { }
+
 		PassthroughUnit(const PassthroughUnit& a_other) :
-		PassthroughUnit(a_other.getName())
-		{
-		};
+			PassthroughUnit(a_other.getName()) { };
+
 	protected:
 		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override {
-			for(int i=0;i<a_inputs.getNumChannels();i++) {
-				a_outputs.setChannel(i,a_inputs.getValue(i));
+			for (int i = 0; i < a_inputs.getNumChannels(); i++) {
+				a_outputs.setChannel(i, a_inputs.getValue(i));
 			}
 		}
+
 	private:
-		inline string _getClassName() const override { return "_PassthroughUnit";  }
-		Unit* _clone() const override { return new PassthroughUnit(*this); }
+		inline string _getClassName() const override {
+			return "_PassthroughUnit";
+		}
+
+		Unit* _clone() const override {
+			return new PassthroughUnit(*this);
+		}
 	};
 
-	class OutputUnit : public Unit
-	{
-		
-	};
+	class OutputUnit : public Unit { };
 
 	/**
 	* \class Circuit
@@ -123,6 +125,9 @@ namespace syn
 
 		template <typename UID, typename PID>
 		bool setInternalParameterPrecision(const UID& a_unitIdentifier, const PID& a_paramIdentifier, int a_precision);
+
+		template <typename UID, typename PID>
+		bool setInternalParameterFromString(const UID& a_unitIdentifier, const PID& a_paramIdentifier, const string& a_value);
 
 		/**
 		 * \returns The id assigned to the newly added unit, or -1 on failure
@@ -217,6 +222,13 @@ namespace syn
 		if (!m_units.find(a_unitIdentifier))
 			return false;
 		return m_units[a_unitIdentifier]->setParameterPrecision(a_paramIdentifier, a_precision);
+	}
+
+	template <typename UID, typename PID>
+	bool Circuit::setInternalParameterFromString(const UID& a_unitIdentifier, const PID& a_paramIdentifier, const string& a_value) {
+		if (!m_units.find(a_unitIdentifier))
+			return false;
+		return m_units[a_unitIdentifier]->setParameterFromString(a_paramIdentifier, a_value);
 	};
 
 
@@ -244,7 +256,7 @@ namespace syn
 				garbageList.push_back(rec);
 			}
 		}
-		for(int i=0;i<garbageList.size();i++) {
+		for (int i = 0; i < garbageList.size(); i++) {
 			const ConnectionRecord& rec = garbageList[i];
 			disconnectInternal(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
 		}
@@ -303,5 +315,3 @@ namespace syn
 	}
 };
 #endif // __Circuit__
-
-

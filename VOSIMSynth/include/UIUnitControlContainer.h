@@ -28,46 +28,30 @@ Copyright 2016, Austen Satterlee
 #ifndef __UIUNITCONTROLCONTAINER__
 #define __UIUNITCONTROLCONTAINER__
 #include "UIWindow.h"
-#include <VoiceManager.h>
-#include "UIUnitControl.h"
-#include "UIButton.h"
-#include "UICell.h"
 
 namespace syn
 {
-	class UIUnitPort : public UIComponent
-	{
-	public:
-		UIUnitPort(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_portNum, bool a_isInput);
-		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
-		bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		int getUnitId() const { return m_unitId; }
-		int getPortId() const { return m_portNum; }
-		bool isInput() const { return m_isInput; }
-	protected:
-		void draw(NVGcontext* a_nvg) override;
-	protected:
-		VoiceManager* m_vm;
-		int m_unitId;
-		int m_portNum;
-		bool m_isInput;
-
-		bool m_isDragging = false;
-
-		int m_textHeight = 12;
-	};
-
 	class UIUnitControlContainer : public UIWindow
 	{
-	friend class UICircuitPanel;
+		friend class UICircuitPanel;
 	public:
 		UIUnitControlContainer(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, UIUnitControl* a_unitControl);
-		int getUnitId() const { return m_unitId; }
+
+		int getUnitId() const {
+			return m_unitId;
+		}
+
 		UIUnitPort* getSelectedInPort(const Vector2i& a_relPos) const;
 		UIUnitPort* getSelectedOutPort(const Vector2i& a_relPos) const;
-		const vector<UIUnitPort*>& getInPorts() const { return m_inPorts; }
-		const vector<UIUnitPort*>& getOutPorts() const { return m_outPorts; }
+
+		const vector<UIUnitPort*>& getInPorts() const {
+			return m_inPorts;
+		}
+
+		const vector<UIUnitPort*>& getOutPorts() const {
+			return m_outPorts;
+		}
+
 		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		void close() const;
 	protected:
@@ -77,10 +61,9 @@ namespace syn
 		vector<UIUnitPort*> m_inPorts;
 		vector<UIUnitPort*> m_outPorts;
 		UIButton* m_closeButton;
-		
+
 		UIRow* m_row;
 		UICol* m_cols[3];
 	};
-
 }
 #endif

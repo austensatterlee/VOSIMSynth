@@ -2,9 +2,12 @@
 #define __THEME__
 #include "UI.h"
 #include <nanovg.h>
-namespace syn {
-	__declspec(align(16)) struct Theme {
-		Theme(NVGcontext *ctx);
+
+namespace syn
+{
+	__declspec(align(16)) struct Theme
+	{
+		Theme(NVGcontext* ctx);
 
 		/* Fonts */
 		int mFontNormal;

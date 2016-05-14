@@ -28,13 +28,6 @@
 #ifndef __UICOMPONENT__
 #define __UICOMPONENT__
 
-#include <SFML/Window.hpp>
-
-#include <thread>
-#include <NDPoint.h>
-
-#include "nanovg.h"
-#include <Theme.h>
 #include "VOSIMWindow.h"
 #include <list>
 
@@ -132,7 +125,7 @@ namespace syn
 		 * If the component already has the given z-order, it is brought to the front of that z-order.
 		 * \param toFront When true, pushes the component to the front of the z-order, and pushes to the back otherwise.
 		 */
-		void setZOrder(UIComponent* a_child, int a_zorder, bool toFront=true);
+		void setZOrder(UIComponent* a_child, int a_zorder, bool toFront = true);
 
 	protected:
 		virtual void draw(NVGcontext* a_nvg) {};
@@ -148,19 +141,22 @@ namespace syn
 		void setMaxSize_(const Vector2i& a_maxSize);
 	private:
 		virtual void _onAddChild(shared_ptr<UIComponent> a_newchild) {};
+
 		virtual void _onRemoveChild() {};
+
 		virtual void _onResize() {};
 
 	protected:
 		UIComponent* m_parent;
 		VOSIMWindow* m_window;
 		vector<shared_ptr<UIComponent>> m_children;
-		map<int,list<shared_ptr<UIComponent>>> m_ZPlanes;
+		map<int, list<shared_ptr<UIComponent>>> m_ZPlanes;
 		map<UIComponent*, int> m_ZPlaneMap;
 
 		bool m_visible, m_focused, m_hovered;
 		Vector2i m_pos, m_size;
 		Vector2i m_minSize, m_maxSize;
+
 	private:
 		Vector2i m_visibleSize;
 	};

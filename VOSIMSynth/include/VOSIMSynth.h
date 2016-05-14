@@ -21,36 +21,41 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __VOSIMSYNTH__
 
 #include "IPlug_include_in_plug_hdr.h"
-#include "MIDIReceiver.h"
-#include "VoiceManager.h"
-#include "UnitFactory.h"
 
 using namespace syn;
 using namespace std;
 
-class VOSIMSynth : public IPlug {
+namespace syn
+{
+	class VoiceManager;
+	class MIDIReceiver;
+	class UnitFactory;
+}
+
+class VOSIMSynth : public IPlug
+{
 public:
 	explicit VOSIMSynth(IPlugInstanceInfo instanceInfo);
 
-    void makeGraphics();
+	void makeGraphics();
 
-    void makeInstrument();
+	void makeInstrument();
 
 	virtual ~VOSIMSynth();
 
-    void Reset() override;
+	void Reset() override;
 
-    void OnParamChange(int paramIdx) override;
+	void OnParamChange(int paramIdx) override;
 
-    void ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) override;
+	void ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) override;
 
-    void ProcessMidiMsg(IMidiMsg* pMsg) override;
+	void ProcessMidiMsg(IMidiMsg* pMsg) override;
 
-    bool SerializeState(ByteChunk* pChunk) override;
+	bool SerializeState(ByteChunk* pChunk) override;
 
-    int UnserializeState(ByteChunk* pChunk, int startPos) override;
+	int UnserializeState(ByteChunk* pChunk, int startPos) override;
 
-    void PresetsChangedByHost() override;
+	void PresetsChangedByHost() override;
 
 	void OnIdle() override;
 
@@ -58,14 +63,16 @@ public:
 
 	bool isTransportRunning();
 
-	int getTickCount() const { return m_tickCount; }
+	int getTickCount() const {
+		return m_tickCount;
+	}
 
 	void OnGUIOpen() override;
 
 	void OnGUIClose() override;
 
 private:
-    MIDIReceiver* m_MIDIReceiver;
+	MIDIReceiver* m_MIDIReceiver;
 	VoiceManager* m_voiceManager;
 	UnitFactory* m_unitFactory;
 	VOSIMWindow* m_vosimWindow;

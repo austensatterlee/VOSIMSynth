@@ -29,47 +29,27 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __MATHUNITS__
 
 #include "Unit.h"
-#include "DSPMath.h"
-#include <cmath>
 #include "MemoryUnit.h"
 
 using namespace std;
 
-namespace syn {
-
-	const vector<string> scale_selections = { "1","10","100" };
-	const vector<double> scale_values = { 1.,10.,100. };
+namespace syn
+{
+	const vector<string> scale_selections = {"1","10","100"};
+	const vector<double> scale_values = {1.,10.,100.};
 
 	class MovingAverage
 	{
 	public:
-		MovingAverage() : 
-			m_windowSize(1),
-			m_lastOutput(0.0)
-		{
-			m_delay.resizeBuffer(m_windowSize);
-		}
+		MovingAverage();
 
-		void setWindowSize(int a_newWindowSize) {
-			m_windowSize = a_newWindowSize;
-			m_delay.resizeBuffer(m_windowSize);
-			m_delay.clearBuffer();
-			m_lastOutput = 0.0;
-		}
+		void setWindowSize(int a_newWindowSize);
 
-		double getWindowSize() const {
-			return m_windowSize;
-		}
+		double getWindowSize() const;
 
-		double process(double a_input) {
-			double output = (1.0 / m_windowSize)*(a_input - m_delay.process(a_input)) + m_lastOutput;
-			m_lastOutput = output;
-			return output;
-		}
+		double process(double a_input);
 
-		double getPastInputSample(int a_offset) {
-			return m_delay.getPastSample(a_offset);
-		}
+		double getPastInputSample(int a_offset);
 
 	private:
 		int m_windowSize;
@@ -83,16 +63,15 @@ namespace syn {
 	class BLIntegrator
 	{
 	public:
-		BLIntegrator() : m_state(0), m_normfc(0) {};
+		BLIntegrator();
+
 		/**
 		 * Set normalized cutoff frequency in the range (0,1), where 1 is nyquist.
 		 */
-		void setFc(double a_newfc) { m_normfc = a_newfc/2; }		
-		double process(double a_input) {
-			a_input = m_normfc*a_input;
-			m_state = 2 * a_input + m_state;
-			return m_state;
-		}
+		void setFc(double a_newfc);
+
+		double process(double a_input);
+
 	private:
 		double m_state;
 		double m_normfc; /// normalized cutoff frequency
@@ -101,42 +80,20 @@ namespace syn {
 	/**
 	 * DC-remover
 	 */
-	class DCRemoverUnit : public Unit {	
+	class DCRemoverUnit : public Unit
+	{
 	public:
-		explicit DCRemoverUnit(const string& a_name) :
-			Unit(a_name),
-			m_pAlpha(addParameter_(UnitParameter("hp",0.0,1.0,0.995))),
-			m_lastInput(0.0),
-			m_lastOutput(0.0)
-		{
-			addInput_("in");
-			addOutput_("out");
-		}
+		explicit DCRemoverUnit(const string& a_name);
 
-		DCRemoverUnit(const DCRemoverUnit& a_rhs) :
-			DCRemoverUnit(a_rhs.getName())
-		{}
+		DCRemoverUnit(const DCRemoverUnit& a_rhs);
+
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
-		{
-			double input = a_inputs.getValue(0);
-			double alpha = getParameter(m_pAlpha).getDouble();
-			double gain = 0.5*(1 + alpha);
-			// dc removal			
-			input = input*gain;
-			double output = input - m_lastInput + alpha*m_lastOutput;
-			m_lastInput = input;
-			m_lastOutput = output;
-			a_outputs.setChannel(0, output);
-		}; 
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;;
 
 	private:
-		string _getClassName() const override
-		{
-			return "DCRemoverUnit";
-		}
+		string _getClassName() const override;
 
-		Unit* _clone() const override { return new DCRemoverUnit(*this); }
+		Unit* _clone() const override;
 
 	private:
 		int m_pAlpha;
@@ -151,33 +108,18 @@ namespace syn {
 	class LagUnit : public Unit
 	{
 	public:
-		explicit LagUnit(const string& a_name) :
-			Unit(a_name),
-			m_pFc(addParameter_(UnitParameter("fc",0.0,1.0,1.0))),
-			m_state(0.0) 
-		{
-			addInput_("in");
-			m_iFcAdd = addInput_("fc");
-			m_iFcMul = addInput_("fc[x]",1.0,Signal::EMul);
-			addOutput_("out");
-		}
+		explicit LagUnit(const string& a_name);
 
-		LagUnit(const LagUnit& a_rhs) : LagUnit(a_rhs.getName()) {}
+		LagUnit(const LagUnit& a_rhs);
+
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override {
-			double input = a_inputs.getValue(0);
-			double fc = getParameter(m_pFc).getDouble()*a_inputs.getValue(m_iFcMul)+a_inputs.getValue(m_iFcAdd); // pitch cutoff
-			fc = 10e3*CLAMP(fc, 0.0, 1.0) / getFs();
-			double wc = 2*tan(PI * fc / 2.0);
-			double gain = wc / (1 + wc);
-			double trap_in = gain * (input - m_state);
-			double output = trap_in + m_state;
-			m_state = trap_in + output;
-			a_outputs.setChannel(0, output);
-		}
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
+
 	private:
-		string _getClassName() const override { return "LagUnit";  };
-		Unit* _clone() const override { return new LagUnit(*this);  };
+		string _getClassName() const override;;
+
+		Unit* _clone() const override;;
+
 	private:
 		int m_pFc;
 		int m_iFcAdd, m_iFcMul;
@@ -187,175 +129,63 @@ namespace syn {
 	/**
 	 * Full-wave rectifier
 	 */
-    class FullRectifierUnit : public Unit {
-    public:
-		explicit FullRectifierUnit(const string& a_name) :
-                Unit(a_name)
-        {
-            addInput_("in");
-            addOutput_("out");
-        }
-
-		FullRectifierUnit(const FullRectifierUnit& a_rhs) :
-			FullRectifierUnit(a_rhs.getName())
-        {
-
-        }
-
-    protected:
-        void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
-        {
-            double input = a_inputs.getValue(0);
-            a_outputs.setChannel(0, abs(input));
-        };
-    private:
-        string _getClassName() const override
-        {
-            return "FullRectifierUnit";
-        }
-
-	    Unit* _clone() const override { return new FullRectifierUnit(*this); }
-    };
-
-	/**
-	* Half-wave rectifier
-	*/
-	class HalfRectifierUnit : public Unit {
+	class RectifierUnit : public Unit
+	{
 	public:
-		explicit HalfRectifierUnit(const string& a_name) :
-			Unit(a_name)
-		{
-			addInput_("in");
-			addOutput_("out");
-		}
+		explicit RectifierUnit(const string& a_name);
 
-		HalfRectifierUnit(const HalfRectifierUnit& a_rhs) :
-			HalfRectifierUnit(a_rhs.getName())
-		{
-
-		}
+		RectifierUnit(const RectifierUnit& a_rhs);
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
-		{
-			double input = a_inputs.getValue(0);
-			input = input > 0 ? input : 0;
-			a_outputs.setChannel(0, input);
-		};
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;;
+
 	private:
-		string _getClassName() const override
-		{
-			return "HalfRectifierUnit";
-		}
+		string _getClassName() const override;
 
-		Unit* _clone() const override { return new HalfRectifierUnit(*this); }
-	};
+		Unit* _clone() const override;
 
-	/**
-	 * Flips the polarity of a signal
-	 */
-    class InvertingUnit : public Unit {
-    public:
-        explicit InvertingUnit(const string& a_name) :
-                Unit(a_name)
-        {
-            addInput_("in");
-            addOutput_("out");
-        }
-
-        InvertingUnit(const InvertingUnit& a_rhs) :
-                InvertingUnit(a_rhs.getName())
-        {
-
-        }
-
-    protected:
-        void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
-        {
-            double input = a_inputs.getValue(0);
-            a_outputs.setChannel(0, -input);
-        };
-    private:
-        string _getClassName() const override
-        {
-            return "InvertingUnit";
-        }
-
-	    Unit* _clone() const override { return new InvertingUnit(*this); }
-    };
+	private:
+		int m_pRectType;
+	};		
+	
 
 	/**
-	 * Multiplies two signals together
+	 * Performs multiplies two signals and then adds a third signal as a bias
 	 */
-	class MACUnit : public Unit {
+	class MACUnit : public Unit
+	{
 	public:
-		explicit MACUnit(const string& a_name) :
-			Unit(a_name)
-		{
-			addInput_("in");
-			addInput_("a[x]", 1.0, Signal::EMul);
-			addInput_("b[+]");
-			addOutput_("a*in+b");
-		}
+		explicit MACUnit(const string& a_name);
 
-		MACUnit(const MACUnit& a_rhs) :
-			MACUnit(a_rhs.getName())
-		{
+		MACUnit(const MACUnit& a_rhs);
 
-		}
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
-		{
-			double output = a_inputs.getValue(0);
-			output *= a_inputs.getValue(1);
-			output += a_inputs.getValue(2);
-			a_outputs.setChannel(0, output);
-		};
-	private:
-		string _getClassName() const override
-		{
-			return "MACUnit";
-		}
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;;
 
-		Unit* _clone() const override { return new MACUnit(*this); }
+	private:
+		string _getClassName() const override;
+
+		Unit* _clone() const override;
 	};
 
 	/**
 	 * Applies gain to the difference between the two inputs (like an op amp)
 	 */
-	class GainUnit : public Unit {
+	class GainUnit : public Unit
+	{
 	public:
-		explicit GainUnit(const string& a_name) :
-			Unit(a_name),
-			m_pGain(addParameter_(UnitParameter("gain", 0.0, 1.0, 1.0))),
-			m_pScale(addParameter_(UnitParameter("scale",scale_selections,scale_values)))			
-		{
-			m_iInput = addInput_("in[+]");
-			m_iInvInput = addInput_("in[-]");
-			m_iGain = addInput_("gain[x]", 1.0, Signal::EMul);
-			addOutput_("out");
-		}
+		explicit GainUnit(const string& a_name);
 
-		GainUnit(const GainUnit& a_rhs) :
-			GainUnit(a_rhs.getName())
-		{
+		GainUnit(const GainUnit& a_rhs);
 
-		}
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
-		{
-			double input = a_inputs.getValue(m_iInput) - a_inputs.getValue(m_iInvInput);
-			double gain = getParameter(m_pGain).getDouble()*getParameter(m_pScale).getEnum();
-			gain *= a_inputs.getValue(m_iGain);
-			a_outputs.setChannel(0, input*gain);
-		};
-	private:
-		string _getClassName() const override
-		{
-			return "GainUnit";
-		}
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;;
 
-		Unit* _clone() const override { return new GainUnit(*this); }
+	private:
+		string _getClassName() const override;
+
+		Unit* _clone() const override;
+
 	private:
 		int m_pGain, m_pScale;
 		int m_iGain, m_iInput, m_iInvInput;
@@ -364,37 +194,21 @@ namespace syn {
 	/**
 	* Sums incomming signals
 	*/
-	class SummerUnit : public Unit {
+	class SummerUnit : public Unit
+	{
 	public:
-		explicit SummerUnit(const string& a_name) :
-			Unit(a_name),
-			m_pBias(addParameter_(UnitParameter("bias", -1.0, 1.0, 0.0))),
-			m_pScale(addParameter_(UnitParameter("bias scale", scale_selections, scale_values)))
-		{
-			addInput_("[+]");
-			addInput_("[-]");
-			addOutput_("out");
-		}
+		explicit SummerUnit(const string& a_name);
 
-		SummerUnit(const SummerUnit& a_rhs) :
-			SummerUnit(a_rhs.getName())
-		{
+		SummerUnit(const SummerUnit& a_rhs);
 
-		}
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
-		{
-			double output = a_inputs.getValue(0) - a_inputs.getValue(1);
-			output += getParameter(m_pBias).getDouble()*getParameter(m_pScale).getEnum();
-			a_outputs.setChannel(0, output);
-		};
-	private:
-		string _getClassName() const override
-		{
-			return "SummerUnit";
-		}
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;;
 
-		Unit* _clone() const override { return new SummerUnit(*this); }
+	private:
+		string _getClassName() const override;
+
+		Unit* _clone() const override;
+
 	private:
 		int m_pBias, m_pScale;
 	};
@@ -402,163 +216,61 @@ namespace syn {
 	/**
 	 * Outputs a constant
 	 */
-	class ConstantUnit : public Unit {
+	class ConstantUnit : public Unit
+	{
 	public:
-		explicit ConstantUnit(const string& a_name) :
-			Unit(a_name)
-		{
-			addParameter_({ "out",-1.0,1.0,1.0 });
-			addParameter_({ "scale",scale_selections});
-			addOutput_("out");
-		}
+		explicit ConstantUnit(const string& a_name);
 
-		ConstantUnit(const ConstantUnit& a_rhs) :
-			ConstantUnit(a_rhs.getName())
-		{
-		}
+		ConstantUnit(const ConstantUnit& a_rhs);
+
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
-		{
-			double output = getParameter(0).getDouble();
-			int selected_scale = getParameter(1).getInt();
-			double scale = scale_values[selected_scale];
-			output = output*scale;
-			a_outputs.setChannel(0, output);
-		};
-	private:
-		string _getClassName() const override
-		{
-			return "ConstantUnit";
-		}
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;;
 
-		Unit* _clone() const override { return new ConstantUnit(*this); }
+	private:
+		string _getClassName() const override;
+
+		Unit* _clone() const override;
 	};
 
 	/**
 	* Balances incoming signals between two outputs
 	*/
-	class PanningUnit : public Unit {
+	class PanningUnit : public Unit
+	{
 	public:
-		explicit PanningUnit(const string& a_name) :
-			Unit(a_name)
-		{
-			addInput_("in1");
-			addInput_("in2");
-			addInput_("bal1");
-			addInput_("bal2");
-			addOutput_("out1");
-			addOutput_("out2");
-			m_pBalance1 = addParameter_({ "bal1",0.0,1.0,0.5 });
-			m_pBalance2 = addParameter_({ "bal2",0.0,1.0,0.5 });
-		}
+		explicit PanningUnit(const string& a_name);
 
-		PanningUnit(const PanningUnit& a_rhs) :
-			PanningUnit(a_rhs.getName())
-		{
+		PanningUnit(const PanningUnit& a_rhs);
 
-		}
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
-		{
-			double in1 = a_inputs.getValue(0);
-			double in2 = a_inputs.getValue(1);
-			double bal1 = getParameter(m_pBalance1).getDouble()+a_inputs.getValue(2);
-			double bal2 = getParameter(m_pBalance2).getDouble()+a_inputs.getValue(3);
-			bal1 = CLAMP(bal1, 0.0, 1.0);
-			bal2 = CLAMP(bal2, 0.0, 1.0);
-			a_outputs.setChannel(0,      bal1 *in1  + bal2*in2);
-			a_outputs.setChannel(1, (1 - bal1)*in1  + (1-bal2)*in2);
-		};
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;;
+
 	protected:
 		int m_pBalance1, m_pBalance2;
 	private:
-		string _getClassName() const override
-		{
-			return "PanningUnit";
-		}
+		string _getClassName() const override;
 
-		Unit* _clone() const override { return new PanningUnit(*this); }
-	};
-
-	/**
-	 * Linear to decibals converter
-	 */
-	class LinToDbUnit : public Unit {
-	public:
-		explicit LinToDbUnit(const string& a_name) :
-			Unit(a_name),
-			m_pMinDb(addParameter_(UnitParameter("min dB", -120.0, 0.0, -120.0)))
-		{
-			addInput_("in");
-			addOutput_("out");
-		}
-
-		LinToDbUnit(const LinToDbUnit& a_rhs) :
-			LinToDbUnit(a_rhs.getName())
-		{
-		}
-	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
-		{
-			double input = a_inputs.getValue(0);
-			double output = lin2db(input, getParameter(m_pMinDb).getDouble(), 0.0);
-			a_outputs.setChannel(0, output);
-		};
-	private:
-		string _getClassName() const override
-		{
-			return "LinToDbUnit";
-		}
-
-		Unit* _clone() const override { return new LinToDbUnit(*this); }
-	private:
-		int m_pMinDb;
+		Unit* _clone() const override;
 	};
 
 	/**
 	* Affine transform
 	*/
-	class LerpUnit : public Unit {
+	class LerpUnit : public Unit
+	{
 	public:
-		explicit LerpUnit(const string& a_name) :
-			Unit(a_name)
-		{
-			m_pInputRange = addParameter_(UnitParameter("input", { "bipolar","unipolar" }));
-			m_pMinOutput = addParameter_(UnitParameter("min out", -1.0, 1.0, 0.0));
-			m_pMinOutputScale = addParameter_(UnitParameter("min scale", scale_selections, scale_values));
-			m_pMaxOutput = addParameter_(UnitParameter("max out", -1.0, 1.0, 1.0));
-			m_pMaxOutputScale = addParameter_(UnitParameter("max scale", scale_selections, scale_values));
-			addInput_("in");
-			addOutput_("out");
-		}
+		explicit LerpUnit(const string& a_name);
 
-		LerpUnit(const LerpUnit& a_rhs) :
-			LerpUnit(a_rhs.getName())
-		{
-		}
+		LerpUnit(const LerpUnit& a_rhs);
+
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override
-		{
-			double input = a_inputs.getValue(0);
-			double a_scale = getParameter(m_pMinOutputScale).getEnum();
-			double a = getParameter(m_pMinOutput).getDouble()*a_scale;
-			double b_scale = getParameter(m_pMaxOutputScale).getEnum();
-			double b = getParameter(m_pMaxOutput).getDouble()*b_scale;
-			double output;
-			if (getParameter(m_pInputRange).getInt() == 1) {
-				output = LERP(a, b, input);
-			}else {
-				output = LERP(a, b, 0.5*(input + 1));
-			}
-			a_outputs.setChannel(0, output);
-		};
-	private:
-		string _getClassName() const override
-		{
-			return "LerpUnit";
-		}
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;;
 
-		Unit* _clone() const override { return new LerpUnit(*this); }
+	private:
+		string _getClassName() const override;
+
+		Unit* _clone() const override;
+
 	private:
 		int m_pInputRange;
 		int m_pMinOutput, m_pMaxOutput;

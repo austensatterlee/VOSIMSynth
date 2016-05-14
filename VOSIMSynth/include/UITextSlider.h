@@ -34,14 +34,14 @@ Copyright 2016, Austen Satterlee
 namespace syn
 {
 	class UITextSlider : public UIComponent
-	{	
+	{
 	public:
 		UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId);
 
 		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		bool onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) override;
-		bool setValueFromString(const string& a_str);
+		void setValueFromString(const string& a_str);
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 	private:

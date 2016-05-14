@@ -1,4 +1,6 @@
 #include "UIUnitSelector.h"
+#include "UnitFactory.h"
+#include "Theme.h"
 
 syn::UIComponent* syn::UIUnitSelector::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	int row = 0;
@@ -6,8 +8,8 @@ syn::UIComponent* syn::UIUnitSelector::onMouseDown(const Vector2i& a_relCursor, 
 	set<string> gNames = m_unitFactory->getGroupNames();
 	for (string gName : gNames) {
 		vector<string> pNames = m_unitFactory->getPrototypeNames(gName);
-		if(highlightedRow()==row) {
-			if (m_currGroup == group) 
+		if (highlightedRow() == row) {
+			if (m_currGroup == group)
 				m_currGroup = -1;
 			else {
 				m_currGroup = group;
@@ -18,7 +20,7 @@ syn::UIComponent* syn::UIUnitSelector::onMouseDown(const Vector2i& a_relCursor, 
 		}
 		if (group == m_currGroup) {
 			for (int j = 0; j < pNames.size(); j++) {
-				row++;	
+				row++;
 				if (highlightedRow() == row) {
 					m_currPrototype = j;
 					m_currPrototypeName = pNames[j];
@@ -42,11 +44,11 @@ bool syn::UIUnitSelector::onMouseMove(const Vector2i& a_relCursor, const Vector2
 	Vector2i cursor = a_relCursor - m_pos;
 	int groupFontSize = theme()->mUnitSelectorGroupFontSize;
 	int protoFontSize = theme()->mUnitSelectorProtoFontSize;
-	int rowPix=0;
+	int rowPix = 0;
 	for (string gName : gNames) {
 		vector<string> pNames = m_unitFactory->getPrototypeNames(gName);
 		rowPix += groupFontSize;
-		if (cursor.y()<rowPix) {
+		if (cursor.y() < rowPix) {
 			m_highlightedRow = row;
 			return true;
 		}
@@ -54,7 +56,7 @@ bool syn::UIUnitSelector::onMouseMove(const Vector2i& a_relCursor, const Vector2
 			for (int j = 0; j < pNames.size(); j++) {
 				row++;
 				rowPix += protoFontSize;
-				if (cursor.y()<rowPix) {
+				if (cursor.y() < rowPix) {
 					m_highlightedRow = row;
 					return true;
 				}
@@ -105,6 +107,6 @@ void syn::UIUnitSelector::draw(NVGcontext* a_nvg) {
 		row++;
 		group++;
 	}
-	setMinSize_(Vector2i{ m_autoWidth, m_autoHeight });
-	setSize(Vector2i{ m_autoWidth, m_autoHeight });
+	setMinSize_(Vector2i{m_autoWidth, m_autoHeight});
+	setSize(Vector2i{m_autoWidth, m_autoHeight});
 }

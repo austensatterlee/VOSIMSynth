@@ -21,18 +21,36 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "tables.h"
 #include "DSPMath.h"
 
-/******************************
-* VOSIM methods
-*
-******************************/
 namespace syn
 {
-	void VosimOscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs)
-	{
-        m_num_pulses = getParameter(m_pNumPulses).getInt();
+	VosimOscillator::VosimOscillator(string name):
+		TunedOscillator(name),
+		m_pulse_step(0.0),
+		m_pulse_tune(0),
+		m_num_pulses(1),
+		m_pPulseTune(addParameter_({"fp", 0.0, 1.0, 0.0})),
+		m_pNumPulses(addParameter_({"num", 1, 8, 1})),
+		m_pPulseDecay(addParameter_({"dec", 0.0, 1.0, 0.0})) {
+		m_iPulseTuneAdd = addInput_("fp");
+		m_iPulseTuneMul = addInput_("fp[x]", 1.0, Signal::EMul);
+	}
+
+	VosimOscillator::VosimOscillator(const VosimOscillator& a_rhs):
+		VosimOscillator(a_rhs.getName()) { }
+
+	string VosimOscillator::_getClassName() const {
+		return "VosimOscillator";
+	}
+
+	Unit* VosimOscillator::_clone() const {
+		return new VosimOscillator(*this);
+	}
+
+	void VosimOscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
+		m_num_pulses = getParameter(m_pNumPulses).getInt();
 		m_pulse_tune = CLAMP(a_inputs.getValue(m_iPulseTuneMul)*getParameter(m_pPulseTune).getDouble() + a_inputs.getValue(m_iPulseTuneAdd), 0, 1);
 		TunedOscillator::process_(a_inputs, a_outputs);
-        double pulse_decay = getParameter(m_pPulseDecay).getDouble();
+		double pulse_decay = getParameter(m_pPulseDecay).getDouble();
 
 		double output = 0.0;
 
@@ -45,33 +63,51 @@ namespace syn
 			double pulseval = lut_sin.getlinear(pulse_phase);
 
 			double curr_pulse_gain = 1.0;
-			while(curr_pulse_num--) {
+			while (curr_pulse_num--) {
 				curr_pulse_gain *= (1 - pulse_decay);
 			}
-			
-			output = pulseval*abs(pulseval);
-			output *= curr_pulse_gain*sqrt(m_pulse_step / m_phase_step);
+
+			output = pulseval * abs(pulseval);
+			output *= curr_pulse_gain * sqrt(m_pulse_step / m_phase_step);
 		}
-		a_outputs.setChannel(m_oOut,m_gain*output + m_bias);
+		a_outputs.setChannel(m_oOut, m_gain * output + m_bias);
 	}
 
-	void VosimOscillator::updatePhaseStep_()
-	{
+	void VosimOscillator::updatePhaseStep_() {
 		TunedOscillator::updatePhaseStep_();
 		double pulse_freq;
-		double min_freq = m_num_pulses*m_freq;
+		double min_freq = m_num_pulses * m_freq;
 		int MAX_PULSE_FREQ = 4000;
 		if (min_freq > MAX_PULSE_FREQ) {
 			pulse_freq = min_freq;
-		}
-		else {
+		} else {
 			pulse_freq = LERP(min_freq, MAX_PULSE_FREQ, m_pulse_tune);
 		}
 		m_pulse_step = pulse_freq / getFs();
 	}
 
-	void FormantOscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs)
-	{
+	FormantOscillator::FormantOscillator(string name):
+		TunedOscillator(name),
+		m_pWidth(addParameter_({"width", 0.0, 1.0, 0.0})),
+		m_pFmt(addParameter_({"fmt", 0.0, 1.0, 0.0})) {
+		m_iWidthAdd = addInput_("w");
+		m_iWidthMul = addInput_("w[x]", 1.0, Signal::EMul);
+		m_iFmtAdd = addInput_("fmt");
+		m_iFmtMul = addInput_("fmt[x]", 1.0, Signal::EMul);
+	}
+
+	FormantOscillator::FormantOscillator(const FormantOscillator& a_rhs):
+		FormantOscillator(a_rhs.getName()) { }
+
+	string FormantOscillator::_getClassName() const {
+		return "FormantOscillator";
+	}
+
+	Unit* FormantOscillator::_clone() const {
+		return new FormantOscillator(*this);
+	}
+
+	void FormantOscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
 		TunedOscillator::process_(a_inputs, a_outputs);
 		double formant_freq;
 		double cos_width;
@@ -79,8 +115,8 @@ namespace syn
 		if (m_freq > MAX_FMT_FREQ) {
 			formant_freq = m_freq;
 			cos_width = 1;
-		}else {
-            double fmt_pitch_norm = CLAMP(a_inputs.getValue(m_iFmtMul)*getParameter(m_pFmt).getDouble() + a_inputs.getValue(m_iFmtAdd), 0, 1);
+		} else {
+			double fmt_pitch_norm = CLAMP(a_inputs.getValue(m_iFmtMul)*getParameter(m_pFmt).getDouble() + a_inputs.getValue(m_iFmtAdd), 0, 1);
 			formant_freq = LERP(m_freq, MAX_FMT_FREQ, fmt_pitch_norm);
 			cos_width = 1 + 8 * CLAMP(a_inputs.getValue(m_iWidthMul)*getParameter(m_pWidth).getDouble() + a_inputs.getValue(m_iWidthAdd), 0, 1);
 		}
@@ -91,9 +127,8 @@ namespace syn
 		double cos_phase = CLAMP(m_phase * cos_width, 0, 1);
 
 		double sinval = lut_sin.getlinear(formant_phase + 0.5);
-		double cosval = 0.5*(1+lut_sin.getlinear(cos_phase - 0.25));
-		double output = sinval*cosval*sqrt(cos_width);
-        a_outputs.setChannel(m_oOut, m_gain*output + m_bias);
-	}	
+		double cosval = 0.5 * (1 + lut_sin.getlinear(cos_phase - 0.25));
+		double output = sinval * cosval * sqrt(cos_width);
+		a_outputs.setChannel(m_oOut, m_gain * output + m_bias);
+	}
 }
-

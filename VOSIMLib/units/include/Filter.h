@@ -45,33 +45,33 @@ namespace syn
 		Filter(string a_name, const double a_X[nX], const double a_Y[nY]) :
 			Unit(a_name),
 			xBufInd(0),
-			yBufInd(0)
-		{
-            addInput_("in");
-            addOutput_("out");
-			memcpy(XCoefs, a_X, sizeof(double)*nX);
-			memcpy(YCoefs, a_Y, sizeof(double)*nY);
+			yBufInd(0) {
+			addInput_("in");
+			addOutput_("out");
+			memcpy(XCoefs, a_X, sizeof(double) * nX);
+			memcpy(YCoefs, a_Y, sizeof(double) * nY);
 			reset_();
 		};
 
 		Filter(const Filter& a_rhs) :
-				Filter(a_rhs.getName(),XCoefs,YCoefs)
-		{
-
-		}
+			Filter(a_rhs.getName(), XCoefs, YCoefs) { }
 
 		virtual ~Filter() { };
 
 	protected:
 		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
-        void reset_() {
-            memset(YBuf, 0, nY * sizeof(double));
-            memset(XBuf, 0, nX * sizeof(double));
-            xBufInd = 0;
-            yBufInd = 0;
-        };
+
+		void reset_() {
+			memset(YBuf, 0, nY * sizeof(double));
+			memset(XBuf, 0, nX * sizeof(double));
+			xBufInd = 0;
+			yBufInd = 0;
+		};
+
 	private:
-		string _getClassName() const override { return "Filter"; };
+		string _getClassName() const override {
+			return "Filter";
+		};
 	};
 
 	template <size_t nX, size_t nY>
@@ -96,8 +96,7 @@ namespace syn
 		yBufInd++;
 		if (yBufInd == nY)
 			yBufInd = 0;
-		a_outputs.setChannel(0,*output);
+		a_outputs.setChannel(0, *output);
 	}
 }
 #endif
-

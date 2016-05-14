@@ -1,5 +1,4 @@
 #include "Hosts.h"
-#include <ctype.h>
 #include "Log.h"
 
 EHost LookUpHost(const char* inHost)

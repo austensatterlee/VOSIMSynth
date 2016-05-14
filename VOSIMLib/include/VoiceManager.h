@@ -49,7 +49,7 @@ namespace syn
 	 */
 	struct ActionMessage
 	{
-		void(*action)(Circuit*, bool, ByteChunk*);
+		void (*action)(Circuit*, bool, ByteChunk*);
 		ByteChunk data;
 	};
 
@@ -122,7 +122,7 @@ namespace syn
 		int addUnit(T a_prototypeId);
 
 		void save(ByteChunk* a_data) const;
-		int  load(ByteChunk* a_data, int startPos);
+		int load(ByteChunk* a_data, int startPos);
 
 	private:
 		/**
@@ -151,7 +151,7 @@ namespace syn
 
 	private:
 		typedef AtomicQueue<int> VoiceIndexList;
-		typedef map<int, AtomicQueue<int> > VoiceMap;
+		typedef map<int, AtomicQueue<int>> VoiceMap;
 
 		spsc_queue<ActionMessage*> m_queuedActions;
 
@@ -165,7 +165,7 @@ namespace syn
 		VoiceIndexList m_voiceStack;
 		VoiceIndexList m_idleVoiceStack;
 		VoiceIndexList m_garbageList; /// pre-allocated storage for collecting idle voices during audio processing
-		vector<shared_ptr<Circuit> > m_allVoices;
+		vector<shared_ptr<Circuit>> m_allVoices;
 		shared_ptr<Circuit> m_instrument;
 		UnitFactory* m_factory;
 	};
@@ -187,4 +187,3 @@ namespace syn
 	}
 }
 #endif
-

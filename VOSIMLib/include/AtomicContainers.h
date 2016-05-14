@@ -66,18 +66,20 @@ namespace syn
 
 		bool peek_left(T& a_item) const;
 		bool peek_right(T& a_item) const;
-		bool peek(T& a_item, unsigned a_offset=0) const;
+		bool peek(T& a_item, unsigned a_offset = 0) const;
 
 		int find(const T& a_item) const;
 		bool remove(const T& a_item);
 
 		bool empty() const;
 
-		const T* getData() const { return m_data; }
+		const T* getData() const {
+			return m_data;
+		}
 
 		unsigned max_size() const {
 			unsigned size = m_maxsize.load(std::memory_order_seq_cst);
-			return size+1;
+			return size + 1;
 		}
 
 		/**
@@ -96,21 +98,19 @@ namespace syn
 
 	template <typename T>
 	AtomicQueue<T>::AtomicQueue() :
-	AtomicQueue(2)
-	{}
+		AtomicQueue(2) {}
 
 	template <typename T>
 	AtomicQueue<T>::AtomicQueue(unsigned a_maxsize):
 		m_left_index(0),
 		m_right_index(0),
-		m_data(nullptr) 
-	{
+		m_data(nullptr) {
 		unsafe_resize(a_maxsize);
 	}
 
 	template <typename T>
 	AtomicQueue<T>::~AtomicQueue() {
-		
+
 		if (m_data) {
 			free(m_data);
 		}
@@ -184,14 +184,14 @@ namespace syn
 		AtomicQueue<T> tmpq(a_offset);
 		T tmpblock;
 		bool success = true;
-		for (int i = 0; i < a_offset-1; i++) {
+		for (int i = 0; i < a_offset - 1; i++) {
 			if (!pop_left(tmpblock)) {
 				success = false;
 				break;
 			}
 			tmpq.push_right(tmpblock);
 		}
-		if(success) {
+		if (success) {
 			pop_left(a_item);
 		}
 		while (tmpq.pop_left(tmpblock)) {
@@ -211,30 +211,30 @@ namespace syn
 		unsigned right = m_right_index.load(std::memory_order_seq_cst);
 		unsigned left = m_left_index.load(std::memory_order_seq_cst);
 		unsigned offset;
-		if(right>left) {
+		if (right > left) {
 			offset = right - 1 - left;
-		}else if(right<left) {
+		} else if (right < left) {
 			unsigned size = m_maxsize.load(std::memory_order_seq_cst);
 			offset = right + size - left;
-		}else {
+		} else {
 			return false;
 		}
 		return peek(a_item, offset);
 	}
 
 	template <typename T>
-	bool AtomicQueue<T>::peek(T& a_item, unsigned a_offset) const{
+	bool AtomicQueue<T>::peek(T& a_item, unsigned a_offset) const {
 		unsigned right = m_right_index.load(std::memory_order_seq_cst);
 		unsigned left = m_left_index.load(std::memory_order_seq_cst);
-		a_offset = (a_offset + left)&m_maxsize;
+		a_offset = (a_offset + left) & m_maxsize;
 		// ensure the offset refers to a non-empty block
-		if(right>left && (a_offset >= left && a_offset < right)) {
+		if (right > left && (a_offset >= left && a_offset < right)) {
 			a_item = m_data[a_offset];
-			return true;			
+			return true;
 		}
-		if(right<left && (a_offset >= left || a_offset < right)) {
+		if (right < left && (a_offset >= left || a_offset < right)) {
 			a_item = m_data[a_offset];
-			return true;			
+			return true;
 		}
 		return false;
 	}
@@ -263,7 +263,7 @@ namespace syn
 		T tmpblock;
 		bool success = false;
 		// "uncover" requested item by temporarily storing the data above it on another queue
-		while(pop_left(tmpblock)){
+		while (pop_left(tmpblock)) {
 			if (tmpblock == a_item) {
 				success = true;
 				break;
@@ -283,10 +283,10 @@ namespace syn
 		if (!a_maxsize)
 			return false;
 
-		a_maxsize = next_power_of_2(a_maxsize+1);
+		a_maxsize = next_power_of_2(a_maxsize + 1);
 		a_maxsize = a_maxsize >= 256 ? 256 : a_maxsize;
 		uint8_t newsize = static_cast<uint8_t>(a_maxsize);
-		m_maxsize.store(newsize-1, std::memory_order_seq_cst);
+		m_maxsize.store(newsize - 1, std::memory_order_seq_cst);
 
 		if (!m_data) {
 			m_data = static_cast<T*>(calloc(newsize, sizeof(T)));
@@ -300,4 +300,3 @@ namespace syn
 	}
 }
 #endif
-

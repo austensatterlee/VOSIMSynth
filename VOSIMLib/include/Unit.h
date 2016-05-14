@@ -20,185 +20,189 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __UNIT__
 #define __UNIT__
 
-#include "UnitParameter.h"
 #include "SignalBus.h"
-#include "UnitConnectionBus.h"
 #include "NamedContainer.h"
+#include "UnitConnectionBus.h"
+#include "UnitParameter.h"
 #include <memory>
 
 using std::shared_ptr;
 using std::make_shared;
 
-namespace syn {
-    class Circuit;
+namespace syn
+{
+	class Circuit;
 
-    struct AudioConfig {
-        double fs;
-        double tempo;
-    };
+	struct AudioConfig
+	{
+		double fs;
+		double tempo;
+	};
 
-    struct MidiData {
-        int note;
-        int velocity;
-        bool isNoteOn;
-    };
+	struct MidiData
+	{
+		int note;
+		int velocity;
+		bool isNoteOn;
+	};
 
-    /**
-     * \class Unit
-     *
-     * \brief Units encapsulate a discrete processor with an internal state
-     *
-     * A unit is composed of internal state variables, a number of outputs and inputs,
-     * and a transition function, Unit::process_, which produces a new set of outputs given the state
-     * of the Unit and the current input.
-     *
-     * New units should be derived by subclassing UnitCloneable, with Unit::addInput_, Unit::addOutput_,
-     * and Unit::addParameter_ called in the constructor some of number of times according to
-     * how many inputs, outputs, and parameters are needed (respectively).
-     *
-     */
-    class Unit {
-    public:
-        Unit();
+	/**
+	 * \class Unit
+	 *
+	 * \brief Units encapsulate a discrete processor with an internal state, plus a collection of inputs, outputs, and parameters.
+	 *
+	 * A unit is composed of internal state variables, a number of outputs and inputs,
+	 * and a transition function, Unit::process_, which updates the Unit's outputs given the state
+	 * of the Unit and the current inputs + parameters.
+	 *
+	 * New units should be derived by subclassing Unit, using Unit::addInput_, Unit::addOutput_, and Unit::addParameter_ to configure the unit.
+	 * To allow the unit to be cloned, it is necessary to implement a copy constructor,
+	 * Unit::_clone, and Unit::_getClassName. Unit::_clone should simply return a new copy of the derived class, for example:
+	 *
+	 *		Unit* DerivedUnit::_clone(){ return new DerivedUnit(*this); }
+	 *
+	 * Unit::_getClassName should simply return a string form of the class name. This is used for serialization.
+	 *
+	 */
+	class Unit
+	{
+	public:
+		Unit();
 
 		explicit Unit(const string& a_name);
 
-        virtual ~Unit()
-        { };
+		virtual ~Unit() { };
 
-        void MSFASTCALL tick() GCCFASTCALL;
+		void MSFASTCALL tick() GCCFASTCALL;
 
-        void MSFASTCALL reset() GCCFASTCALL;
+		void MSFASTCALL reset() GCCFASTCALL;
 
-        void setFs(double a_newFs);
+		void setFs(double a_newFs);
 
-        void setTempo(double a_newTempo);
+		void setTempo(double a_newTempo);
 
-        void noteOn(int a_note, int a_velocity);
+		void noteOn(int a_note, int a_velocity);
 
-        void noteOff(int a_note, int a_velocity);
+		void noteOff(int a_note, int a_velocity);
 
-        double getFs() const;
+		double getFs() const;
 
-        double getTempo() const;
+		double getTempo() const;
 
 		bool isNoteOn() const;
 
-        int getNote() const;
+		int getNote() const;
 
-        int getVelocity() const;
+		int getVelocity() const;
 
-        //void sendMidiEvent();
-        virtual bool isActive() const;
+		//void sendMidiEvent();
+		virtual bool isActive() const;
 
-        const Circuit* getParent() const;
+		const Circuit* getParent() const;
 
-        template<typename ID>
-        const UnitParameter& getParameter(const ID& a_identifier) const;
+		template <typename ID>
+		const UnitParameter& getParameter(const ID& a_identifier) const;
 
-        template<typename ID, typename T>
-        bool setParameter(const ID& a_identifier, const T& a_value);
+		template <typename ID, typename T>
+		bool setParameter(const ID& a_identifier, const T& a_value);
 
-        template<typename ID, typename T>
-        bool setParameterNorm(const ID& a_identifier, const T& a_value);
+		template <typename ID, typename T>
+		bool setParameterNorm(const ID& a_identifier, const T& a_value);
 
-		template<typename ID>
+		template <typename ID>
 		bool setParameterPrecision(const ID& a_identifier, int a_value);
 
-		template<typename ID>
+		template <typename ID>
+		bool setParameterFromString(const ID& a_identifier, const string& a_value);
+
+		template <typename ID>
 		string getInputName(const ID& a_identifier) const;
 
-		template<typename ID>
+		template <typename ID>
 		string getOutputName(const ID& a_identifier) const;
 
-        template<typename ID>
-        const Signal& getOutputChannel(const ID& a_identifier) const;
+		template <typename ID>
+		const Signal& getOutputChannel(const ID& a_identifier) const;
 
-        template<typename ID>
-        const Signal& getInputChannel(const ID& a_identifier) const;
+		template <typename ID>
+		const Signal& getInputChannel(const ID& a_identifier) const;
 
-        template<typename ID, typename T>
-        bool setInputChannel(const ID& a_identifier, const T& a_val);
+		template <typename ID, typename T>
+		bool setInputChannel(const ID& a_identifier, const T& a_val);
 
-        int getNumParameters() const;
+		int getNumParameters() const;
 
-        int getNumInputs() const;
+		int getNumInputs() const;
 
-        int getNumOutputs() const;
+		int getNumOutputs() const;
 
-        const string& getName() const;
+		const string& getName() const;
 
-        unsigned int getClassIdentifier() const;
+		unsigned int getClassIdentifier() const;
 
-        /**
-         * Copies this unit into newly allocated memory (the caller is responsible for releasing the memory).
-         * Connections to other units are not preserved in the clone.
-         */
-        Unit* clone() const;
-    protected:
-        /**
-         * Called when a parameter has been modified. This function should be overridden
-         * to update the internal state and verify that the change is valid. If the change is not valid,
-         * the function should return false.
-         */
-        virtual void onParamChange_(int a_paramId)
-        { };
+		/**
+		 * Copies this unit into newly allocated memory (the caller is responsible for releasing the memory).
+		 * Connections to other units are not preserved in the clone.
+		 */
+		Unit* clone() const;
+	protected:
+		/**
+		 * Called when a parameter has been modified. This function should be overridden
+		 * to update the internal state and verify that the change is valid. If the change is not valid,
+		 * the function should return false.
+		 */
+		virtual void onParamChange_(int a_paramId) { };
 
-        virtual void onFsChange_()
-        { };
+		virtual void onFsChange_() { };
 
-        virtual void onTempoChange_()
-        { };
+		virtual void onTempoChange_() { };
 
-        virtual void onNoteOn_()
-        { };
+		virtual void onNoteOn_() { };
 
-        virtual void onNoteOff_()
-        { };
+		virtual void onNoteOff_() { };
 
-		virtual void onMidiControlChange_(int a_cc, double a_value)
-		{ };
+		virtual void onMidiControlChange_(int a_cc, double a_value) { };
 
-		template<typename ID>
+		template <typename ID>
 		UnitParameter& getParameter_(const ID& a_identifier);
 
-        virtual void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL = 0;
+		virtual void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL = 0;
 
-        int addInput_(const string& a_name, double a_default = 0.0, Signal::ChannelAccType a_accType = Signal::ChannelAccType::EAdd);
+		int addInput_(const string& a_name, double a_default = 0.0, Signal::ChannelAccType a_accType = Signal::ChannelAccType::EAdd);
 
-        int addOutput_(const string& a_name);
+		int addOutput_(const string& a_name);
 
-        int addParameter_(const UnitParameter& a_param);
+		int addParameter_(const UnitParameter& a_param);
 
-    private:
-        virtual inline string _getClassName() const = 0;
+	private:
+		virtual inline string _getClassName() const = 0;
 
-        void _setParent(Circuit* a_new_parent);
+		void _setParent(Circuit* a_new_parent);
 
-        void _setName(const string& a_name);
+		void _setName(const string& a_name);
 
-        /**
-         * Connect the specified output port to this units specified input port.
-         * \param a_fromUnit The output unit
-         * \param a_fromOutputPort The output port of a_fromUnit
-         * \param a_toInputPort The input port of this unit
-         * \returns False if the connection already existed
-         */
-        bool _connectInput(shared_ptr<Unit> a_fromUnit, int a_fromOutputPort, int a_toInputPort);
+		/**
+		 * Connect the specified output port to this units specified input port.
+		 * \param a_fromUnit The output unit
+		 * \param a_fromOutputPort The output port of a_fromUnit
+		 * \param a_toInputPort The input port of this unit
+		 * \returns False if the connection already existed
+		 */
+		bool _connectInput(shared_ptr<Unit> a_fromUnit, int a_fromOutputPort, int a_toInputPort);
 
-        /**
-         * Remove the specified connection
-         * \returns True if the connection existed
-         */
-        bool _disconnectInput(shared_ptr<Unit> a_fromUnit, int a_fromOutputPort, int a_toInputPort);
+		/**
+		 * Remove the specified connection
+		 * \returns True if the connection existed
+		 */
+		bool _disconnectInput(shared_ptr<Unit> a_fromUnit, int a_fromOutputPort, int a_toInputPort);
 
-        /**
-         * Remove all connections referencing the specified Unit
-         * \returns True if any connections were removed
-         */
-        bool _disconnectInput(shared_ptr<Unit> a_fromUnit);
+		/**
+		 * Remove all connections referencing the specified Unit
+		 * \returns True if any connections were removed
+		 */
+		bool _disconnectInput(shared_ptr<Unit> a_fromUnit);
 
-        virtual Unit* _clone() const = 0;
+		virtual Unit* _clone() const = 0;
 	private:
 		friend class Circuit;
 		friend class UnitFactory;
@@ -213,76 +217,70 @@ namespace syn {
 		Circuit* m_parent;
 		AudioConfig m_audioConfig;
 		MidiData m_midiData;
-    };
+	};
 
 
-    template<typename ID>
-    const Signal& Unit::getOutputChannel(const ID& a_identifier) const
-    {
-        return m_outputSignals.getChannel(a_identifier);
-    }
+	template <typename ID>
+	const Signal& Unit::getOutputChannel(const ID& a_identifier) const {
+		return m_outputSignals.getChannel(a_identifier);
+	}
 
-    template<typename ID>
-    const Signal& Unit::getInputChannel(const ID& a_identifier) const
-    {
-        return m_inputSignals.getChannel(a_identifier);
-    }
+	template <typename ID>
+	const Signal& Unit::getInputChannel(const ID& a_identifier) const {
+		return m_inputSignals.getChannel(a_identifier);
+	}
 
-    template<typename ID, typename T>
-    bool Unit::setInputChannel(const ID& a_identifier, const T& a_val)
-    {
-        return m_inputSignals.setChannel(a_identifier, a_val);
-    }
+	template <typename ID, typename T>
+	bool Unit::setInputChannel(const ID& a_identifier, const T& a_val) {
+		return m_inputSignals.setChannel(a_identifier, a_val);
+	}
 
 	template <typename ID>
 	UnitParameter& Unit::getParameter_(const ID& a_identifier) {
 		return m_parameters[a_identifier];
-    };
+	};
 
-    template<typename ID>
-    const UnitParameter& Unit::getParameter(const ID& a_identifier) const
-    {
-        return m_parameters[a_identifier];
-    }
+	template <typename ID>
+	const UnitParameter& Unit::getParameter(const ID& a_identifier) const {
+		return m_parameters[a_identifier];
+	}
 
-    template<typename ID, typename T>
-    bool Unit::setParameter(const ID& a_identifier, const T& a_value)
-    {
-        if (!m_parameters.find(a_identifier))
-            return false;
+	template <typename ID, typename T>
+	bool Unit::setParameter(const ID& a_identifier, const T& a_value) {		
 		if (m_parameters[a_identifier].set(a_value)) {
 			int id = m_parameters.getItemId(a_identifier);
 			onParamChange_(id);
 			return true;
 		}
-        return false;
-    };
+		return false;
+	};
 
-    template<typename ID, typename T>
-    bool Unit::setParameterNorm(const ID& a_identifier, const T& a_value)
-    {
-        if (!m_parameters.find(a_identifier))
-            return false;
-        if (m_parameters[a_identifier].setNorm(a_value)) {
-            int id = m_parameters.getItemId(a_identifier);
-            onParamChange_(id);
-            return true;
-        }
-        return false;        
-    }
+	template <typename ID, typename T>
+	bool Unit::setParameterNorm(const ID& a_identifier, const T& a_value) {
+		if (m_parameters[a_identifier].setNorm(a_value)) {
+			int id = m_parameters.getItemId(a_identifier);
+			onParamChange_(id);
+			return true;
+		}
+		return false;
+	}
 
 	template <typename ID>
 	bool Unit::setParameterPrecision(const ID& a_identifier, int a_precision) {
-		if (!m_parameters.find(a_identifier))
-			return false;
 		m_parameters[a_identifier].setPrecision(a_precision);
 		return true;
-    }
+	}
+
+	template <typename ID>
+	bool Unit::setParameterFromString(const ID& a_identifier, const string& a_value) {
+		m_parameters[a_identifier].setFromString(a_value);
+		return true;
+	}
 
 	template <typename ID>
 	string Unit::getInputName(const ID& a_identifier) const {
 		return m_inputSignals.getChannelName<ID>(a_identifier);
-    }
+	}
 
 	template <typename ID>
 	string Unit::getOutputName(const ID& a_identifier) const {
@@ -290,4 +288,3 @@ namespace syn {
 	};
 }
 #endif
-

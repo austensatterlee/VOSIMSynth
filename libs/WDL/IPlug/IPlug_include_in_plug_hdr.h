@@ -38,7 +38,6 @@
 #endif
 
 #ifdef OS_WIN
-  #include "IGraphicsWin.h"
   #ifdef __MINGW32__
     #define EXPORT __attribute__ ((visibility("default")))
   #else

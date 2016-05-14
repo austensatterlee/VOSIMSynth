@@ -27,8 +27,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __DSPMATH__
 #define __DSPMATH__
-#include "NDPoint.h"
-#include "tables.h"
 
 #if defined(_MSC_VER)
 #define MSFASTCALL __fastcall
@@ -43,17 +41,11 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define CLAMP(x,lo,hi) ((x) < (lo) ? (lo) : (x) > (hi) ? (hi) : (x))
 #define MAX(a,b) ((a) < (b) ? (b) : (a))
 #define MIN(a,b) ((a) > (b) ? (b) : (a))
+#define DSP_PI 3.14159265359f
 
 namespace syn
 {
-	inline int gcd(int a, int b) {
-		while (a != 0) {
-			int c = a;
-			a = b % a;
-			b = c;
-		}
-		return b;
-	}
+	inline int gcd(int a, int b);
 
 	template <typename T>
 	T WRAP(T x, T modulo) {
@@ -69,44 +61,10 @@ namespace syn
 		return newx;
 	}
 
-	inline double blackman_harris(int a_k, size_t a_winSize) {
-		static const double a[4] = {0.35875, 0.48829, 0.14128, 0.01168};
-		double phase = a_k * 1.0 / (a_winSize - 1);
-		double s1 = lut_sin.getlinear(phase + 0.25);
-		double s2 = lut_sin.getlinear(2 * phase + 0.25);
-		double s3 = lut_sin.getlinear(3 * phase + 0.25);
-		return a[0] - a[1] * s1 + a[2] * s2 - a[3] * s3;
-	}
+	double blackman_harris(int a_k, size_t a_winSize);
 
-	inline double pitchToFreq(double pitch) {
-		double freq = lut_pitch_table.getlinear(pitch);
-		if (freq == 0)
-			freq = 1;
-		return freq;
-	}
+	double pitchToFreq(double pitch);
 
-	inline double lin2db(double lin, double mindb, double maxdb) {
-		double db;
-		if (lin >= 0) {
-			db = lut_db_table.getlinear(LERP(mindb, maxdb, lin));
-		} else {
-			db = -lut_db_table.getlinear(LERP(mindb, maxdb, -lin));
-		}
-		return db;
-	}
-
-	template <typename T>
-	NDPoint<2, T> closestPointOnLine(const NDPoint<2, T>& pt, const NDPoint<2, T>& a, const NDPoint<2, T>& b) {
-		double ablength = a.distFrom(b);
-		NDPoint<2, double> abnorm = static_cast<NDPoint<2, double>>(a - b) * (1.0 / ablength);
-		double proj = static_cast<NDPoint<2, double>>(pt - b).dot(abnorm);
-		proj = CLAMP(proj, 0, ablength);
-		return b + abnorm * proj;
-	}
-
-	template <typename T>
-	double pointLineDistance(const NDPoint<2, T>& pt, const NDPoint<2, T>& a, const NDPoint<2, T>& b) {
-		return (pt - closestPointOnLine(pt, a, b)).mag();
-	}
+	double lin2db(double lin, double mindb, double maxdb);
 }
 #endif

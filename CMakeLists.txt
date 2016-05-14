@@ -12,7 +12,6 @@ set(LIBS_DIR ${CMAKE_SOURCE_DIR}/libs CACHE PATH "")
 set(NANOVG_DIR ${LIBS_DIR}/nanovg CACHE PATH "")
 set(WDL_DIR ${LIBS_DIR}/wdl CACHE PATH "")
 set(IPLUG_DIR ${WDL_DIR}/iplug CACHE PATH "")
-set(LICE_DIR ${WDL_DIR}/lice CACHE PATH "")
 set(VOSIMLIB_DIR ${CMAKE_SOURCE_DIR}/vosimlib CACHE PATH "")
 set(VOSIMSYNTH_DIR ${CMAKE_SOURCE_DIR}/vosimsynth CACHE PATH "")
 set(STANDALONE_DIR ${VOSIMSYNTH_DIR}/standalone CACHE PATH "")
@@ -20,16 +19,19 @@ set(VST2_SDK ${LIBS_DIR}/VST_SDK CACHE PATH "")
 set(SFTOOLS_DIR ${LIBS_DIR}/sftools CACHE PATH "")
 set(EIGEN_DIR ${LIBS_DIR}/eigen CACHE PATH "")
 set(RESOURCES_DIR ${VOSIMSYNTH_DIR}/resources CACHE PATH "")
+set(GLEW_DIR "C:/Program Files (x86)/glew" CACHE PATH "")
+set(SFML_DIR "C:/Program Files/sfml" CACHE PATH "")
 
 message (STATUS "Path to nanovg is ${NANOVG_DIR}")
 message (STATUS "Path to sftools is ${SFTOOLS_DIR}")
 message (STATUS "Path to wdl is ${WDL_DIR}")
 message (STATUS "Path to iplug is ${IPLUG_DIR}")
-message (STATUS "Path to lice is ${LICE_DIR}")
 message (STATUS "Path to vosimlib is ${VOSIMLIB_DIR}")
 message (STATUS "Path to vosimsynth is ${VOSIMSYNTH_DIR}")
 message (STATUS "Path to vosimsynth standalone is ${STANDALONE_DIR}")
 message (STATUS "Path to VST2SDK is ${VST2_SDK}")
+message (STATUS "Path to GLEW is ${GLEW_DIR}")
+message (STATUS "Path to SFML is ${SFML_DIR}")
 
 message (STATUS "Build tool is ${CMAKE_BUILD_TOOL}")
 message (STATUS "System is ${CMAKE_SYSTEM_NAME}")
@@ -134,24 +136,14 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 ##
 set(IPLUG_FILES
   ${IPLUG_DIR}/Containers.h ${IPLUG_DIR}/Hosts.cpp ${IPLUG_DIR}/Hosts.h
-  ${IPLUG_DIR}/IControl.cpp ${IPLUG_DIR}/IControl.h
-  ${IPLUG_DIR}/IGraphics.cpp ${IPLUG_DIR}/IGraphics.h
-  ${IPLUG_DIR}/IParam.cpp ${IPLUG_DIR}/IParam.h ${IPLUG_DIR}/IPlugBase.cpp
-  ${IPLUG_DIR}/IPlugBase.h ${IPLUG_DIR}/IPlugOSDetect.h
-  ${IPLUG_DIR}/IPlugStructs.cpp ${IPLUG_DIR}/IPlugStructs.h
-  ${IPLUG_DIR}/IPlugVST.cpp ${IPLUG_DIR}/IPlugVST.h
-  ${IPLUG_DIR}/IPlug_Prefix.pch ${IPLUG_DIR}/IPlug_include_in_plug_hdr.h
-  ${IPLUG_DIR}/IPlug_include_in_plug_src.h ${IPLUG_DIR}/IPopupMenu.cpp
-  ${IPLUG_DIR}/IPopupMenu.h ${IPLUG_DIR}/Log.cpp ${IPLUG_DIR}/Log.h
+  ${IPLUG_DIR}/IPlugBase.cpp ${IPLUG_DIR}/IPlugBase.h
+  ${IPLUG_DIR}/IPlugOSDetect.h ${IPLUG_DIR}/IPlugStructs.cpp
+  ${IPLUG_DIR}/IPlugStructs.h ${IPLUG_DIR}/IPlugVST.cpp
+  ${IPLUG_DIR}/IPlugVST.h ${IPLUG_DIR}/IPlug_Prefix.pch
+  ${IPLUG_DIR}/IPlug_include_in_plug_hdr.h
+  ${IPLUG_DIR}/IPlug_include_in_plug_src.h ${IPLUG_DIR}/Log.cpp
+  ${IPLUG_DIR}/Log.h
 )
-
-if (WIN32)
-  add_definitions(-D__OS_WINDOWS__)
-  list(APPEND IPLUG_FILES ${IPLUG_DIR}/IGraphicsWin.cpp;${IPLUG_DIR}/IGraphicsWin.h)
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  add_definitions(-D__OS_MACOSX__)
-  list(APPEND IPLUG_FILES ${IPLUG_DIR}/IGraphicsCarbon.h;${IPLUG_DIR}/IGraphicsMac.h;${IPLUG_DIR}/IGraphicsMac.cpp)
-endif ()
 
 ##
 # NanoVG source files
@@ -169,11 +161,11 @@ file(GLOB SFTOOLS_FILES ${SFTOOLS_DIR}/include/sftools/*.hpp
   ${SFTOOLS_DIR}/include/sftools/Singleton/*.hpp)
 
 ################################
-# Compile dependencies
+# Compile/include dependencies
 ################################
 
-list(APPEND CMAKE_PREFIX_PATH "C:/Program Files (x86)/glew")
-list(APPEND CMAKE_PREFIX_PATH "C:/Program Files/sfml")
+list(APPEND CMAKE_PREFIX_PATH ${GLEW_DIR})
+list(APPEND CMAKE_PREFIX_PATH ${SFML_DIR})
 list(REMOVE_DUPLICATES CMAKE_PREFIX_PATH)
 
 set(BUILD_SHARED_LIBS false)
@@ -185,22 +177,23 @@ find_package(Boost REQUIRED)
 #message(STATUS "Boost include dirs: ${Boost_INCLUDE_DIRS}")
 include_directories(${Boost_INCLUDE_DIRS})
 
+# Add SFML
 set(SFML_STATIC true)
 set(SFML_STATIC_LIBRARIES true)
 add_definitions(-DSFTOOLS_NO_AUDIO)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
-# find SFML
+# Find SFML
 find_package(SFML 2 REQUIRED system window graphics)
 include_directories(${SFML_INCLUDE_DIR})
 set(SFML_DBG_LIBS ${SFML_SYSTEM_LIBRARY_DEBUG} ${SFML_WINDOW_LIBRARY_DEBUG} ${SFML_GRAPHICS_LIBRARY_DEBUG})
 set(SFML_REL_LIBS ${SFML_SYSTEM_LIBRARY_RELEASE} ${SFML_WINDOW_LIBRARY_RELEASE} ${SFML_GRAPHICS_LIBRARY_RELEASE})
 list(APPEND ADDITIONAL_LIBRARIES ${SFML_DEPENDENCIES})
-message(STATUS "SFML debug libs: ${SFML_DBG_LIBS}" )
-message(STATUS "SFML release libs: ${SFML_REL_LIBS}" )
-message(STATUS "SFML deps: ${SFML_DEPENDENCIES}" )
+# message(STATUS "SFML debug libs: ${SFML_DBG_LIBS}" )
+# message(STATUS "SFML release libs: ${SFML_REL_LIBS}" )
+# message(STATUS "SFML deps: ${SFML_DEPENDENCIES}" )
 
-# find glew
+# Find glew
 find_package(glew REQUIRED)
 add_definitions(-DGLEW_MX -DGLEW_STATIC)
 include_directories(${GLEW_INCLUDE_DIR})
@@ -208,7 +201,7 @@ include_directories(${GLEW_INCLUDE_DIR})
 string(REGEX REPLACE "(.*)\\.(.*)" "\\1$<$<CONFIG:Debug>:d>.\\2" GLEW_LIBRARY "${GLEW_LIBRARY}")
 list(APPEND ADDITIONAL_LIBRARIES ${GLEW_LIBRARY})
 
-# find OpenGL
+# Find OpenGL
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIR})
 list(APPEND ADDITIONAL_LIBRARIES ${OPENGL_LIBRARIES})
@@ -216,28 +209,22 @@ list(APPEND ADDITIONAL_LIBRARIES ${OPENGL_LIBRARIES})
 
 list(REMOVE_DUPLICATES ADDITIONAL_LIBRARIES)
 
+# Add VOSIMLib
+include_directories(${IPLUG_DIR})
+add_subdirectory(${VOSIMLIB_DIR} VOSIMLib)
+
+
 ################################
 # Include header directories
 ################################
 
 include_directories(${NANOVG_DIR}/src)
 include_directories(${WDL_DIR})
-include_directories(${IPLUG_DIR})
-include_directories(${LICE_DIR})
 include_directories(${VOSIMSYNTH_DIR}/include)
 include_directories(${SFTOOLS_DIR}/include)
 include_directories(${EIGEN_DIR})
-
-# LICE
-add_subdirectory(${LICE_DIR} "libs/LICELib")
-
-# IPlug
-# add_subdirectory(${IPLUG_DIR} "libs/IPlugLib")
-
-# VOSIMLib
 include_directories(${VOSIMLIB_DIR}/include)
 include_directories(${VOSIMLIB_DIR}/units/include)
-add_subdirectory(${VOSIMLIB_DIR} VOSIMLib)
 
 # Add standalone project
 add_subdirectory(${STANDALONE_DIR} "standalone")
@@ -262,8 +249,11 @@ add_library(${PLUGIN_NAME} SHARED
   ${SFTOOLS_FILES}
   )
 
-target_link_libraries(${PLUGIN_NAME} ${ADDITIONAL_LIBRARIES} "$<$<CONFIG:Release>:${SFML_REL_LIBS}>" "$<$<NOT:$<CONFIG:Release>>:${SFML_DBG_LIBS}>")
-target_link_libraries(${PLUGIN_NAME} VOSIMLib LICELib)
+target_link_libraries(${PLUGIN_NAME} ${ADDITIONAL_LIBRARIES}
+  "$<$<CONFIG:Release>:${SFML_REL_LIBS}>"
+  "$<$<NOT:$<CONFIG:Release>>:${SFML_DBG_LIBS}>"
+  VOSIMLib
+  )
 
 if (WIN32)
   target_link_libraries(${PLUGIN_NAME} comctl32 wininet)

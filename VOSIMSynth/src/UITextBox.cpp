@@ -1,11 +1,12 @@
 #include "UITextBox.h"
+#include "Theme.h"
 #include <regex>
 
 namespace syn
 {
 	UITextBox::UITextBox(VOSIMWindow* a_window, const string& value)
 		: UIComponent(a_window),
-		mEnabled(true),
+		  mEnabled(true),
 		  mEditable(true),
 		  mCommitted(true),
 		  mValue(value),
@@ -23,8 +24,7 @@ namespace syn
 		  mMouseDragPos(Vector2i(-1, -1)),
 		  mMouseDownModifier(0),
 		  mTextOffset(0),
-		  mLastClick(0) 
-	{
+		  mLastClick(0) {
 		mFontSize = m_window->theme()->mTextBoxFontSize;
 		updateMinSize_();
 	}
@@ -247,7 +247,7 @@ namespace syn
 	}
 
 	bool UITextBox::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
-		if (mEditable && focused() && a_diffCursor.squaredNorm()>=1) {
+		if (mEditable && focused() && a_diffCursor.squaredNorm() >= 1) {
 			mMouseDragPos = a_relCursor - getRelPos();
 			return true;
 		}

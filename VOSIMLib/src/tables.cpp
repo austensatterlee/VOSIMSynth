@@ -19,6 +19,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "tables.h"
 #include "DSPMath.h"
+#include <cstdlib>
+#include <math.h>
 
 namespace syn
 {
@@ -27,8 +29,7 @@ namespace syn
 		m_isperiodic(a_isPeriodic),
 		m_table(a_tableptr),
 		m_input_min(a_input_min),
-		m_input_max(a_input_max)
-	{
+		m_input_max(a_input_max) {
 		m_norm_bias = a_input_min;
 		m_norm_scale = 1. / (a_input_max - a_input_min);
 		m_normalizePhase = !(a_input_min == 0 && a_input_max == 1);
@@ -48,12 +49,12 @@ namespace syn
 		if (m_normalizePhase) {
 			phase = (phase - m_norm_bias) * m_norm_scale;
 		}
-		if (m_isperiodic){
+		if (m_isperiodic) {
 			phase = WRAP(phase, 1.0);
 			phase *= m_size;
-		}else {
+		} else {
 			phase = CLAMP(phase, 0.0, 1.0);
-			phase *= m_size-1;
+			phase *= m_size - 1;
 		}
 
 		int int_index = int(phase);
@@ -74,21 +75,19 @@ namespace syn
 		m_blimp_table_offline(a_blimp_table_offline),
 		m_resampled_sizes(nullptr),
 		m_resampled_tables(nullptr),
-		m_num_resampled_tables(0)
-	{
+		m_num_resampled_tables(0) {
 		resample_tables(a_blimp_table_offline);
 	}
 
-	void ResampledLookupTable::resample_tables(const BlimpTable& blimp_table_offline)
-	{
+	void ResampledLookupTable::resample_tables(const BlimpTable& blimp_table_offline) {
 		/* Construct resampled tables at ratios of powers of two */
 		m_num_resampled_tables = MAX(1, log2(m_size) - 3);
-		m_resampled_tables = static_cast<double**>(malloc(sizeof(double*)*m_num_resampled_tables));
+		m_resampled_tables = static_cast<double**>(malloc(sizeof(double*) * m_num_resampled_tables));
 		m_resampled_sizes = new int[m_num_resampled_tables];
 		double currsize = m_size;
 		for (int i = 0; i < m_num_resampled_tables; i++) {
 			int table_size = static_cast<size_t>(currsize);
-			m_resampled_tables[i] = static_cast<double*>( malloc(sizeof(double)*table_size) );
+			m_resampled_tables[i] = static_cast<double*>(malloc(sizeof(double) * table_size));
 			m_resampled_sizes[i] = currsize;
 			resample_table(m_table, m_size, m_resampled_tables[i], currsize, blimp_table_offline);
 			currsize *= 0.5;
@@ -102,7 +101,7 @@ namespace syn
 			int curr_size_diff = m_resampled_sizes[i] - static_cast<int>(period);
 			if (curr_size_diff < 0) {
 				break;
-			} 
+			}
 			if (curr_size_diff < min_size_diff || min_size_diff == -1) {
 				min_size_diff = curr_size_diff;
 				min_size_diff_index = i;
@@ -175,10 +174,9 @@ namespace syn
 			filt_phase += blimp_step;
 		}
 		if (ratio < 1)
-			output *= 1./filt_sum;
+			output *= 1. / filt_sum;
 		else
-			output *= 1./filt_sum;
+			output *= 1. / filt_sum;
 		return output;
 	}
 }
-

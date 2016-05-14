@@ -6,7 +6,6 @@
 
 #include "Containers.h"
 #include "IPlugStructs.h"
-#include "IParam.h"
 #include "Hosts.h"
 #include "Log.h"
 #include "NChanDelay.h"
@@ -20,26 +19,25 @@
 
 // All version ints are stored as 0xVVVVRRMM: V = version, R = revision, M = minor revision.
 
-class IGraphics;
 namespace syn {
-	class VOSIMWindow;
+    class VOSIMWindow;
 }
 
 class IPlugBase
 {
 
-	// Changes made by Austen (4/11)
+    // Changes made by Austen (4/11)
 private:
-	syn::VOSIMWindow* m_appWindow;
+    syn::VOSIMWindow* m_appWindow;
 protected:
-	virtual void AttachAppWindow(syn::VOSIMWindow* a_appWindow) {
-		m_appWindow = a_appWindow;
-	}
+    virtual void AttachAppWindow(syn::VOSIMWindow* a_appWindow) {
+        m_appWindow = a_appWindow;
+    }
 public:
-	syn::VOSIMWindow* GetAppWindow() const {
-		return m_appWindow;
-	}
-	// End changes made by Austen (4/11)
+    syn::VOSIMWindow* GetAppWindow() const {
+        return m_appWindow;
+    }
+    // End changes made by Austen (4/11)
 public:
   // Use IPLUG_CTOR instead of calling directly (defined in IPlug_include_in_plug_src.h).
   IPlugBase(int nParams,
@@ -115,18 +113,19 @@ public:
   // ----------------------------------------
   // Your plugin class, or a control class, can call these functions.
 
-  int NParams() { return mParams.GetSize(); }
-  IParam* GetParam(int idx) { return mParams.Get(idx); }
-  IGraphics* GetGUI() { return mGraphics; }
+  int NParams() const {  
+      // \todo
+      return 0; 
+  } 
 
-  const char* GetEffectName() { return mEffectName; }
+  const char* GetEffectName() const { return mEffectName; }
   int GetEffectVersion(bool decimal);   // Decimal = VVVVRRMM, otherwise 0xVVVVRRMM.
   void GetEffectVersionStr(char* str);
-  const char* GetMfrName() { return mMfrName; }
-  const char* GetProductName() { return mProductName; }
+  const char* GetMfrName() const { return mMfrName; }
+  const char* GetProductName() const { return mProductName; }
 
-  int GetUniqueID() { return mUniqueID; }
-  int GetMfrID() { return mMfrID; }
+  int GetUniqueID() const { return mUniqueID; }
+  int GetMfrID() const { return mMfrID; }
 
   virtual void SetParameterFromGUI(int idx, double normalizedValue);
   // If a parameter change comes from the GUI, midi, or external input,
@@ -141,17 +140,17 @@ public:
   // Useful stuff for your plugin class or an outsider to call,
   // most of which is implemented by the API class.
 
-  double GetSampleRate() { return mSampleRate; }
-  int GetBlockSize() { return mBlockSize; }
-  int GetLatency() { return mLatency; }
+  double GetSampleRate() const { return mSampleRate; }
+  int GetBlockSize() const { return mBlockSize; }
+  int GetLatency() const { return mLatency; }
 
-  bool GetIsBypassed() { return mIsBypassed; }
+  bool GetIsBypassed() const { return mIsBypassed; }
 
   // In ProcessDoubleReplacing you are always guaranteed to get valid pointers
   // to all the channels the plugin requested.  If the host hasn't connected all the pins,
   // the unconnected channels will be full of zeros.
-  int NInChannels() { return mInChannels.GetSize(); }
-  int NOutChannels() { return mOutChannels.GetSize(); }
+  int NInChannels() const { return mInChannels.GetSize(); }
+  int NOutChannels() const { return mOutChannels.GetSize(); }
   bool IsInChannelConnected(int chIdx);
   bool IsOutChannelConnected(int chIdx);
 
@@ -168,7 +167,7 @@ public:
   void GetHostVersionStr(char* str);
   const char* GetArchString();
   
-  int GetTailSize() { return mTailSize; }
+  int GetTailSize() const { return mTailSize; }
   
   // Tell the host that the graphics resized.
   // Should be called only by the graphics object when it resizes itself.
@@ -184,15 +183,15 @@ protected:
   void SetInputLabel(int idx, const char* pLabel);
   void SetOutputLabel(int idx, const char* pLabel);
 
-  const WDL_String* GetInputLabel(int idx) { return &(mInChannels.Get(idx)->mLabel); }
-  const WDL_String* GetOutputLabel(int idx) { return &(mOutChannels.Get(idx)->mLabel); }
+  const WDL_String* GetInputLabel(int idx) const { return &(mInChannels.Get(idx)->mLabel); }
+  const WDL_String* GetOutputLabel(int idx) const { return &(mOutChannels.Get(idx)->mLabel); }
 
   // for labelling bus inputs/outputs (AU/VST3)
   void SetInputBusLabel(int idx, const char* pLabel);
   void SetOutputBusLabel(int idx, const char* pLabel);
 
-  const WDL_String* GetInputBusLabel(int idx) { return mInputBusLabels.Get(idx); }
-  const WDL_String* GetOutputBusLabel(int idx) { return mOutputBusLabels.Get(idx); }
+  const WDL_String* GetInputBusLabel(int idx) const { return mInputBusLabels.Get(idx); }
+  const WDL_String* GetOutputBusLabel(int idx) const { return mOutputBusLabels.Get(idx); }
 
   struct ChannelIO
   {
@@ -209,9 +208,6 @@ protected:
 
   void SetHost(const char* host, int version);   // Version = 0xVVVVRRMM.
   virtual void HostSpecificInit() { return; };
-  #ifndef OS_IOS
-  virtual void AttachGraphics(IGraphics* pGraphics);
-  #endif
 
   // If latency changes after initialization (often not supported by the host).
   virtual void SetLatency(int samples);
@@ -223,22 +219,22 @@ protected:
   virtual bool SendMidiMsg(IMidiMsg* pMsg) = 0;
   bool SendMidiMsgs(WDL_TypedBuf<IMidiMsg>* pMsgs);
   virtual bool SendSysEx(ISysEx* pSysEx) { return false; }
-  bool IsInst() { return mIsInst; }
-  bool DoesMIDI() { return mDoesMIDI; }
+  bool IsInst() const { return mIsInst; }
+  bool DoesMIDI() const { return mDoesMIDI; }
   
   // You can't use these three methods with chunks-based plugins, because there is no way to set the custom data
   void MakeDefaultPreset(char* name = 0, int nPresets = 1);
   // MakePreset(name, param1, param2, ..., paramN)
-  void MakePreset(char* name, ...);
+  // void MakePreset(char* name, ...);
   // MakePresetFromNamedParams(name, nParamsNamed, paramEnum1, paramVal1, paramEnum2, paramVal2, ..., paramEnumN, paramVal2)
   // nParamsNamed may be less than the total number of params.
-  void MakePresetFromNamedParams(char* name, int nParamsNamed, ...);
+  // void MakePresetFromNamedParams(char* name, int nParamsNamed, ...);
 
   // Use these methods with chunks-based plugins
   void MakePresetFromChunk(char* name, ByteChunk* pChunk);
   void MakePresetFromBlob(char* name, const char* blob, int sizeOfChunk);
 
-  bool DoesStateChunks() { return mStateChunks; }
+  bool DoesStateChunks() const { return mStateChunks; }
 
   // Will append if the chunk is already started
   bool SerializeParams(ByteChunk* pChunk);
@@ -278,8 +274,8 @@ protected:
   
 public:
   void ModifyCurrentPreset(const char* name = 0);     // Sets the currently active preset to whatever current params are.
-  int NPresets() { return mPresets.GetSize(); }
-  int GetCurrentPresetIdx() { return mCurrentPresetIdx; }
+  int NPresets() const { return mPresets.GetSize(); }
+  int GetCurrentPresetIdx() const { return mCurrentPresetIdx; }
   bool RestorePreset(int idx);
   bool RestorePreset(const char* name);
   const char* GetPresetName(int idx);
@@ -347,8 +343,6 @@ protected:
   WDL_PtrList<const char> mParamGroups;
 
 private:
-  IGraphics* mGraphics;
-  WDL_PtrList<IParam> mParams;
   WDL_PtrList<IPreset> mPresets;
   WDL_TypedBuf<double*> mInData, mOutData;
   WDL_PtrList<InChannel> mInChannels;

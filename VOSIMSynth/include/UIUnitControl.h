@@ -38,8 +38,8 @@ namespace syn
 		UIUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId) :
 			UIComponent{a_window},
 			m_vm(a_vm),
-			m_unitId(a_unitId)
-		{}
+			m_unitId(a_unitId) {}
+
 	protected:
 		VoiceManager* m_vm;
 		int m_unitId;

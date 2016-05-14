@@ -30,26 +30,18 @@ Copyright 2016, Austen Satterlee
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
-
-#include <NDPoint.h>
+#include "sftools/Chronometer.hpp"
 
 #include "nanovg.h"
-#include <UnitFactory.h>
-#include <VoiceManager.h>
-#include <Theme.h>
-#include <perf.h>
-#include <sftools/Chronometer.hpp>
+#include "UnitFactory.h"
+#include "VoiceManager.h"
+#include "UI.h"
+#include "perf.h"
 
 using sf::Event;
 
 namespace syn
 {
-	class UIComponent;
-
-	class UICircuitPanel;
-
-	class UIUnitControl;
-
 	template <typename T>
 	struct Timestamped
 	{
@@ -61,49 +53,52 @@ namespace syn
 	{
 	public:
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-		VOSIMWindow(int a_width, int a_height, VoiceManager* a_vm, UnitFactory* a_unitFactory) : 
-			m_hinstance(0),
+
+		VOSIMWindow(int a_width, int a_height, VoiceManager* a_vm, UnitFactory* a_unitFactory) :
+			m_HInstance(0),
 			m_childHandle1(nullptr),
 			m_childHandle2(nullptr),
-			m_size(a_width,a_height),
+			m_size(a_width, a_height),
 			m_cursor({0,0}),
-			m_isClicked(false), 
-			m_running(false), 
+			m_isClicked(false),
+			m_running(false),
 			m_isInitialized(false),
-			m_draggingComponent(nullptr), 
-			m_root(nullptr), 
+			m_draggingComponent(nullptr),
+			m_root(nullptr),
 			m_sfmlWindow(nullptr),
 			m_frameCount(0),
 			m_vm(a_vm),
 			m_unitFactory(a_unitFactory),
-			m_circuitPanel(nullptr), 
+			m_circuitPanel(nullptr),
 			m_vg(nullptr),
-			m_view(0,0,a_width,a_height)
-		{
-		}
+			m_view(0, 0, a_width, a_height) { }
 
 		virtual ~VOSIMWindow();
 
-		sf::RenderWindow* GetWindow() const {
-			return m_sfmlWindow;
-		}
+		sf::RenderWindow* GetWindow() const { return m_sfmlWindow; }
 
-		Vector2i getSize() const {
-			return m_size;
-		}
+		Vector2i getSize() const { return m_size; }
 
 		Vector2i cursorPos() const;
 
 		Vector2i diffCursorPos() const;
 
 		const Timestamped<Event::MouseButtonEvent>& lastClickEvent() const { return m_lastClick; }
+
 		const Timestamped<Event::MouseWheelScrollEvent>& lastScrollEvent() const { return m_lastScroll; }
+
 		shared_ptr<Theme> theme() const { return m_theme; }
+
 		UICircuitPanel* getCircuitPanel() const { return m_circuitPanel; }
+
 		UnitFactory* getUnitFactory() const { return m_unitFactory; }
+
 		NVGcontext* getContext() const { return m_vg; }
+
 		void setFocus(UIComponent* a_comp);
+
 		UIComponent* getFocused() const { return m_focusPath.empty() ? nullptr : m_focusPath.front(); }
+
 		void clearFocus() { setFocus(nullptr); }
 
 		Vector2i toWorldCoords(const Vector2i& a_pix) const;
@@ -117,21 +112,23 @@ namespace syn
 		void CloseWindow();
 
 		void save(ByteChunk* a_data) const;
-		int  load(ByteChunk* a_data, int startPos);
+		int load(ByteChunk* a_data, int startPos);
 
 		bool isInitialized() const { return m_isInitialized; }
 
 		void reset();
 
-		template<typename UnitType>
+		template <typename UnitType>
 		void registerUnitControl(function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)> a_unitControlConstructor);
 
 		UIUnitControl* createUnitControl(unsigned a_classId, int a_unitId);
 
+		void setHInstance(HINSTANCE a_newHInstance) { m_HInstance = a_newHInstance; }
+		HINSTANCE getHInstance() const { return m_HInstance; }
+
 #ifdef _WIN32
 		static LRESULT CALLBACK drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam);
 	public:
-		HINSTANCE m_hinstance;
 #endif
 	private:
 		/**
@@ -141,13 +138,14 @@ namespace syn
 		sf::WindowHandle sys_CreateChildWindow(sf::WindowHandle a_system_window);
 		void updateCursorPos(const Vector2i& newPos);
 	private:
+		HINSTANCE m_HInstance;
 		sf::WindowHandle m_childHandle1, m_childHandle2;
 		Vector2i m_size;
 		Vector2i m_cursor;
 		Vector2i m_dCursor;
 		Timestamped<Event::MouseButtonEvent> m_lastClick;
 		Timestamped<Event::MouseWheelScrollEvent> m_lastScroll;
-	
+
 		bool m_isClicked;
 		bool m_running;
 		bool m_isInitialized;
@@ -171,9 +169,9 @@ namespace syn
 		NVGcontext* m_vg;
 
 		Vector4i m_view;
-		double m_zoom = 1.0;		
+		double m_zoom = 1.0;
 
-		map<unsigned, function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)> > m_unitControlMap;
+		map<unsigned, function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)>> m_unitControlMap;
 	};
 
 	template <typename UnitType>
@@ -183,4 +181,3 @@ namespace syn
 	}
 }
 #endif
-

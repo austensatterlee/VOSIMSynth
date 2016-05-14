@@ -33,8 +33,6 @@ Copyright 2016, Austen Satterlee
 
 namespace syn
 {
-
-
 	class DefaultUnitControl : public UIUnitControl
 	{
 	public:

@@ -16,14 +16,6 @@
     return TRUE;
   }
   #endif
-
-  IGraphics* MakeGraphics(IPlug* pPlug, int w, int h, int FPS = 0)
-  {
-    IGraphicsWin* pGraphics = new IGraphicsWin(pPlug, w, h, FPS);
-
-    pGraphics->SetHInstance(gHInstance);
-    return pGraphics;
-  }
 #elif defined OS_OSX
   IGraphics* MakeGraphics(IPlug* pPlug, int w, int h, int FPS = 0)
   {

@@ -29,7 +29,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __UILABEL__
 #include "UIComponent.h"
 
-namespace syn {
+namespace syn
+{
 	class UILabel : public UIComponent
 	{
 	public:
@@ -49,8 +50,8 @@ namespace syn {
 
 		const Color& fontColor() const;
 
-		int alignment() const; 
-	
+		int alignment() const;
+
 		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 
 	protected:
@@ -58,7 +59,7 @@ namespace syn {
 
 	private:
 		Vector2i _measureText() const;
-	
+
 	private:
 		string m_text;
 		Color m_color;

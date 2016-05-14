@@ -27,8 +27,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __STATEVARIABLEFILTER__
 #define __STATEVARIABLEFILTER__
 #include "Unit.h"
-#include <tables.h>
-#include <DSPMath.h>
 
 using namespace std;
 
@@ -40,16 +38,20 @@ namespace syn
 		explicit StateVariableFilter(const string& a_name);
 
 		StateVariableFilter(const StateVariableFilter& a_rhs) :
-			StateVariableFilter(a_rhs.getName())
-		{}
+			StateVariableFilter(a_rhs.getName()) {}
 
 	protected:
 
 		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
 
 	private:
-		string _getClassName() const override { return "StateVariableFilter";  };
-		Unit* _clone() const override { return new StateVariableFilter(*this); };
+		string _getClassName() const override {
+			return "StateVariableFilter";
+		};
+
+		Unit* _clone() const override {
+			return new StateVariableFilter(*this);
+		};
 
 	private:
 		int m_pFc, m_pRes;
@@ -67,4 +69,3 @@ namespace syn
 	};
 }
 #endif
-

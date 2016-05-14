@@ -28,54 +28,59 @@ using std::shared_ptr;
 
 namespace syn
 {
-    class Unit;
+	class Unit;
 
-    struct UnitConnector {
-        shared_ptr<Unit> connectedUnit;
-        int connectedPort;
-        int localPort;
-        bool operator==(const UnitConnector& a_rhs) const {
+	struct UnitConnector
+	{
+		shared_ptr<Unit> connectedUnit;
+		int connectedPort;
+		int localPort;
+
+		bool operator==(const UnitConnector& a_rhs) const {
 			return connectedUnit == a_rhs.connectedUnit && connectedPort == a_rhs.connectedPort && localPort == a_rhs.localPort;
-        }
-    };
+		}
+	};
 
-    class UnitConnectionBus
-    {
-    public:
-        /**
-         * Create the specified connection
-         * \returns False if connection already existed
-         */
-        bool connect(shared_ptr<Unit> a_connectedUnit, int a_connectedPort, int a_localPort);
-        /**
-         * Remove the specified connection
-         * \returns True if connection existed
-         */
-        bool disconnect(shared_ptr<Unit> a_connectedUnit, int a_connectedPort, int a_localPort);
-        /**
-         * Remove all connections that reference the specified unit
-         * \returns True if any connections were removed
-         */
-        bool disconnect(shared_ptr<Unit> a_connectedUnit);
-        /**
-         * Pull incoming output signals from the specified port into the specified receiving signal.
-         * If multiple connections are present at a port, their values are summed.
-         */
-        void MSFASTCALL pull(int a_localPort, Signal& a_recipient) const GCCFASTCALL;
-        /**
-        * Push the specified output signal into the input signals connected to the specified port.
-        */
-        void MSFASTCALL push(int a_localPort, Signal& a_signal) const GCCFASTCALL;
+	class UnitConnectionBus
+	{
+	public:
+		/**
+		 * Create the specified connection
+		 * \returns False if connection already existed
+		 */
+		bool connect(shared_ptr<Unit> a_connectedUnit, int a_connectedPort, int a_localPort);
+		/**
+		 * Remove the specified connection
+		 * \returns True if connection existed
+		 */
+		bool disconnect(shared_ptr<Unit> a_connectedUnit, int a_connectedPort, int a_localPort);
+		/**
+		 * Remove all connections that reference the specified unit
+		 * \returns True if any connections were removed
+		 */
+		bool disconnect(shared_ptr<Unit> a_connectedUnit);
+		/**
+		 * Pull incoming output signals from the specified port into the specified receiving signal.
+		 * If multiple connections are present at a port, their values are summed.
+		 */
+		void MSFASTCALL pull(int a_localPort, Signal& a_recipient) const GCCFASTCALL;
+		/**
+		* Push the specified output signal into the input signals connected to the specified port.
+		*/
+		void MSFASTCALL push(int a_localPort, Signal& a_signal) const GCCFASTCALL;
 
-		void addPort() { m_ports.push_back({}); m_numPorts += 1;  };
+		void addPort() {
+			m_ports.push_back({});
+			m_numPorts += 1;
+		};
 
-        int MSFASTCALL numPorts() const GCCFASTCALL;
-	    int MSFASTCALL numConnections(int a_portNum) const GCCFASTCALL;
-    private:
-        typedef vector<UnitConnector> UnitPort;
-        vector<UnitPort> m_ports;
+		int MSFASTCALL numPorts() const GCCFASTCALL;
+		int MSFASTCALL numConnections(int a_portNum) const GCCFASTCALL;
+	private:
+		typedef vector<UnitConnector> UnitPort;
+		vector<UnitPort> m_ports;
 		int m_numPorts = 0;
-    };
+	};
 }
 
 #endif //VOSIMLIB_CONNECTIONBUS_H

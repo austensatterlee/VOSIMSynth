@@ -75,7 +75,6 @@ void MyPlug::ProcessDoubleReplacing(double** inputs, double** outputs, int nFram
 
 */
 
-
 class IMidiQueue
 {
 public:

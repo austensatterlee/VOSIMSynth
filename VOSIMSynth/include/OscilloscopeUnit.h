@@ -30,22 +30,29 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "UIUnitControl.h"
 #include "UIDefaultUnitControl.h"
 
-namespace syn {
+namespace syn
+{
 	class OscilloscopeUnit : public Unit
-	{	
+	{
 	public:
 		explicit OscilloscopeUnit(const string& a_name);
 
 		OscilloscopeUnit(const OscilloscopeUnit& a_rhs) :
-			OscilloscopeUnit(a_rhs.getName())
-		{}
+			OscilloscopeUnit(a_rhs.getName()) {}
+
 	protected:
 		void onParamChange_(int a_paramId) override;
 		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
-		
+
 	private:
-		string _getClassName() const override { return "OscilloscopeUnit"; };
-		Unit* _clone() const override { return new OscilloscopeUnit(*this);  };
+		string _getClassName() const override {
+			return "OscilloscopeUnit";
+		};
+
+		Unit* _clone() const override {
+			return new OscilloscopeUnit(*this);
+		};
+
 		void _sync();
 	private:
 		friend class OscilloscopeUnitControl;
@@ -55,8 +62,8 @@ namespace syn {
 		int m_pBufferSize;
 		int m_pNumPeriods;
 		int m_iPhase;
-		
-		vector<vector<double> > m_buffers;
+
+		vector<vector<double>> m_buffers;
 
 		double m_lastPhase;
 		int m_lastSync;
@@ -83,7 +90,6 @@ namespace syn {
 		Vector2f m_yBounds;
 		Vector2i m_screenPos;
 		Vector2i m_screenSize;
-		vector<Color> m_colors = { { 255,255,255,255 },{ 255,128,128,255 } };
+		vector<Color> m_colors = {{255,255,255,255},{255,128,128,255}};
 	};
-
 }

@@ -21,7 +21,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __TABLES__
 #include "table_data.h"
 
-//#define DO_LERP_FOR_SINC
+#define DO_LERP_FOR_SINC
 
 /*::macro_defs::*/
 /*::/macro_defs::*/
@@ -31,13 +31,20 @@ namespace syn
 	{
 	public:
 		LookupTable(const double* table, int size, double input_min = 0, double input_max = 1, bool isPeriodic = true);
+
 		LookupTable(const LookupTable& a_o) : LookupTable(a_o.m_table, a_o.m_size, a_o.m_input_min, a_o.m_input_max, a_o.m_isperiodic) {}
+
 		virtual ~LookupTable() {
 			delete[] m_diff_table;
 		}
+
 		double getlinear(double phase) const;
 		double getraw(int index) const;
-		int size() const { return m_size; }
+
+		int size() const {
+			return m_size;
+		}
+
 	protected:
 		int m_size;
 		double m_input_min, m_input_max;
@@ -57,11 +64,10 @@ namespace syn
 			  m_resolution(a_resolution) {}
 
 		BlimpTable(const BlimpTable& a_other)
-			: BlimpTable(a_other.m_table, a_other.m_size, a_other.m_num_intervals, a_other.m_resolution)
-		{}
+			: BlimpTable(a_other.m_table, a_other.m_size, a_other.m_num_intervals, a_other.m_resolution) {}
 
 		const int m_num_intervals;
-		const int m_resolution;		
+		const int m_resolution;
 	};
 
 	class ResampledLookupTable : public LookupTable
@@ -69,6 +75,7 @@ namespace syn
 	public:
 		/// Construct a table that resamples itself with the specified blimp table
 		ResampledLookupTable(const double* a_table, int a_size, const BlimpTable& a_blimp_table_online, const BlimpTable& a_blimp_table_offline);
+
 		ResampledLookupTable(const ResampledLookupTable& a_o) : ResampledLookupTable(a_o.m_table, a_o.m_size, a_o.m_blimp_table_online, a_o.m_blimp_table_offline) {}
 
 		void resample_tables(const BlimpTable& blimp_table_offline);
@@ -91,13 +98,13 @@ namespace syn
 		const BlimpTable& m_blimp_table_offline;
 	};
 
-	/*::lut_defs::*/	
+	/*::lut_defs::*/
 	const BlimpTable lut_blimp_table_offline(BLIMP_TABLE_OFFLINE, 525313, 513, 2048);
-	const BlimpTable lut_blimp_table_online(BLIMP_TABLE_ONLINE, 11265, 11, 2048);
-	const LookupTable lut_pitch_table(PITCH_TABLE, 256, -128, 128, false);
-	const ResampledLookupTable lut_bl_saw(BL_SAW, 2048, lut_blimp_table_online, lut_blimp_table_offline);
-	const LookupTable lut_sin(SIN, 128, 0, 1, true);
-	const LookupTable lut_db_table(DB_TABLE, 256, -90, 0, false);
+	const BlimpTable lut_blimp_table_online(BLIMP_TABLE_ONLINE, 2561, 5, 1024);
+	const LookupTable lut_pitch_table(PITCH_TABLE, 1024, -128, 128, false);
+	const ResampledLookupTable lut_bl_saw(BL_SAW, 8192, lut_blimp_table_online, lut_blimp_table_offline);
+	const LookupTable lut_sin(SIN, 1024, 0, 1, true);
+	const LookupTable lut_db_table(DB_TABLE, 1024, -120, 0, false);
 	/*::/lut_defs::*/
 
 	/**
