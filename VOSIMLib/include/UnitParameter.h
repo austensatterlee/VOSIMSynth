@@ -31,23 +31,36 @@ using std::vector;
 
 namespace syn
 {
-	enum EParamType
-	{
-		Null,
-		Bool,
-		Enum,
-		Int,
-		Double
-	};
 
 	class UnitParameter
 	{
 	public:
+		enum EParamType
+		{
+			Null,
+			Bool,
+			Enum,
+			Int,
+			Double
+		};
+
+		enum EUnitsType
+		{
+			None,
+			Freq,
+			BPM,
+			Semitones,
+			Octaves,
+			Seconds,
+			Decibal
+		};
+	public:
 		UnitParameter();
+		UnitParameter(const UnitParameter& a_other);
 		UnitParameter(const string& a_name, bool a_defaultValue);
-		UnitParameter(const string& a_name, int a_min, int a_max, int a_defaultValue);
-		UnitParameter(const string& a_name, const vector<string>& a_optionNames, const vector<double>& a_optionValues = {}, int a_defaultOption = 0);
-		UnitParameter(const string& a_name, double a_min, double a_max, double a_defaultValue, int a_displayPrecision = 2);
+		UnitParameter(const string& a_name, int a_min, int a_max, int a_defaultValue, EUnitsType a_unitsType = None);
+		UnitParameter(const string& a_name, const vector<string>& a_optionNames, const vector<double>& a_optionValues = {}, int a_defaultOption = 0, EUnitsType a_unitsType=None);
+		UnitParameter(const string& a_name, double a_min, double a_max, double a_defaultValue, EUnitsType m_unitsType=None, int a_displayPrecision = 2);
 
 
 		/**
@@ -72,13 +85,17 @@ namespace syn
 		int getPrecision() const;
 		void setPrecision(int a_precision);
 
+		bool isVisible() const;
+
+		void setVisible(bool a_visible);
+
 		/**
 		 * \return true if the parameter value was changed
 		 */
 		bool set(double a_value);
 		/**
 		 * Set the parameter from a number in the range (0,1)
-		   * \return true if the parameter value was changed
+		 * \return true if the parameter value was changed
 		 */
 		bool setNorm(double a_norm_value);
 		bool setFromString(const string& a_str);
@@ -99,10 +116,11 @@ namespace syn
 		double getPrevEnum() const;
 
 		/**
-		* Get the parameter value as a number in the range (0,1)
-		*/
+		 * Get the parameter value as a number in the range (0,1)
+		 */
 		double getNorm() const;
-		string getString() const;
+		string getValueString() const;
+		string getUnitsString() const;
 	private:
 		bool _setBool(bool a_value);
 		bool _setInt(int a_value);
@@ -111,7 +129,10 @@ namespace syn
 		string m_name;
 		double m_value, m_prevValue, m_defaultValue;
 		double m_min, m_max;
+		double m_logMin, m_logRange;
+		bool m_isVisible;
 		EParamType m_type;
+		EUnitsType m_unitsType;
 		int m_displayPrecision;
 
 		struct DisplayText

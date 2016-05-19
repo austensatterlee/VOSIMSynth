@@ -77,7 +77,13 @@ namespace syn
 
 	private:
 		NSampleDelay m_delay;
+		int m_iSize;
+
 		int m_pBufSize;
+		int m_pBufDelay;
+		int m_pBufFreq;
+		int m_pBufBPMFreq;
+		int m_pBufType;
 	};
 }
 #endif

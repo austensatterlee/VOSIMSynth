@@ -3,7 +3,7 @@ from scipy import signal as ss
 import re
 import os,sys
 
-TABLEDATA_FILE = "include/table_data.h"
+TABLEDATA_FILE = "src/table_data.cpp"
 TABLEHDR_FILE = "include/tables.h"
 
 def RealCepstrum(n,signal):
@@ -178,7 +178,7 @@ def RewriteAutomatedSection(full_text,tag,replacement_text):
     result = full_text[:match.start("block")] + replacement_text + full_text[match.end("block"):]
     return result
 
-def MakeTableStr(table,name,ctype="const double"):
+def MakeTableStr(table,name,ctype="double"):
     rows = int(sqrt(table.size))
     cols = int(ceil(sqrt(table.size)))
     showstr = "{} {}[{}] = {{\n".format(ctype,name,table.size)
@@ -501,11 +501,11 @@ def main(pargs):
         macrodefine_code += line + "\n"
     # Generate lookup table structures
     tabledata_def = ""
-    # tabledata_decl = ""
+    tabledata_decl = ""
     tableobj_def = ""
     for name,struct in tables:
         tabledata_def += MakeTableStr(struct['data'],name)
-        # tabledata_decl += "extern const double {}[{}];\n".format(name,len(struct['data']))
+        tabledata_decl += "extern double {}[];\n".format(name)
 
         currargs = []
         classname = struct["classname"]
@@ -526,13 +526,13 @@ def main(pargs):
 
     if os.path.isfile(TABLEDATA_FILE):
         if v:
-            print "Backing up old table_data.h..."
+            print "Backing up old {}...".format(TABLEDATA_FILE)
         old_table_data = open(TABLEDATA_FILE,'r').read()
         with open(TABLEDATA_FILE+'.bk','w') as fp:
             fp.write(old_table_data)
 
     if v:
-        print "Writing new table_data.cpp..."
+        print "Writing new {}...".format(TABLEDATA_FILE)
     with open(TABLEDATA_FILE,'w') as fp:
         fp.write(tabledata_def)
 
@@ -547,6 +547,7 @@ def main(pargs):
             print "Writing new {}...".format(TABLEHDR_FILE)
         new_code = RewriteAutomatedSection(old_code,'lut_defs', tableobj_def)
         new_code = RewriteAutomatedSection(new_code,'macro_defs', macrodefine_code)
+        new_code = RewriteAutomatedSection(new_code,'table_decl', tabledata_decl)
         with open(TABLEHDR_FILE, 'w') as fp:
             fp.write(new_code)
 

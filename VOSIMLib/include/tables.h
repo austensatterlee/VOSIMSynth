@@ -19,12 +19,20 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __TABLES__
 #define __TABLES__
-#include "table_data.h"
 
 #define DO_LERP_FOR_SINC
 
 /*::macro_defs::*/
 /*::/macro_defs::*/
+
+/*::table_decl::*/
+extern double BLIMP_TABLE_OFFLINE[];
+extern double BLIMP_TABLE_ONLINE[];
+extern double PITCH_TABLE[];
+extern double BL_SAW[];
+extern double SIN[];
+extern double DB_TABLE[];
+/*::/table_decl::*/
 namespace syn
 {
 	class LookupTable

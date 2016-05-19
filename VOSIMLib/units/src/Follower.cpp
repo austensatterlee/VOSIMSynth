@@ -23,8 +23,8 @@ syn::FollowerUnit::FollowerUnit(const string& a_name):
 	Unit(a_name),
 	m_w(0.0),
 	m_output(0.0),
-	m_pAlpha(addParameter_(UnitParameter("alpha", 0.0, 1.0, 0.995))),
-	m_pBeta(addParameter_(UnitParameter("beta", 0.0, 1.0, 0.01))) {
+	m_pAlpha(addParameter_(UnitParameter("lp", 0.0, 1.0, 0.995))),
+	m_pBeta(addParameter_(UnitParameter("hp", 0.0, 1.0, 0.01))) {
 	addInput_("in");
 	addOutput_("out");
 }

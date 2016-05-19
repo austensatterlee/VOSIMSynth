@@ -1,6 +1,6 @@
 ﻿#include "UIComponent.h"
 
-//#define DRAW_COMPONENT_BOUNDS
+#define DRAW_COMPONENT_BOUNDS
 
 namespace syn
 {
@@ -78,8 +78,8 @@ namespace syn
 	bool UIComponent::removeChild(int a_index) {
 		if (a_index < 0 || a_index >= m_children.size())
 			return false;
-		if (m_window->getFocused() == m_children[a_index].get())
-			m_window->clearFocus();
+		if (m_children[a_index]->focused())
+			m_window->forfeitFocus(m_children[a_index].get());
 
 		shared_ptr<UIComponent> child = m_children[a_index];
 
@@ -126,6 +126,13 @@ namespace syn
 		return m_parent;
 	}
 
+	shared_ptr<UIComponent> UIComponent::getSharedPtr()
+	{
+		if(parent())
+			return parent()->getChild(this);
+		return nullptr;
+	}
+
 	Vector2i UIComponent::getRelPos() const {
 		return m_pos;
 	}
@@ -147,7 +154,7 @@ namespace syn
 	}
 
 	Vector2i UIComponent::size() const {
-		return m_size;
+		return visible() ? m_size : Vector2i{0,0};
 	}
 
 	Vector2i UIComponent::minSize() const {
@@ -191,12 +198,10 @@ namespace syn
 	}
 
 	void UIComponent::setVisible(bool a_visible) {
-		if (a_visible) {
-			m_visibleSize = m_size;
-			setSize({0,0});
-		} else {
-			setSize(m_visibleSize);
-			if(focused())
+		if (a_visible == m_visible)
+			return;
+		if (!a_visible) {
+			if (focused())
 				m_window->clearFocus();
 		}
 		m_visible = a_visible;
@@ -252,13 +257,21 @@ namespace syn
 		}
 	}
 
-	void UIComponent::setMinSize_(const Vector2i& a_minSize) {
+	void UIComponent::setMinSize(const Vector2i& a_minSize) {
 		m_minSize = a_minSize;
+		if (m_maxSize[0] >= 0)
+			m_maxSize[0] = MAX(m_maxSize[0], a_minSize[0]);
+		if (m_maxSize[1] >= 0)
+			m_maxSize[1] = MAX(m_maxSize[1], a_minSize[1]);
 		setSize(m_size);
 	}
 
-	void UIComponent::setMaxSize_(const Vector2i& a_maxSize) {
+	void UIComponent::setMaxSize(const Vector2i& a_maxSize) {
 		m_maxSize = a_maxSize;
+		if (m_minSize[0] >= 0)
+			m_minSize[0] = MIN(m_minSize[0], a_maxSize[0]);
+		if (m_minSize[1] >= 0)
+			m_minSize[1] = MIN(m_minSize[1], a_maxSize[1]);
 		setSize(m_size);
 	}
 

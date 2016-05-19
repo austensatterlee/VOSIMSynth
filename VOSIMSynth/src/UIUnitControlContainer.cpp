@@ -12,25 +12,8 @@ syn::UIUnitControlContainer::UIUnitControlContainer(VOSIMWindow* a_window, Voice
 	m_unitId(a_unitId),
 	m_unitControl(a_unitControl) {
 	m_row = new UIRow(m_window);
-	m_row->setRelPos({0,theme()->mWindowHeaderHeight});
-	addChildToBody(m_row);
 	m_cols[0] = new UICol(m_window);
-	m_row->addChild(m_cols[0]);
 	m_cols[1] = new UICol(m_window);
-	m_row->addChild(m_cols[1]);
-	m_cols[2] = new UICol(m_window);
-	m_row->addChild(m_cols[2]);
-
-	m_cols[1]->addChild(a_unitControl);
-
-	m_cols[0]->setChildResizePolicy(UICol::CMAX);
-	m_cols[0]->setSelfResizePolicy(UICol::SFIT);
-	m_cols[1]->setChildResizePolicy(UICol::CMAX);
-	m_cols[1]->setSelfResizePolicy(UICol::SFIT);
-	m_cols[1]->setPadding({5,1,5,1});
-	m_cols[2]->setChildResizePolicy(UICol::CMAX);
-	m_cols[2]->setSelfResizePolicy(UICol::SFIT);
-
 
 	const Unit& unit = m_vm->getUnit(m_unitId);
 	int nIn = unit.getNumInputs();
@@ -43,14 +26,18 @@ syn::UIUnitControlContainer::UIUnitControlContainer(VOSIMWindow* a_window, Voice
 
 	for (int i = 0; i < nOut; i++) {
 		m_outPorts.push_back(new UIUnitPort(a_window, a_vm, a_unitId, i, false));
-		m_cols[2]->addChild(m_outPorts[i]);
+		m_cols[1]->addChild(m_outPorts[i]);
 	}
 
-	m_cols[0]->pack();
-	m_cols[1]->pack();
-	m_cols[2]->pack();
-	m_row->setGreedyChild(m_cols[1], NVG_ALIGN_CENTER);
-	m_row->pack();
+	
+	m_row->addChild(m_cols[0]);
+	m_row->addChild(a_unitControl);
+	m_row->addChild(m_cols[1]);
+	m_row->setChildResizePolicy(UICell::CNONE);
+	m_row->setSelfResizePolicy(UICell::SACTIVE);
+	m_row->setPadding({ 0,1,0,1 });
+	m_row->setChildrenSpacing(5);
+	addChildToBody(m_row);
 
 	m_closeButton = new UIButton(a_window, "", 0xE729);
 	m_closeButton->setCallback([&]() {

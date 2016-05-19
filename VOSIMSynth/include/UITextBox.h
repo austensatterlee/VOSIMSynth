@@ -54,7 +54,8 @@ namespace syn
 		}
 
 		virtual void setValue(const string& value) {
-			mValue = value;
+			mValue = value; 
+			updateMinSize_();
 		}
 
 		const string& defaultValue() const {
@@ -79,6 +80,7 @@ namespace syn
 
 		void setUnits(const string& units) {
 			mUnits = units;
+			updateMinSize_();
 		}
 
 		int unitsImage() const {
@@ -87,6 +89,7 @@ namespace syn
 
 		void setUnitsImage(int image) {
 			mUnitsImage = image;
+			updateMinSize_();
 		}
 
 		/// Return the underlying regular expression specifying valid formats

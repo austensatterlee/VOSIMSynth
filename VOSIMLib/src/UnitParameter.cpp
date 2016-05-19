@@ -30,8 +30,31 @@ namespace syn
 		m_defaultValue(0),
 		m_min(0),
 		m_max(1),
+		m_logMin(0),
+		m_logRange(0),
+		m_isVisible(true),
 		m_type(Null),
-		m_displayPrecision(0) { }
+		m_unitsType(None),
+		m_displayPrecision(0) 
+	{		
+	}
+
+	UnitParameter::UnitParameter(const UnitParameter& a_other) : 
+		m_name(a_other.m_name),
+		m_value(a_other.m_value),
+		m_prevValue(a_other.m_prevValue),
+		m_defaultValue(a_other.m_defaultValue),
+		m_min(a_other.m_min),
+		m_max(a_other.m_max),
+		m_logMin(a_other.m_logMin),
+		m_logRange(a_other.m_logRange),
+		m_isVisible(true),
+		m_type(a_other.m_type),
+		m_unitsType(a_other.m_unitsType),
+		m_displayPrecision(a_other.m_displayPrecision),
+		m_displayTexts(a_other.m_displayTexts)
+	{		
+	}
 
 	UnitParameter::UnitParameter(const string& a_name, bool a_defaultValue) :
 		m_name(a_name),
@@ -40,30 +63,43 @@ namespace syn
 		m_defaultValue(a_defaultValue),
 		m_min(0),
 		m_max(1),
+		m_logMin(0),
+		m_logRange(0),
+		m_isVisible(true),
 		m_type(Bool),
+		m_unitsType(None),
 		m_displayPrecision(0),
 		m_displayTexts({{0,"Off"},{1,"On"}}) { }
 
 	UnitParameter::UnitParameter(const string& a_name, int a_min, int a_max,
-	                             int a_defaultValue) :
+	                             int a_defaultValue, EUnitsType a_unitsType) :
 		m_name(a_name),
 		m_value(a_defaultValue),
 		m_prevValue(a_defaultValue),
 		m_defaultValue(a_defaultValue),
 		m_min(a_min),
 		m_max(a_max),
+		m_logMin(0),
+		m_logRange(0),
+		m_isVisible(true),
 		m_type(Int),
+		m_unitsType(a_unitsType),
 		m_displayPrecision(0) { }
 
 	UnitParameter::UnitParameter(const string& a_name,
 	                             const vector<string>& a_optionNames,
 	                             const vector<double>& a_optionValues,
-	                             int a_defaultOption) :
+	                             int a_defaultOption, EUnitsType a_unitsType) :
 		m_name(a_name),
 		m_min(0),
 		m_max(a_optionNames.size() - 1),
+		m_logMin(0),
+		m_logRange(0),
+		m_isVisible(true),
 		m_type(Enum),
-		m_displayPrecision(0) {
+		m_unitsType(a_unitsType),
+		m_displayPrecision(0) 
+	{
 		m_defaultValue = a_defaultOption;
 		m_value = m_prevValue = m_defaultValue;
 		double optionValue;
@@ -78,15 +114,20 @@ namespace syn
 	}
 
 	UnitParameter::UnitParameter(const string& a_name, double a_min, double a_max,
-	                             double a_defaultValue, int a_displayPrecision) :
+	                             double a_defaultValue, EUnitsType a_unitsType, int a_displayPrecision) :
 		m_name(a_name),
 		m_value(a_defaultValue),
 		m_prevValue(a_defaultValue),
 		m_defaultValue(a_defaultValue),
 		m_min(a_min),
-		m_max(a_max),
+		m_max(a_max), 
+		m_logMin(log(a_min)), 
+		m_logRange(log(a_max)-log(a_min)), 
+		m_isVisible(true),
 		m_type(Double),
-		m_displayPrecision(a_displayPrecision) { }
+		m_unitsType(a_unitsType),
+		m_displayPrecision(a_displayPrecision) 
+	{ }
 
 	void UnitParameter::reset() {
 		m_value = m_defaultValue;
@@ -96,7 +137,7 @@ namespace syn
 		return m_name;
 	}
 
-	EParamType UnitParameter::getType() const {
+	UnitParameter::EParamType UnitParameter::getType() const {
 		return m_type;
 	}
 
@@ -106,6 +147,8 @@ namespace syn
 
 	void UnitParameter::setMin(double a_new_min) {
 		m_min = a_new_min;
+		m_logMin = log(a_new_min);
+		m_logRange = log(m_max) - m_logMin;
 	}
 
 	double UnitParameter::getMax() const {
@@ -114,6 +157,7 @@ namespace syn
 
 	void UnitParameter::setMax(double a_new_max) {
 		m_max = a_new_max;
+		m_logRange = log(m_max) - m_logMin;
 	}
 
 	double UnitParameter::getDefaultValue() const {
@@ -127,6 +171,16 @@ namespace syn
 	void UnitParameter::setPrecision(int a_precision) {
 		if (a_precision >= 0 && m_type == Double)
 			m_displayPrecision = a_precision;
+	}
+
+	bool UnitParameter::isVisible() const
+	{
+		return m_isVisible;
+	}
+
+	void UnitParameter::setVisible(bool a_visible)
+	{
+		m_isVisible = a_visible;
 	}
 
 	bool UnitParameter::getBool() const {
@@ -217,52 +271,82 @@ namespace syn
 	}
 
 	double UnitParameter::getNorm() const {
-		return (m_value - m_min) / (m_max - m_min);
+		switch (m_unitsType) {
+		case Freq:
+		case Decibal:
+			return (log(m_value) - m_logMin) / m_logRange;
+		case None:
+		default:
+			return (m_value - m_min) / (m_max - m_min);
+		}
 	}
 
 	bool UnitParameter::setNorm(double a_norm_value) {
-		double value = CLAMP(a_norm_value, 0, 1) * (m_max - m_min) + m_min;
-		bool retval = set(value);
-		m_value = value;
-		return retval;
+		double value = CLAMP(a_norm_value, 0, 1);
+		switch(m_unitsType) {
+		case Freq:
+		case Decibal:
+			value = exp(value*m_logRange + m_logMin);			
+			break;
+		case None:
+		default:
+			value = value * (m_max - m_min) + m_min;
+			break;
+		}
+		return set(value);
 	}
 
 	bool UnitParameter::setFromString(const string& a_str) {
-		try {
-			size_t num_digits;
-			double value = stod(a_str, &num_digits);
+		if (getType() != Enum) {
+			try {
+				size_t num_digits;
+				double value = stod(a_str, &num_digits);
 
-			size_t decimal_pos;
-			// adjust parameter precision
-			decimal_pos = a_str.find_first_of(".");
-			if (decimal_pos != string::npos) {
-				int newParamPrecision = static_cast<int>(num_digits) - static_cast<int>(decimal_pos) - 1;
-				setPrecision(newParamPrecision);
+				size_t decimal_pos;
+				// adjust parameter precision
+				decimal_pos = a_str.find_first_of(".");
+				if (decimal_pos != string::npos) {
+					int newParamPrecision = static_cast<int>(num_digits) - static_cast<int>(decimal_pos) - 1;
+					setPrecision(newParamPrecision);
+				}
+				set(value);
+				return true;
 			}
-			set(value);
-			return true;
-		}
-		catch (std::invalid_argument&) {
+			catch (std::invalid_argument&) {
+				// Try to match string to an enum option
+				int i = 0;
+				for (const DisplayText& disp : m_displayTexts) {
+					if (disp.m_text == a_str) {
+						_setInt(i);
+						return true;
+					}
+					i++;
+				}
+			}
+		}else
+		{
 			// Try to match string to an enum option
-			for(const DisplayText& disp : m_displayTexts) {
-				if(disp.m_text==a_str) {
-					_setInt(disp.m_value);
+			int i = 0;
+			for (const DisplayText& disp : m_displayTexts) {
+				if (disp.m_text == a_str) {
+					_setInt(i);
 					return true;
 				}
+				i++;
 			}
 		}
 		return false;
 	}
 
-	string UnitParameter::getString() const {
+	string UnitParameter::getValueString() const {
 		int idx = getInt();
 		// Check for a matching display text
 		if (idx >= 0 && idx < m_displayTexts.size()) {
 			return m_displayTexts[idx].m_text;
 		}
 
-
 		// If no display text is found, return numeral
+
 		char displaytext[MAX_PARAM_STR_LEN];
 		if (getType() != Double) {
 			snprintf(displaytext, MAX_PARAM_STR_LEN, "%d", idx);
@@ -276,5 +360,34 @@ namespace syn
 			}
 		}
 		return string(displaytext);
+	}
+
+	string UnitParameter::getUnitsString() const {
+		string units;
+		switch (m_unitsType) {
+		case Freq:
+			units = "Hz";
+			break;
+		case BPM:
+			units = "BPM";
+			break;
+		case Semitones:
+			units = "semi";
+			break;
+		case Octaves:
+			units = "oct";
+			break;
+		case Seconds:
+			units = "s";
+			break;
+		case Decibal:
+			units = "dB";
+			break;
+		case None:
+		default:
+			units = "";
+			break;
+		}
+		return units;
 	}
 }

@@ -94,6 +94,7 @@ void syn::UnitFactory::resetBuildCounts() {
 	for (shared_ptr<FactoryPrototype> prototype : m_prototypes) {
 		prototype->build_count = 0;
 	}
+	m_generatedNameHistory.clear();
 }
 
 void syn::UnitFactory::saveUnit(const Unit* a_unit, int a_unitId, ByteChunk* a_data) {

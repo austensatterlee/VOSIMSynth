@@ -17,15 +17,10 @@ syn::UICircuitPanel::UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, U
 	m_unitFactory(a_unitFactory)
 	{
 	m_unitSelector = new UIUnitSelector{m_window, m_unitFactory};
-	UICol* unitSelectorLayout = new UICol(m_window);
 	UIWindow* unitSelectorWindow = new UIWindow{m_window,"Unit Selector"};
 	unitSelectorWindow->setRelPos({5,45});
-	unitSelectorLayout->setRelPos({5, theme()->mWindowHeaderHeight});
 	addChild(unitSelectorWindow);
-	unitSelectorWindow->addChildToBody(unitSelectorLayout);
-
-	unitSelectorLayout->addChild(m_unitSelector);
-	unitSelectorLayout->setChildResizePolicy(UICell::CMATCHMAX);
+	unitSelectorWindow->addChildToBody(m_unitSelector);
 
 	const Circuit& circ = m_vm->getCircuit();
 	onAddUnit_(circ.getUnit(circ.getInputUnitId()).getClassIdentifier(), circ.getInputUnitId());
@@ -91,52 +86,58 @@ syn::UIUnitControlContainer* syn::UICircuitPanel::findUnit(int a_unitId) const {
 }
 
 void syn::UICircuitPanel::requestAddConnection(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort) {
-	ActionMessage* msg = new ActionMessage();
+	RTMessage* msg = new RTMessage();
 	msg->action = [](Circuit* a_circuit, bool a_isLast, ByteChunk* a_data) {
 		UICircuitPanel* self;
 		int fromUnit, fromPort, toUnit, toPort;
-		int pos = 0;
-		pos = a_data->Get<UICircuitPanel*>(&self, pos);
-		pos = a_data->Get<int>(&fromUnit, pos);
-		pos = a_data->Get<int>(&fromPort, pos);
-		pos = a_data->Get<int>(&toUnit, pos);
-		pos = a_data->Get<int>(&toPort, pos);
+		GetArgs(a_data,0,self, fromUnit, fromPort, toUnit, toPort);
 		a_circuit->connectInternal(fromUnit, fromPort, toUnit, toPort);
-		if (a_isLast)
-			self->onAddConnection_(fromUnit, fromPort, toUnit, toPort);
+
+		// Queue return message
+		if (a_isLast) {
+			GUIMessage* msg = new GUIMessage;
+			msg->action = [](VOSIMWindow* a_win, ByteChunk* a_data)
+			{
+				int fromUnit, fromPort, toUnit, toPort;
+				GetArgs(a_data, 0, fromUnit, fromPort, toUnit, toPort);
+				a_win->getCircuitPanel()->onAddConnection_(fromUnit, fromPort, toUnit, toPort);
+			};
+			PutArgs(&msg->data, fromUnit, fromPort, toUnit, toPort);
+			self->m_window->queueExternalMessage(msg);
+		}
 	};
 
 	UICircuitPanel* self = this;
-	msg->data.Put<UICircuitPanel*>(&self);
-	msg->data.Put<int>(&a_fromUnit);
-	msg->data.Put<int>(&a_fromPort);
-	msg->data.Put<int>(&a_toUnit);
-	msg->data.Put<int>(&a_toPort);
+	PutArgs(&msg->data, self, a_fromUnit, a_fromPort, a_toUnit, a_toPort);
 	m_vm->queueAction(msg);
 }
 
 void syn::UICircuitPanel::requestDeleteConnection(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort) {
-	ActionMessage* msg = new ActionMessage();
+
+	RTMessage* msg = new RTMessage();
+	UICircuitPanel* self = this;
+	PutArgs(&msg->data, self, a_fromUnit, a_fromPort, a_toUnit, a_toPort);
+
 	msg->action = [](Circuit* a_circuit, bool a_isLast, ByteChunk* a_data) {
 		UICircuitPanel* self;
 		int fromUnit, fromPort, toUnit, toPort;
-		int pos = 0;
-		pos = a_data->Get<UICircuitPanel*>(&self, pos);
-		pos = a_data->Get<int>(&fromUnit, pos);
-		pos = a_data->Get<int>(&fromPort, pos);
-		pos = a_data->Get<int>(&toUnit, pos);
-		pos = a_data->Get<int>(&toPort, pos);
+		GetArgs(a_data, 0, self, fromUnit, fromPort, toUnit, toPort);
 		a_circuit->disconnectInternal(fromUnit, fromPort, toUnit, toPort);
-		if (a_isLast)
-			self->onDeleteConnection_(fromUnit, fromPort, toUnit, toPort);
+
+		// Queue return message
+		if (a_isLast) {
+			GUIMessage* msg = new GUIMessage;
+			PutArgs(&msg->data, fromUnit, fromPort, toUnit, toPort);
+			msg->action = [](VOSIMWindow* a_win, ByteChunk* a_data)
+			{
+				int fromUnit, fromPort, toUnit, toPort;
+				GetArgs(a_data, 0, fromUnit, fromPort, toUnit, toPort);
+				a_win->getCircuitPanel()->onDeleteConnection_(fromUnit, fromPort, toUnit, toPort);
+			};
+			self->m_window->queueExternalMessage(msg);
+		}
 	};
 
-	UICircuitPanel* self = this;
-	msg->data.Put<UICircuitPanel*>(&self);
-	msg->data.Put<int>(&a_fromUnit);
-	msg->data.Put<int>(&a_fromPort);
-	msg->data.Put<int>(&a_toUnit);
-	msg->data.Put<int>(&a_toPort);
 	m_vm->queueAction(msg);
 }
 
@@ -157,22 +158,14 @@ void syn::UICircuitPanel::requestDeleteUnit(int a_unitId) {
 		}
 	}
 	// Delete the unit from the circuit
-	ActionMessage* msg = new ActionMessage();
+	RTMessage* msg = new RTMessage();
 	msg->action = [](Circuit* a_circuit, bool a_isLast, ByteChunk* a_data) {
-		UICircuitPanel* self;
-		UnitFactory* unitFactory;
 		int unitId;
-		int pos = 0;
-		pos = a_data->Get<UICircuitPanel*>(&self, pos);
-		pos = a_data->Get<UnitFactory*>(&unitFactory, pos);
-		pos = a_data->Get<int>(&unitId, pos);
+		GetArgs(a_data, 0, unitId);
 		a_circuit->removeUnit(unitId);
 	};
 
-	UICircuitPanel* self = this;
-	msg->data.Put<UICircuitPanel*>(&self);
-	msg->data.Put<UnitFactory*>(&m_unitFactory);
-	msg->data.Put<int>(&a_unitId);
+	PutArgs(&msg->data, a_unitId);
 	m_vm->queueAction(msg);
 }
 
@@ -221,6 +214,7 @@ void syn::UICircuitPanel::onDeleteConnection_(int a_fromUnit, int a_fromPort, in
 		UIWire* wire = m_wires[i];
 		if (wire->fromUnit() == a_fromUnit && wire->fromPort() == a_fromPort && wire->toUnit() == a_toUnit && wire->toPort() == a_toPort) {
 			m_wires.erase(m_wires.cbegin() + i);
+			m_window->forfeitFocus(wire);
 			clearSelectedWire(wire);
 			removeChild(wire);
 			return;
@@ -237,26 +231,31 @@ void syn::UICircuitPanel::onAddUnit_(unsigned a_classId, int a_unitId) {
 }
 
 void syn::UICircuitPanel::requestAddUnit_(unsigned a_classId) {
-	ActionMessage* msg = new ActionMessage();
+	RTMessage* msg = new RTMessage();
 	msg->action = [](Circuit* a_circuit, bool a_isLast, ByteChunk* a_data) {
 		UICircuitPanel* self;
 		UnitFactory* unitFactory;
 		Unit* unit;
-		int pos = 0;
-		pos = a_data->Get<UICircuitPanel*>(&self, pos);
-		pos = a_data->Get<UnitFactory*>(&unitFactory, pos);
-		pos = a_data->Get<Unit*>(&unit, pos);
+		GetArgs(a_data, 0, self, unitFactory, unit);
 		int unitId = a_circuit->addUnit(shared_ptr<Unit>(unit->clone()));
+		// Queue return message
 		if (a_isLast) {
-			self->onAddUnit_(unit->getClassIdentifier(), unitId);
+			GUIMessage* msg = new GUIMessage;
+			msg->action = [](VOSIMWindow* a_win, ByteChunk* a_data) {
+				unsigned classId;
+				int unitId;
+				GetArgs(a_data, 0, classId, unitId);
+				a_win->getCircuitPanel()->onAddUnit_(classId, unitId);
+			};
+			unsigned classId = unit->getClassIdentifier();
+			PutArgs(&msg->data, classId, unitId);
+			self->m_window->queueExternalMessage(msg);
 			delete unit;
 		}
 	};
 
 	UICircuitPanel* self = this;
 	Unit* unit = m_window->getUnitFactory()->createUnit(a_classId);
-	msg->data.Put<UICircuitPanel*>(&self);
-	msg->data.Put<UnitFactory*>(&m_unitFactory);
-	msg->data.Put<Unit*>(&unit);
+	PutArgs(&msg->data, self, m_unitFactory, unit);
 	m_vm->queueAction(msg);
 }

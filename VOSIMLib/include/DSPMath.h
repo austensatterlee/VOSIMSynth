@@ -65,6 +65,12 @@ namespace syn
 
 	double pitchToFreq(double pitch);
 
+	double bpmToFreq(double bpm, double tempo);
+
+	double freqToSamples(double freq, double fs);
+
+	double periodToSamples(double seconds, double fs);
+
 	double lin2db(double lin, double mindb, double maxdb);
 }
 #endif

@@ -126,7 +126,7 @@ namespace syn
 		UIUnitControl(a_window, a_vm, a_unitId),
 		m_defCtrl(new DefaultUnitControl(a_window, a_vm, a_unitId)),
 		m_resizeHandle(new UIResizeHandle(a_window)),
-		m_yBounds{-120,12},
+		m_yBounds{-120,60},
 		m_screenSize{0,0},
 		m_screenPos{0,0} {
 		addChild(m_defCtrl);
@@ -137,10 +137,9 @@ namespace syn
 
 		Vector2i minSize{200,100};
 		Vector2i defCtrlSize = m_defCtrl->size();
-		minSize = minSize.cwiseMax(defCtrlSize);
 		minSize[1] += defCtrlSize[1];
 		minSize[0] = MAX(minSize[0], defCtrlSize[0]);
-		setMinSize_(minSize);
+		setMinSize(minSize);
 	}
 
 	Vector2i SpectroscopeUnitControl::toPixCoords(const Vector2f& a_sample) {
@@ -148,7 +147,9 @@ namespace syn
 		int screenY = -unitY * m_screenSize[1] + m_screenPos[1] + m_screenSize[1];
 
 		const SpectroscopeUnit* unit = static_cast<const SpectroscopeUnit*>(&m_vm->getUnit(m_unitId));
-		double unitX = a_sample[0] / unit->getBufferSize();
+		int bufsize = unit->getBufferSize();
+		double freqX = a_sample[0] * (unit->getFs()*0.5 / bufsize);
+		double unitX = INVLERP(log2(0.5*unit->getFs()/bufsize), log2((bufsize-1)*unit->getFs()*0.5/bufsize), log2(freqX));
 		int screenX = unitX * m_screenSize[0] + m_screenPos[0];
 
 		return {screenX, screenY};
@@ -157,7 +158,7 @@ namespace syn
 	void SpectroscopeUnitControl::_onResize() {
 		m_screenPos = {0,m_defCtrl->size()[1]};
 		m_screenSize = size() - Vector2i{0,m_defCtrl->size()[1] + m_resizeHandle->size()[1]};
-		m_defCtrl->setSize({size()[0],m_defCtrl->size()[1]});
+		m_defCtrl->setSize({ size()[0], -1 });
 		m_resizeHandle->setRelPos(size() - m_resizeHandle->size());
 	}
 
@@ -175,9 +176,9 @@ namespace syn
 			Color color = m_colors[i % m_colors.size()];
 			nvgBeginPath(a_nvg);
 			nvgStrokeColor(a_nvg, color);
-			for (int j = 0; j < unit->getBufferSize(); j++) {
+			for (int j = 1; j < unit->getBufferSize(); j++) {
 				Vector2i screenPt = toPixCoords({j,unit->getBuffer(i)[j]});
-				if (j == 0)
+				if (j == 1)
 					nvgMoveTo(a_nvg, screenPt[0], screenPt[1]);
 				else
 					nvgLineTo(a_nvg, screenPt[0], screenPt[1]);

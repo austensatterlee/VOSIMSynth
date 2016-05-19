@@ -19,6 +19,7 @@
 #include "../wdlstring.h"
 #include "../ptrlist.h"
 #include "../wdlendian.h"
+#include <string>
 
 #define FREE_NULL(p) {free(p);p=0;}
 #define DELETE_NULL(p) {delete(p); p=0;}
@@ -90,12 +91,18 @@ public:
     return PutBytes(pVal, sizeof(T));
   }
 
+  template<>
+  int Put<std::string>(const std::string* pVal);
+
   template <class T> inline int Get(T* pVal, int startPos)
   {
     return GetBytes(pVal, sizeof(T), startPos);
   }
 
-// Handle endian conversion for integer and floating point data types.
+  template<>
+	int Get<std::string>(std::string* pVal, int startPos);
+
+	// Handle endian conversion for integer and floating point data types.
 // Data is always stored in the chunk in little endian format, so nothing needs
 //  changing on Intel x86 platforms.
 
@@ -292,4 +299,16 @@ private:
   WDL_TypedBuf<unsigned char> mBytes;
 };
 
+template <>
+inline int ByteChunk::Get<std::basic_string<char>>(std::string* pVal, int startPos) {
+	WDL_String tmp;
+	int retval = GetStr(&tmp, startPos);
+	*pVal = tmp.Get();
+	return retval;
+}
+
+template <>
+inline int ByteChunk::Put<std::string>(const std::string* pVal) {
+	return PutStr(pVal->c_str());
+}
 #endif

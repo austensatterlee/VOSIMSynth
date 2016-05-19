@@ -107,6 +107,6 @@ void syn::UIUnitSelector::draw(NVGcontext* a_nvg) {
 		row++;
 		group++;
 	}
-	setMinSize_(Vector2i{m_autoWidth, m_autoHeight});
+	setMinSize(Vector2i{m_autoWidth, m_autoHeight});
 	setSize(Vector2i{m_autoWidth, m_autoHeight});
 }

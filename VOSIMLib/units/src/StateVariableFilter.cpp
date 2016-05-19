@@ -23,7 +23,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 syn::StateVariableFilter::StateVariableFilter(const string& a_name):
 	Unit(a_name),
-	m_pFc(addParameter_(UnitParameter("fc", 0.0, 1.0, 0.5))),
+	m_pFc(addParameter_(UnitParameter("fc", 0.01, 20000.0, 10000.0, UnitParameter::Freq))),
 	m_pRes(addParameter_(UnitParameter("res", 0.0, 1.0, 0.0))),
 	m_prevBPOut(0.0), m_prevLPOut(0.0),
 	m_F(0.0), m_Q(0.0) {
@@ -39,9 +39,7 @@ syn::StateVariableFilter::StateVariableFilter(const string& a_name):
 }
 
 void syn::StateVariableFilter::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
-	double input_fc = a_inputs.getValue(m_iFcMul) * getParameter(m_pFc).getDouble() + a_inputs.getValue(m_iFcAdd);
-	input_fc = CLAMP(input_fc, 0, 1) * 128;
-	double fc = pitchToFreq(input_fc);
+	double fc = a_inputs.getValue(m_iFcMul) * getParameter(m_pFc).getDouble() + a_inputs.getValue(m_iFcAdd);
 	m_F = 2 * lut_sin.getlinear(0.5 * fc / (getFs() * c_oversamplingFactor));
 
 	double input_res = a_inputs.getValue(m_iResMul) * getParameter(m_pRes).getDouble() + a_inputs.getValue(m_iResAdd);

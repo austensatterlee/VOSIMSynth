@@ -63,7 +63,7 @@ namespace syn
 		UIButton* m_closeButton;
 
 		UIRow* m_row;
-		UICol* m_cols[3];
+		UICol* m_cols[2];
 	};
 }
 #endif

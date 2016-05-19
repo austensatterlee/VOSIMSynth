@@ -112,21 +112,19 @@ namespace syn
 	public:
 		explicit LFOOscillator(const string& a_name);
 
-		explicit LFOOscillator(const BasicOscillator& a_rhs) : LFOOscillator(a_rhs.getName()) {}
+		explicit LFOOscillator(const LFOOscillator& a_rhs);
 
-		virtual ~LFOOscillator();
+		explicit LFOOscillator(const BasicOscillator& a_rhs) : LFOOscillator(a_rhs.getName()) {}
 
 	protected:
 		int m_oQuadOut;
 
 		int m_pWaveform;
+		int m_pBPMFreq;
 		int m_pFreq;
 		int m_pTempoSync;
 		int m_iFreqAdd, m_iFreqMul;
 		int m_iSync;
-
-		UnitParameter* m_syncedFreqParam;
-		UnitParameter* m_linFreqParam;
 
 		double m_lastSync;
 	protected:

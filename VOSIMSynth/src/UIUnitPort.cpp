@@ -1,6 +1,8 @@
 #include "UIUnitPort.h"
 #include "UIUnitControlContainer.h"
 #include "UICircuitPanel.h"
+#include "Unit.h"
+#include "VoiceManager.h"
 #include "Theme.h"
 
 syn::UIUnitPort::UIUnitPort(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_portNum, bool a_isInput) :
@@ -22,7 +24,7 @@ syn::UIUnitPort::UIUnitPort(VOSIMWindow* a_window, VoiceManager* a_vm, int a_uni
 	nvgFontSize(nvg, (float)theme()->mPortFontSize);
 	nvgTextBounds(nvg, 0, 0, portName.c_str(), nullptr, bounds);
 	textWidth = bounds[2] - bounds[0];
-	setMinSize_(Vector2i{textWidth + 5, theme()->mPortFontSize + 5});
+	setMinSize(Vector2i{textWidth + 5, theme()->mPortFontSize + 5});
 }
 
 bool syn::UIUnitPort::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {

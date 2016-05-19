@@ -75,7 +75,6 @@ private:
 	MIDIReceiver* m_MIDIReceiver;
 	VoiceManager* m_voiceManager;
 	UnitFactory* m_unitFactory;
-	VOSIMWindow* m_vosimWindow;
 
 	int m_tempo;
 	unsigned m_tickCount;

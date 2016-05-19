@@ -63,6 +63,8 @@ namespace syn
 
 		UIComponent* parent() const;
 
+		shared_ptr<UIComponent> getSharedPtr();
+
 		virtual bool contains(const Vector2i& a_pt);
 
 		UIComponent* findChild(const Vector2i& a_pt);
@@ -127,18 +129,19 @@ namespace syn
 		 */
 		void setZOrder(UIComponent* a_child, int a_zorder, bool toFront = true);
 
-	protected:
-		virtual void draw(NVGcontext* a_nvg) {};
+		/**
+		* Sets maximum size constraint. To unconstrain a dimension, set it to a negative number.
+		*/
+		void setMaxSize(const Vector2i& a_maxSize);
 
 		/**
 		* Sets minimum size constraint. To unconstrain a dimension, set it to a negative number.
 		*/
-		void setMinSize_(const Vector2i& a_minSize);
+		void setMinSize(const Vector2i& a_minSize);
 
-		/**
-		* Sets maximum size constraint. To unconstrain a dimension, set it to a negative number.
-		*/
-		void setMaxSize_(const Vector2i& a_maxSize);
+	protected:
+		virtual void draw(NVGcontext* a_nvg) {};
+
 	private:
 		virtual void _onAddChild(shared_ptr<UIComponent> a_newchild) {};
 
@@ -156,9 +159,6 @@ namespace syn
 		bool m_visible, m_focused, m_hovered;
 		Vector2i m_pos, m_size;
 		Vector2i m_minSize, m_maxSize;
-
-	private:
-		Vector2i m_visibleSize;
 	};
 
 	class UIResizeHandle : public UIComponent
@@ -166,7 +166,7 @@ namespace syn
 	public:
 		UIResizeHandle(VOSIMWindow* a_window)
 			: UIComponent{a_window} {
-			setMinSize_({10,10});
+			setMinSize({10,10});
 		}
 
 		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override {
@@ -185,7 +185,10 @@ namespace syn
 	protected:
 		void draw(NVGcontext* a_nvg) override {
 			nvgBeginPath(a_nvg);
-			nvgStrokeColor(a_nvg, Color(Vector3i{255,255,255}));
+			if (hovered())
+				nvgStrokeColor(a_nvg, Color(1.0f, 1.0f));
+			else
+				nvgStrokeColor(a_nvg, Color(1.0, 0.7f));
 			nvgMoveTo(a_nvg, 0.0f, size()[1]);
 			nvgLineTo(a_nvg, size()[0], 0.0f);
 			nvgMoveTo(a_nvg, size()[0] / 3.0f, size()[1]);

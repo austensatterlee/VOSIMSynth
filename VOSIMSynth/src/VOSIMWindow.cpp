@@ -16,7 +16,7 @@
 static int nWndClassReg = 0;
 static const char* wndClassName = "VOSIMWndClass";
 
-sf::WindowHandle syn::VOSIMWindow::sys_CreateChildWindow(sf::WindowHandle a_system_window) {
+sf::WindowHandle syn::VOSIMWindow::_sys_CreateChildWindow(sf::WindowHandle a_system_window) {
 	int x = 0, y = 0, w = m_size[0], h = m_size[1];
 
 	if (nWndClassReg++ == 0) {
@@ -48,7 +48,7 @@ sf::WindowHandle syn::VOSIMWindow::sys_CreateChildWindow(sf::WindowHandle a_syst
 	return m_childHandle2;
 }
 
-void syn::VOSIMWindow::updateCursorPos(const Vector2i& newPos) {
+void syn::VOSIMWindow::_updateCursorPos(const Vector2i& newPos) {
 	m_dCursor = toWorldCoords(newPos) - m_cursor;
 	m_cursor = toWorldCoords(newPos);
 }
@@ -66,6 +66,29 @@ syn::UIUnitControl* syn::VOSIMWindow::createUnitControl(unsigned a_classId, int 
 	}
 }
 
+void syn::VOSIMWindow::_queueInternalMessage(GUIMessage* a_msg) {
+	m_guiInternalMsgQueue.push(a_msg);
+}
+
+void syn::VOSIMWindow::_flushMessageQueues() {
+	GUIMessage* msg;
+	while (m_guiInternalMsgQueue.pop(msg)) {
+		_processMessage(msg);
+	}
+	while (m_guiExternalMsgQueue.pop(msg)) {
+		_processMessage(msg);
+	}
+}
+
+void syn::VOSIMWindow::_processMessage(GUIMessage* a_msg) {
+	a_msg->action(this, &a_msg->data);
+	delete a_msg;
+}
+
+void syn::VOSIMWindow::queueExternalMessage(GUIMessage* a_msg) {
+	m_guiExternalMsgQueue.push(a_msg);
+}
+
 LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam) {
 	Event event;
 	double cpuStartTime, dCpuTime;
@@ -75,12 +98,12 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 		VOSIMWindow* _this = (VOSIMWindow*)GetWindowLongPtr(Handle, GWLP_USERDATA);
 
 		if (_this->m_sfmlWindow) {
-			int mSec = int(1000.0 / 60.0);
+			int mSec = int(1000.0 / 120.0);
 			SetTimer(Handle, 2, mSec, NULL);
 
 			_this->m_sfmlWindow->setActive(true);
 			_this->m_sfmlWindow->requestFocus();
-			_this->m_sfmlWindow->setFramerateLimit(60);
+			_this->m_sfmlWindow->setVerticalSyncEnabled(true);
 			_this->m_sfmlWindow->setPosition({0,0});
 
 			// Initialize glew
@@ -116,8 +139,7 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 			}
 			_this->m_circuitPanel->setSize(_this->getViewSize());
 
-			initGraph(&_this->m_fpsGraph, GRAPH_RENDER_FPS, "Frame Time");
-			initGraph(&_this->m_cpuGraph, GRAPH_RENDER_MS, "CPU Time");
+			initGraph(&_this->m_fpsGraph, GRAPH_RENDER_FPS, "FPS");
 
 			_this->m_timer.resume();
 			_this->m_running = true;
@@ -131,14 +153,13 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 	switch (Message) {
 	case WM_TIMER:
 		cpuStartTime = _this->m_timer.getElapsedTime().asSeconds();
-		Color bgColor = colorFromHSL(0.0, 0.5 + 0.5 * sin(cpuStartTime), 0.25);
+		Color bgColor = colorFromHSL(0.0, 0.125, 0.25);
 		glClearColor(bgColor.r(), bgColor.g(), bgColor.b(), 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		nvgBeginFrame(_this->m_vg, _this->getSize()[0], _this->getSize()[1], 1.0);
 		_this->m_root->recursiveDraw(_this->m_vg);
 		renderGraph(_this->m_vg, 5, 5, &_this->m_fpsGraph);
-		renderGraph(_this->m_vg, 5 + 200 + 5, 5, &_this->m_cpuGraph);
 
 		// Measure the CPU time taken excluding swap buffers (as the swap may wait for GPU)
 		dCpuTime = _this->m_timer.getElapsedTime().asSeconds() - cpuStartTime;
@@ -146,7 +167,6 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 		nvgEndFrame(_this->m_vg);
 
 		updateGraph(&_this->m_fpsGraph, dCpuTime);
-		updateGraph(&_this->m_cpuGraph, dCpuTime);
 
 		_this->m_sfmlWindow->display();
 
@@ -156,12 +176,15 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 			_this->m_draggingComponent->onMouseDrag(_this->cursorPos() - _this->m_draggingComponent->parent()->getAbsPos(), {0,0});
 		}
 
+		_this->_flushMessageQueues();
+
+		
 		// check all the window's events that were triggered since the last iteration of the loop
 		while (_this->m_sfmlWindow->pollEvent(event)) {
 			switch (event.type) {
 			case Event::Closed:
 				// "close requested" event: we close the window
-				_this->m_sfmlWindow->setActive(false);
+				_this->m_sfmlWindow->close();
 				break;
 			case Event::Resized:
 				glViewport(0, 0, _this->getSize()[0], _this->getSize()[1]);
@@ -174,8 +197,9 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 				break;
 			case Event::TextEntered:
 				if (event.text.unicode >= 32 && event.text.unicode <= 126) {
-					if (!_this->m_focusPath.empty()) {
-						for (auto it = ++_this->m_focusPath.rbegin(); it != _this->m_focusPath.rend(); ++it)
+					if (!_this->m_focusPath.empty()){
+						list<UIComponent*> focusPathCopy = _this->m_focusPath;
+						for (list<UIComponent*>::reverse_iterator it = focusPathCopy.rbegin(); it != focusPathCopy.rend(); ++it)
 							if ((*it)->focused())
 								(*it)->onTextEntered(event.text.unicode);
 					}
@@ -183,14 +207,16 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 				break;
 			case Event::KeyPressed:
 				if (!_this->m_focusPath.empty()) {
-					for (auto it = ++_this->m_focusPath.rbegin(); it != _this->m_focusPath.rend(); ++it)
+					list<UIComponent*> focusPathCopy = _this->m_focusPath;
+					for (list<UIComponent*>::reverse_iterator it = focusPathCopy.rbegin(); it != focusPathCopy.rend(); ++it)
 						if ((*it)->focused())
 							(*it)->onKeyDown(event.key);
 				}
 				break;
 			case Event::KeyReleased:
 				if (!_this->m_focusPath.empty()) {
-					for (auto it = ++_this->m_focusPath.rbegin(); it != _this->m_focusPath.rend(); ++it)
+					list<UIComponent*> focusPathCopy = _this->m_focusPath;
+					for (list<UIComponent*>::reverse_iterator it = focusPathCopy.rbegin(); it != focusPathCopy.rend(); ++it)
 						if ((*it)->focused())
 							(*it)->onKeyUp(event.key);
 				}
@@ -212,8 +238,9 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 			case Event::MouseButtonPressed:
 				{
 				_this->m_isClicked = true;
-
-				_this->m_draggingComponent = _this->m_root->onMouseDown(_this->cursorPos(), _this->diffCursorPos(), (_this->m_timer.getElapsedTime().asSeconds() - _this->m_lastClick.time.asSeconds() < 0.25));
+				bool isDblClick = (_this->m_timer.getElapsedTime().asSeconds() - _this->m_lastClick.time.asSeconds() < 0.125);
+				isDblClick &= (_this->cursorPos()-Vector2i{_this->m_lastClick.data.x, _this->m_lastClick.data.y}).norm() <= 2.0;
+				_this->m_draggingComponent = _this->m_root->onMouseDown(_this->cursorPos(), _this->diffCursorPos(), isDblClick);
 				if (_this->m_draggingComponent == _this->m_root)
 					_this->m_draggingComponent = nullptr;
 				if (_this->m_draggingComponent)
@@ -229,19 +256,17 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 					_this->m_draggingComponent->onMouseUp(_this->cursorPos() - _this->m_draggingComponent->parent()->getAbsPos(), _this->diffCursorPos());
 				if (!_this->m_draggingComponent) {
 					_this->m_root->onMouseUp(_this->cursorPos(), _this->diffCursorPos());
-					_this->setFocus(nullptr);
 				}
 				_this->m_draggingComponent = nullptr;
 				_this->m_isClicked = false;
 				break;
 			case Event::MouseMoved:
-
-				_this->updateCursorPos({event.mouseMove.x - 1,event.mouseMove.y - 2});
-				_this->m_root->onMouseMove(_this->cursorPos(), _this->diffCursorPos());
-
 				if (_this->m_draggingComponent) {
 					_this->m_draggingComponent->onMouseDrag(_this->cursorPos() - _this->m_draggingComponent->parent()->getAbsPos(), _this->diffCursorPos());
 				}
+
+				_this->_updateCursorPos({event.mouseMove.x - 1,event.mouseMove.y - 2});
+				_this->m_root->onMouseMove(_this->cursorPos(), _this->diffCursorPos());
 				break;
 			default:
 				break;
@@ -264,22 +289,19 @@ syn::VOSIMWindow::~VOSIMWindow() {
 }
 
 void syn::VOSIMWindow::setFocus(UIComponent* a_comp) {
-	if (a_comp && a_comp != getFocused()) {
-		while (!m_focusPath.empty()) {
-			m_focusPath.front()->onFocusEvent(false);
-			m_focusPath.pop_front();
-		}
+	while (!m_focusPath.empty()) {  // clear focus
+		if (m_focusPath.front() == a_comp)
+			break;
+		m_focusPath.front()->onFocusEvent(false);
+		m_focusPath.pop_front();
+	}
 
+	if (a_comp != getFocused()) { // set focus path
 		UIComponent* gainingFocus = a_comp;
 		while (gainingFocus != nullptr) {
 			gainingFocus->onFocusEvent(true);
 			m_focusPath.push_back(gainingFocus);
 			gainingFocus = gainingFocus->parent();
-		}
-	} else if (a_comp == nullptr) {
-		while (!m_focusPath.empty()) {
-			m_focusPath.front()->onFocusEvent(false);
-			m_focusPath.pop_front();
 		}
 	}
 }
@@ -290,6 +312,18 @@ Eigen::Vector2i syn::VOSIMWindow::cursorPos() const {
 
 Eigen::Vector2i syn::VOSIMWindow::diffCursorPos() const {
 	return m_dCursor;
+}
+
+void syn::VOSIMWindow::forfeitFocus(UIComponent* a_comp) {
+	if (!a_comp->focused())
+		return;
+	while (!m_focusPath.empty()) {
+		UIComponent* focused = m_focusPath.front();
+		focused->onFocusEvent(false);
+		m_focusPath.pop_front();
+		if (focused == a_comp)
+			break;
+	}
 }
 
 Eigen::Vector2i syn::VOSIMWindow::toWorldCoords(const Vector2i& a_pix) const {
@@ -327,7 +361,7 @@ bool syn::VOSIMWindow::OpenWindow(sf::WindowHandle a_system_window) {
 		m_sfmlWindow = nullptr;
 	}
 
-	sys_CreateChildWindow(a_system_window);
+	_sys_CreateChildWindow(a_system_window);
 
 	return true;
 }
@@ -341,7 +375,6 @@ void syn::VOSIMWindow::CloseWindow() {
 
 		m_sfmlWindow->close();
 		delete m_sfmlWindow;
-
 		m_sfmlWindow = nullptr;
 
 		m_theme.reset();

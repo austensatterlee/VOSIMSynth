@@ -74,7 +74,7 @@ syn::Unit* syn::DCRemoverUnit::_clone() const {
 
 syn::LagUnit::LagUnit(const string& a_name):
 	Unit(a_name),
-	m_pFc(addParameter_(UnitParameter("fc", 0.0, 1.0, 1.0))),
+	m_pFc(addParameter_(UnitParameter("fc", 0.01, 20000.0, 1.0, UnitParameter::Freq))),
 	m_state(0.0) {
 	addInput_("in");
 	m_iFcAdd = addInput_("fc");
@@ -86,8 +86,8 @@ syn::LagUnit::LagUnit(const LagUnit& a_rhs): LagUnit(a_rhs.getName()) {}
 
 void syn::LagUnit::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
 	double input = a_inputs.getValue(0);
-	double fc = getParameter(m_pFc).getDouble() * a_inputs.getValue(m_iFcMul) + a_inputs.getValue(m_iFcAdd); // pitch cutoff
-	fc = 10e3 * CLAMP(fc, 0.0, 1.0) / getFs();
+	double fc = getParameter(m_pFc).getDouble() * a_inputs.getValue(m_iFcMul) + a_inputs.getValue(m_iFcAdd); // freq cutoff
+	fc = fc / getFs();
 	double wc = 2 * tan(DSP_PI * fc / 2.0);
 	double gain = wc / (1 + wc);
 	double trap_in = gain * (input - m_state);

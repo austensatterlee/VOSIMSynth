@@ -88,14 +88,14 @@ namespace syn
 		addChild(m_defCtrl);
 		addChild(m_resizeHandle);
 		m_resizeHandle->setDragCallback([&](const Vector2i& a_relPos, const Vector2i& a_diffPos) {
-			grow(a_diffPos);
+			grow(a_diffPos);			
 		});
 
 		Vector2i minSize{200,100};
-		Vector2i defCtrlSize = m_defCtrl->size();
+		Vector2i defCtrlSize = m_defCtrl->minSize();
 		minSize[1] += defCtrlSize[1];
 		minSize[0] = MAX(minSize[0], defCtrlSize[0]);
-		setMinSize_(minSize);
+		setMinSize(minSize);
 	}
 
 	Vector2i OscilloscopeUnitControl::toPixCoords(const Vector2f& a_sample) {
@@ -112,8 +112,8 @@ namespace syn
 	void OscilloscopeUnitControl::_onResize() {
 		m_screenPos = {0,m_defCtrl->size()[1]};
 		m_screenSize = size() - Vector2i{0,m_defCtrl->size()[1] + m_resizeHandle->size()[1]};
-		m_defCtrl->setSize({size()[0],m_defCtrl->size()[1]});
-		m_resizeHandle->setRelPos(size() - m_resizeHandle->size());
+		m_defCtrl->setSize({ size()[0],-1 });		
+		m_resizeHandle->setRelPos(size() - m_resizeHandle->size());	
 	}
 
 	void OscilloscopeUnitControl::draw(NVGcontext* a_nvg) {

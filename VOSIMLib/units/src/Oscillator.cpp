@@ -174,21 +174,19 @@ namespace syn
 		m_iFreqAdd(addInput_("freq")),
 		m_iFreqMul(addInput_("freq[x]", 1.0, Signal::EMul)),
 		m_iSync(addInput_("sync")),
-		m_syncedFreqParam(new UnitParameter("rate",
-		{ "1/64","1/32","3/64","1/16","3/32","1/8","1/4","3/8","1/2","3/4","1","3/2","2" },
-		{ 1.0 / 64,1.0 / 32,3.0 / 64,1.0 / 16,3.0 / 32,1.0 / 8,1.0 / 4,3.0 / 8,1.0 / 2,3.0 / 4,1.0,3.0 / 2,2 }, 0)),
-		m_linFreqParam(new UnitParameter("freq", 0.0, 30.0, 1.0)),
 		m_lastSync(0.0)
 	{
+		m_pBPMFreq = addParameter_({"rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM});
+		getParameter_(m_pBPMFreq).setVisible(false);
+		m_pFreq = addParameter_({ "freq", 0.01, 30.0, 1.0, UnitParameter::EUnitsType::Freq });
 		m_pWaveform = addParameter_(UnitParameter("waveform", WAVE_SHAPE_NAMES));
-		m_pFreq = addParameter_(*m_linFreqParam);
 		m_pTempoSync = addParameter_(UnitParameter("tempo sync", false));
 	}
 
-	LFOOscillator::~LFOOscillator() {
-		delete m_syncedFreqParam;
-		delete m_linFreqParam;
-	};
+	LFOOscillator::LFOOscillator(const LFOOscillator& a_rhs) :
+		LFOOscillator(a_rhs.getName())
+	{		
+	}
 
 	string LFOOscillator::_getClassName() const {
 		return "LFOOscillator";
@@ -201,7 +199,7 @@ namespace syn
 	void LFOOscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
 		// determine frequency
 		if (getParameter(m_pTempoSync).getBool()) {
-			m_freq = getTempo() / 60.0 * 1. / (a_inputs.getValue(m_iFreqMul) * (getParameter(m_pFreq).getEnum() + a_inputs.getValue(m_iFreqAdd)));
+			m_freq = bpmToFreq(a_inputs.getValue(m_iFreqMul) * (getParameter(m_pBPMFreq).getEnum() + a_inputs.getValue(m_iFreqAdd)), getTempo());
 		} else {
 			m_freq = a_inputs.getValue(m_iFreqMul) * (getParameter(m_pFreq).getDouble() + a_inputs.getValue(m_iFreqAdd));
 		}
@@ -225,13 +223,9 @@ namespace syn
 
 	void LFOOscillator::onParamChange_(int a_paramId) {
 		if (a_paramId == m_pTempoSync) {
-			double normFreq = getParameter(m_pFreq).getDouble();
-			if (getParameter(m_pTempoSync).getBool()) {
-				getParameter_(m_pFreq) = *m_syncedFreqParam;
-			} else {
-				getParameter_(m_pFreq) = *m_linFreqParam;
-			}
-			setParameter(m_pFreq, normFreq);
+			bool useTempoSync = getParameter(m_pTempoSync).getBool();
+			getParameter_(m_pFreq).setVisible(!useTempoSync);
+			getParameter_(m_pBPMFreq).setVisible(useTempoSync);
 		}
 	}
 }

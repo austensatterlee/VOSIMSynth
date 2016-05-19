@@ -26,7 +26,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "DSPMath.h"
-#include <tables.h>
+#include "tables.h"
 
 int syn::gcd(int a, int b) {
 	while (a != 0) {
@@ -49,6 +49,21 @@ double syn::blackman_harris(int a_k, size_t a_winSize) {
 double syn::pitchToFreq(double pitch) {
 	double freq = lut_pitch_table.getlinear(pitch);
 	return freq;
+}
+
+double syn::bpmToFreq(double bpm, double tempo)
+{
+	return tempo / 60.0 * 1. / bpm;
+}
+
+double syn::freqToSamples(double freq, double fs)
+{
+	return fs/freq;
+}
+
+double syn::periodToSamples(double seconds, double fs)
+{
+	return seconds*fs;
 }
 
 double syn::lin2db(double lin, double mindb, double maxdb) {

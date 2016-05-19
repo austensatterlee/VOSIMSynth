@@ -36,6 +36,10 @@ message (STATUS "Path to SFML is ${SFML_DIR}")
 message (STATUS "Build tool is ${CMAKE_BUILD_TOOL}")
 message (STATUS "System is ${CMAKE_SYSTEM_NAME}")
 
+##
+# Set compiler/linker settings
+##
+
 if (MINGW)
   set(CMAKE_CXX_FLAGS "-std=gnu++0x -fpermissive -wno-unknown-pragmas-wno-write-strings" CACHE STRING "")
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math  -D__NO_INLINE__" CACHE STRING "")
@@ -74,8 +78,9 @@ if(MSVC)
   # Linker optimizations
   # /LTCG link time code generation
   # /OPT:REF remove code that is never referenced
-  set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "/LTCG /INCREMENTAL:NO /OPT:REF")
-  set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/LTCG /INCREMENTAL:NO /OPT:REF")
+  # /OPT:ICF perform identical COMDAT folding
+  set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
+  set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
 endif()
 
 # configurations for all compilers
@@ -83,7 +88,6 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG" CACHE STRING "")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUGLIBPNG" CACHE STRING "")
 add_definitions(-DWDL_FFT_REALSIZE=8)
 add_definitions(-DPNG_NO_ASSEMBLER_CODE -DPNG_LIBPNG_SPECIALBUILD) 
-
 
 ################################
 # Collect sources
@@ -109,7 +113,9 @@ set(PROJECT_FILES ${PROJECT_SRCS};${PROJECT_HDRS})
 set(RESOURCE_FILES ${VOSIMSYNTH_DIR}/vosimsynth.rc ${VOSIMSYNTH_DIR}/include/resource.h)
 set_source_files_properties(${VOSIMSYNTH_DIR}/vosimsynth.rc LANGUAGE RC)
 
-# compile resources into C code to be compiled into the exe
+##
+# Compile resources into C code to be compiled into the exe
+##
 add_executable(bin2c ${RESOURCES_DIR}/bin2c.c)
 set(RES_BIN vosimsynth_resources.cpp vosimsynth_resources.h)
 set(bin2c_cmdline ${RES_BIN})

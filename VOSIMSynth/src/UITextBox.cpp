@@ -19,12 +19,13 @@ namespace syn
 		  mValueTemp(value),
 		  mCursorPos(-1),
 		  mSelectionPos(-1),
-		  mMousePos(Vector2i(-1, -1)),
-		  mMouseDownPos(Vector2i(-1, -1)),
-		  mMouseDragPos(Vector2i(-1, -1)),
+		  mMousePos(-1, -1),
+		  mMouseDownPos(-1, -1),
+		  mMouseDragPos(-1, -1),
 		  mMouseDownModifier(0),
 		  mTextOffset(0),
-		  mLastClick(0) {
+		  mLastClick(0) 
+	{
 		mFontSize = m_window->theme()->mTextBoxFontSize;
 		updateMinSize_();
 	}
@@ -37,21 +38,21 @@ namespace syn
 
 	void UITextBox::updateMinSize_() {
 		NVGcontext* ctx = m_window->getContext();
-		Vector2i size(0, mFontSize * 1.4f);
+		Vector2i minsize(0, mFontSize * 1.4f);
 
 		float uw = 0;
 		if (mUnitsImage > 0) {
 			int w, h;
 			nvgImageSize(ctx, mUnitsImage, &w, &h);
-			float uh = size(1) * 0.4f;
+			float uh = minsize(1) * 0.4f;
 			uw = w * uh / h;
 		} else if (!mUnits.empty()) {
 			uw = nvgTextBounds(ctx, 0, 0, mUnits.c_str(), nullptr, nullptr);
 		}
 
 		float ts = nvgTextBounds(ctx, 0, 0, mValue.c_str(), nullptr, nullptr);
-		size(0) = size(1) + ts + uw;
-		setMinSize_(size);
+		minsize(0) = minsize(1) + ts + uw;
+		setMinSize(minsize);
 	}
 
 	void UITextBox::draw(NVGcontext* ctx) {
@@ -341,7 +342,7 @@ namespace syn
 				}
 			} else if (key == sf::Keyboard::Return) {
 				if (!mCommitted)
-					onFocusEvent(false);
+					m_window->forfeitFocus(this);
 			} else if (key == sf::Keyboard::A && a_keyEvent.control) {
 				mCursorPos = (int)mValueTemp.length();
 				mSelectionPos = 0;

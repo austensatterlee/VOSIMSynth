@@ -28,11 +28,12 @@ Copyright 2016, Austen Satterlee
 #ifndef __UITEXTSLIDER__
 #define __UITEXTSLIDER__
 #include "UIComponent.h"
-#include <VoiceManager.h>
 #include "UITextBox.h"
 
 namespace syn
 {
+	class UnitParameter;
+
 	class UITextSlider : public UIComponent
 	{
 	public:
@@ -50,11 +51,15 @@ namespace syn
 		void _updateMinSize();
 	private:
 		double m_value;
-		string m_valueStr, m_paramName;
 		VoiceManager* m_vm;
 		UITextBox* m_textBox;
+		UIRow* m_row;
+		UILabel* m_nameLabel;
+		UILabel* m_valueLabel;
+		UILabel* m_unitsLabel;
 		int m_unitId;
 		int m_paramId;
+		const UnitParameter* m_param;
 
 		bool m_isValueDirty = false;
 	};

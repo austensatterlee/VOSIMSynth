@@ -30,7 +30,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <memory>
 #include <Containers.h>
 
-#define MAX_QUEUE_SIZE 64
+#define MAX_VOICEMANAGER_MSG_QUEUE_SIZE 64
 #define MAX_VOICES_PER_NOTE 8
 
 using std::map;
@@ -47,7 +47,7 @@ namespace syn
 	 * On the last voice, the second parameter will be true.
 	 * The third parameter is a pointer to the ByteChunk stored in this structure.
 	 */
-	struct ActionMessage
+	struct RTMessage
 	{
 		void (*action)(Circuit*, bool, ByteChunk*);
 		ByteChunk data;
@@ -57,7 +57,7 @@ namespace syn
 	{
 	public:
 		VoiceManager(shared_ptr<Circuit> a_proto, UnitFactory* a_factory) :
-			m_queuedActions(MAX_QUEUE_SIZE),
+			m_queuedActions(MAX_VOICEMANAGER_MSG_QUEUE_SIZE),
 			m_numActiveVoices(0),
 			m_maxVoices(0),
 			m_bufferSize(1),
@@ -78,7 +78,7 @@ namespace syn
 		/**
 		 * Safely queue a function to be called on the real-time thread in between samples.
 		 */
-		unsigned queueAction(ActionMessage* a_action);
+		unsigned queueAction(RTMessage* a_action);
 
 		unsigned getTickCount() const;
 
@@ -133,7 +133,7 @@ namespace syn
 		/**
 		 * Processes the next action from the action queue
 		 */
-		void _processAction(ActionMessage* a_msg);
+		void _processAction(RTMessage* a_msg);
 
 		int _createVoice(int a_note, int a_velocity);
 
@@ -153,7 +153,7 @@ namespace syn
 		typedef AtomicQueue<int> VoiceIndexList;
 		typedef map<int, AtomicQueue<int>> VoiceMap;
 
-		spsc_queue<ActionMessage*> m_queuedActions;
+		spsc_queue<RTMessage*> m_queuedActions;
 
 		unsigned m_numActiveVoices; /// Number of active voices
 		unsigned m_maxVoices; /// Total number of voices (idle voices + active voices)

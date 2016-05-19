@@ -244,7 +244,7 @@ namespace syn
 		return m_numActiveVoices;
 	}
 
-	unsigned VoiceManager::queueAction(ActionMessage* a_msg) {
+	unsigned VoiceManager::queueAction(RTMessage* a_msg) {
 		m_queuedActions.push(a_msg);
 		return m_tickCount;
 	}
@@ -254,13 +254,13 @@ namespace syn
 	}
 
 	void VoiceManager::_flushActionQueue() {
-		ActionMessage* msg;
+		RTMessage* msg;
 		while (m_queuedActions.pop(msg)) {
 			_processAction(msg);
 		}
 	}
 
-	void VoiceManager::_processAction(ActionMessage* a_msg) {
+	void VoiceManager::_processAction(RTMessage* a_msg) {
 		Circuit* voice;
 		// Apply action to all voices
 		for (int i = 0; i <= m_maxVoices; i++) {

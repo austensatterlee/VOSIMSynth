@@ -30,15 +30,20 @@ Copyright 2016, Austen Satterlee
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
-#include "sftools/Chronometer.hpp"
+#include <sftools/Chronometer.hpp>
+#include <boost/lockfree/spsc_queue.hpp>
+#include <boost/lockfree/policies.hpp>
+#include <list>
 
 #include "nanovg.h"
-#include "UnitFactory.h"
-#include "VoiceManager.h"
 #include "UI.h"
 #include "perf.h"
 
+#define MAX_GUI_MSG_QUEUE_SIZE 64
+
 using sf::Event;
+using boost::lockfree::spsc_queue;
+using boost::lockfree::capacity;
 
 namespace syn
 {
@@ -49,13 +54,26 @@ namespace syn
 		sf::Time time;
 	};
 
+	class VOSIMWindow;
+
+	struct GUIMessage
+	{
+		void(*action)(VOSIMWindow*, ByteChunk*);
+		ByteChunk data;
+	};
+
+	class VoiceManager;
+	class UnitFactory;
+
 	class VOSIMWindow
 	{
 	public:
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 		VOSIMWindow(int a_width, int a_height, VoiceManager* a_vm, UnitFactory* a_unitFactory) :
-			m_HInstance(0),
+			m_guiExternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE),
+			m_guiInternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE),
+			m_HInstance(nullptr),
 			m_childHandle1(nullptr),
 			m_childHandle2(nullptr),
 			m_size(a_width, a_height),
@@ -101,6 +119,8 @@ namespace syn
 
 		void clearFocus() { setFocus(nullptr); }
 
+		void forfeitFocus(UIComponent* a_comp);
+
 		Vector2i toWorldCoords(const Vector2i& a_pix) const;
 		Vector2i toPixelCoords(const Vector2i& a_world) const;
 
@@ -126,6 +146,8 @@ namespace syn
 		void setHInstance(HINSTANCE a_newHInstance) { m_HInstance = a_newHInstance; }
 		HINSTANCE getHInstance() const { return m_HInstance; }
 
+		void queueExternalMessage(GUIMessage* a_msg);
+
 #ifdef _WIN32
 		static LRESULT CALLBACK drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam);
 	public:
@@ -135,8 +157,12 @@ namespace syn
 		* Creates a child window from the given system window handle.
 		* \returns the system window handle for the child window.
 		*/
-		sf::WindowHandle sys_CreateChildWindow(sf::WindowHandle a_system_window);
-		void updateCursorPos(const Vector2i& newPos);
+		sf::WindowHandle _sys_CreateChildWindow(sf::WindowHandle a_system_window);
+		void _updateCursorPos(const Vector2i& newPos);
+
+		void _queueInternalMessage(GUIMessage* a_msg);
+		void _flushMessageQueues();
+		void _processMessage(GUIMessage* a_msg);
 	private:
 		HINSTANCE m_HInstance;
 		sf::WindowHandle m_childHandle1, m_childHandle2;
@@ -163,7 +189,7 @@ namespace syn
 
 		shared_ptr<Theme> m_theme;
 
-		PerfGraph m_fpsGraph, m_cpuGraph;
+		PerfGraph m_fpsGraph;
 		sftools::Chronometer m_timer;
 
 		NVGcontext* m_vg;
@@ -172,6 +198,9 @@ namespace syn
 		double m_zoom = 1.0;
 
 		map<unsigned, function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)>> m_unitControlMap;
+
+		spsc_queue<GUIMessage*> m_guiInternalMsgQueue;
+		spsc_queue<GUIMessage*> m_guiExternalMsgQueue;
 	};
 
 	template <typename UnitType>

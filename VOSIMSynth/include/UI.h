@@ -29,6 +29,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __UI__
 #define __UI__
 #include <IPlug/IPlugStructs.h>
+#include "Containers.h"
 #include <functional>
 #include <eigen/Core>
 #include <nanovg.h>
@@ -215,8 +216,8 @@ namespace syn
 	extern vector<pair<int, string>> loadImageDirectory(NVGcontext* ctx, const string& path);
 
 	/// Convenience function for instanting a PNG icon from the application's data segment (via bin2c)
-	#define nvgImageIcon(ctx, name) __nanogui_get_image(ctx, #name, name##_png, name##_png_size)
-	/// Helper function used by nvgImageIcon
+#define nvgImageIcon(ctx, name) __nanogui_get_image(ctx, #name, name##_png, name##_png_size)
+/// Helper function used by nvgImageIcon
 	int __nanogui_get_image(NVGcontext* ctx, const string& name, uint8_t* data, uint32_t size);
 
 	/* Cursor shapes */
@@ -309,5 +310,27 @@ namespace syn
 		vector<unique_ptr<UpdateCondition>> m_conds;
 		bool m_isFirstUpdate = true;
 	};
+
+	template<typename First, typename... Rest>
+	int PutArgs(ByteChunk* a_chunk, const First& a_first, const Rest&... a_rest) {
+		a_chunk->Put<First>(&a_first);
+		return PutArgs(a_chunk, a_rest...);
+	}
+
+	template<typename Only>
+	int PutArgs(ByteChunk* a_chunk, const Only& a_only) {
+		return a_chunk->Put<Only>(&a_only);
+	}
+
+	template<typename First, typename... Rest>
+	int GetArgs(ByteChunk* a_chunk, int a_startPos, First& a_first, Rest&... a_rest) {
+		a_startPos = a_chunk->Get<First>(&a_first, a_startPos);
+		return GetArgs(a_chunk, a_startPos, a_rest...);
+	}
+
+	template<typename Only>
+	int GetArgs(ByteChunk* a_chunk, int a_startPos, Only& a_only) {
+		return a_chunk->Get<Only>(&a_only, a_startPos);
+	}
 }
 #endif

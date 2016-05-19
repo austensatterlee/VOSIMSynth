@@ -40,7 +40,11 @@ namespace syn
 
 		void setFontSize(float a_newFontSize);
 
+		void setFontBlur(float a_fontBlur);
+
 		void setFontColor(const Color& a_newColor);
+
+		void setFontFace(int a_fontFaceId);
 
 		void setAlignment(int a_newAlign);
 
@@ -48,7 +52,11 @@ namespace syn
 
 		float fontSize() const;
 
+		float fontBlur() const;
+
 		const Color& fontColor() const;
+
+		int fontFace() const;		
 
 		int alignment() const;
 
@@ -62,8 +70,10 @@ namespace syn
 
 	private:
 		string m_text;
+		int m_fontFace;
 		Color m_color;
 		float m_fontSize;
+		float m_fontBlur;
 		int m_align;
 	};
 }

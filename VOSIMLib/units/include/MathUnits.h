@@ -116,7 +116,7 @@ namespace syn
 		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
 
 	private:
-		string _getClassName() const override;;
+		string _getClassName() const override;
 
 		Unit* _clone() const override;;
 

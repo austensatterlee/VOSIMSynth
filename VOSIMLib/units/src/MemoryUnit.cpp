@@ -38,8 +38,11 @@ namespace syn
 	}
 
 	void NSampleDelay::resizeBuffer(int a_newBufSize) {
-		m_buffer.resize(a_newBufSize);
-		m_bufferSize = m_buffer.size();
+		if (m_bufferSize == a_newBufSize)
+			return;
+		if(a_newBufSize>m_buffer.size())
+			m_buffer.resize(a_newBufSize);
+		m_bufferSize = a_newBufSize;
 		m_bufferIndex = MIN(m_bufferIndex, m_bufferSize - 1);
 	}
 
@@ -52,10 +55,21 @@ namespace syn
 	}
 
 	MemoryUnit::MemoryUnit(const string& a_name):
-		Unit(a_name),
-		m_pBufSize(addParameter_(UnitParameter("samples", 1, 16384, 1))) {
+		Unit(a_name)
+	{
+		m_delay.resizeBuffer(16384);
+
 		addInput_("in");
+		m_iSize = addInput_("size");
 		addOutput_("out");
+		m_pBufSize = addParameter_({ "samples", 1, 16384, 1 });
+		m_pBufDelay = addParameter_({ "delay", 0.001, 1.0, 0.001, UnitParameter::EUnitsType::Seconds});
+		m_pBufFreq = addParameter_({ "freq", 1.0, 10000.0, 1.0, UnitParameter::EUnitsType::Freq });
+		m_pBufBPMFreq = addParameter_({ "rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM });
+		getParameter_(m_pBufDelay).setVisible(false);
+		getParameter_(m_pBufFreq).setVisible(false);
+		getParameter_(m_pBufBPMFreq).setVisible(false);
+		m_pBufType = addParameter_(UnitParameter{ "units",{"samples","seconds","Hz","BPM"} });
 	}
 
 	MemoryUnit::MemoryUnit(const MemoryUnit& a_rhs):
@@ -70,16 +84,37 @@ namespace syn
 	}
 
 	void MemoryUnit::onParamChange_(int a_paramId) {
-		if (a_paramId == m_pBufSize) {
-			int newBufSize = getParameter(m_pBufSize).getInt();
-			m_delay.resizeBuffer(newBufSize);
-			if (newBufSize == 1) {
-				m_delay.clearBuffer();
-			}
+		if(a_paramId == m_pBufType)
+		{
+			int newtype = getParameter(m_pBufType).getInt();
+			getParameter_(m_pBufSize).setVisible(newtype==0);
+			getParameter_(m_pBufDelay).setVisible(newtype==1);
+			getParameter_(m_pBufFreq).setVisible(newtype==2);
+			getParameter_(m_pBufBPMFreq).setVisible(newtype==3);
 		}
 	}
 
 	void MemoryUnit::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
+		int buftype = getParameter(m_pBufType).getInt();
+		double sizemod = a_inputs.getValue(m_iSize);
+		int bufsamples;
+		switch(buftype)
+		{
+		case 3: // bpm
+			bufsamples = freqToSamples(bpmToFreq(getParameter(m_pBufBPMFreq).getEnum() + sizemod, getTempo()), getFs());
+			break;
+		case 2: // freq
+			bufsamples = freqToSamples(getParameter(m_pBufFreq).getDouble() + sizemod, getFs());
+			break;
+		case 1: // seconds
+			bufsamples = periodToSamples(getParameter(m_pBufDelay).getDouble() + sizemod, getFs());
+			break;
+		case 0: // samples
+		default:
+			bufsamples = getParameter(m_pBufSize).getInt() + sizemod;
+			break;
+		}
+		m_delay.resizeBuffer(bufsamples);
 		double input = a_inputs.getValue(0);
 		double output = m_delay.process(input);
 		a_outputs.setChannel(0, output);

@@ -10,11 +10,15 @@ syn::UIWindow::UIWindow(VOSIMWindow* a_window, const string& a_title):
 	addChild(m_col);
 
 	m_headerRow = new UIRow(a_window);
+	m_headerRow->setSelfResizePolicy(UICell::SACTIVE);
 	m_bodyRow = new UIRow(a_window);
 	m_bodyRow->setRelPos({0,theme()->mWindowHeaderHeight});
+	m_bodyRow->setSelfResizePolicy(UICell::SACTIVE);
 	m_col->addChild(m_headerRow);
 	m_col->addChild(m_bodyRow);
 	m_col->setPadding({5,1,5,5});
+	m_col->setChildResizePolicy(UICell::CMATCHMIN);
+	m_col->setSelfResizePolicy(UICell::SACTIVE);
 
 	m_title = new UILabel(a_window);
 	m_title->setText(a_title);
@@ -23,21 +27,15 @@ syn::UIWindow::UIWindow(VOSIMWindow* a_window, const string& a_title):
 	addChildToHeader(m_title);
 
 	m_headerRow->setGreedyChild(m_title, NVG_ALIGN_LEFT);
-	m_headerRow->setSelfResizePolicy(UICell::SNONE);
 	m_headerRow->setSize({-1,theme()->mWindowHeaderHeight});
-
-	m_col->setChildResizePolicy(UICell::CMATCHMIN);
-	m_col->setSelfResizePolicy(UICell::SFIT);
 }
 
 void syn::UIWindow::addChildToHeader(UIComponent* a_newChild) const {
 	m_headerRow->addChild(a_newChild);
-	m_headerRow->pack();
 }
 
 void syn::UIWindow::addChildToBody(UIComponent* a_newChild) const {
 	m_bodyRow->addChild(a_newChild);
-	m_bodyRow->pack();
 }
 
 bool syn::UIWindow::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
@@ -53,23 +51,27 @@ syn::UIComponent* syn::UIWindow::onMouseDown(const Vector2i& a_relCursor, const 
 		return child;
 
 	if (a_relCursor.y() - m_pos.y() < theme()->mWindowHeaderHeight) {
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
+		if (a_isDblClick) {
 			toggleCollapsed();
 		}
-		return this;
+		else {
+			return this;
+		}
 	}
 	return nullptr;
 }
 
 void syn::UIWindow::notifyChildResized(UIComponent* a_child) {
 	Vector2i minSize = {0,0};
+	Vector2i newSize = {0,0};
 	for (shared_ptr<UIComponent> child : m_children) {
 		Vector2i childExtent = child->getRelPos() + child->size();
-		minSize = minSize.cwiseMax(childExtent);
+		Vector2i minChildExtent = child->getRelPos() + child->minSize();
+		newSize = newSize.cwiseMax(childExtent);
+		minSize = minSize.cwiseMax(minChildExtent);
 	}
-	setMinSize_(minSize);
-	setSize(minSize);
-	m_col->pack();
+	setMinSize(minSize);
+	setSize(newSize);
 }
 
 void syn::UIWindow::toggleCollapsed() {
@@ -84,13 +86,13 @@ void syn::UIWindow::collapse() {
 	m_oldSize = m_size;
 	m_oldMinSize = minSize();
 	m_bodyRow->setVisible(false);
-	setMinSize_({m_size[0], theme()->mWindowHeaderHeight});
+	setMinSize({m_size[0], theme()->mWindowHeaderHeight});
 	setSize({m_size[0],theme()->mWindowHeaderHeight});
 }
 
 void syn::UIWindow::expand() {
 	m_isCollapsed = false;
-	setMinSize_(m_oldMinSize);
+	setMinSize(m_oldMinSize);
 	setSize(m_oldSize);
 	m_bodyRow->setVisible(true);
 }

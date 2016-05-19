@@ -61,11 +61,9 @@ namespace syn
 		double m_prevBPOut, m_prevLPOut;
 		double m_F, m_Q;
 
-		const double c_minFreq = 80.0;
-		const double c_maxFreq = 10000.0;
 		const double c_minRes = 1.0;
 		const double c_maxRes = 10.0;
-		const int c_oversamplingFactor = 4;
+		const int c_oversamplingFactor = 8;
 	};
 }
 #endif

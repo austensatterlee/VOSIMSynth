@@ -47,14 +47,14 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 }
 
 void VOSIMSynth::makeGraphics() {
-	m_vosimWindow = new VOSIMWindow(GUI_WIDTH, GUI_HEIGHT, m_voiceManager, m_unitFactory);
-	m_vosimWindow->setHInstance(gHInstance);
-	AttachAppWindow(m_vosimWindow);
+	VOSIMWindow* vosimWindow = new VOSIMWindow(GUI_WIDTH, GUI_HEIGHT, m_voiceManager, m_unitFactory);
+	vosimWindow->setHInstance(gHInstance);
+	AttachAppWindow(vosimWindow);
 
-	m_vosimWindow->registerUnitControl<OscilloscopeUnit>([](VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId)-> UIUnitControl* {
+	vosimWindow->registerUnitControl<OscilloscopeUnit>([](VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId)-> UIUnitControl* {
 		return new OscilloscopeUnitControl(a_window, a_vm, a_unitId);
 	});
-	m_vosimWindow->registerUnitControl<SpectroscopeUnit>([](VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId)-> UIUnitControl* {
+	vosimWindow->registerUnitControl<SpectroscopeUnit>([](VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId)-> UIUnitControl* {
 		return new SpectroscopeUnitControl(a_window, a_vm, a_unitId);
 	});
 }
@@ -102,8 +102,6 @@ void VOSIMSynth::makeInstrument() {
 VOSIMSynth::~VOSIMSynth() {
 	if (m_voiceManager)
 	DELETE_NULL(m_voiceManager);
-	if (m_vosimWindow)
-	DELETE_NULL(m_vosimWindow);
 	if (m_unitFactory)
 	DELETE_NULL(m_unitFactory);
 	if (m_MIDIReceiver)
@@ -134,16 +132,16 @@ void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg) {
 }
 
 bool VOSIMSynth::SerializeState(ByteChunk* pChunk) {
-	if (m_vosimWindow->isInitialized()) {
+	if (GetAppWindow()->isInitialized()) {
 		m_voiceManager->save(pChunk);
-		m_vosimWindow->save(pChunk);
+		GetAppWindow()->save(pChunk);
 		return true;
 	}
 	return false;
 }
 
 int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
-	if (m_vosimWindow->isInitialized()) {
+	if (GetAppWindow()->isInitialized()) {
 		m_unitFactory->resetBuildCounts();
 
 		//		ActionMessage* msg = new ActionMessage();
@@ -170,9 +168,9 @@ int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
 		//		msg->data.Put<ByteChunk*>(&pChunk);
 		//		msg->data.Put<VoiceManager*>(&m_voiceManager);
 		//		msg->data.Put<VOSIMWindow*>(&m_vosimWindow);
-		m_vosimWindow->reset();
+		GetAppWindow()->reset();
 		startPos = m_voiceManager->load(pChunk, startPos);
-		startPos = m_vosimWindow->load(pChunk, startPos);
+		startPos = GetAppWindow()->load(pChunk, startPos);
 	}
 	return startPos;
 }
