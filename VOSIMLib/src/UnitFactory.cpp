@@ -14,7 +14,7 @@ void syn::UnitFactory::addUnitPrototype(string a_group_name, Unit* a_unit) {
 
 set<string> syn::UnitFactory::getGroupNames() const {
 	set<string> groupnames;
-	for (string groupname: m_group_names) {
+	for (string groupname : m_group_names) {
 		if (groupname != "")
 			groupnames.insert(groupname);
 	}
@@ -38,7 +38,8 @@ syn::Unit* syn::UnitFactory::createUnit(int a_protoNum, const string& a_name) {
 	string newname;
 	if (!a_name.empty() && m_generatedNameHistory.find(a_name) == m_generatedNameHistory.end()) {
 		newname = a_name;
-	} else {
+	}
+	else {
 		char namebuf[MAX_UNIT_NAME_LEN];
 		do {
 			snprintf(namebuf, 256, "%s_%d", unit->getName().c_str(), m_prototypes[a_protoNum]->build_count);
@@ -141,8 +142,10 @@ int syn::UnitFactory::loadUnit(ByteChunk* a_data, int a_startPos, Unit** a_unit,
 		int prec;
 		startPos = a_data->Get<double>(&val, startPos);
 		startPos = a_data->Get<int>(&prec, startPos);
-		(*a_unit)->getParameter_(i).set(val);
-		(*a_unit)->getParameter_(i).setPrecision(prec);
+		if ((*a_unit)->hasParameter(i)) {
+			(*a_unit)->setParameter(i, val);
+			(*a_unit)->setParameterPrecision(i, prec);
+		}
 	}
 	for (int i = 0; i < nParams; i++) {
 		(*a_unit)->onParamChange_(i);

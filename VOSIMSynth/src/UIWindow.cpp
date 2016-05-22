@@ -3,22 +3,20 @@
 #include "UILabel.h"
 #include "Theme.h"
 
-syn::UIWindow::UIWindow(VOSIMWindow* a_window, const string& a_title):
-	UIComponent{a_window},
+syn::UIWindow::UIWindow(VOSIMWindow* a_window, const string& a_title) :
+	UIComponent{ a_window },
 	m_isCollapsed(false) {
 	m_col = new UICol(a_window);
 	addChild(m_col);
 
 	m_headerRow = new UIRow(a_window);
-	m_headerRow->setSelfResizePolicy(UICell::SACTIVE);
 	m_bodyRow = new UIRow(a_window);
-	m_bodyRow->setRelPos({0,theme()->mWindowHeaderHeight});
-	m_bodyRow->setSelfResizePolicy(UICell::SACTIVE);
+	m_bodyRow->setRelPos({ 0,theme()->mWindowHeaderHeight });
+	m_bodyRow->setPadding({ 0,5,0,5 });
+	m_col->setChildResizePolicy(UICell::CMATCHMIN);
+	m_col->setPadding({ 5,0,5,0 });
 	m_col->addChild(m_headerRow);
 	m_col->addChild(m_bodyRow);
-	m_col->setPadding({5,1,5,5});
-	m_col->setChildResizePolicy(UICell::CMATCHMIN);
-	m_col->setSelfResizePolicy(UICell::SACTIVE);
 
 	m_title = new UILabel(a_window);
 	m_title->setText(a_title);
@@ -27,7 +25,7 @@ syn::UIWindow::UIWindow(VOSIMWindow* a_window, const string& a_title):
 	addChildToHeader(m_title);
 
 	m_headerRow->setGreedyChild(m_title, NVG_ALIGN_LEFT);
-	m_headerRow->setSize({-1,theme()->mWindowHeaderHeight});
+	m_headerRow->setSize({ -1,theme()->mWindowHeaderHeight });
 }
 
 void syn::UIWindow::addChildToHeader(UIComponent* a_newChild) const {
@@ -62,8 +60,8 @@ syn::UIComponent* syn::UIWindow::onMouseDown(const Vector2i& a_relCursor, const 
 }
 
 void syn::UIWindow::notifyChildResized(UIComponent* a_child) {
-	Vector2i minSize = {0,0};
-	Vector2i newSize = {0,0};
+	Vector2i minSize = { 0,0 };
+	Vector2i newSize = { 0,0 };
 	for (shared_ptr<UIComponent> child : m_children) {
 		Vector2i childExtent = child->getRelPos() + child->size();
 		Vector2i minChildExtent = child->getRelPos() + child->minSize();
@@ -86,8 +84,8 @@ void syn::UIWindow::collapse() {
 	m_oldSize = m_size;
 	m_oldMinSize = minSize();
 	m_bodyRow->setVisible(false);
-	setMinSize({m_size[0], theme()->mWindowHeaderHeight});
-	setSize({m_size[0],theme()->mWindowHeaderHeight});
+	setMinSize({ m_size[0], theme()->mWindowHeaderHeight });
+	setSize({ m_size[0],theme()->mWindowHeaderHeight });
 }
 
 void syn::UIWindow::expand() {
@@ -111,7 +109,7 @@ void syn::UIWindow::draw(NVGcontext* a_nvg) {
 
 	/* Draw a drop shadow */
 	NVGpaint shadowPaint = nvgBoxGradient(a_nvg, 0, 0, m_size[0], m_size[1], cr * 2, ds * 2,
-	                                      nvgRGBA(0, 0, 0, 255), nvgRGBA(255, 255, 255, 0));
+		nvgRGBA(0, 0, 0, 255), nvgRGBA(255, 255, 255, 0));
 
 	nvgBeginPath(a_nvg);
 	nvgRect(a_nvg, 0 - ds, 0 - ds, m_size[0] + 2 * ds, m_size[1] + 2 * ds);

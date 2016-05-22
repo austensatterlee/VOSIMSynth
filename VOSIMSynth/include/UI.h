@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 /**
 *  \file UI.h
 *  \brief Common UI functions and definitions
@@ -28,10 +27,9 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __UI__
 #define __UI__
-#include <IPlug/IPlugStructs.h>
 #include "Containers.h"
-#include <functional>
 #include <eigen/Core>
+#include <functional>
 #include <nanovg.h>
 #include <vector>
 #include <memory>
@@ -311,6 +309,10 @@ namespace syn
 		bool m_isFirstUpdate = true;
 	};
 
+	/**
+	 * Packs an ordered sequence of variables into a byte array. The variables may be of any type.
+	 * \returns The total number of bytes used to store the arguments.
+	 */
 	template<typename First, typename... Rest>
 	int PutArgs(ByteChunk* a_chunk, const First& a_first, const Rest&... a_rest) {
 		a_chunk->Put<First>(&a_first);
@@ -322,6 +324,10 @@ namespace syn
 		return a_chunk->Put<Only>(&a_only);
 	}
 
+	/**
+	 * Unpacks a byte array into the given sequence of variables, in the order they are given. The variables may be of any type.
+	 * \returns The next offset of the byte array to be read.
+	 */
 	template<typename First, typename... Rest>
 	int GetArgs(ByteChunk* a_chunk, int a_startPos, First& a_first, Rest&... a_rest) {
 		a_startPos = a_chunk->Get<First>(&a_first, a_startPos);

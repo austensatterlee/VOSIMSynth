@@ -10,10 +10,15 @@ syn::UIUnitControlContainer::UIUnitControlContainer(VOSIMWindow* a_window, Voice
 	UIWindow{a_window, a_vm->getUnit(a_unitId).getName()},
 	m_vm(a_vm),
 	m_unitId(a_unitId),
-	m_unitControl(a_unitControl) {
+	m_unitControl(a_unitControl) 
+{
 	m_row = new UIRow(m_window);
+	m_row->setChildResizePolicy(UICell::CNONE);
+	m_row->setChildrenSpacing(5);
 	m_cols[0] = new UICol(m_window);
+	m_cols[0]->setChildResizePolicy(UICell::CMATCHMIN);
 	m_cols[1] = new UICol(m_window);
+	m_cols[1]->setChildResizePolicy(UICell::CMATCHMIN);
 
 	const Unit& unit = m_vm->getUnit(m_unitId);
 	int nIn = unit.getNumInputs();
@@ -33,11 +38,9 @@ syn::UIUnitControlContainer::UIUnitControlContainer(VOSIMWindow* a_window, Voice
 	m_row->addChild(m_cols[0]);
 	m_row->addChild(a_unitControl);
 	m_row->addChild(m_cols[1]);
-	m_row->setChildResizePolicy(UICell::CNONE);
-	m_row->setSelfResizePolicy(UICell::SACTIVE);
-	m_row->setPadding({ 0,1,0,1 });
-	m_row->setChildrenSpacing(5);
+	m_row->setGreedyChild(m_cols[1], NVG_ALIGN_RIGHT);
 	addChildToBody(m_row);
+	m_bodyRow->setGreedyChild(m_row,NVG_ALIGN_RIGHT);
 
 	m_closeButton = new UIButton(a_window, "", 0xE729);
 	m_closeButton->setCallback([&]() {

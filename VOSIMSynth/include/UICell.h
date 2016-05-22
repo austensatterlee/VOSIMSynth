@@ -41,8 +41,8 @@ namespace syn
 	public:
 		enum ChildResizePolicy
 		{
-			CMIN,
 			CNONE,
+			CMIN,
 			CMATCHMIN,
 			CMATCHMAX,
 			CMAX
@@ -50,22 +50,25 @@ namespace syn
 
 		enum SelfMinSizePolicy
 		{
-			SMIN,
 			SNONE,
+			SMIN,
 			SFIT
 		};
 
 		enum SelfResizePolicy
 		{
-			SACTIVE,
-			SPASSIVE
+			SRNONE,
+			SRMIN,
+			SRFIT
 		};
 
 	public:
 		UICell(VOSIMWindow* a_window);
 
 		void notifyChildResized(UIComponent* a_child) override {
-			pack();
+			if (m_packOnChildResize) {
+				pack();
+			}
 		}
 
 		/**
@@ -153,6 +156,7 @@ namespace syn
 		void _onResize() override {
 			layoutChildren_();
 			resizeChildren_();
+			updateMinSize_();
 		}
 
 	protected:
@@ -165,6 +169,8 @@ namespace syn
 		int m_childSpacing;
 		Vector2i m_maxChildSize;
 		Vector2i m_maxChildMinSize;
+
+		bool m_packOnChildResize;
 	};
 
 	/**

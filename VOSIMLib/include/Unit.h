@@ -74,7 +74,7 @@ namespace syn
 
 		explicit Unit(const string& a_name);
 
-		virtual ~Unit() { };
+		virtual ~Unit() { }
 
 		void MSFASTCALL tick() GCCFASTCALL;
 
@@ -102,6 +102,9 @@ namespace syn
 		virtual bool isActive() const;
 
 		const Circuit* getParent() const;
+
+		template <typename ID>
+		bool hasParameter(const ID& a_paramId) const;
 
 		template <typename ID>
 		const UnitParameter& getParameter(const ID& a_identifier) const;
@@ -242,6 +245,12 @@ namespace syn
 	UnitParameter& Unit::getParameter_(const ID& a_identifier) {
 		return m_parameters[a_identifier];
 	};
+
+	template <typename ID>
+	bool Unit::hasParameter(const ID& a_paramId) const
+	{
+		return m_parameters.find(a_paramId);
+	}
 
 	template <typename ID>
 	const UnitParameter& Unit::getParameter(const ID& a_identifier) const {

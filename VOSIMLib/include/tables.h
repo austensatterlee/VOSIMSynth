@@ -20,7 +20,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __TABLES__
 #define __TABLES__
 
-#define DO_LERP_FOR_SINC
+//#define DO_LERP_FOR_SINC
 
 /*::macro_defs::*/
 /*::/macro_defs::*/
@@ -116,14 +116,23 @@ namespace syn
 	/*::/lut_defs::*/
 
 	/**
-	 * Retrieve a single sample from table as if it were resampled to have the specified period. 
-	 * Uses fractional sinc interpolation/decimation.
+	 * Retrieve a single sample from table as if it were resampled to have the specified period, using fractional sinc interpolation/decimation.
+	 * \param size the size of the input table
+	 * \param phase the desired phase to sample at, in the range [0,1).
+	 * \param period the desired period to resample at (in fractional number of samples)
 	 */
 	double getresampled_single(const double* table, int size, double phase, double period, const BlimpTable& blimp_table);
 	/**
-	 * Resample an entire table to have the specified period and store the result in resampled_table (which should already be allocated).
-	 * Uses fractional sinc interpolation/decimation.
+	 * Resample an entire table to have the specified period and store the result in resampled_table (which should already be allocated), using fractional sinc interpolation/decimation.
+	 * \param size the size of the input table
+	 * \param resampled_table a pointer to the output table
+	 * \param period the desired period to resample at (in fractional number of samples). The allocated size of the output table should be ceil(period).
 	 */
-	void resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table);
+	void resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table, bool normalize=false);
+
+	/** 
+	 * \todo
+	 */
+	void fft_resample_table(const double* table, int size, double* resampled_table, double period);
 }
 #endif

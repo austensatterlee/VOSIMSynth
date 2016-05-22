@@ -25,18 +25,18 @@ syn::UITextSlider::UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a
 	addChild(m_textBox);
 
 	m_row = new UIRow(a_window);
-	m_row->setChildrenSpacing(2);
+	m_row->setChildrenSpacing(0);
 	m_nameLabel = new UILabel(a_window);
 	m_nameLabel->setFontSize(14.0);
-	m_nameLabel->setAlignment(NVG_ALIGN_BOTTOM | NVG_ALIGN_LEFT);
+	m_nameLabel->setAlignment(NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT);
 	m_valueLabel = new UILabel(a_window);
-	m_valueLabel->setFontColor(Color{ 1.0f,1.0f,0.85f,1.0f });
-	m_valueLabel->setAlignment(NVG_ALIGN_BOTTOM | NVG_ALIGN_RIGHT);
-	m_valueLabel->setFontSize(14.0);
+	m_valueLabel->setFontColor(Color{ 1.0f,1.0f,0.80f,1.0f });
+	m_valueLabel->setAlignment(NVG_ALIGN_MIDDLE | NVG_ALIGN_RIGHT);
+	m_valueLabel->setFontSize(13.0);
 	m_unitsLabel = new UILabel(a_window);
-	m_unitsLabel->setFontSize(14.0);
-	m_unitsLabel->setFontColor(Color{ 1.0f,1.0f,1.0f,0.8f });
-	m_unitsLabel->setAlignment(NVG_ALIGN_BOTTOM | NVG_ALIGN_RIGHT);
+	m_unitsLabel->setFontSize(13.0);
+	m_unitsLabel->setFontColor(Color{ 1.0f,1.0f,1.0f,0.7f });
+	m_unitsLabel->setAlignment(NVG_ALIGN_MIDDLE | NVG_ALIGN_RIGHT);
 	m_row->addChild(m_nameLabel);
 	m_row->addChild(m_valueLabel);
 	m_row->addChild(m_unitsLabel);
@@ -70,6 +70,7 @@ bool syn::UITextSlider::onMouseDrag(const Vector2i& a_relCursor, const Vector2i&
 		msg->data.Put<int>(&m_paramId);
 		msg->data.Put<double>(&currValue);
 		m_vm->queueAction(msg);
+		m_isValueDirty = true;
 		return true;
 	}
 	return false;
@@ -91,6 +92,7 @@ syn::UIComponent* syn::UITextSlider::onMouseDown(const Vector2i& a_relCursor, co
 		};
 		PutArgs(&msg->data, m_unitId, m_paramId, newValue);
 		m_vm->queueAction(msg);
+		m_isValueDirty = true;
 		return nullptr;
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)) {
@@ -126,6 +128,7 @@ bool syn::UITextSlider::onMouseScroll(const Vector2i& a_relCursor, const Vector2
 		a_circuit->setInternalParameter(unitId, paramId, currValue);
 	};
 	m_vm->queueAction(msg);
+	m_isValueDirty = true;
 	return true;
 }
 
@@ -139,6 +142,7 @@ void syn::UITextSlider::setValueFromString(const string& a_str) {
 		a_circuit->setInternalParameterFromString(unitId, paramId, valStr);
 	};
 	m_vm->queueAction(msg);
+	m_isValueDirty = true;
 }
 
 void syn::UITextSlider::draw(NVGcontext* a_nvg) {
@@ -151,7 +155,7 @@ void syn::UITextSlider::draw(NVGcontext* a_nvg) {
 		}
 
 		nvgBeginPath(a_nvg);
-		nvgFillColor(a_nvg, Color(Vector3f{0.0f,0.0f,0.0f},0.1f));
+		nvgFillColor(a_nvg, Color(Vector3f{ 0.4f,0.1f,0.7f }*0.25,0.7f));
 		nvgRect(a_nvg, 0, 0, size()[0], size()[1]);
 		nvgFill(a_nvg);
 
@@ -182,4 +186,5 @@ void syn::UITextSlider::_updateValue() {
 	m_textBox->setValue(m_valueLabel->text());
 	m_textBox->setUnits(m_unitsLabel->text());
 	_updateMinSize();
+	_onResize();
 }

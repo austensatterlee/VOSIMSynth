@@ -40,6 +40,7 @@ syn::StateVariableFilter::StateVariableFilter(const string& a_name):
 
 void syn::StateVariableFilter::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
 	double fc = a_inputs.getValue(m_iFcMul) * getParameter(m_pFc).getDouble() + a_inputs.getValue(m_iFcAdd);
+	fc = CLAMP(fc, getParameter(m_pFc).getMin(), getParameter(m_pFc).getMax());
 	m_F = 2 * lut_sin.getlinear(0.5 * fc / (getFs() * c_oversamplingFactor));
 
 	double input_res = a_inputs.getValue(m_iResMul) * getParameter(m_pRes).getDouble() + a_inputs.getValue(m_iResAdd);

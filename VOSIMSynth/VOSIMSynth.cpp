@@ -71,7 +71,8 @@ void VOSIMSynth::makeInstrument() {
 	m_unitFactory->addUnitPrototype("Modulators", new ADSREnvelope("ADSR"));
 	m_unitFactory->addUnitPrototype("Modulators", new LFOOscillator("LFO"));
 
-	m_unitFactory->addUnitPrototype("DSP", new MemoryUnit("Memory"));
+	m_unitFactory->addUnitPrototype("DSP", new MemoryUnit("Delay"));
+	m_unitFactory->addUnitPrototype("DSP", new ResampleUnit("Delay2"));
 	m_unitFactory->addUnitPrototype("DSP", new PanningUnit("Pan"));
 	m_unitFactory->addUnitPrototype("DSP", new FollowerUnit("Follow"));
 	m_unitFactory->addUnitPrototype("DSP", new DCRemoverUnit("DC Trap"));
@@ -84,7 +85,7 @@ void VOSIMSynth::makeInstrument() {
 	m_unitFactory->addUnitPrototype("Math", new RectifierUnit("Rect"));
 
 	m_unitFactory->addUnitPrototype("MIDI", new GateUnit("Gate"));
-	m_unitFactory->addUnitPrototype("MIDI", new MidiNoteUnit("Pitch"));
+	m_unitFactory->addUnitPrototype("MIDI", new MidiNoteUnit("CV"));
 	m_unitFactory->addUnitPrototype("MIDI", new VelocityUnit("Vel"));
 	m_unitFactory->addUnitPrototype("MIDI", new MidiCCUnit("CC"));
 
@@ -101,11 +102,11 @@ void VOSIMSynth::makeInstrument() {
 
 VOSIMSynth::~VOSIMSynth() {
 	if (m_voiceManager)
-	DELETE_NULL(m_voiceManager);
+		DELETE_NULL(m_voiceManager);
 	if (m_unitFactory)
-	DELETE_NULL(m_unitFactory);
+		DELETE_NULL(m_unitFactory);
 	if (m_MIDIReceiver)
-	DELETE_NULL(m_MIDIReceiver);
+		DELETE_NULL(m_MIDIReceiver);
 }
 
 void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) {

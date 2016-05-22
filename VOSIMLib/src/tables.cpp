@@ -21,6 +21,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "DSPMath.h"
 #include <cstdlib>
 #include <math.h>
+#include "../../libs/wdl/fft.h"
 
 namespace syn
 {
@@ -89,7 +90,7 @@ namespace syn
 			int table_size = static_cast<size_t>(currsize);
 			m_resampled_tables[i] = static_cast<double*>(malloc(sizeof(double) * table_size));
 			m_resampled_sizes[i] = currsize;
-			resample_table(m_table, m_size, m_resampled_tables[i], currsize, blimp_table_offline);
+			resample_table(m_table, m_size, m_resampled_tables[i], currsize, blimp_table_offline, true);
 			currsize *= 0.5;
 		}
 	}
@@ -110,7 +111,7 @@ namespace syn
 		return getresampled_single(m_resampled_tables[min_size_diff_index], m_resampled_sizes[min_size_diff_index], phase, period, m_blimp_table_online);
 	}
 
-	void resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table) {
+	void resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table, bool normalize) {
 		double phase = 0;
 		double phase_step = 1. / period;
 		double maxval = 0;
@@ -119,11 +120,17 @@ namespace syn
 			maxval = MAX(resampled_table[i], maxval);
 		}
 		/* normalize */
-		if (maxval != 0) {
-			for (int i = 0; i < period; i++) {
-				resampled_table[i] /= maxval;
+		if (normalize) {
+			if (maxval != 0) {
+				for (int i = 0; i < period; i++) {
+					resampled_table[i] /= maxval;
+				}
 			}
 		}
+	}
+
+	void fft_resample_table(const double* table, int size, double* resampled_table, double period)
+	{
 	}
 
 	double getresampled_single(const double* table, int size, double phase, double period, const BlimpTable& blimp_table) {

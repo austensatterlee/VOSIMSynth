@@ -50,10 +50,12 @@ namespace syn
 
 		/* Port */
 		mPortFontSize = 12;
-		mInputPortBG = Color(Vector3f{0.55f , 0.775f, 1.f}, 0.12f);
+
+		mInputPortBG = Color(Vector3f{0.55f , 0.775f, 1.f}, 0.22f);
 		mInputPortHighlightedBG = Color(Vector3f{0.55f , 0.775f, 1.f}, 0.42f);
-		mOutputPortBG = Color(Vector3f{0.55f , 0.775f, 1.f}, 0.12f);
-		mOutputPortHighlightedBG = Color(Vector3f{0.83f , 0.76f, 0.66f}, 0.42f);
+
+		mOutputPortBG = Color(Vector3f{ 0.83f , 0.76f, 0.66f }.normalized(), 0.22f);
+		mOutputPortHighlightedBG = Color(Vector3f{0.83f , 0.76f, 0.66f}.normalized(), 0.42f);
 
 		/* Unit selector */
 		mUnitSelectorProtoFontSize = 16;

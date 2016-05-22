@@ -87,6 +87,7 @@ syn::LagUnit::LagUnit(const LagUnit& a_rhs): LagUnit(a_rhs.getName()) {}
 void syn::LagUnit::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
 	double input = a_inputs.getValue(0);
 	double fc = getParameter(m_pFc).getDouble() * a_inputs.getValue(m_iFcMul) + a_inputs.getValue(m_iFcAdd); // freq cutoff
+	fc = CLAMP(fc, getParameter(m_pFc).getMin(), getParameter(m_pFc).getMax());
 	fc = fc / getFs();
 	double wc = 2 * tan(DSP_PI * fc / 2.0);
 	double gain = wc / (1 + wc);

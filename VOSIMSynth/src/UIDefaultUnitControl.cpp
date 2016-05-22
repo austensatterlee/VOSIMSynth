@@ -5,7 +5,7 @@ syn::DefaultUnitControl::DefaultUnitControl(VOSIMWindow* a_window, VoiceManager*
 {
 	m_col = new UICol(a_window);
 	m_col->setChildResizePolicy(UICell::CMAX);
-	m_col->setSelfMinSizePolicy(UICell::SMIN);
+	m_col->setSelfResizePolicy(UICell::SRFIT);
 	addChild(m_col);
 
 	const Unit& unit = a_vm->getUnit(a_unitId);
@@ -15,6 +15,7 @@ syn::DefaultUnitControl::DefaultUnitControl(VOSIMWindow* a_window, VoiceManager*
 		m_paramControls.push_back(paramControl);
 		m_col->addChild(paramControl);
 	}
+	m_col->pack();
 }
 
 void syn::DefaultUnitControl::notifyChildResized(UIComponent* a_child)
@@ -27,15 +28,19 @@ void syn::DefaultUnitControl::draw(NVGcontext* a_nvg)
 {
 	const Unit& unit = m_vm->getUnit(m_unitId);
 	int i = 0;
+	bool isDirty = false;
 	for (UITextSlider* txt_slider : m_paramControls)
 	{
 		const UnitParameter& param = unit.getParameter(i);
 		if(param.isVisible()!=txt_slider->visible())
 		{
 			txt_slider->setVisible(param.isVisible());
-			m_col->pack();
+			isDirty = true;
 		}
 		i++;
+	}
+	if (isDirty) {
+		m_col->pack();
 	}
 }
 

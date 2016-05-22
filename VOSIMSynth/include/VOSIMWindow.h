@@ -74,8 +74,7 @@ namespace syn
 			m_guiExternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE),
 			m_guiInternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE),
 			m_HInstance(nullptr),
-			m_childHandle1(nullptr),
-			m_childHandle2(nullptr),
+			m_timerWindow(nullptr),
 			m_size(a_width, a_height),
 			m_cursor({0,0}),
 			m_isClicked(false),
@@ -150,7 +149,6 @@ namespace syn
 
 #ifdef _WIN32
 		static LRESULT CALLBACK drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam);
-	public:
 #endif
 	private:
 		/**
@@ -164,8 +162,10 @@ namespace syn
 		void _flushMessageQueues();
 		void _processMessage(GUIMessage* a_msg);
 	private:
+#ifdef _WIN32
 		HINSTANCE m_HInstance;
-		sf::WindowHandle m_childHandle1, m_childHandle2;
+#endif
+		sf::WindowHandle m_timerWindow;
 		Vector2i m_size;
 		Vector2i m_cursor;
 		Vector2i m_dCursor;

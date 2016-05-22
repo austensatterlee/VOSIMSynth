@@ -3,14 +3,15 @@
 syn::UICell::UICell(VOSIMWindow* a_window): 
 	UIComponent(a_window),
 	m_greedyChild(nullptr),
-	m_childResizePolicy(CMATCHMAX),
-	m_selfMinSizePolicy(SFIT), 
-	m_selfResizePolicy(SPASSIVE),
+	m_childResizePolicy(CNONE),
+	m_selfMinSizePolicy(SMIN), 
+	m_selfResizePolicy(SRFIT),
 	m_greedyChildAlign(NVG_ALIGN_TOP),
 	m_padding{0,0,0,0},
 	m_childSpacing(1),
 	m_maxChildMinSize(0,0),
-	m_maxChildSize(0,0)
+	m_maxChildSize(0,0),
+	m_packOnChildResize(true)
 {}
 
 void syn::UICell::setGreedyChild(UIComponent* a_child, int a_align)
@@ -115,11 +116,13 @@ void syn::UICol::layoutChildren_()
 
 void syn::UICol::resizeChildren_()
 {
+	bool oldPackOnChildResize = m_packOnChildResize;
+	m_packOnChildResize = false;
 	// Resize children according to ChildResizePolicy
 	for (shared_ptr<UIComponent> child : m_children) {
 		switch (m_childResizePolicy) {
 		case CMIN:
-			child->setSize(child->minSize());
+			child->setSize({child->minSize()[0], -1});
 			break;
 		case CMATCHMIN:
 			child->setSize({ m_maxChildMinSize[0], -1 });
@@ -133,34 +136,35 @@ void syn::UICol::resizeChildren_()
 		default: break;
 		}
 	}
+	m_packOnChildResize = oldPackOnChildResize;
 }
 
 void syn::UICol::updateMinSize_()
 {
 	m_maxChildMinSize = { 0,0 };
 	m_maxChildSize = { 0,0 };
+	Vector2i m_extent = { 0,0 };
 	int y = m_padding[1];
 	for (shared_ptr<UIComponent> child : m_children) {
 		if (child->visible()) {
 			m_maxChildSize = m_maxChildSize.cwiseMax(child->size());
 			m_maxChildMinSize = m_maxChildMinSize.cwiseMax(child->minSize());
+			m_extent = m_extent.cwiseMax(child->getRelPos() + child->size());
 			y += child->size()[1] + m_childSpacing;
 		}
 	}
+	m_extent += Vector2i{m_padding[2], m_padding[3]};
 	Vector2i pad_wh = Vector2i{ m_padding[0] + m_padding[2],m_padding[1] + m_padding[3] };
-	int width;
-	if (m_selfMinSizePolicy == SMIN)
-		width = m_maxChildMinSize[0];
-	else
-		width = m_maxChildSize[0];
+	int minWidth = m_maxChildMinSize[0];
 	if (m_selfMinSizePolicy != SNONE)
-		setMinSize(Vector2i{ width, y - m_childSpacing } + pad_wh);
+		setMinSize(Vector2i{ minWidth, y - m_childSpacing } + pad_wh);
 
-	Vector2i freeSpace = innerSize() - minSize();
 	// Shrink cell according to resize policy
-	if (m_selfResizePolicy == SACTIVE && freeSpace.any()) {
+	if (m_selfResizePolicy == SRMIN) {
 		setSize(minSize());
-	}
+	}else if (m_selfResizePolicy == SRFIT) {
+		setSize(m_extent);
+	}	
 }
 
 void syn::UIRow::layoutChildren_()
@@ -205,11 +209,13 @@ void syn::UIRow::layoutChildren_()
 
 void syn::UIRow::resizeChildren_()
 {
+	bool oldPackOnChildResize = m_packOnChildResize;
+	m_packOnChildResize = false;
 	// Resize children according to ChildResizePolicy
 	for (shared_ptr<UIComponent> child : m_children) {
 		switch (m_childResizePolicy) {
 		case CMIN:
-			child->setSize(child->minSize());
+			child->setSize({ -1, child->minSize()[1] });
 			break;
 		case CMATCHMIN:
 			child->setSize({ -1, m_maxChildMinSize[1] });
@@ -223,34 +229,35 @@ void syn::UIRow::resizeChildren_()
 		default: break;
 		}
 	}
+	m_packOnChildResize = oldPackOnChildResize;
 }
 
 void syn::UIRow::updateMinSize_()
 {
 	m_maxChildMinSize = { 0,0 };
 	m_maxChildSize = { 0,0 };
+	Vector2i m_extent = {0,0};
 	int x = m_padding[0];
 	for (shared_ptr<UIComponent> child : m_children) {
 		if (child->visible()) {
 			x += child->size()[0] + m_childSpacing;
+			m_extent = m_extent.cwiseMax(child->getRelPos() + child->size());
 			m_maxChildSize = m_maxChildSize.cwiseMax(child->size());
 			m_maxChildMinSize = m_maxChildMinSize.cwiseMax(child->minSize());
 		}
 	}
+	m_extent += Vector2i{ m_padding[2], m_padding[3] };
 
 	// Update cell minimum size
 	Vector2i pad_wh = Vector2i{ m_padding[0] + m_padding[2],m_padding[1] + m_padding[3] };
-	int height;
-	if (m_selfMinSizePolicy == SMIN)
-		height = m_maxChildMinSize[1];
-	else
-		height = m_maxChildSize[1];
+	int minHeight = m_maxChildMinSize[1];
 	if (m_selfMinSizePolicy != SNONE)
-		setMinSize(Vector2i{ x - m_childSpacing,height } +pad_wh);
+		setMinSize(Vector2i{ x - m_childSpacing, minHeight } +pad_wh);
 	
 	// Shrink cell according to resize policy
-	Vector2i freeSpace = innerSize() - minSize();
-	if (m_selfResizePolicy == SACTIVE && freeSpace.any()) {
+	if (m_selfResizePolicy == SRMIN) {
 		setSize(minSize());
+	}else if(m_selfResizePolicy == SRFIT){
+		setSize(m_extent);
 	}
 }

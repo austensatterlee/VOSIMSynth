@@ -40,6 +40,7 @@ namespace syn
 			output = lut_sin.getlinear(phase);
 			break;
 		case TRI_WAVE:
+			phase = WRAP(phase, 1.0);
 			output = phase <= 0.5 ? 4 * phase - 1 : -4 * (phase - 0.5) + 1;
 			break;
 		case SQUARE_WAVE:

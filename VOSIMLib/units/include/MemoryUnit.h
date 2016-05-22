@@ -39,44 +39,54 @@ namespace syn
 	class NSampleDelay
 	{
 	public:
-		NSampleDelay() :
-			m_buffer(1, 0),
-			m_bufferSize(1),
-			m_bufferIndex(0) { };
-
+		NSampleDelay();
 		double process(double a_input);
-
-		double getPastSample(int a_offset);
-
-		void resizeBuffer(int a_newBufSize);
-
+		double getPastSample(double a_offset);
+		void resizeBuffer(double a_newBufSize);
 		void clearBuffer();
-
 		int size() const;
 	private:
 		vector<double> m_buffer;
-		int m_bufferSize;
-		int m_bufferIndex;
+		int m_arraySize;
+		double m_nBufSamples;
+		double m_curReadPhase;
+		double m_curWritePhase;
 	};
 
 	class MemoryUnit : public Unit
 	{
 	public:
 		explicit MemoryUnit(const string& a_name);
-
 		MemoryUnit(const MemoryUnit& a_rhs);
 
 	protected:
 		void onParamChange_(int a_paramId) override;
-
 		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
 	private:
 		string _getClassName() const override;
-
 		Unit* _clone() const override;
 
 	private:
 		NSampleDelay m_delay;
+		int m_pBufSize;
+	};
+
+	class ResampleUnit : public Unit
+	{
+	public:
+		explicit ResampleUnit(const string& a_name);
+		ResampleUnit(const ResampleUnit& a_rhs);
+
+	protected:
+		void onParamChange_(int a_paramId) override;
+		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
+	private:
+		string _getClassName() const override;
+		Unit* _clone() const override;
+
+	private:
+		NSampleDelay m_delay;
+		double m_delaySamples;
 		int m_iSize;
 
 		int m_pBufSize;
