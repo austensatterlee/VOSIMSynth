@@ -25,7 +25,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn
 {
-	LookupTable::LookupTable(const double* a_tableptr, int a_size, double a_input_min, double a_input_max, bool a_isPeriodic):
+	LookupTable::LookupTable(const double* a_tableptr, int a_size, double a_input_min, double a_input_max, bool a_isPeriodic) :
 		m_size(a_size),
 		m_isperiodic(a_isPeriodic),
 		m_table(a_tableptr),
@@ -53,7 +53,8 @@ namespace syn
 		if (m_isperiodic) {
 			phase = WRAP(phase, 1.0);
 			phase *= m_size;
-		} else {
+		}
+		else {
 			phase = CLAMP(phase, 0.0, 1.0);
 			phase *= m_size - 1;
 		}
@@ -90,7 +91,7 @@ namespace syn
 			int table_size = static_cast<size_t>(currsize);
 			m_resampled_tables[i] = static_cast<double*>(malloc(sizeof(double) * table_size));
 			m_resampled_sizes[i] = currsize;
-			resample_table(m_table, m_size, m_resampled_tables[i], currsize, blimp_table_offline, true);
+			resample_table(m_table, m_size, m_resampled_tables[i], currsize, blimp_table_offline);
 			currsize *= 0.5;
 		}
 	}
@@ -114,17 +115,24 @@ namespace syn
 	void resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table, bool normalize) {
 		double phase = 0;
 		double phase_step = 1. / period;
-		double maxval = 0;
-		for (int i = 0; i < period; i++ , phase += phase_step) {
+		double input_energy = 0.0;
+		double output_energy = 0.0;
+
+		for (int i = 0; i < period; i++, phase += phase_step) {
 			resampled_table[i] = getresampled_single(table, size, phase, period, blimp_table);
-			maxval = MAX(resampled_table[i], maxval);
+			if (normalize)
+				output_energy += resampled_table[i] * resampled_table[i];
 		}
 		/* normalize */
 		if (normalize) {
-			if (maxval != 0) {
-				for (int i = 0; i < period; i++) {
-					resampled_table[i] /= maxval;
-				}
+			for (int i = 0; i < size; i++)
+			{
+				input_energy += table[i] * table[i];
+			}
+			double input_power = input_energy / size;
+			double output_power = output_energy / period;
+			for (int i = 0; i < period; i++) {
+				resampled_table[i] = resampled_table[i] * sqrt(output_power) / sqrt(input_power);
 			}
 		}
 	}
@@ -135,55 +143,52 @@ namespace syn
 
 	double getresampled_single(const double* table, int size, double phase, double period, const BlimpTable& blimp_table) {
 		double ratio = period * (1.0 / size);
-		phase = WRAP(phase, 1.0);
-		phase = phase * size;
-		int index = static_cast<int>(phase);
-		double frac_index = (phase - index);
+		phase = WRAP(phase, 1.0)*size;
 		double blimp_step;
 		if (ratio < 1.0)
 			blimp_step = static_cast<double>(blimp_table.m_resolution) * ratio;
 		else
 			blimp_step = static_cast<double>(blimp_table.m_resolution);
 
-		double offset = frac_index * blimp_step;
+		int index = static_cast<int>(phase);
+		double offset = (phase - index) * blimp_step;
+		double	output = 0.0;
+		double filt_sum = 0.0;
 
-		double filt_sum = 0;
-		double output = 0.0;
-		double filt_phase = offset;
-		double filt_sample;
-		int table_index = index;
-		while (filt_phase < blimp_table.size()) {
+		// Backward pass
+		double	bkwd_filt_phase = offset;
+		int		bkwd_table_index = index;
+		while (bkwd_filt_phase < blimp_table.size()) {
 #ifdef DO_LERP_FOR_SINC
-			filt_sample = blimp_table.getlinear(filt_phase / blimp_table.size());
+			double bkwd_filt_sample = blimp_table.getlinear(filt_phase / blimp_table.size());
 #else
-			filt_sample = blimp_table.getraw(static_cast<int>(filt_phase));
+			double bkwd_filt_sample = blimp_table.getraw(static_cast<int>(bkwd_filt_phase));
 #endif
-			if (table_index < 0) {
-				table_index = size - 1;
+			if (bkwd_table_index < 0) {
+				bkwd_table_index = size - 1;
 			}
-			output += filt_sample * table[table_index--];
-			filt_sum += filt_sample;
-			filt_phase += blimp_step;
-		}
-		filt_phase = blimp_step - offset;
-		table_index = index + 1;
-		while (filt_phase < blimp_table.size()) {
-#ifdef DO_LERP_FOR_SINC
-			filt_sample = blimp_table.getlinear(filt_phase / blimp_table.size());
-#else
-			filt_sample = blimp_table.getraw(static_cast<int>(filt_phase));
-#endif
-			if (table_index >= size) {
-				table_index = 0;
-			}
-			output += filt_sample * table[table_index++];
-			filt_sum += filt_sample;
-			filt_phase += blimp_step;
-		}
-		if (ratio < 1)
-			output *= 1. / filt_sum;
-		else
-			output *= 1. / filt_sum;
-		return output;
+			output += bkwd_filt_sample * table[bkwd_table_index--];
+			bkwd_filt_phase += blimp_step;
+			filt_sum += bkwd_filt_sample;
 	}
+
+		// Forward pass
+		double	fwd_filt_phase = blimp_step - offset;
+		int		fwd_table_index = index + 1;
+		while (fwd_filt_phase < blimp_table.size()) {
+#ifdef DO_LERP_FOR_SINC
+			double fwd_filt_sample = blimp_table.getlinear(filt_phase / blimp_table.size());
+#else
+			double fwd_filt_sample = blimp_table.getraw(static_cast<int>(fwd_filt_phase));
+#endif
+			if (fwd_table_index >= size) {
+				fwd_table_index = 0;
+			}
+			output += fwd_filt_sample * table[fwd_table_index++];
+			fwd_filt_phase += blimp_step;
+			filt_sum += fwd_filt_sample;
+		}
+
+		return output / filt_sum;
+}
 }

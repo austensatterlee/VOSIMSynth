@@ -374,8 +374,8 @@ def resample(signal, new_table_size, filt, filt_res, numperiods=1, isperiodic=Tr
             filt_phase += filt_step
             filt_sum += filt_sample
             i+=1
-        newsig[new_index]*=1./filt_sum
         num_taps_used += i-1
+        newsig[new_index] = newsig[new_index]/filt_sum
         if num_taps_used > max_taps_used:
             max_taps_used = num_taps_used
         phase += phase_step
@@ -383,7 +383,6 @@ def resample(signal, new_table_size, filt, filt_res, numperiods=1, isperiodic=Tr
         if phase >= 1:
             phase -= 1
             currperiod+=1
-    # newsig *= min(1,siglen*1./newsiglen)
     return newsig
 
 def sinclowpass(signal,fc,winlen=10):
@@ -410,8 +409,13 @@ def genApodWindow(pts,beta,apgain,apbeta):
     W = w*apw
     return W
 
+def signal_power(signal):
+    return sqrt(sum(signal**2)/len(signal))
+
 def normalize_power(signal):
-    signal_norm = signal/sqrt(sum(signal**2))*sqrt(0.5)
+    input_power = signal_power(signal)
+    output_power = sqrt(2.)/2.
+    signal_norm = signal/input_power*output_power
     return signal_norm
 
 def main(pargs):

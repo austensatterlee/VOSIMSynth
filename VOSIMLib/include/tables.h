@@ -68,8 +68,8 @@ namespace syn
 	public:
 		BlimpTable(const double* a_table, int a_size, int a_num_intervals, int a_resolution)
 			: LookupTable(a_table, a_size, 0.0, 1.0, false),
-			  m_num_intervals(a_num_intervals),
-			  m_resolution(a_resolution) {}
+			m_num_intervals(a_num_intervals),
+			m_resolution(a_resolution) {}
 
 		BlimpTable(const BlimpTable& a_other)
 			: BlimpTable(a_other.m_table, a_other.m_size, a_other.m_num_intervals, a_other.m_resolution) {}
@@ -128,9 +128,9 @@ namespace syn
 	 * \param resampled_table a pointer to the output table
 	 * \param period the desired period to resample at (in fractional number of samples). The allocated size of the output table should be ceil(period).
 	 */
-	void resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table, bool normalize=false);
+	void resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table, bool normalize = true);
 
-	/** 
+	/**
 	 * \todo
 	 */
 	void fft_resample_table(const double* table, int size, double* resampled_table, double period);

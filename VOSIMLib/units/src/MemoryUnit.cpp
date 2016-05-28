@@ -38,9 +38,9 @@ namespace syn
 	//---------------------
 	NSampleDelay::NSampleDelay() :
 		m_buffer(48000),
-		m_arraySize(1),
+		m_arraySize(48000),
 		m_nBufSamples(1.0),
-		m_curReadPhase(0.0), 
+		m_curReadPhase(0.0),
 		m_curWritePhase(0.0)
 	{
 		resizeBuffer(1);
@@ -49,18 +49,19 @@ namespace syn
 	double NSampleDelay::getPastSample(double a_offset)
 	{
 		int bufferReadPhase = WRAP(m_curReadPhase - a_offset, m_nBufSamples);
-		return getresampled_single(&m_buffer[0], m_arraySize, bufferReadPhase, m_nBufSamples, lut_blimp_table_online);
+		return getresampled_single(&m_buffer[0], ceil(m_nBufSamples), bufferReadPhase, m_nBufSamples, lut_blimp_table_online);
 	}
 
 	void NSampleDelay::resizeBuffer(double a_nBufSamples)
 	{
 		if (m_nBufSamples == a_nBufSamples || a_nBufSamples <= 0)
 			return;
-		m_arraySize = ceil(a_nBufSamples);
-		if (m_arraySize > m_buffer.size())
-			m_buffer.resize(m_arraySize);
+		int requiredBufSize = ceil(a_nBufSamples);
+		if (requiredBufSize > m_buffer.size())
+			m_buffer.resize(requiredBufSize);
+		m_arraySize = m_buffer.size();
 		m_nBufSamples = a_nBufSamples;
-		m_curReadPhase = WRAP<double>(m_curWritePhase - m_nBufSamples, m_nBufSamples);
+		m_curReadPhase = WRAP<double>(m_curWritePhase - m_nBufSamples, m_arraySize);
 	}
 
 	void NSampleDelay::clearBuffer()
@@ -81,12 +82,12 @@ namespace syn
 
 		int writeIndex = m_curWritePhase;
 		m_buffer[writeIndex] = a_input;
+		m_curWritePhase = WRAP<double>(m_curWritePhase + 1.0, m_arraySize);
 
-		double output = getresampled_single(&m_buffer[0], m_arraySize, m_curReadPhase / m_nBufSamples, m_nBufSamples, lut_blimp_table_online);
-
-		m_curReadPhase = WRAP<double>(m_curReadPhase + 1.0, m_nBufSamples);
-		m_curWritePhase = WRAP<double>(m_curWritePhase + 1.0, m_nBufSamples);
-
+		int rInd1 = int(m_curReadPhase);
+		int rInd2 = WRAP<int>(int(m_curReadPhase) + 1, m_arraySize);
+		double output = LERP(m_buffer[rInd1], m_buffer[rInd2], m_curReadPhase - rInd1);
+		m_curReadPhase = WRAP<double>(m_curReadPhase + 1.0, m_arraySize);
 		return output;
 	}
 
@@ -97,6 +98,7 @@ namespace syn
 		Unit(a_name),
 		m_pBufSize(addParameter_(UnitParameter("n", 1.0, 192.0E3, 1.0)))
 	{
+		getParameter_(m_pBufSize).setControlType(UnitParameter::Unbounded);
 		addInput_("in");
 		addOutput_("out");
 	}
@@ -141,14 +143,14 @@ namespace syn
 		addInput_("in");
 		m_iSize = addInput_("size");
 		addOutput_("out");
-		m_pBufSize = addParameter_({"samples", 1.0, 16384.0, 1.0});
-		m_pBufDelay = addParameter_({"delay", 0.001, 1.0, 0.001, UnitParameter::EUnitsType::Seconds});
-		m_pBufFreq = addParameter_({"freq", 1.0, 10000.0, 1.0, UnitParameter::EUnitsType::Freq});
-		m_pBufBPMFreq = addParameter_({"rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM});
+		m_pBufSize = addParameter_({ "samples", 1.0, 48000.0, 1.0 });
+		m_pBufDelay = addParameter_({ "delay", 0.001, 1.0, 0.001, UnitParameter::EUnitsType::Seconds });
+		m_pBufFreq = addParameter_({ "freq", 1.0, 10000.0, 1.0, UnitParameter::EUnitsType::Freq });
+		m_pBufBPMFreq = addParameter_({ "rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM });
 		getParameter_(m_pBufDelay).setVisible(false);
 		getParameter_(m_pBufFreq).setVisible(false);
 		getParameter_(m_pBufBPMFreq).setVisible(false);
-		m_pBufType = addParameter_(UnitParameter{"units",{"samples","seconds","Hz","BPM"}});
+		m_pBufType = addParameter_(UnitParameter{ "units",{"samples","seconds","Hz","BPM"} });
 	}
 
 	ResampleUnit::ResampleUnit(const ResampleUnit& a_rhs) :
@@ -174,23 +176,27 @@ namespace syn
 			getParameter_(m_pBufDelay).setVisible(newtype == 1);
 			getParameter_(m_pBufFreq).setVisible(newtype == 2);
 			getParameter_(m_pBufBPMFreq).setVisible(newtype == 3);
-		} else if (a_paramId == m_pBufSize) { // samples
-			m_delaySamples = getParameter(m_pBufSize).getDouble();
-		} else if (a_paramId == m_pBufDelay) { // seconds
-			m_delaySamples = periodToSamples(getParameter(m_pBufDelay).getDouble(), getFs());
-		} else if (a_paramId == m_pBufFreq) { // freq
-			m_delaySamples = freqToSamples(getParameter(m_pBufFreq).getDouble(), getFs());
-		} else if (a_paramId == m_pBufBPMFreq) { // bpm
-			m_delaySamples = freqToSamples(bpmToFreq(getParameter(m_pBufBPMFreq).getEnum(), getTempo()), getFs());
 		}
 	}
 
 	void ResampleUnit::process_(const SignalBus& a_inputs, SignalBus& a_outputs)
 	{
-		m_delay.resizeBuffer(m_delaySamples+a_inputs.getValue(m_iSize));
+		int bufType = getParameter(m_pBufType).getInt();
+		if (bufType == m_pBufSize) { // samples
+			m_delaySamples = getParameter(m_pBufSize).getDouble() + a_inputs.getValue(m_iSize);
+		}
+		else if (bufType == m_pBufDelay) { // seconds
+			m_delaySamples = periodToSamples(getParameter(m_pBufDelay).getDouble() + a_inputs.getValue(m_iSize), getFs());
+		}
+		else if (bufType == m_pBufFreq) { // freq
+			m_delaySamples = freqToSamples(getParameter(m_pBufFreq).getDouble() + a_inputs.getValue(m_iSize), getFs());
+		}
+		else if (bufType == m_pBufBPMFreq) { // bpm
+			m_delaySamples = freqToSamples(bpmToFreq(getParameter(m_pBufBPMFreq).getEnum(getParameter(m_pBufFreq).getInt() + a_inputs.getValue(m_iSize)), getTempo()), getFs());
+		}
+		m_delay.resizeBuffer(m_delaySamples);
 		double input = a_inputs.getValue(0);
 		double output = m_delay.process(input);
 		a_outputs.setChannel(0, output);
 	}
 }
-

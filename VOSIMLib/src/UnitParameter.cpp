@@ -35,11 +35,12 @@ namespace syn
 		m_isVisible(true),
 		m_type(Null),
 		m_unitsType(None),
-		m_displayPrecision(0) 
-	{		
+		m_controlType(Bounded),
+		m_displayPrecision(0)
+	{
 	}
 
-	UnitParameter::UnitParameter(const UnitParameter& a_other) : 
+	UnitParameter::UnitParameter(const UnitParameter& a_other) :
 		m_name(a_other.m_name),
 		m_value(a_other.m_value),
 		m_prevValue(a_other.m_prevValue),
@@ -51,9 +52,10 @@ namespace syn
 		m_isVisible(true),
 		m_type(a_other.m_type),
 		m_unitsType(a_other.m_unitsType),
+		m_controlType(Bounded),
 		m_displayPrecision(a_other.m_displayPrecision),
 		m_displayTexts(a_other.m_displayTexts)
-	{		
+	{
 	}
 
 	UnitParameter::UnitParameter(const string& a_name, bool a_defaultValue) :
@@ -68,11 +70,12 @@ namespace syn
 		m_isVisible(true),
 		m_type(Bool),
 		m_unitsType(None),
+		m_controlType(Bounded),
 		m_displayPrecision(0),
-		m_displayTexts({{0,"Off"},{1,"On"}}) { }
+		m_displayTexts({ {0,"Off"},{1,"On"} }) { }
 
 	UnitParameter::UnitParameter(const string& a_name, int a_min, int a_max,
-	                             int a_defaultValue, EUnitsType a_unitsType) :
+		int a_defaultValue, EUnitsType a_unitsType) :
 		m_name(a_name),
 		m_value(a_defaultValue),
 		m_prevValue(a_defaultValue),
@@ -84,12 +87,13 @@ namespace syn
 		m_isVisible(true),
 		m_type(Int),
 		m_unitsType(a_unitsType),
+		m_controlType(Bounded),
 		m_displayPrecision(0) { }
 
 	UnitParameter::UnitParameter(const string& a_name,
-	                             const vector<string>& a_optionNames,
-	                             const vector<double>& a_optionValues,
-	                             int a_defaultOption, EUnitsType a_unitsType) :
+		const vector<string>& a_optionNames,
+		const vector<double>& a_optionValues,
+		int a_defaultOption, EUnitsType a_unitsType) :
 		m_name(a_name),
 		m_min(0),
 		m_max(a_optionNames.size() - 1),
@@ -98,7 +102,8 @@ namespace syn
 		m_isVisible(true),
 		m_type(Enum),
 		m_unitsType(a_unitsType),
-		m_displayPrecision(0) 
+		m_controlType(Bounded),
+		m_displayPrecision(0)
 	{
 		m_defaultValue = a_defaultOption;
 		m_value = m_prevValue = m_defaultValue;
@@ -106,27 +111,29 @@ namespace syn
 		for (int i = 0; i < a_optionNames.size(); i++) {
 			if (a_optionValues.empty()) {
 				optionValue = i;
-			} else {
+			}
+			else {
 				optionValue = a_optionValues[i];
 			}
-			m_displayTexts.push_back({optionValue, a_optionNames[i]});
+			m_displayTexts.push_back({ optionValue, a_optionNames[i] });
 		}
 	}
 
 	UnitParameter::UnitParameter(const string& a_name, double a_min, double a_max,
-	                             double a_defaultValue, EUnitsType a_unitsType, int a_displayPrecision) :
+		double a_defaultValue, EUnitsType a_unitsType, int a_displayPrecision) :
 		m_name(a_name),
 		m_value(a_defaultValue),
 		m_prevValue(a_defaultValue),
 		m_defaultValue(a_defaultValue),
 		m_min(a_min),
-		m_max(a_max), 
-		m_logMin(log(a_min)), 
-		m_logRange(log(a_max)-log(a_min)), 
+		m_max(a_max),
+		m_logMin(log(a_min)),
+		m_logRange(log(a_max) - log(a_min)),
 		m_isVisible(true),
 		m_type(Double),
 		m_unitsType(a_unitsType),
-		m_displayPrecision(a_displayPrecision) 
+		m_controlType(Bounded),
+		m_displayPrecision(a_displayPrecision)
 	{ }
 
 	void UnitParameter::reset() {
@@ -171,6 +178,16 @@ namespace syn
 	void UnitParameter::setPrecision(int a_precision) {
 		if (a_precision >= 0 && m_type == Double)
 			m_displayPrecision = a_precision;
+	}
+
+	UnitParameter::EControlType UnitParameter::getControlType() const
+	{
+		return m_controlType;
+	}
+
+	void UnitParameter::setControlType(EControlType a_newControlType)
+	{
+		m_controlType = a_newControlType;
 	}
 
 	bool UnitParameter::isVisible() const
@@ -240,6 +257,12 @@ namespace syn
 		return m_displayTexts[idx].m_value;
 	}
 
+	double UnitParameter::getEnum(int a_index) const
+	{
+		a_index = CLAMP(a_index, 0, m_displayTexts.size());
+		return m_displayTexts[a_index].m_value;
+	}
+
 	double UnitParameter::getPrevEnum() const {
 		int idx = getPrevInt();
 		return m_displayTexts[idx].m_value;
@@ -283,10 +306,10 @@ namespace syn
 
 	bool UnitParameter::setNorm(double a_norm_value) {
 		double value = CLAMP(a_norm_value, 0, 1);
-		switch(m_unitsType) {
+		switch (m_unitsType) {
 		case Freq:
 		case Decibal:
-			value = exp(value*m_logRange + m_logMin);			
+			value = exp(value*m_logRange + m_logMin);
 			break;
 		case None:
 		default:
@@ -323,7 +346,8 @@ namespace syn
 					i++;
 				}
 			}
-		}else
+		}
+		else
 		{
 			// Try to match string to an enum option
 			int i = 0;
@@ -350,12 +374,14 @@ namespace syn
 		char displaytext[MAX_PARAM_STR_LEN];
 		if (getType() != Double) {
 			snprintf(displaytext, MAX_PARAM_STR_LEN, "%d", idx);
-		} else {
+		}
+		else {
 			double displayValue = getDouble();
 			// if precision is set, print out that many digits
 			if (getPrecision() > 0) {
 				snprintf(displaytext, MAX_PARAM_STR_LEN, "%.*f", m_displayPrecision, displayValue);
-			} else {
+			}
+			else {
 				snprintf(displaytext, MAX_PARAM_STR_LEN, "%g", displayValue);
 			}
 		}

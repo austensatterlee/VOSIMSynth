@@ -31,7 +31,6 @@ using std::vector;
 
 namespace syn
 {
-
 	class UnitParameter
 	{
 	public:
@@ -54,14 +53,19 @@ namespace syn
 			Seconds,
 			Decibal
 		};
+
+		enum EControlType
+		{
+			Bounded,
+			Unbounded
+		};
 	public:
 		UnitParameter();
 		UnitParameter(const UnitParameter& a_other);
 		UnitParameter(const string& a_name, bool a_defaultValue);
 		UnitParameter(const string& a_name, int a_min, int a_max, int a_defaultValue, EUnitsType a_unitsType = None);
-		UnitParameter(const string& a_name, const vector<string>& a_optionNames, const vector<double>& a_optionValues = {}, int a_defaultOption = 0, EUnitsType a_unitsType=None);
-		UnitParameter(const string& a_name, double a_min, double a_max, double a_defaultValue, EUnitsType m_unitsType=None, int a_displayPrecision = 2);
-
+		UnitParameter(const string& a_name, const vector<string>& a_optionNames, const vector<double>& a_optionValues = {}, int a_defaultOption = 0, EUnitsType a_unitsType = None);
+		UnitParameter(const string& a_name, double a_min, double a_max, double a_defaultValue, EUnitsType m_unitsType = None, int a_displayPrecision = 2);
 
 		/**
 		 * Reset the parameter to its default value
@@ -84,6 +88,9 @@ namespace syn
 
 		int getPrecision() const;
 		void setPrecision(int a_precision);
+
+		EControlType getControlType() const;
+		void setControlType(EControlType a_newControlType);
 
 		bool isVisible() const;
 
@@ -113,6 +120,7 @@ namespace syn
 		double getDouble() const;
 		double getPrevDouble() const;
 		double getEnum() const;
+		double getEnum(int a_index) const;
 		double getPrevEnum() const;
 
 		/**
@@ -133,6 +141,7 @@ namespace syn
 		bool m_isVisible;
 		EParamType m_type;
 		EUnitsType m_unitsType;
+		EControlType m_controlType;
 		int m_displayPrecision;
 
 		struct DisplayText

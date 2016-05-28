@@ -5,8 +5,8 @@
 #include "UILabel.h"
 #include "Theme.h"
 
-syn::UITextSlider::UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId):
-	UIComponent{a_window},
+syn::UITextSlider::UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId) :
+	UIComponent{ a_window },
 	m_value(0.0),
 	m_vm(a_vm),
 	m_unitId(a_unitId),
@@ -108,7 +108,8 @@ bool syn::UITextSlider::onMouseScroll(const Vector2i& a_relCursor, const Vector2
 	double scale;
 	if (m_param->getType() != UnitParameter::Double) {
 		scale = 1.0;
-	} else {
+	}
+	else {
 		scale = pow(10, -m_param->getPrecision() + 1);
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)) {
 			scale *= 10;
@@ -124,7 +125,7 @@ bool syn::UITextSlider::onMouseScroll(const Vector2i& a_relCursor, const Vector2
 	msg->action = [](Circuit* a_circuit, bool a_isLast, ByteChunk* a_data) {
 		double currValue;
 		int unitId, paramId;
-		GetArgs(a_data,0, unitId, paramId, currValue);
+		GetArgs(a_data, 0, unitId, paramId, currValue);
 		a_circuit->setInternalParameter(unitId, paramId, currValue);
 	};
 	m_vm->queueAction(msg);
@@ -138,7 +139,7 @@ void syn::UITextSlider::setValueFromString(const string& a_str) {
 	msg->action = [](Circuit* a_circuit, bool a_isLast, ByteChunk* a_data) {
 		string valStr;
 		int unitId, paramId;
-		GetArgs(a_data,0, valStr,unitId,paramId);
+		GetArgs(a_data, 0, valStr, unitId, paramId);
 		a_circuit->setInternalParameterFromString(unitId, paramId, valStr);
 	};
 	m_vm->queueAction(msg);
@@ -149,17 +150,17 @@ void syn::UITextSlider::draw(NVGcontext* a_nvg) {
 	if (!m_textBox->visible()) {
 		const UnitParameter& param = m_vm->getCircuit().getUnit(m_unitId).getParameter(m_paramId);
 		double value = m_param->getNorm();
-		if (&param!=m_param || value!=m_value || m_isValueDirty) {
+		if (&param != m_param || value != m_value || m_isValueDirty) {
 			_updateValue();
 			m_isValueDirty = false;
 		}
 
 		nvgBeginPath(a_nvg);
-		nvgFillColor(a_nvg, Color(Vector3f{ 0.4f,0.1f,0.7f }*0.25,0.7f));
+		nvgFillColor(a_nvg, Color(Vector3f{ 0.4f,0.1f,0.7f }*0.25, 0.7f));
 		nvgRect(a_nvg, 0, 0, size()[0], size()[1]);
 		nvgFill(a_nvg);
 
-		nvgFillColor(a_nvg, Color(Vector3f{0.4f,0.1f,0.7f}));
+		nvgFillColor(a_nvg, Color(Vector3f{ 0.4f,0.1f,0.7f }));
 		nvgBeginPath(a_nvg);
 		float fgWidth = size()[0] * m_value;
 		nvgRect(a_nvg, 0, 0, fgWidth, size()[1]);

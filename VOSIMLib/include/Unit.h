@@ -58,9 +58,9 @@ namespace syn
 	 * and a transition function, Unit::process_, which updates the Unit's outputs given the state
 	 * of the Unit and the current inputs + parameters.
 	 *
-	 * New units should be derived by subclassing Unit, using Unit::addInput_, Unit::addOutput_, and Unit::addParameter_ to configure the unit.
-	 * To allow the unit to be cloned, it is necessary to implement a copy constructor,
-	 * Unit::_clone, and Unit::_getClassName. Unit::_clone should simply return a new copy of the derived class, for example:
+	 * New units should be derived by subclassing Unit, using Unit::addInput_, Unit::addOutput_, and Unit::addParameter_ to configure the unit in its constructor.
+	 * To allow the unit to be cloned, it is necessary to implement a copy constructor, Unit::_clone, and Unit::_getClassName. Unit::_clone should simply return a
+	 * new copy of the derived class, for example:
 	 *
 	 *		Unit* DerivedUnit::_clone(){ return new DerivedUnit(*this); }
 	 *
@@ -225,7 +225,6 @@ namespace syn
 		MidiData m_midiData;
 	};
 
-
 	template <typename ID>
 	const Signal& Unit::getOutputChannel(const ID& a_identifier) const {
 		return m_outputSignals.getChannel(a_identifier);
@@ -258,7 +257,7 @@ namespace syn
 	}
 
 	template <typename ID, typename T>
-	bool Unit::setParameter(const ID& a_identifier, const T& a_value) {		
+	bool Unit::setParameter(const ID& a_identifier, const T& a_value) {
 		if (m_parameters[a_identifier].set(a_value)) {
 			int id = m_parameters.getItemId(a_identifier);
 			onParamChange_(id);
