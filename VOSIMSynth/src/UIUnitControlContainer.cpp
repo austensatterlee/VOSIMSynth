@@ -79,3 +79,26 @@ syn::UIComponent* syn::UIUnitControlContainer::onMouseDown(const Vector2i& a_rel
 void syn::UIUnitControlContainer::close() const {
 	m_window->getCircuitPanel()->requestDeleteUnit(m_unitId);
 }
+
+void syn::UIUnitControlContainer::draw(NVGcontext* a_nvg)
+{
+	UIWindow::draw(a_nvg);
+	const list<shared_ptr<Unit> >& procGraph = m_vm->getCircuit().getProcGraph();
+	const Unit& myUnit = m_vm->getCircuit().getUnit(m_unitId);
+	int i = 0;
+	int procPos = -1;
+	for(shared_ptr<Unit> unit : procGraph) {
+		if (unit.get() == &myUnit) {
+			procPos = i;
+			break;
+		}
+		i++;
+	}
+
+	char procPosStr[4];
+	sprintf(procPosStr, "%d", procPos);
+	nvgSave(a_nvg);
+	nvgFillColor(a_nvg, Color{ 0.85f,0.15f,0.05f,1.0f });
+	nvgText(a_nvg, 0.0f, -10.0f, procPosStr, nullptr);
+	nvgRestore(a_nvg);
+}

@@ -33,6 +33,7 @@ namespace syn
 {
 	class UIUnitControlContainer : public UIWindow
 	{
+	private:
 		friend class UICircuitPanel;
 	public:
 		UIUnitControlContainer(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, UIUnitControl* a_unitControl);
@@ -41,8 +42,8 @@ namespace syn
 			return m_unitId;
 		}
 
-		UIUnitPort* getSelectedInPort(const Vector2i& a_relPos) const;
-		UIUnitPort* getSelectedOutPort(const Vector2i& a_relPos) const;
+		virtual UIUnitPort* getSelectedInPort(const Vector2i& a_relPos) const;
+		virtual UIUnitPort* getSelectedOutPort(const Vector2i& a_relPos) const;
 
 		const vector<UIUnitPort*>& getInPorts() const {
 			return m_inPorts;
@@ -54,6 +55,8 @@ namespace syn
 
 		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		void close() const;
+	protected:
+		void draw(NVGcontext* a_nvg) override;
 	protected:
 		VoiceManager* m_vm;
 		int m_unitId;

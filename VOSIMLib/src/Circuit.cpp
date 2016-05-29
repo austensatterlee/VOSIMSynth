@@ -19,6 +19,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "Circuit.h"
 #include <unordered_set>
+#include <functional>
 
 using std::vector;
 using std::unordered_set;
@@ -56,17 +57,12 @@ namespace syn
 	}
 
 	void Circuit::process_(const SignalBus& inputs, SignalBus& outputs) {
-		// reset all internal components
-		for (int i = 0; i < m_units.size(); i++) {
-			m_units.getItemByIndex(i)->reset();
-		}
-
 		/* Push external input data into internal input unit */
 		m_inputUnit->m_inputSignals.set(m_inputSignals);
 
 		// tick all internal components
-		for (int i = 0; i < m_units.size(); i++) {
-			m_units.getItemByIndex(i)->tick();
+		for (shared_ptr<Unit> unit : m_procGraph) {
+			unit->tick();
 		}
 
 		/* Push internally connected output signals to circuit output ports */
@@ -81,6 +77,7 @@ namespace syn
 		a_unit->setFs(getFs());
 		a_unit->setTempo(getTempo());
 		a_unit->m_midiData = m_midiData;
+		_recomputeGraph();
 		return retval;
 	}
 
@@ -92,6 +89,7 @@ namespace syn
 		a_unit->setFs(getFs());
 		a_unit->setTempo(getTempo());
 		a_unit->m_midiData = m_midiData;
+		_recomputeGraph();
 		return true;
 	}
 
@@ -101,6 +99,47 @@ namespace syn
 
 	Unit* Circuit::_clone() const {
 		return new Circuit(*this);
+	}
+
+	void Circuit::_recomputeGraph()
+	{
+		list<shared_ptr<Unit> > sinks;
+		m_procGraph.clear();
+		// Find sinks
+		auto units = m_units.data();
+		for (auto it = units.begin(); it != units.end(); ++it) {
+			if (!it->second->getNumOutputs()) {
+				sinks.push_back(it->second);
+			}
+		}
+		sinks.push_back(m_outputUnit);
+
+		unordered_set<shared_ptr<Unit> > permClosedSet;
+		unordered_set<shared_ptr<Unit> > tempClosedSet;
+		std::function<void(shared_ptr<Unit>)> visit = [&](shared_ptr<Unit> node)
+		{
+			if (tempClosedSet.count(node) || permClosedSet.count(node))
+				return;
+			tempClosedSet.insert(node);
+
+			int nPorts = node->getNumInputs();
+			for (int i = 0; i < nPorts; i++) {
+				const vector<UnitConnector>& port = node->getInputPort(i);
+				for (const UnitConnector& conn : port) {
+					visit(conn.connectedUnit);
+				}
+			}
+			permClosedSet.insert(node);
+			tempClosedSet.erase(node);
+			m_procGraph.push_back(node);
+		};
+		// DFS
+		while (!sinks.empty()) {
+			shared_ptr<Unit> node = sinks.back();
+			sinks.pop_back();
+			visit(node);
+		}
+		return;
 	}
 
 	bool Circuit::isActive() const {
@@ -179,6 +218,11 @@ namespace syn
 
 	int Circuit::getNumUnits() const {
 		return m_units.size();
+	}
+
+	const list<shared_ptr<Unit> >& Circuit::getProcGraph() const
+	{
+		return m_procGraph;
 	}
 
 	void Circuit::notifyMidiControlChange(int a_cc, double a_value) {

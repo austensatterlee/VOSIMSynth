@@ -13,6 +13,7 @@ syn::DefaultUnitControl::DefaultUnitControl(VOSIMWindow* a_window, VoiceManager*
 	for (int i = 0; i < nParams; i++) {
 		UITextSlider* paramControl = new UITextSlider(a_window, m_vm, m_unitId, i);
 		m_paramControls.push_back(paramControl);
+		paramControl->setVisible(unit.getParameter(i).isVisible());
 		m_col->addChild(paramControl);
 	}
 	m_col->pack();

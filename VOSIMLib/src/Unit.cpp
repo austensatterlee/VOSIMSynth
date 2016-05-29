@@ -26,16 +26,14 @@ using namespace std;
 namespace syn
 {
 	Unit::Unit() :
-		m_name{""},
-		m_hasTicked(false),
-		m_parent{nullptr},
+		m_name{ "" },
+		m_parent{ nullptr },
 		m_audioConfig{},
 		m_midiData{} { }
 
 	Unit::Unit(const string& a_name) :
-		m_name{a_name},
-		m_hasTicked(false),
-		m_parent{nullptr},
+		m_name{ a_name },
+		m_parent{ nullptr },
 		m_audioConfig{},
 		m_midiData{} { }
 
@@ -115,9 +113,7 @@ namespace syn
 	}
 
 	void Unit::tick() {
-		if (m_hasTicked)
-			return;
-		m_hasTicked = true;
+		m_inputSignals.clear();
 
 		/* Pull signals from inputs */
 		for (int i = 0; i < m_inputSignals.getNumChannels(); i++) {
@@ -130,11 +126,6 @@ namespace syn
 		m_outputSignals.clear();
 
 		process_(m_inputSignals, m_outputSignals);
-	}
-
-	void Unit::reset() {
-		m_inputSignals.clear();
-		m_hasTicked = false;
 	}
 
 	int Unit::addInput_(const string& a_name, double a_default, Signal::ChannelAccType a_accType) {
@@ -181,5 +172,10 @@ namespace syn
 		unit->setFs(m_audioConfig.fs);
 		unit->setTempo(m_audioConfig.tempo);
 		return unit;
+	}
+
+	const vector<UnitConnector>& Unit::getInputPort(int a_index) const
+	{
+		return m_inputConnections.getPort(a_index);
 	}
 }

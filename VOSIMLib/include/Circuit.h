@@ -24,9 +24,11 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "NamedContainer.h"
 #include <vector>
 #include <memory>
+#include <list>
 
 using std::shared_ptr;
 using std::vector;
+using std::list;
 
 namespace syn
 {
@@ -103,6 +105,8 @@ namespace syn
 
 		int getNumUnits() const;
 
+		const list<shared_ptr<Unit> >& getProcGraph() const;
+
 		void notifyMidiControlChange(int a_cc, double a_value);
 
 		/**
@@ -141,11 +145,11 @@ namespace syn
 
 		template <typename ID>
 		bool connectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier, int
-		                     a_toInputPort);
+			a_toInputPort);
 
 		template <typename ID>
 		bool disconnectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier, int
-		                        a_toInputPort);
+			a_toInputPort);
 
 	protected:
 		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
@@ -173,6 +177,8 @@ namespace syn
 
 		Unit* _clone() const override;
 
+		void _recomputeGraph();
+
 	private:
 		friend class VoiceManager;
 
@@ -183,6 +189,8 @@ namespace syn
 		vector<ConnectionRecord> m_connectionRecords;
 		shared_ptr<PassthroughUnit> m_inputUnit;
 		shared_ptr<PassthroughUnit> m_outputUnit;
+
+		list<shared_ptr<Unit> > m_procGraph;
 	};
 
 	template <typename UID>
@@ -231,7 +239,6 @@ namespace syn
 		return m_units[a_unitIdentifier]->setParameterFromString(a_paramIdentifier, a_value);
 	};
 
-
 	template <typename UID, typename PID>
 	double Circuit::getInternalParameter(const UID& a_unitIdentifier, const PID& a_paramIdentifier) const {
 		if (!m_units.find(a_unitIdentifier))
@@ -261,12 +268,13 @@ namespace syn
 			disconnectInternal(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
 		}
 		m_units.remove(a_unitIdentifier);
+		_recomputeGraph();
 		return true;
 	}
 
 	template <typename ID>
 	bool Circuit::connectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier,
-	                              int a_toInputPort) {
+		int a_toInputPort) {
 		int fromUnitId = m_units.getItemId(a_fromIdentifier);
 		int toUnitId = m_units.getItemId(a_toIdentifier);
 		if (!m_units.find(fromUnitId) || !m_units.find(toUnitId))
@@ -281,14 +289,15 @@ namespace syn
 		bool result = toUnit->_connectInput(fromUnit, a_fromOutputPort, a_toInputPort);
 		// record the connection upon success
 		if (result) {
-			m_connectionRecords.push_back({fromUnitId, a_fromOutputPort, toUnitId,a_toInputPort});
+			m_connectionRecords.push_back({ fromUnitId, a_fromOutputPort, toUnitId,a_toInputPort });
+			_recomputeGraph();
 		}
 		return result;
 	}
 
 	template <typename ID>
 	bool Circuit::disconnectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier,
-	                                 int a_toInputPort) {
+		int a_toInputPort) {
 		int fromId = m_units.getItemId(a_fromIdentifier);
 		int toId = m_units.getItemId(a_toIdentifier);
 		if (!m_units.find(fromId) || !m_units.find(toId))
@@ -303,13 +312,14 @@ namespace syn
 		bool result = toUnit->_disconnectInput(fromUnit, a_fromOutputPort, a_toInputPort);
 		// find and remove the associated connection record upon successful removal
 		if (result) {
-			ConnectionRecord record = {fromId, a_fromOutputPort, toId, a_toInputPort};
+			ConnectionRecord record = { fromId, a_fromOutputPort, toId, a_toInputPort };
 			for (unsigned i = 0; i < m_connectionRecords.size(); i++) {
 				if (m_connectionRecords[i] == record) {
 					m_connectionRecords.erase(m_connectionRecords.begin() + i);
 					break;
 				}
 			}
+			_recomputeGraph();
 		}
 		return result;
 	}

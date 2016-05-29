@@ -32,7 +32,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #endif
 """
 
-SOURCE_TEMPLATE=r"#include \"{filename:}.h\""
+SOURCE_TEMPLATE="#include \"{filename:}.h\""
 
 INCLUDE_DIRNAME = "include"
 SOURCES_DIRNAME = "src"

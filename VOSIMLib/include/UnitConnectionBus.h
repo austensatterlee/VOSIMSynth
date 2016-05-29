@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #ifndef __UNITCONNECTIONBUS__
 #define __UNITCONNECTIONBUS__
 
@@ -43,6 +42,8 @@ namespace syn
 
 	class UnitConnectionBus
 	{
+	public:
+		typedef vector<UnitConnector> UnitPort;
 	public:
 		/**
 		 * Create the specified connection
@@ -74,10 +75,10 @@ namespace syn
 			m_numPorts += 1;
 		};
 
+		const UnitPort& getPort(int a_index) const;
 		int MSFASTCALL numPorts() const GCCFASTCALL;
 		int MSFASTCALL numConnections(int a_portNum) const GCCFASTCALL;
 	private:
-		typedef vector<UnitConnector> UnitPort;
 		vector<UnitPort> m_ports;
 		int m_numPorts = 0;
 	};

@@ -78,8 +78,6 @@ namespace syn
 
 		void MSFASTCALL tick() GCCFASTCALL;
 
-		void MSFASTCALL reset() GCCFASTCALL;
-
 		void setFs(double a_newFs);
 
 		void setTempo(double a_newTempo);
@@ -151,6 +149,8 @@ namespace syn
 		 * Connections to other units are not preserved in the clone.
 		 */
 		Unit* clone() const;
+
+		const vector<UnitConnector>& getInputPort(int a_index) const;
 	protected:
 		/**
 		 * Called when a parameter has been modified. This function should be overridden
@@ -215,7 +215,6 @@ namespace syn
 		friend class VoiceManager;
 		friend class UnitConnectionBus;
 		string m_name;
-		bool m_hasTicked;
 		NamedContainer<UnitParameter> m_parameters;
 		SignalBus m_inputSignals;
 		SignalBus m_outputSignals;

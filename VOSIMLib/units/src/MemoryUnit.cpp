@@ -192,7 +192,7 @@ namespace syn
 			m_delaySamples = freqToSamples(getParameter(m_pBufFreq).getDouble() + a_inputs.getValue(m_iSize), getFs());
 		}
 		else if (bufType == m_pBufBPMFreq) { // bpm
-			m_delaySamples = freqToSamples(bpmToFreq(getParameter(m_pBufBPMFreq).getEnum(getParameter(m_pBufFreq).getInt() + a_inputs.getValue(m_iSize)), getTempo()), getFs());
+			m_delaySamples = freqToSamples(bpmToFreq(getParameter(m_pBufBPMFreq).getEnum(getParameter(m_pBufBPMFreq).getInt() + a_inputs.getValue(m_iSize)), getTempo()), getFs());
 		}
 		m_delay.resizeBuffer(m_delaySamples);
 		double input = a_inputs.getValue(0);

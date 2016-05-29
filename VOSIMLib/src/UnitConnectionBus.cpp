@@ -17,14 +17,13 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "UnitConnectionBus.h"
 #include "Unit.h"
 
 namespace syn
 {
 	bool UnitConnectionBus::connect(shared_ptr<Unit> a_connectedUnit, int a_connectedPort, int a_localPort) {
-		UnitConnector conn{a_connectedUnit, a_connectedPort, a_localPort};
+		UnitConnector conn{ a_connectedUnit, a_connectedPort, a_localPort };
 
 		/* Make sure we don't add duplicate connections */
 		UnitPort& port = m_ports[a_localPort];
@@ -38,7 +37,7 @@ namespace syn
 	}
 
 	bool UnitConnectionBus::disconnect(shared_ptr<Unit> a_connectedUnit, int a_connectedPort, int a_localPort) {
-		UnitConnector conn{a_connectedUnit, a_connectedPort, a_localPort};
+		UnitConnector conn{ a_connectedUnit, a_connectedPort, a_localPort };
 
 		if (m_ports.size() <= a_localPort) {
 			return false;
@@ -61,7 +60,6 @@ namespace syn
 		a_recipient.clear();
 		for (int i = 0; i < pSize; i++) {
 			const UnitConnector& conn = port[i];
-			conn.connectedUnit->tick();
 
 			// add outputChannel to a_recipient
 			const Signal& outputChannel = conn.connectedUnit->getOutputChannel(conn.connectedPort);
@@ -76,6 +74,11 @@ namespace syn
 			// add outputChannel to a_recipient
 			port[i].connectedUnit->m_inputSignals.getChannel(port[i].connectedPort).accumulate(a_signal);
 		}
+	}
+
+	const UnitConnectionBus::UnitPort& UnitConnectionBus::getPort(int a_index) const
+	{
+		return m_ports[a_index];
 	}
 
 	int UnitConnectionBus::numPorts() const {

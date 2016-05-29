@@ -157,14 +157,12 @@ namespace syn
 				voice->m_inputSignals.setChannel(0, a_left_input[j]);
 				voice->m_inputSignals.setChannel(1, a_right_input[j]);
 				voice->tick();
-				voice->reset();
 				double left_out = voice->getOutputChannel(0).get();
 				double right_out = voice->getOutputChannel(1).get();
 				a_left_output[j] += left_out;
 				a_right_output[j] += right_out;
 			}
 		}
-
 
 		m_tickCount += m_bufferSize;
 		m_isPlaying = false;
@@ -266,7 +264,8 @@ namespace syn
 		for (int i = 0; i <= m_maxVoices; i++) {
 			if (i == m_maxVoices) { // Reserve last loop for applying action to prototype voice
 				voice = m_instrument.get();
-			} else {
+			}
+			else {
 				voice = m_allVoices[i].get();
 			}
 			a_msg->action(voice, i == m_maxVoices, &a_msg->data);
