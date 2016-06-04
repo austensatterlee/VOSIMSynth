@@ -61,7 +61,7 @@ namespace syn
 
 	protected:
 		void onParamChange_(int a_paramId) override;
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
+		void MSFASTCALL process_() GCCFASTCALL override;
 	private:
 		string _getClassName() const override;
 		Unit* _clone() const override;
@@ -79,7 +79,7 @@ namespace syn
 
 	protected:
 		void onParamChange_(int a_paramId) override;
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
+		void MSFASTCALL process_() GCCFASTCALL override;
 	private:
 		string _getClassName() const override;
 		Unit* _clone() const override;

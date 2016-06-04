@@ -20,9 +20,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __UNIT__
 #define __UNIT__
 
-#include "SignalBus.h"
 #include "NamedContainer.h"
-#include "UnitConnectionBus.h"
 #include "UnitParameter.h"
 #include <memory>
 
@@ -44,6 +42,13 @@ namespace syn
 		int note;
 		int velocity;
 		bool isNoteOn;
+	};
+
+	struct UnitPort
+	{
+		UnitPort(double a_defVal) : defVal(a_defVal), src(nullptr) {};
+		double defVal;
+		const double* src;
 	};
 
 	const vector<string> g_bpmStrs = { "1/64", "1/32", "3/64", "1/16", "3/32", "1/8", "3/16", "1/4", "3/8", "1/2", "3/4", "1", "3/2", "2" };
@@ -119,26 +124,39 @@ namespace syn
 		template <typename ID>
 		bool setParameterFromString(const ID& a_identifier, const string& a_value);
 
-		template <typename ID>
-		string getInputName(const ID& a_identifier) const;
+		string getInputName(int a_index) const;
 
 		template <typename ID>
 		string getOutputName(const ID& a_identifier) const;
 
 		template <typename ID>
-		const Signal& getOutputChannel(const ID& a_identifier) const;
+		const double& getOutputValue(const ID& a_identifier) const;
 
-		template <typename ID>
-		const Signal& getInputChannel(const ID& a_identifier) const;
-
-		template <typename ID, typename T>
-		bool setInputChannel(const ID& a_identifier, const T& a_val);
+		const double& getInputValue(int a_index) const;
 
 		int getNumParameters() const;
 
 		int getNumInputs() const;
 
 		int getNumOutputs() const;
+
+		/**
+		* Connect the specified input port to a location in memory.
+		* \param a_toInputPort The desired input port of this unit
+		* \param a_src A pointer to the memory to read the input from
+		*/
+		void connectInput(int a_inputPort, const double* a_src);
+
+		/**
+		 * \returns True if the input port points to a non-null location in memory.
+		 */
+		bool isConnected(int a_inputPort) const;
+
+		/**
+		* Remove the specified connection.
+		* \returns True if the connection existed, false if it was already disconnected.
+		*/
+		bool disconnectInput(int a_toInputPort);
 
 		const string& getName() const;
 
@@ -149,8 +167,6 @@ namespace syn
 		 * Connections to other units are not preserved in the clone.
 		 */
 		Unit* clone() const;
-
-		const vector<UnitConnector>& getInputPort(int a_index) const;
 	protected:
 		/**
 		 * Called when a parameter has been modified. This function should be overridden
@@ -169,12 +185,19 @@ namespace syn
 
 		virtual void onMidiControlChange_(int a_cc, double a_value) { };
 
+		virtual void onInputConnection_(int a_inputPort) { };
+
+		virtual void onInputDisconnection_(int a_inputPort) { };
+
 		template <typename ID>
 		UnitParameter& getParameter_(const ID& a_identifier);
 
-		virtual void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL = 0;
+		template <typename ID>
+		void setOutputChannel_(const ID& a_id, const double& a_val);
 
-		int addInput_(const string& a_name, double a_default = 0.0, Signal::ChannelAccType a_accType = Signal::ChannelAccType::EAdd);
+		virtual void MSFASTCALL process_() GCCFASTCALL = 0;
+
+		int addInput_(const string& a_name, double a_default = 0.0);
 
 		int addOutput_(const string& a_name);
 
@@ -187,61 +210,33 @@ namespace syn
 
 		void _setName(const string& a_name);
 
-		/**
-		 * Connect the specified output port to this units specified input port.
-		 * \param a_fromUnit The output unit
-		 * \param a_fromOutputPort The output port of a_fromUnit
-		 * \param a_toInputPort The input port of this unit
-		 * \returns False if the connection already existed
-		 */
-		bool _connectInput(shared_ptr<Unit> a_fromUnit, int a_fromOutputPort, int a_toInputPort);
-
-		/**
-		 * Remove the specified connection
-		 * \returns True if the connection existed
-		 */
-		bool _disconnectInput(shared_ptr<Unit> a_fromUnit, int a_fromOutputPort, int a_toInputPort);
-
-		/**
-		 * Remove all connections referencing the specified Unit
-		 * \returns True if any connections were removed
-		 */
-		bool _disconnectInput(shared_ptr<Unit> a_fromUnit);
-
 		virtual Unit* _clone() const = 0;
 	private:
-		friend class Circuit;
 		friend class UnitFactory;
-		friend class VoiceManager;
-		friend class UnitConnectionBus;
+		friend class Circuit;
 		string m_name;
 		NamedContainer<UnitParameter> m_parameters;
-		SignalBus m_inputSignals;
-		SignalBus m_outputSignals;
-		UnitConnectionBus m_inputConnections;
+		NamedContainer<double> m_outputSignals;
+		NamedContainer<UnitPort> m_inputPorts;
 		Circuit* m_parent;
 		AudioConfig m_audioConfig;
 		MidiData m_midiData;
 	};
 
 	template <typename ID>
-	const Signal& Unit::getOutputChannel(const ID& a_identifier) const {
-		return m_outputSignals.getChannel(a_identifier);
-	}
-
-	template <typename ID>
-	const Signal& Unit::getInputChannel(const ID& a_identifier) const {
-		return m_inputSignals.getChannel(a_identifier);
-	}
-
-	template <typename ID, typename T>
-	bool Unit::setInputChannel(const ID& a_identifier, const T& a_val) {
-		return m_inputSignals.setChannel(a_identifier, a_val);
+	const double& Unit::getOutputValue(const ID& a_identifier) const {
+		return m_outputSignals[a_identifier];
 	}
 
 	template <typename ID>
 	UnitParameter& Unit::getParameter_(const ID& a_identifier) {
 		return m_parameters[a_identifier];
+	}
+
+	template <typename ID>
+	void Unit::setOutputChannel_(const ID& a_id, const double& a_val)
+	{
+		m_outputSignals[a_id] = a_val;
 	};
 
 	template <typename ID>
@@ -288,13 +283,8 @@ namespace syn
 	}
 
 	template <typename ID>
-	string Unit::getInputName(const ID& a_identifier) const {
-		return m_inputSignals.getChannelName<ID>(a_identifier);
-	}
-
-	template <typename ID>
 	string Unit::getOutputName(const ID& a_identifier) const {
-		return m_outputSignals.getChannelName<ID>(a_identifier);
+		return m_outputSignals.getItemName<ID>(a_identifier);
 	};
 }
 #endif

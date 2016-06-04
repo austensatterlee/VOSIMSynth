@@ -17,9 +17,9 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**  
+/**
  *	 \file OscilloscopeUnit.h
- *   \brief 
+ *   \brief
  *   \details
  *   \author Austen Satterlee
  *   \date 02/15/2016
@@ -42,7 +42,7 @@ namespace syn
 
 	protected:
 		void onParamChange_(int a_paramId) override;
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
+		void MSFASTCALL process_() GCCFASTCALL override;
 
 	private:
 		string _getClassName() const override {
@@ -90,6 +90,6 @@ namespace syn
 		Vector2f m_yBounds;
 		Vector2i m_screenPos;
 		Vector2i m_screenSize;
-		vector<Color> m_colors = {{255,255,255,255},{255,128,128,255}};
+		vector<Color> m_colors = { {255,255,255,255},{255,128,128,255} };
 	};
 }

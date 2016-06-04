@@ -31,7 +31,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <Containers.h>
 
 #define MAX_VOICEMANAGER_MSG_QUEUE_SIZE 64
-#define MAX_VOICES_PER_NOTE 8
 
 using std::map;
 using std::string;
@@ -45,16 +44,25 @@ namespace syn
 	 * Used to pass messages to a voice manager via VoiceManager::queueAction
 	 * The action function pointer will be called once for each voice (with the corresponding circuit passed as the first parameter).
 	 * On the last voice, the second parameter will be true.
-	 * The third parameter is a pointer to the ByteChunk stored in this structure.
+	 * The third parameter is a pointer to the ByteChunk stored in this structure, which is useful for passing arguments.
 	 */
 	struct RTMessage
 	{
-		void (*action)(Circuit*, bool, ByteChunk*);
+		void(*action)(Circuit*, bool, ByteChunk*);
 		ByteChunk data;
 	};
 
 	class VoiceManager
 	{
+	public:
+		enum VoiceSelectionPolicy
+		{
+			LOW,
+			HIGH,
+			OLD,
+			NEW
+		};
+
 	public:
 		VoiceManager(shared_ptr<Circuit> a_proto, UnitFactory* a_factory) :
 			m_queuedActions(MAX_VOICEMANAGER_MSG_QUEUE_SIZE),
@@ -62,12 +70,12 @@ namespace syn
 			m_maxVoices(0),
 			m_bufferSize(1),
 			m_tickCount(0),
-			m_isPlaying(false),
 			m_voiceStack(0),
 			m_idleVoiceStack(0),
 			m_garbageList(0),
 			m_instrument(a_proto),
-			m_factory(a_factory) { };
+			m_factory(a_factory)
+		{ };
 
 		~VoiceManager() {
 			m_allVoices.clear();
@@ -100,26 +108,32 @@ namespace syn
 
 		int getMaxVoices() const;
 
+		int getLowestVoiceIndex() const;
+
+		int getNewestVoiceIndex() const;
+
+		int getOldestVoiceIndex() const;
+
+		int getHighestVoiceIndex() const;
+
 		/**
 		 * Get the voice numbers that are currently playing the given note
 		 */
 		vector<int> getNoteVoices(int a_note);
 
-		bool isPlaying() const;
-
 		void onIdle();
 
-		const Unit& getUnit(int a_id);
+		/**
+		 * Retrieves a unit from a specific voice circuit.
+		 * If the given voice id is negative, the unit is retrieved from the prototype circuit.
+		 */
+		const Unit& getUnit(int a_id, int a_voiceId = -1);
 
 		int getNumUnits() const;
 
-		const Circuit& getCircuit() const;
+		shared_ptr<const Circuit> getPrototypeCircuit() const;
 
-		/** 
-		 * \note This method is not thread safe. Use the queueAction method to queue a function that creates a new unit instead.
-		 */
-		template <typename T>
-		int addUnit(T a_prototypeId);
+		shared_ptr<const Circuit> getVoiceCircuit(int a_voiceId) const;
 
 		void save(ByteChunk* a_data) const;
 		int load(ByteChunk* a_data, int startPos);
@@ -141,14 +155,6 @@ namespace syn
 
 		int _findIdleVoice();
 
-		int _getLowestVoiceIndex() const;
-
-		int _getNewestVoiceIndex() const;
-
-		int _getOldestVoiceIndex() const;
-
-		int _getHighestVoiceIndex() const;
-
 	private:
 		typedef AtomicQueue<int> VoiceIndexList;
 		typedef map<int, AtomicQueue<int>> VoiceMap;
@@ -159,7 +165,6 @@ namespace syn
 		unsigned m_maxVoices; /// Total number of voices (idle voices + active voices)
 		unsigned m_bufferSize;
 		unsigned m_tickCount;
-		bool m_isPlaying;
 
 		VoiceMap m_voiceMap;
 		VoiceIndexList m_voiceStack;
@@ -169,21 +174,5 @@ namespace syn
 		shared_ptr<Circuit> m_instrument;
 		UnitFactory* m_factory;
 	};
-
-	template <typename T>
-	int VoiceManager::addUnit(T a_prototypeId) {
-		shared_ptr<Circuit> voice;
-		// Apply action to all voices
-		int numVoices = m_allVoices.size();
-
-		shared_ptr<Unit> unit = shared_ptr<Unit>(m_factory->createUnit(a_prototypeId));
-
-		int returnId = m_instrument->addUnit(unit);
-		for (int i = 0; i < numVoices; i++) {
-			voice = m_allVoices[i];
-			returnId = voice->addUnit(shared_ptr<Unit>(unit->clone()));
-		}
-		return returnId;
-	}
 }
 #endif

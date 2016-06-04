@@ -44,7 +44,7 @@ namespace syn
 		FollowerUnit(const FollowerUnit& a_rhs);
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
+		void MSFASTCALL process_() GCCFASTCALL override;
 	private:
 		string _getClassName() const override {
 			return "FollowerUnit";

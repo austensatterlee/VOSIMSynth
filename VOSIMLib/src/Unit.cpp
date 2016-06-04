@@ -89,11 +89,11 @@ namespace syn
 	}
 
 	int Unit::getNumInputs() const {
-		return m_inputSignals.getNumChannels();
+		return m_inputPorts.size();
 	}
 
 	int Unit::getNumOutputs() const {
-		return m_outputSignals.getNumChannels();
+		return m_outputSignals.size();
 	}
 
 	const string& Unit::getName() const {
@@ -113,59 +113,52 @@ namespace syn
 	}
 
 	void Unit::tick() {
-		m_inputSignals.clear();
-
-		/* Pull signals from inputs */
-		for (int i = 0; i < m_inputSignals.getNumChannels(); i++) {
-			if (m_inputConnections.numConnections(i)) {
-				Signal& inputChannel = m_inputSignals.getChannel(i);
-				m_inputConnections.pull(i, inputChannel);
-			}
+		// Clear outputs
+		for (int id : m_outputSignals.getIds()) {
+			m_outputSignals[id] = 0.0;
 		}
 
-		m_outputSignals.clear();
-
-		process_(m_inputSignals, m_outputSignals);
+		process_();
 	}
 
-	int Unit::addInput_(const string& a_name, double a_default, Signal::ChannelAccType a_accType) {
-		int inputId = m_inputSignals.addChannel(a_name);
-		m_inputSignals.getChannel(inputId).setDefault(a_default);
-		m_inputSignals.getChannel(inputId).setChannelAccType(a_accType);
-		m_inputConnections.addPort();
-		return inputId;
+	int Unit::addInput_(const string& a_name, double a_default) {
+		return m_inputPorts.add(a_name, { a_default });
 	}
 
 	int Unit::addOutput_(const string& a_name) {
-		return m_outputSignals.addChannel(a_name);
+		return m_outputSignals.add(a_name, 0);
 	}
 
 	int Unit::addParameter_(const UnitParameter& a_param) {
-		int indx = m_parameters.add(a_param.getName(), a_param);
-		return m_parameters.getItemId(indx);
+		return m_parameters.add(a_param.getName(), a_param);
 	}
 
 	void Unit::_setParent(Circuit* a_new_parent) {
 		m_parent = a_new_parent;
 	}
 
-	bool Unit::_connectInput(shared_ptr<Unit> a_fromUnit, int a_fromOutputPort, int a_toInputPort) {
-		return m_inputConnections.connect(a_fromUnit, a_fromOutputPort, a_toInputPort);
+	void Unit::connectInput(int a_inputPort, const double* a_src)
+	{
+		m_inputPorts[a_inputPort].src = a_src;
+		onInputConnection_(a_inputPort);
 	}
 
-	bool Unit::_disconnectInput(shared_ptr<Unit> a_fromUnit, int a_fromOutputPort, int a_toInputPort) {
-		return m_inputConnections.disconnect(a_fromUnit, a_fromOutputPort, a_toInputPort);
+	bool Unit::isConnected(int a_inputPort) const
+	{
+		return m_inputPorts[a_inputPort].src != nullptr;
 	}
 
-	bool Unit::_disconnectInput(shared_ptr<Unit> a_fromUnit) {
-		return m_inputConnections.disconnect(a_fromUnit);
+	bool Unit::disconnectInput(int a_inputPort) {
+		bool retval = m_inputPorts[a_inputPort].src == nullptr;
+		m_inputPorts[a_inputPort].src = nullptr;
+		if (retval) onInputDisconnection_(a_inputPort);
+		return retval;
 	}
 
 	Unit* Unit::clone() const {
 		Unit* unit = _clone();
 
 		unit->m_name = m_name;
-		unit->m_inputSignals = m_inputSignals;
 		unit->m_outputSignals = m_outputSignals;
 		unit->m_parameters = m_parameters;
 		unit->m_midiData = m_midiData;
@@ -174,8 +167,11 @@ namespace syn
 		return unit;
 	}
 
-	const vector<UnitConnector>& Unit::getInputPort(int a_index) const
-	{
-		return m_inputConnections.getPort(a_index);
+	const double& Unit::getInputValue(int a_index) const {
+		return m_inputPorts[a_index].src == nullptr ? m_inputPorts[a_index].defVal : *m_inputPorts[a_index].src;
+	}
+
+	string Unit::getInputName(int a_index) const {
+		return m_inputPorts.getItemName(a_index);
 	}
 }

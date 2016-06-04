@@ -55,9 +55,9 @@ namespace syn
 			PassthroughUnit(a_other.getName()) { };
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override {
-			for (int i = 0; i < a_inputs.getNumChannels(); i++) {
-				a_outputs.setChannel(i, a_inputs.getValue(i));
+		void MSFASTCALL process_() GCCFASTCALL override {
+			for (int i = 0; i < getNumInputs(); i++) {
+				setOutputChannel_(i, getInputValue(i));
 			}
 		}
 
@@ -105,17 +105,19 @@ namespace syn
 
 		int getNumUnits() const;
 
-		const list<shared_ptr<Unit> >& getProcGraph() const;
+		const list<Unit*>& getProcGraph() const;
 
 		void notifyMidiControlChange(int a_cc, double a_value);
 
 		/**
 		 * Retrieves a list of output ports connected to an input port.
-		 * \returns A vector of pairs of the form {unit_id, port_id}
+		 * \returns A vector of (unit_id, port_id) pairs.
 		 */
-		template <typename UID>
-		vector<pair<int, int>> getConnectionsToInternalInput(const UID& a_unitIdentifier, int a_portid) const;
+		vector<pair<int, int>> getConnectionsToInternalInput(int a_unitId, int a_portid) const;
 
+		/**
+		 * Get a list of all connections within the Circuit.
+		 */
 		const vector<ConnectionRecord>& getConnections() const;
 
 		template <typename UID, typename PID>
@@ -138,6 +140,9 @@ namespace syn
 		 */
 		int addUnit(shared_ptr<Unit> a_unit);
 
+		/**
+		 * \returns True if the unit was added to the circuit (i.e. the provided id was not already taken).
+		 */
 		bool addUnit(shared_ptr<Unit> a_unit, int a_unitId);
 
 		template <typename ID>
@@ -152,7 +157,7 @@ namespace syn
 			a_toInputPort);
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
+		void MSFASTCALL process_() GCCFASTCALL override;
 
 		void onFsChange_() override;
 
@@ -163,6 +168,10 @@ namespace syn
 		void onNoteOff_() override;
 
 		void onMidiControlChange_(int a_cc, double a_value) override;
+
+		void onInputConnection_(int a_inputPort) override;
+
+		void onInputDisconnection_(int a_inputPort) override;
 
 		Unit& getUnit_(int a_unitId);
 
@@ -190,21 +199,8 @@ namespace syn
 		shared_ptr<PassthroughUnit> m_inputUnit;
 		shared_ptr<PassthroughUnit> m_outputUnit;
 
-		list<shared_ptr<Unit> > m_procGraph;
+		list<Unit*> m_procGraph;
 	};
-
-	template <typename UID>
-	vector<pair<int, int>> Circuit::getConnectionsToInternalInput(const UID& a_unitIdentifier, int a_portid) const {
-		int unitId = m_units.getItemIndex(a_unitIdentifier);
-		vector<pair<int, int>> connectedPorts;
-		for (int i = 0; i < m_connectionRecords.size(); i++) {
-			const ConnectionRecord& conn = m_connectionRecords[i];
-			if (conn.to_id == unitId && conn.to_port == a_portid) {
-				connectedPorts.push_back(make_pair(conn.from_id, conn.from_port));
-			}
-		}
-		return connectedPorts;
-	}
 
 	template <typename UID>
 	int Circuit::getUnitId(const UID& a_unitIdentifier) const {
@@ -213,36 +209,26 @@ namespace syn
 
 	template <typename UID, typename PID, typename T>
 	bool Circuit::setInternalParameter(const UID& a_unitIdentifier, const PID& a_paramIdentifier, const T& a_value) {
-		if (!m_units.find(a_unitIdentifier))
-			return false;
 		return m_units[a_unitIdentifier]->setParameter(a_paramIdentifier, a_value);
 	};
 
 	template <typename UID, typename PID, typename T>
 	bool Circuit::setInternalParameterNorm(const UID& a_unitIdentifier, const PID& a_paramIdentifier, const T& a_value) {
-		if (!m_units.find(a_unitIdentifier))
-			return false;
 		return m_units[a_unitIdentifier]->setParameterNorm(a_paramIdentifier, a_value);
 	}
 
 	template <typename UID, typename PID>
 	bool Circuit::setInternalParameterPrecision(const UID& a_unitIdentifier, const PID& a_paramIdentifier, int a_precision) {
-		if (!m_units.find(a_unitIdentifier))
-			return false;
 		return m_units[a_unitIdentifier]->setParameterPrecision(a_paramIdentifier, a_precision);
 	}
 
 	template <typename UID, typename PID>
 	bool Circuit::setInternalParameterFromString(const UID& a_unitIdentifier, const PID& a_paramIdentifier, const string& a_value) {
-		if (!m_units.find(a_unitIdentifier))
-			return false;
 		return m_units[a_unitIdentifier]->setParameterFromString(a_paramIdentifier, a_value);
 	};
 
 	template <typename UID, typename PID>
 	double Circuit::getInternalParameter(const UID& a_unitIdentifier, const PID& a_paramIdentifier) const {
-		if (!m_units.find(a_unitIdentifier))
-			return false;
 		return m_units[a_unitIdentifier]->getParameter(a_paramIdentifier).getDouble();
 	};
 
@@ -250,8 +236,8 @@ namespace syn
 	bool Circuit::removeUnit(const ID& a_unitIdentifier) {
 		if (!m_units.find(a_unitIdentifier))
 			return false;
-		shared_ptr<Unit> unit = m_units[a_unitIdentifier];
 		int unitId = m_units.getItemId(a_unitIdentifier);
+		shared_ptr<Unit> unit = m_units[unitId];
 		// Don't allow deletion of input or output unit
 		if (unit == m_inputUnit || unit == m_outputUnit)
 			return false;
@@ -277,22 +263,18 @@ namespace syn
 		int a_toInputPort) {
 		int fromUnitId = m_units.getItemId(a_fromIdentifier);
 		int toUnitId = m_units.getItemId(a_toIdentifier);
-		if (!m_units.find(fromUnitId) || !m_units.find(toUnitId))
+		// Don't allow connections to self
+		if (fromUnitId == toUnitId)
 			return false;
 
 		shared_ptr<Unit> fromUnit = m_units[fromUnitId];
 		shared_ptr<Unit> toUnit = m_units[toUnitId];
 
-		if (fromUnit->getNumOutputs() <= a_fromOutputPort || toUnit->getNumInputs() <= a_toInputPort)
-			return false;
-
-		bool result = toUnit->_connectInput(fromUnit, a_fromOutputPort, a_toInputPort);
+		toUnit->connectInput(a_toInputPort, &fromUnit->getOutputValue(a_fromOutputPort));
 		// record the connection upon success
-		if (result) {
-			m_connectionRecords.push_back({ fromUnitId, a_fromOutputPort, toUnitId,a_toInputPort });
-			_recomputeGraph();
-		}
-		return result;
+		m_connectionRecords.push_back({ fromUnitId, a_fromOutputPort, toUnitId,a_toInputPort });
+		_recomputeGraph();
+		return true;
 	}
 
 	template <typename ID>
@@ -300,26 +282,20 @@ namespace syn
 		int a_toInputPort) {
 		int fromId = m_units.getItemId(a_fromIdentifier);
 		int toId = m_units.getItemId(a_toIdentifier);
-		if (!m_units.find(fromId) || !m_units.find(toId))
-			return false;
 
-		shared_ptr<Unit> fromUnit = m_units[fromId];
 		shared_ptr<Unit> toUnit = m_units[toId];
 
-		if (fromUnit->getNumOutputs() <= a_fromOutputPort || toUnit->getNumInputs() <= a_toInputPort)
-			return false;
+		bool result = toUnit->disconnectInput(a_toInputPort);
 
-		bool result = toUnit->_disconnectInput(fromUnit, a_fromOutputPort, a_toInputPort);
-		// find and remove the associated connection record upon successful removal
-		if (result) {
-			ConnectionRecord record = { fromId, a_fromOutputPort, toId, a_toInputPort };
-			for (unsigned i = 0; i < m_connectionRecords.size(); i++) {
-				if (m_connectionRecords[i] == record) {
-					m_connectionRecords.erase(m_connectionRecords.begin() + i);
-					break;
-				}
+		// Find and remove the associated connection record stored in this Circuit
+		ConnectionRecord record = { fromId, a_fromOutputPort, toId, a_toInputPort };
+		for (unsigned i = 0; i < m_connectionRecords.size(); i++) {
+			if (m_connectionRecords[i] == record) {
+				result = true;
+				m_connectionRecords.erase(m_connectionRecords.begin() + i);
+				_recomputeGraph();
+				break;
 			}
-			_recomputeGraph();
 		}
 		return result;
 	}

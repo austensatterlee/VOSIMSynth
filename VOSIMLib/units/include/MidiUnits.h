@@ -14,7 +14,7 @@ using namespace std;
 
 namespace syn
 {
-	/** 
+	/**
 	 * Outputs the current midi note
 	 */
 	class MidiNoteUnit : public Unit
@@ -29,8 +29,8 @@ namespace syn
 			MidiNoteUnit(a_rhs.getName()) { }
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override {
-			a_outputs.setChannel(0, getNote() * 0.0078125);
+		void MSFASTCALL process_() GCCFASTCALL override {
+			setOutputChannel_(0, getNote() * 0.0078125);
 		};
 
 	private:
@@ -58,8 +58,8 @@ namespace syn
 			VelocityUnit(a_rhs.getName()) { }
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override {
-			a_outputs.setChannel(0, getVelocity() * 0.0078125);
+		void MSFASTCALL process_() GCCFASTCALL override {
+			setOutputChannel_(0, getVelocity() * 0.0078125);
 		};
 
 	private:
@@ -87,8 +87,8 @@ namespace syn
 			GateUnit(a_rhs.getName()) { }
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override {
-			a_outputs.setChannel(0, static_cast<double>(isNoteOn()));
+		void MSFASTCALL process_() GCCFASTCALL override {
+			setOutputChannel_(0, static_cast<double>(isNoteOn()));
 		};
 
 	private:
@@ -119,8 +119,8 @@ namespace syn
 			MidiCCUnit(a_rhs.getName()) { }
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override {
-			a_outputs.setChannel(0, m_value); // divide by 128
+		void MSFASTCALL process_() GCCFASTCALL override {
+			setOutputChannel_(0, m_value); // divide by 128
 		};
 
 		void onParamChange_(int a_paramId) override {

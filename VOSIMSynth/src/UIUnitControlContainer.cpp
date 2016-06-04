@@ -6,11 +6,11 @@
 #include "UIUnitControl.h"
 #include "Theme.h"
 
-syn::UIUnitControlContainer::UIUnitControlContainer(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, UIUnitControl* a_unitControl):
-	UIWindow{a_window, a_vm->getUnit(a_unitId).getName()},
+syn::UIUnitControlContainer::UIUnitControlContainer(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, UIUnitControl* a_unitControl) :
+	UIWindow{ a_window, a_vm->getUnit(a_unitId).getName() },
 	m_vm(a_vm),
 	m_unitId(a_unitId),
-	m_unitControl(a_unitControl) 
+	m_unitControl(a_unitControl)
 {
 	m_row = new UIRow(m_window);
 	m_row->setChildResizePolicy(UICell::CNONE);
@@ -34,19 +34,18 @@ syn::UIUnitControlContainer::UIUnitControlContainer(VOSIMWindow* a_window, Voice
 		m_cols[1]->addChild(m_outPorts[i]);
 	}
 
-	
 	m_row->addChild(m_cols[0]);
 	m_row->addChild(a_unitControl);
 	m_row->addChild(m_cols[1]);
 	m_row->setGreedyChild(m_cols[1], NVG_ALIGN_RIGHT);
 	addChildToBody(m_row);
-	m_bodyRow->setGreedyChild(m_row,NVG_ALIGN_RIGHT);
+	m_bodyRow->setGreedyChild(m_row, NVG_ALIGN_RIGHT);
 
 	m_closeButton = new UIButton(a_window, "", 0xE729);
 	m_closeButton->setCallback([&]() {
 		this->close();
 	});
-	m_closeButton->setSize({theme()->mWindowHeaderHeight - 4 ,theme()->mWindowHeaderHeight - 4});
+	m_closeButton->setSize({ theme()->mWindowHeaderHeight - 4 ,theme()->mWindowHeaderHeight - 4 });
 	m_closeButton->setFontSize(8);
 	addChildToHeader(m_closeButton);
 }
@@ -83,12 +82,12 @@ void syn::UIUnitControlContainer::close() const {
 void syn::UIUnitControlContainer::draw(NVGcontext* a_nvg)
 {
 	UIWindow::draw(a_nvg);
-	const list<shared_ptr<Unit> >& procGraph = m_vm->getCircuit().getProcGraph();
-	const Unit& myUnit = m_vm->getCircuit().getUnit(m_unitId);
+	const list<Unit*>& procGraph = m_vm->getPrototypeCircuit()->getProcGraph();
+	const Unit& myUnit = m_vm->getPrototypeCircuit()->getUnit(m_unitId);
 	int i = 0;
 	int procPos = -1;
-	for(shared_ptr<Unit> unit : procGraph) {
-		if (unit.get() == &myUnit) {
+	for (Unit* unit : procGraph) {
+		if (unit == &myUnit) {
 			procPos = i;
 			break;
 		}

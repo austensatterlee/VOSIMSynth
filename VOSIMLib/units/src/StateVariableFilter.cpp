@@ -21,7 +21,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "tables.h"
 #include "DSPMath.h"
 
-syn::StateVariableFilter::StateVariableFilter(const string& a_name):
+syn::StateVariableFilter::StateVariableFilter(const string& a_name) :
 	Unit(a_name),
 	m_pFc(addParameter_(UnitParameter("fc", 0.01, 20000.0, 10000.0, UnitParameter::Freq))),
 	m_pRes(addParameter_(UnitParameter("res", 0.0, 1.0, 0.0))),
@@ -29,26 +29,26 @@ syn::StateVariableFilter::StateVariableFilter(const string& a_name):
 	m_F(0.0), m_Q(0.0) {
 	addInput_("in");
 	m_iFcAdd = addInput_("fc");
-	m_iFcMul = addInput_("fc[x]", 1.0, Signal::EMul);
+	m_iFcMul = addInput_("fc[x]", 1.0);
 	m_iResAdd = addInput_("res");
-	m_iResMul = addInput_("res[x]", 1.0, Signal::EMul);
+	m_iResMul = addInput_("res[x]", 1.0);
 	m_oLP = addOutput_("LP");
 	m_oHP = addOutput_("HP");
 	m_oBP = addOutput_("BP");
 	m_oN = addOutput_("N");
 }
 
-void syn::StateVariableFilter::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
-	double fc = a_inputs.getValue(m_iFcMul) * getParameter(m_pFc).getDouble() + a_inputs.getValue(m_iFcAdd);
+void syn::StateVariableFilter::process_() {
+	double fc = getInputValue(m_iFcMul) * getParameter(m_pFc).getDouble() + getInputValue(m_iFcAdd);
 	fc = CLAMP(fc, getParameter(m_pFc).getMin(), getParameter(m_pFc).getMax());
 	m_F = 2 * lut_sin.getlinear(0.5 * fc / (getFs() * c_oversamplingFactor));
 
-	double input_res = a_inputs.getValue(m_iResMul) * getParameter(m_pRes).getDouble() + a_inputs.getValue(m_iResAdd);
+	double input_res = getInputValue(m_iResMul) * getParameter(m_pRes).getDouble() + getInputValue(m_iResAdd);
 	input_res = CLAMP(input_res, 0, 1);
 	double res = LERP(c_minRes, c_maxRes, input_res);
 	m_Q = 1.0 / res;
 
-	double input = a_inputs.getValue(0);
+	double input = getInputValue(0);
 	double LPOut = 0, HPOut = 0, BPOut = 0;
 	int i = c_oversamplingFactor;
 	while (i--) {
@@ -61,8 +61,8 @@ void syn::StateVariableFilter::process_(const SignalBus& a_inputs, SignalBus& a_
 	}
 	double NOut = HPOut + LPOut;
 
-	a_outputs.setChannel(m_oLP, LPOut);
-	a_outputs.setChannel(m_oHP, HPOut);
-	a_outputs.setChannel(m_oBP, BPOut);
-	a_outputs.setChannel(m_oN, NOut);
+	setOutputChannel_(m_oLP, LPOut);
+	setOutputChannel_(m_oHP, HPOut);
+	setOutputChannel_(m_oBP, BPOut);
+	setOutputChannel_(m_oN, NOut);
 }

@@ -18,7 +18,7 @@ sf::WindowHandle syn::VOSIMWindow::_sys_CreateChildWindow(sf::WindowHandle a_sys
 	int x = 0, y = 0, w = m_size[0], h = m_size[1];
 
 	if (nWndClassReg++ == 0) {
-		WNDCLASS wndClass = {NULL, drawFunc, 0, 0, m_HInstance, 0, LoadCursor(NULL, IDC_ARROW), 0, 0, wndClassName};
+		WNDCLASS wndClass = { NULL, drawFunc, 0, 0, m_HInstance, 0, LoadCursor(NULL, IDC_ARROW), 0, 0, wndClassName };
 		RegisterClass(&wndClass);
 	}
 
@@ -28,10 +28,9 @@ sf::WindowHandle syn::VOSIMWindow::_sys_CreateChildWindow(sf::WindowHandle a_sys
 	sf::ContextSettings settings;
 	settings.depthBits = 32;
 	settings.stencilBits = 8;
-	settings.antialiasingLevel = 0; // Optional  
+	settings.antialiasingLevel = 0; // Optional
 	m_sfmlWindow = new sf::RenderWindow(sf::VideoMode(w, h), "", sf::Style::None, settings);
 	SetWindowLongW(m_sfmlWindow->getSystemHandle(), GWL_STYLE, GetWindowLongW(m_sfmlWindow->getSystemHandle(), GWL_STYLE) | WS_CHILD);
-
 
 	m_timerWindow = CreateWindow(wndClassName, "VOSIMTimerWindow", WS_CHILD, // | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
 		x, y, w, h, (HWND)a_system_window, 0, m_HInstance, this);
@@ -58,7 +57,8 @@ void syn::VOSIMWindow::reset() {
 syn::UIUnitControl* syn::VOSIMWindow::createUnitControl(unsigned a_classId, int a_unitId) {
 	if (m_unitControlMap.find(a_classId) != m_unitControlMap.end()) {
 		return m_unitControlMap[a_classId](this, m_vm, a_unitId);
-	} else {
+	}
+	else {
 		return new DefaultUnitControl(this, m_vm, a_unitId);
 	}
 }
@@ -96,7 +96,7 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 			_this->m_sfmlWindow->setActive(true);
 			//_this->m_sfmlWindow->requestFocus();
 			//_this->m_sfmlWindow->setVerticalSyncEnabled(true);
-			_this->m_sfmlWindow->setPosition({0,0});
+			_this->m_sfmlWindow->setPosition({ 0,0 });
 
 			// Initialize glew
 			glewExperimental = GL_TRUE;
@@ -145,7 +145,7 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 	}
 
 	VOSIMWindow* _this = (VOSIMWindow*)GetWindowLongPtr(Handle, GWLP_USERDATA);
-	if(!_this || !_this->m_running)
+	if (!_this || !_this->m_running)
 		return DefWindowProc(Handle, Message, WParam, LParam);
 
 	double cpuStartTime, dCpuTime;
@@ -174,7 +174,6 @@ LRESULT CALLBACK syn::VOSIMWindow::drawFunc(HWND Handle, UINT Message, WPARAM WP
 		}
 
 		_this->_flushMessageQueues();
-
 
 		// check all the window's events that were triggered since the last iteration of the loop
 		Event event;
@@ -329,14 +328,14 @@ void syn::VOSIMWindow::forfeitFocus(UIComponent* a_comp) {
 }
 
 Eigen::Vector2i syn::VOSIMWindow::toWorldCoords(const Vector2i& a_pix) const {
-	Vector2f normCoords{float(a_pix[0]) / float(m_sfmlWindow->getSize().x),float(a_pix[1]) / float(m_sfmlWindow->getSize().y)};
-	Vector2i worldCoords{normCoords[0] * (m_view[2] - m_view[0]) + m_view[0], normCoords[1] * (m_view[3] - m_view[1]) + m_view[1]};
+	Vector2f normCoords{ float(a_pix[0]) / float(m_sfmlWindow->getSize().x),float(a_pix[1]) / float(m_sfmlWindow->getSize().y) };
+	Vector2i worldCoords{ normCoords[0] * (m_view[2] - m_view[0]) + m_view[0], normCoords[1] * (m_view[3] - m_view[1]) + m_view[1] };
 	return worldCoords;
 }
 
 Eigen::Vector2i syn::VOSIMWindow::toPixelCoords(const Vector2i& a_world) const {
-	Vector2f normCoords{float(a_world[0] - m_view[0]) / float(m_view[2] - m_view[0]),float(a_world[1] - m_view[1]) / float(m_view[3] - m_view[1])};
-	Vector2i pixCoords{normCoords[0] * m_sfmlWindow->getSize().x,normCoords[1] * m_sfmlWindow->getSize().y};
+	Vector2f normCoords{ float(a_world[0] - m_view[0]) / float(m_view[2] - m_view[0]),float(a_world[1] - m_view[1]) / float(m_view[3] - m_view[1]) };
+	Vector2i pixCoords{ normCoords[0] * m_sfmlWindow->getSize().x,normCoords[1] * m_sfmlWindow->getSize().y };
 	return pixCoords;
 }
 
@@ -353,7 +352,7 @@ void syn::VOSIMWindow::setViewPos(const Vector2i& a_pos) {
 }
 
 Eigen::Vector2i syn::VOSIMWindow::getViewSize() const {
-	return {m_view[2] - m_view[0],m_view[3] - m_view[1]};
+	return{ m_view[2] - m_view[0],m_view[3] - m_view[1] };
 }
 
 bool syn::VOSIMWindow::OpenWindow(sf::WindowHandle a_system_window) {
@@ -420,11 +419,11 @@ int syn::VOSIMWindow::load(ByteChunk* a_data, int startPos) {
 		startPos = a_data->Get<int>(&reservedBytes, startPos);
 		startPos += reservedBytes;
 
-		m_circuitPanel->onAddUnit_(m_vm->getUnit(unitId).getClassIdentifier(), unitId);
+		m_circuitPanel->onAddUnit_(m_vm->getPrototypeCircuit()->getUnit(unitId).getClassIdentifier(), unitId);
 		m_circuitPanel->findUnit(unitId)->setRelPos(pos);
 	}
 	// Add wires
-	const vector<ConnectionRecord>& records = m_vm->getCircuit().getConnections();
+	const vector<ConnectionRecord>& records = m_vm->getPrototypeCircuit()->getConnections();
 	for (int i = 0; i < records.size(); i++) {
 		const ConnectionRecord& rec = records[i];
 		m_circuitPanel->onAddConnection_(rec.from_id, rec.from_port, rec.to_id, rec.to_port);

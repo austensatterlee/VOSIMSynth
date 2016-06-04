@@ -17,9 +17,9 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**  
+/**
  *	 \file SpectroscopeUnit.h
- *   \brief 
+ *   \brief
  *   \details
  *   \author Austen Satterlee
  *   \date 03/14/2016
@@ -61,12 +61,12 @@ namespace syn
 		array<double, 2> getBufferExtrema(int a_bufInd) const {
 			double bufmin = m_outBuffers[a_bufInd][m_outBufferExtrema[a_bufInd][0]];
 			double bufmax = m_outBuffers[a_bufInd][m_outBufferExtrema[a_bufInd][1]];
-			return {bufmin, bufmax};
+			return{ bufmin, bufmax };
 		}
 
 	protected:
 		void onParamChange_(int a_paramId) override;
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
+		void MSFASTCALL process_() GCCFASTCALL override;
 
 	private:
 		string _getClassName() const override {
@@ -114,6 +114,6 @@ namespace syn
 		Vector2f m_yBounds;
 		Vector2i m_screenPos;
 		Vector2i m_screenSize;
-		vector<Color> m_colors = {{255,255,255,255},{255,128,128,255}};
+		vector<Color> m_colors = { {255,255,255,255},{255,128,128,255} };
 	};
 }

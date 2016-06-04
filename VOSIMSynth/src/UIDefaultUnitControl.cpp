@@ -1,6 +1,6 @@
 #include "UIDefaultUnitControl.h"
 
-syn::DefaultUnitControl::DefaultUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId): 
+syn::DefaultUnitControl::DefaultUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId) :
 	UIUnitControl(a_window, a_vm, a_unitId)
 {
 	m_col = new UICol(a_window);
@@ -33,7 +33,7 @@ void syn::DefaultUnitControl::draw(NVGcontext* a_nvg)
 	for (UITextSlider* txt_slider : m_paramControls)
 	{
 		const UnitParameter& param = unit.getParameter(i);
-		if(param.isVisible()!=txt_slider->visible())
+		if (param.isVisible() != txt_slider->visible())
 		{
 			txt_slider->setVisible(param.isVisible());
 			isDirty = true;

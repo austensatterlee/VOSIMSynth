@@ -126,11 +126,11 @@ namespace syn
 		}
 	}
 
-	void MemoryUnit::process_(const SignalBus& a_inputs, SignalBus& a_outputs)
+	void MemoryUnit::process_()
 	{
-		double input = a_inputs.getValue(0);
+		double input = getInputValue(0);
 		double output = m_delay.process(input);
-		a_outputs.setChannel(0, output);
+		setOutputChannel_(0, output);
 	}
 
 	//---------------------
@@ -179,24 +179,24 @@ namespace syn
 		}
 	}
 
-	void ResampleUnit::process_(const SignalBus& a_inputs, SignalBus& a_outputs)
+	void ResampleUnit::process_()
 	{
 		int bufType = getParameter(m_pBufType).getInt();
 		if (bufType == m_pBufSize) { // samples
-			m_delaySamples = getParameter(m_pBufSize).getDouble() + a_inputs.getValue(m_iSize);
+			m_delaySamples = getParameter(m_pBufSize).getDouble() + getInputValue(m_iSize);
 		}
 		else if (bufType == m_pBufDelay) { // seconds
-			m_delaySamples = periodToSamples(getParameter(m_pBufDelay).getDouble() + a_inputs.getValue(m_iSize), getFs());
+			m_delaySamples = periodToSamples(getParameter(m_pBufDelay).getDouble() + getInputValue(m_iSize), getFs());
 		}
 		else if (bufType == m_pBufFreq) { // freq
-			m_delaySamples = freqToSamples(getParameter(m_pBufFreq).getDouble() + a_inputs.getValue(m_iSize), getFs());
+			m_delaySamples = freqToSamples(getParameter(m_pBufFreq).getDouble() + getInputValue(m_iSize), getFs());
 		}
 		else if (bufType == m_pBufBPMFreq) { // bpm
-			m_delaySamples = freqToSamples(bpmToFreq(getParameter(m_pBufBPMFreq).getEnum(getParameter(m_pBufBPMFreq).getInt() + a_inputs.getValue(m_iSize)), getTempo()), getFs());
+			m_delaySamples = freqToSamples(bpmToFreq(getParameter(m_pBufBPMFreq).getEnum(getParameter(m_pBufBPMFreq).getInt() + getInputValue(m_iSize)), getTempo()), getFs());
 		}
 		m_delay.resizeBuffer(m_delaySamples);
-		double input = a_inputs.getValue(0);
+		double input = getInputValue(0);
 		double output = m_delay.process(input);
-		a_outputs.setChannel(0, output);
+		setOutputChannel_(0, output);
 	}
 }

@@ -27,7 +27,7 @@ namespace syn
 		m_voiceStack.push_right(vind);
 		if (m_voiceMap.find(a_note) == m_voiceMap.end()) {
 			// should be okay since nobody else should be trying to access a note that doesn't exist
-			m_voiceMap[a_note].unsafe_resize(MAX_VOICES_PER_NOTE);
+			m_voiceMap[a_note].unsafe_resize(m_maxVoices);
 		}
 		m_voiceMap[a_note].push_right(vind);
 		m_allVoices[vind]->noteOn(a_note, a_velocity);
@@ -59,7 +59,7 @@ namespace syn
 		}
 
 		// If none are found, force a voice off the active stack
-		vind = _getOldestVoiceIndex();
+		vind = getOldestVoiceIndex();
 		_makeIdle(vind);
 		m_idleVoiceStack.remove(vind);
 		return vind;
@@ -125,7 +125,6 @@ namespace syn
 	}
 
 	void VoiceManager::tick(const double* a_left_input, const double* a_right_input, double* a_left_output, double* a_right_output) {
-		m_isPlaying = true;
 		_flushActionQueue();
 
 		int nVoices = m_numActiveVoices;
@@ -154,21 +153,18 @@ namespace syn
 			m_voiceStack.peek(voiceInd, i);
 			shared_ptr<Circuit> voice = m_allVoices[voiceInd];
 			for (int j = 0; j < bufsize; j++) {
-				voice->m_inputSignals.setChannel(0, a_left_input[j]);
-				voice->m_inputSignals.setChannel(1, a_right_input[j]);
+				voice->connectInput(0, a_left_input + j);
+				voice->connectInput(1, a_right_input + j);
 				voice->tick();
-				double left_out = voice->getOutputChannel(0).get();
-				double right_out = voice->getOutputChannel(1).get();
-				a_left_output[j] += left_out;
-				a_right_output[j] += right_out;
+				a_left_output[j] += voice->getOutputValue(0);
+				a_right_output[j] += voice->getOutputValue(1);
 			}
 		}
 
 		m_tickCount += m_bufferSize;
-		m_isPlaying = false;
 	}
 
-	int VoiceManager::_getLowestVoiceIndex() const {
+	int VoiceManager::getLowestVoiceIndex() const {
 		if (m_numActiveVoices > 0) {
 			VoiceMap::const_iterator it;
 			int voice;
@@ -181,7 +177,7 @@ namespace syn
 		return -1;
 	}
 
-	int VoiceManager::_getNewestVoiceIndex() const {
+	int VoiceManager::getNewestVoiceIndex() const {
 		if (m_numActiveVoices > 0) {
 			int vind;
 			if (m_voiceStack.peek_right(vind))
@@ -190,7 +186,7 @@ namespace syn
 		return -1;
 	}
 
-	int VoiceManager::_getOldestVoiceIndex() const {
+	int VoiceManager::getOldestVoiceIndex() const {
 		if (m_numActiveVoices > 0) {
 			int vind;
 			if (m_voiceStack.peek_left(vind))
@@ -199,7 +195,7 @@ namespace syn
 		return -1;
 	}
 
-	int VoiceManager::_getHighestVoiceIndex() const {
+	int VoiceManager::getHighestVoiceIndex() const {
 		if (m_numActiveVoices > 0) {
 			VoiceMap::const_iterator it;
 			int voice;
@@ -228,10 +224,6 @@ namespace syn
 			}
 		}
 		return voices;
-	}
-
-	bool VoiceManager::isPlaying() const {
-		return m_isPlaying;
 	}
 
 	void VoiceManager::onIdle() {
@@ -273,12 +265,17 @@ namespace syn
 		delete a_msg;
 	}
 
-	const Circuit& VoiceManager::getCircuit() const {
-		return *m_instrument;
+	shared_ptr<const Circuit> VoiceManager::getPrototypeCircuit() const {
+		return m_instrument;
+	}
+
+	shared_ptr<const Circuit> VoiceManager::getVoiceCircuit(int a_voiceId) const
+	{
+		return m_allVoices[a_voiceId];
 	}
 
 	void VoiceManager::save(ByteChunk* a_data) const {
-		vector<int> unitIds = m_instrument->m_units.getIds();
+		const vector<int>& unitIds = m_instrument->m_units.getIds();
 		int nUnits = unitIds.size();
 		a_data->Put<int>(&nUnits);
 		for (int i = 0; i < nUnits; i++) {
@@ -296,7 +293,7 @@ namespace syn
 	}
 
 	int VoiceManager::load(ByteChunk* a_data, int startPos) {
-		vector<int> unitIds = m_instrument->m_units.getIds();
+		const vector<int>& unitIds = m_instrument->m_units.getIds();
 		for (int i = 0; i < unitIds.size(); i++) {
 			m_instrument->removeUnit(unitIds[i]);
 		}
@@ -323,11 +320,9 @@ namespace syn
 		return m_instrument->getNumUnits();
 	}
 
-	const Unit& VoiceManager::getUnit(int a_id) {
-		int voiceInd = _getNewestVoiceIndex();
-
-		if (voiceInd >= 0) {
-			return m_allVoices[voiceInd]->getUnit(a_id);
+	const Unit& VoiceManager::getUnit(int a_id, int a_voiceInd) {
+		if (a_voiceInd >= 0) {
+			return m_allVoices[a_voiceInd]->getUnit(a_id);
 		}
 		return m_instrument->getUnit(a_id);
 	}

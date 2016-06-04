@@ -35,8 +35,8 @@ using namespace std;
 
 namespace syn
 {
-	const vector<string> scale_selections = {"1","10","100"};
-	const vector<double> scale_values = {1.,10.,100.};
+	const vector<string> scale_selections = { "1","10","100" };
+	const vector<double> scale_values = { 1.,10.,100. };
 
 	class MovingAverage
 	{
@@ -88,7 +88,7 @@ namespace syn
 		DCRemoverUnit(const DCRemoverUnit& a_rhs);
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;;
+		void MSFASTCALL process_() GCCFASTCALL override;
 
 	private:
 		string _getClassName() const override;
@@ -101,7 +101,6 @@ namespace syn
 		double m_lastInput;
 	};
 
-
 	/**
 	* 1 Pole Filter (Lag)
 	*/
@@ -113,12 +112,12 @@ namespace syn
 		LagUnit(const LagUnit& a_rhs);
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
+		void MSFASTCALL process_() GCCFASTCALL override;
 
 	private:
 		string _getClassName() const override;
 
-		Unit* _clone() const override;;
+		Unit* _clone() const override;
 
 	private:
 		int m_pFc;
@@ -137,7 +136,7 @@ namespace syn
 		RectifierUnit(const RectifierUnit& a_rhs);
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;;
+		void MSFASTCALL process_() GCCFASTCALL override;
 
 	private:
 		string _getClassName() const override;
@@ -146,8 +145,7 @@ namespace syn
 
 	private:
 		int m_pRectType;
-	};		
-	
+	};
 
 	/**
 	 * Performs multiplies two signals and then adds a third signal as a bias
@@ -160,7 +158,7 @@ namespace syn
 		MACUnit(const MACUnit& a_rhs);
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;;
+		void MSFASTCALL process_() GCCFASTCALL override;
 
 	private:
 		string _getClassName() const override;
@@ -179,7 +177,7 @@ namespace syn
 		GainUnit(const GainUnit& a_rhs);
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;;
+		void MSFASTCALL process_() GCCFASTCALL override;
 
 	private:
 		string _getClassName() const override;
@@ -202,7 +200,7 @@ namespace syn
 		SummerUnit(const SummerUnit& a_rhs);
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;;
+		void MSFASTCALL process_() GCCFASTCALL override;
 
 	private:
 		string _getClassName() const override;
@@ -224,7 +222,7 @@ namespace syn
 		ConstantUnit(const ConstantUnit& a_rhs);
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;;
+		void MSFASTCALL process_() GCCFASTCALL override;
 
 	private:
 		string _getClassName() const override;
@@ -243,7 +241,7 @@ namespace syn
 		PanningUnit(const PanningUnit& a_rhs);
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;;
+		void MSFASTCALL process_() GCCFASTCALL override;
 
 	protected:
 		int m_pBalance1, m_pBalance2;
@@ -264,7 +262,7 @@ namespace syn
 		LerpUnit(const LerpUnit& a_rhs);
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;;
+		void MSFASTCALL process_() GCCFASTCALL override;
 
 	private:
 		string _getClassName() const override;

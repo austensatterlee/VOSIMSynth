@@ -19,7 +19,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "Follower.h"
 
-syn::FollowerUnit::FollowerUnit(const string& a_name):
+syn::FollowerUnit::FollowerUnit(const string& a_name) :
 	Unit(a_name),
 	m_w(0.0),
 	m_output(0.0),
@@ -29,11 +29,11 @@ syn::FollowerUnit::FollowerUnit(const string& a_name):
 	addOutput_("out");
 }
 
-syn::FollowerUnit::FollowerUnit(const FollowerUnit& a_rhs):
+syn::FollowerUnit::FollowerUnit(const FollowerUnit& a_rhs) :
 	FollowerUnit(a_rhs.getName()) {}
 
-void syn::FollowerUnit::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
-	double input = a_inputs.getValue(0);
+void syn::FollowerUnit::process_() {
+	double input = getInputValue(0);
 	double alpha = getParameter(m_pAlpha).getDouble();
 	double beta = getParameter(m_pBeta).getDouble();
 	// dc removal + rectification
@@ -42,5 +42,5 @@ void syn::FollowerUnit::process_(const SignalBus& a_inputs, SignalBus& a_outputs
 	double hpOutput = abs(m_w - old_w);
 	// low pass
 	m_output = beta * hpOutput + (1 - beta) * m_output;
-	a_outputs.setChannel(0, sqrt(m_output));
+	setOutputChannel_(0, sqrt(m_output));
 }

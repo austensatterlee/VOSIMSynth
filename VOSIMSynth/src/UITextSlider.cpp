@@ -148,7 +148,7 @@ void syn::UITextSlider::setValueFromString(const string& a_str) {
 
 void syn::UITextSlider::draw(NVGcontext* a_nvg) {
 	if (!m_textBox->visible()) {
-		const UnitParameter& param = m_vm->getCircuit().getUnit(m_unitId).getParameter(m_paramId);
+		const UnitParameter& param = m_vm->getPrototypeCircuit()->getUnit(m_unitId).getParameter(m_paramId);
 		double value = m_param->getNorm();
 		if (&param != m_param || value != m_value || m_isValueDirty) {
 			_updateValue();

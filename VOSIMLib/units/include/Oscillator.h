@@ -34,7 +34,7 @@ namespace syn
 		SQUARE_WAVE
 	};
 
-	const vector<string> WAVE_SHAPE_NAMES{"Saw", "Sine", "Tri", "Square"};
+	const vector<string> WAVE_SHAPE_NAMES{ "Saw", "Sine", "Tri", "Square" };
 
 	double sampleWaveShape(WAVE_SHAPE shape, double phase, double period, bool useNaive);
 
@@ -44,11 +44,11 @@ namespace syn
 		explicit Oscillator(const string& a_name);
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
+		void MSFASTCALL process_() GCCFASTCALL override;
 		virtual void MSFASTCALL tickPhase_(double a_phaseOffset) GCCFASTCALL;
 		virtual void MSFASTCALL updatePhaseStep_() GCCFASTCALL;
 
-		virtual void MSFASTCALL sync_() GCCFASTCALL ;;
+		virtual void MSFASTCALL sync_() GCCFASTCALL;
 
 	protected:
 		double m_basePhase;
@@ -78,7 +78,7 @@ namespace syn
 		explicit TunedOscillator(const TunedOscillator& a_rhs);
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) override GCCFASTCALL;
+		void MSFASTCALL process_() override GCCFASTCALL;
 		void MSFASTCALL updatePhaseStep_() override GCCFASTCALL;
 		void onNoteOn_() override;
 	protected:
@@ -93,14 +93,14 @@ namespace syn
 	class BasicOscillator : public TunedOscillator
 	{
 	public:
-		explicit BasicOscillator(const string& a_name);;
+		explicit BasicOscillator(const string& a_name);
 
 		explicit BasicOscillator(const BasicOscillator& a_rhs);
 
 	protected:
 		int m_pWaveform;
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
+		void MSFASTCALL process_() GCCFASTCALL override;
 	private:
 		string _getClassName() const override;
 
@@ -128,7 +128,7 @@ namespace syn
 
 		double m_lastSync;
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
+		void MSFASTCALL process_() GCCFASTCALL override;
 		void onParamChange_(int a_paramId) override;
 	private:
 		string _getClassName() const override;

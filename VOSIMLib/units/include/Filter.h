@@ -59,7 +59,7 @@ namespace syn
 		virtual ~Filter() { };
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
+		void MSFASTCALL process_() GCCFASTCALL override;
 
 		void reset_() {
 			memset(YBuf, 0, nY * sizeof(double));
@@ -75,17 +75,17 @@ namespace syn
 	};
 
 	template <size_t nX, size_t nY>
-	void Filter<nX, nY>::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
-		XBuf[xBufInd] = a_inputs.getValue(0);
+	void Filter<nX, nY>::process_() {
+		XBuf[xBufInd] = getInputValue(0);
 		YBuf[yBufInd] = 0.0;
 		double* output = &YBuf[yBufInd];
 		int i, j;
-		for (i = 0 , j = xBufInd; i < nX; i++ , j--) {
+		for (i = 0, j = xBufInd; i < nX; i++, j--) {
 			if (j < 0)
 				j = nX - 1;
 			YBuf[yBufInd] += XBuf[j] * XCoefs[i];
 		}
-		for (i = 1 , j = yBufInd - 1; i < nY; i++ , j--) {
+		for (i = 1, j = yBufInd - 1; i < nY; i++, j--) {
 			if (j < 0)
 				j = nY - 1;
 			YBuf[yBufInd] -= YBuf[j] * YCoefs[i];
@@ -96,7 +96,7 @@ namespace syn
 		yBufInd++;
 		if (yBufInd == nY)
 			yBufInd = 0;
-		a_outputs.setChannel(0, *output);
+		setOutputChannel_(0, *output);
 	}
 }
 #endif

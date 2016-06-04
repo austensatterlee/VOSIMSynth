@@ -34,7 +34,7 @@ namespace syn
 		VosimOscillator(const VosimOscillator& a_rhs);
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
+		void MSFASTCALL process_() GCCFASTCALL override;
 		void MSFASTCALL updatePhaseStep_() GCCFASTCALL override;
 
 	private:
@@ -55,12 +55,12 @@ namespace syn
 	{
 	public:
 
-		explicit FormantOscillator(string name);;
+		explicit FormantOscillator(string name);
 
 		FormantOscillator(const FormantOscillator& a_rhs);
 
 	protected:
-		void MSFASTCALL process_(const SignalBus& a_inputs, SignalBus& a_outputs) GCCFASTCALL override;
+		void MSFASTCALL process_() GCCFASTCALL override;
 
 	private:
 		string _getClassName() const override;

@@ -12,18 +12,18 @@
 #include "Theme.h"
 
 syn::UICircuitPanel::UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, UnitFactory* a_unitFactory) :
-	UIComponent{a_window},
+	UIComponent{ a_window },
 	m_vm(a_vm),
 	m_unitFactory(a_unitFactory)
-	{
-	m_unitSelector = new UIUnitSelector{m_window, m_unitFactory};
-	UIWindow* unitSelectorWindow = new UIWindow{m_window,"Unit Selector"};
-	unitSelectorWindow->setRelPos({5,45});
+{
+	m_unitSelector = new UIUnitSelector{ m_window, m_unitFactory };
+	UIWindow* unitSelectorWindow = new UIWindow{ m_window,"Unit Selector" };
+	unitSelectorWindow->setRelPos({ 5,45 });
 	addChild(unitSelectorWindow);
 	unitSelectorWindow->addChildToBody(m_unitSelector);
 
-	const Circuit& circ = m_vm->getCircuit();
-	onAddUnit_(circ.getUnit(circ.getInputUnitId()).getClassIdentifier(), circ.getInputUnitId());
+	const shared_ptr<const Circuit> circ = m_vm->getPrototypeCircuit();
+	onAddUnit_(circ->getUnit(circ->getInputUnitId()).getClassIdentifier(), circ->getInputUnitId());
 	m_inputs = m_unitControls.back();
 	m_inputs->m_headerRow->removeChild(m_inputs->m_closeButton);
 	m_inputs->m_closeButton = nullptr;
@@ -31,7 +31,7 @@ syn::UICircuitPanel::UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, U
 	for (UIUnitPort* port : inputPorts) {
 		port->setVisible(false);
 	}
-	onAddUnit_(circ.getUnit(circ.getOutputUnitId()).getClassIdentifier(), circ.getOutputUnitId());
+	onAddUnit_(circ->getUnit(circ->getOutputUnitId()).getClassIdentifier(), circ->getOutputUnitId());
 	m_outputs = m_unitControls.back();
 	m_outputs->m_headerRow->removeChild(m_outputs->m_closeButton);
 	m_outputs->m_closeButton = nullptr;
@@ -90,7 +90,7 @@ void syn::UICircuitPanel::requestAddConnection(int a_fromUnit, int a_fromPort, i
 	msg->action = [](Circuit* a_circuit, bool a_isLast, ByteChunk* a_data) {
 		UICircuitPanel* self;
 		int fromUnit, fromPort, toUnit, toPort;
-		GetArgs(a_data,0,self, fromUnit, fromPort, toUnit, toPort);
+		GetArgs(a_data, 0, self, fromUnit, fromPort, toUnit, toPort);
 		a_circuit->connectInternal(fromUnit, fromPort, toUnit, toPort);
 
 		// Queue return message
@@ -113,7 +113,6 @@ void syn::UICircuitPanel::requestAddConnection(int a_fromUnit, int a_fromPort, i
 }
 
 void syn::UICircuitPanel::requestDeleteConnection(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort) {
-
 	RTMessage* msg = new RTMessage();
 	UICircuitPanel* self = this;
 	PutArgs(&msg->data, self, a_fromUnit, a_fromPort, a_toUnit, a_toPort);
@@ -170,12 +169,12 @@ void syn::UICircuitPanel::requestDeleteUnit(int a_unitId) {
 }
 
 void syn::UICircuitPanel::_onResize() {
-	m_inputs->setRelPos({5, size()[1] / 2 - m_inputs->size()[1] / 2});
-	m_outputs->setRelPos({size()[0] - m_outputs->size()[0] - 5, size()[1] / 2 - m_outputs->size()[1] / 2});
+	m_inputs->setRelPos({ 5, size()[1] / 2 - m_inputs->size()[1] / 2 });
+	m_outputs->setRelPos({ size()[0] - m_outputs->size()[0] - 5, size()[1] / 2 - m_outputs->size()[1] / 2 });
 }
 
 void syn::UICircuitPanel::setSelectedWire(UIWire* a_wire) {
-	if(find(m_wireSelectionQueue.begin(),m_wireSelectionQueue.end(),a_wire)==m_wireSelectionQueue.end())
+	if (find(m_wireSelectionQueue.begin(), m_wireSelectionQueue.end(), a_wire) == m_wireSelectionQueue.end())
 		m_wireSelectionQueue.push_back(a_wire);
 }
 
@@ -203,6 +202,12 @@ void syn::UICircuitPanel::reset() {
 void syn::UICircuitPanel::draw(NVGcontext* a_nvg) {}
 
 void syn::UICircuitPanel::onAddConnection_(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort) {
+	for(UIWire* wire : m_wires) {
+		if(wire->toPort()==a_toPort && wire->toUnit()==a_toUnit) {
+			onDeleteConnection_(wire->fromUnit(), wire->fromPort(), wire->toUnit(), wire->toPort());
+			break;
+		}
+	}
 	UIWire* wire = new UIWire(m_window, a_fromUnit, a_fromPort, a_toUnit, a_toPort);
 	m_wires.push_back(wire);
 	addChild(wire);

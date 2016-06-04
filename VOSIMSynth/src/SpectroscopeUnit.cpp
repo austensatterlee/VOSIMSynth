@@ -19,11 +19,12 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "SpectroscopeUnit.h"
 #include <DSPMath.h>
+#include <tables.h>
 
 namespace syn
 {
-	const vector<string> bufferSizeSelections = {"128","256","512","1024","2048","4096"};
-	const vector<double> bufferSizeValues = {128,256,512,1024,2048,4096};
+	const vector<string> bufferSizeSelections = { "128","256","512","1024","2048","4096" };
+	const vector<double> bufferSizeValues = { 128,256,512,1024,2048,4096 };
 
 	SpectroscopeUnit::SpectroscopeUnit(const string& a_name) :
 		Unit(a_name),
@@ -61,12 +62,12 @@ namespace syn
 			int newBufferSize = getParameter(m_pBufferSize).getEnum();
 			m_inBufferSize = newBufferSize;
 			m_outBufferSize = newBufferSize >> 1;
-			m_bufferIndex = MIN(m_bufferIndex, m_inBufferSize-1);
+			m_bufferIndex = MIN(m_bufferIndex, m_inBufferSize - 1);
 			for (int i = 0; i < m_nBuffers; i++) {
 				m_timeBuffers[i].resize(m_inBufferSize);
 				m_freqBuffers[i].resize(m_inBufferSize);
 				m_outBuffers[i].resize(m_outBufferSize);
-				m_outBufferExtrema[i] = {0,0};
+				m_outBufferExtrema[i] = { 0,0 };
 			}
 
 			m_window.resize(m_inBufferSize);
@@ -76,13 +77,13 @@ namespace syn
 		}
 	}
 
-	void SpectroscopeUnit::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
+	void SpectroscopeUnit::process_() {
 		for (int i = 0; i < m_nBuffers; i++) {
-			m_timeBuffers[i][m_bufferIndex] = a_inputs.getValue(i);
+			m_timeBuffers[i][m_bufferIndex] = getInputValue(i);
 		}
 
 		m_samplesSinceLastUpdate++;
-		int updatePeriod = LERP(16,m_inBufferSize, 1 - getParameter(m_pUpdatePeriod).getDouble());
+		int updatePeriod = LERP(16, m_inBufferSize, 1 - getParameter(m_pUpdatePeriod).getDouble());
 		if (m_samplesSinceLastUpdate >= updatePeriod && m_isActive) {
 			m_samplesSinceLastUpdate = 0;
 			for (int i = 0; i < m_nBuffers; i++) {
@@ -116,26 +117,26 @@ namespace syn
 					}
 				}
 				// Record extrema locations
-				m_outBufferExtrema[i] = {argoutmin,argoutmax};
+				m_outBufferExtrema[i] = { argoutmin,argoutmax };
 			}
 		}
 		m_bufferIndex = WRAP(m_bufferIndex + 1, m_inBufferSize);
 	}
 
-	SpectroscopeUnitControl::SpectroscopeUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId):
+	SpectroscopeUnitControl::SpectroscopeUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId) :
 		UIUnitControl(a_window, a_vm, a_unitId),
 		m_defCtrl(new DefaultUnitControl(a_window, a_vm, a_unitId)),
 		m_resizeHandle(new UIResizeHandle(a_window)),
-		m_yBounds{-120,60},
-		m_screenSize{0,0},
-		m_screenPos{0,0} {
+		m_yBounds{ -120,60 },
+		m_screenSize{ 0,0 },
+		m_screenPos{ 0,0 } {
 		addChild(m_defCtrl);
 		addChild(m_resizeHandle);
 		m_resizeHandle->setDragCallback([&](const Vector2i& a_relPos, const Vector2i& a_diffPos) {
 			grow(a_diffPos);
 		});
 
-		Vector2i minSize{200,100};
+		Vector2i minSize{ 200,100 };
 		Vector2i defCtrlSize = m_defCtrl->size();
 		minSize[1] += defCtrlSize[1];
 		minSize[0] = MAX(minSize[0], defCtrlSize[0]);
@@ -148,22 +149,22 @@ namespace syn
 
 		const SpectroscopeUnit* unit = static_cast<const SpectroscopeUnit*>(&m_vm->getUnit(m_unitId));
 		int bufsize = unit->getBufferSize();
-		double freqX = a_sample[0] * (unit->getFs()*0.5 / bufsize);
-		double unitX = INVLERP(log2(0.5*unit->getFs()/bufsize), log2((bufsize-1)*unit->getFs()*0.5/bufsize), log2(freqX));
+		double freqX = a_sample[0] * unit->getFs() * 0.5;
+		double unitX = INVLERP(log2(0.5*unit->getFs() / bufsize), log2((bufsize - 1)*unit->getFs()*0.5 / bufsize), log2(freqX));
 		int screenX = unitX * m_screenSize[0] + m_screenPos[0];
 
-		return {screenX, screenY};
+		return{ screenX, screenY };
 	}
 
 	void SpectroscopeUnitControl::_onResize() {
-		m_screenPos = {0,m_defCtrl->size()[1]};
-		m_screenSize = size() - Vector2i{0,m_defCtrl->size()[1] + m_resizeHandle->size()[1]};
+		m_screenPos = { 0,m_defCtrl->size()[1] };
+		m_screenSize = size() - Vector2i{ 0,m_defCtrl->size()[1] + m_resizeHandle->size()[1] };
 		m_defCtrl->setSize({ size()[0], -1 });
 		m_resizeHandle->setRelPos(size() - m_resizeHandle->size());
 	}
 
 	void SpectroscopeUnitControl::draw(NVGcontext* a_nvg) {
-		const SpectroscopeUnit* unit = static_cast<const SpectroscopeUnit*>(&m_vm->getUnit(m_unitId));
+		const SpectroscopeUnit* unit = static_cast<const SpectroscopeUnit*>(&m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()));
 
 		// Draw background
 		nvgBeginPath(a_nvg);
@@ -172,16 +173,21 @@ namespace syn
 		nvgFill(a_nvg);
 
 		// Draw paths
+		int nLines = m_screenSize[0] << 1;
+		double bufPhaseStep = 1.0 / (double)nLines;
 		for (int i = 0; i < unit->getNumBuffers(); i++) {
 			Color color = m_colors[i % m_colors.size()];
 			nvgBeginPath(a_nvg);
 			nvgStrokeColor(a_nvg, color);
-			for (int j = 1; j < unit->getBufferSize(); j++) {
-				Vector2i screenPt = toPixCoords({j,unit->getBuffer(i)[j]});
+			double bufPhase = 0;
+			for (int j = 0; j < nLines; j++) {
+				double bufVal = getresampled_single(unit->getBuffer(i), unit->getBufferSize(), bufPhase, nLines, lut_blimp_table_online);
+				Vector2i screenPt = toPixCoords({ bufPhase, bufVal });
 				if (j == 1)
 					nvgMoveTo(a_nvg, screenPt[0], screenPt[1]);
 				else
 					nvgLineTo(a_nvg, screenPt[0], screenPt[1]);
+				bufPhase += bufPhaseStep;
 			}
 			nvgStroke(a_nvg);
 		}

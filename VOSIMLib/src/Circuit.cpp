@@ -56,17 +56,16 @@ namespace syn
 		}
 	}
 
-	void Circuit::process_(const SignalBus& inputs, SignalBus& outputs) {
-		/* Push external input data into internal input unit */
-		m_inputUnit->m_inputSignals.set(m_inputSignals);
-
-		// tick all internal components
-		for (shared_ptr<Unit> unit : m_procGraph) {
+	void Circuit::process_() {
+		// tick units in processing graph
+		for (Unit* unit : m_procGraph) {
 			unit->tick();
 		}
 
 		/* Push internally connected output signals to circuit output ports */
-		m_outputSignals.set(m_outputUnit->m_outputSignals);
+		for (int i = 0; i < m_outputSignals.size(); i++) {
+			setOutputChannel_(i, m_outputUnit->getOutputValue(i));
+		}
 	}
 
 	int Circuit::addUnit(shared_ptr<Unit> a_unit) {
@@ -103,49 +102,52 @@ namespace syn
 
 	void Circuit::_recomputeGraph()
 	{
-		list<shared_ptr<Unit> > sinks;
+		list<int> sinks;
 		m_procGraph.clear();
 		// Find sinks
-		auto units = m_units.data();
-		for (auto it = units.begin(); it != units.end(); ++it) {
-			if (!it->second->getNumOutputs()) {
-				sinks.push_back(it->second);
+		const vector<int>& unitIds = m_units.getIds();
+		for (const int& id : unitIds) {
+			shared_ptr<Unit> unit = m_units[id];
+			if (!unit->getNumOutputs()) {
+				sinks.push_back(id);
 			}
 		}
-		sinks.push_back(m_outputUnit);
+		sinks.push_back(getOutputUnitId());
 
-		unordered_set<shared_ptr<Unit> > permClosedSet;
-		unordered_set<shared_ptr<Unit> > tempClosedSet;
-		std::function<void(shared_ptr<Unit>)> visit = [&](shared_ptr<Unit> node)
+		unordered_set<int> permClosedSet;
+		unordered_set<int> tempClosedSet;
+		std::function<void(int)> visit = [&](int unitId)
 		{
-			if (tempClosedSet.count(node) || permClosedSet.count(node))
+			shared_ptr<Unit> node = m_units[unitId];
+			if (tempClosedSet.count(unitId) || permClosedSet.count(unitId))
 				return;
-			tempClosedSet.insert(node);
+			tempClosedSet.insert(unitId);
 
 			int nPorts = node->getNumInputs();
 			for (int i = 0; i < nPorts; i++) {
-				const vector<UnitConnector>& port = node->getInputPort(i);
-				for (const UnitConnector& conn : port) {
-					visit(conn.connectedUnit);
+				const vector<pair<int, int> >& conns = getConnectionsToInternalInput(unitId, i);
+				if (!conns.empty()) {
+					for (const pair<int, int>& conn : conns) {
+						visit(conn.first);
+					}
 				}
 			}
-			permClosedSet.insert(node);
-			tempClosedSet.erase(node);
-			m_procGraph.push_back(node);
+			permClosedSet.insert(unitId);
+			tempClosedSet.erase(unitId);
+			m_procGraph.push_back(m_units[unitId].get());
 		};
 		// DFS
 		while (!sinks.empty()) {
-			shared_ptr<Unit> node = sinks.back();
+			int sinkId = sinks.back();
 			sinks.pop_back();
-			visit(node);
+			visit(sinkId);
 		}
-		return;
 	}
 
 	bool Circuit::isActive() const {
 		auto units = m_units.data();
 		for (auto it = units.begin(); it != units.end(); ++it) {
-			if (it->second->isActive())
+			if ((*it)->isActive())
 				return true;
 		}
 		return false;
@@ -154,36 +156,46 @@ namespace syn
 	void Circuit::onFsChange_() {
 		auto units = m_units.data();
 		for (auto it = units.begin(); it != units.end(); ++it) {
-			it->second->setFs(getFs());
+			(*it)->setFs(getFs());
 		}
 	}
 
 	void Circuit::onTempoChange_() {
 		auto units = m_units.data();
 		for (auto it = units.begin(); it != units.end(); ++it) {
-			it->second->setTempo(getTempo());
+			(*it)->setTempo(getTempo());
 		}
 	}
 
 	void Circuit::onNoteOn_() {
 		auto units = m_units.data();
 		for (auto it = units.begin(); it != units.end(); ++it) {
-			it->second->noteOn(getNote(), getVelocity());
+			(*it)->noteOn(getNote(), getVelocity());
 		}
 	}
 
 	void Circuit::onNoteOff_() {
 		auto units = m_units.data();
 		for (auto it = units.begin(); it != units.end(); ++it) {
-			it->second->noteOff(getNote(), getVelocity());
+			(*it)->noteOff(getNote(), getVelocity());
 		}
 	}
 
 	void Circuit::onMidiControlChange_(int a_cc, double a_value) {
 		auto units = m_units.data();
 		for (auto it = units.begin(); it != units.end(); ++it) {
-			it->second->onMidiControlChange_(a_cc, a_value);
+			(*it)->onMidiControlChange_(a_cc, a_value);
 		}
+	}
+
+	void Circuit::onInputConnection_(int a_inputPort)
+	{
+		m_inputUnit->connectInput(a_inputPort, &getInputValue(a_inputPort));
+	}
+
+	void Circuit::onInputDisconnection_(int a_inputPort)
+	{
+		m_inputUnit->disconnectInput(a_inputPort);
 	}
 
 	Unit& Circuit::getUnit_(int a_unitId) {
@@ -220,12 +232,24 @@ namespace syn
 		return m_units.size();
 	}
 
-	const list<shared_ptr<Unit> >& Circuit::getProcGraph() const
+	const list<Unit*>& Circuit::getProcGraph() const
 	{
 		return m_procGraph;
 	}
 
 	void Circuit::notifyMidiControlChange(int a_cc, double a_value) {
 		onMidiControlChange_(a_cc, a_value);
+	}
+
+	vector<pair<int, int>> Circuit::getConnectionsToInternalInput(int a_unitId, int a_portid) const {
+		int unitId = m_units.getItemId(a_unitId);
+		vector<pair<int, int>> connectedPorts;
+		for (int i = 0; i < m_connectionRecords.size(); i++) {
+			const ConnectionRecord& conn = m_connectionRecords[i];
+			if (conn.to_id == unitId && conn.to_port == a_portid) {
+				connectedPorts.push_back(make_pair(conn.from_id, conn.from_port));
+			}
+		}
+		return connectedPorts;
 	}
 }

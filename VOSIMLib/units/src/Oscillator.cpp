@@ -32,7 +32,8 @@ namespace syn
 					output = 2 * phase;
 				else
 					output = 2 * phase - 2;
-			} else {
+			}
+			else {
 				output = lut_bl_saw.getresampled(phase, period);
 			}
 			break;
@@ -56,7 +57,7 @@ namespace syn
 		return output;
 	}
 
-	Oscillator::Oscillator(const string& a_name):
+	Oscillator::Oscillator(const string& a_name) :
 		Unit(a_name),
 		m_basePhase(0),
 		m_phase(0),
@@ -68,10 +69,10 @@ namespace syn
 		m_bias(0.0),
 		m_oOut(addOutput_("out")),
 		m_oPhase(addOutput_("ph")),
-		m_pGain(addParameter_({"gain", 0.0, 1.0, 1.0})),
-		m_pPhaseOffset(addParameter_({"phase", 0.0, 1.0, 0.0})),
+		m_pGain(addParameter_({ "gain", 0.0, 1.0, 1.0 })),
+		m_pPhaseOffset(addParameter_({ "phase", 0.0, 1.0, 0.0 })),
 		m_pUnipolar(addParameter_(UnitParameter("unipolar", false))),
-		m_iGainMul(addInput_("g[x]", 1.0, Signal::EMul)),
+		m_iGainMul(addInput_("g[x]", 1.0)),
 		m_iPhaseAdd(addInput_("ph")) { }
 
 	void Oscillator::sync_() {}
@@ -85,7 +86,8 @@ namespace syn
 		if (m_freq) {
 			m_period = getFs() / m_freq;
 			m_phase_step = 1. / m_period;
-		} else {
+		}
+		else {
 			m_period = 0.0;
 			m_phase_step = 0.0;
 		}
@@ -104,9 +106,9 @@ namespace syn
 		m_last_phase = m_phase;
 	}
 
-	void Oscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
-		double phase_offset = getParameter(m_pPhaseOffset).getDouble() + a_inputs.getValue(m_iPhaseAdd);
-		m_gain = getParameter(m_pGain).getDouble() * a_inputs.getValue(m_iGainMul);
+	void Oscillator::process_() {
+		double phase_offset = getParameter(m_pPhaseOffset).getDouble() + getInputValue(m_iPhaseAdd);
+		m_gain = getParameter(m_pGain).getDouble() * getInputValue(m_iGainMul);
 		m_bias = 0;
 		if (getParameter(m_pUnipolar).getBool()) {
 			// make signal unipolar
@@ -116,7 +118,7 @@ namespace syn
 		updatePhaseStep_();
 		tickPhase_(phase_offset);
 
-		a_outputs.setChannel(m_oPhase, m_phase);
+		setOutputChannel_(m_oPhase, m_phase);
 	}
 
 	void TunedOscillator::onNoteOn_() {
@@ -129,36 +131,36 @@ namespace syn
 		Oscillator::updatePhaseStep_();
 	}
 
-	TunedOscillator::TunedOscillator(const string& a_name):
+	TunedOscillator::TunedOscillator(const string& a_name) :
 		Oscillator(a_name),
 		m_pitch(0),
-		m_pTune(addParameter_({"semi", -12.0, 12.0, 0.0})),
-		m_pOctave(addParameter_({"oct", -3, 3, 0})) {
+		m_pTune(addParameter_({ "semi", -12.0, 12.0, 0.0 })),
+		m_pOctave(addParameter_({ "oct", -3, 3, 0 })) {
 		m_iNote = addInput_("pitch");
 	}
 
-	TunedOscillator::TunedOscillator(const TunedOscillator& a_rhs):
+	TunedOscillator::TunedOscillator(const TunedOscillator& a_rhs) :
 		TunedOscillator(a_rhs.getName()) {}
 
-	void TunedOscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
-		double tune = getParameter(m_pTune).getDouble() + 128 * a_inputs.getValue(m_iNote);
+	void TunedOscillator::process_() {
+		double tune = getParameter(m_pTune).getDouble() + 128 * getInputValue(m_iNote);
 		double oct = getParameter(m_pOctave).getInt();
 		m_pitch = tune + oct * 12;
-		Oscillator::process_(a_inputs, a_outputs);
+		Oscillator::process_();
 	}
 
-	BasicOscillator::BasicOscillator(const string& a_name):
+	BasicOscillator::BasicOscillator(const string& a_name) :
 		TunedOscillator(a_name),
 		m_pWaveform(addParameter_(UnitParameter("waveform", WAVE_SHAPE_NAMES))) { }
 
-	BasicOscillator::BasicOscillator(const BasicOscillator& a_rhs): BasicOscillator(a_rhs.getName()) {}
+	BasicOscillator::BasicOscillator(const BasicOscillator& a_rhs) : BasicOscillator(a_rhs.getName()) {}
 
-	void BasicOscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
-		TunedOscillator::process_(a_inputs, a_outputs);
+	void BasicOscillator::process_() {
+		TunedOscillator::process_();
 		double output;
 		int shape = getParameter(m_pWaveform).getInt();
 		output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period, false);
-		a_outputs.setChannel(m_oOut, m_gain * output + m_bias);
+		setOutputChannel_(m_oOut, m_gain * output + m_bias);
 	}
 
 	string BasicOscillator::_getClassName() const {
@@ -173,11 +175,11 @@ namespace syn
 		Oscillator(a_name),
 		m_oQuadOut(addOutput_("quad")),
 		m_iFreqAdd(addInput_("freq")),
-		m_iFreqMul(addInput_("freq[x]", 1.0, Signal::EMul)),
+		m_iFreqMul(addInput_("freq[x]", 1.0)),
 		m_iSync(addInput_("sync")),
 		m_lastSync(0.0)
 	{
-		m_pBPMFreq = addParameter_({"rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM});
+		m_pBPMFreq = addParameter_({ "rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM });
 		getParameter_(m_pBPMFreq).setVisible(false);
 		m_pFreq = addParameter_({ "freq", 0.01, 30.0, 1.0, UnitParameter::EUnitsType::Freq });
 		m_pWaveform = addParameter_(UnitParameter("waveform", WAVE_SHAPE_NAMES));
@@ -186,7 +188,7 @@ namespace syn
 
 	LFOOscillator::LFOOscillator(const LFOOscillator& a_rhs) :
 		LFOOscillator(a_rhs.getName())
-	{		
+	{
 	}
 
 	string LFOOscillator::_getClassName() const {
@@ -197,29 +199,30 @@ namespace syn
 		return new LFOOscillator(*this);
 	}
 
-	void LFOOscillator::process_(const SignalBus& a_inputs, SignalBus& a_outputs) {
+	void LFOOscillator::process_() {
 		// determine frequency
 		if (getParameter(m_pTempoSync).getBool()) {
-			m_freq = bpmToFreq(a_inputs.getValue(m_iFreqMul) * (getParameter(m_pBPMFreq).getEnum() + a_inputs.getValue(m_iFreqAdd)), getTempo());
-		} else {
-			m_freq = a_inputs.getValue(m_iFreqMul) * (getParameter(m_pFreq).getDouble() + a_inputs.getValue(m_iFreqAdd));
+			m_freq = bpmToFreq(getInputValue(m_iFreqMul) * (getParameter(m_pBPMFreq).getEnum() + getInputValue(m_iFreqAdd)), getTempo());
+		}
+		else {
+			m_freq = getInputValue(m_iFreqMul) * (getParameter(m_pFreq).getDouble() + getInputValue(m_iFreqAdd));
 		}
 		// sync
-		if (m_lastSync <= 0.0 && a_inputs.getValue(m_iSync) > 0.0) {
+		if (m_lastSync <= 0.0 && getInputValue(m_iSync) > 0.0) {
 			m_basePhase = 0.0;
 			sync_();
 		}
-		m_lastSync = a_inputs.getValue(m_iSync);
-		Oscillator::process_(a_inputs, a_outputs);
+		m_lastSync = getInputValue(m_iSync);
+		Oscillator::process_();
 		double output;
 		int shape = getParameter(m_pWaveform).getInt();
 		output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period, true);
-		a_outputs.setChannel(m_oOut, m_gain * output + m_bias);
+		setOutputChannel_(m_oOut, m_gain * output + m_bias);
 		///  Output quad output
 		/// \todo <experimentation>
 		double quadoutput;
 		quadoutput = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase + 0.25, m_period, true);
-		a_outputs.setChannel(m_oQuadOut, m_gain * quadoutput + m_bias);
+		setOutputChannel_(m_oQuadOut, m_gain * quadoutput + m_bias);
 	}
 
 	void LFOOscillator::onParamChange_(int a_paramId) {
