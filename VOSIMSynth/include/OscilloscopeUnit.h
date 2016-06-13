@@ -26,9 +26,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
 #include <Unit.h>
-#include <DSPMath.h>
 #include "UIUnitControl.h"
-#include "UIDefaultUnitControl.h"
 
 namespace syn
 {
@@ -39,6 +37,9 @@ namespace syn
 
 		OscilloscopeUnit(const OscilloscopeUnit& a_rhs) :
 			OscilloscopeUnit(a_rhs.getName()) {}
+
+		const double* getBufferPtr() const;
+		int getBufferSize() const;
 
 	protected:
 		void onParamChange_(int a_paramId) override;
@@ -58,12 +59,11 @@ namespace syn
 		friend class OscilloscopeUnitControl;
 		int m_bufferIndex;
 		int m_bufferSize;
-		int m_nBuffers;
 		int m_pBufferSize;
 		int m_pNumPeriods;
 		int m_iPhase;
 
-		vector<vector<double>> m_buffers;
+		vector<double> m_buffer;
 
 		double m_lastPhase;
 		int m_lastSync;
@@ -72,24 +72,20 @@ namespace syn
 
 	class OscilloscopeUnitControl : public UIUnitControl
 	{
+
 	public:
 		OscilloscopeUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId);
-
-		Vector2i toPixCoords(const Vector2f& a_sample);
 
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 
 	private:
 		void _onResize() override;
-
 	private:
+		UICol* m_col;
+		UILabel* m_statusLabel;
+		UIPlot* m_plot;
 		DefaultUnitControl* m_defCtrl;
 		UIResizeHandle* m_resizeHandle;
-
-		Vector2f m_yBounds;
-		Vector2i m_screenPos;
-		Vector2i m_screenSize;
-		vector<Color> m_colors = { {255,255,255,255},{255,128,128,255} };
 	};
 }

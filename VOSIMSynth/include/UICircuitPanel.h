@@ -31,6 +31,7 @@ Copyright 2016, Austen Satterlee
 #include "UIWire.h"
 
 #include <queue>
+#include <map>
 
 namespace syn
 {
@@ -43,19 +44,15 @@ namespace syn
 		
 	public:
 		UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, UnitFactory* a_unitFactory);
-		bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
-		bool onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) override;
 		UIUnitControlContainer* getUnit(const Vector2i& a_pt) const;
 		UIUnitControlContainer* findUnit(int a_unitId) const;
 		void requestAddConnection(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);
 		void requestDeleteConnection(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);
+		void requestMoveConnection(UIWire* a_uiWire, int a_unitId, int a_portId, int a_toUnit, int a_toPort);
 		void requestDeleteUnit(int a_unitId);
 
-		UIWire* getSelectedWire() {
-			make_heap(m_wireSelectionQueue.begin(), m_wireSelectionQueue.end(), UIWire::compareByHoverDistance());
-			return m_wireSelectionQueue.empty() ? nullptr : m_wireSelectionQueue.front();
-		}
+		UIWire* getSelectedWire();
 
 		void setSelectedWire(UIWire* a_wire);
 		void clearSelectedWire(UIWire* a_wire);

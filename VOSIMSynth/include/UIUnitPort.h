@@ -51,6 +51,10 @@ namespace syn
 			return m_isInput;
 		}
 
+		Vector2i getVector() const {
+			return { getUnitId(), getPortId() };
+		}
+
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 	protected:

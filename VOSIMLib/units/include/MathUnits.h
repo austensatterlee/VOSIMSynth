@@ -35,8 +35,8 @@ using namespace std;
 
 namespace syn
 {
-	const vector<string> scale_selections = { "1","10","100" };
-	const vector<double> scale_values = { 1.,10.,100. };
+	const vector<string> scale_selections = { "1","10","1E2","1E3","1E4" };
+	const vector<double> scale_values = { 1.,10.,100.,1000.,10000. };
 
 	class MovingAverage
 	{
@@ -206,9 +206,6 @@ namespace syn
 		string _getClassName() const override;
 
 		Unit* _clone() const override;
-
-	private:
-		int m_pBias, m_pScale;
 	};
 
 	/**

@@ -3,11 +3,7 @@
 #include <UICircuitPanel.h>
 #include <UIUnitPort.h>
 
-bool syn::UIWire::contains(const Vector2i& a_absPt) {
-	// Return false if pt is over a port
-	UIUnitControlContainer* ctrlContainer = m_window->getCircuitPanel()->getUnit(a_absPt);
-	if (ctrlContainer && (ctrlContainer->getSelectedInPort(a_absPt) || ctrlContainer->getSelectedOutPort(a_absPt)))
-		return false;
+bool syn::UIWire::contains(const Vector2i& a_absPt) const {
 	// Otherwise compute distance to line and verify it is below a threshold
 	double distance = pointLineDistance(a_absPt, fromPt(), toPt());
 	return distance <= 2;
@@ -31,22 +27,23 @@ bool syn::UIWire::onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_dif
 bool syn::UIWire::onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
 	UIUnitControlContainer* selectedUnit = m_window->getCircuitPanel()->getUnit(m_window->cursorPos());
 	m_isDragging = false;
-	if (selectedUnit && selectedUnit != m_parent) {
+
+	if (selectedUnit) {
 		if (!m_isDraggingInput) {
 			UIUnitPort* port = selectedUnit->getSelectedOutPort(m_window->cursorPos());
-			if (port && !(port->getUnitId() == m_fromUnit && port->getPortId() == m_fromPort))
-				m_window->getCircuitPanel()->requestAddConnection(port->getUnitId(), port->getPortId(), m_toUnit, m_toPort);
-			else
+			if (port) {
+				m_window->getCircuitPanel()->requestMoveConnection(this, port->getUnitId(), port->getPortId(), toUnit(), toPort());
 				return true;
+			}
 		} else {
 			UIUnitPort* port = selectedUnit->getSelectedInPort(m_window->cursorPos());
-			if (port && !(port->getUnitId() == m_toUnit && port->getPortId() == m_toPort))
-				m_window->getCircuitPanel()->requestAddConnection(m_fromUnit, m_fromPort, port->getUnitId(), port->getPortId());
-			else
+			if (port) {
+				m_window->getCircuitPanel()->requestMoveConnection(this, fromUnit(), fromPort(), port->getUnitId(), port->getPortId());
 				return true;
+			}
 		}
 	}
-	m_window->getCircuitPanel()->requestDeleteConnection(m_fromUnit, m_fromPort, m_toUnit, m_toPort);
+	m_window->getCircuitPanel()->requestDeleteConnection(fromUnit(), fromPort(), toUnit(), toPort());	
 	return true;
 }
 
@@ -59,6 +56,14 @@ syn::UIComponent* syn::UIWire::onMouseDown(const Vector2i& a_relCursor, const Ve
 	m_isDragging = true;
 	m_isDraggingInput = distanceToInput < distanceToOutput;
 	return this;
+}
+
+Eigen::Vector2i syn::UIWire::destVector() const {
+	return{ toUnit(),toPort() };
+}
+
+Eigen::Vector2i syn::UIWire::originVector() const {
+	return{ fromUnit(),fromPort() };
 }
 
 Eigen::Vector2i syn::UIWire::fromPt() const {

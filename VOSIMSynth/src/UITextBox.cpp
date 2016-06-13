@@ -220,7 +220,7 @@ namespace syn
 	UIComponent* UITextBox::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 
 		if (mEditable && sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-			mMouseDownPos = a_relCursor - getRelPos();
+			mMouseDownPos = a_relCursor;
 
 			if (a_isDblClick) {
 				/* Double-click: select all text */
@@ -241,7 +241,7 @@ namespace syn
 
 	bool UITextBox::onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
 		if (mEditable && focused()) {
-			mMousePos = a_relCursor - getRelPos();
+			mMousePos = a_relCursor;
 			return true;
 		}
 		return false;
@@ -249,7 +249,7 @@ namespace syn
 
 	bool UITextBox::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
 		if (mEditable && focused() && a_diffCursor.squaredNorm() >= 1) {
-			mMouseDragPos = a_relCursor - getRelPos();
+			mMouseDragPos = a_relCursor;
 			return true;
 		}
 		return false;

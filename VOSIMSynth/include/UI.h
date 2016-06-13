@@ -27,13 +27,14 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __UI__
 #define __UI__
-#include "Containers.h"
 #include <eigen/Core>
 #include <functional>
 #include <nanovg.h>
 #include <vector>
 #include <memory>
-#include <DSPMath.h>
+#include "DSPMath.h"
+#include "Containers.h"
+#include "entypo.h"
 
 using namespace std;
 
@@ -57,6 +58,8 @@ namespace syn
 	class UIUnitSelector;
 	class UIWindow;
 	class UIWire;
+	class UIPlot;
+	class DefaultUnitControl;
 
 	using Eigen::Vector2f;
 	using Eigen::Vector3f;
@@ -146,6 +149,16 @@ namespace syn
 			return z();
 		}
 
+		/// Return a reference to the alpha channel
+		float& a() {
+			return w();
+		}
+
+		/// Return a reference to the alpha channel (const version)
+		const float& a() const {
+			return w();
+		}
+
 		Color contrastingColor() const {
 			float luminance = cwiseProduct(Color(0.299f, 0.587f, 0.144f, 0.f)).sum();
 			return Color(luminance < 0.5f ? 1.f : 0.f, 1.f);
@@ -174,7 +187,7 @@ namespace syn
 		double ablength = (a - b).norm();
 		Eigen::Vector2d abnorm = (a - b).template cast<double>() * (1.0 / ablength);
 		double proj = (pt - b).template cast<double>().dot(abnorm);
-		proj = CLAMP(proj, 0, ablength);
+		proj = CLAMP<double>(proj, 0, ablength);
 		return (b.template cast<double>() + abnorm * proj).template cast<T>();
 	}
 

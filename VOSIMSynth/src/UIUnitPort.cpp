@@ -73,7 +73,7 @@ void syn::UIUnitPort::draw(NVGcontext* a_nvg) {
 	nvgFill(a_nvg);
 
 	nvgFontSize(a_nvg, (float)theme()->mPortFontSize);
-	nvgFillColor(a_nvg, Color(Vector3f{1.0,1.0,1.0}));
+	nvgFillColor(a_nvg, Color(Vector3f{1.0f,1.0f,1.0f}));
 	nvgTextAlign(a_nvg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
 	nvgText(a_nvg, size()[0] / 2, size()[1] / 2, portName.c_str(), nullptr);
 

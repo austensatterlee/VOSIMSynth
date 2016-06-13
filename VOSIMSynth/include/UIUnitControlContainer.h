@@ -56,8 +56,6 @@ namespace syn
 		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		void close() const;
 	protected:
-		void draw(NVGcontext* a_nvg) override;
-	protected:
 		VoiceManager* m_vm;
 		int m_unitId;
 		UIUnitControl* m_unitControl;

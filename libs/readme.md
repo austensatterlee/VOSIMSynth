@@ -1,5 +1,5 @@
 Clone the libraries in this directory according to the readme in each
-directory.
+sub-folder.
 
 Additional required libraries (not in this directory):
 - *SFML*
@@ -8,5 +8,8 @@ Additional required libraries (not in this directory):
 - *GLEW*
   - https://github.com/Perlmint/glew-cmake.git
   - Build and install with CMake
+- *Boost.Lockfree*
+  - http://www.boost.org/users/download/
+  - If CMake can't locate it, add the install directory to an environment variable called BOOST_ROOT.
 
-For MSVC, use the "/EHsc /MT" compiler flags.
+When building statically linked libraries with MSVC, use the "/MT" compiler flag to ensure it has the same runtime as VOSIMSynth.

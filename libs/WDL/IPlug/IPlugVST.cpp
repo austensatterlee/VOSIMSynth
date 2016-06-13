@@ -219,8 +219,8 @@ void IPlugVST::AttachAppWindow(syn::VOSIMWindow* a_vosimWindow) {
         IPlugBase::AttachAppWindow(a_vosimWindow);
         mAEffect.flags |= effFlagsHasEditor;
         mEditRect.left = mEditRect.top = 0;
-        mEditRect.right = (VstInt16)a_vosimWindow->getSize()[0];
-        mEditRect.bottom = (VstInt16)a_vosimWindow->getSize()[1];
+        mEditRect.right = static_cast<VstInt16>(a_vosimWindow->getSize()[0]);
+        mEditRect.bottom = static_cast<VstInt16>(a_vosimWindow->getSize()[1]);
       }
 }
 

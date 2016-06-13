@@ -193,11 +193,10 @@ syn::Unit* syn::GainUnit::_clone() const {
 }
 
 syn::SummerUnit::SummerUnit(const string& a_name) :
-	Unit(a_name),
-	m_pBias(addParameter_(UnitParameter("bias", -1.0, 1.0, 0.0))),
-	m_pScale(addParameter_(UnitParameter("bias scale", scale_selections, scale_values))) {
-	addInput_("[+]");
-	addInput_("[-]");
+	Unit(a_name)
+{
+	addInput_("1");
+	addInput_("2");
 	addOutput_("out");
 }
 
@@ -205,8 +204,7 @@ syn::SummerUnit::SummerUnit(const SummerUnit& a_rhs) :
 	SummerUnit(a_rhs.getName()) { }
 
 void syn::SummerUnit::process_() {
-	double output = getInputValue(0) - getInputValue(1);
-	output += getParameter(m_pBias).getDouble() * getParameter(m_pScale).getEnum();
+	double output = getInputValue(0) + getInputValue(1);
 	setOutputChannel_(0, output);
 }
 
@@ -219,9 +217,11 @@ syn::Unit* syn::SummerUnit::_clone() const {
 }
 
 syn::ConstantUnit::ConstantUnit(const string& a_name) :
-	Unit(a_name) {
-	addParameter_({ "out",-1.0,1.0,1.0 });
-	addParameter_({ "scale",scale_selections });
+	Unit(a_name) 
+{
+	addParameter_(UnitParameter{ "out",-1.0,1.0,0.0 });
+	addParameter_(UnitParameter{ "scale",scale_selections,scale_values });
+	getParameter_("scale").setControlType(UnitParameter::EControlType::Unbounded);
 	addOutput_("out");
 }
 
@@ -230,8 +230,7 @@ syn::ConstantUnit::ConstantUnit(const ConstantUnit& a_rhs) :
 
 void syn::ConstantUnit::process_() {
 	double output = getParameter(0).getDouble();
-	int selected_scale = getParameter(1).getInt();
-	double scale = scale_values[selected_scale];
+	double scale = getParameter(1).getEnum();
 	output = output * scale;
 	setOutputChannel_(0, output);
 }
@@ -252,8 +251,8 @@ syn::PanningUnit::PanningUnit(const string& a_name) :
 	addInput_("bal2");
 	addOutput_("out1");
 	addOutput_("out2");
-	m_pBalance1 = addParameter_({ "bal1",0.0,1.0,0.5 });
-	m_pBalance2 = addParameter_({ "bal2",0.0,1.0,0.5 });
+	m_pBalance1 = addParameter_({ "bal1",-1.0,1.0,0.0 });
+	m_pBalance2 = addParameter_({ "bal2",-1.0,1.0,0.0 });
 }
 
 syn::PanningUnit::PanningUnit(const PanningUnit& a_rhs) :
@@ -264,10 +263,10 @@ void syn::PanningUnit::process_() {
 	double in2 = getInputValue(1);
 	double bal1 = getParameter(m_pBalance1).getDouble() + getInputValue(2);
 	double bal2 = getParameter(m_pBalance2).getDouble() + getInputValue(3);
-	bal1 = CLAMP(bal1, 0.0, 1.0);
-	bal2 = CLAMP(bal2, 0.0, 1.0);
-	setOutputChannel_(0, bal1 * in1 + bal2 * in2);
-	setOutputChannel_(1, (1 - bal1) * in1 + (1 - bal2) * in2);
+	bal1 = 0.5*(1+CLAMP(bal1, -1.0, 1.0));
+	bal2 = 0.5*(1+CLAMP(bal2, -1.0, 1.0));
+	setOutputChannel_(0, (1 - bal1) * in1 + (1 - bal2) * in2);
+	setOutputChannel_(1, bal1 * in1 + bal2 * in2);
 }
 
 string syn::PanningUnit::_getClassName() const {

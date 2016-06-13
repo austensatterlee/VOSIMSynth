@@ -44,7 +44,7 @@ void syn::StateVariableFilter::process_() {
 	m_F = 2 * lut_sin.getlinear(0.5 * fc / (getFs() * c_oversamplingFactor));
 
 	double input_res = getInputValue(m_iResMul) * getParameter(m_pRes).getDouble() + getInputValue(m_iResAdd);
-	input_res = CLAMP(input_res, 0, 1);
+	input_res = CLAMP<double>(input_res, 0, 1);
 	double res = LERP(c_minRes, c_maxRes, input_res);
 	m_Q = 1.0 / res;
 

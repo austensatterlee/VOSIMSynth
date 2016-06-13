@@ -1,17 +1,6 @@
 #include "UnitFactory.h"
 #include "Containers.h"
 
-void syn::UnitFactory::addUnitPrototype(string a_group_name, shared_ptr<Unit> a_unit) {
-	shared_ptr<FactoryPrototype> prototype = make_shared<FactoryPrototype>(a_group_name, a_unit);
-	m_prototypes.push_back(prototype);
-	m_group_names.insert(prototype->group_name);
-	m_class_identifiers[prototype->prototype->getClassIdentifier()] = m_prototypes.size() - 1;
-}
-
-void syn::UnitFactory::addUnitPrototype(string a_group_name, Unit* a_unit) {
-	addUnitPrototype(a_group_name, shared_ptr<Unit>(a_unit));
-}
-
 set<string> syn::UnitFactory::getGroupNames() const {
 	set<string> groupnames;
 	for (string groupname : m_group_names) {
@@ -23,7 +12,7 @@ set<string> syn::UnitFactory::getGroupNames() const {
 
 vector<string> syn::UnitFactory::getPrototypeNames(const string& group) const {
 	vector<string> names;
-	for (shared_ptr<FactoryPrototype> prototype : m_prototypes) {
+	for (FactoryPrototype* prototype : m_prototypes) {
 		if (prototype->group_name == group) {
 			names.push_back(prototype->name);
 		}
@@ -70,7 +59,7 @@ bool syn::UnitFactory::hasClassId(unsigned a_classIdentifier) const {
 
 bool syn::UnitFactory::hasClassId(string a_protoName) const {
 	int i = 0;
-	for (shared_ptr<FactoryPrototype> prototype : m_prototypes) {
+	for (FactoryPrototype* prototype : m_prototypes) {
 		if (prototype->name == a_protoName) {
 			return true;
 		}
@@ -92,7 +81,7 @@ unsigned syn::UnitFactory::getClassId(unsigned a_protoNum) {
 }
 
 void syn::UnitFactory::resetBuildCounts() {
-	for (shared_ptr<FactoryPrototype> prototype : m_prototypes) {
+	for (FactoryPrototype* prototype : m_prototypes) {
 		prototype->build_count = 0;
 	}
 	m_generatedNameHistory.clear();
@@ -158,7 +147,7 @@ int syn::UnitFactory::loadUnit(ByteChunk* a_data, int a_startPos, Unit** a_unit,
 
 int syn::UnitFactory::getPrototypeIdx_(const string& a_name) const {
 	int i = 0;
-	for (shared_ptr<FactoryPrototype> prototype : m_prototypes) {
+	for (FactoryPrototype* prototype : m_prototypes) {
 		if (prototype->name == a_name) {
 			return i;
 		}

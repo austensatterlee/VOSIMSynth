@@ -27,6 +27,53 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __UIDIGITCONTROL__
 #define __UIDIGITCONTROL__
+#include <UIComponent.h>
+#include "UICell.h"
+#include "UITextBox.h"
 
+namespace syn {
+	class UIDigitalControl : public UIComponent
+	{
+	public:
+		UIDigitalControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId)
+			: 
+			UIComponent(a_window),
+			m_value(0.0),
+			m_row(nullptr),
+			m_vm(a_vm),
+			m_unitId(a_unitId),
+			m_paramId(a_paramId) 
+		{
+			setNumDigits(5);
+		}
+
+		void setNumDigits(int a_numDigits) {
+			while(m_digits.size()>a_numDigits)
+				m_digits.pop_back();
+			while (m_digits.size() <= a_numDigits)
+				m_digits.push_back(0); 
+
+			m_textBoxes.clear();
+			removeChild(m_row);
+			m_row = new UIRow(m_window);
+			addChild(m_row);			
+			while (m_textBoxes.size() <= a_numDigits) {
+				UITextBox* digitBox = new UITextBox(m_window, "0");
+				m_textBoxes.push_back(digitBox);
+				m_row->addChild(digitBox);
+			}
+		}
+	protected:
+	private:
+		double m_value;
+		vector<int> m_digits;
+
+		vector<UITextBox*> m_textBoxes;
+		UIRow* m_row;
+
+		VoiceManager* m_vm;
+		int m_unitId, m_paramId;
+	};
+}
 
 #endif

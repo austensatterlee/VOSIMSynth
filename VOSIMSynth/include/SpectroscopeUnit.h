@@ -46,22 +46,12 @@ namespace syn
 		SpectroscopeUnit(const SpectroscopeUnit& a_rhs) :
 			SpectroscopeUnit(a_rhs.getName()) {}
 
-		size_t getNumBuffers() const {
-			return m_nBuffers;
-		}
-
 		size_t getBufferSize() const {
 			return m_outBufferSize;
 		}
 
-		const double* getBuffer(int a_bufInd) const {
-			return &m_outBuffers[a_bufInd][0];
-		}
-
-		array<double, 2> getBufferExtrema(int a_bufInd) const {
-			double bufmin = m_outBuffers[a_bufInd][m_outBufferExtrema[a_bufInd][0]];
-			double bufmax = m_outBuffers[a_bufInd][m_outBufferExtrema[a_bufInd][1]];
-			return{ bufmin, bufmax };
+		const double* getBufferPtr() const {
+			return &m_outBuffer[0];
 		}
 
 	protected:
@@ -81,15 +71,13 @@ namespace syn
 		friend class SpectroscopeUnitControl;
 		int m_bufferIndex;
 		int m_inBufferSize, m_outBufferSize;
-		int m_nBuffers;
 		int m_pBufferSize, m_pTimeSmooth, m_pUpdatePeriod;
 
 		int m_samplesSinceLastUpdate;
 
-		vector<vector<double>> m_timeBuffers;
-		vector<vector<WDL_FFT_COMPLEX>> m_freqBuffers;
-		vector<vector<double>> m_outBuffers;
-		vector<array<int, 2>> m_outBufferExtrema;
+		vector<double> m_timeBuffer;
+		vector<WDL_FFT_COMPLEX> m_freqBuffer;
+		vector<double> m_outBuffer;
 		vector<double> m_window;
 		bool m_isActive;
 	};
@@ -97,23 +85,18 @@ namespace syn
 	class SpectroscopeUnitControl : public UIUnitControl
 	{
 	public:
-		SpectroscopeUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId);
-
-		Vector2i toPixCoords(const Vector2f& a_sample);
+		SpectroscopeUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId); 
 
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 
 	private:
 		void _onResize() override;
-
 	private:
+		UICol* m_col;
+		UILabel* m_statusLabel;
+		UIPlot* m_plot;
 		DefaultUnitControl* m_defCtrl;
 		UIResizeHandle* m_resizeHandle;
-
-		Vector2f m_yBounds;
-		Vector2i m_screenPos;
-		Vector2i m_screenSize;
-		vector<Color> m_colors = { {255,255,255,255},{255,128,128,255} };
 	};
 }

@@ -41,7 +41,7 @@ namespace syn
 		UIWire(VOSIMWindow* a_window, int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort)
 			: UIComponent{a_window}, m_fromUnit(a_fromUnit), m_fromPort(a_fromPort), m_toUnit(a_toUnit), m_toPort(a_toPort), m_hoverDistance(INFINITY) {}
 
-		bool contains(const Vector2i& a_pt) override;
+		bool contains(const Vector2i& a_pt) const override;
 		void onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) override;
 		bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 		bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
@@ -66,6 +66,9 @@ namespace syn
 		int toPort() const {
 			return m_toPort;
 		}
+
+		Vector2i destVector() const;
+		Vector2i originVector() const;
 
 		Vector2i fromPt() const;
 		Vector2i toPt() const;

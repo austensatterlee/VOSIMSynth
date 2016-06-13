@@ -78,7 +78,6 @@ namespace syn
 			m_size(a_width, a_height),
 			m_cursor({0,0}),
 			m_isClicked(false),
-			m_running(false),
 			m_isInitialized(false),
 			m_draggingComponent(nullptr),
 			m_root(nullptr),
@@ -87,18 +86,20 @@ namespace syn
 			m_vm(a_vm),
 			m_unitFactory(a_unitFactory),
 			m_circuitPanel(nullptr),
-			m_vg(nullptr),
-			m_view(0, 0, a_width, a_height) { }
+			m_vg(nullptr)
+		{ }
 
 		virtual ~VOSIMWindow();
 
-		sf::RenderWindow* GetWindow() const { return m_sfmlWindow; }
+		sf::Window* GetWindow() const { return m_sfmlWindow; }
 
 		Vector2i getSize() const { return m_size; }
 
 		Vector2i cursorPos() const;
 
 		Vector2i diffCursorPos() const;
+
+		Vector2i size() const;
 
 		const Timestamped<Event::MouseButtonEvent>& lastClickEvent() const { return m_lastClick; }
 
@@ -119,13 +120,6 @@ namespace syn
 		void clearFocus() { setFocus(nullptr); }
 
 		void forfeitFocus(UIComponent* a_comp);
-
-		Vector2i toWorldCoords(const Vector2i& a_pix) const;
-		Vector2i toPixelCoords(const Vector2i& a_world) const;
-
-		void setViewSize(const Vector2i& a_size);
-		void setViewPos(const Vector2i& a_size);
-		Vector2i getViewSize() const;
 
 		bool OpenWindow(sf::WindowHandle a_system_window);
 		void CloseWindow();
@@ -166,6 +160,10 @@ namespace syn
 		HINSTANCE m_HInstance;
 #endif
 		sf::WindowHandle m_timerWindow;
+		sf::Window* m_sfmlWindow;
+		NVGcontext* m_vg;
+		unsigned m_frameCount;
+
 		Vector2i m_size;
 		Vector2i m_cursor;
 		Vector2i m_dCursor;
@@ -173,29 +171,18 @@ namespace syn
 		Timestamped<Event::MouseWheelScrollEvent> m_lastScroll;
 
 		bool m_isClicked;
-		bool m_running;
 		bool m_isInitialized;
 		UIComponent* m_draggingComponent;
 		list<UIComponent*> m_focusPath;
-		UIComponent* m_root;
-
-		sf::RenderWindow* m_sfmlWindow;
-		unsigned m_frameCount;
-
 		VoiceManager* m_vm;
 		UnitFactory* m_unitFactory;
 
+		UIComponent* m_root;
 		UICircuitPanel* m_circuitPanel;
-
 		shared_ptr<Theme> m_theme;
 
 		PerfGraph m_fpsGraph;
 		sftools::Chronometer m_timer;
-
-		NVGcontext* m_vg;
-
-		Vector4i m_view;
-		double m_zoom = 1.0;
 
 		map<unsigned, function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)>> m_unitControlMap;
 

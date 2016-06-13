@@ -22,7 +22,7 @@ syn::UICircuitPanel::UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, U
 	addChild(unitSelectorWindow);
 	unitSelectorWindow->addChildToBody(m_unitSelector);
 
-	const shared_ptr<const Circuit> circ = m_vm->getPrototypeCircuit();
+	const Circuit* circ = m_vm->getPrototypeCircuit();
 	onAddUnit_(circ->getUnit(circ->getInputUnitId()).getClassIdentifier(), circ->getInputUnitId());
 	m_inputs = m_unitControls.back();
 	m_inputs->m_headerRow->removeChild(m_inputs->m_closeButton);
@@ -41,12 +41,6 @@ syn::UICircuitPanel::UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, U
 	}
 }
 
-bool syn::UICircuitPanel::onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
-	if (UIComponent::onMouseMove(a_relCursor, a_diffCursor))
-		return true;
-	return false;
-}
-
 syn::UIComponent* syn::UICircuitPanel::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	UIComponent* child = UIComponent::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
 	if (child)
@@ -61,20 +55,9 @@ syn::UIComponent* syn::UICircuitPanel::onMouseDown(const Vector2i& a_relCursor, 
 	return nullptr;
 }
 
-bool syn::UICircuitPanel::onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) {
-	if (UIComponent::onMouseScroll(a_relCursor, a_diffCursor, a_scrollAmt))
-		return true;
-	return false;
-}
-
 syn::UIUnitControlContainer* syn::UICircuitPanel::getUnit(const Vector2i& a_absPt) const {
-	for (UIUnitControlContainer* unitCtrlContainer : m_unitControls) {
-		Vector2i relPos = a_absPt - unitCtrlContainer->parent()->getAbsPos();
-		if (unitCtrlContainer->contains(relPos)) {
-			return unitCtrlContainer;
-		}
-	}
-	return nullptr;
+	UIUnitControlContainer* found = dynamic_cast<UIUnitControlContainer*>(findChild(a_absPt,"units"));
+	return found;
 }
 
 syn::UIUnitControlContainer* syn::UICircuitPanel::findUnit(int a_unitId) const {
@@ -86,6 +69,15 @@ syn::UIUnitControlContainer* syn::UICircuitPanel::findUnit(int a_unitId) const {
 }
 
 void syn::UICircuitPanel::requestAddConnection(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort) {
+	// remove old wire
+	for (UIWire* wire : m_wires) {
+		if(wire->toUnit()==a_toUnit && wire->toPort()==a_toPort) {
+			onDeleteConnection_(wire->fromUnit(), wire->fromPort(), wire->toUnit(), wire->toPort());
+			break;
+		}
+	}
+
+	// send the new connection request to the real-time thread
 	RTMessage* msg = new RTMessage();
 	msg->action = [](Circuit* a_circuit, bool a_isLast, ByteChunk* a_data) {
 		UICircuitPanel* self;
@@ -140,6 +132,13 @@ void syn::UICircuitPanel::requestDeleteConnection(int a_fromUnit, int a_fromPort
 	m_vm->queueAction(msg);
 }
 
+void syn::UICircuitPanel::requestMoveConnection(UIWire* a_wire, int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort) {
+	if (a_wire->originVector() == Vector2i{ a_fromUnit, a_fromPort } && a_wire->destVector() == Vector2i{ a_toUnit, a_toPort })
+		return;
+	requestDeleteConnection(a_wire->fromUnit(), a_wire->fromPort(), a_wire->toUnit(), a_wire->toPort());
+	requestAddConnection(a_fromUnit, a_fromPort, a_toUnit, a_toPort);
+}
+
 void syn::UICircuitPanel::requestDeleteUnit(int a_unitId) {
 	// Delete the corresponding UIUnitControlContainer
 	UIUnitControlContainer* unitCtrlCont = findUnit(a_unitId);
@@ -168,6 +167,17 @@ void syn::UICircuitPanel::requestDeleteUnit(int a_unitId) {
 	m_vm->queueAction(msg);
 }
 
+syn::UIWire* syn::UICircuitPanel::getSelectedWire() {
+	Vector2i mousePt = m_window->cursorPos() - getAbsPos();
+	// Return nullptr if pt is over a port
+	UIUnitControlContainer* ctrlContainer = m_window->getCircuitPanel()->getUnit(mousePt);
+	if (ctrlContainer && (ctrlContainer->getSelectedInPort(mousePt) || ctrlContainer->getSelectedOutPort(mousePt)))
+		return nullptr;
+
+	make_heap(m_wireSelectionQueue.begin(), m_wireSelectionQueue.end(), UIWire::compareByHoverDistance());
+	return m_wireSelectionQueue.empty() ? nullptr : m_wireSelectionQueue.front();
+}
+
 void syn::UICircuitPanel::_onResize() {
 	m_inputs->setRelPos({ 5, size()[1] / 2 - m_inputs->size()[1] / 2 });
 	m_outputs->setRelPos({ size()[0] - m_outputs->size()[0] - 5, size()[1] / 2 - m_outputs->size()[1] / 2 });
@@ -185,12 +195,12 @@ void syn::UICircuitPanel::clearSelectedWire(UIWire* a_wire) {
 }
 
 void syn::UICircuitPanel::reset() {
+	for (int i = 0; i < m_wires.size(); i++) {
+		removeChild(m_wires[i]);
+	}
 	for (int i = 0; i < m_unitControls.size(); i++) {
 		if (m_unitControls[i] != m_inputs && m_unitControls[i] != m_outputs) // don't allow deletion of input or output units
 			removeChild(m_unitControls[i]);
-	}
-	for (int i = 0; i < m_wires.size(); i++) {
-		removeChild(m_wires[i]);
 	}
 	m_unitControls.clear();
 	m_unitControls.push_back(m_inputs);
@@ -230,8 +240,8 @@ void syn::UICircuitPanel::onDeleteConnection_(int a_fromUnit, int a_fromPort, in
 void syn::UICircuitPanel::onAddUnit_(unsigned a_classId, int a_unitId) {
 	UIUnitControl* unitctrl = m_window->createUnitControl(a_classId, a_unitId);
 	UIUnitControlContainer* unitctrlcontainer = new UIUnitControlContainer(m_window, m_vm, a_unitId, unitctrl);
-	unitctrlcontainer->setRelPos(m_window->cursorPos() - m_pos);
-	addChild(unitctrlcontainer);
+	unitctrlcontainer->setRelPos(m_window->cursorPos() - m_pos - unitctrlcontainer->size()/2);
+	addChild(unitctrlcontainer, "units");
 	m_unitControls.push_back(unitctrlcontainer);
 }
 
@@ -242,7 +252,7 @@ void syn::UICircuitPanel::requestAddUnit_(unsigned a_classId) {
 		UnitFactory* unitFactory;
 		Unit* unit;
 		GetArgs(a_data, 0, self, unitFactory, unit);
-		int unitId = a_circuit->addUnit(shared_ptr<Unit>(unit->clone()));
+		int unitId = a_circuit->addUnit(unit->clone());
 		// Queue return message
 		if (a_isLast) {
 			GUIMessage* msg = new GUIMessage;

@@ -49,7 +49,7 @@ syn::UITextSlider::UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a
 bool syn::UITextSlider::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)) {
 		double currValue = m_param->getNorm();
-		double targetValue = (a_relCursor[0] - m_pos[0]) * (1.0 / size()[0]);
+		double targetValue = (a_relCursor[0]) * (1.0 / size()[0]);
 		double error = currValue - targetValue;
 		double adjust_speed = 0.5;
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift))
@@ -148,7 +148,7 @@ void syn::UITextSlider::setValueFromString(const string& a_str) {
 
 void syn::UITextSlider::draw(NVGcontext* a_nvg) {
 	if (!m_textBox->visible()) {
-		const UnitParameter& param = m_vm->getPrototypeCircuit()->getUnit(m_unitId).getParameter(m_paramId);
+		const UnitParameter& param = m_vm->getUnit(m_unitId,m_vm->getNewestVoiceIndex()).getParameter(m_paramId);
 		double value = m_param->getNorm();
 		if (&param != m_param || value != m_value || m_isValueDirty) {
 			_updateValue();
@@ -178,7 +178,7 @@ void syn::UITextSlider::_onResize() {
 }
 
 void syn::UITextSlider::_updateValue() {
-	const UnitParameter& param = m_vm->getUnit(m_unitId).getParameter(m_paramId);
+	const UnitParameter& param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).getParameter(m_paramId);
 	m_param = &param;
 	m_nameLabel->setText(param.getName());
 	m_unitsLabel->setText(param.getUnitsString());

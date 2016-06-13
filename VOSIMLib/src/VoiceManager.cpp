@@ -37,7 +37,7 @@ namespace syn
 
 	void VoiceManager::_makeIdle(int a_voiceIndex) {
 		if (m_numActiveVoices > 0) {
-			shared_ptr<Circuit> voice = m_allVoices[a_voiceIndex];
+			Circuit* voice = m_allVoices[a_voiceIndex];
 			int note = voice->getNote();
 			int vel = voice->getVelocity();
 			if (m_voiceMap.find(note) != m_voiceMap.end()) {
@@ -113,13 +113,13 @@ namespace syn
 		}
 
 		for (unsigned i = 0; i < m_allVoices.size(); i++) {
-			m_allVoices[i] = shared_ptr<Circuit>(static_cast<Circuit*>(m_instrument->clone()));
+			m_allVoices[i] = static_cast<Circuit*>(m_instrument->clone());
 			m_idleVoiceStack.push_right(i);
 		}
 
 		while (m_allVoices.size() < a_newMax) {
 			m_idleVoiceStack.push_right(m_allVoices.size());
-			m_allVoices.push_back(shared_ptr<Circuit>(static_cast<Circuit*>(m_instrument->clone())));
+			m_allVoices.push_back(static_cast<Circuit*>(m_instrument->clone()));
 		}
 		m_numActiveVoices = 0;
 	}
@@ -131,7 +131,7 @@ namespace syn
 		int voiceInd;
 		for (int i = 0; i < nVoices; i++) {
 			m_voiceStack.peek(voiceInd, i);
-			shared_ptr<Circuit> voice = m_allVoices[voiceInd];
+			Circuit* voice = m_allVoices[voiceInd];
 			if (!voice->isActive()) {
 				m_garbageList.push_right(voiceInd);
 			}
@@ -151,7 +151,7 @@ namespace syn
 
 		for (int i = 0; i < nVoices; i++) {
 			m_voiceStack.peek(voiceInd, i);
-			shared_ptr<Circuit> voice = m_allVoices[voiceInd];
+			Circuit* voice = m_allVoices[voiceInd];
 			for (int j = 0; j < bufsize; j++) {
 				voice->connectInput(0, a_left_input + j);
 				voice->connectInput(1, a_right_input + j);
@@ -255,31 +255,30 @@ namespace syn
 		// Apply action to all voices
 		for (int i = 0; i <= m_maxVoices; i++) {
 			if (i == m_maxVoices) { // Reserve last loop for applying action to prototype voice
-				voice = m_instrument.get();
+				voice = m_instrument;
 			}
 			else {
-				voice = m_allVoices[i].get();
+				voice = m_allVoices[i];
 			}
 			a_msg->action(voice, i == m_maxVoices, &a_msg->data);
 		}
 		delete a_msg;
 	}
 
-	shared_ptr<const Circuit> VoiceManager::getPrototypeCircuit() const {
+	const Circuit* VoiceManager::getPrototypeCircuit() const {
 		return m_instrument;
 	}
 
-	shared_ptr<const Circuit> VoiceManager::getVoiceCircuit(int a_voiceId) const
+	const Circuit* VoiceManager::getVoiceCircuit(int a_voiceId) const
 	{
 		return m_allVoices[a_voiceId];
 	}
 
 	void VoiceManager::save(ByteChunk* a_data) const {
-		const vector<int>& unitIds = m_instrument->m_units.getIds();
-		int nUnits = unitIds.size();
+		int nUnits = m_instrument->m_units.size();
 		a_data->Put<int>(&nUnits);
 		for (int i = 0; i < nUnits; i++) {
-			int unitid = unitIds[i];
+			int unitid = m_instrument->m_units.getIndices()[i];
 			const Unit& unit = m_instrument->getUnit(unitid);
 			m_factory->saveUnit(&unit, unitid, a_data);
 		}
@@ -293,9 +292,13 @@ namespace syn
 	}
 
 	int VoiceManager::load(ByteChunk* a_data, int startPos) {
-		const vector<int>& unitIds = m_instrument->m_units.getIds();
+		vector<int> unitIds(m_instrument->m_units.size());
+		std::copy(m_instrument->m_units.getIndices(), m_instrument->m_units.getIndices() + m_instrument->m_units.size(), &unitIds[0]);
 		for (int i = 0; i < unitIds.size(); i++) {
 			m_instrument->removeUnit(unitIds[i]);
+			for(Circuit* voice : m_allVoices) {
+				voice->removeUnit(unitIds[i]);
+			}
 		}
 
 		int nUnits, nConnections;
@@ -304,15 +307,21 @@ namespace syn
 			Unit* unit;
 			int unitId;
 			startPos = m_factory->loadUnit(a_data, startPos, &unit, &unitId);
-			m_instrument->addUnit(shared_ptr<Unit>(unit), unitId);
+			m_instrument->addUnit(unit->clone(), unitId);
+			for (Circuit* voice : m_allVoices) {
+				voice->addUnit(unit->clone(), unitId);
+			}
+			delete unit;
 		}
 		startPos = a_data->Get<int>(&nConnections, startPos);
 		for (int i = 0; i < nConnections; i++) {
 			ConnectionRecord record;
 			startPos = a_data->Get<ConnectionRecord>(&record, startPos);
 			m_instrument->connectInternal(record.from_id, record.from_port, record.to_id, record.to_port);
+			for (Circuit* voice : m_allVoices) {
+				voice->connectInternal(record.from_id, record.from_port, record.to_id, record.to_port);
+			}
 		}
-		setMaxVoices(m_maxVoices);
 		return startPos;
 	}
 

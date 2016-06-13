@@ -61,40 +61,40 @@ void VOSIMSynth::makeGraphics() {
 
 void VOSIMSynth::makeInstrument() {
 	m_unitFactory = new UnitFactory();
-	m_unitFactory->addUnitPrototype("Filters", new StateVariableFilter("SVF"));
-	m_unitFactory->addUnitPrototype("Filters", new LagUnit("Lag"));
+	m_unitFactory->addUnitPrototype<StateVariableFilter>("Filters","SVF");
+	m_unitFactory->addUnitPrototype<LagUnit>("Filters","Lag");
 
-	m_unitFactory->addUnitPrototype("Oscillators", new BasicOscillator("Basic"));
-	m_unitFactory->addUnitPrototype("Oscillators", new VosimOscillator("VOSIM"));
-	m_unitFactory->addUnitPrototype("Oscillators", new FormantOscillator("Formant"));
+	m_unitFactory->addUnitPrototype<BasicOscillator>("Oscillators","Basic");
+	m_unitFactory->addUnitPrototype<VosimOscillator>("Oscillators","VOSIM");
+	m_unitFactory->addUnitPrototype<FormantOscillator>("Oscillators","Formant");
 
-	m_unitFactory->addUnitPrototype("Modulators", new ADSREnvelope("ADSR"));
-	m_unitFactory->addUnitPrototype("Modulators", new LFOOscillator("LFO"));
+	m_unitFactory->addUnitPrototype<ADSREnvelope>("Modulators","ADSR");
+	m_unitFactory->addUnitPrototype<LFOOscillator>("Modulators","LFO");
 
-	m_unitFactory->addUnitPrototype("DSP", new MemoryUnit("Delay"));
-	m_unitFactory->addUnitPrototype("DSP", new ResampleUnit("Delay2"));
-	m_unitFactory->addUnitPrototype("DSP", new PanningUnit("Pan"));
-	m_unitFactory->addUnitPrototype("DSP", new FollowerUnit("Follow"));
-	m_unitFactory->addUnitPrototype("DSP", new DCRemoverUnit("DC Trap"));
+	m_unitFactory->addUnitPrototype<MemoryUnit>("DSP","Delay");
+	m_unitFactory->addUnitPrototype<ResampleUnit>("DSP","Delay2");
+	m_unitFactory->addUnitPrototype<PanningUnit>("DSP","Pan");
+	m_unitFactory->addUnitPrototype<FollowerUnit>("DSP","Follow");
+	m_unitFactory->addUnitPrototype<DCRemoverUnit>("DSP","DC Trap");
 
-	m_unitFactory->addUnitPrototype("Math", new ConstantUnit("Const"));
-	m_unitFactory->addUnitPrototype("Math", new SummerUnit("Sum"));
-	m_unitFactory->addUnitPrototype("Math", new GainUnit("Gain"));
-	m_unitFactory->addUnitPrototype("Math", new MACUnit("MAC"));
-	m_unitFactory->addUnitPrototype("Math", new LerpUnit("Affine"));
-	m_unitFactory->addUnitPrototype("Math", new RectifierUnit("Rect"));
+	m_unitFactory->addUnitPrototype<ConstantUnit>("Math","Const");
+	m_unitFactory->addUnitPrototype<SummerUnit>("Math","Sum");
+	m_unitFactory->addUnitPrototype<GainUnit>("Math","Gain");
+	m_unitFactory->addUnitPrototype<MACUnit>("Math","MAC");
+	m_unitFactory->addUnitPrototype<LerpUnit>("Math","Affine");
+	m_unitFactory->addUnitPrototype<RectifierUnit>("Math","Rect");
 
-	m_unitFactory->addUnitPrototype("MIDI", new GateUnit("Gate"));
-	m_unitFactory->addUnitPrototype("MIDI", new MidiNoteUnit("CV"));
-	m_unitFactory->addUnitPrototype("MIDI", new VelocityUnit("Vel"));
-	m_unitFactory->addUnitPrototype("MIDI", new MidiCCUnit("CC"));
+	m_unitFactory->addUnitPrototype<GateUnit>("MIDI","Gate");
+	m_unitFactory->addUnitPrototype<MidiNoteUnit>("MIDI","CV");
+	m_unitFactory->addUnitPrototype<VelocityUnit>("MIDI","Vel");
+	m_unitFactory->addUnitPrototype<MidiCCUnit>("MIDI","CC");
 
-	m_unitFactory->addUnitPrototype("Visualizer", new OscilloscopeUnit("Oscilloscope"));
-	m_unitFactory->addUnitPrototype("Visualizer", new SpectroscopeUnit("Spectroscope"));
+	m_unitFactory->addUnitPrototype<OscilloscopeUnit>("Visualizer","Oscilloscope");
+	m_unitFactory->addUnitPrototype<SpectroscopeUnit>("Visualizer","Spectroscope");
 
-	m_unitFactory->addUnitPrototype("", new PassthroughUnit("Passthrough"));
+	m_unitFactory->addUnitPrototype<PassthroughUnit>("","Passthrough");
 
-	m_voiceManager = new VoiceManager(make_shared<Circuit>("main"), m_unitFactory);
+	m_voiceManager = new VoiceManager(m_unitFactory);
 	m_voiceManager->setMaxVoices(6);
 
 	m_MIDIReceiver = new MIDIReceiver(m_voiceManager);
@@ -144,31 +144,6 @@ bool VOSIMSynth::SerializeState(ByteChunk* pChunk) {
 int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
 	if (GetAppWindow()->isInitialized()) {
 		m_unitFactory->resetBuildCounts();
-
-		//		ActionMessage* msg = new ActionMessage();
-		//		msg->action = [](Circuit* a_circ, bool a_isLast, ByteChunk* a_data)
-		//		{
-		//			if (a_isLast) {
-		//				int* chunkStartPos;
-		//				ByteChunk* chunk;
-		//				VoiceManager* vm;
-		//				VOSIMWindow* vw;
-		//
-		//				int localStartPos = 0;
-		//				localStartPos = a_data->Get<int*>(&chunkStartPos, localStartPos);
-		//				localStartPos = a_data->Get<ByteChunk*>(&chunk, localStartPos);
-		//				localStartPos = a_data->Get<VoiceManager*>(&vm, localStartPos);
-		//				localStartPos = a_data->Get<VOSIMWindow*>(&vw, localStartPos);
-		//
-		//				*chunkStartPos = vm->load(chunk, *chunkStartPos);
-		//				*chunkStartPos = vw->load(chunk, *chunkStartPos);
-		//			}
-		//		};
-		//		int* startPosAddr = &startPos;
-		//		msg->data.Put<int*>(&startPosAddr);
-		//		msg->data.Put<ByteChunk*>(&pChunk);
-		//		msg->data.Put<VoiceManager*>(&m_voiceManager);
-		//		msg->data.Put<VOSIMWindow*>(&m_vosimWindow);
 		GetAppWindow()->reset();
 		startPos = m_voiceManager->load(pChunk, startPos);
 		startPos = GetAppWindow()->load(pChunk, startPos);

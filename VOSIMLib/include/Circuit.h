@@ -23,10 +23,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "Unit.h"
 #include "NamedContainer.h"
 #include <vector>
-#include <memory>
 #include <list>
 
-using std::shared_ptr;
 using std::vector;
 using std::list;
 
@@ -90,6 +88,8 @@ namespace syn
 
 		Circuit(const Circuit& a_other);
 
+		virtual ~Circuit();
+
 		/**
 		 * \returns True if any of its internal units are active
 		 */
@@ -113,7 +113,7 @@ namespace syn
 		 * Retrieves a list of output ports connected to an input port.
 		 * \returns A vector of (unit_id, port_id) pairs.
 		 */
-		vector<pair<int, int>> getConnectionsToInternalInput(int a_unitId, int a_portid) const;
+		vector<std::pair<int, int>> getConnectionsToInternalInput(int a_unitId, int a_portid) const;
 
 		/**
 		 * Get a list of all connections within the Circuit.
@@ -138,12 +138,12 @@ namespace syn
 		/**
 		 * \returns The id assigned to the newly added unit, or -1 on failure
 		 */
-		int addUnit(shared_ptr<Unit> a_unit);
+		int addUnit(Unit* a_unit);
 
 		/**
 		 * \returns True if the unit was added to the circuit (i.e. the provided id was not already taken).
 		 */
-		bool addUnit(shared_ptr<Unit> a_unit, int a_unitId);
+		bool addUnit(Unit* a_unit, int a_unitId);
 
 		template <typename ID>
 		bool removeUnit(const ID& a_identifier);
@@ -191,20 +191,17 @@ namespace syn
 	private:
 		friend class VoiceManager;
 
-		/**
-		 *\todo make a collection class that automatically assigns an id to inserted elements. The id should be valid even when elements are deleted. Also allows user to request a specific id
-		 **/
-		NamedContainer<shared_ptr<Unit>> m_units;
+		NamedContainer<Unit*, 64> m_units;
 		vector<ConnectionRecord> m_connectionRecords;
-		shared_ptr<PassthroughUnit> m_inputUnit;
-		shared_ptr<PassthroughUnit> m_outputUnit;
+		PassthroughUnit* m_inputUnit;
+		PassthroughUnit* m_outputUnit;
 
 		list<Unit*> m_procGraph;
 	};
 
 	template <typename UID>
 	int Circuit::getUnitId(const UID& a_unitIdentifier) const {
-		return m_units.getItemId(a_unitIdentifier);
+		return m_units.find(a_unitIdentifier);
 	}
 
 	template <typename UID, typename PID, typename T>
@@ -236,14 +233,15 @@ namespace syn
 	bool Circuit::removeUnit(const ID& a_unitIdentifier) {
 		if (!m_units.find(a_unitIdentifier))
 			return false;
-		int unitId = m_units.getItemId(a_unitIdentifier);
-		shared_ptr<Unit> unit = m_units[unitId];
+		int unitId = m_units.find(a_unitIdentifier);
+		Unit* unit = m_units[unitId];
 		// Don't allow deletion of input or output unit
 		if (unit == m_inputUnit || unit == m_outputUnit)
 			return false;
 		// Erase connections
 		vector<ConnectionRecord> garbageList;
-		for (int i = 0; i < m_connectionRecords.size(); i++) {
+		const int nRecords = m_connectionRecords.size();
+		for (int i = 0; i < nRecords; i++) {
 			const ConnectionRecord& rec = m_connectionRecords[i];
 			if (unitId == rec.to_id || unitId == rec.from_id) {
 				garbageList.push_back(rec);
@@ -261,16 +259,32 @@ namespace syn
 	template <typename ID>
 	bool Circuit::connectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier,
 		int a_toInputPort) {
-		int fromUnitId = m_units.getItemId(a_fromIdentifier);
-		int toUnitId = m_units.getItemId(a_toIdentifier);
-		// Don't allow connections to self
-		if (fromUnitId == toUnitId)
+		int fromUnitId = m_units.find(a_fromIdentifier);
+		int toUnitId = m_units.find(a_toIdentifier);
+
+		Unit* fromUnit = m_units[fromUnitId];
+		Unit* toUnit = m_units[toUnitId];
+
+		if (!fromUnit->hasOutput(a_fromOutputPort))
+			return false;
+		if (!toUnit->hasInput(a_toInputPort))
 			return false;
 
-		shared_ptr<Unit> fromUnit = m_units[fromUnitId];
-		shared_ptr<Unit> toUnit = m_units[toUnitId];
-
+		// remove record of old connection
+		if(toUnit->isConnected(a_toInputPort)) {
+			const int nRecords = m_connectionRecords.size();
+			for(int i=0;i<nRecords;i++) {
+				const ConnectionRecord& rec = m_connectionRecords[i];
+				if(rec.to_id == toUnitId && rec.to_port == a_toInputPort) {
+					m_connectionRecords.erase(m_connectionRecords.begin() + i);
+					break;
+				}
+			}
+		}
+		
+		// make new connection
 		toUnit->connectInput(a_toInputPort, &fromUnit->getOutputValue(a_fromOutputPort));
+
 		// record the connection upon success
 		m_connectionRecords.push_back({ fromUnitId, a_fromOutputPort, toUnitId,a_toInputPort });
 		_recomputeGraph();
@@ -280,10 +294,12 @@ namespace syn
 	template <typename ID>
 	bool Circuit::disconnectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier,
 		int a_toInputPort) {
-		int fromId = m_units.getItemId(a_fromIdentifier);
-		int toId = m_units.getItemId(a_toIdentifier);
+		int fromId = m_units.find(a_fromIdentifier);
+		int toId = m_units.find(a_toIdentifier);
 
-		shared_ptr<Unit> toUnit = m_units[toId];
+		Unit* toUnit = m_units[toId];
+		Unit* fromUnit = m_units[fromId];
+		_ASSERT(toUnit->getInputSource(a_toInputPort) == &fromUnit->getOutputValue(a_fromOutputPort));
 
 		bool result = toUnit->disconnectInput(a_toInputPort);
 

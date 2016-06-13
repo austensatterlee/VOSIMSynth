@@ -22,10 +22,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "NamedContainer.h"
 #include "UnitParameter.h"
-#include <memory>
 
-using std::shared_ptr;
-using std::make_shared;
+#define MAX_PARAMS 16
+#define MAX_INPUTS 8
+#define MAX_OUTPUTS 8
 
 namespace syn
 {
@@ -46,7 +46,9 @@ namespace syn
 
 	struct UnitPort
 	{
-		UnitPort(double a_defVal) : defVal(a_defVal), src(nullptr) {};
+		UnitPort() : UnitPort(0.0) {}
+		UnitPort(double a_defVal) : defVal(a_defVal), src(nullptr) {}
+		
 		double defVal;
 		const double* src;
 	};
@@ -124,6 +126,10 @@ namespace syn
 		template <typename ID>
 		bool setParameterFromString(const ID& a_identifier, const string& a_value);
 
+		bool hasOutput(int a_outputPort) const;
+
+		bool hasInput(int a_inputPort) const;
+
 		string getInputName(int a_index) const;
 
 		template <typename ID>
@@ -133,6 +139,8 @@ namespace syn
 		const double& getOutputValue(const ID& a_identifier) const;
 
 		const double& getInputValue(int a_index) const;
+
+		const double* Unit::getInputSource(int a_index) const;
 
 		int getNumParameters() const;
 
@@ -167,6 +175,7 @@ namespace syn
 		 * Connections to other units are not preserved in the clone.
 		 */
 		Unit* clone() const;
+
 	protected:
 		/**
 		 * Called when a parameter has been modified. This function should be overridden
@@ -215,9 +224,9 @@ namespace syn
 		friend class UnitFactory;
 		friend class Circuit;
 		string m_name;
-		NamedContainer<UnitParameter> m_parameters;
-		NamedContainer<double> m_outputSignals;
-		NamedContainer<UnitPort> m_inputPorts;
+		NamedContainer<UnitParameter, MAX_PARAMS> m_parameters;
+		NamedContainer<double, MAX_OUTPUTS> m_outputSignals;
+		NamedContainer<UnitPort, MAX_INPUTS> m_inputPorts;
 		Circuit* m_parent;
 		AudioConfig m_audioConfig;
 		MidiData m_midiData;
@@ -242,7 +251,7 @@ namespace syn
 	template <typename ID>
 	bool Unit::hasParameter(const ID& a_paramId) const
 	{
-		return m_parameters.find(a_paramId);
+		return m_parameters.contains(a_paramId);
 	}
 
 	template <typename ID>
@@ -253,7 +262,7 @@ namespace syn
 	template <typename ID, typename T>
 	bool Unit::setParameter(const ID& a_identifier, const T& a_value) {
 		if (m_parameters[a_identifier].set(a_value)) {
-			int id = m_parameters.getItemId(a_identifier);
+			int id = m_parameters.find(a_identifier);
 			onParamChange_(id);
 			return true;
 		}
@@ -263,7 +272,7 @@ namespace syn
 	template <typename ID, typename T>
 	bool Unit::setParameterNorm(const ID& a_identifier, const T& a_value) {
 		if (m_parameters[a_identifier].setNorm(a_value)) {
-			int id = m_parameters.getItemId(a_identifier);
+			int id = m_parameters.find(a_identifier);
 			onParamChange_(id);
 			return true;
 		}

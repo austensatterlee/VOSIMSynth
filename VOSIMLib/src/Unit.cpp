@@ -114,8 +114,8 @@ namespace syn
 
 	void Unit::tick() {
 		// Clear outputs
-		for (int id : m_outputSignals.getIds()) {
-			m_outputSignals[id] = 0.0;
+		for (int i = 0; i < m_outputSignals.size(); i++) {
+			m_outputSignals[m_outputSignals.getIndices()[i]] = 0.0;
 		}
 
 		process_();
@@ -149,7 +149,7 @@ namespace syn
 	}
 
 	bool Unit::disconnectInput(int a_inputPort) {
-		bool retval = m_inputPorts[a_inputPort].src == nullptr;
+		bool retval = !isConnected(a_inputPort);
 		m_inputPorts[a_inputPort].src = nullptr;
 		if (retval) onInputDisconnection_(a_inputPort);
 		return retval;
@@ -159,16 +159,28 @@ namespace syn
 		Unit* unit = _clone();
 
 		unit->m_name = m_name;
-		unit->m_outputSignals = m_outputSignals;
-		unit->m_parameters = m_parameters;
 		unit->m_midiData = m_midiData;
+		unit->m_parameters = m_parameters;
+		unit->m_outputSignals = m_outputSignals;
 		unit->setFs(m_audioConfig.fs);
 		unit->setTempo(m_audioConfig.tempo);
 		return unit;
 	}
 
 	const double& Unit::getInputValue(int a_index) const {
-		return m_inputPorts[a_index].src == nullptr ? m_inputPorts[a_index].defVal : *m_inputPorts[a_index].src;
+		return m_inputPorts[a_index].src ? *m_inputPorts[a_index].src : m_inputPorts[a_index].defVal;
+	}
+
+	const double* Unit::getInputSource(int a_index) const {
+		return m_inputPorts[a_index].src;
+	}
+
+	bool Unit::hasOutput(int a_outputPort) const {
+		return m_outputSignals.contains(a_outputPort);
+	}
+
+	bool Unit::hasInput(int a_inputPort) const {
+		return m_inputPorts.contains(a_inputPort);
 	}
 
 	string Unit::getInputName(int a_index) const {

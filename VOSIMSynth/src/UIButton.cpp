@@ -64,7 +64,7 @@ namespace syn
 		if (mEnabled) {
 			bool pushedBackup = mPushed;
 			if (mPushed) {
-				if (contains(a_relCursor) && mCallback)
+				if (mCallback)
 					mCallback();
 				if (mFlags & NormalButton)
 					mPushed = false;

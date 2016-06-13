@@ -25,6 +25,7 @@ syn::UIWindow::UIWindow(VOSIMWindow* a_window, const string& a_title) :
 	addChildToHeader(m_title);
 
 	m_headerRow->setGreedyChild(m_title, NVG_ALIGN_LEFT);
+	m_headerRow->setPadding({ 0,2,0,2 });
 	m_headerRow->setSize({ -1,theme()->mWindowHeaderHeight });
 }
 
@@ -48,7 +49,7 @@ syn::UIComponent* syn::UIWindow::onMouseDown(const Vector2i& a_relCursor, const 
 	if (child)
 		return child;
 
-	if (a_relCursor.y() - m_pos.y() < theme()->mWindowHeaderHeight) {
+	if (a_relCursor.y() < theme()->mWindowHeaderHeight) {
 		if (a_isDblClick) {
 			toggleCollapsed();
 		}

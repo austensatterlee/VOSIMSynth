@@ -53,12 +53,12 @@ double syn::pitchToFreq(double pitch) {
 
 double syn::bpmToFreq(double bpm, double tempo)
 {
-	return tempo / 60.0 * 1. / bpm;
+	return bpm > 1e-5 ? tempo / 60.0 * 1. / bpm : 0.0;
 }
 
 double syn::freqToSamples(double freq, double fs)
 {
-	return fs/freq;
+	return freq > 1e-5 ? fs/freq : 0.0;
 }
 
 double syn::periodToSamples(double seconds, double fs)

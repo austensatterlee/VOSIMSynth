@@ -30,10 +30,10 @@ namespace syn
 		Circuit("") {}
 
 	Circuit::Circuit(const string& a_name) :
-		Unit(a_name),
-		m_units(256) {
-		shared_ptr<PassthroughUnit> inputUnit = make_shared<PassthroughUnit>("inputs");
-		shared_ptr<PassthroughUnit> outputUnit = make_shared<PassthroughUnit>("outputs");
+		Unit(a_name)
+	{
+		PassthroughUnit* inputUnit = new PassthroughUnit("inputs");
+		PassthroughUnit* outputUnit = new PassthroughUnit("outputs");
 		m_units.add("inputs", inputUnit);
 		m_units.add("outputs", outputUnit);
 		m_inputUnit = inputUnit;
@@ -46,13 +46,19 @@ namespace syn
 
 	Circuit::Circuit(const Circuit& a_other) :
 		Circuit(a_other.getName()) {
-		vector<int> unitIds = a_other.m_units.getIds();
-		for (int i = 0; i < unitIds.size(); i++) {
-			addUnit(shared_ptr<Unit>(a_other.m_units[unitIds[i]]->clone()), unitIds[i]);
+		const int* unitIndices = a_other.m_units.getIndices();
+		for (int i = 0; i < a_other.m_units.size(); i++) {
+			addUnit(a_other.m_units[unitIndices[i]]->clone(), unitIndices[i]);
 		}
 		for (int i = 0; i < a_other.m_connectionRecords.size(); i++) {
 			const ConnectionRecord& rec = a_other.m_connectionRecords[i];
 			connectInternal(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
+		}
+	}
+
+	Circuit::~Circuit() {
+		for(int i=0;i<m_units.size();i++) {
+			delete m_units[m_units.getIndices()[i]];
 		}
 	}
 
@@ -68,8 +74,8 @@ namespace syn
 		}
 	}
 
-	int Circuit::addUnit(shared_ptr<Unit> a_unit) {
-		int retval = m_units.add(a_unit.get()->getName(), a_unit);
+	int Circuit::addUnit(Unit* a_unit) {
+		int retval = m_units.add(a_unit->getName(), a_unit);
 		if (retval < 0)
 			return retval;
 		a_unit->_setParent(this);
@@ -80,8 +86,8 @@ namespace syn
 		return retval;
 	}
 
-	bool Circuit::addUnit(shared_ptr<Unit> a_unit, int a_unitId) {
-		bool retval = m_units.add(a_unit.get()->getName(), a_unitId, a_unit);
+	bool Circuit::addUnit(Unit* a_unit, int a_unitId) {
+		bool retval = m_units.add(a_unit->getName(), a_unitId, a_unit);
 		if (!retval)
 			return false;
 		a_unit->_setParent(this);
@@ -105,11 +111,12 @@ namespace syn
 		list<int> sinks;
 		m_procGraph.clear();
 		// Find sinks
-		const vector<int>& unitIds = m_units.getIds();
-		for (const int& id : unitIds) {
-			shared_ptr<Unit> unit = m_units[id];
+		const int* unitIndices = m_units.getIndices();
+		for (int i = 0; i < m_units.size(); i++) {
+			int index = unitIndices[i];
+			Unit* unit = m_units[index];
 			if (!unit->getNumOutputs()) {
-				sinks.push_back(id);
+				sinks.push_back(index);
 			}
 		}
 		sinks.push_back(getOutputUnitId());
@@ -118,23 +125,23 @@ namespace syn
 		unordered_set<int> tempClosedSet;
 		std::function<void(int)> visit = [&](int unitId)
 		{
-			shared_ptr<Unit> node = m_units[unitId];
+			Unit* node = m_units[unitId];
 			if (tempClosedSet.count(unitId) || permClosedSet.count(unitId))
 				return;
 			tempClosedSet.insert(unitId);
 
 			int nPorts = node->getNumInputs();
 			for (int i = 0; i < nPorts; i++) {
-				const vector<pair<int, int> >& conns = getConnectionsToInternalInput(unitId, i);
+				const vector<std::pair<int, int> >& conns = getConnectionsToInternalInput(unitId, i);
 				if (!conns.empty()) {
-					for (const pair<int, int>& conn : conns) {
+					for (const std::pair<int, int>& conn : conns) {
 						visit(conn.first);
 					}
 				}
 			}
 			permClosedSet.insert(unitId);
 			tempClosedSet.erase(unitId);
-			m_procGraph.push_back(m_units[unitId].get());
+			m_procGraph.push_back(m_units[unitId]);
 		};
 		// DFS
 		while (!sinks.empty()) {
@@ -145,46 +152,46 @@ namespace syn
 	}
 
 	bool Circuit::isActive() const {
-		auto units = m_units.data();
-		for (auto it = units.begin(); it != units.end(); ++it) {
-			if ((*it)->isActive())
+		const int* unitIndices = m_units.getIndices();
+		for (int i = 0; i < m_units.size(); i++) {			
+			if (m_units[unitIndices[i]]->isActive())
 				return true;
 		}
 		return false;
 	}
 
 	void Circuit::onFsChange_() {
-		auto units = m_units.data();
-		for (auto it = units.begin(); it != units.end(); ++it) {
-			(*it)->setFs(getFs());
+		const int* unitIndices = m_units.getIndices();
+		for (int i = 0; i < m_units.size(); i++) {
+			m_units[unitIndices[i]]->setFs(getFs());
 		}
 	}
 
 	void Circuit::onTempoChange_() {
-		auto units = m_units.data();
-		for (auto it = units.begin(); it != units.end(); ++it) {
-			(*it)->setTempo(getTempo());
+		const int* unitIndices = m_units.getIndices();
+		for (int i = 0; i < m_units.size(); i++) {
+			m_units[unitIndices[i]]->setTempo(getTempo());
 		}
 	}
 
 	void Circuit::onNoteOn_() {
-		auto units = m_units.data();
-		for (auto it = units.begin(); it != units.end(); ++it) {
-			(*it)->noteOn(getNote(), getVelocity());
+		const int* unitIndices = m_units.getIndices();
+		for (int i = 0; i < m_units.size(); i++) {
+			m_units[unitIndices[i]]->noteOn(getNote(), getVelocity());
 		}
 	}
 
 	void Circuit::onNoteOff_() {
-		auto units = m_units.data();
-		for (auto it = units.begin(); it != units.end(); ++it) {
-			(*it)->noteOff(getNote(), getVelocity());
+		const int* unitIndices = m_units.getIndices();
+		for (int i = 0; i < m_units.size(); i++) {
+			m_units[unitIndices[i]]->noteOff(getNote(), getVelocity());
 		}
 	}
 
 	void Circuit::onMidiControlChange_(int a_cc, double a_value) {
-		auto units = m_units.data();
-		for (auto it = units.begin(); it != units.end(); ++it) {
-			(*it)->onMidiControlChange_(a_cc, a_value);
+		const int* unitIndices = m_units.getIndices();
+		for (int i = 0; i < m_units.size(); i++) {
+			m_units[unitIndices[i]]->onMidiControlChange_(a_cc, a_value);
 		}
 	}
 
@@ -241,13 +248,13 @@ namespace syn
 		onMidiControlChange_(a_cc, a_value);
 	}
 
-	vector<pair<int, int>> Circuit::getConnectionsToInternalInput(int a_unitId, int a_portid) const {
-		int unitId = m_units.getItemId(a_unitId);
-		vector<pair<int, int>> connectedPorts;
+	vector<std::pair<int, int>> Circuit::getConnectionsToInternalInput(int a_unitId, int a_portid) const {
+		int unitId = m_units.find(a_unitId);
+		vector<std::pair<int, int>> connectedPorts;
 		for (int i = 0; i < m_connectionRecords.size(); i++) {
 			const ConnectionRecord& conn = m_connectionRecords[i];
 			if (conn.to_id == unitId && conn.to_port == a_portid) {
-				connectedPorts.push_back(make_pair(conn.from_id, conn.from_port));
+				connectedPorts.push_back(std::make_pair(conn.from_id, conn.from_port));
 			}
 		}
 		return connectedPorts;

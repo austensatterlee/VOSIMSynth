@@ -23,7 +23,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "Unit.h"
 
 #include <vector>
-#include <memory>
 #include <set>
 #include <unordered_map>
 
@@ -34,22 +33,24 @@ class ByteChunk;
 using std::vector;
 using std::set;
 using std::unordered_map;
-using std::shared_ptr;
 
 namespace syn
 {
 	struct FactoryPrototype
 	{
-		FactoryPrototype(string a_group_name, shared_ptr<Unit> a_unit) :
+		FactoryPrototype(string a_group_name, Unit* a_unit, size_t a_class_size) :
 			group_name(a_group_name),
-			name(a_unit.get()->getName()),
+			name(a_unit->getName()),
 			prototype(a_unit),
-			build_count{0} {};
+			build_count{0},
+			size(a_class_size)
+		{}
 
 		string group_name;
 		string name;
-		shared_ptr<Unit> prototype;
+		Unit* prototype;
 		int build_count;
+		size_t size;
 	};
 
 	class UnitFactory
@@ -66,9 +67,8 @@ namespace syn
 		/**
 		 * \brief Register a prototype unit with the factory. Prototype deletion will be taken care of upon factory destruction.
 		 */
-		void addUnitPrototype(string a_group_name, shared_ptr<Unit> a_unit);
-
-		void addUnitPrototype(string a_group_name, Unit* a_unit);
+		template <typename T, typename = std::enable_if_t<std::is_base_of<Unit, T>::value > >
+		void addUnitPrototype(const string& a_group_name, const string& a_unit_name);
 
 		set<string> getGroupNames() const;
 
@@ -103,12 +103,20 @@ namespace syn
 		int getPrototypeIdx_(unsigned a_classId) const;
 
 	private:
-		vector<shared_ptr<FactoryPrototype>> m_prototypes;
+		vector<FactoryPrototype*> m_prototypes;
 		set<string> m_group_names;
 		set<string> m_generatedNameHistory;
 
 		unordered_map<unsigned int, int> m_class_identifiers; //<! mapping from unique class IDs to prototype numbers
 	};
+
+	template <typename T, typename>
+	void UnitFactory::addUnitPrototype(const string& a_group_name, const string& a_unit_name) {
+		FactoryPrototype* prototype = new FactoryPrototype(a_group_name, new T(a_unit_name), sizeof(T));
+		m_prototypes.push_back(prototype);
+		m_group_names.insert(prototype->group_name);
+		m_class_identifiers[prototype->prototype->getClassIdentifier()] = m_prototypes.size() - 1;
+	}
 }
 
 #endif

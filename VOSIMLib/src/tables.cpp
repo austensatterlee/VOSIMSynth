@@ -83,7 +83,7 @@ namespace syn
 
 	void ResampledLookupTable::resample_tables(const BlimpTable& blimp_table_offline) {
 		/* Construct resampled tables at ratios of powers of two */
-		m_num_resampled_tables = MAX(1, log2(m_size) - 3);
+		m_num_resampled_tables = MAX<double>(1, log2(m_size) - 3);
 		m_resampled_tables = static_cast<double**>(malloc(sizeof(double*) * m_num_resampled_tables));
 		m_resampled_sizes = new int[m_num_resampled_tables];
 		double currsize = m_size;

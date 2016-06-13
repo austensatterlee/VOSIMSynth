@@ -32,7 +32,7 @@ namespace syn
 		nvgSave(a_nvg);
 		draw(a_nvg);
 
-		for (auto zplane_iter = m_ZPlanes.rbegin(); zplane_iter != m_ZPlanes.rend(); ++zplane_iter) {
+		for (auto zplane_iter = m_ZPlaneMap.rbegin(); zplane_iter != m_ZPlaneMap.rend(); ++zplane_iter) {
 			const list<shared_ptr<UIComponent>>& zplane = zplane_iter->second;
 			for (auto zorder_iter = zplane.rbegin(); zorder_iter != zplane.rend(); ++zorder_iter) {
 				shared_ptr<UIComponent> child = *zorder_iter;
@@ -44,26 +44,38 @@ namespace syn
 		nvgTranslate(a_nvg, -m_pos[0], -m_pos[1]);
 	}
 
-	void UIComponent::addChild(UIComponent* a_newChild) {
+	void UIComponent::addChild(UIComponent* a_newChild, const string& a_group) {
 		if (a_newChild->parent())
 			return;
 		shared_ptr<UIComponent> newChildPtr(a_newChild);
-		addChild(newChildPtr);
+		addChild(newChildPtr, a_group);
 	}
 
-	void UIComponent::addChild(shared_ptr<UIComponent> a_newChild) {
+	void UIComponent::addChild(shared_ptr<UIComponent> a_newChild, const string& a_group) {
 		if (a_newChild->parent())
 			return;
 		if (find(m_children.begin(), m_children.end(), a_newChild) == m_children.end()) {
 			a_newChild->m_parent = this;
 			m_children.push_back(a_newChild);
+			// register with group maps
+			m_groupMap[a_group].push_back(a_newChild.get());
+			m_reverseGroupMap[a_newChild.get()] = a_group;
 
 			// Push to front of z-order stack
-			m_ZPlanes[0].push_front(a_newChild);
-			m_ZPlaneMap[a_newChild.get()] = 0;
+			m_ZPlaneMap[0].push_front(a_newChild);
+			m_reverseZPlaneMap[a_newChild.get()] = 0;
 
+			// Execute callback
 			_onAddChild(a_newChild);
 		}
+	}
+
+	const string& UIComponent::getChildGroup(UIComponent* a_child) const {
+		return m_reverseGroupMap.at(a_child);
+	}
+
+	const vector<UIComponent*>& UIComponent::getGroup(const string& a_group) const {
+		return m_groupMap.at(a_group);
 	}
 
 	bool UIComponent::removeChild(UIComponent* a_child) {
@@ -83,10 +95,15 @@ namespace syn
 
 		shared_ptr<UIComponent> child = m_children[a_index];
 
+		// Remove from group maps
+		const string& group = m_reverseGroupMap[child.get()];
+		m_groupMap[group].erase(find(m_groupMap[group].begin(), m_groupMap[group].end(), child.get()));
+		m_reverseGroupMap.erase(child.get());
+
 		// Remove from z-order stack
-		int zorder = m_ZPlaneMap[child.get()];
-		m_ZPlaneMap.erase(child.get());
-		m_ZPlanes[zorder].remove(child);
+		int zorder = m_reverseZPlaneMap[child.get()];
+		m_reverseZPlaneMap.erase(child.get());
+		m_ZPlaneMap[zorder].remove(child);
 
 		m_children.erase(m_children.cbegin() + a_index);
 
@@ -94,11 +111,11 @@ namespace syn
 		return true;
 	}
 
-	shared_ptr<UIComponent> UIComponent::getChild(int i) {
+	shared_ptr<UIComponent> UIComponent::getChild(int i) const {
 		return m_children[i];
 	}
 
-	shared_ptr<UIComponent> UIComponent::getChild(UIComponent* a_comp) {
+	shared_ptr<UIComponent> UIComponent::getChild(const UIComponent* a_comp) const {
 		for (int i = 0; i < m_children.size(); i++) {
 			if (m_children[i].get() == a_comp)
 				return m_children[i];
@@ -106,7 +123,7 @@ namespace syn
 		return nullptr;
 	}
 
-	int UIComponent::getChildIndex(UIComponent* a_comp) {
+	int UIComponent::getChildIndex(const UIComponent* a_comp) const {
 		for (int i = 0; i < m_children.size(); i++) {
 			if (m_children[i].get() == a_comp)
 				return i;
@@ -118,7 +135,7 @@ namespace syn
 		return m_children.size();
 	}
 
-	vector<shared_ptr<UIComponent>>& UIComponent::children() {
+	const vector<shared_ptr<UIComponent>>& UIComponent::children() const {
 		return m_children;
 	}
 
@@ -126,7 +143,7 @@ namespace syn
 		return m_parent;
 	}
 
-	shared_ptr<UIComponent> UIComponent::getSharedPtr()
+	shared_ptr<UIComponent> UIComponent::getSharedPtr() const
 	{
 		if(parent())
 			return parent()->getChild(this);
@@ -207,31 +224,33 @@ namespace syn
 		m_visible = a_visible;
 	}
 
-	bool UIComponent::contains(const Vector2i& a_pt) {
-		auto pt = (a_pt - m_pos).array();
+	bool UIComponent::contains(const Vector2i& a_parentPt) const {
+		Eigen::Array<int,2,1> pt = (a_parentPt - getRelPos()).array();
 		return (pt >= 0).all() && (pt <= size().array()).all();
 	}
 
-	UIComponent* UIComponent::findChild(const Vector2i& a_pt) {
-		Vector2i relPt = a_pt - m_pos;
-		for (auto const& kv : m_ZPlanes) {
+	UIComponent* UIComponent::findChild(const Vector2i& a_parentPt, const string& a_filterGroup) const {
+		Vector2i relPt = a_parentPt - getRelPos();
+		for (auto const& kv : m_ZPlaneMap) {
 			for (shared_ptr<UIComponent> child : kv.second) {
-				if (child->visible() && child->contains(relPt))
-					return child.get();
+				if (a_filterGroup.empty() || getChildGroup(child.get()) == a_filterGroup) {
+					if (child->visible() && child->contains(relPt))
+						return child.get();
+				}
 			}
 		}
-		return contains(a_pt) ? this : nullptr;
+		return nullptr;
 	}
 
-	UIComponent* UIComponent::findChildRecursive(const Vector2i& a_pt) {
-		Vector2i relPt = a_pt - m_pos;
-		for (auto const& kv : m_ZPlanes) {
+	UIComponent* UIComponent::findChildRecursive(const Vector2i& a_parentPt) {
+		Vector2i relPt = a_parentPt - getRelPos();
+		for (auto const& kv : m_ZPlaneMap) {
 			for (shared_ptr<UIComponent> child : kv.second) {
 				if (child->visible() && child->contains(relPt))
 					return child->findChildRecursive(relPt);
 			}
 		}
-		return contains(a_pt) ? this : nullptr;
+		return nullptr;
 	}
 
 	void UIComponent::setSize(const Vector2i& a_size) {
@@ -280,16 +299,16 @@ namespace syn
 	}
 
 	bool UIComponent::onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
-		for (auto const& kv : m_ZPlanes) {
+		for (auto const& kv : m_ZPlaneMap) {
 			for (shared_ptr<UIComponent> child : kv.second) {
 				if (!child->visible())
 					continue;
-				bool hasMouse = child->contains(a_relCursor - m_pos);
-				bool hadMouse = child->contains(a_relCursor - m_pos - a_diffCursor);
+				bool hasMouse = child->contains(a_relCursor);
+				bool hadMouse = child->contains(a_relCursor - a_diffCursor);
 				if (hasMouse != hadMouse)
-					child->onMouseEnter(a_relCursor - m_pos, a_diffCursor, hasMouse);
+					child->onMouseEnter(a_relCursor - child->getRelPos(), a_diffCursor, hasMouse);
 				if (hasMouse || hadMouse)
-					child->onMouseMove(a_relCursor - m_pos, a_diffCursor);
+					child->onMouseMove(a_relCursor - child->getRelPos(), a_diffCursor);
 			}
 		}
 		return false;
@@ -300,12 +319,12 @@ namespace syn
 	}
 
 	UIComponent* UIComponent::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
-		for (auto const& kv : m_ZPlanes) {
+		for (auto const& kv : m_ZPlaneMap) {
 			for (shared_ptr<UIComponent> child : kv.second) {
 				if (!child->visible())
 					continue;
-				if (child->contains(a_relCursor - m_pos)) {
-					UIComponent* ret = child->onMouseDown(a_relCursor - m_pos, a_diffCursor, a_isDblClick);
+				if (child->contains(a_relCursor)) {
+					UIComponent* ret = child->onMouseDown(a_relCursor - child->getRelPos(), a_diffCursor, a_isDblClick);
 					if (ret)
 						return ret;
 				}
@@ -315,11 +334,11 @@ namespace syn
 	}
 
 	bool UIComponent::onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
-		for (auto const& kv : m_ZPlanes) {
+		for (auto const& kv : m_ZPlaneMap) {
 			for (shared_ptr<UIComponent> child : kv.second) {
 				if (!child->visible())
 					continue;
-				if (child->contains(a_relCursor - m_pos) && child->onMouseUp(a_relCursor - m_pos, a_diffCursor))
+				if (child->contains(a_relCursor) && child->onMouseUp(a_relCursor - child->getRelPos(), a_diffCursor))
 					return true;
 			}
 		}
@@ -327,11 +346,11 @@ namespace syn
 	}
 
 	bool UIComponent::onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) {
-		for (auto const& kv : m_ZPlanes) {
+		for (auto const& kv : m_ZPlaneMap) {
 			for (shared_ptr<UIComponent> child : kv.second) {
 				if (!child->visible())
 					continue;
-				if (child->contains(a_relCursor - m_pos) && child->onMouseScroll(a_relCursor - m_pos, a_diffCursor, a_scrollAmt))
+				if (child->contains(a_relCursor) && child->onMouseScroll(a_relCursor - child->getRelPos(), a_diffCursor, a_scrollAmt))
 					return true;
 			}
 		}
@@ -350,24 +369,24 @@ namespace syn
 	}
 
 	void UIComponent::pushToBack(UIComponent* a_child) {
-		int backZOrder = m_ZPlanes.rbegin()->first;
+		int backZOrder = m_ZPlaneMap.rbegin()->first;
 		setZOrder(a_child, backZOrder, false);
 	}
 
 	int UIComponent::getZOrder(UIComponent* a_child) {
-		return m_ZPlaneMap[a_child];
+		return m_reverseZPlaneMap[a_child];
 	}
 
 	void UIComponent::setZOrder(UIComponent* a_child, int a_newZOrder, bool toFront) {
 		shared_ptr<UIComponent> child = getChild(a_child);
 		if (child) {
 			int oldZOrder = getZOrder(child.get());
-			m_ZPlanes[oldZOrder].remove(child);
+			m_ZPlaneMap[oldZOrder].remove(child);
 			if (toFront)
-				m_ZPlanes[a_newZOrder].push_front(child);
+				m_ZPlaneMap[a_newZOrder].push_front(child);
 			else
-				m_ZPlanes[a_newZOrder].push_back(child);
-			m_ZPlaneMap[child.get()] = a_newZOrder;
+				m_ZPlaneMap[a_newZOrder].push_back(child);
+			m_reverseZPlaneMap[child.get()] = a_newZOrder;
 		}
 	}
 }

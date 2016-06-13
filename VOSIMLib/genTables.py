@@ -76,15 +76,29 @@ def GenerateBlit(pts,nharmonics=None):
     blit = blit/blit.max()
     return blit
 
-def GenerateBLSaw(nharmonics,npoints):
+def GenerateBLSaw(nharmonics,npoints=None):
     """ Generate band limited sawtooth wave """
+    npoints = npoints or nharmonics*2+1
     nfft = npoints
     hpts = nharmonics or npoints/2+1
     hind = arange(1,hpts)
     freqmags = zeros(npoints/2+1,dtype=complex128)
     freqmags[hind] = 1j*1./hind
     blsaw = fft.fftshift(fft.irfft(freqmags,n=nfft))
-    return blsaw/blsaw.max()
+    return normalize_power(blsaw)
+
+def GenerateBLSquare(npoints):
+    npoints = npoints or nharmonics*2+1
+    maxharmonic = npoints/2-1 if npoints%2 else npoints/2
+
+    harmonics = [x for x in xrange(npoints) if x<=maxharmonic and x%2]
+    harmonics = harmonics[:maxharmonic]
+
+    gains = [1./x for x in harmonics]
+
+    sample_pts = arange(npoints)*2.0*pi/npoints;
+    blsquare = sum([g*sin(h*sample_pts) for g,h in zip(gains,harmonics)],axis=0)
+    return normalize_power(blsquare)
 
 def GenerateBlimp(intervals=10,resolution=2048,fs=48000,fc=20000,beta=9.,apgain=0.9,apbeta=0.7,ret_half=True):
     """
@@ -206,16 +220,16 @@ def make_symmetric_l(left_half):
     right_half = list(reversed(left_half))
     return hstack([left_half[:-1],right_half])
 
-def magspec(signal, pts=None, fs=None, logscale=True, **kwargs):
+def magspec(signal, pts=None, fs=None, xlogscale=True, ylogscale=True, **kwargs):
     from matplotlib import pyplot as plt
     pts = pts or len(signal)
     k = arange(1,pts/2)
     fs = fs or 1.
     freqs = linfreqs = k*1./pts*fs
-    if(logscale):
+    if(xlogscale):
         freqs = log2(freqs)
     signalfft = fft.fft(signal,n=pts)[1:pts/2]/pts
-    if(all(signalfft)):
+    if(all(signalfft) and ylogscale):
         mag = 20*log10(abs(signalfft))
         ylabel = "dB"
     else:
@@ -223,7 +237,7 @@ def magspec(signal, pts=None, fs=None, logscale=True, **kwargs):
         ylabel = "Amp"
     f = plt.gcf()
     ax = plt.gca()
-    if logscale:
+    if xlogscale:
         ax.semilogx( linfreqs, mag, basex=10, **kwargs)
     else:
         ax.plot( linfreqs, mag, **kwargs)
@@ -232,7 +246,7 @@ def magspec(signal, pts=None, fs=None, logscale=True, **kwargs):
     ax.grid(True,which='both')
     f.show()
 
-def maggain(signal1,signal2,pts=None,fs=None,logscale=True,**kwargs):
+def maggain(signal1,signal2,pts=None,fs=None,xlogscale=True,ylogscale=True,**kwargs):
     from matplotlib import pyplot as plt
     fftlength = pts or max(len(signal1),len(signal2))
     k = arange(1,fftlength/2)
@@ -240,7 +254,7 @@ def maggain(signal1,signal2,pts=None,fs=None,logscale=True,**kwargs):
     linfreqs = freqs = k*1./fftlength*fs
     signal1fft = fft.fft(signal1,n=fftlength)[1:fftlength/2]/fftlength
     signal2fft = fft.fft(signal2,n=fftlength)[1:fftlength/2]/fftlength
-    if(all(signal1fft) and all(signal2fft)):
+    if(all(signal1fft) and all(signal2fft) and ylogscale):
         mag1 = 20*log10(abs(signal1fft))
         mag2 = 20*log10(abs(signal2fft))
         gain = mag2-mag1
@@ -248,11 +262,11 @@ def maggain(signal1,signal2,pts=None,fs=None,logscale=True,**kwargs):
     else:
         mag1 = abs(signal1fft)**2
         mag2 = abs(signal2fft)**2
-        gain = mag2-mag1
+        gain = [m2/m1 if m1 else 0.0 for m2,m1 in zip(mag2,mag1)]
         ylabel = "Amp"
     f = plt.gcf()
     ax = plt.gca()
-    if logscale:
+    if xlogscale:
         ax.semilogx( linfreqs, gain, basex=10, **kwargs)
     else:
         ax.plot( linfreqs, gain, **kwargs )
@@ -408,6 +422,9 @@ def genApodWindow(pts,beta,apgain,apbeta):
     apw = 1-apgain*ss.kaiser(pts,apbeta) # apodization window
     W = w*apw
     return W
+
+def shift(signal,dPhase):
+    return roll(signal,int(len(signal)*dPhase))
 
 def signal_power(signal):
     return sqrt(sum(signal**2)/len(signal))

@@ -27,14 +27,12 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/lockfree/policies.hpp>
 #include <map>
-#include <memory>
 #include <Containers.h>
 
 #define MAX_VOICEMANAGER_MSG_QUEUE_SIZE 64
 
 using std::map;
 using std::string;
-using std::shared_ptr;
 using boost::lockfree::spsc_queue;
 using boost::lockfree::capacity;
 
@@ -64,7 +62,7 @@ namespace syn
 		};
 
 	public:
-		VoiceManager(shared_ptr<Circuit> a_proto, UnitFactory* a_factory) :
+		VoiceManager(UnitFactory* a_factory) :
 			m_queuedActions(MAX_VOICEMANAGER_MSG_QUEUE_SIZE),
 			m_numActiveVoices(0),
 			m_maxVoices(0),
@@ -73,12 +71,15 @@ namespace syn
 			m_voiceStack(0),
 			m_idleVoiceStack(0),
 			m_garbageList(0),
-			m_instrument(a_proto),
+			m_instrument(new Circuit("main")),
 			m_factory(a_factory)
 		{ };
 
 		~VoiceManager() {
-			m_allVoices.clear();
+			delete m_instrument;
+			for(int i=0;i<m_allVoices.size();i++) {
+				delete m_allVoices[i];
+			}			
 		}
 
 		void MSFASTCALL tick(const double* a_left_input, const double* a_right_input, double* a_left_output, double* a_right_output) GCCFASTCALL;
@@ -131,9 +132,9 @@ namespace syn
 
 		int getNumUnits() const;
 
-		shared_ptr<const Circuit> getPrototypeCircuit() const;
+		const Circuit* getPrototypeCircuit() const;
 
-		shared_ptr<const Circuit> getVoiceCircuit(int a_voiceId) const;
+		const Circuit* getVoiceCircuit(int a_voiceId) const;
 
 		void save(ByteChunk* a_data) const;
 		int load(ByteChunk* a_data, int startPos);
@@ -170,8 +171,8 @@ namespace syn
 		VoiceIndexList m_voiceStack;
 		VoiceIndexList m_idleVoiceStack;
 		VoiceIndexList m_garbageList; /// pre-allocated storage for collecting idle voices during audio processing
-		vector<shared_ptr<Circuit>> m_allVoices;
-		shared_ptr<Circuit> m_instrument;
+		vector<Circuit*> m_allVoices;
+		Circuit* m_instrument;
 		UnitFactory* m_factory;
 	};
 }

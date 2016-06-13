@@ -47,27 +47,30 @@ namespace syn
 
 		void recursiveDraw(NVGcontext* a_nvg);
 
-		void addChild(UIComponent* a_newChild);
-		void addChild(shared_ptr<UIComponent> a_newChild);
+		void addChild(UIComponent* a_newChild, const string& a_group="");
+		void addChild(shared_ptr<UIComponent> a_newChild, const string& a_group="");
+
+		const string& getChildGroup(UIComponent* a_child) const;
+		const vector<UIComponent*>& getGroup(const string& a_group) const;
 
 		bool removeChild(UIComponent* a_child);
 		bool removeChild(int a_index);
 
-		shared_ptr<UIComponent> getChild(int i);
-		shared_ptr<UIComponent> getChild(UIComponent* a_comp);
-		int getChildIndex(UIComponent* a_comp);
+		shared_ptr<UIComponent> getChild(int i) const;
+		shared_ptr<UIComponent> getChild(const UIComponent* a_comp) const;
+		int getChildIndex(const UIComponent* a_comp) const;
 
 		int numChildren() const;
 
-		vector<shared_ptr<UIComponent>>& children();
+		const vector<shared_ptr<UIComponent>>& children() const;
 
 		UIComponent* parent() const;
 
-		shared_ptr<UIComponent> getSharedPtr();
+		shared_ptr<UIComponent> getSharedPtr() const;
 
-		virtual bool contains(const Vector2i& a_pt);
+		virtual bool contains(const Vector2i& a_pt) const;
 
-		UIComponent* findChild(const Vector2i& a_pt);
+		UIComponent* findChild(const Vector2i& a_pt, const string& a_filterGroup="") const;
 		UIComponent* findChildRecursive(const Vector2i& a_pt);
 
 		Vector2i getRelPos() const;
@@ -152,9 +155,11 @@ namespace syn
 	protected:
 		UIComponent* m_parent;
 		VOSIMWindow* m_window;
-		vector<shared_ptr<UIComponent>> m_children;
-		map<int, list<shared_ptr<UIComponent>>> m_ZPlanes;
-		map<UIComponent*, int> m_ZPlaneMap;
+		vector<shared_ptr<UIComponent> > m_children;
+		map<int, list<shared_ptr<UIComponent> > > m_ZPlaneMap;
+		map<UIComponent*, int> m_reverseZPlaneMap;
+		map<string, vector<UIComponent*> > m_groupMap;
+		map<UIComponent*, string> m_reverseGroupMap;
 
 		bool m_visible, m_focused, m_hovered;
 		Vector2i m_pos, m_size;

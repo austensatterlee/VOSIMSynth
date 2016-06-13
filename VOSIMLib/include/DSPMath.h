@@ -36,11 +36,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define GCCFASTCALL __attribute__((fastcall))
 #endif
 
-#define LERP(A,B,F) (((B)-(A))*(F)+(A))
-#define INVLERP(A,B,X) (((X)-(A))/((B)-(A)))
-#define CLAMP(x,lo,hi) ((x) < (lo) ? (lo) : (x) > (hi) ? (hi) : (x))
-#define MAX(a,b) ((a) < (b) ? (b) : (a))
-#define MIN(a,b) ((a) > (b) ? (b) : (a))
 #define DSP_PI 3.14159265359f
 
 namespace syn
@@ -48,16 +43,52 @@ namespace syn
 	inline int gcd(int a, int b);
 
 	template <typename T>
-	T WRAP(T x, T modulo) {
-		if (!modulo)
+	T LERP(const T& pt1, const T& pt2, const T& frac) {
+		return (pt2 - pt1)*frac + pt1;
+	}
+
+	template <typename T>
+	T INVLERP(const T& pt1, const T& pt2, const T& lerped_pt) {
+		return (lerped_pt - pt1) / (pt2 - pt1);
+	}
+
+	template <typename T>
+	T CLAMP(const T& val, const T& min_val, const T& max_val) {
+		return val < min_val ? min_val : (val > max_val ? max_val : val);
+	}
+
+	template <typename T>
+	T MAX(const T& val1, const T& val2) {
+		return val1 < val2 ? val2 : val1;
+	}
+
+	template <typename T>
+	T MIN(const T& val1, const T& val2) {
+		return val1 > val2 ? val2 : val1;
+	}
+
+	template <typename T>
+	T WRAP(const T& x, const T& m) {
+		if (!m)
 			return x;
 		T newx = x;
-		while (newx >= modulo) {
-			newx -= modulo;
-		}
-		while (newx < 0) {
-			newx += modulo;
-		}
+		while (newx >= m)
+			newx -= m;
+		while (newx < 0)
+			newx += m;
+		return newx;
+	}
+
+	template <typename T>
+	T WRAP2(const T& x, const T& left_m, const T& right_m) {
+		const T m = right_m - left_m;
+		if (!m)
+			return x;
+		T newx = x;
+		while (newx >= right_m)
+			newx -= m;
+		while (newx < left_m)
+			newx += m;
 		return newx;
 	}
 

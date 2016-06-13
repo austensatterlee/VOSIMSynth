@@ -69,8 +69,8 @@ if(MSVC)
   # /GL whole program optimization      /arch:SSE2 simd extensions
   # /fp:fast fast floating point model  /Qpar enable parallel code gen
   # /Oy omit frame pointers             /GT fiber-safe optimizations
-  list(APPEND MSVC_REL /Ox /Ob2 /Oi /Ot /GL /arch:SSE2 /fp:fast /Qpar /Oy /GT)
-  list(APPEND MSVC_RDEB /Ob2 /Oi /arch:SSE2 /fp:fast /GT)
+  list(APPEND MSVC_REL /Ox /Ob2 /Oi /Ot /GL /arch:AVX2 /fp:fast /Qpar /Oy /GT)
+  list(APPEND MSVC_RDEB /Ob2 /Oi /arch:AVX2 /fp:fast /GT)
   add_compile_options("$<$<CONFIG:Release>:${MSVC_REL}>")
   add_compile_options("$<$<CONFIG:RelWithDebInfo>:${MSVC_RDEB}>")
   add_compile_options("$<$<CONFIG:Debug>:${MSVC_DEB}>")
@@ -85,6 +85,7 @@ endif()
 
 # configurations for all compilers
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG" CACHE STRING "")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -D_DEBUG" CACHE STRING "")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUGLIBPNG" CACHE STRING "")
 add_definitions(-DWDL_FFT_REALSIZE=8)
 add_definitions(-DPNG_NO_ASSEMBLER_CODE -DPNG_LIBPNG_SPECIALBUILD) 
@@ -180,7 +181,6 @@ set(BUILD_SHARED_LIBS false)
 set(Boost_NO_BOOST_CMAKE True)
 set(Boost_DETAILED_FAILURE_MSG True)
 find_package(Boost REQUIRED)
-#message(STATUS "Boost include dirs: ${Boost_INCLUDE_DIRS}")
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Add SFML

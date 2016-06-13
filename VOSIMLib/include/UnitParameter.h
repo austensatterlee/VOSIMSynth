@@ -61,7 +61,6 @@ namespace syn
 		};
 	public:
 		UnitParameter();
-		UnitParameter(const UnitParameter& a_other);
 		UnitParameter(const string& a_name, bool a_defaultValue);
 		UnitParameter(const string& a_name, int a_min, int a_max, int a_defaultValue, EUnitsType a_unitsType = None);
 		UnitParameter(const string& a_name, const vector<string>& a_optionNames, const vector<double>& a_optionValues = {}, int a_defaultOption = 0, EUnitsType a_unitsType = None);
@@ -159,6 +158,7 @@ namespace syn
 		case Bool:
 			return static_cast<T>(getBool());
 		case Enum:
+			return static_cast<T>(getEnum());			
 		case Int:
 			return static_cast<T>(getInt());
 		case Double:
