@@ -7,10 +7,10 @@ namespace syn
 		mStandardFontSize = 16;
 		mButtonFontSize = 20;
 		mTextBoxFontSize = 20;
-		mWindowCornerRadius = 5;
+		mWindowCornerRadius = 2;
 		mWindowHeaderHeight = 20;
 		mWindowDropShadowSize = 5;
-		mButtonCornerRadius = 2;
+		mButtonCornerRadius = 4;
 
 		mDropShadow = Color(0, 128);
 		mTransparent = Color(0, 0);
@@ -24,8 +24,8 @@ namespace syn
 
 		mHighlightedTextColor = Color(255, 250);
 
-		mButtonGradientTopFocused = Color(64, 255);
-		mButtonGradientBotFocused = Color(48, 255);
+		mButtonGradientTopFocused = Color(84, 255);
+		mButtonGradientBotFocused = Color(78, 255);
 		mButtonGradientTopUnfocused = Color(74, 255);
 		mButtonGradientBotUnfocused = Color(58, 255);
 		mButtonGradientTopPushed = Color(41, 255);
@@ -46,16 +46,21 @@ namespace syn
 		mWindowPopupTransparent = Color(50, 0);
 
 		/* Text slider */
-		mTextSliderFontSize = 14;
+		mTextSliderFontSize = 13;
 
 		/* Port */
 		mPortFontSize = 12;
 
-		mInputPortBG = Color(Vector3f{0.55f , 0.775f, 1.f}, 0.22f);
-		mInputPortHighlightedBG = Color(Vector3f{0.55f , 0.775f, 1.f}, 0.42f);
+		mInputPortBG = Color(Vector3f{0.55f , 0.775f, 1.f}, 0.32f);
+		mInputPortHighlightedBG = Color(Vector3f{0.55f , 0.775f, 1.f}, 0.52f);
 
-		mOutputPortBG = Color(Vector3f{ 0.83f , 0.76f, 0.66f }.normalized(), 0.22f);
-		mOutputPortHighlightedBG = Color(Vector3f{0.83f , 0.76f, 0.66f}.normalized(), 0.42f);
+		mOutputPortBG = Color(Vector3f{ 0.93f , 0.76f, 0.66f }.normalized(), 0.32f);
+		mOutputPortHighlightedBG = Color(Vector3f{0.93f , 0.76f, 0.66f}.normalized(), 0.52f);
+
+		/* Wire parameters */
+		mWireColor = Color(Vector3f(0.5f, 0.0f, 0.0f),0.9f);
+		mWireInnerShadowColor = Color(Vector3f(0.15f, 0.0f, 0.0f), 0.8f);
+		mSelectedWireColor = Color(Vector3f(0.8f, 0.3f, 0.3f), 1.0f);
 
 		/* Unit selector */
 		mUnitSelectorProtoFontSize = 16;

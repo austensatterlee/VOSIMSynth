@@ -12,9 +12,8 @@ syn::UIUnitControlContainer::UIUnitControlContainer(VOSIMWindow* a_window, Voice
 	m_unitId(a_unitId),
 	m_unitControl(a_unitControl)
 {
-	m_row = new UIRow(m_window);
-	m_row->setChildResizePolicy(UICell::CNONE);
-	m_row->setChildrenSpacing(5);
+	m_bodyRow->setChildResizePolicy(UICell::CNONE);
+	m_bodyRow->setChildrenSpacing(2);
 	m_cols[0] = new UICol(m_window);
 	m_cols[0]->setChildResizePolicy(UICell::CMATCHMIN);
 	m_cols[1] = new UICol(m_window);
@@ -34,18 +33,18 @@ syn::UIUnitControlContainer::UIUnitControlContainer(VOSIMWindow* a_window, Voice
 		m_cols[1]->addChild(m_outPorts[i]);
 	}
 
-	m_row->addChild(m_cols[0]);
-	m_row->addChild(a_unitControl);
-	m_row->addChild(m_cols[1]);
-	addChildToBody(m_row);
-	m_bodyRow->setGreedyChild(m_row, NVG_ALIGN_RIGHT);
+	addChildToBody(m_cols[0]);
+	addChildToBody(a_unitControl);
+	addChildToBody(m_cols[1]);
+	//m_bodyRow->setGreedyChild(m_cols[1], NVG_ALIGN_RIGHT);
 
 	m_closeButton = new UIButton(a_window, "", ENTYPO_TRASH);
 	m_closeButton->setCallback([&]() {
 		this->close();
 	});
-	m_closeButton->setSize({ theme()->mWindowHeaderHeight - 4 ,theme()->mWindowHeaderHeight - 4 });
-	m_closeButton->setFontSize(8);
+	m_closeButton->setRelPos({ m_closeButton->getRelPos().x(), 2 });
+	m_closeButton->setSize({ theme()->mWindowHeaderHeight, theme()->mWindowHeaderHeight-6 });
+	m_closeButton->setFontSize(10);
 	addChildToHeader(m_closeButton);
 }
 

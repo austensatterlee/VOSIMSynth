@@ -113,10 +113,10 @@ namespace syn {
 		nvgStroke(a_nvg);
 
 		// Draw ticks
-		Color tickColor{ colorFromHSL(0.19, 1.0, 0.5) }; tickColor.a() = 0.9f;
-		Color tickLabelColor{colorFromHSL(0.19, 0.7, 0.5)}; tickColor.a() = 0.25f;
+		Color tickColor{ colorFromHSL(0.19f, 1.0f, 0.5f) }; tickColor.a() = 0.9f;
+		Color tickLabelColor{colorFromHSL(0.19f, 0.7f, 0.5f)}; tickColor.a() = 0.25f;
 		nvgTextAlign(a_nvg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);	
-		nvgFontSize(a_nvg, 12.0);
+		nvgFontSize(a_nvg, 12.0f);
 		nvgStrokeColor(a_nvg, tickColor);
 		nvgFillColor(a_nvg, tickLabelColor);
 		nvgBeginPath(a_nvg);

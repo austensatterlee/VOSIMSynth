@@ -63,8 +63,8 @@ instrument determined by PLUG _IS _INST
 // Image resource locations for this plug.
 
 // GUI default dimensions
-#define GUI_WIDTH 1024
-#define GUI_HEIGHT 640
+#define GUI_WIDTH 1000
+#define GUI_HEIGHT 700
 
 // on MSVC, you must define SA_API in the resource editor preprocessor macros as well as the c++ ones
 #if defined(SA_API) && !defined(OS_IOS)

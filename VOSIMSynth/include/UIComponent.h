@@ -75,6 +75,8 @@ namespace syn
 
 		Vector2i getRelPos() const;
 
+		Vector2i getRelCenter() const;
+
 		void setRelPos(const Vector2i& a_pos);
 
 		Vector2i getAbsPos() const;
@@ -97,6 +99,8 @@ namespace syn
 
 		void grow(const Vector2i& a_amt);
 
+		NVGcontext* nvgContext() const;
+		sf::RenderWindow* sfmlWindow() const;
 		shared_ptr<Theme> theme() const;
 
 		bool visible() const;
@@ -144,6 +148,7 @@ namespace syn
 
 	protected:
 		virtual void draw(NVGcontext* a_nvg) {};
+		virtual void setChildrenStyles(NVGcontext* a_nvg) {};
 
 	private:
 		virtual void _onAddChild(shared_ptr<UIComponent> a_newchild) {};
@@ -156,7 +161,7 @@ namespace syn
 		UIComponent* m_parent;
 		VOSIMWindow* m_window;
 		vector<shared_ptr<UIComponent> > m_children;
-		map<int, list<shared_ptr<UIComponent> > > m_ZPlaneMap;
+		map<int, list<UIComponent*> > m_ZPlaneMap;
 		map<UIComponent*, int> m_reverseZPlaneMap;
 		map<string, vector<UIComponent*> > m_groupMap;
 		map<UIComponent*, string> m_reverseGroupMap;

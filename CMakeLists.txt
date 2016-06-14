@@ -19,8 +19,9 @@ set(VST2_SDK ${LIBS_DIR}/VST_SDK CACHE PATH "")
 set(SFTOOLS_DIR ${LIBS_DIR}/sftools CACHE PATH "")
 set(EIGEN_DIR ${LIBS_DIR}/eigen CACHE PATH "")
 set(RESOURCES_DIR ${VOSIMSYNTH_DIR}/resources CACHE PATH "")
-set(GLEW_DIR "C:/Program Files (x86)/glew" CACHE PATH "")
-set(SFML_DIR "C:/Program Files/sfml" CACHE PATH "")
+set(GLEW_ROOT "C:/Program Files (x86)/glew" CACHE PATH "")
+set(SFML_ROOT "C:/Program Files/sfml" CACHE PATH "")
+set(SFGUI_ROOT "C:/Program Files (x86)/SFGUI" CACHE PATH "")
 
 message (STATUS "Path to nanovg is ${NANOVG_DIR}")
 message (STATUS "Path to sftools is ${SFTOOLS_DIR}")
@@ -64,13 +65,14 @@ if(MSVC)
   set(MSVC_DISABLED_WARNINGS /wd4996 /wd4224 /wd4244 /wd4091 /wd4018)
   add_compile_options("${MSVC_DISABLED_WARNINGS}")
   add_definitions(-D_ENABLE_ATOMIC_ALIGNMENT_FIX)
+  add_definitions(-DWIN32_LEAN_AND_MEAN)
   # /Ox full opt                        /Ob2 any suitable inline function expansion
   # /Oi enable intrinsics               /Ot favor fast code
   # /GL whole program optimization      /arch:SSE2 simd extensions
   # /fp:fast fast floating point model  /Qpar enable parallel code gen
   # /Oy omit frame pointers             /GT fiber-safe optimizations
-  list(APPEND MSVC_REL /Ox /Ob2 /Oi /Ot /GL /arch:AVX2 /fp:fast /Qpar /Oy /GT)
-  list(APPEND MSVC_RDEB /Ob2 /Oi /arch:AVX2 /fp:fast /GT)
+  list(APPEND MSVC_REL /Ox /Ob2 /Oi /Ot /GL /arch:SSE2 /fp:fast /Qpar /Oy /GT)
+  list(APPEND MSVC_RDEB /Ob2 /Oi /arch:SSE2 /fp:fast /GT)
   add_compile_options("$<$<CONFIG:Release>:${MSVC_REL}>")
   add_compile_options("$<$<CONFIG:RelWithDebInfo>:${MSVC_RDEB}>")
   add_compile_options("$<$<CONFIG:Debug>:${MSVC_DEB}>")
@@ -198,6 +200,12 @@ list(APPEND ADDITIONAL_LIBRARIES ${SFML_DEPENDENCIES})
 # message(STATUS "SFML debug libs: ${SFML_DBG_LIBS}" )
 # message(STATUS "SFML release libs: ${SFML_REL_LIBS}" )
 # message(STATUS "SFML deps: ${SFML_DEPENDENCIES}" )
+
+# Find SFGUI
+set( SFGUI_STATIC_LIBRARIES TRUE )
+find_package( SFGUI REQUIRED )
+include_directories( ${SFGUI_INCLUDE_DIR} )
+list(APPEND ADDITIONAL_LIBRARIES ${SFGUI_LIBRARY} ${SFGUI_DEPENDENCIES})
 
 # Find glew
 find_package(glew REQUIRED)

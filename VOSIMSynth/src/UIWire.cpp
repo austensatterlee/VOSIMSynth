@@ -2,6 +2,7 @@
 #include <UIUnitControlContainer.h>
 #include <UICircuitPanel.h>
 #include <UIUnitPort.h>
+#include <Theme.h>
 
 bool syn::UIWire::contains(const Vector2i& a_absPt) const {
 	// Otherwise compute distance to line and verify it is below a threshold
@@ -89,15 +90,24 @@ Eigen::Vector2i syn::UIWire::toPt() const {
 void syn::UIWire::draw(NVGcontext* a_nvg) {
 	Vector2i fromPos = fromPt();
 	Vector2i toPos = toPt();
+	Vector2f rawWire = (toPos - fromPos).cast<float>();
+	float angle = atan2(rawWire.y(),rawWire.x());
+	nvgTranslate(a_nvg, fromPos.x(), fromPos.y());
+	nvgRotate(a_nvg, angle);
+
+	nvgLineCap(a_nvg, NVG_ROUND);
+	// Draw wire
+	Color wireColor;
+	if (m_window->getCircuitPanel()->getSelectedWire() == this)
+		wireColor = theme()->mSelectedWireColor;
+	else
+		wireColor = theme()->mWireColor;
+	NVGpaint wirePaint = nvgLinearGradient(a_nvg, 0.0f, 0.0f, 0.0f, 0.75f, wireColor, theme()->mWireInnerShadowColor);
+	nvgStrokeWidth(a_nvg, 2.0f);
+	nvgStrokePaint(a_nvg, wirePaint);
 
 	nvgBeginPath(a_nvg);
-	if (m_window->getCircuitPanel()->getSelectedWire() == this) {
-		nvgStrokeColor(a_nvg, Color(Vector3f{1.0f,0.0f,0.0f}));
-	} else {
-		nvgStrokeColor(a_nvg, Color(Vector3f{0.0f,0.0f,0.0f}));
-	}
-	nvgMoveTo(a_nvg, fromPos[0], fromPos[1]);
-	nvgLineTo(a_nvg, toPos[0], toPos[1]);
-
-	nvgStroke(a_nvg);
+	nvgMoveTo(a_nvg, 0.0f, 0.0f);
+	nvgLineTo(a_nvg, rawWire.norm(), 0.0f);
+	nvgStroke(a_nvg); 
 }

@@ -33,6 +33,11 @@ namespace syn
 		Color mOutputPortBG;
 		Color mOutputPortHighlightedBG;
 
+		/* Wire parameters */
+		Color mSelectedWireColor;
+		Color mWireColor;
+		Color mWireInnerShadowColor;
+
 		/* Unit selector */
 		int mUnitSelectorProtoFontSize;
 		int mUnitSelectorGroupFontSize;

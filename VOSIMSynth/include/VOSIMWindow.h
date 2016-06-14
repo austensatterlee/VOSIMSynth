@@ -70,28 +70,11 @@ namespace syn
 	public:
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		VOSIMWindow(int a_width, int a_height, VoiceManager* a_vm, UnitFactory* a_unitFactory) :
-			m_guiExternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE),
-			m_guiInternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE),
-			m_HInstance(nullptr),
-			m_timerWindow(nullptr),
-			m_size(a_width, a_height),
-			m_cursor({0,0}),
-			m_isClicked(false),
-			m_isInitialized(false),
-			m_draggingComponent(nullptr),
-			m_root(nullptr),
-			m_sfmlWindow(nullptr),
-			m_frameCount(0),
-			m_vm(a_vm),
-			m_unitFactory(a_unitFactory),
-			m_circuitPanel(nullptr),
-			m_vg(nullptr)
-		{ }
-
+		VOSIMWindow(int a_width, int a_height, VoiceManager* a_vm, UnitFactory* a_unitFactory);
 		virtual ~VOSIMWindow();
 
-		sf::Window* GetWindow() const { return m_sfmlWindow; }
+		sf::RenderWindow* GetWindow() const { return m_sfmlWindow; }
+		bool isOpen() const { return m_isOpen; }
 
 		Vector2i getSize() const { return m_size; }
 
@@ -127,8 +110,6 @@ namespace syn
 		void save(ByteChunk* a_data) const;
 		int load(ByteChunk* a_data, int startPos);
 
-		bool isInitialized() const { return m_isInitialized; }
-
 		void reset();
 
 		template <typename UnitType>
@@ -136,20 +117,23 @@ namespace syn
 
 		UIUnitControl* createUnitControl(unsigned a_classId, int a_unitId);
 
-		void setHInstance(HINSTANCE a_newHInstance) { m_HInstance = a_newHInstance; }
-		HINSTANCE getHInstance() const { return m_HInstance; }
-
 		void queueExternalMessage(GUIMessage* a_msg);
 
 #ifdef _WIN32
+		void setHInstance(HINSTANCE a_newHInstance) { m_HInstance = a_newHInstance; }
+		HINSTANCE getHInstance() const { return m_HInstance; }
 		static LRESULT CALLBACK drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam);
 #endif
 	private:
 		/**
-		* Creates a child window from the given system window handle.
-		* \returns the system window handle for the child window.
-		*/
-		sf::WindowHandle _sys_CreateChildWindow(sf::WindowHandle a_system_window);
+		 * Attach the sfml window to the given parent window.
+		 */
+		void _OpenWindowImplem(sf::WindowHandle a_system_window);
+		void _CloseWindowImplem();
+		void _initialize();
+		void _runLoop();
+		void _handleEvents();
+
 		void _updateCursorPos(const Vector2i& newPos);
 
 		void _queueInternalMessage(GUIMessage* a_msg);
@@ -160,9 +144,9 @@ namespace syn
 		HINSTANCE m_HInstance;
 #endif
 		sf::WindowHandle m_timerWindow;
-		sf::Window* m_sfmlWindow;
+		sf::RenderWindow* m_sfmlWindow;
 		NVGcontext* m_vg;
-		unsigned m_frameCount;
+		bool m_isOpen;
 
 		Vector2i m_size;
 		Vector2i m_cursor;
@@ -170,8 +154,6 @@ namespace syn
 		Timestamped<Event::MouseButtonEvent> m_lastClick;
 		Timestamped<Event::MouseWheelScrollEvent> m_lastScroll;
 
-		bool m_isClicked;
-		bool m_isInitialized;
 		UIComponent* m_draggingComponent;
 		list<UIComponent*> m_focusPath;
 		VoiceManager* m_vm;
@@ -180,9 +162,11 @@ namespace syn
 		UIComponent* m_root;
 		UICircuitPanel* m_circuitPanel;
 		shared_ptr<Theme> m_theme;
+		sf::Font m_defaultFont;
 
 		PerfGraph m_fpsGraph;
 		sftools::Chronometer m_timer;
+		unsigned m_frameCount;
 
 		map<unsigned, function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)>> m_unitControlMap;
 

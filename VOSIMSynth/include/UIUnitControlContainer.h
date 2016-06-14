@@ -63,7 +63,6 @@ namespace syn
 		vector<UIUnitPort*> m_outPorts;
 		UIButton* m_closeButton;
 
-		UIRow* m_row;
 		UICol* m_cols[2];
 	};
 }

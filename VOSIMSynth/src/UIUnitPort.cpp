@@ -24,7 +24,7 @@ syn::UIUnitPort::UIUnitPort(VOSIMWindow* a_window, VoiceManager* a_vm, int a_uni
 	nvgFontSize(nvg, (float)theme()->mPortFontSize);
 	nvgTextBounds(nvg, 0, 0, portName.c_str(), nullptr, bounds);
 	textWidth = bounds[2] - bounds[0];
-	setMinSize(Vector2i{textWidth + 5, theme()->mPortFontSize + 5});
+	setMinSize(Vector2i{textWidth + 5, theme()->mPortFontSize + 2});
 }
 
 bool syn::UIUnitPort::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {

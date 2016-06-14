@@ -12,9 +12,9 @@ syn::UIWindow::UIWindow(VOSIMWindow* a_window, const string& a_title) :
 	m_headerRow = new UIRow(a_window);
 	m_bodyRow = new UIRow(a_window);
 	m_bodyRow->setRelPos({ 0,theme()->mWindowHeaderHeight });
-	m_bodyRow->setPadding({ 0,5,0,5 });
+	m_bodyRow->setPadding({ 0,2,0,2 });
 	m_col->setChildResizePolicy(UICell::CMATCHMIN);
-	m_col->setPadding({ 5,0,5,0 });
+	m_col->setPadding({ 2,0,2,0 });
 	m_col->addChild(m_headerRow);
 	m_col->addChild(m_bodyRow);
 

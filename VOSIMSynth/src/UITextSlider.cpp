@@ -27,15 +27,15 @@ syn::UITextSlider::UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a
 	m_row = new UIRow(a_window);
 	m_row->setChildrenSpacing(0);
 	m_nameLabel = new UILabel(a_window);
-	m_nameLabel->setFontSize(14.0);
+	m_nameLabel->setFontSize(theme()->mTextSliderFontSize);
 	m_nameLabel->setAlignment(NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT);
 	m_valueLabel = new UILabel(a_window);
 	m_valueLabel->setFontColor(Color{ 1.0f,1.0f,0.80f,1.0f });
 	m_valueLabel->setAlignment(NVG_ALIGN_MIDDLE | NVG_ALIGN_RIGHT);
-	m_valueLabel->setFontSize(13.0);
+	m_valueLabel->setFontSize(theme()->mTextSliderFontSize);
 	m_unitsLabel = new UILabel(a_window);
-	m_unitsLabel->setFontSize(13.0);
-	m_unitsLabel->setFontColor(Color{ 1.0f,1.0f,1.0f,0.7f });
+	m_unitsLabel->setFontSize(theme()->mTextSliderFontSize);
+	m_unitsLabel->setFontColor(Color{ 1.0f,1.0f,0.8f,0.6f });
 	m_unitsLabel->setAlignment(NVG_ALIGN_MIDDLE | NVG_ALIGN_RIGHT);
 	m_row->addChild(m_nameLabel);
 	m_row->addChild(m_valueLabel);
@@ -169,7 +169,7 @@ void syn::UITextSlider::draw(NVGcontext* a_nvg) {
 }
 
 void syn::UITextSlider::_updateMinSize() {
-	setMinSize(m_row->minSize().cwiseMax(m_textBox->minSize()));
+	setMinSize(m_row->minSize());
 }
 
 void syn::UITextSlider::_onResize() {

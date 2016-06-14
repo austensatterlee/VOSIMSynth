@@ -72,8 +72,8 @@ if __name__=="__main__":
 
     with open(include_fname,"w") as fp:
         fp.write(include_contents)
-        sys.stdout.write("Added header file to {}".format(include_fname))
+        sys.stdout.write("Added header file to {}\n".format(include_fname))
 
     with open(src_fname,"w") as fp:
         fp.write(src_contents)
-        sys.stdout.write("Added source file to {}".format(src_contents))
+        sys.stdout.write("Added source file to {}\n".format(src_fname))

@@ -44,7 +44,6 @@ namespace syn
 		
 	public:
 		UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, UnitFactory* a_unitFactory);
-		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		UIUnitControlContainer* getUnit(const Vector2i& a_pt) const;
 		UIUnitControlContainer* findUnit(int a_unitId) const;
 		void requestAddConnection(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);
@@ -61,15 +60,19 @@ namespace syn
 			return m_unitControls;
 		}
 
-		void reset();
+		void reset(); 
+
+		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
+		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
 	protected:
 		void draw(NVGcontext* a_nvg) override;
+		void setChildrenStyles(NVGcontext* a_nvg) override;
 		void onAddConnection_(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);
 		void onDeleteConnection_(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);
 		void onAddUnit_(unsigned a_classId, int a_unitId);
 		void requestAddUnit_(unsigned a_classId);
 	private:
-		void _onResize() override;
+		void _onResize() override;	
 	private:
 		vector<UIUnitControlContainer*> m_unitControls;
 		vector<UIWire*> m_wires;

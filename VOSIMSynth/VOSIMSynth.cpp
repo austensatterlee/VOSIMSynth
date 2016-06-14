@@ -38,7 +38,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 using namespace std;
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
-	: IPLUG_CTOR(0, 0, instanceInfo), m_tempo(0) {
+	: IPLUG_CTOR(0, 1, instanceInfo), m_tempo(0) {
 	TRACE;
 
 	WDL_fft_init();
@@ -133,21 +133,15 @@ void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg) {
 }
 
 bool VOSIMSynth::SerializeState(ByteChunk* pChunk) {
-	if (GetAppWindow()->isInitialized()) {
-		m_voiceManager->save(pChunk);
-		GetAppWindow()->save(pChunk);
-		return true;
-	}
-	return false;
+	m_voiceManager->save(pChunk);
+	GetAppWindow()->save(pChunk);
+	return true;
 }
 
 int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
-	if (GetAppWindow()->isInitialized()) {
-		m_unitFactory->resetBuildCounts();
-		GetAppWindow()->reset();
-		startPos = m_voiceManager->load(pChunk, startPos);
-		startPos = GetAppWindow()->load(pChunk, startPos);
-	}
+	m_unitFactory->resetBuildCounts();
+	startPos = m_voiceManager->load(pChunk, startPos);
+	startPos = GetAppWindow()->load(pChunk, startPos);	
 	return startPos;
 }
 
@@ -161,7 +155,7 @@ void VOSIMSynth::OnActivate(bool active) {}
 
 void VOSIMSynth::OnGUIOpen() {}
 
-void VOSIMSynth::OnGUIClose() { }
+void VOSIMSynth::OnGUIClose() {}
 
 bool VOSIMSynth::isTransportRunning() {
 	GetTime(&m_timeInfo);

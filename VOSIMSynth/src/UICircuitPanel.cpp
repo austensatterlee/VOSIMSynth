@@ -27,32 +27,17 @@ syn::UICircuitPanel::UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, U
 	m_inputs = m_unitControls.back();
 	m_inputs->m_headerRow->removeChild(m_inputs->m_closeButton);
 	m_inputs->m_closeButton = nullptr;
-	const vector<UIUnitPort*>& inputPorts = m_inputs->getInPorts();
-	for (UIUnitPort* port : inputPorts) {
-		port->setVisible(false);
-	}
+	vector<UIUnitPort*>& inputPorts = m_inputs->m_inPorts;
+	inputPorts.clear();
+	m_inputs->m_bodyRow->removeChild(m_inputs->m_cols[0]);
+
 	onAddUnit_(circ->getUnit(circ->getOutputUnitId()).getClassIdentifier(), circ->getOutputUnitId());
 	m_outputs = m_unitControls.back();
 	m_outputs->m_headerRow->removeChild(m_outputs->m_closeButton);
 	m_outputs->m_closeButton = nullptr;
-	const vector<UIUnitPort*>& outputPorts = m_outputs->getOutPorts();
-	for (UIUnitPort* port : outputPorts) {
-		port->setVisible(false);
-	}
-}
-
-syn::UIComponent* syn::UICircuitPanel::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
-	UIComponent* child = UIComponent::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
-	if (child)
-		return child;
-
-	if (m_unitSelector->selectedPrototype() >= 0) {
-		unsigned classId = m_unitFactory->getClassId(m_unitSelector->selectedPrototypeName());
-		requestAddUnit_(classId);
-		m_unitSelector->setSelectedPrototype(-1);
-		return this;
-	}
-	return nullptr;
+	vector<UIUnitPort*>& outputPorts = m_outputs->m_outPorts;
+	outputPorts.clear();
+	m_outputs->m_bodyRow->removeChild(m_outputs->m_cols[1]);
 }
 
 syn::UIUnitControlContainer* syn::UICircuitPanel::getUnit(const Vector2i& a_absPt) const {
@@ -209,7 +194,28 @@ void syn::UICircuitPanel::reset() {
 	m_wireSelectionQueue.clear();
 }
 
+syn::UIComponent* syn::UICircuitPanel::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+	UIComponent* child = UIComponent::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
+	if (child)
+		return child;
+
+	if (m_unitSelector->selectedPrototype() >= 0) {
+		unsigned classId = m_unitFactory->getClassId(m_unitSelector->selectedPrototypeName());
+		requestAddUnit_(classId);
+		m_unitSelector->setSelectedPrototype(-1);
+		return this;
+	}
+	return nullptr;
+}
+
+bool syn::UICircuitPanel::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+	return true;
+}
+
 void syn::UICircuitPanel::draw(NVGcontext* a_nvg) {}
+
+void syn::UICircuitPanel::setChildrenStyles(NVGcontext* a_nvg) {
+}
 
 void syn::UICircuitPanel::onAddConnection_(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort) {
 	for(UIWire* wire : m_wires) {
@@ -220,7 +226,7 @@ void syn::UICircuitPanel::onAddConnection_(int a_fromUnit, int a_fromPort, int a
 	}
 	UIWire* wire = new UIWire(m_window, a_fromUnit, a_fromPort, a_toUnit, a_toPort);
 	m_wires.push_back(wire);
-	addChild(wire);
+	addChild(wire,"wires");
 	setZOrder(wire, -1);
 }
 

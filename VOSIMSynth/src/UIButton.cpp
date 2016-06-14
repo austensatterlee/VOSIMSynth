@@ -77,7 +77,7 @@ namespace syn
 	}
 
 	void UIButton::draw(NVGcontext* ctx) {
-		NVGcolor gradTop = theme()->mButtonGradientTopFocused;
+		NVGcolor gradTop = theme()->mButtonGradientTopUnfocused;
 		NVGcolor gradBot = theme()->mButtonGradientBotUnfocused;
 
 		if (mPushed) {
@@ -111,13 +111,13 @@ namespace syn
 		nvgFill(ctx);
 
 		nvgBeginPath(ctx);
-		nvgRoundedRect(ctx, 0 + 0.5f, 0 + (mPushed ? 0.5f : 1.5f), size().x() - 1,
+		nvgRoundedRect(ctx, 0.5f, (mPushed ? 0.5f : 1.5f), size().x() - 1,
 		               size().y() - 1 - (mPushed ? 0.0f : 1.0f), theme()->mButtonCornerRadius);
 		nvgStrokeColor(ctx, theme()->mBorderLight);
 		nvgStroke(ctx);
 
 		nvgBeginPath(ctx);
-		nvgRoundedRect(ctx, 0 + 0.5f, 0 + 0.5f, size().x() - 1,
+		nvgRoundedRect(ctx, 0.5f, 0.5f, size().x() - 1,
 		               size().y() - 2, theme()->mButtonCornerRadius);
 		nvgStrokeColor(ctx, theme()->mBorderDark);
 		nvgStroke(ctx);
@@ -171,8 +171,7 @@ namespace syn
 			if (nvgIsFontIcon(mIcon)) {
 				nvgText(ctx, iconPos.x(), iconPos.y() + 1, icon.data(), nullptr);
 			} else {
-				NVGpaint imgPaint = nvgImagePattern(ctx,
-				                                    iconPos.x(), iconPos.y() - ih / 2, iw, ih, 0, mIcon, mEnabled ? 0.5f : 0.25f);
+				NVGpaint imgPaint = nvgImagePattern(ctx, iconPos.x(), iconPos.y() - ih / 2, iw, ih, 0, mIcon, mEnabled ? 0.5f : 0.25f);
 
 				nvgFillPaint(ctx, imgPaint);
 				nvgFill(ctx);
