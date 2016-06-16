@@ -44,7 +44,7 @@ namespace syn
 		
 	public:
 		UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, UnitFactory* a_unitFactory);
-		UIUnitControlContainer* getUnit(const Vector2i& a_pt) const;
+		UIUnitControlContainer* getUnit(const UICoord& a_pt) const;
 		UIUnitControlContainer* findUnit(int a_unitId) const;
 		void requestAddConnection(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);
 		void requestDeleteConnection(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);
@@ -62,8 +62,8 @@ namespace syn
 
 		void reset(); 
 
-		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
-		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
+		bool onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 		void setChildrenStyles(NVGcontext* a_nvg) override;

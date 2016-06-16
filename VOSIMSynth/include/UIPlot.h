@@ -64,7 +64,7 @@ namespace syn {
 			m_xScale = a_xScale;
 		}
 
-		bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		bool onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
 
 		void setXUnits(const string& a_xUnits);
 		void setYUnits(const string& a_yUnits);

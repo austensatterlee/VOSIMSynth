@@ -19,8 +19,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 /**
  *  \file UIColorWheel.h
- *  \brief
- *  \details
+ *  \brief Mostly influenced by nanogui
+ *  \details 
  *  \author Austen Satterlee
  *  \date 06/2016
  */
@@ -28,5 +28,49 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __UICOLORWHEEL__
 #define __UICOLORWHEEL__
 
+#include "UIComponent.h"
+#include "UI.h"
+
+namespace syn {
+
+	class ColorWheel : public UIComponent {
+	public:
+		ColorWheel(VOSIMWindow *a_window, const Color& color = { 1.f, 0.f, 0.f, 1.f });
+
+		/// Set the change callback
+		std::function<void(const Color &)> callback() const { return mCallback; }
+		void setCallback(const std::function<void(const Color &)> &callback) { mCallback = callback; }
+
+		/// Get the current color
+		Color color() const;
+		/// Set the current color
+		void setColor(const Color& color);
+
+		virtual Vector2i preferredSize(NVGcontext *ctx) const override;
+		virtual void draw(NVGcontext *ctx) override;
+
+		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
+		bool onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
+		bool onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
+
+	private:
+		enum Region {
+			None = 0,
+			InnerTriangle = 1,
+			OuterCircle = 2,
+			Both = 3
+		};
+
+		static Color hue2rgb(float h);
+		Region adjustPosition(const UICoord &a_relCoord, Region consideredRegions = Both);
+	
+	protected:
+		float mHue;
+		float mWhite;
+		float mBlack;
+		Region mDragRegion;
+		std::function<void(const Color &)> mCallback;
+	};
+}
 
 #endif

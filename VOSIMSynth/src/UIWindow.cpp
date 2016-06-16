@@ -37,19 +37,19 @@ void syn::UIWindow::addChildToBody(UIComponent* a_newChild) const {
 	m_bodyRow->addChild(a_newChild);
 }
 
-bool syn::UIWindow::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+bool syn::UIWindow::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	if (UIComponent::onMouseDrag(a_relCursor, a_diffCursor))
 		return true;
 	move(a_diffCursor);
 	return true;
 }
 
-syn::UIComponent* syn::UIWindow::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+syn::UIComponent* syn::UIWindow::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	UIComponent* child = UIComponent::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
 	if (child)
 		return child;
 
-	if (a_relCursor.y() < theme()->mWindowHeaderHeight) {
+	if (a_relCursor.localCoord().y() < theme()->mWindowHeaderHeight) {
 		if (a_isDblClick) {
 			toggleCollapsed();
 		}

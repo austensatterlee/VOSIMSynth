@@ -42,8 +42,8 @@ namespace syn
 			return m_unitId;
 		}
 
-		virtual UIUnitPort* getSelectedInPort(const Vector2i& a_relPos) const;
-		virtual UIUnitPort* getSelectedOutPort(const Vector2i& a_relPos) const;
+		virtual UIUnitPort* getSelectedInPort(const UICoord& a_relPos) const;
+		virtual UIUnitPort* getSelectedOutPort(const UICoord& a_absPt) const;
 
 		const vector<UIUnitPort*>& getInPorts() const {
 			return m_inPorts;
@@ -53,7 +53,7 @@ namespace syn
 			return m_outPorts;
 		}
 
-		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
+		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		void close() const;
 	protected:
 		VoiceManager* m_vm;

@@ -4,13 +4,15 @@
 #include <UIUnitPort.h>
 #include <Theme.h>
 
-bool syn::UIWire::contains(const Vector2i& a_absPt) const {
+
+bool syn::UIWire::contains(const UICoord& a_pt) const {
+	Vector2i globalPt = a_pt.globalCoord();
 	// Otherwise compute distance to line and verify it is below a threshold
-	double distance = pointLineDistance(a_absPt, fromPt(), toPt());
+	double distance = pointLineDistance(globalPt, fromPt(), toPt());
 	return distance <= 2;
 }
 
-void syn::UIWire::onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) {
+void syn::UIWire::onMouseEnter(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) {
 	UIComponent::onMouseEnter(a_relCursor, a_diffCursor, a_isEntering);
 	m_hoverDistance = pointLineDistance(m_window->cursorPos(), fromPt(), toPt());
 	if (a_isEntering)
@@ -19,25 +21,25 @@ void syn::UIWire::onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_di
 		m_window->getCircuitPanel()->clearSelectedWire(this);
 }
 
-bool syn::UIWire::onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+bool syn::UIWire::onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	UIComponent::onMouseMove(a_relCursor, a_diffCursor);
 	m_hoverDistance = pointLineDistance(m_window->cursorPos(), fromPt(), toPt());
 	return true;
 }
 
-bool syn::UIWire::onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
-	UIUnitControlContainer* selectedUnit = m_window->getCircuitPanel()->getUnit(m_window->cursorPos());
+bool syn::UIWire::onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
+	UIUnitControlContainer* selectedUnit = m_window->getCircuitPanel()->getUnit(a_relCursor);
 	m_isDragging = false;
 
 	if (selectedUnit) {
 		if (!m_isDraggingInput) {
-			UIUnitPort* port = selectedUnit->getSelectedOutPort(m_window->cursorPos());
+			UIUnitPort* port = selectedUnit->getSelectedOutPort(a_relCursor);
 			if (port) {
 				m_window->getCircuitPanel()->requestMoveConnection(this, port->getUnitId(), port->getPortId(), toUnit(), toPort());
 				return true;
 			}
 		} else {
-			UIUnitPort* port = selectedUnit->getSelectedInPort(m_window->cursorPos());
+			UIUnitPort* port = selectedUnit->getSelectedInPort(a_relCursor);
 			if (port) {
 				m_window->getCircuitPanel()->requestMoveConnection(this, fromUnit(), fromPort(), port->getUnitId(), port->getPortId());
 				return true;
@@ -48,12 +50,12 @@ bool syn::UIWire::onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffC
 	return true;
 }
 
-syn::UIComponent* syn::UIWire::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+syn::UIComponent* syn::UIWire::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	Vector2i frompt = fromPt();
 	Vector2i topt = toPt();
 
-	int distanceToInput = (a_relCursor - topt).squaredNorm();
-	int distanceToOutput = (a_relCursor - frompt).squaredNorm();
+	int distanceToInput = (a_relCursor.globalCoord() - topt).squaredNorm();
+	int distanceToOutput = (a_relCursor.globalCoord() - frompt).squaredNorm();
 	m_isDragging = true;
 	m_isDraggingInput = distanceToInput < distanceToOutput;
 	return this;

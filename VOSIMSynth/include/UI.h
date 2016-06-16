@@ -34,7 +34,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <memory>
 #include "DSPMath.h"
 #include "Containers.h"
-#include "entypo.h"
+#include "UICoord.h"
 
 using namespace std;
 

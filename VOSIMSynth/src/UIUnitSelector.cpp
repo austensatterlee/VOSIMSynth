@@ -2,7 +2,7 @@
 #include "UnitFactory.h"
 #include "Theme.h"
 
-syn::UIComponent* syn::UIUnitSelector::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+syn::UIComponent* syn::UIUnitSelector::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	int row = 0;
 	int group = 0;
 	set<string> gNames = m_unitFactory->getGroupNames();
@@ -37,11 +37,11 @@ syn::UIComponent* syn::UIUnitSelector::onMouseDown(const Vector2i& a_relCursor, 
 	return nullptr;
 }
 
-bool syn::UIUnitSelector::onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+bool syn::UIUnitSelector::onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	int row = 0;
 	int group = 0;
 	set<string> gNames = m_unitFactory->getGroupNames();
-	Vector2i cursor = a_relCursor;
+	Vector2i cursor = UICoord(a_relCursor,this).localCoord();
 	int groupFontSize = theme()->mUnitSelectorGroupFontSize;
 	int protoFontSize = theme()->mUnitSelectorProtoFontSize;
 	int rowPix = 0;

@@ -92,7 +92,7 @@ namespace syn
 		m_col->addChild(m_defCtrl);
 		m_col->addChild(m_plot);
 		m_col->addChild(m_statusLabel);
-		m_statusLabel->setSize({ -1,12 });
+		m_statusLabel->setSize({ -1,8 });
 		m_col->setChildResizePolicy(UICell::CMAX);
 		m_col->setSelfResizePolicy(UICell::SRNONE);
 		addChild(m_col);
@@ -100,7 +100,7 @@ namespace syn
 		m_plot->setStatusLabel(m_statusLabel);
 
 		addChild(m_resizeHandle);
-		m_resizeHandle->setDragCallback([&](const Vector2i& a_relPos, const Vector2i& a_diffPos) {
+		m_resizeHandle->setDragCallback([&](const UICoord& a_relPos, const Vector2i& a_diffPos) {
 			grow(a_diffPos);
 			m_plot->grow(a_diffPos);
 		});

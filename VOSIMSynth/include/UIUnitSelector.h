@@ -39,8 +39,8 @@ namespace syn
 		UIUnitSelector(VOSIMWindow* a_window, UnitFactory* a_unitFactory)
 			: UIComponent{a_window}, m_autoWidth(0), m_autoHeight(0), m_currGroup(-1), m_currPrototype(-1), m_highlightedRow(-1), m_unitFactory(a_unitFactory) {}
 
-		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
-		bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
+		bool onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
 
 		int selectedGroup() const {
 			return m_currGroup;

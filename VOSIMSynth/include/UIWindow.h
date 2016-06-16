@@ -41,9 +41,9 @@ namespace syn
 
 		void addChildToBody(UIComponent* a_newChild) const;
 
-		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		bool onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
 
-		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
+		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 
 		void notifyChildResized(UIComponent* a_child) override;
 

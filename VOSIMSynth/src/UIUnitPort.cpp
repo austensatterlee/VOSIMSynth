@@ -5,6 +5,7 @@
 #include "VoiceManager.h"
 #include "Theme.h"
 
+
 syn::UIUnitPort::UIUnitPort(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_portNum, bool a_isInput) :
 	UIComponent{a_window},
 	m_vm(a_vm),
@@ -27,25 +28,25 @@ syn::UIUnitPort::UIUnitPort(VOSIMWindow* a_window, VoiceManager* a_vm, int a_uni
 	setMinSize(Vector2i{textWidth + 5, theme()->mPortFontSize + 2});
 }
 
-bool syn::UIUnitPort::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+bool syn::UIUnitPort::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	return true;
 }
 
-syn::UIComponent* syn::UIUnitPort::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+syn::UIComponent* syn::UIUnitPort::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	m_isDragging = true;
 	return this;
 }
 
-bool syn::UIUnitPort::onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+bool syn::UIUnitPort::onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	m_isDragging = false;
-	UIUnitControlContainer* selectedUnit = m_window->getCircuitPanel()->getUnit(m_window->cursorPos());
+	UIUnitControlContainer* selectedUnit = m_window->getCircuitPanel()->getUnit(UICoord(m_window->cursorPos()));
 	if (selectedUnit && selectedUnit != m_parent) {
 		if (m_isInput) {
-			UIUnitPort* port = selectedUnit->getSelectedOutPort(m_window->cursorPos());
+			UIUnitPort* port = selectedUnit->getSelectedOutPort(a_relCursor);
 			if (port)
 				m_window->getCircuitPanel()->requestAddConnection(port->getUnitId(), port->getPortId(), m_unitId, m_portNum);
 		} else {
-			UIUnitPort* port = selectedUnit->getSelectedInPort(m_window->cursorPos());
+			UIUnitPort* port = selectedUnit->getSelectedInPort(a_relCursor);
 			if (port)
 				m_window->getCircuitPanel()->requestAddConnection(m_unitId, m_portNum, port->getUnitId(), port->getPortId());
 		}

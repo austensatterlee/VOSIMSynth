@@ -5,6 +5,7 @@
 #include "UIButton.h"
 #include "UIUnitControl.h"
 #include "Theme.h"
+#include <entypo.h>
 
 syn::UIUnitControlContainer::UIUnitControlContainer(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, UIUnitControl* a_unitControl) :
 	UIWindow{ a_window, a_vm->getUnit(a_unitId).getName() },
@@ -48,25 +49,23 @@ syn::UIUnitControlContainer::UIUnitControlContainer(VOSIMWindow* a_window, Voice
 	addChildToHeader(m_closeButton);
 }
 
-syn::UIUnitPort* syn::UIUnitControlContainer::getSelectedInPort(const Vector2i& a_absPt) const {
+syn::UIUnitPort* syn::UIUnitControlContainer::getSelectedInPort(const UICoord& a_pt) const {
 	for (UIUnitPort* port : m_inPorts) {
-		Vector2i relPos = a_absPt - port->parent()->getAbsPos();
-		if (port->contains(relPos))
+		if (port->contains(a_pt))
 			return port;
 	}
 	return nullptr;
 }
 
-syn::UIUnitPort* syn::UIUnitControlContainer::getSelectedOutPort(const Vector2i& a_absPt) const {
+syn::UIUnitPort* syn::UIUnitControlContainer::getSelectedOutPort(const UICoord& a_pt) const {
 	for (UIUnitPort* port : m_outPorts) {
-		Vector2i relPos = a_absPt - port->parent()->getAbsPos();
-		if (port->contains(relPos))
+		if (port->contains(a_pt))
 			return port;
 	}
 	return nullptr;
 }
 
-syn::UIComponent* syn::UIUnitControlContainer::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+syn::UIComponent* syn::UIUnitControlContainer::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	UIComponent* child = UIComponent::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
 	if (child)
 		return child;

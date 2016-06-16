@@ -60,7 +60,7 @@ namespace syn
 
 		int alignment() const;
 
-		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
+		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 
 	protected:
 		void draw(NVGcontext* a_nvg) override;

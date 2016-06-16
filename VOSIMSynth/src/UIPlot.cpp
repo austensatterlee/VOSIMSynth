@@ -2,15 +2,17 @@
 #include <UILabel.h>
 #include <tables.h>
 
+
 namespace syn {
 	UIPlot::UIPlot(VOSIMWindow* a_window) :
 		UIComponent(a_window),
 		m_minBounds{ 0, -1 },
 		m_maxBounds{ 1, 1 },
-		m_autoAdjustSpeed(0.01),
+		m_autoAdjustSpeed(1.0),
 		m_yBufPtr(nullptr),
 		m_bufSize(0),
 		m_nScreenPts(0),
+		m_crosshairPos{0.0,0.0},
 		m_statusLabel(nullptr),
 		m_interpPolicy(LinInterp), 
 		m_xScale(LinScale) {
@@ -36,8 +38,8 @@ namespace syn {
 		m_interpPolicy = a_policy;
 	}
 
-	bool UIPlot::onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
-		m_crosshairPos = a_relCursor;
+	bool UIPlot::onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
+		m_crosshairPos = UICoord(a_relCursor, this).localCoord();
 		_updateStatusLabel();
 		return true;
 	}
@@ -210,15 +212,18 @@ namespace syn {
 	void UIPlot::_updateYBounds(const Vector2f& a_yExtrema) {
 		// update extrema
 		double margin = 0.10*(a_yExtrema[1] - a_yExtrema[0]);
-		m_minBounds[1] = m_minBounds.y() + m_autoAdjustSpeed * (MIN<double>(a_yExtrema[0]-margin, a_yExtrema[1] - 1.0) - m_minBounds.y());
-		m_maxBounds[1] = m_maxBounds.y() + m_autoAdjustSpeed * (MAX<double>(a_yExtrema[1]+margin, a_yExtrema[0] + 1.0) - m_maxBounds.y());
+		double minSetPoint = a_yExtrema[0] - margin;
+		double maxSetPoint = a_yExtrema[1] + margin;
+		double coeff = m_autoAdjustSpeed / m_window->fps();
+		m_minBounds[1] = m_minBounds.y() + coeff * (minSetPoint - m_minBounds.y());
+		m_maxBounds[1] = m_maxBounds.y() + coeff * (maxSetPoint - m_maxBounds.y());
 	}
 
 	void UIPlot::_updateStatusLabel() const {
 		if (m_statusLabel) {
 			Vector2f sample_pt = toSampleCoords(m_crosshairPos);
 			char buf[64];
-			sprintf(buf, "%.1f %s, %.4f", sample_pt.x(), m_xUnits.c_str(), sample_pt.y());
+			sprintf(buf, "%.1f %s, %.4f %s", sample_pt.x(), m_xUnits.c_str(), sample_pt.y(), m_yUnits.c_str());
 			m_statusLabel->setText(buf);
 		}
 	}

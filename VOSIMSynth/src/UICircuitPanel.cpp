@@ -11,6 +11,7 @@
 #include "UIButton.h"
 #include "Theme.h"
 
+
 syn::UICircuitPanel::UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, UnitFactory* a_unitFactory) :
 	UIComponent{ a_window },
 	m_vm(a_vm),
@@ -40,7 +41,7 @@ syn::UICircuitPanel::UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, U
 	m_outputs->m_bodyRow->removeChild(m_outputs->m_cols[1]);
 }
 
-syn::UIUnitControlContainer* syn::UICircuitPanel::getUnit(const Vector2i& a_absPt) const {
+syn::UIUnitControlContainer* syn::UICircuitPanel::getUnit(const UICoord& a_absPt) const {
 	UIUnitControlContainer* found = dynamic_cast<UIUnitControlContainer*>(findChild(a_absPt,"units"));
 	return found;
 }
@@ -153,7 +154,7 @@ void syn::UICircuitPanel::requestDeleteUnit(int a_unitId) {
 }
 
 syn::UIWire* syn::UICircuitPanel::getSelectedWire() {
-	Vector2i mousePt = m_window->cursorPos() - getAbsPos();
+	UICoord mousePt(m_window->cursorPos());
 	// Return nullptr if pt is over a port
 	UIUnitControlContainer* ctrlContainer = m_window->getCircuitPanel()->getUnit(mousePt);
 	if (ctrlContainer && (ctrlContainer->getSelectedInPort(mousePt) || ctrlContainer->getSelectedOutPort(mousePt)))
@@ -194,7 +195,7 @@ void syn::UICircuitPanel::reset() {
 	m_wireSelectionQueue.clear();
 }
 
-syn::UIComponent* syn::UICircuitPanel::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+syn::UIComponent* syn::UICircuitPanel::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	UIComponent* child = UIComponent::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
 	if (child)
 		return child;
@@ -208,7 +209,7 @@ syn::UIComponent* syn::UICircuitPanel::onMouseDown(const Vector2i& a_relCursor, 
 	return nullptr;
 }
 
-bool syn::UICircuitPanel::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+bool syn::UICircuitPanel::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	return true;
 }
 

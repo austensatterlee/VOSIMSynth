@@ -61,7 +61,7 @@ int syn::UILabel::alignment() const {
 	return m_align;
 }
 
-syn::UIComponent* syn::UILabel::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+syn::UIComponent* syn::UILabel::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	return nullptr;
 }
 

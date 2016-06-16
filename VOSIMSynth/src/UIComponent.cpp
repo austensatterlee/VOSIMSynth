@@ -1,5 +1,6 @@
 ﻿#include "UIComponent.h"
 
+
 //#define DRAW_COMPONENT_BOUNDS
 
 namespace syn
@@ -241,13 +242,13 @@ namespace syn
 		m_visible = a_visible;
 	}
 
-	bool UIComponent::contains(const Vector2i& a_parentPt) const {
-		Eigen::Array<int,2,1> pt = (a_parentPt - getRelPos()).array();
-		return (pt >= 0).all() && (pt <= size().array()).all();
+	bool UIComponent::contains(const UICoord& a_pt) const {
+		UICoord relPt(a_pt, this);
+		return (relPt.localCoord().array() >= 0).all() && (relPt.localCoord().array() <= size().array()).all();
 	}
 
-	UIComponent* UIComponent::findChild(const Vector2i& a_parentPt, const string& a_filterGroup) const {
-		Vector2i relPt = a_parentPt - getRelPos();
+	UIComponent* UIComponent::findChild(const UICoord& a_pt, const string& a_filterGroup) const {
+		UICoord relPt(a_pt, this);
 		for (auto const& kv : m_ZPlaneMap) {
 			for (UIComponent* child : kv.second) {
 				if (a_filterGroup.empty() || getChildGroup(child) == a_filterGroup) {
@@ -259,8 +260,8 @@ namespace syn
 		return nullptr;
 	}
 
-	UIComponent* UIComponent::findChildRecursive(const Vector2i& a_parentPt) {
-		Vector2i relPt = a_parentPt - getRelPos();
+	UIComponent* UIComponent::findChildRecursive(const UICoord& a_pt) {
+		UICoord relPt(a_pt, this);
 		for (auto const& kv : m_ZPlaneMap) {
 			for (UIComponent* child : kv.second) {
 				if (child->visible() && child->contains(relPt))
@@ -311,11 +312,11 @@ namespace syn
 		setSize(m_size);
 	}
 
-	bool UIComponent::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+	bool UIComponent::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 		return false;
 	}
 
-	bool UIComponent::onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+	bool UIComponent::onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 		for (auto const& kv : m_ZPlaneMap) {
 			for (UIComponent* child : kv.second) {
 				if (!child->visible())
@@ -323,25 +324,25 @@ namespace syn
 				bool hasMouse = child->contains(a_relCursor);
 				bool hadMouse = child->contains(a_relCursor - a_diffCursor);
 				if (hasMouse != hadMouse)
-					child->onMouseEnter(a_relCursor - child->getRelPos(), a_diffCursor, hasMouse);
+					child->onMouseEnter(a_relCursor, a_diffCursor, hasMouse);
 				if (hasMouse || hadMouse)
-					child->onMouseMove(a_relCursor - child->getRelPos(), a_diffCursor);
+					child->onMouseMove(a_relCursor, a_diffCursor);
 			}
 		}
 		return false;
 	}
 
-	void UIComponent::onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) {
+	void UIComponent::onMouseEnter(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) {
 		m_hovered = a_isEntering;
 	}
 
-	UIComponent* UIComponent::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+	UIComponent* UIComponent::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 		for (auto const& kv : m_ZPlaneMap) {
 			for (UIComponent* child : kv.second) {
 				if (!child->visible())
 					continue;
 				if (child->contains(a_relCursor)) {
-					UIComponent* ret = child->onMouseDown(a_relCursor - child->getRelPos(), a_diffCursor, a_isDblClick);
+					UIComponent* ret = child->onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
 					if (ret)
 						return ret;
 				}
@@ -350,24 +351,24 @@ namespace syn
 		return nullptr;
 	}
 
-	bool UIComponent::onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+	bool UIComponent::onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 		for (auto const& kv : m_ZPlaneMap) {
 			for (UIComponent* child : kv.second) {
 				if (!child->visible())
 					continue;
-				if (child->contains(a_relCursor) && child->onMouseUp(a_relCursor - child->getRelPos(), a_diffCursor))
+				if (child->contains(a_relCursor) && child->onMouseUp(a_relCursor, a_diffCursor))
 					return true;
 			}
 		}
 		return false;
 	}
 
-	bool UIComponent::onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) {
+	bool UIComponent::onMouseScroll(const UICoord& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) {
 		for (auto const& kv : m_ZPlaneMap) {
 			for (UIComponent* child : kv.second) {
 				if (!child->visible())
 					continue;
-				if (child->contains(a_relCursor) && child->onMouseScroll(a_relCursor - child->getRelPos(), a_diffCursor, a_scrollAmt))
+				if (child->contains(a_relCursor) && child->onMouseScroll(a_relCursor, a_diffCursor, a_scrollAmt))
 					return true;
 			}
 		}

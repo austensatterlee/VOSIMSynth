@@ -116,10 +116,10 @@ namespace syn
 			mCallback = callback;
 		}
 
-		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
-		bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
-		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
+		bool onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
+		bool onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
+		bool onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
 		void onFocusEvent(bool a_isFocused) override;
 
 		bool onKeyDown(const sf::Event::KeyEvent& a_key) override;

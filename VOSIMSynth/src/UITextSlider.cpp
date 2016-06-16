@@ -5,6 +5,7 @@
 #include "UILabel.h"
 #include "Theme.h"
 
+
 syn::UITextSlider::UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId) :
 	UIComponent{ a_window },
 	m_value(0.0),
@@ -46,10 +47,10 @@ syn::UITextSlider::UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a
 	_updateValue();
 }
 
-bool syn::UITextSlider::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+bool syn::UITextSlider::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)) {
 		double currValue = m_param->getNorm();
-		double targetValue = (a_relCursor[0]) * (1.0 / size()[0]);
+		double targetValue = (UICoord(a_relCursor,this).localCoord()[0]) * (1.0 / size()[0]);
 		double error = currValue - targetValue;
 		double adjust_speed = 0.5;
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift))
@@ -76,7 +77,7 @@ bool syn::UITextSlider::onMouseDrag(const Vector2i& a_relCursor, const Vector2i&
 	return false;
 }
 
-syn::UIComponent* syn::UITextSlider::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+syn::UIComponent* syn::UITextSlider::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	UIComponent* retval = UIComponent::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
 	if (retval)
 		return retval;
@@ -104,7 +105,7 @@ syn::UIComponent* syn::UITextSlider::onMouseDown(const Vector2i& a_relCursor, co
 	return this;
 }
 
-bool syn::UITextSlider::onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) {
+bool syn::UITextSlider::onMouseScroll(const UICoord& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) {
 	double scale;
 	if (m_param->getType() != UnitParameter::Double) {
 		scale = 1.0;

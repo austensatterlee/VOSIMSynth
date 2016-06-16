@@ -12,7 +12,7 @@ namespace syn
 		m_fontSize = theme()->mButtonFontSize;
 	}
 
-	UIComponent* UIButton::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+	UIComponent* UIButton::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 		UIComponent::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
 
 		if (mEnabled) {
@@ -59,7 +59,7 @@ namespace syn
 		return nullptr;
 	}
 
-	bool UIButton::onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+	bool UIButton::onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 		shared_ptr<UIComponent> self = m_parent->getChild(this);
 		if (mEnabled) {
 			bool pushedBackup = mPushed;

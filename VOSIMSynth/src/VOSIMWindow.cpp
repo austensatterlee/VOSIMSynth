@@ -7,6 +7,7 @@
 #include "UIDefaultUnitControl.h"
 #include "UIUnitControlContainer.h"
 #include <vosimsynth_resources.h>
+#include <sftools/ResourceManager.hpp>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -78,9 +79,8 @@ syn::VOSIMWindow::VOSIMWindow(int a_width, int a_height, VoiceManager* a_vm, Uni
 	m_HInstance(nullptr),
 	m_timerWindow(nullptr),
 	m_sfmlWindow(nullptr),
-	m_vg(nullptr),
 	m_isOpen(false),
-	m_frameCount(0),
+	m_vg(nullptr),
 	m_size(a_width, a_height),
 	m_cursor({ 0,0 }),
 	m_draggingComponent(nullptr),
@@ -88,12 +88,12 @@ syn::VOSIMWindow::VOSIMWindow(int a_width, int a_height, VoiceManager* a_vm, Uni
 	m_unitFactory(a_unitFactory),
 	m_root(nullptr),
 	m_circuitPanel(nullptr),
+	m_frameCount(0),
+	m_fps(1.0),
 	m_guiInternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE),
-	m_guiExternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE) 
+	m_guiExternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE)
 {
 	_initialize();
-
-	m_defaultFont.loadFromMemory(roboto_regular_ttf, roboto_regular_ttf_size);
 }
 
 
@@ -114,7 +114,7 @@ void syn::VOSIMWindow::_initialize() {
 	m_sfmlWindow = new sf::RenderWindow(sf::VideoMode(size()[0], size()[1]), "VOSIMWindow", sf::Style::None, settings);
 	
 	m_sfmlWindow->setVisible(false);
-	m_sfmlWindow->setActive(true);
+	m_sfmlWindow->setActive(false);
 
 	// Initialize glew
 	glewExperimental = GL_TRUE;
@@ -151,43 +151,39 @@ void syn::VOSIMWindow::_initialize() {
 	}
 
 	initGraph(&m_fpsGraph, GRAPH_RENDER_FPS, "FPS");
-
-	m_sfmlWindow->setActive(false);
 }
 
 void syn::VOSIMWindow::_runLoop() {
-	double cpuStartTime, dCpuTime;
-	m_sfmlWindow->setActive(true);
-	cpuStartTime = m_timer.getElapsedTime().asSeconds();
+	m_sfmlWindow->setActive(true); 
+
 	Color bgColor = colorFromHSL(0.09f, 1.0f, 0.10f);
 
 	glViewport(0, 0, getSize()[0], getSize()[1]);
 	glClearColor(bgColor.r(), bgColor.g(), bgColor.b(), 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
+	
 	nvgBeginFrame(m_vg, getSize()[0], getSize()[1], 1.0);
 	m_root->recursiveDraw(m_vg);
 	renderGraph(m_vg, 5, 5, &m_fpsGraph);
 	nvgEndFrame(m_vg);
-
+	
 	m_sfmlWindow->display();
-
-	m_sfmlWindow->setActive(false);
-
-	// Measure the CPU time taken excluding swap buffers (as the swap may wait for GPU)
-	dCpuTime = m_timer.getElapsedTime().asSeconds() - cpuStartTime;
-	updateGraph(&m_fpsGraph, dCpuTime);
 	m_frameCount++;
 
 	_flushMessageQueues();
-
 	_handleEvents();
 
+	m_sfmlWindow->setActive(false);
+
+	double dCpuTime = m_timer.getElapsedTime().asSeconds();
+	m_fps = 1. / dCpuTime;
+	m_timer.reset(true);
+	updateGraph(&m_fpsGraph, dCpuTime);
 }
 
 void syn::VOSIMWindow::_handleEvents() {
 	if (m_draggingComponent) {
-		m_draggingComponent->onMouseDrag(cursorPos() - m_draggingComponent->getAbsPos(), { 0,0 });
+		m_draggingComponent->onMouseDrag(UICoord(cursorPos()), { 0,0 });
 	}
 
 	// check all the window's events that were triggered since the last iteration of the loop
@@ -238,14 +234,14 @@ void syn::VOSIMWindow::_handleEvents() {
 		case Event::MouseWheelScrolled:
 		{
 			m_lastScroll = { event.mouseWheelScroll, m_timer.getElapsedTime() };
-			m_root->onMouseScroll(cursorPos(), diffCursorPos(), event.mouseWheelScroll.delta);
+			m_root->onMouseScroll(UICoord(cursorPos()), diffCursorPos(), event.mouseWheelScroll.delta);
 		}
 		break;
 		case Event::MouseButtonPressed:
 		{
 			bool isDblClick = (m_timer.getElapsedTime().asSeconds() - m_lastClick.time.asSeconds() < 0.125);
 			isDblClick &= (cursorPos() - Vector2i{ m_lastClick.data.x, m_lastClick.data.y }).norm() <= 2.0;
-			m_draggingComponent = m_root->onMouseDown(cursorPos(), diffCursorPos(), isDblClick);
+			m_draggingComponent = m_root->onMouseDown(UICoord(cursorPos()), diffCursorPos(), isDblClick);
 			if (m_draggingComponent == m_root)
 				m_draggingComponent = nullptr;
 			if (m_draggingComponent)
@@ -258,19 +254,19 @@ void syn::VOSIMWindow::_handleEvents() {
 		case Event::MouseButtonReleased:
 			m_lastClick = { event.mouseButton, m_timer.getElapsedTime() };
 			if (m_draggingComponent)
-				m_draggingComponent->onMouseUp(cursorPos() - m_draggingComponent->getAbsPos(), diffCursorPos());
+				m_draggingComponent->onMouseUp(UICoord(cursorPos()), diffCursorPos());
 			if (!m_draggingComponent) {
-				m_root->onMouseUp(cursorPos(), diffCursorPos());
+				m_root->onMouseUp(UICoord(cursorPos()), diffCursorPos());
 			}
 			m_draggingComponent = nullptr;
 			break;
 		case Event::MouseMoved:
 			if (m_draggingComponent) {
-				m_draggingComponent->onMouseDrag(cursorPos() - m_draggingComponent->getAbsPos(), diffCursorPos());
+				m_draggingComponent->onMouseDrag(UICoord(cursorPos()), diffCursorPos());
 			}
 
 			_updateCursorPos({ event.mouseMove.x - 1,event.mouseMove.y - 2 });
-			m_root->onMouseMove(cursorPos(), diffCursorPos());
+			m_root->onMouseMove(UICoord(cursorPos()), diffCursorPos());
 			break;
 		default:
 			break;

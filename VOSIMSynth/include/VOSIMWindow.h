@@ -89,6 +89,7 @@ namespace syn
 		const Timestamped<Event::MouseWheelScrollEvent>& lastScrollEvent() const { return m_lastScroll; }
 
 		shared_ptr<Theme> theme() const { return m_theme; }
+		double fps() const { return m_fps; }
 
 		UICircuitPanel* getCircuitPanel() const { return m_circuitPanel; }
 
@@ -145,8 +146,9 @@ namespace syn
 #endif
 		sf::WindowHandle m_timerWindow;
 		sf::RenderWindow* m_sfmlWindow;
-		NVGcontext* m_vg;
 		bool m_isOpen;
+
+		NVGcontext* m_vg;
 
 		Vector2i m_size;
 		Vector2i m_cursor;
@@ -162,11 +164,11 @@ namespace syn
 		UIComponent* m_root;
 		UICircuitPanel* m_circuitPanel;
 		shared_ptr<Theme> m_theme;
-		sf::Font m_defaultFont;
 
 		PerfGraph m_fpsGraph;
 		sftools::Chronometer m_timer;
 		unsigned m_frameCount;
+		double m_fps;
 
 		map<unsigned, function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)>> m_unitControlMap;
 

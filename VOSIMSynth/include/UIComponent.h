@@ -35,6 +35,8 @@ using std::list;
 
 namespace syn
 {
+	class UICoord;
+
 	class UIComponent
 	{
 		friend class VOSIMWindow;
@@ -68,10 +70,10 @@ namespace syn
 
 		shared_ptr<UIComponent> getSharedPtr() const;
 
-		virtual bool contains(const Vector2i& a_pt) const;
+		virtual bool contains(const UICoord& a_pt) const;
 
-		UIComponent* findChild(const Vector2i& a_pt, const string& a_filterGroup="") const;
-		UIComponent* findChildRecursive(const Vector2i& a_pt);
+		UIComponent* findChild(const UICoord& a_pt, const string& a_filterGroup="") const;
+		UIComponent* findChildRecursive(const UICoord& a_pt);
 
 		Vector2i getRelPos() const;
 
@@ -110,12 +112,12 @@ namespace syn
 
 		void setVisible(bool a_visible);
 
-		virtual bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
-		virtual bool onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
-		virtual void onMouseEnter(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering);
-		virtual UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick);
-		virtual bool onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor);
-		virtual bool onMouseScroll(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt);
+		virtual bool onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor);
+		virtual bool onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor);
+		virtual void onMouseEnter(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering);
+		virtual UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick);
+		virtual bool onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor);
+		virtual bool onMouseScroll(const UICoord& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt);
 		virtual bool onTextEntered(sf::Uint32 a_unicode);
 		virtual bool onKeyDown(const sf::Event::KeyEvent& a_key);
 		virtual bool onKeyUp(const sf::Event::KeyEvent& a_key);
@@ -179,16 +181,16 @@ namespace syn
 			setMinSize({10,10});
 		}
 
-		bool onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) override {
+		bool onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override {
 			m_dragCallback(a_relCursor, a_diffCursor);
 			return true;
 		}
 
-		UIComponent* onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override {
+		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override {
 			return this;
 		}
 
-		void setDragCallback(const function<void(const Vector2i&, const Vector2i&)>& a_callback) {
+		void setDragCallback(const function<void(const UICoord&, const Vector2i&)>& a_callback) {
 			m_dragCallback = a_callback;
 		}
 
@@ -209,7 +211,7 @@ namespace syn
 		}
 
 	private:
-		function<void(const Vector2i& a_relCursor, const Vector2i& a_diffCursor)> m_dragCallback;
+		function<void(const UICoord& a_relCursor, const Vector2i& a_diffCursor)> m_dragCallback;
 	};
 };
 #endif

@@ -2,6 +2,7 @@
 #include "Theme.h"
 #include <regex>
 
+
 namespace syn
 {
 	UITextBox::UITextBox(VOSIMWindow* a_window, const string& value)
@@ -217,10 +218,10 @@ namespace syn
 		nvgResetScissor(ctx);
 	}
 
-	UIComponent* UITextBox::onMouseDown(const Vector2i& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+	UIComponent* UITextBox::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 
 		if (mEditable && sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-			mMouseDownPos = a_relCursor;
+			mMouseDownPos = UICoord(a_relCursor,this).localCoord();
 
 			if (a_isDblClick) {
 				/* Double-click: select all text */
@@ -233,23 +234,23 @@ namespace syn
 		return this;
 	}
 
-	bool UITextBox::onMouseUp(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+	bool UITextBox::onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 		mMouseDownPos = Vector2i(-1, -1);
 		mMouseDragPos = Vector2i(-1, -1);
 		return true;
 	}
 
-	bool UITextBox::onMouseMove(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+	bool UITextBox::onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 		if (mEditable && focused()) {
-			mMousePos = a_relCursor;
+			mMousePos = UICoord(a_relCursor, this).localCoord();
 			return true;
 		}
 		return false;
 	}
 
-	bool UITextBox::onMouseDrag(const Vector2i& a_relCursor, const Vector2i& a_diffCursor) {
+	bool UITextBox::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 		if (mEditable && focused() && a_diffCursor.squaredNorm() >= 1) {
-			mMouseDragPos = a_relCursor;
+			mMouseDragPos = UICoord(a_relCursor, this).localCoord();
 			return true;
 		}
 		return false;
