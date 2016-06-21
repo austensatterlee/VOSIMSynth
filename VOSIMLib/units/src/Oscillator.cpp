@@ -180,7 +180,7 @@ namespace syn
 		m_lastSync(0.0)
 	{
 		m_pBPMFreq = addParameter_({ "rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM });
-		getParameter_(m_pBPMFreq).setVisible(false);
+		getParameter(m_pBPMFreq).setVisible(false);
 		m_pFreq = addParameter_({ "freq", 0.01, 30.0, 1.0, UnitParameter::EUnitsType::Freq });
 		m_pWaveform = addParameter_(UnitParameter("waveform", WAVE_SHAPE_NAMES));
 		m_pTempoSync = addParameter_(UnitParameter("tempo sync", false));
@@ -228,8 +228,8 @@ namespace syn
 	void LFOOscillator::onParamChange_(int a_paramId) {
 		if (a_paramId == m_pTempoSync) {
 			bool useTempoSync = getParameter(m_pTempoSync).getBool();
-			getParameter_(m_pFreq).setVisible(!useTempoSync);
-			getParameter_(m_pBPMFreq).setVisible(useTempoSync);
+			getParameter(m_pFreq).setVisible(!useTempoSync);
+			getParameter(m_pBPMFreq).setVisible(useTempoSync);
 		}
 	}
 }

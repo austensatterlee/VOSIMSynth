@@ -69,8 +69,6 @@ namespace syn
 		}
 	};
 
-	class OutputUnit : public Unit { };
-
 	/**
 	* \class Circuit
 	*
@@ -95,11 +93,14 @@ namespace syn
 		 */
 		bool isActive() const override;
 
+		Unit& getUnit(int a_unitId);
 		const Unit& getUnit(int a_unitId) const;
 
 		int getInputUnitId() const;
 		int getOutputUnitId() const;
 
+		template <typename UID>
+		bool hasUnit(const UID& a_unitIdentifier) const;
 		template <typename UID>
 		int getUnitId(const UID& a_unitIdentifier) const;
 
@@ -173,8 +174,6 @@ namespace syn
 
 		void onInputDisconnection_(int a_inputPort) override;
 
-		Unit& getUnit_(int a_unitId);
-
 		int addExternalInput_(const string& a_name);
 
 		int addExternalOutput_(const string& a_name);
@@ -198,6 +197,11 @@ namespace syn
 
 		list<Unit*> m_procGraph;
 	};
+
+	template <typename UID>
+	bool Circuit::hasUnit(const UID& a_unitIdentifier) const {
+		return getUnitId(a_unitIdentifier) >= 0;
+	}
 
 	template <typename UID>
 	int Circuit::getUnitId(const UID& a_unitIdentifier) const {

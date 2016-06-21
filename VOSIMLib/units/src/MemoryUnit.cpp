@@ -37,8 +37,8 @@ namespace syn
 	// NSampleDelay
 	//---------------------
 	NSampleDelay::NSampleDelay() :
-		m_buffer(48000),
-		m_arraySize(48000),
+		m_buffer(1),
+		m_arraySize(1),
 		m_nBufSamples(1.0),
 		m_curReadPhase(0.0),
 		m_curWritePhase(0.0)
@@ -95,12 +95,11 @@ namespace syn
 	// MemoryUnit
 	//---------------------
 	MemoryUnit::MemoryUnit(const string& a_name) :
-		Unit(a_name),
-		m_pBufSize(addParameter_(UnitParameter("n", 1.0, 192.0E3, 1.0)))
+		Unit(a_name)
 	{
-		getParameter_(m_pBufSize).setControlType(UnitParameter::Unbounded);
 		addInput_("in");
 		addOutput_("out");
+		m_delay.resizeBuffer(1.0);
 	}
 
 	MemoryUnit::MemoryUnit(const MemoryUnit& a_rhs) :
@@ -120,17 +119,11 @@ namespace syn
 
 	void MemoryUnit::onParamChange_(int a_paramId)
 	{
-		if (a_paramId == m_pBufSize) {
-			double newBufSize = getParameter(m_pBufSize).getDouble();
-			m_delay.resizeBuffer(newBufSize);
-		}
 	}
 
 	void MemoryUnit::process_()
 	{
-		double input = getInputValue(0);
-		double output = m_delay.process(input);
-		setOutputChannel_(0, output);
+		setOutputChannel_(0, m_delay.process(getInputValue(0)));
 	}
 
 	//---------------------
@@ -143,14 +136,13 @@ namespace syn
 		addInput_("in");
 		m_iSize = addInput_("size");
 		addOutput_("out");
-		m_pBufSize = addParameter_({ "samples", 1.0, 48000.0, 1.0 });
-		m_pBufDelay = addParameter_({ "delay", 0.001, 1.0, 0.001, UnitParameter::EUnitsType::Seconds });
+		m_pBufDelay = addParameter_({ "time", 0.001, 1.0, 0.001, UnitParameter::EUnitsType::Seconds });
 		m_pBufFreq = addParameter_({ "freq", 1.0, 10000.0, 1.0, UnitParameter::EUnitsType::Freq });
-		m_pBufBPMFreq = addParameter_({ "rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM });
-		getParameter_(m_pBufDelay).setVisible(false);
-		getParameter_(m_pBufFreq).setVisible(false);
-		getParameter_(m_pBufBPMFreq).setVisible(false);
-		m_pBufType = addParameter_(UnitParameter{ "units",{"samples","seconds","Hz","BPM"} });
+		m_pBufBPMFreq = addParameter_({ "rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM });		
+		getParameter(m_pBufFreq).setVisible(false);
+		getParameter(m_pBufBPMFreq).setVisible(false);
+		m_pBufType = addParameter_(UnitParameter{ "units",{"sec","Hz","BPM"} });
+		m_delay.resizeBuffer(48000);
 	}
 
 	ResampleUnit::ResampleUnit(const ResampleUnit& a_rhs) :
@@ -172,20 +164,16 @@ namespace syn
 	{
 		if (a_paramId == m_pBufType) {
 			int newtype = getParameter(m_pBufType).getInt();
-			getParameter_(m_pBufSize).setVisible(newtype == 0);
-			getParameter_(m_pBufDelay).setVisible(newtype == 1);
-			getParameter_(m_pBufFreq).setVisible(newtype == 2);
-			getParameter_(m_pBufBPMFreq).setVisible(newtype == 3);
+			getParameter(m_pBufDelay).setVisible(newtype == 0);
+			getParameter(m_pBufFreq).setVisible(newtype == 1);
+			getParameter(m_pBufBPMFreq).setVisible(newtype == 2);
 		}
 	}
 
 	void ResampleUnit::process_()
 	{
 		int bufType = getParameter(m_pBufType).getInt();
-		if (bufType == m_pBufSize) { // samples
-			m_delaySamples = getParameter(m_pBufSize).getDouble() + getInputValue(m_iSize);
-		}
-		else if (bufType == m_pBufDelay) { // seconds
+		if (bufType == m_pBufDelay) { // seconds
 			m_delaySamples = periodToSamples(getParameter(m_pBufDelay).getDouble() + getInputValue(m_iSize), getFs());
 		}
 		else if (bufType == m_pBufFreq) { // freq

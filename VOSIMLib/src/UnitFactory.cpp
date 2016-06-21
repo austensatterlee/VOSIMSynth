@@ -44,11 +44,15 @@ syn::Unit* syn::UnitFactory::createUnit(int a_protoNum, const string& a_name) {
 
 syn::Unit* syn::UnitFactory::createUnit(unsigned a_classIdentifier, const string& a_name) {
 	int protonum = getPrototypeIdx_(a_classIdentifier);
+	if (protonum < 0)
+		return nullptr;
 	return createUnit(protonum, a_name);
 }
 
 syn::Unit* syn::UnitFactory::createUnit(string a_prototypeName, const string& a_name) {
 	int protonum = getPrototypeIdx_(a_prototypeName);
+	if (protonum < 0)
+		return nullptr;
 	return createUnit(protonum, a_name);
 }
 
@@ -131,13 +135,15 @@ int syn::UnitFactory::loadUnit(ByteChunk* a_data, int a_startPos, Unit** a_unit,
 		int prec;
 		startPos = a_data->Get<double>(&val, startPos);
 		startPos = a_data->Get<int>(&prec, startPos);
-		if ((*a_unit)->hasParameter(i)) {
+		if (*a_unit && (*a_unit)->hasParameter(i)) {
 			(*a_unit)->setParameter(i, val);
 			(*a_unit)->setParameterPrecision(i, prec);
 		}
 	}
-	for (int i = 0; i < nParams; i++) {
-		(*a_unit)->onParamChange_(i);
+	if (*a_unit) {
+		for (int i = 0; i < nParams; i++) {
+			(*a_unit)->onParamChange_(i);
+		}
 	}
 	int reserved;
 	startPos = a_data->Get<int>(&reserved, startPos);

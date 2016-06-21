@@ -221,7 +221,7 @@ syn::ConstantUnit::ConstantUnit(const string& a_name) :
 {
 	addParameter_(UnitParameter{ "out",-1.0,1.0,0.0 });
 	addParameter_(UnitParameter{ "scale",scale_selections,scale_values });
-	getParameter_("scale").setControlType(UnitParameter::EControlType::Unbounded);
+	getParameter("scale").setControlType(UnitParameter::EControlType::Unbounded);
 	addOutput_("out");
 }
 

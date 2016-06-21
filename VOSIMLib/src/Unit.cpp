@@ -125,6 +125,18 @@ namespace syn
 		return m_inputPorts.add(a_name, { a_default });
 	}
 
+	bool Unit::addInput_(int a_id, const string& a_name, double a_default) {
+		return m_inputPorts.add(a_name, a_id, { a_default });
+	}
+
+	bool Unit::addOutput_(int a_id, const string& a_name) {
+		return m_outputSignals.add(a_name, a_id, 0);
+	}
+
+	bool Unit::addParameter_(int a_id, const UnitParameter& a_param) {
+		return m_parameters.add(a_param.getName(), a_id, a_param);
+	}
+
 	int Unit::addOutput_(const string& a_name) {
 		return m_outputSignals.add(a_name, 0);
 	}

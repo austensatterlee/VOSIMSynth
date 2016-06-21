@@ -95,9 +95,7 @@ namespace syn
 
 		void setVisible(bool a_visible);
 
-		/**
-		 * \return true if the parameter value was changed
-		 */
+		
 		bool set(double a_value);
 		/**
 		 * Set the parameter from a number in the range (0,1)
@@ -105,6 +103,7 @@ namespace syn
 		 */
 		bool setNorm(double a_norm_value);
 		bool setFromString(const string& a_str);
+		void nudge(double a_logAmt, double a_linAmt);
 
 		/**
 		 * Automatically retrieves the parameter value according to its type.
@@ -113,14 +112,10 @@ namespace syn
 		T get() const;
 
 		bool getBool() const;
-		bool getPrevBool() const;
 		int getInt() const;
-		int getPrevInt() const;
 		double getDouble() const;
-		double getPrevDouble() const;
 		double getEnum() const;
 		double getEnum(int a_index) const;
-		double getPrevEnum() const;
 
 		/**
 		 * Get the parameter value as a number in the range (0,1)
@@ -129,12 +124,8 @@ namespace syn
 		string getValueString() const;
 		string getUnitsString() const;
 	private:
-		bool _setBool(bool a_value);
-		bool _setInt(int a_value);
-		bool _setDouble(double a_value);
-	private:
 		string m_name;
-		double m_value, m_prevValue, m_defaultValue;
+		double m_value, m_defaultValue;
 		double m_min, m_max;
 		double m_logMin, m_logRange;
 		bool m_isVisible;

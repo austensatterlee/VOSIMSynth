@@ -30,6 +30,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "Unit.h"
 #include "MemoryUnit.h"
+#include "DSPMath.h"
 
 using namespace std;
 
@@ -270,6 +271,34 @@ namespace syn
 		int m_pInputRange;
 		int m_pMinOutput, m_pMaxOutput;
 		int m_pMinOutputScale, m_pMaxOutputScale;
+	};
+
+	/**
+	* Affine transform
+	*/
+	class PitchToFreqUnit : public Unit
+	{
+	public:
+		explicit PitchToFreqUnit(const string& a_name) : Unit(a_name) 
+		{
+			addInput_("in");
+			addOutput_("out");
+		}
+
+		PitchToFreqUnit(const PitchToFreqUnit& a_rhs) : 
+			PitchToFreqUnit(a_rhs.getName())
+		{		
+		}
+
+	protected:
+		void MSFASTCALL process_() GCCFASTCALL override {
+			setOutputChannel_(0,pitchToFreq(getInputValue(0)));
+		}
+
+	private:
+		string _getClassName() const override { return "PitchToFreqUnit"; }
+
+		Unit* _clone() const override { return new PitchToFreqUnit(*this); }
 	};
 }
 

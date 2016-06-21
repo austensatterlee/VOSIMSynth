@@ -83,6 +83,7 @@ void VOSIMSynth::makeInstrument() {
 	m_unitFactory->addUnitPrototype<MACUnit>("Math","MAC");
 	m_unitFactory->addUnitPrototype<LerpUnit>("Math","Affine");
 	m_unitFactory->addUnitPrototype<RectifierUnit>("Math","Rect");
+	m_unitFactory->addUnitPrototype<PitchToFreqUnit>("Math", "Pitch2Freq");
 
 	m_unitFactory->addUnitPrototype<GateUnit>("MIDI","Gate");
 	m_unitFactory->addUnitPrototype<MidiNoteUnit>("MIDI","CV");

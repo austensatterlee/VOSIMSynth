@@ -205,7 +205,11 @@ namespace syn
 		m_inputUnit->disconnectInput(a_inputPort);
 	}
 
-	Unit& Circuit::getUnit_(int a_unitId) {
+	Unit& Circuit::getUnit(int a_unitId) {
+		return *m_units[a_unitId];
+	}
+
+	const Unit& Circuit::getUnit(int a_unitId) const {
 		return *m_units[a_unitId];
 	}
 
@@ -221,10 +225,6 @@ namespace syn
 		m_outputUnit->addOutput_(a_name);
 		m_outputUnit->addInput_(a_name);
 		return outputid;
-	}
-
-	const Unit& Circuit::getUnit(int a_unitId) const {
-		return *m_units[a_unitId];
 	}
 
 	int Circuit::getInputUnitId() const {

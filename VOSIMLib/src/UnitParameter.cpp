@@ -26,7 +26,6 @@ namespace syn
 	UnitParameter::UnitParameter() :
 		m_name(""),
 		m_value(0),
-		m_prevValue(0),
 		m_defaultValue(0),
 		m_min(0),
 		m_max(1),
@@ -41,7 +40,6 @@ namespace syn
 	UnitParameter::UnitParameter(const string& a_name, bool a_defaultValue) :
 		m_name(a_name),
 		m_value(a_defaultValue),
-		m_prevValue(a_defaultValue),
 		m_defaultValue(a_defaultValue),
 		m_min(0),
 		m_max(1),
@@ -58,7 +56,6 @@ namespace syn
 	                             int a_defaultValue, EUnitsType a_unitsType) :
 		m_name(a_name),
 		m_value(a_defaultValue),
-		m_prevValue(a_defaultValue),
 		m_defaultValue(a_defaultValue),
 		m_min(a_min),
 		m_max(a_max),
@@ -85,7 +82,7 @@ namespace syn
 		m_controlType(Bounded),
 		m_displayPrecision(0) {
 		m_defaultValue = a_defaultOption;
-		m_value = m_prevValue = m_defaultValue;
+		m_value = m_defaultValue;
 		double optionValue;
 		for (int i = 0; i < a_optionNames.size(); i++) {
 			if (a_optionValues.empty()) {
@@ -101,7 +98,6 @@ namespace syn
 	                             double a_defaultValue, EUnitsType a_unitsType, int a_displayPrecision) :
 		m_name(a_name),
 		m_value(a_defaultValue),
-		m_prevValue(a_defaultValue),
 		m_defaultValue(a_defaultValue),
 		m_min(a_min),
 		m_max(a_max),
@@ -178,17 +174,6 @@ namespace syn
 		return m_value > 0.5;
 	}
 
-	bool UnitParameter::getPrevBool() const {
-		return m_prevValue > 0.5;
-	}
-
-	bool UnitParameter::_setBool(bool a_value) {
-		if (getBool() == a_value)
-			return false;
-		m_value = static_cast<double>(a_value);
-		return true;
-	}
-
 	int UnitParameter::getInt() const {
 		int intvalue = static_cast<int>(m_value);
 		// round upwards
@@ -199,31 +184,8 @@ namespace syn
 		return intvalue;
 	}
 
-	int UnitParameter::getPrevInt() const {
-		int intvalue = static_cast<int>(m_prevValue);
-		// round upwards
-		if (m_prevValue > 0)
-			intvalue = (m_prevValue - intvalue >= 0.5) ? intvalue + 1 : intvalue;
-		else
-			intvalue = (intvalue - m_prevValue >= 0.5) ? intvalue - 1 : intvalue;
-		return intvalue;
-	}
-
-	bool UnitParameter::_setInt(int a_value) {
-		if (a_value < m_min || a_value > m_max)
-			return false;
-		if (getInt() == a_value)
-			return false;
-		m_value = static_cast<double>(a_value);
-		return true;
-	}
-
 	double UnitParameter::getDouble() const {
 		return m_value;
-	}
-
-	double UnitParameter::getPrevDouble() const {
-		return m_prevValue;
 	}
 
 	double UnitParameter::getEnum() const {
@@ -236,34 +198,10 @@ namespace syn
 		return m_displayTexts[a_index].m_value;
 	}
 
-	double UnitParameter::getPrevEnum() const {
-		int idx = getPrevInt();
-		return m_displayTexts[idx].m_value;
-	}
-
-	bool UnitParameter::_setDouble(double a_value) {
-		if (a_value < m_min || a_value > m_max)
-			return false;
-		if (m_value == a_value)
-			return false;
+	bool UnitParameter::set(double a_value) {
+		a_value = CLAMP<double>(a_value, m_min, m_max);
 		m_value = a_value;
 		return true;
-	}
-
-	bool UnitParameter::set(double a_value) {
-		m_prevValue = a_value;
-		switch (m_type) {
-		case Bool:
-			return _setBool(a_value >= 0.5);
-		case Enum:
-		case Int:
-			return _setInt(a_value);
-		case Double:
-			return _setDouble(a_value);
-		case Null:
-		default:
-			return false;
-		}
 	}
 
 	double UnitParameter::getNorm() const {
@@ -304,6 +242,8 @@ namespace syn
 				if (decimal_pos != string::npos) {
 					int newParamPrecision = static_cast<int>(num_digits) - static_cast<int>(decimal_pos) - 1;
 					setPrecision(newParamPrecision);
+				}else {
+					setPrecision(1);
 				}
 				set(value);
 				return true;
@@ -312,7 +252,7 @@ namespace syn
 				int i = 0;
 				for (const DisplayText& disp : m_displayTexts) {
 					if (disp.m_text == a_str) {
-						_setInt(i);
+						set(i);
 						return true;
 					}
 					i++;
@@ -323,13 +263,18 @@ namespace syn
 			int i = 0;
 			for (const DisplayText& disp : m_displayTexts) {
 				if (disp.m_text == a_str) {
-					_setInt(i);
+					set(i);
 					return true;
 				}
 				i++;
 			}
 		}
 		return false;
+	}
+
+	void UnitParameter::nudge(double a_logAmt, double a_linAmt) {
+		double shiftamt = pow(10.0, -m_displayPrecision + a_logAmt) * a_linAmt;
+		set(get<double>() + shiftamt);
 	}
 
 	string UnitParameter::getValueString() const {

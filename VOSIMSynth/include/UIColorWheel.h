@@ -46,13 +46,12 @@ namespace syn {
 		/// Set the current color
 		void setColor(const Color& color);
 
-		virtual Vector2i preferredSize(NVGcontext *ctx) const override;
-		virtual void draw(NVGcontext *ctx) override;
-
 		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		bool onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
 		bool onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
 
+	protected:
+		void draw(NVGcontext *ctx) override;
 	private:
 		enum Region {
 			None = 0,

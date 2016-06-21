@@ -53,8 +53,8 @@ namespace syn
 		const double* src;
 	};
 
-	const vector<string> g_bpmStrs = { "1/64", "1/32", "3/64", "1/16", "3/32", "1/8", "3/16", "1/4", "3/8", "1/2", "3/4", "1", "3/2", "2" };
-	const vector<double> g_bpmVals = { 1.0 / 64.0, 1.0 / 32.0, 3.0 / 64.0, 1.0 / 16.0, 3.0 / 32.0, 1.0 / 8.0, 3.0 / 16.0, 1.0 / 4.0, 3.0 / 8.0, 1.0 / 2.0, 3.0 / 4.0, 1.0, 3.0 / 2.0, 2.0 };
+	const vector<string> g_bpmStrs = { "1/64", "1/32", "3/64", "1/16", "3/32", "1/8", "3/16", "1/4", "3/8", "1/2", "3/4", "1", "3/2", "2", "5/2", "3", "7/2", "4" };
+	const vector<double> g_bpmVals = { 1.0 / 64.0, 1.0 / 32.0, 3.0 / 64.0, 1.0 / 16.0, 3.0 / 32.0, 1.0 / 8.0, 3.0 / 16.0, 1.0 / 4.0, 3.0 / 8.0, 1.0 / 2.0, 3.0 / 4.0, 1.0, 3.0 / 2.0, 2.0, 5.0/2.0, 3.0, 7.0/2.0, 4.0 };
 
 	/**
 	 * \class Unit
@@ -110,6 +110,9 @@ namespace syn
 
 		template <typename ID>
 		bool hasParameter(const ID& a_paramId) const;
+
+		template <typename ID>
+		UnitParameter& getParameter(const ID& a_identifier);
 
 		template <typename ID>
 		const UnitParameter& getParameter(const ID& a_identifier) const;
@@ -199,18 +202,18 @@ namespace syn
 		virtual void onInputDisconnection_(int a_inputPort) { };
 
 		template <typename ID>
-		UnitParameter& getParameter_(const ID& a_identifier);
-
-		template <typename ID>
 		void setOutputChannel_(const ID& a_id, const double& a_val);
 
 		virtual void MSFASTCALL process_() GCCFASTCALL = 0;
 
 		int addInput_(const string& a_name, double a_default = 0.0);
+		bool addInput_(int a_id, const string& a_name, double a_default = 0.0);
 
 		int addOutput_(const string& a_name);
+		bool addOutput_(int a_id, const string& a_name);
 
 		int addParameter_(const UnitParameter& a_param);
+		bool addParameter_(int a_id, const UnitParameter& a_param);
 
 	private:
 		virtual inline string _getClassName() const = 0;
@@ -238,7 +241,12 @@ namespace syn
 	}
 
 	template <typename ID>
-	UnitParameter& Unit::getParameter_(const ID& a_identifier) {
+	UnitParameter& Unit::getParameter(const ID& a_identifier) {
+		return m_parameters[a_identifier];
+	}
+
+	template <typename ID>
+	const UnitParameter& Unit::getParameter(const ID& a_identifier) const {
 		return m_parameters[a_identifier];
 	}
 
@@ -252,11 +260,6 @@ namespace syn
 	bool Unit::hasParameter(const ID& a_paramId) const
 	{
 		return m_parameters.contains(a_paramId);
-	}
-
-	template <typename ID>
-	const UnitParameter& Unit::getParameter(const ID& a_identifier) const {
-		return m_parameters[a_identifier];
 	}
 
 	template <typename ID, typename T>

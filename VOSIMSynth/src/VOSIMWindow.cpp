@@ -421,14 +421,17 @@ int syn::VOSIMWindow::load(ByteChunk* a_data, int startPos) {
 		startPos = a_data->Get<int>(&reservedBytes, startPos);
 		startPos += reservedBytes;
 
-		m_circuitPanel->onAddUnit_(m_vm->getPrototypeCircuit()->getUnit(unitId).getClassIdentifier(), unitId);
-		m_circuitPanel->findUnit(unitId)->setRelPos(pos);
+		if (m_vm->getPrototypeCircuit()->hasUnit(unitId)) {
+			m_circuitPanel->onAddUnit_(m_vm->getPrototypeCircuit()->getUnit(unitId).getClassIdentifier(), unitId);
+			m_circuitPanel->findUnit(unitId)->setRelPos(pos);
+		}
 	}
 	// Add wires
 	const vector<ConnectionRecord>& records = m_vm->getPrototypeCircuit()->getConnections();
 	for (int i = 0; i < records.size(); i++) {
 		const ConnectionRecord& rec = records[i];
-		m_circuitPanel->onAddConnection_(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
+		if(m_vm->getPrototypeCircuit()->hasUnit(rec.from_id) && m_vm->getPrototypeCircuit()->hasUnit(rec.to_id))
+			m_circuitPanel->onAddConnection_(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
 	}
 	return startPos;
 };

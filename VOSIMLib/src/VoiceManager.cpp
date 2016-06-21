@@ -307,19 +307,23 @@ namespace syn
 			Unit* unit;
 			int unitId;
 			startPos = m_factory->loadUnit(a_data, startPos, &unit, &unitId);
-			m_instrument->addUnit(unit->clone(), unitId);
-			for (Circuit* voice : m_allVoices) {
-				voice->addUnit(unit->clone(), unitId);
+			if (unit) {
+				m_instrument->addUnit(unit->clone(), unitId);
+				for (Circuit* voice : m_allVoices) {
+					voice->addUnit(unit->clone(), unitId);
+				}
+				delete unit;
 			}
-			delete unit;
 		}
 		startPos = a_data->Get<int>(&nConnections, startPos);
 		for (int i = 0; i < nConnections; i++) {
 			ConnectionRecord record;
 			startPos = a_data->Get<ConnectionRecord>(&record, startPos);
-			m_instrument->connectInternal(record.from_id, record.from_port, record.to_id, record.to_port);
-			for (Circuit* voice : m_allVoices) {
-				voice->connectInternal(record.from_id, record.from_port, record.to_id, record.to_port);
+			if (m_instrument->hasUnit(record.from_id) && m_instrument->hasUnit(record.to_id)) {
+				m_instrument->connectInternal(record.from_id, record.from_port, record.to_id, record.to_port);
+				for (Circuit* voice : m_allVoices) {
+					voice->connectInternal(record.from_id, record.from_port, record.to_id, record.to_port);
+				}
 			}
 		}
 		return startPos;

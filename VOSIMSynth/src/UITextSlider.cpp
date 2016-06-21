@@ -106,28 +106,27 @@ syn::UIComponent* syn::UITextSlider::onMouseDown(const UICoord& a_relCursor, con
 }
 
 bool syn::UITextSlider::onMouseScroll(const UICoord& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) {
-	double scale;
-	if (m_param->getType() != UnitParameter::Double) {
-		scale = 1.0;
+	double linScale = a_scrollAmt;
+	double logScale;
+	if (m_param->getType() == UnitParameter::Double)
+		logScale = 1;
+	else
+		logScale = 0;
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)) {
+		logScale+=1.0;
 	}
-	else {
-		scale = pow(10, -m_param->getPrecision() + 1);
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)) {
-			scale *= 10;
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift)) {
-			scale *= 0.1;
-		}
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift)) {
+		logScale -= 1.0;
 	}
+	
 
-	double currValue = m_param->get<double>() + scale * a_scrollAmt;
 	RTMessage* msg = new RTMessage();
-	PutArgs(&msg->data, m_unitId, m_paramId, currValue);
+	PutArgs(&msg->data, m_unitId, m_paramId, logScale, linScale);
 	msg->action = [](Circuit* a_circuit, bool a_isLast, ByteChunk* a_data) {
-		double currValue;
+		double logScale, linScale;
 		int unitId, paramId;
-		GetArgs(a_data, 0, unitId, paramId, currValue);
-		a_circuit->setInternalParameter(unitId, paramId, currValue);
+		GetArgs(a_data, 0, unitId, paramId, logScale, linScale);
+		a_circuit->getUnit(unitId).getParameter(paramId).nudge(logScale, linScale);
 	};
 	m_vm->queueAction(msg);
 	m_isValueDirty = true;
@@ -170,7 +169,7 @@ void syn::UITextSlider::draw(NVGcontext* a_nvg) {
 }
 
 void syn::UITextSlider::_updateMinSize() {
-	setMinSize(m_row->minSize());
+	setMinSize(m_row->minSize().cwiseMin(m_textBox->minSize()));
 }
 
 void syn::UITextSlider::_onResize() {
