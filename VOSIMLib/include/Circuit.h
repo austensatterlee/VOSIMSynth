@@ -210,7 +210,7 @@ namespace syn
 
 	template <typename UID, typename PID, typename T>
 	bool Circuit::setInternalParameter(const UID& a_unitIdentifier, const PID& a_paramIdentifier, const T& a_value) {
-		return m_units[a_unitIdentifier]->setParameter(a_paramIdentifier, a_value);
+		return m_units[a_unitIdentifier]->setParameterValue(a_paramIdentifier, a_value);
 	};
 
 	template <typename UID, typename PID, typename T>

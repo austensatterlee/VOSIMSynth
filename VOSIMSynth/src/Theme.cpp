@@ -4,13 +4,13 @@
 namespace syn
 {
 	Theme::Theme(NVGcontext* ctx) {
-		mStandardFontSize = 16;
-		mButtonFontSize = 20;
-		mTextBoxFontSize = 20;
+		mStandardFontSize = 14;
+		mButtonFontSize = 14;
+		mTextBoxFontSize = 14;
 		mWindowCornerRadius = 2;
 		mWindowHeaderHeight = 20;
-		mWindowDropShadowSize = 5;
-		mButtonCornerRadius = 4;
+		mWindowDropShadowSize = 4;
+		mButtonCornerRadius = 2;
 
 		mDropShadow = Color(0, 128);
 		mTransparent = Color(0, 0);
@@ -46,7 +46,7 @@ namespace syn
 		mWindowPopupTransparent = Color(50, 0);
 
 		/* Text slider */
-		mTextSliderFontSize = 13;
+		mTextSliderFontSize = 14;
 
 		/* Port */
 		mPortFontSize = 12;

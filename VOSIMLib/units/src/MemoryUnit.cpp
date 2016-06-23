@@ -61,7 +61,7 @@ namespace syn
 			m_buffer.resize(requiredBufSize);
 		m_arraySize = m_buffer.size();
 		m_nBufSamples = a_nBufSamples;
-		m_curReadPhase = WRAP<double>(m_curWritePhase - m_nBufSamples, m_arraySize);
+		m_curReadPhase = WRAP<double>(m_curWritePhase- m_nBufSamples, m_arraySize);
 	}
 
 	void NSampleDelay::clearBuffer()
@@ -80,14 +80,15 @@ namespace syn
 			clearBuffer();
 		}
 
-		int writeIndex = m_curWritePhase;
-		m_buffer[writeIndex] = a_input;
-		m_curWritePhase = WRAP<double>(m_curWritePhase + 1.0, m_arraySize);
-
-		int rInd1 = int(m_curReadPhase);
-		int rInd2 = WRAP<int>(int(m_curReadPhase) + 1, m_arraySize);
+		// Read
+		int rInd1 = static_cast<int>(m_curReadPhase);
+		int rInd2 = WRAP<int>(rInd1 + 1, m_arraySize);
 		double output = LERP(m_buffer[rInd1], m_buffer[rInd2], m_curReadPhase - rInd1);
 		m_curReadPhase = WRAP<double>(m_curReadPhase + 1.0, m_arraySize);
+
+		// Write
+		m_buffer[static_cast<int>(m_curWritePhase)] = a_input;
+		m_curWritePhase = WRAP<double>(m_curWritePhase + 1.0, m_arraySize);
 		return output;
 	}
 

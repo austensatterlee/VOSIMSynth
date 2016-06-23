@@ -49,7 +49,7 @@ syn::UIComponent* syn::UIWindow::onMouseDown(const UICoord& a_relCursor, const V
 	if (child)
 		return child;
 
-	if (a_relCursor.localCoord().y() < theme()->mWindowHeaderHeight) {
+	if (a_relCursor.localCoord(this).y() < theme()->mWindowHeaderHeight) {
 		if (a_isDblClick) {
 			toggleCollapsed();
 		}
@@ -135,9 +135,10 @@ void syn::UIWindow::draw(NVGcontext* a_nvg) {
 	nvgBeginPath(a_nvg);
 	nvgRoundedRect(a_nvg, 0, 0, m_size.x(), hh, cr);
 	nvgStrokeColor(a_nvg, theme()->mWindowHeaderSepTop);
-	nvgScissor(a_nvg, 0, 0, m_size.x(), 0.5f);
+	nvgSave(a_nvg);
+	nvgIntersectScissor(a_nvg, 0, 0, m_size.x(), 0.5f);
 	nvgStroke(a_nvg);
-	nvgResetScissor(a_nvg);
+	nvgRestore(a_nvg);
 
 	nvgBeginPath(a_nvg);
 	nvgMoveTo(a_nvg, 0 + 0.5f, 0 + hh - 1.5f);

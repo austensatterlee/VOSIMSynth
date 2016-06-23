@@ -64,6 +64,10 @@ namespace syn
 		onNoteOff_();
 	}
 
+	void Unit::notifyParameterChanged(int a_id) {
+		onParamChange_(a_id);
+	}
+
 	double Unit::getFs() const {
 		return m_audioConfig.fs;
 	}
@@ -134,7 +138,12 @@ namespace syn
 	}
 
 	bool Unit::addParameter_(int a_id, const UnitParameter& a_param) {
-		return m_parameters.add(a_param.getName(), a_id, a_param);
+		bool retval = m_parameters.add(a_param.getName(), a_id, a_param);
+		if (retval) {
+			m_parameters[a_id].setParent(this);
+			m_parameters[a_id].setId(a_id);
+		}
+		return retval;
 	}
 
 	int Unit::addOutput_(const string& a_name) {
@@ -142,7 +151,12 @@ namespace syn
 	}
 
 	int Unit::addParameter_(const UnitParameter& a_param) {
-		return m_parameters.add(a_param.getName(), a_param);
+		int id = m_parameters.add(a_param.getName(), a_param);
+		if (id >= 0) {
+			m_parameters[id].setParent(this);
+			m_parameters[id].setId(id);
+		}
+		return id;
 	}
 
 	void Unit::_setParent(Circuit* a_new_parent) {
@@ -161,7 +175,7 @@ namespace syn
 	}
 
 	bool Unit::disconnectInput(int a_inputPort) {
-		bool retval = !isConnected(a_inputPort);
+		bool retval = isConnected(a_inputPort);
 		m_inputPorts[a_inputPort].src = nullptr;
 		if (retval) onInputDisconnection_(a_inputPort);
 		return retval;
@@ -169,11 +183,16 @@ namespace syn
 
 	Unit* Unit::clone() const {
 		Unit* unit = _clone();
-
+		// Copy name
 		unit->m_name = m_name;
+		// Copy midi status
 		unit->m_midiData = m_midiData;
-		unit->m_parameters = m_parameters;
-		unit->m_outputSignals = m_outputSignals;
+		// Copy parameter values
+		const int* indices = m_parameters.getIndices();
+		for(int i=0;i<m_parameters.size();i++) {
+			unit->m_parameters[indices[i]].setFromString(m_parameters[indices[i]].getValueString());
+		}
+		// Copy audio config data
 		unit->setFs(m_audioConfig.fs);
 		unit->setTempo(m_audioConfig.tempo);
 		return unit;

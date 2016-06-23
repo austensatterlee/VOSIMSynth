@@ -11,10 +11,6 @@ Eigen::Vector2i syn::UICoord::globalCoord() const {
 	return m_globalPt;
 }
 
-Eigen::Vector2i syn::UICoord::localCoord() const {
-	return m_referenceComponent ? m_globalPt - m_referenceComponent->getAbsPos() : m_globalPt;
-}
-
 Eigen::Vector2i syn::UICoord::localCoord(const UIComponent* a_refComponent) const {
 	return a_refComponent ? m_globalPt - a_refComponent->getAbsPos() : m_globalPt;
 }

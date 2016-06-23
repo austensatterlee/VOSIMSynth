@@ -33,9 +33,9 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn {
 
-	class ColorWheel : public UIComponent {
+	class UIColorWheel : public UIComponent {
 	public:
-		ColorWheel(VOSIMWindow *a_window, const Color& color = { 1.f, 0.f, 0.f, 1.f });
+		UIColorWheel(VOSIMWindow *a_window, const Color& color = { 1.f, 0.f, 0.f, 1.f });
 
 		/// Set the change callback
 		std::function<void(const Color &)> callback() const { return mCallback; }

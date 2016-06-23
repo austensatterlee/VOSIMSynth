@@ -59,6 +59,7 @@ namespace syn
 
 		void setCaption(const string& caption) {
 			mCaption = caption;
+			_updateMinSize();
 		}
 
 		const Color& backgroundColor() const {
@@ -83,6 +84,7 @@ namespace syn
 
 		void setIcon(int icon) {
 			mIcon = icon;
+			_updateMinSize();
 		}
 
 		int flags() const {
@@ -141,10 +143,13 @@ namespace syn
 
 		void setFontSize(int a_fontSize) {
 			m_fontSize = a_fontSize;
+			_updateMinSize();
 		}
 
 	protected:
 		void draw(NVGcontext* ctx) override;
+	private:
+		void _updateMinSize();
 	protected:
 		string mCaption;
 		int mIcon;

@@ -93,6 +93,8 @@ namespace syn
 
 		void noteOff(int a_note, int a_velocity);
 
+		void notifyParameterChanged(int a_id);
+
 		double getFs() const;
 
 		double getTempo() const;
@@ -118,7 +120,7 @@ namespace syn
 		const UnitParameter& getParameter(const ID& a_identifier) const;
 
 		template <typename ID, typename T>
-		bool setParameter(const ID& a_identifier, const T& a_value);
+		bool setParameterValue(const ID& a_identifier, const T& a_value);
 
 		template <typename ID, typename T>
 		bool setParameterNorm(const ID& a_identifier, const T& a_value);
@@ -254,7 +256,7 @@ namespace syn
 	void Unit::setOutputChannel_(const ID& a_id, const double& a_val)
 	{
 		m_outputSignals[a_id] = a_val;
-	};
+	}
 
 	template <typename ID>
 	bool Unit::hasParameter(const ID& a_paramId) const
@@ -263,35 +265,23 @@ namespace syn
 	}
 
 	template <typename ID, typename T>
-	bool Unit::setParameter(const ID& a_identifier, const T& a_value) {
-		if (m_parameters[a_identifier].set(a_value)) {
-			int id = m_parameters.find(a_identifier);
-			onParamChange_(id);
-			return true;
-		}
-		return false;
+	bool Unit::setParameterValue(const ID& a_identifier, const T& a_value) {
+		return m_parameters[a_identifier].set(a_value);
 	};
 
 	template <typename ID, typename T>
 	bool Unit::setParameterNorm(const ID& a_identifier, const T& a_value) {
-		if (m_parameters[a_identifier].setNorm(a_value)) {
-			int id = m_parameters.find(a_identifier);
-			onParamChange_(id);
-			return true;
-		}
-		return false;
+		return m_parameters[a_identifier].setNorm(a_value);
 	}
 
 	template <typename ID>
 	bool Unit::setParameterPrecision(const ID& a_identifier, int a_precision) {
-		m_parameters[a_identifier].setPrecision(a_precision);
-		return true;
+		return m_parameters[a_identifier].setPrecision(a_precision);
 	}
 
 	template <typename ID>
 	bool Unit::setParameterFromString(const ID& a_identifier, const string& a_value) {
-		m_parameters[a_identifier].setFromString(a_value);
-		return true;
+		return m_parameters[a_identifier].setFromString(a_value);
 	}
 
 	template <typename ID>

@@ -1,5 +1,5 @@
 ﻿#include "UIComponent.h"
-
+#include "UILayout.h"
 
 //#define DRAW_COMPONENT_BOUNDS
 
@@ -117,8 +117,10 @@ namespace syn
 		return true;
 	}
 
-	shared_ptr<UIComponent> UIComponent::getChild(int i) const {
-		return m_children[i];
+	shared_ptr<UIComponent> UIComponent::getChild(int i, const string& a_group) const {
+		if(a_group.empty())
+			return m_children[i];
+		return getChild(m_groupMap.at(a_group)[i]);
 	}
 
 	shared_ptr<UIComponent> UIComponent::getChild(const UIComponent* a_comp) const {
@@ -147,6 +149,29 @@ namespace syn
 
 	UIComponent* UIComponent::parent() const {
 		return m_parent;
+	}
+
+	UILayout* UIComponent::layout() const {
+		return m_layout.get();
+	}
+
+	void UIComponent::setLayout(UILayout* a_layout) {
+		m_layout = shared_ptr<UILayout>(a_layout);
+	}
+
+	void UIComponent::setLayout(shared_ptr<UILayout> a_layout) {
+		m_layout = a_layout;
+	}
+
+	void UIComponent::performLayout(NVGcontext* a_nvg) {
+		if (m_layout) {
+			m_layout->performLayout(a_nvg, this);
+		}
+		else {
+			for (auto c : m_children) {
+				c->performLayout(a_nvg);
+			}
+		}
 	}
 
 	shared_ptr<UIComponent> UIComponent::getSharedPtr() const
@@ -243,8 +268,7 @@ namespace syn
 	}
 
 	bool UIComponent::contains(const UICoord& a_pt) const {
-		UICoord relPt(a_pt, this);
-		return (relPt.localCoord().array() >= 0).all() && (relPt.localCoord().array() <= size().array()).all();
+		return (a_pt.localCoord(this).array() >= 0).all() && (a_pt.localCoord(this).array() <= size().array()).all();
 	}
 
 	UIComponent* UIComponent::findChild(const UICoord& a_pt, const string& a_filterGroup) const {
@@ -260,7 +284,7 @@ namespace syn
 		return nullptr;
 	}
 
-	UIComponent* UIComponent::findChildRecursive(const UICoord& a_pt) {
+	UIComponent* UIComponent::findChildRecursive(const UICoord& a_pt) const {
 		UICoord relPt(a_pt, this);
 		for (auto const& kv : m_ZPlaneMap) {
 			for (UIComponent* child : kv.second) {

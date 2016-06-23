@@ -50,7 +50,7 @@ syn::UITextSlider::UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a
 bool syn::UITextSlider::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl)) {
 		double currValue = m_param->getNorm();
-		double targetValue = (UICoord(a_relCursor,this).localCoord()[0]) * (1.0 / size()[0]);
+		double targetValue = (a_relCursor.localCoord(this)[0]) * (1.0 / size()[0]);
 		double error = currValue - targetValue;
 		double adjust_speed = 0.5;
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift))
@@ -169,7 +169,7 @@ void syn::UITextSlider::draw(NVGcontext* a_nvg) {
 }
 
 void syn::UITextSlider::_updateMinSize() {
-	setMinSize(m_row->minSize().cwiseMin(m_textBox->minSize()));
+	setMinSize(m_row->minSize().cwiseMax(m_textBox->minSize()));
 }
 
 void syn::UITextSlider::_onResize() {

@@ -7,17 +7,19 @@ syn::UILabel::UILabel(VOSIMWindow* a_window):
 	m_color(1.0f,1.0f,1.0f,1.0f),
 	m_fontSize(theme()->mStandardFontSize),
 	m_fontBlur(0),
-	m_align(NVG_ALIGN_LEFT | NVG_ALIGN_TOP)
-{}
+	m_align(NVG_ALIGN_LEFT | NVG_ALIGN_TOP) 
+{
+	_updateMinSize();	
+}
 
 void syn::UILabel::setText(const string& a_newText) {
 	m_text = a_newText;
-	setMinSize(_measureText());
+	_updateMinSize();
 }
 
 void syn::UILabel::setFontSize(float a_newFontSize) {
 	m_fontSize = a_newFontSize;
-	setMinSize(_measureText());
+	_updateMinSize();
 }
 
 void syn::UILabel::setFontBlur(float a_fontBlur) {
@@ -38,7 +40,7 @@ void syn::UILabel::setFontColor(const Color& a_newColor) {
 
 void syn::UILabel::setFontFace(int a_fontFace) {
 	m_fontFace = a_fontFace;
-	setMinSize(_measureText());
+	_updateMinSize();
 }
 
 void syn::UILabel::setAlignment(int a_newAlign) {
@@ -100,7 +102,7 @@ void syn::UILabel::draw(NVGcontext* a_nvg) {
 	nvgText(a_nvg, pos[0], pos[1], m_text.c_str(), nullptr);
 }
 
-Eigen::Vector2i syn::UILabel::_measureText() const {
+void syn::UILabel::_updateMinSize() {
 	float bounds[4];
 	NVGcontext* nvg = m_window->getContext();
 	nvgSave(nvg);
@@ -108,5 +110,5 @@ Eigen::Vector2i syn::UILabel::_measureText() const {
 	nvgTextBounds(nvg, 0, 0, m_text.c_str(), nullptr, bounds);
 	nvgRestore(nvg);
 	Vector2i textSize{bounds[2] - bounds[0],bounds[3] - bounds[1]};
-	return textSize;
+	setMinSize(textSize);
 }

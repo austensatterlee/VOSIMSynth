@@ -39,7 +39,7 @@ namespace syn {
 	}
 
 	bool UIPlot::onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
-		m_crosshairPos = UICoord(a_relCursor, this).localCoord();
+		m_crosshairPos = a_relCursor.localCoord(this);
 		_updateStatusLabel();
 		return true;
 	}
@@ -101,7 +101,7 @@ namespace syn {
 	}
 
 	void UIPlot::draw(NVGcontext* a_nvg) {
-		nvgScissor(a_nvg, 0.0f, 0.0f, size()[0], size()[1]);
+		nvgIntersectScissor(a_nvg, 0.0f, 0.0f, size()[0], size()[1]);
 
 		// Draw background
 		nvgBeginPath(a_nvg);
@@ -200,8 +200,6 @@ namespace syn {
 		nvgMoveTo(a_nvg, m_crosshairPos.x(), 0);
 		nvgLineTo(a_nvg, m_crosshairPos.x(), size().y());
 		nvgStroke(a_nvg);
-
-		nvgResetScissor(a_nvg);
 	}
 
 	void UIPlot::_onResize() {
@@ -217,6 +215,7 @@ namespace syn {
 		double coeff = m_autoAdjustSpeed / m_window->fps();
 		m_minBounds[1] = m_minBounds.y() + coeff * (minSetPoint - m_minBounds.y());
 		m_maxBounds[1] = m_maxBounds.y() + coeff * (maxSetPoint - m_maxBounds.y());
+		_updateStatusLabel();
 	}
 
 	void UIPlot::_updateStatusLabel() const {

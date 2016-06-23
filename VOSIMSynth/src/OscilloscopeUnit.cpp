@@ -74,7 +74,7 @@ namespace syn
 	void OscilloscopeUnit::_sync() {
 		m_syncCount++;
 		if (m_syncCount >= getParameter(m_pNumPeriods).getInt()) {
-			setParameter(m_pBufferSize, m_lastSync);
+			setParameterValue(m_pBufferSize, m_lastSync);
 			m_bufferIndex = 0;
 			m_lastSync = 0;
 			m_syncCount = 0;

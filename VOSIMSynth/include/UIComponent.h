@@ -58,7 +58,7 @@ namespace syn
 		bool removeChild(UIComponent* a_child);
 		bool removeChild(int a_index);
 
-		shared_ptr<UIComponent> getChild(int i) const;
+		shared_ptr<UIComponent> getChild(int i, const string& a_group="") const;
 		shared_ptr<UIComponent> getChild(const UIComponent* a_comp) const;
 		int getChildIndex(const UIComponent* a_comp) const;
 
@@ -68,12 +68,20 @@ namespace syn
 
 		UIComponent* parent() const;
 
+		UILayout* layout() const;
+
+		void setLayout(UILayout* a_layout);
+
+		void setLayout(shared_ptr<UILayout> a_layout);
+		virtual void performLayout(NVGcontext* a_nvg);
+
+
 		shared_ptr<UIComponent> getSharedPtr() const;
 
 		virtual bool contains(const UICoord& a_pt) const;
 
 		UIComponent* findChild(const UICoord& a_pt, const string& a_filterGroup="") const;
-		UIComponent* findChildRecursive(const UICoord& a_pt);
+		UIComponent* findChildRecursive(const UICoord& a_pt) const;
 
 		Vector2i getRelPos() const;
 
@@ -162,6 +170,7 @@ namespace syn
 	protected:
 		UIComponent* m_parent;
 		VOSIMWindow* m_window;
+		shared_ptr<UILayout> m_layout;
 		vector<shared_ptr<UIComponent> > m_children;
 		map<int, list<UIComponent*> > m_ZPlaneMap;
 		map<UIComponent*, int> m_reverseZPlaneMap;

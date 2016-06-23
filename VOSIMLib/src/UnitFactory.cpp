@@ -136,7 +136,7 @@ int syn::UnitFactory::loadUnit(ByteChunk* a_data, int a_startPos, Unit** a_unit,
 		startPos = a_data->Get<double>(&val, startPos);
 		startPos = a_data->Get<int>(&prec, startPos);
 		if (*a_unit && (*a_unit)->hasParameter(i)) {
-			(*a_unit)->setParameter(i, val);
+			(*a_unit)->setParameterValue(i, val);
 			(*a_unit)->setParameterPrecision(i, prec);
 		}
 	}

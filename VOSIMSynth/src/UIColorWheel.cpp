@@ -3,14 +3,14 @@
 #include <Eigen/Geometry>
 
 namespace syn {
-	ColorWheel::ColorWheel(VOSIMWindow *parent, const Color& rgb)
+	UIColorWheel::UIColorWheel(VOSIMWindow *parent, const Color& rgb)
 		: UIComponent(parent), mDragRegion(None) 
 	{
 		setColor(rgb);
 		setMinSize({ 100,100 });
 	}
 
-	void ColorWheel::draw(NVGcontext *ctx) {
+	void UIColorWheel::draw(NVGcontext *ctx) {
 		if (!visible())
 			return;
 
@@ -119,23 +119,23 @@ namespace syn {
 		nvgRestore(vg);
 	}
 
-	UIComponent* ColorWheel::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+	UIComponent* UIColorWheel::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 		if (!sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))
 			return nullptr;
 		mDragRegion = adjustPosition(a_relCursor);
 		return mDragRegion != None ? this : nullptr;
 	}
 
-	bool ColorWheel::onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
+	bool UIColorWheel::onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 		mDragRegion = None;
 		return true;
 	}
 
-	bool ColorWheel::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
+	bool UIColorWheel::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 		return adjustPosition(a_relCursor, mDragRegion) != None;
 	}
 
-	ColorWheel::Region ColorWheel::adjustPosition(const UICoord &a_relCoord, Region consideredRegions) {
+	UIColorWheel::Region UIColorWheel::adjustPosition(const UICoord &a_relCoord, Region consideredRegions) {
 		float x = a_relCoord.localCoord(this).x(),
 			y = a_relCoord.localCoord(this).y(),
 			w = size().x(),
@@ -210,7 +210,7 @@ namespace syn {
 		return None;
 	}
 
-	Color ColorWheel::hue2rgb(float h) {
+	Color UIColorWheel::hue2rgb(float h) {
 		float s = 1., v = 1.;
 
 		if (h < 0) h += 1;
@@ -234,14 +234,14 @@ namespace syn {
 		return{ r, g, b, 1.f };
 	}
 
-	Color ColorWheel::color() const {
+	Color UIColorWheel::color() const {
 		Color rgb = hue2rgb(mHue);
 		Color black{ 0.f, 0.f, 0.f, 1.f };
 		Color white{ 1.f, 1.f, 1.f, 1.f };
 		return rgb * (1 - mWhite - mBlack) + black * mBlack + white * mWhite;
 	}
 
-	void ColorWheel::setColor(const Color &rgb) {
+	void UIColorWheel::setColor(const Color &rgb) {
 		float r = rgb[0], g = rgb[1], b = rgb[2];
 
 		float max = std::max({ r, g, b });

@@ -35,12 +35,14 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "DSPMath.h"
 #include "Containers.h"
 #include "UICoord.h"
+#include "entypo.h"
 
 using namespace std;
 
 namespace syn
 {
 	class UIComponent;
+	class UILayout;
 	struct Theme;
 
 	class UIButton;
@@ -52,6 +54,8 @@ namespace syn
 	class UILabel;
 	class UITextBox;
 	class UITextSlider;
+	class UIDigitControl;
+	class UIColorWheel;
 	class UIUnitControl;
 	class UIUnitControlContainer;
 	class UIUnitPort;

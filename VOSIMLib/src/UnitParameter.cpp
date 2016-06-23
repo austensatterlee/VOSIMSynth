@@ -20,11 +20,13 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "UnitParameter.h"
 #include <DSPMath.h>
 #include <string>
+#include <Unit.h>
 
 namespace syn
 {
 	UnitParameter::UnitParameter() :
-		m_name(""),
+		m_name(""), 
+		m_id(-1),
 		m_value(0),
 		m_defaultValue(0),
 		m_min(0),
@@ -35,26 +37,19 @@ namespace syn
 		m_type(Null),
 		m_unitsType(None),
 		m_controlType(Bounded),
-		m_displayPrecision(0) { }
+		m_displayPrecision(0),
+		m_parent(nullptr) { }
 
 	UnitParameter::UnitParameter(const string& a_name, bool a_defaultValue) :
-		m_name(a_name),
-		m_value(a_defaultValue),
-		m_defaultValue(a_defaultValue),
-		m_min(0),
-		m_max(1),
-		m_logMin(0),
-		m_logRange(0),
-		m_isVisible(true),
-		m_type(Bool),
-		m_unitsType(None),
-		m_controlType(Bounded),
-		m_displayPrecision(0),
-		m_displayTexts({{0,"Off"},{1,"On"}}) { }
+		UnitParameter(a_name, { "Off","On" }, { 0,1 }, 0)
+	{
+		m_type = Bool;
+	}
 
 	UnitParameter::UnitParameter(const string& a_name, int a_min, int a_max,
 	                             int a_defaultValue, EUnitsType a_unitsType) :
 		m_name(a_name),
+		m_id(-1),
 		m_value(a_defaultValue),
 		m_defaultValue(a_defaultValue),
 		m_min(a_min),
@@ -65,13 +60,16 @@ namespace syn
 		m_type(Int),
 		m_unitsType(a_unitsType),
 		m_controlType(Bounded),
-		m_displayPrecision(0) { }
+		m_displayPrecision(0),
+		m_parent(nullptr)
+	{ }
 
 	UnitParameter::UnitParameter(const string& a_name,
 	                             const vector<string>& a_optionNames,
 	                             const vector<double>& a_optionValues,
 	                             int a_defaultOption, EUnitsType a_unitsType) :
 		m_name(a_name),
+		m_id(-1),
 		m_min(0),
 		m_max(a_optionNames.size() - 1),
 		m_logMin(0),
@@ -80,7 +78,9 @@ namespace syn
 		m_type(Enum),
 		m_unitsType(a_unitsType),
 		m_controlType(Bounded),
-		m_displayPrecision(0) {
+		m_displayPrecision(0),
+		m_parent(nullptr)
+	{
 		m_defaultValue = a_defaultOption;
 		m_value = m_defaultValue;
 		double optionValue;
@@ -97,6 +97,7 @@ namespace syn
 	UnitParameter::UnitParameter(const string& a_name, double a_min, double a_max,
 	                             double a_defaultValue, EUnitsType a_unitsType, int a_displayPrecision) :
 		m_name(a_name),
+		m_id(-1),
 		m_value(a_defaultValue),
 		m_defaultValue(a_defaultValue),
 		m_min(a_min),
@@ -107,8 +108,8 @@ namespace syn
 		m_type(Double),
 		m_unitsType(a_unitsType),
 		m_controlType(Bounded),
-		m_displayPrecision(a_displayPrecision) 
-	{ }
+		m_displayPrecision(a_displayPrecision),
+		m_parent(nullptr) { }
 
 	void UnitParameter::reset() {
 		m_value = m_defaultValue;
@@ -116,6 +117,22 @@ namespace syn
 
 	const string& UnitParameter::getName() const {
 		return m_name;
+	}
+
+	int UnitParameter::getId() const {
+		return m_id;
+	}
+
+	void UnitParameter::setId(int a_id) {
+		m_id = a_id;
+	}
+
+	Unit* UnitParameter::getParent() const {
+		return m_parent;
+	}
+
+	void UnitParameter::setParent(Unit* a_newParent) {
+		m_parent = a_newParent;
 	}
 
 	UnitParameter::EParamType UnitParameter::getType() const {
@@ -149,9 +166,12 @@ namespace syn
 		return m_displayPrecision;
 	}
 
-	void UnitParameter::setPrecision(int a_precision) {
-		if (a_precision >= 0 && m_type == Double)
+	bool UnitParameter::setPrecision(int a_precision) {
+		if (a_precision >= 0 && m_type == Double && a_precision!=m_displayPrecision) {
 			m_displayPrecision = a_precision;
+			return true;
+		}
+		return false;
 	}
 
 	UnitParameter::EControlType UnitParameter::getControlType() const {
@@ -180,7 +200,7 @@ namespace syn
 		if (m_value > 0)
 			intvalue = (m_value - intvalue >= 0.5) ? intvalue + 1 : intvalue;
 		else
-			intvalue = (intvalue - m_value >= 0.5) ? intvalue - 1 : intvalue;
+			intvalue = (m_value - intvalue <= -0.5) ? intvalue - 1 : intvalue;
 		return intvalue;
 	}
 
@@ -194,14 +214,20 @@ namespace syn
 	}
 
 	double UnitParameter::getEnum(int a_index) const {
-		a_index = CLAMP<int>(a_index, 0, m_displayTexts.size());
+		a_index = CLAMP<int>(a_index, 0, m_displayTexts.size()-1);
 		return m_displayTexts[a_index].m_value;
 	}
 
 	bool UnitParameter::set(double a_value) {
 		a_value = CLAMP<double>(a_value, m_min, m_max);
-		m_value = a_value;
-		return true;
+		if (m_value != a_value) {
+			m_value = a_value;
+			if (m_parent) {
+				m_parent->notifyParameterChanged(m_id);
+			}
+			return true;
+		}
+		return false;
 	}
 
 	double UnitParameter::getNorm() const {
@@ -243,17 +269,15 @@ namespace syn
 					int newParamPrecision = static_cast<int>(num_digits) - static_cast<int>(decimal_pos) - 1;
 					setPrecision(newParamPrecision);
 				}else {
-					setPrecision(1);
+					setPrecision(0);
 				}
-				set(value);
-				return true;
+				return set(value);
 			} catch (std::invalid_argument&) {
 				// Try to match string to an enum option
 				int i = 0;
 				for (const DisplayText& disp : m_displayTexts) {
 					if (disp.m_text == a_str) {
-						set(i);
-						return true;
+						return set(i);
 					}
 					i++;
 				}
@@ -263,8 +287,7 @@ namespace syn
 			int i = 0;
 			for (const DisplayText& disp : m_displayTexts) {
 				if (disp.m_text == a_str) {
-					set(i);
-					return true;
+					return set(i);
 				}
 				i++;
 			}
@@ -272,9 +295,11 @@ namespace syn
 		return false;
 	}
 
-	void UnitParameter::nudge(double a_logAmt, double a_linAmt) {
+	bool UnitParameter::nudge(double a_logAmt, double a_linAmt) {
 		double shiftamt = pow(10.0, -m_displayPrecision + a_logAmt) * a_linAmt;
-		set(get<double>() + shiftamt);
+		if (m_type == Enum)
+			return set(getInt() + shiftamt);
+		return set(get<double>() + shiftamt);
 	}
 
 	string UnitParameter::getValueString() const {

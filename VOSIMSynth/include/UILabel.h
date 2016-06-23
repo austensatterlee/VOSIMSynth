@@ -66,7 +66,7 @@ namespace syn
 		void draw(NVGcontext* a_nvg) override;
 
 	private:
-		Vector2i _measureText() const;
+		void _updateMinSize();
 
 	private:
 		string m_text;

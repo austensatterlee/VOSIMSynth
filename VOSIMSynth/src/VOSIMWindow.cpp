@@ -154,9 +154,10 @@ void syn::VOSIMWindow::_initialize() {
 }
 
 void syn::VOSIMWindow::_runLoop() {
+	double cpuStartTime = m_timer.getElapsedTime().asSeconds();
 	m_sfmlWindow->setActive(true); 
 
-	Color bgColor = colorFromHSL(0.09f, 1.0f, 0.10f);
+	Color bgColor = colorFromHSL(0.9f, 0.6f, 0.22f);
 
 	glViewport(0, 0, getSize()[0], getSize()[1]);
 	glClearColor(bgColor.r(), bgColor.g(), bgColor.b(), 1.0f);
@@ -175,10 +176,10 @@ void syn::VOSIMWindow::_runLoop() {
 
 	m_sfmlWindow->setActive(false);
 
-	double dCpuTime = m_timer.getElapsedTime().asSeconds();
-	m_fps = 1. / dCpuTime;
-	m_timer.reset(true);
-	updateGraph(&m_fpsGraph, dCpuTime);
+	double dCpuTime = m_timer.getElapsedTime().asSeconds() - cpuStartTime;
+	double fps = 1. / dCpuTime;
+	m_fps = m_fps + 0.5*(fps - m_fps);
+	updateGraph(&m_fpsGraph, 1./m_fps);
 }
 
 void syn::VOSIMWindow::_handleEvents() {
@@ -239,8 +240,9 @@ void syn::VOSIMWindow::_handleEvents() {
 		break;
 		case Event::MouseButtonPressed:
 		{
-			bool isDblClick = (m_timer.getElapsedTime().asSeconds() - m_lastClick.time.asSeconds() < 0.125);
-			isDblClick &= (cursorPos() - Vector2i{ m_lastClick.data.x, m_lastClick.data.y }).norm() <= 2.0;
+			float clickTime = m_timer.getElapsedTime().asSeconds() - m_lastClick.time.asSeconds();
+			float clickDist = (cursorPos().cast<float>() - Vector2f{ m_lastClick.data.x, m_lastClick.data.y }).norm();
+			bool isDblClick = clickTime < 0.05 && clickDist <= 3.0;
 			m_draggingComponent = m_root->onMouseDown(UICoord(cursorPos()), diffCursorPos(), isDblClick);
 			if (m_draggingComponent == m_root)
 				m_draggingComponent = nullptr;

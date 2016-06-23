@@ -109,6 +109,7 @@ namespace syn
 		}
 
 		while (m_allVoices.size() > a_newMax) {
+			delete m_allVoices.back();
 			m_allVoices.pop_back();
 		}
 

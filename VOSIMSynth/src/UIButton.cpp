@@ -8,8 +8,10 @@ namespace syn
 		: UIComponent(a_window), mCaption(caption), mIcon(icon),
 		  mIconPosition(IconPosition::LeftCentered), mPushed(false),
 		  mFlags(NormalButton), mBackgroundColor(Color(0, 0)),
-		  mTextColor(Color(0, 0)), mEnabled(true) {
+		  mTextColor(Color(0, 0)), mEnabled(true) 
+	{
 		m_fontSize = theme()->mButtonFontSize;
+		_updateMinSize();
 	}
 
 	UIComponent* UIButton::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
@@ -139,7 +141,7 @@ namespace syn
 
 			float iw, ih = fontSize;
 			if (nvgIsFontIcon(mIcon)) {
-				ih *= 1.5f;
+				ih *= 1.5;
 				nvgFontSize(ctx, ih);
 				nvgFontFace(ctx, "icons");
 				iw = nvgTextBounds(ctx, 0, 0, icon.data(), nullptr, nullptr);
@@ -185,5 +187,31 @@ namespace syn
 		nvgText(ctx, textPos.x(), textPos.y(), mCaption.c_str(), nullptr);
 		nvgFillColor(ctx, textColor);
 		nvgText(ctx, textPos.x(), textPos.y() + 1, mCaption.c_str(), nullptr);
+	}
+
+	void UIButton::_updateMinSize() {
+		NVGcontext* nvg = m_window->getContext();
+		int fontSize = m_fontSize == -1 ? theme()->mButtonFontSize : m_fontSize;
+		nvgFontSize(nvg, fontSize);
+		nvgFontFace(nvg, "sans-bold");
+		float tw = nvgTextBounds(nvg, 0, 0, mCaption.c_str(), nullptr, nullptr);
+		float iw = 0.0f, ih = fontSize;
+
+		if (mIcon) {
+			if (nvgIsFontIcon(mIcon)) {
+				ih *= 1.5;
+				nvgFontFace(nvg, "icons");
+				nvgFontSize(nvg, ih);
+				iw = nvgTextBounds(nvg, 0, 0, utf8(mIcon).data(), nullptr, nullptr)
+					+ size().y() * 0.1f;
+			}
+			else {
+				int w, h;
+				ih *= 0.9f;
+				nvgImageSize(nvg, mIcon, &w, &h);
+				iw = w * ih / h;
+			}
+		}
+		setMinSize({(int)(tw + iw), fontSize});
 	}
 }

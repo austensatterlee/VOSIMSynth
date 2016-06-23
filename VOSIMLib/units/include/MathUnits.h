@@ -287,12 +287,12 @@ namespace syn
 
 		PitchToFreqUnit(const PitchToFreqUnit& a_rhs) : 
 			PitchToFreqUnit(a_rhs.getName())
-		{		
+		{
 		}
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override {
-			setOutputChannel_(0,pitchToFreq(getInputValue(0)));
+			setOutputChannel_(0,pitchToFreq(128*getInputValue(0)));
 		}
 
 	private:

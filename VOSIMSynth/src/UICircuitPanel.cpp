@@ -39,6 +39,8 @@ syn::UICircuitPanel::UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, U
 	vector<UIUnitPort*>& outputPorts = m_outputs->m_outPorts;
 	outputPorts.clear();
 	m_outputs->m_bodyRow->removeChild(m_outputs->m_cols[1]);
+
+	setMinSize({ 400, 400 });
 }
 
 syn::UIUnitControlContainer* syn::UICircuitPanel::getUnit(const UICoord& a_absPt) const {
@@ -216,6 +218,7 @@ bool syn::UICircuitPanel::onMouseDrag(const UICoord& a_relCursor, const Vector2i
 void syn::UICircuitPanel::draw(NVGcontext* a_nvg) {}
 
 void syn::UICircuitPanel::setChildrenStyles(NVGcontext* a_nvg) {
+	nvgIntersectScissor(a_nvg, 0.0f, 0.0f, size()[0], size()[1]);
 }
 
 void syn::UICircuitPanel::onAddConnection_(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort) {

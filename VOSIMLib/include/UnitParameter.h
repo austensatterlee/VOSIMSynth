@@ -31,6 +31,8 @@ using std::vector;
 
 namespace syn
 {
+	class Unit;
+
 	class UnitParameter
 	{
 	public:
@@ -72,6 +74,10 @@ namespace syn
 		void reset();
 
 		const string& getName() const;
+		int getId() const;
+		void setId(int a_id);
+		Unit* getParent() const;
+		void setParent(Unit* a_newParent);
 
 		EParamType getType() const;
 
@@ -86,7 +92,7 @@ namespace syn
 		double getDefaultValue() const;
 
 		int getPrecision() const;
-		void setPrecision(int a_precision);
+		bool setPrecision(int a_precision);
 
 		EControlType getControlType() const;
 		void setControlType(EControlType a_newControlType);
@@ -103,7 +109,7 @@ namespace syn
 		 */
 		bool setNorm(double a_norm_value);
 		bool setFromString(const string& a_str);
-		void nudge(double a_logAmt, double a_linAmt);
+		bool nudge(double a_logAmt, double a_linAmt);
 
 		/**
 		 * Automatically retrieves the parameter value according to its type.
@@ -125,6 +131,7 @@ namespace syn
 		string getUnitsString() const;
 	private:
 		string m_name;
+		int m_id;
 		double m_value, m_defaultValue;
 		double m_min, m_max;
 		double m_logMin, m_logRange;
@@ -133,6 +140,7 @@ namespace syn
 		EUnitsType m_unitsType;
 		EControlType m_controlType;
 		int m_displayPrecision;
+		Unit* m_parent;
 
 		struct DisplayText
 		{

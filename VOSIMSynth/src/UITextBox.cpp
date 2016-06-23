@@ -39,7 +39,7 @@ namespace syn
 
 	void UITextBox::updateMinSize_() {
 		NVGcontext* ctx = m_window->getContext();
-		Vector2i minsize(0, mFontSize * 1.4f);
+		Vector2i minsize(0, mFontSize);
 
 		float uw = 0;
 		if (mUnitsImage > 0) {
@@ -57,8 +57,6 @@ namespace syn
 	}
 
 	void UITextBox::draw(NVGcontext* ctx) {
-		UIComponent::draw(ctx);
-
 		NVGpaint bg = nvgBoxGradient(ctx,
 		                             0 + 1, 0 + 1 + 1.0f, size().x() - 2, size().y() - 2,
 		                             3, 4, Color(255, 32), Color(32, 32));
@@ -88,7 +86,7 @@ namespace syn
 
 		nvgFontSize(ctx, mFontSize);
 		nvgFontFace(ctx, "sans");
-		Vector2i drawPos(0, 0 + size().y() * 0.5f + 1);
+		Vector2i drawPos(0, 0 + size().y() * 0.5f);
 
 		float xSpacing = size().y() * 0.3f;
 
@@ -134,15 +132,14 @@ namespace syn
 		}
 
 		nvgFontSize(ctx, mFontSize);
-		nvgFillColor(ctx,
-		             mEnabled ? theme()->mTextColor : theme()->mDisabledTextColor);
+		nvgFillColor(ctx, mEnabled ? theme()->mTextColor : theme()->mDisabledTextColor);
 
 		// clip visible text area
 		float clipX = 0 + xSpacing - 1.0f;
 		float clipY = 0 + 1.0f;
 		float clipWidth = size().x() - unitWidth - 2 * xSpacing + 2.0f;
 		float clipHeight = size().y() - 3.0f;
-		nvgScissor(ctx, clipX, clipY, clipWidth, clipHeight);
+		nvgIntersectScissor(ctx, clipX, clipY, clipWidth, clipHeight);
 
 		Vector2i oldDrawPos(drawPos);
 		drawPos.x() += mTextOffset;
@@ -214,14 +211,12 @@ namespace syn
 				nvgStroke(ctx);
 			}
 		}
-
-		nvgResetScissor(ctx);
 	}
 
 	UIComponent* UITextBox::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 
 		if (mEditable && sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-			mMouseDownPos = UICoord(a_relCursor,this).localCoord();
+			mMouseDownPos = a_relCursor.localCoord(this);
 
 			if (a_isDblClick) {
 				/* Double-click: select all text */
@@ -242,7 +237,7 @@ namespace syn
 
 	bool UITextBox::onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 		if (mEditable && focused()) {
-			mMousePos = UICoord(a_relCursor, this).localCoord();
+			mMousePos = a_relCursor.localCoord(this);
 			return true;
 		}
 		return false;
@@ -250,7 +245,7 @@ namespace syn
 
 	bool UITextBox::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 		if (mEditable && focused() && a_diffCursor.squaredNorm() >= 1) {
-			mMouseDragPos = UICoord(a_relCursor, this).localCoord();
+			mMouseDragPos = a_relCursor.localCoord(this);
 			return true;
 		}
 		return false;

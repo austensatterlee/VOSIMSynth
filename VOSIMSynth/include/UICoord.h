@@ -48,7 +48,6 @@ namespace syn {
 		 */
 		UICoord(const UICoord& a_coord, const UIComponent* a_referenceComponent);
 		Eigen::Vector2i globalCoord() const;
-		Eigen::Vector2i localCoord() const;
 		Eigen::Vector2i localCoord(const UIComponent* a_refComponent) const;
 		UICoord toComponent(const UIComponent* a_refComponent) const;
 		const UIComponent* refComponent() const;

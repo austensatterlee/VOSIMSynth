@@ -29,7 +29,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <map>
 #include <Containers.h>
 
-#define MAX_VOICEMANAGER_MSG_QUEUE_SIZE 64
+#define MAX_VOICEMANAGER_MSG_QUEUE_SIZE 1024
 
 using std::map;
 using std::string;
@@ -55,10 +55,9 @@ namespace syn
 	public:
 		enum VoiceSelectionPolicy
 		{
-			LOW,
+			LOW = 0,
 			HIGH,
-			OLD,
-			NEW
+			OLD
 		};
 
 	public:
