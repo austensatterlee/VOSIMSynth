@@ -3,7 +3,7 @@
 
 set<string> syn::UnitFactory::getGroupNames() const {
 	set<string> groupnames;
-	for (string groupname : m_group_names) {
+	for (const string& groupname : m_group_names) {
 		if (groupname != "")
 			groupnames.insert(groupname);
 	}
@@ -12,16 +12,32 @@ set<string> syn::UnitFactory::getGroupNames() const {
 
 vector<string> syn::UnitFactory::getPrototypeNames(const string& group) const {
 	vector<string> names;
-	for (FactoryPrototype* prototype : m_prototypes) {
-		if (prototype->group_name == group) {
-			names.push_back(prototype->name);
+	for (const FactoryPrototype& prototype : m_prototypes) {
+		if (prototype.group_name == group) {
+			names.push_back(prototype.name);
 		}
 	}
 	return names;
 }
 
+vector<string> syn::UnitFactory::getPrototypeNames() const {
+	vector<string> names;
+	for (const FactoryPrototype& prototype : m_prototypes) {
+		names.push_back(prototype.name);
+	}
+	return names;
+}
+
+const syn::FactoryPrototype* syn::UnitFactory::getFactoryPrototype(const string& a_prototypeName) const {
+	for (const FactoryPrototype& prototype : m_prototypes) {
+		if (prototype.name == a_prototypeName)
+			return &prototype;
+	}
+	return nullptr;
+}
+
 syn::Unit* syn::UnitFactory::createUnit(int a_protoNum, const string& a_name) {
-	Unit* unit = m_prototypes[a_protoNum]->prototype->clone();
+	Unit* unit = m_prototypes[a_protoNum].prototype->clone();
 
 	// Generate default name
 	string newname;
@@ -31,9 +47,9 @@ syn::Unit* syn::UnitFactory::createUnit(int a_protoNum, const string& a_name) {
 	else {
 		char namebuf[MAX_UNIT_NAME_LEN];
 		do {
-			snprintf(namebuf, 256, "%s_%d", unit->getName().c_str(), m_prototypes[a_protoNum]->build_count);
+			snprintf(namebuf, 256, "%s_%d", unit->getName().c_str(), m_prototypes[a_protoNum].build_count);
 			newname = namebuf;
-			m_prototypes[a_protoNum]->build_count++;
+			m_prototypes[a_protoNum].build_count++;
 		} while (m_generatedNameHistory.find(newname) != m_generatedNameHistory.end());
 	}
 
@@ -63,8 +79,8 @@ bool syn::UnitFactory::hasClassId(unsigned a_classIdentifier) const {
 
 bool syn::UnitFactory::hasClassId(string a_protoName) const {
 	int i = 0;
-	for (FactoryPrototype* prototype : m_prototypes) {
-		if (prototype->name == a_protoName) {
+	for (const FactoryPrototype& prototype : m_prototypes) {
+		if (prototype.name == a_protoName) {
 			return true;
 		}
 		i++;
@@ -73,11 +89,11 @@ bool syn::UnitFactory::hasClassId(string a_protoName) const {
 }
 
 unsigned syn::UnitFactory::getClassId(string a_protoName) const {
-	return m_prototypes[getPrototypeIdx_(a_protoName)]->prototype->getClassIdentifier();
+	return m_prototypes[getPrototypeIdx_(a_protoName)].prototype->getClassIdentifier();
 }
 
 unsigned syn::UnitFactory::getClassId(int a_protoNum) const {
-	return m_prototypes[a_protoNum]->prototype->getClassIdentifier();
+	return m_prototypes[a_protoNum].prototype->getClassIdentifier();
 }
 
 unsigned syn::UnitFactory::getClassId(unsigned a_protoNum) {
@@ -85,8 +101,8 @@ unsigned syn::UnitFactory::getClassId(unsigned a_protoNum) {
 }
 
 void syn::UnitFactory::resetBuildCounts() {
-	for (FactoryPrototype* prototype : m_prototypes) {
-		prototype->build_count = 0;
+	for (FactoryPrototype& prototype : m_prototypes) {
+		prototype.build_count = 0;
 	}
 	m_generatedNameHistory.clear();
 }
@@ -153,8 +169,8 @@ int syn::UnitFactory::loadUnit(ByteChunk* a_data, int a_startPos, Unit** a_unit,
 
 int syn::UnitFactory::getPrototypeIdx_(const string& a_name) const {
 	int i = 0;
-	for (FactoryPrototype* prototype : m_prototypes) {
-		if (prototype->name == a_name) {
+	for (const FactoryPrototype& prototype : m_prototypes) {
+		if (prototype.name == a_name) {
 			return i;
 		}
 		i++;

@@ -248,22 +248,16 @@ namespace syn
 		RTMessage* msg;
 		while (m_queuedActions.pop(msg)) {
 			_processAction(msg);
+			delete msg;
 		}
 	}
 
 	void VoiceManager::_processAction(RTMessage* a_msg) {
-		Circuit* voice;
 		// Apply action to all voices
-		for (int i = 0; i <= m_maxVoices; i++) {
-			if (i == m_maxVoices) { // Reserve last loop for applying action to prototype voice
-				voice = m_instrument;
-			}
-			else {
-				voice = m_allVoices[i];
-			}
-			a_msg->action(voice, i == m_maxVoices, &a_msg->data);
+		for (int i = 0; i < m_maxVoices; i++) {
+			a_msg->action(m_allVoices[i], false, &a_msg->data);
 		}
-		delete a_msg;
+		a_msg->action(m_instrument, true, &a_msg->data);
 	}
 
 	const Circuit* VoiceManager::getPrototypeCircuit() const {

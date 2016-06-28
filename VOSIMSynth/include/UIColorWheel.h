@@ -35,7 +35,7 @@ namespace syn {
 
 	class UIColorWheel : public UIComponent {
 	public:
-		UIColorWheel(VOSIMWindow *a_window, const Color& color = { 1.f, 0.f, 0.f, 1.f });
+		UIColorWheel(MainWindow *a_window, const Color& color = { 1.f, 0.f, 0.f, 1.f });
 
 		/// Set the change callback
 		std::function<void(const Color &)> callback() const { return mCallback; }

@@ -49,21 +49,24 @@ namespace syn
 	class UICell;
 	class UICol;
 	class UIRow;
-	class UICircuitPanel;
-	class UIDefaultUnitControl;
 	class UILabel;
 	class UITextBox;
 	class UITextSlider;
 	class UIDigitControl;
 	class UIColorWheel;
 	class UIUnitControl;
-	class UIUnitControlContainer;
+	class UIDefaultUnitControl;
+	class UIUnitContainer;
+	class UIDefaultUnitContainer;
 	class UIUnitPort;
-	class UIUnitSelector;
 	class UIWindow;
 	class UIWire;
 	class UIPlot;
-	class DefaultUnitControl;
+
+	// VOSIMSynth specific:
+	class UICircuitPanel;
+	class UIControlPanel;
+	class UIUnitSelector;
 
 	using Eigen::Vector2f;
 	using Eigen::Vector3f;

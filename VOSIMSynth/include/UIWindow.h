@@ -35,11 +35,9 @@ namespace syn
 	{
 	public:
 
-		UIWindow(VOSIMWindow* a_window, const string& a_title = "Untitled");
+		UIWindow(MainWindow* a_window, const string& a_title = "Untitled");
 
 		void addChildToHeader(UIComponent* a_newChild) const;
-
-		void addChildToBody(UIComponent* a_newChild) const;
 
 		bool onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
 
@@ -47,9 +45,7 @@ namespace syn
 
 		void notifyChildResized(UIComponent* a_child) override;
 
-		void toggleCollapsed();
-		void collapse();
-		void expand();
+		void lockPosition(bool a_lockPosition);
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 	private:
@@ -59,8 +55,7 @@ namespace syn
 		UICol* m_col;
 		UIRow* m_bodyRow;
 		UIRow* m_headerRow;
-		bool m_isCollapsed;
-		Vector2i m_oldSize, m_oldMinSize;
+		bool m_isLocked;
 	};
 }
 #endif

@@ -2,6 +2,18 @@
 #include "UnitFactory.h"
 #include "Theme.h"
 
+syn::UIUnitSelector::UIUnitSelector(MainWindow* a_window, UnitFactory* a_unitFactory) :
+	UIWindow{a_window, "Unit Selector"},
+	m_autoWidth(0),
+	m_autoHeight(0),
+	m_currGroup(-1),
+	m_currPrototype(-1),
+	m_highlightedRow(-1),
+	m_unitFactory(a_unitFactory) 
+{
+	lockPosition(true);
+}
+
 syn::UIComponent* syn::UIUnitSelector::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	int row = 0;
 	int group = 0;
@@ -44,7 +56,7 @@ bool syn::UIUnitSelector::onMouseMove(const UICoord& a_relCursor, const Vector2i
 	Vector2i cursor = a_relCursor.localCoord(this);
 	int groupFontSize = theme()->mUnitSelectorGroupFontSize;
 	int protoFontSize = theme()->mUnitSelectorProtoFontSize;
-	int rowPix = 0;
+	int rowPix = theme()->mWindowHeaderHeight;
 	for (string gName : gNames) {
 		vector<string> pNames = m_unitFactory->getPrototypeNames(gName);
 		rowPix += groupFontSize;
@@ -69,6 +81,7 @@ bool syn::UIUnitSelector::onMouseMove(const UICoord& a_relCursor, const Vector2i
 }
 
 void syn::UIUnitSelector::draw(NVGcontext* a_nvg) {
+	UIWindow::draw(a_nvg);
 	int groupFontSize = theme()->mUnitSelectorGroupFontSize;
 	int protoFontSize = theme()->mUnitSelectorProtoFontSize;
 
@@ -79,7 +92,7 @@ void syn::UIUnitSelector::draw(NVGcontext* a_nvg) {
 	int row = 0;
 	int group = 0;
 	set<string> gNames = m_unitFactory->getGroupNames();
-	m_autoHeight = 0;
+	m_autoHeight = theme()->mWindowHeaderHeight;
 	m_autoWidth = 0;
 	for (string gName : gNames) {
 		vector<string> pNames = m_unitFactory->getPrototypeNames(gName);
@@ -108,5 +121,4 @@ void syn::UIUnitSelector::draw(NVGcontext* a_nvg) {
 		group++;
 	}
 	setMinSize(Vector2i{m_autoWidth, m_autoHeight});
-	setSize(Vector2i{m_autoWidth, m_autoHeight});
 }

@@ -18,46 +18,55 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
- *  \file UIDigitControl.h
+ *  \file MemoryPool.h
  *  \brief
  *  \details
  *  \author Austen Satterlee
- *  \date 05/2016
+ *  \date 06/2016
  */
 
-#ifndef __UIDIGITCONTROL__
-#define __UIDIGITCONTROL__
+#ifndef __MEMORYPOOL__
+#define __MEMORYPOOL__
+#include <vector>
 
-#include "UIComponent.h"
-
-namespace syn {
-	class UIDigitControl : public UIComponent
+class MemoryPool
+{
+	struct Chunk
 	{
-	public:
-		UIDigitControl(MainWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId);
+		size_t size;
+		uint8_t* addr;
+		bool isFree;
+		Chunk* next;
+		Chunk* prev;
 
-		void setNumDigits(int a_numDigits);
-
-		void setValue(const string& a_num);
-
-		double getValue() const;
-
-		int getDigit(int a_digit);
-
-		void setDigit(int a_digit, int a_value);
-	private:
-		int m_decimalLoc;
-
-		string m_value;
-		vector<UITextBox*> m_textBoxes;
-		vector<UIButton*> m_upArrows;
-		vector<UIButton*> m_downArrows;
-		UIRow* m_row;
-		vector<UICol*> m_digitCols;
-
-		VoiceManager* m_vm;
-		int m_unitId, m_paramId;
+		~Chunk();
 	};
-}
+
+	struct ChunkSortBySize
+	{
+		bool operator ()(const Chunk& a_lhs, const Chunk& a_rhs) const;
+	};
+
+	struct ChunkSortByAddr
+	{
+		bool operator ()(const Chunk& a_lhs, const Chunk& a_rhs) const;
+	};
+
+	std::vector<uint8_t> m_bytes;
+	std::vector<Chunk*> m_freeChunks;
+	std::vector<Chunk*> m_usedChunks;
+	Chunk m_head;
+	int m_bytesUsed;
+public:
+	MemoryPool(size_t a_numBytes);
+
+	virtual ~MemoryPool();
+
+	void* allocate(size_t a_numBytes);
+
+	void free(void* a_ptr);
+private:
+	void _joinFreeChunks(Chunk* a_chunk);
+};
 
 #endif

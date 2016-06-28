@@ -41,7 +41,7 @@ namespace syn
 			Right
 		};
 
-		UITextBox(VOSIMWindow* a_window, const string& value = "Untitled");
+		UITextBox(MainWindow* a_window, const string& value = "Untitled");
 
 		bool editable() const {
 			return mEditable;
@@ -170,7 +170,7 @@ namespace syn
 	class UIIntBox : public UITextBox
 	{
 	public:
-		UIIntBox(VOSIMWindow* a_window, Scalar value = (Scalar)0) : UITextBox(a_window) {
+		UIIntBox(MainWindow* a_window, Scalar value = (Scalar)0) : UITextBox(a_window) {
 			setDefaultValue("0");
 			setFormat(is_signed<Scalar>::value ? "[-]?[0-9]*" : "[0-9]*");
 			UIIntBox<Scalar>::setValue(value);
@@ -207,7 +207,7 @@ namespace syn
 	class UIFloatBox : public UITextBox
 	{
 	public:
-		UIFloatBox(VOSIMWindow* a_window, Scalar value = (Scalar) 0.f) : UITextBox(a_window) {
+		UIFloatBox(MainWindow* a_window, Scalar value = (Scalar) 0.f) : UITextBox(a_window) {
 			mNumberFormat = sizeof(Scalar) == sizeof(float) ? "%.4g" : "%.7g";
 			setDefaultValue("0");
 			setFormat("[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?");

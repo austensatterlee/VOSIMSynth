@@ -28,7 +28,7 @@
 #ifndef __UICOMPONENT__
 #define __UICOMPONENT__
 
-#include "VOSIMWindow.h"
+#include "MainWindow.h"
 #include <list>
 
 using std::list;
@@ -37,13 +37,13 @@ namespace syn
 {
 	class UICoord;
 
-	class UIComponent
+	class UIComponent : std::enable_shared_from_this<UIComponent>
 	{
-		friend class VOSIMWindow;
+		friend class MainWindow;
 	public:
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		UIComponent(VOSIMWindow* a_window);
+		UIComponent(MainWindow* a_window);
 
 		virtual ~UIComponent() {}
 
@@ -76,7 +76,7 @@ namespace syn
 		virtual void performLayout(NVGcontext* a_nvg);
 
 
-		shared_ptr<UIComponent> getSharedPtr() const;
+		shared_ptr<UIComponent> getSharedPtr();
 
 		virtual bool contains(const UICoord& a_pt) const;
 
@@ -169,7 +169,7 @@ namespace syn
 
 	protected:
 		UIComponent* m_parent;
-		VOSIMWindow* m_window;
+		MainWindow* m_window;
 		shared_ptr<UILayout> m_layout;
 		vector<shared_ptr<UIComponent> > m_children;
 		map<int, list<UIComponent*> > m_ZPlaneMap;
@@ -185,7 +185,7 @@ namespace syn
 	class UIResizeHandle : public UIComponent
 	{
 	public:
-		UIResizeHandle(VOSIMWindow* a_window)
+		UIResizeHandle(MainWindow* a_window)
 			: UIComponent{a_window} {
 			setMinSize({10,10});
 		}

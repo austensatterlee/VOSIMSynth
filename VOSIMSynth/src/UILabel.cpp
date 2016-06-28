@@ -1,7 +1,7 @@
 #include "UILabel.h"
 #include "Theme.h"
 
-syn::UILabel::UILabel(VOSIMWindow* a_window):
+syn::UILabel::UILabel(MainWindow* a_window):
 	UIComponent(a_window),
 	m_fontFace(theme()->mFontNormal), 
 	m_color(1.0f,1.0f,1.0f,1.0f),

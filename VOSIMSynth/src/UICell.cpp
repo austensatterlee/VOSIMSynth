@@ -1,24 +1,22 @@
 #include "UICell.h"
 
-syn::UICell::UICell(VOSIMWindow* a_window): 
+syn::UICell::UICell(MainWindow* a_window) : 
 	UIComponent(a_window),
 	m_greedyChild(nullptr),
 	m_childResizePolicy(CNONE),
-	m_selfMinSizePolicy(SMIN), 
-	m_selfResizePolicy(SRFIT),
-	m_greedyChildAlign(NVG_ALIGN_TOP),
+	m_selfMinSizePolicy(SFIT), 
+	m_selfResizePolicy(SRNONE),
 	m_padding{0,0,0,0},
 	m_childSpacing(1),
-	m_maxChildMinSize(0,0),
 	m_maxChildSize(0,0),
+	m_maxChildMinSize(0,0),
 	m_packOnChildResize(true)
 {}
 
-void syn::UICell::setGreedyChild(UIComponent* a_child, int a_align)
+void syn::UICell::setGreedyChild(UIComponent* a_child)
 {
-	if (m_greedyChild != a_child || m_greedyChildAlign != a_align) {
+	if (m_greedyChild != a_child) {
 		m_greedyChild = a_child;
-		m_greedyChildAlign = a_align;
 		pack();
 	}
 }
@@ -85,32 +83,11 @@ void syn::UICol::layoutChildren_()
 
 	// If there's extra space left over, expand the greedy child
 	// If there is no greedy child, shrink the cell to get rid of the extra space
-	Vector2i freeSpace = innerSize() - minSize();
-	int extraHeight = freeSpace[1];
-	if (m_greedyChild && extraHeight > 0) {
+	int extraHeight = innerSize().y() - y;
+	if (m_greedyChild) {
 		int greedyCellHeight = m_greedyChild->size()[1] + extraHeight;
 
-		// Align child if it doesn't take up the whole cell
-		int greedyCellShift;
-		switch (m_greedyChildAlign) {
-		case NVG_ALIGN_BOTTOM:
-			greedyCellShift = greedyCellHeight - m_greedyChild->size()[1];
-			break;
-		case NVG_ALIGN_MIDDLE:
-			greedyCellShift = (greedyCellHeight - m_greedyChild->size()[1]) / 2;
-			break;
-		case NVG_ALIGN_LEFT:
-		default:
-			greedyCellShift = 0;
-		}
-		m_greedyChild->move({ 0, greedyCellShift });
-
-		// Shift children after the greedy one
-		int i = getChildIndex(m_greedyChild) + 1;
-		for (; i < m_children.size(); i++) {
-			shared_ptr<UIComponent> child = m_children[i];
-			child->move({ 0, extraHeight });
-		}
+		m_greedyChild->setSize({ -1, greedyCellHeight });
 	}
 }
 
@@ -179,31 +156,11 @@ void syn::UIRow::layoutChildren_()
 
 	// If there's extra space left over, expand the greedy child
 	// If there is no greedy child, shrink the cell to get rid of the extra space
-	Vector2i freeSpace = innerSize() - minSize();
-	int extraWidth = freeSpace[0];
-	if (m_greedyChild && extraWidth > 0) {
+	int extraWidth = innerSize().x() - x;
+	if (m_greedyChild) {
 		int greedyCellWidth = m_greedyChild->size()[0] + extraWidth;
 
-		// Align child if it doesn't take up the whole cell
-		int greedyCellShift;
-		switch (m_greedyChildAlign) {
-		case NVG_ALIGN_BOTTOM:
-			greedyCellShift = greedyCellWidth - m_greedyChild->size()[0];
-			break;
-		case NVG_ALIGN_MIDDLE:
-			greedyCellShift = (greedyCellWidth - m_greedyChild->size()[0]) / 2;
-			break;
-		default:
-			greedyCellShift = 0;
-		}
-		m_greedyChild->move({ greedyCellShift,0 });
-
-		// Shift children after the greedy one
-		int i = getChildIndex(m_greedyChild) + 1;
-		for (; i < m_children.size(); i++) {
-			shared_ptr<UIComponent> child = m_children[i];
-			child->move({ extraWidth, 0 });
-		}
+		m_greedyChild->setSize({ greedyCellWidth, -1 });
 	}
 }
 
@@ -252,7 +209,7 @@ void syn::UIRow::updateMinSize_()
 	Vector2i pad_wh = Vector2i{ m_padding[0] + m_padding[2],m_padding[1] + m_padding[3] };
 	int minHeight = m_maxChildMinSize[1];
 	if (m_selfMinSizePolicy != SNONE)
-		setMinSize(Vector2i{ x - m_childSpacing, minHeight } +pad_wh);
+		setMinSize(Vector2i{ x - m_childSpacing, minHeight } + pad_wh);
 	
 	// Shrink cell according to resize policy
 	if (m_selfResizePolicy == SRMIN) {

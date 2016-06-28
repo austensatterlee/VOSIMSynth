@@ -3,7 +3,7 @@
 #include <Eigen/Geometry>
 
 namespace syn {
-	UIColorWheel::UIColorWheel(VOSIMWindow *parent, const Color& rgb)
+	UIColorWheel::UIColorWheel(MainWindow *parent, const Color& rgb)
 		: UIComponent(parent), mDragRegion(None) 
 	{
 		setColor(rgb);

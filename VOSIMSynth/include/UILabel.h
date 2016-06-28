@@ -34,7 +34,7 @@ namespace syn
 	class UILabel : public UIComponent
 	{
 	public:
-		UILabel(VOSIMWindow* a_window);
+		UILabel(MainWindow* a_window);
 
 		void setText(const string& a_newText);
 

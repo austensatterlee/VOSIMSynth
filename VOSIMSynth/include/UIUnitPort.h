@@ -34,7 +34,7 @@ namespace syn
 	class UIUnitPort : public UIComponent
 	{
 	public:
-		UIUnitPort(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_portNum, bool a_isInput);
+		UIUnitPort(MainWindow* a_window, UICircuitPanel* a_circuitPanel, VoiceManager* a_vm, int a_unitId, int a_portNum, bool a_isInput);
 		bool onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
 		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		bool onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
@@ -57,8 +57,10 @@ namespace syn
 
 	protected:
 		void draw(NVGcontext* a_nvg) override;
+
 	protected:
 		VoiceManager* m_vm;
+		UICircuitPanel* m_circuitPanel;
 		int m_unitId;
 		int m_portNum;
 		bool m_isInput;

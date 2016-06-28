@@ -18,45 +18,31 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
- *  \file UIDigitControl.h
+ *  \file UIControlPanel.h
  *  \brief
  *  \details
  *  \author Austen Satterlee
- *  \date 05/2016
+ *  \date 06/2016
  */
 
-#ifndef __UIDIGITCONTROL__
-#define __UIDIGITCONTROL__
-
+#ifndef __UICONTROLPANEL__
+#define __UICONTROLPANEL__
 #include "UIComponent.h"
 
 namespace syn {
-	class UIDigitControl : public UIComponent
+	class UIControlPanel : public UIComponent
 	{
 	public:
-		UIDigitControl(MainWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId);
+		UIControlPanel(MainWindow* a_window);
+		void showUnitControl(UIUnitContainer* a_unitCtrl);
+		void clearUnitControl();
+		UIUnitContainer* getCurrentUnitContainer() const;
+		UIUnitControl* getCurrentUnitControl() const;
 
-		void setNumDigits(int a_numDigits);
-
-		void setValue(const string& a_num);
-
-		double getValue() const;
-
-		int getDigit(int a_digit);
-
-		void setDigit(int a_digit, int a_value);
 	private:
-		int m_decimalLoc;
-
-		string m_value;
-		vector<UITextBox*> m_textBoxes;
-		vector<UIButton*> m_upArrows;
-		vector<UIButton*> m_downArrows;
-		UIRow* m_row;
-		vector<UICol*> m_digitCols;
-
-		VoiceManager* m_vm;
-		int m_unitId, m_paramId;
+		void _onResize() override;
+		UIWindow* m_ctrlWindow;
+		UIUnitContainer* m_currUnitContainer;
 	};
 }
 

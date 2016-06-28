@@ -40,12 +40,14 @@ namespace syn
 
 	class UICircuitPanel : public UIComponent
 	{
-		friend VOSIMWindow;
-		
+		friend class VOSIMComponent;
 	public:
-		UICircuitPanel(VOSIMWindow* a_window, VoiceManager* a_vm, UnitFactory* a_unitFactory);
-		UIUnitControlContainer* getUnit(const UICoord& a_pt) const;
-		UIUnitControlContainer* findUnit(int a_unitId) const;
+		typedef function<UIUnitContainer*(MainWindow*, UICircuitPanel*, VoiceManager*, UIUnitControl*)> UnitContainerConstructor;
+		typedef function<UIUnitControl*(MainWindow*, VoiceManager*, int)> UnitControllerConstructor;
+	public:
+		UICircuitPanel(MainWindow* a_window, VoiceManager* a_vm, UnitFactory* a_unitFactory, UIUnitSelector* a_unitSelector, UIControlPanel* a_controlPanel);
+		UIUnitContainer* findUnitContainer(const UICoord& a_pt) const;
+		UIUnitContainer* findUnitContainer(int a_unitId) const;
 		void requestAddConnection(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);
 		void requestDeleteConnection(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);
 		void requestMoveConnection(UIWire* a_uiWire, int a_unitId, int a_portId, int a_toUnit, int a_toPort);
@@ -56,14 +58,20 @@ namespace syn
 		void setSelectedWire(UIWire* a_wire);
 		void clearSelectedWire(UIWire* a_wire);
 
-		const vector<UIUnitControlContainer*>& getUnits() const {
-			return m_unitControls;
+		const vector<UIUnitContainer*>& getUnits() const {
+			return m_unitContainers;
 		}
 
 		void reset(); 
 
 		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		bool onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
+
+		template <typename UnitType>
+		void registerUnitControl(UnitControllerConstructor a_unitControlConstructor);
+		template <typename UnitType>
+		void registerUnitContainer(UnitContainerConstructor a_unitContainerConstructor);
+
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 		void setChildrenStyles(NVGcontext* a_nvg) override;
@@ -71,17 +79,34 @@ namespace syn
 		void onDeleteConnection_(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);
 		void onAddUnit_(unsigned a_classId, int a_unitId);
 		void requestAddUnit_(unsigned a_classId);
+		UIUnitContainer* createUnitContainer_(unsigned a_classId, int a_unitId);
 	private:
 		void _onResize() override;	
 	private:
-		vector<UIUnitControlContainer*> m_unitControls;
+		vector<UIUnitContainer*> m_unitContainers;
 		vector<UIWire*> m_wires;
 		vector<UIWire*> m_wireSelectionQueue;
 		VoiceManager* m_vm;
 		UnitFactory* m_unitFactory;
 		UIUnitSelector* m_unitSelector;
-		UIUnitControlContainer* m_inputs;
-		UIUnitControlContainer* m_outputs;
+		UIControlPanel* m_unitControlPanel;
+		UIUnitContainer* m_inputs;
+		UIUnitContainer* m_outputs;
+
+		map<unsigned, UnitControllerConstructor> m_unitControlMap;
+		map<unsigned, UnitContainerConstructor> m_unitContainerMap;
 	};
+
+	template <typename UnitType>
+	void UICircuitPanel::registerUnitControl(UnitControllerConstructor a_unitControlConstructor) {
+		unsigned unitClassId = UnitType("").getClassIdentifier();
+		m_unitControlMap[unitClassId] = a_unitControlConstructor;
+	}
+
+	template <typename UnitType>
+	void UICircuitPanel::registerUnitContainer(UnitContainerConstructor a_unitContainerConstructor) {
+		unsigned unitClassId = UnitType("").getClassIdentifier();
+		m_unitContainerMap[unitClassId] = a_unitContainerConstructor;
+	}
 }
 #endif

@@ -33,11 +33,11 @@ Copyright 2016, Austen Satterlee
 
 namespace syn
 {
-	class DefaultUnitControl : public UIUnitControl
+	class UIDefaultUnitControl : public UIUnitControl
 	{
 	public:
-		DefaultUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId);
-		void notifyChildResized(UIComponent* a_child) override; 
+		UIDefaultUnitControl(MainWindow* a_window, VoiceManager* a_vm, int a_unitId);
+		void notifyChildResized(UIComponent* a_child) override;
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 	private:

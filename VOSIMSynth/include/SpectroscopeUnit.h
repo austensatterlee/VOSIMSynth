@@ -85,7 +85,7 @@ namespace syn
 	class SpectroscopeUnitControl : public UIUnitControl
 	{
 	public:
-		SpectroscopeUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId); 
+		SpectroscopeUnitControl(MainWindow* a_window, VoiceManager* a_vm, int a_unitId); 
 
 	protected:
 		void draw(NVGcontext* a_nvg) override;
@@ -96,7 +96,6 @@ namespace syn
 		UICol* m_col;
 		UILabel* m_statusLabel;
 		UIPlot* m_plot;
-		DefaultUnitControl* m_defCtrl;
-		UIResizeHandle* m_resizeHandle;
+		UIDefaultUnitControl* m_defCtrl;
 	};
 }

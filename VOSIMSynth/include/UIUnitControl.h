@@ -35,11 +35,11 @@ namespace syn
 	class UIUnitControl : public UIComponent
 	{
 	public:
-		UIUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId) :
+		UIUnitControl(MainWindow* a_window, VoiceManager* a_vm, int a_unitId) :
 			UIComponent{a_window},
 			m_vm(a_vm),
 			m_unitId(a_unitId) {}
-
+		int unitId() const { return m_unitId; }
 	protected:
 		VoiceManager* m_vm;
 		int m_unitId;

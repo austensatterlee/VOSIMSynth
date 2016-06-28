@@ -35,11 +35,10 @@ namespace syn
 	{
 	public:
 		struct compareByHoverDistance {
-			bool operator()(UIWire* a_lhs, UIWire* a_rhs) { return a_lhs->hoverDistance() < a_rhs->hoverDistance(); }
+			bool operator()(UIWire* a_lhs, UIWire* a_rhs) const { return a_lhs->hoverDistance() < a_rhs->hoverDistance(); }
 		};
 	public:
-		UIWire(VOSIMWindow* a_window, int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort)
-			: UIComponent{a_window}, m_fromUnit(a_fromUnit), m_fromPort(a_fromPort), m_toUnit(a_toUnit), m_toPort(a_toPort), m_hoverDistance(INFINITY) {}
+		UIWire(MainWindow* a_window, UICircuitPanel* a_circuitPanel, int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);
 
 		bool contains(const UICoord& a_pt) const override;
 		void onMouseEnter(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) override;
@@ -70,12 +69,13 @@ namespace syn
 		Vector2i destVector() const;
 		Vector2i originVector() const;
 
-		Vector2i fromPt() const;
-		Vector2i toPt() const;
+		UICoord fromPt() const;
+		UICoord toPt() const;
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 	private:
 		int m_fromUnit, m_fromPort, m_toUnit, m_toPort;
+		UICircuitPanel* m_circuitPanel;
 		bool m_isDragging = false;
 		bool m_isDraggingInput = false;
 		double m_hoverDistance;

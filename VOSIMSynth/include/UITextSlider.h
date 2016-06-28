@@ -37,7 +37,7 @@ namespace syn
 	class UITextSlider : public UIComponent
 	{
 	public:
-		UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId);
+		UITextSlider(MainWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId);
 
 		bool onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
 		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;

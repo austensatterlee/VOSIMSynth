@@ -69,6 +69,36 @@ namespace syn
 		}
 	};
 
+	class InputUnit : public PassthroughUnit
+	{
+	public:
+		explicit InputUnit(const string& a_name) : PassthroughUnit(a_name) {}
+		InputUnit(const InputUnit& a_other) : InputUnit(a_other.getName()) {}
+	private:
+		string _getClassName() const override {
+			return "_InputUnit";
+		}
+
+		Unit* _clone() const override {
+			return new InputUnit(*this);
+		}
+	};
+
+	class OutputUnit : public PassthroughUnit
+	{
+	public:
+		explicit OutputUnit(const string& a_name) : PassthroughUnit(a_name) {}
+		OutputUnit(const OutputUnit& a_other) : OutputUnit(a_other.getName()) {}
+	private:
+		string _getClassName() const override {
+			return "_OutputUnit";
+		}
+
+		Unit* _clone() const override {
+			return new OutputUnit(*this);
+		}
+	};
+
 	/**
 	* \class Circuit
 	*
@@ -192,8 +222,8 @@ namespace syn
 
 		NamedContainer<Unit*, 64> m_units;
 		vector<ConnectionRecord> m_connectionRecords;
-		PassthroughUnit* m_inputUnit;
-		PassthroughUnit* m_outputUnit;
+		InputUnit* m_inputUnit;
+		OutputUnit* m_outputUnit;
 
 		list<Unit*> m_procGraph;
 	};
@@ -235,9 +265,9 @@ namespace syn
 
 	template <typename ID>
 	bool Circuit::removeUnit(const ID& a_unitIdentifier) {
-		if (!m_units.find(a_unitIdentifier))
-			return false;
 		int unitId = m_units.find(a_unitIdentifier);
+		if (unitId < 0)
+			return false;
 		Unit* unit = m_units[unitId];
 		// Don't allow deletion of input or output unit
 		if (unit == m_inputUnit || unit == m_outputUnit)
@@ -255,7 +285,8 @@ namespace syn
 			const ConnectionRecord& rec = garbageList[i];
 			disconnectInternal(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
 		}
-		m_units.remove(a_unitIdentifier);
+		m_units.remove(unitId);
+		delete unit;
 		_recomputeGraph();
 		return true;
 	}

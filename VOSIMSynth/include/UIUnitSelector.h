@@ -27,17 +27,16 @@ Copyright 2016, Austen Satterlee
 
 #ifndef __UIUNITSELECTOR__
 #define __UIUNITSELECTOR__
-#include "UIComponent.h"
+#include "UIWindow.h"
 
 namespace syn
 {
 	class UnitFactory;
 
-	class UIUnitSelector : public UIComponent
+	class UIUnitSelector : public UIWindow
 	{
 	public:
-		UIUnitSelector(VOSIMWindow* a_window, UnitFactory* a_unitFactory)
-			: UIComponent{a_window}, m_autoWidth(0), m_autoHeight(0), m_currGroup(-1), m_currPrototype(-1), m_highlightedRow(-1), m_unitFactory(a_unitFactory) {}
+		UIUnitSelector(MainWindow* a_window, UnitFactory* a_unitFactory);
 
 		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		bool onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
@@ -74,7 +73,7 @@ namespace syn
 		string m_currPrototypeName;
 		int m_highlightedRow;
 
-		int m_indentAmt = 5;
+		int m_indentAmt = 1;
 		UnitFactory* m_unitFactory;
 	};
 }

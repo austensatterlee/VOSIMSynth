@@ -46,7 +46,7 @@ namespace syn {
 			LogScale10
 		};
 	public:
-		UIPlot(VOSIMWindow* a_window);
+		UIPlot(MainWindow* a_window);
 
 		void setBufferPtr(const double* a_yBufPtr, int a_bufSize);
 

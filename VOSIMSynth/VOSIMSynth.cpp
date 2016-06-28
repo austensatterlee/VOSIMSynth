@@ -30,31 +30,37 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "StateVariableFilter.h"
 #include "fft.h"
 #include "include/SpectroscopeUnit.h"
-#include "VOSIMWindow.h"
+#include "MainWindow.h"
 #include "MIDIReceiver.h"
 #include "VoiceManager.h"
 #include "UnitFactory.h"
+#include "include/UICircuitPanel.h"
+#include "include/UIUnitContainer.h"
+#include "include/VOSIMComponent.h"
 
 using namespace std;
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
-	: IPLUG_CTOR(0, 1, instanceInfo), m_tempo(0) {
+	: 
+	IPLUG_CTOR(0, 1, instanceInfo), m_tempo(0)
+{
 	TRACE;
-
 	WDL_fft_init();
 	makeInstrument();
 	makeGraphics();
 }
 
 void VOSIMSynth::makeGraphics() {
-	VOSIMWindow* vosimWindow = new VOSIMWindow(GUI_WIDTH, GUI_HEIGHT, m_voiceManager, m_unitFactory);
+	VoiceManager* vm = m_voiceManager;
+	UnitFactory* uf = m_unitFactory;
+	MainWindow* vosimWindow = new MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm,uf](MainWindow* a_win)->UIComponent* {return new VOSIMComponent(a_win, vm, uf); });
 	vosimWindow->setHInstance(gHInstance);
 	AttachAppWindow(vosimWindow);
 
-	vosimWindow->registerUnitControl<OscilloscopeUnit>([](VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId)-> UIUnitControl* {
+	getVOSIMComponent()->circuitPanel()->registerUnitControl<OscilloscopeUnit>([](MainWindow* a_window, VoiceManager* a_vm, int a_unitId)-> UIUnitControl* {
 		return new OscilloscopeUnitControl(a_window, a_vm, a_unitId);
 	});
-	vosimWindow->registerUnitControl<SpectroscopeUnit>([](VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId)-> UIUnitControl* {
+	getVOSIMComponent()->circuitPanel()->registerUnitControl<SpectroscopeUnit>([](MainWindow* a_window, VoiceManager* a_vm, int a_unitId)-> UIUnitControl* {
 		return new SpectroscopeUnitControl(a_window, a_vm, a_unitId);
 	});
 }
@@ -71,8 +77,8 @@ void VOSIMSynth::makeInstrument() {
 	m_unitFactory->addUnitPrototype<ADSREnvelope>("Modulators","ADSR");
 	m_unitFactory->addUnitPrototype<LFOOscillator>("Modulators","LFO");
 
-	m_unitFactory->addUnitPrototype<MemoryUnit>("DSP","Delay");
-	m_unitFactory->addUnitPrototype<ResampleUnit>("DSP","Delay2");
+	m_unitFactory->addUnitPrototype<MemoryUnit>("DSP","Unit Delay");
+	m_unitFactory->addUnitPrototype<ResampleUnit>("DSP","Var Delay");
 	m_unitFactory->addUnitPrototype<PanningUnit>("DSP","Pan");
 	m_unitFactory->addUnitPrototype<FollowerUnit>("DSP","Follow");
 	m_unitFactory->addUnitPrototype<DCRemoverUnit>("DSP","DC Trap");
@@ -86,7 +92,7 @@ void VOSIMSynth::makeInstrument() {
 	m_unitFactory->addUnitPrototype<PitchToFreqUnit>("Math", "Pitch2Freq");
 
 	m_unitFactory->addUnitPrototype<GateUnit>("MIDI","Gate");
-	m_unitFactory->addUnitPrototype<MidiNoteUnit>("MIDI","CV");
+	m_unitFactory->addUnitPrototype<MidiNoteUnit>("MIDI","Pitch");
 	m_unitFactory->addUnitPrototype<VelocityUnit>("MIDI","Vel");
 	m_unitFactory->addUnitPrototype<MidiCCUnit>("MIDI","CC");
 
@@ -94,6 +100,8 @@ void VOSIMSynth::makeInstrument() {
 	m_unitFactory->addUnitPrototype<SpectroscopeUnit>("Visualizer","Spectroscope");
 
 	m_unitFactory->addUnitPrototype<PassthroughUnit>("","Passthrough");
+	m_unitFactory->addUnitPrototype<InputUnit>("", "Input");
+	m_unitFactory->addUnitPrototype<OutputUnit>("", "Output");
 
 	m_voiceManager = new VoiceManager(m_unitFactory);
 	m_voiceManager->setMaxVoices(6);
@@ -135,14 +143,14 @@ void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg) {
 
 bool VOSIMSynth::SerializeState(ByteChunk* pChunk) {
 	m_voiceManager->save(pChunk);
-	GetAppWindow()->save(pChunk);
+	getVOSIMComponent()->save(pChunk);
 	return true;
 }
 
 int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
 	m_unitFactory->resetBuildCounts();
 	startPos = m_voiceManager->load(pChunk, startPos);
-	startPos = GetAppWindow()->load(pChunk, startPos);	
+	startPos = getVOSIMComponent()->load(pChunk, startPos);
 	return startPos;
 }
 
@@ -157,6 +165,10 @@ void VOSIMSynth::OnActivate(bool active) {}
 void VOSIMSynth::OnGUIOpen() {}
 
 void VOSIMSynth::OnGUIClose() {}
+
+VOSIMComponent* VOSIMSynth::getVOSIMComponent() const {
+	return static_cast<VOSIMComponent*>(GetAppWindow()->getRoot());
+}
 
 bool VOSIMSynth::isTransportRunning() {
 	GetTime(&m_timeInfo);

@@ -34,13 +34,7 @@ namespace syn
 		m_pSustain(addParameter_(UnitParameter("sus", 0.0, 1.0, 1.0))),
 		m_pRelease(addParameter_(UnitParameter("rel", 0.0, 1.0, 0.01))),
 		m_pTimeScale(addParameter_(UnitParameter("timescale", 1, 10, 1))) {
-		m_iGate = addInput_("gate");
-		m_iAttack = addInput_("atk");
-		m_iAttackMul = addInput_("atk[x]", 1.0);
-		m_iDecay = addInput_("dec");
-		m_iDecayMul = addInput_("dec[x]", 1.0);
-		m_iRelease = addInput_("rel");
-		m_iReleaseMul = addInput_("rel[x]", 1.0);
+		m_iGate = addInput_("trig");
 		addOutput_("out");
 	}
 
@@ -52,13 +46,13 @@ namespace syn
 		double segment_time;
 		switch (m_currStage) {
 		case Attack:
-			segment_time = getInputValue(m_iAttackMul) * (getParameter(m_pAttack).getDouble() + getInputValue(m_iAttack));
+			segment_time = getParameter(m_pAttack).getDouble();
 			m_initial = 0;
 			// skip decay segment if its length is zero
 			m_target = getParameter(m_pDecay).getDouble() != 0 ? 1.0 : getParameter(m_pSustain).getDouble();
 			break;
 		case Decay:
-			segment_time = getInputValue(m_iDecayMul) * (getParameter(m_pDecay).getDouble() + getInputValue(m_iDecay));
+			segment_time = getParameter(m_pDecay).getDouble();
 			m_target = getParameter(m_pSustain).getDouble();
 			break;
 		case Sustain:
@@ -67,7 +61,7 @@ namespace syn
 			m_target = getParameter(m_pSustain).getDouble();
 			break;
 		case Release:
-			segment_time = getInputValue(m_iReleaseMul) * (getParameter(m_pRelease).getDouble() + getInputValue(m_iRelease));
+			segment_time = getParameter(m_pRelease).getDouble();
 			break;
 		default:
 			throw std::logic_error("Invalid envelope stage");
@@ -100,6 +94,7 @@ namespace syn
 				m_phase = 1.0;
 			}
 		}
+
 		double output = LERP(m_initial, m_target, m_phase);
 		setOutputChannel_(0, output);
 

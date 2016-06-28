@@ -28,6 +28,7 @@ namespace syn
 		switch (static_cast<int>(shape)) {
 		case SAW_WAVE:
 			if (useNaive) {
+				phase = WRAP(phase, 1.0);
 				if (phase < 0.5)
 					output = 2 * phase;
 				else
@@ -45,8 +46,10 @@ namespace syn
 			output = phase <= 0.5 ? 4 * phase - 1 : -4 * (phase - 0.5) + 1;
 			break;
 		case SQUARE_WAVE:
-			if (useNaive)
+			if (useNaive) {
+				phase = WRAP(phase, 1.0);
 				output = phase <= 0.5 ? 1 : -1;
+			}
 			else
 				output = -lut_bl_saw.getresampled(phase + 0.5, period) + lut_bl_saw.getresampled(phase, period);
 			break;
@@ -202,7 +205,7 @@ namespace syn
 	void LFOOscillator::process_() {
 		// determine frequency
 		if (getParameter(m_pTempoSync).getBool()) {
-			m_freq = bpmToFreq(getInputValue(m_iFreqMul) * (getParameter(m_pBPMFreq).getEnum() + getInputValue(m_iFreqAdd)), getTempo());
+			m_freq = bpmToFreq(getParameter(m_pBPMFreq).getEnum(getInputValue(m_iFreqMul) * (getParameter(m_pBPMFreq).getInt()+getInputValue(m_iFreqAdd))), getTempo());
 		}
 		else {
 			m_freq = getInputValue(m_iFreqMul) * (getParameter(m_pFreq).getDouble() + getInputValue(m_iFreqAdd));

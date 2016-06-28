@@ -4,7 +4,7 @@
 
 namespace syn
 {
-	UIButton::UIButton(VOSIMWindow* a_window, const string& caption, int icon)
+	UIButton::UIButton(MainWindow* a_window, const string& caption, int icon)
 		: UIComponent(a_window), mCaption(caption), mIcon(icon),
 		  mIconPosition(IconPosition::LeftCentered), mPushed(false),
 		  mFlags(NormalButton), mBackgroundColor(Color(0, 0)),

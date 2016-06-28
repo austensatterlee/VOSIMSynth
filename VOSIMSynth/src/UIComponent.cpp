@@ -5,7 +5,7 @@
 
 namespace syn
 {
-	UIComponent::UIComponent(VOSIMWindow* a_window):
+	UIComponent::UIComponent(MainWindow* a_window):
 		m_parent(nullptr), m_window(a_window), m_visible(true), m_focused(false), m_hovered(false),
 		m_pos(0, 0), m_size(0, 0), m_minSize(-1, -1), m_maxSize(-1, -1) 
 	{
@@ -50,13 +50,6 @@ namespace syn
 		nvgTranslate(a_nvg, -m_pos[0], -m_pos[1]);
 	}
 
-	void UIComponent::addChild(UIComponent* a_newChild, const string& a_group) {
-		if (a_newChild->parent())
-			return;
-		shared_ptr<UIComponent> newChildPtr(a_newChild);
-		addChild(newChildPtr, a_group);
-	}
-
 	void UIComponent::addChild(shared_ptr<UIComponent> a_newChild, const string& a_group) {
 		if (a_newChild->parent())
 			return;
@@ -74,6 +67,13 @@ namespace syn
 			// Execute callback
 			_onAddChild(a_newChild);
 		}
+	}
+
+	void UIComponent::addChild(UIComponent* a_newChild, const string& a_group) {
+		if (a_newChild->parent())
+			return;
+		shared_ptr<UIComponent> newChildPtr = shared_ptr<UIComponent>(a_newChild);
+		addChild(newChildPtr, a_group);
 	}
 
 	const string& UIComponent::getChildGroup(UIComponent* a_child) const {
@@ -112,6 +112,8 @@ namespace syn
 		m_ZPlaneMap[zorder].remove(child.get());
 
 		m_children.erase(m_children.cbegin() + a_index);
+
+		child->m_parent = nullptr;
 
 		_onRemoveChild();
 		return true;
@@ -174,11 +176,9 @@ namespace syn
 		}
 	}
 
-	shared_ptr<UIComponent> UIComponent::getSharedPtr() const
+	shared_ptr<UIComponent> UIComponent::getSharedPtr()
 	{
-		if(parent())
-			return parent()->getChild(this);
-		return nullptr;
+		return shared_from_this();
 	}
 
 	Vector2i UIComponent::getRelPos() const {
@@ -349,8 +349,10 @@ namespace syn
 				bool hadMouse = child->contains(a_relCursor - a_diffCursor);
 				if (hasMouse != hadMouse)
 					child->onMouseEnter(a_relCursor, a_diffCursor, hasMouse);
-				if (hasMouse || hadMouse)
-					child->onMouseMove(a_relCursor, a_diffCursor);
+				if (hasMouse || hadMouse) {
+					if (child->onMouseMove(a_relCursor, a_diffCursor))
+						return true;
+				}
 			}
 		}
 		return false;

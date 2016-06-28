@@ -98,13 +98,12 @@ namespace syn
 		m_bufferIndex = WRAP(m_bufferIndex + 1, m_inBufferSize);
 	}
 
-	SpectroscopeUnitControl::SpectroscopeUnitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId) :
+	SpectroscopeUnitControl::SpectroscopeUnitControl(MainWindow* a_window, VoiceManager* a_vm, int a_unitId) :
 		UIUnitControl(a_window, a_vm, a_unitId), 
 		m_col(new UICol(a_window)),
 		m_statusLabel(new UILabel(a_window)),
 		m_plot(new UIPlot(a_window)),
-		m_defCtrl(new DefaultUnitControl(a_window, a_vm, a_unitId)),
-		m_resizeHandle(new UIResizeHandle(a_window))
+		m_defCtrl(new UIDefaultUnitControl(a_window, a_vm, a_unitId))
 	{
 		m_col->addChild(m_defCtrl);
 		m_col->addChild(m_plot);
@@ -112,6 +111,7 @@ namespace syn
 		m_statusLabel->setSize({ -1,8 });
 		m_col->setChildResizePolicy(UICell::CMAX);
 		m_col->setSelfResizePolicy(UICell::SRNONE);
+		m_col->setGreedyChild(m_plot);
 		addChild(m_col);
 
 		m_plot->setStatusLabel(m_statusLabel);
@@ -120,18 +120,11 @@ namespace syn
 		m_plot->setYUnits("dB");
 		m_plot->setInterpPolicy(UIPlot::SincInterp);
 
-		addChild(m_resizeHandle);
-		m_resizeHandle->setDragCallback([&](const UICoord& a_relPos, const Vector2i& a_diffPos) {
-			grow(a_diffPos);
-			m_plot->grow(a_diffPos);
-		});
-
 		setMinSize(minSize().cwiseMax(m_col->minSize()));
 	}
 
 	void SpectroscopeUnitControl::_onResize() {
 		m_col->setSize(size());
-		m_resizeHandle->setRelPos(size() - m_resizeHandle->size());
 	}
 
 	void SpectroscopeUnitControl::draw(NVGcontext* a_nvg) {

@@ -6,7 +6,7 @@
 #include "Theme.h"
 
 
-syn::UITextSlider::UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId) :
+syn::UITextSlider::UITextSlider(MainWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId) :
 	UIComponent{ a_window },
 	m_value(0.0),
 	m_vm(a_vm),
@@ -27,6 +27,7 @@ syn::UITextSlider::UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a
 
 	m_row = new UIRow(a_window);
 	m_row->setChildrenSpacing(0);
+	m_row->setSelfMinSizePolicy(UICell::SNONE);
 	m_nameLabel = new UILabel(a_window);
 	m_nameLabel->setFontSize(theme()->mTextSliderFontSize);
 	m_nameLabel->setAlignment(NVG_ALIGN_MIDDLE | NVG_ALIGN_LEFT);
@@ -41,7 +42,7 @@ syn::UITextSlider::UITextSlider(VOSIMWindow* a_window, VoiceManager* a_vm, int a
 	m_row->addChild(m_nameLabel);
 	m_row->addChild(m_valueLabel);
 	m_row->addChild(m_unitsLabel);
-	m_row->setGreedyChild(m_nameLabel, NVG_ALIGN_LEFT);
+	m_row->setGreedyChild(m_nameLabel);
 	addChild(m_row);
 
 	_updateValue();

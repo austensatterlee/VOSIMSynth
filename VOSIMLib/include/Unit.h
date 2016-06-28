@@ -77,7 +77,7 @@ namespace syn
 	class Unit
 	{
 	public:
-		Unit();
+		Unit(); 
 
 		explicit Unit(const string& a_name);
 
@@ -228,6 +228,7 @@ namespace syn
 	private:
 		friend class UnitFactory;
 		friend class Circuit;
+
 		string m_name;
 		NamedContainer<UnitParameter, MAX_PARAMS> m_parameters;
 		NamedContainer<double, MAX_OUTPUTS> m_outputSignals;

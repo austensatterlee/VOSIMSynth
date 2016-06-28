@@ -1,14 +1,15 @@
 #include "UIUnitPort.h"
-#include "UIUnitControlContainer.h"
+#include "UIUnitContainer.h"
 #include "UICircuitPanel.h"
 #include "Unit.h"
 #include "VoiceManager.h"
 #include "Theme.h"
 
 
-syn::UIUnitPort::UIUnitPort(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_portNum, bool a_isInput) :
+syn::UIUnitPort::UIUnitPort(MainWindow* a_window, UICircuitPanel* a_circuitPanel, VoiceManager* a_vm, int a_unitId, int a_portNum, bool a_isInput) :
 	UIComponent{a_window},
 	m_vm(a_vm),
+	m_circuitPanel(a_circuitPanel),
 	m_unitId(a_unitId),
 	m_portNum(a_portNum),
 	m_isInput(a_isInput) {
@@ -24,8 +25,8 @@ syn::UIUnitPort::UIUnitPort(VOSIMWindow* a_window, VoiceManager* a_vm, int a_uni
 	NVGcontext* nvg = m_window->getContext();
 	nvgFontSize(nvg, (float)theme()->mPortFontSize);
 	nvgTextBounds(nvg, 0, 0, portName.c_str(), nullptr, bounds);
-	textWidth = bounds[2] - bounds[0];
-	setMinSize(Vector2i{textWidth + 5, theme()->mPortFontSize + 2});
+	textWidth = MAX(bounds[2] - bounds[0],10.0f);
+	setMinSize(Vector2i{textWidth, theme()->mPortFontSize});
 }
 
 bool syn::UIUnitPort::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
@@ -39,16 +40,16 @@ syn::UIComponent* syn::UIUnitPort::onMouseDown(const UICoord& a_relCursor, const
 
 bool syn::UIUnitPort::onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	m_isDragging = false;
-	UIUnitControlContainer* selectedUnit = m_window->getCircuitPanel()->getUnit(UICoord(m_window->cursorPos()));
+	UIUnitContainer* selectedUnit = m_circuitPanel->findUnitContainer(UICoord(m_window->cursorPos()));
 	if (selectedUnit && selectedUnit != m_parent) {
 		if (m_isInput) {
 			UIUnitPort* port = selectedUnit->getSelectedOutPort(a_relCursor);
 			if (port)
-				m_window->getCircuitPanel()->requestAddConnection(port->getUnitId(), port->getPortId(), m_unitId, m_portNum);
+				m_circuitPanel->requestAddConnection(port->getUnitId(), port->getPortId(), m_unitId, m_portNum);
 		} else {
 			UIUnitPort* port = selectedUnit->getSelectedInPort(a_relCursor);
 			if (port)
-				m_window->getCircuitPanel()->requestAddConnection(m_unitId, m_portNum, port->getUnitId(), port->getPortId());
+				m_circuitPanel->requestAddConnection(m_unitId, m_portNum, port->getUnitId(), port->getPortId());
 		}
 	}
 	return true;

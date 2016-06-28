@@ -3,44 +3,31 @@
 #include "UILabel.h"
 #include "Theme.h"
 
-syn::UIWindow::UIWindow(VOSIMWindow* a_window, const string& a_title) :
+syn::UIWindow::UIWindow(MainWindow* a_window, const string& a_title) :
 	UIComponent{ a_window },
-	m_isCollapsed(false) {
-	m_col = new UICol(a_window);
-	addChild(m_col);
-
+	m_isLocked(false) 
+{
 	m_headerRow = new UIRow(a_window);
-	m_bodyRow = new UIRow(a_window);
-	m_bodyRow->setRelPos({ 0,theme()->mWindowHeaderHeight });
-	m_bodyRow->setPadding({ 0,2,0,2 });
-	m_col->setChildResizePolicy(UICell::CMATCHMIN);
-	m_col->setPadding({ 2,0,2,0 });
-	m_col->addChild(m_headerRow);
-	m_col->addChild(m_bodyRow);
-
+	m_headerRow->setPadding({ 0,2,0,2 });
+	m_headerRow->setSize({ -1,theme()->mWindowHeaderHeight });
 	m_title = new UILabel(a_window);
 	m_title->setText(a_title);
 	m_title->setFontSize(16.0);
 	m_title->setFontColor(theme()->mTextColor);
-	addChildToHeader(m_title);
-
-	m_headerRow->setGreedyChild(m_title, NVG_ALIGN_LEFT);
-	m_headerRow->setPadding({ 0,2,0,2 });
-	m_headerRow->setSize({ -1,theme()->mWindowHeaderHeight });
+	m_headerRow->addChild(m_title);
+	m_headerRow->setGreedyChild(m_title);
+	addChild(m_headerRow);
 }
 
 void syn::UIWindow::addChildToHeader(UIComponent* a_newChild) const {
 	m_headerRow->addChild(a_newChild);
 }
 
-void syn::UIWindow::addChildToBody(UIComponent* a_newChild) const {
-	m_bodyRow->addChild(a_newChild);
-}
-
 bool syn::UIWindow::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	if (UIComponent::onMouseDrag(a_relCursor, a_diffCursor))
 		return true;
-	move(a_diffCursor);
+	if(!m_isLocked)
+		move(a_diffCursor);
 	return true;
 }
 
@@ -50,50 +37,22 @@ syn::UIComponent* syn::UIWindow::onMouseDown(const UICoord& a_relCursor, const V
 		return child;
 
 	if (a_relCursor.localCoord(this).y() < theme()->mWindowHeaderHeight) {
-		if (a_isDblClick) {
-			toggleCollapsed();
-		}
-		else {
-			return this;
-		}
+		return this;
 	}
 	return nullptr;
 }
 
 void syn::UIWindow::notifyChildResized(UIComponent* a_child) {
 	Vector2i minSize = { 0,0 };
-	Vector2i newSize = { 0,0 };
 	for (shared_ptr<UIComponent> child : m_children) {
-		Vector2i childExtent = child->getRelPos() + child->size();
 		Vector2i minChildExtent = child->getRelPos() + child->minSize();
-		newSize = newSize.cwiseMax(childExtent);
 		minSize = minSize.cwiseMax(minChildExtent);
 	}
 	setMinSize(minSize);
-	setSize(newSize);
 }
 
-void syn::UIWindow::toggleCollapsed() {
-	if (m_isCollapsed)
-		expand();
-	else
-		collapse();
-}
-
-void syn::UIWindow::collapse() {
-	m_isCollapsed = true;
-	m_oldSize = m_size;
-	m_oldMinSize = minSize();
-	m_bodyRow->setVisible(false);
-	setMinSize({ m_size[0], theme()->mWindowHeaderHeight });
-	setSize({ m_size[0],theme()->mWindowHeaderHeight });
-}
-
-void syn::UIWindow::expand() {
-	m_isCollapsed = false;
-	setMinSize(m_oldMinSize);
-	setSize(m_oldSize);
-	m_bodyRow->setVisible(true);
+void syn::UIWindow::lockPosition(bool a_lockPosition) {
+	m_isLocked = a_lockPosition;
 }
 
 void syn::UIWindow::draw(NVGcontext* a_nvg) {
@@ -148,7 +107,5 @@ void syn::UIWindow::draw(NVGcontext* a_nvg) {
 }
 
 void syn::UIWindow::_onResize() {
-	m_col->setSize(size() - m_col->getRelPos());
-	m_headerRow->pack();
-	m_bodyRow->pack();
+	m_headerRow->setSize({ size().x(),-1 });
 }

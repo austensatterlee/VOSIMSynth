@@ -63,7 +63,7 @@ namespace syn
 		};
 
 	public:
-		UICell(VOSIMWindow* a_window);
+		UICell(MainWindow* a_window);
 
 		void notifyChildResized(UIComponent* a_child) override {
 			if (m_packOnChildResize) {
@@ -85,14 +85,11 @@ namespace syn
 		 * Specifies one of the children to be the greedy child.
 		 *
 		 * The division of the greedy child will expand to take up any extra space.
-		 * While the size of the child itself is not changed, the cell spaces the children as if it were.
-		 * The alignment parameter specifies where to place the child within the extra space.
 		 *
 		 * Note that this will not have any effect if the SelfMinSizePolicy is anything other than SNONE, since the other policies remove extra space by shrinking the cell.
 		 *
-		 * \param a_align For cols: One of NVG_ALIGN_TOP, NVG_ALIGN_BOTTOM, NVG_ALIGN_MIDDLE. For rows: One of NVG_ALIGN_LEFT, NVG_ALIGN_CENTER, NVG_ALIGN_RIGHT.
 		 */
-		void setGreedyChild(UIComponent* a_child, int a_align);
+		void setGreedyChild(UIComponent* a_child);
 
 		/**
 		 * The child resize policy specifies how the children are resized relative to each other.
@@ -164,7 +161,6 @@ namespace syn
 		ChildResizePolicy m_childResizePolicy;
 		SelfMinSizePolicy m_selfMinSizePolicy;
 		SelfResizePolicy m_selfResizePolicy;
-		int m_greedyChildAlign;
 		Vector4i m_padding;
 		int m_childSpacing;
 		Vector2i m_maxChildSize;
@@ -179,7 +175,7 @@ namespace syn
 	class UICol : public UICell
 	{
 	public:
-		UICol(VOSIMWindow* a_window)
+		UICol(MainWindow* a_window)
 			: UICell(a_window)
 		{}
 	protected:
@@ -194,7 +190,7 @@ namespace syn
 	class UIRow : public UICell
 	{
 	public:
-		UIRow(VOSIMWindow* a_window)
+		UIRow(MainWindow* a_window)
 			: UICell(a_window)
 		{}
 	protected:

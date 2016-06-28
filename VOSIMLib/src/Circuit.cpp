@@ -32,8 +32,8 @@ namespace syn
 	Circuit::Circuit(const string& a_name) :
 		Unit(a_name)
 	{
-		PassthroughUnit* inputUnit = new PassthroughUnit("inputs");
-		PassthroughUnit* outputUnit = new PassthroughUnit("outputs");
+		InputUnit* inputUnit = new InputUnit("inputs");
+		OutputUnit* outputUnit = new OutputUnit("outputs");
 		m_units.add("inputs", inputUnit);
 		m_units.add("outputs", outputUnit);
 		m_inputUnit = inputUnit;
@@ -45,10 +45,13 @@ namespace syn
 	}
 
 	Circuit::Circuit(const Circuit& a_other) :
-		Circuit(a_other.getName()) {
+		Circuit(a_other.getName()) 
+	{
 		const int* unitIndices = a_other.m_units.getIndices();
 		for (int i = 0; i < a_other.m_units.size(); i++) {
-			addUnit(a_other.m_units[unitIndices[i]]->clone(), unitIndices[i]);
+			Unit* unit = a_other.m_units[unitIndices[i]];
+			if(unit!=a_other.m_inputUnit && unit!=a_other.m_outputUnit)
+				addUnit(a_other.m_units[unitIndices[i]]->clone(), unitIndices[i]);
 		}
 		for (int i = 0; i < a_other.m_connectionRecords.size(); i++) {
 			const ConnectionRecord& rec = a_other.m_connectionRecords[i];

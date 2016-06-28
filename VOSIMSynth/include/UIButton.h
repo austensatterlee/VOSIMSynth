@@ -51,7 +51,7 @@ namespace syn
 			Right
 		};
 
-		UIButton(VOSIMWindow* a_window, const string& caption = "Untitled", int icon = 0);
+		UIButton(MainWindow* a_window, const string& caption = "Untitled", int icon = 0);
 
 		const string& caption() const {
 			return mCaption;

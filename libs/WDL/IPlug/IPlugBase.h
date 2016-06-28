@@ -20,7 +20,7 @@
 // All version ints are stored as 0xVVVVRRMM: V = version, R = revision, M = minor revision.
 
 namespace syn {
-    class VOSIMWindow;
+    class MainWindow;
 }
 
 class IPlugBase
@@ -28,13 +28,13 @@ class IPlugBase
 
     // Changes made by Austen (4/11)
 private:
-    syn::VOSIMWindow* m_appWindow;
+    syn::MainWindow* m_appWindow;
 protected:
-    virtual void AttachAppWindow(syn::VOSIMWindow* a_appWindow) {
+    virtual void AttachAppWindow(syn::MainWindow* a_appWindow) {
         m_appWindow = a_appWindow;
     }
 public:
-    syn::VOSIMWindow* GetAppWindow() const {
+    syn::MainWindow* GetAppWindow() const {
         return m_appWindow;
     }
     // End changes made by Austen (4/11)

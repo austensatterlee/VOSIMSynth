@@ -4,7 +4,7 @@
 
 
 namespace syn {
-	UIPlot::UIPlot(VOSIMWindow* a_window) :
+	UIPlot::UIPlot(MainWindow* a_window) :
 		UIComponent(a_window),
 		m_minBounds{ 0, -1 },
 		m_maxBounds{ 1, 1 },
@@ -15,8 +15,9 @@ namespace syn {
 		m_crosshairPos{0.0,0.0},
 		m_statusLabel(nullptr),
 		m_interpPolicy(LinInterp), 
-		m_xScale(LinScale) {
-		setMinSize({ 200,200 });
+		m_xScale(LinScale) 
+	{
+		setMinSize({ 50,50 });
 	}
 
 	void UIPlot::setBufferPtr(const double* a_yBufPtr, int a_bufSize) {
@@ -133,7 +134,7 @@ namespace syn {
 		const double yTickStep = 1. / numYTicks;
 		double yTickPos = zeroPct;
 		double yTickNeg = zeroPct-yTickStep;
-		char buf[16];
+		char buf[256];
 		while (yTickNeg>0.0 || yTickPos <= 1.0) {
 			if (yTickNeg > 0.0) {
 				double samplePtPos = LERP<double>(m_minBounds.y(), m_maxBounds.y(), yTickNeg);
@@ -221,7 +222,7 @@ namespace syn {
 	void UIPlot::_updateStatusLabel() const {
 		if (m_statusLabel) {
 			Vector2f sample_pt = toSampleCoords(m_crosshairPos);
-			char buf[64];
+			char buf[256];
 			sprintf(buf, "%.1f %s, %.4f %s", sample_pt.x(), m_xUnits.c_str(), sample_pt.y(), m_yUnits.c_str());
 			m_statusLabel->setText(buf);
 		}

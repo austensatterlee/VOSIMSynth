@@ -5,7 +5,7 @@
 
 namespace syn
 {
-	UIDigitControl::UIDigitControl(VOSIMWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId) :
+	UIDigitControl::UIDigitControl(MainWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId) :
 		UIComponent(a_window),
 		m_decimalLoc(-1),
 		m_value(""),

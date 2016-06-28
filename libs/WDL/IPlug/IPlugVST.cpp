@@ -1,5 +1,5 @@
 #include "IPlugVST.h"
-#include "VOSIMWindow.h"
+#include "MainWindow.h"
 #include <stdio.h>
 
 const int VST_VERSION = 2400;
@@ -213,7 +213,7 @@ EHost IPlugVST::GetHost()
   return host;
 }
 
-void IPlugVST::AttachAppWindow(syn::VOSIMWindow* a_vosimWindow) {
+void IPlugVST::AttachAppWindow(syn::MainWindow* a_vosimWindow) {
       if (a_vosimWindow)
       {
         IPlugBase::AttachAppWindow(a_vosimWindow);
@@ -238,7 +238,7 @@ void IPlugVST::AttachAppWindow(syn::VOSIMWindow* a_vosimWindow) {
 
 void IPlugVST::ResizeGraphics(int w, int h)
 {
-    syn::VOSIMWindow* vosimWindow = GetAppWindow();
+    syn::MainWindow* vosimWindow = GetAppWindow();
 
   if (vosimWindow)
   {
@@ -481,7 +481,7 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
     }
     case effEditOpen:
     {
-       syn::VOSIMWindow* pGraphics = _this->GetAppWindow();
+       syn::MainWindow* pGraphics = _this->GetAppWindow();
       
       if (pGraphics)
       {

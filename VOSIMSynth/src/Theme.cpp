@@ -46,7 +46,7 @@ namespace syn
 		mWindowPopupTransparent = Color(50, 0);
 
 		/* Text slider */
-		mTextSliderFontSize = 14;
+		mTextSliderFontSize = 16;
 
 		/* Port */
 		mPortFontSize = 12;
@@ -65,6 +65,10 @@ namespace syn
 		/* Unit selector */
 		mUnitSelectorProtoFontSize = 16;
 		mUnitSelectorGroupFontSize = 18;
+
+		/* Unit Control Panel */
+
+		/* Circuit Panel */
 
 		mFontNormal = nvgCreateFontMem(ctx, "sans", roboto_regular_ttf,
 		                               roboto_regular_ttf_size, 0);

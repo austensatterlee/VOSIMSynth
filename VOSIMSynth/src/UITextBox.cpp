@@ -5,7 +5,7 @@
 
 namespace syn
 {
-	UITextBox::UITextBox(VOSIMWindow* a_window, const string& value)
+	UITextBox::UITextBox(MainWindow* a_window, const string& value)
 		: UIComponent(a_window),
 		  mEnabled(true),
 		  mEditable(true),

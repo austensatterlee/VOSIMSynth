@@ -18,7 +18,7 @@ Copyright 2016, Austen Satterlee
 */
 
 /**
-*  \file VOSIMWindow.h
+*  \file MainWindow.h
 *  \brief
 *  \details
 *  \author Austen Satterlee
@@ -54,26 +54,27 @@ namespace syn
 		sf::Time time;
 	};
 
-	class VOSIMWindow;
+	class MainWindow;
 
 	struct GUIMessage
 	{
-		void(*action)(VOSIMWindow*, ByteChunk*);
+		void(*action)(MainWindow*, ByteChunk*);
 		ByteChunk data;
 	};
 
 	class VoiceManager;
 	class UnitFactory;
 
-	class VOSIMWindow
+	class MainWindow
 	{
 	public:
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		VOSIMWindow(int a_width, int a_height, VoiceManager* a_vm, UnitFactory* a_unitFactory);
-		virtual ~VOSIMWindow();
+		MainWindow(int a_width, int a_height, std::function<UIComponent*(MainWindow*)> a_rootComponentConstructor);
+		virtual ~MainWindow();
 
 		sf::RenderWindow* GetWindow() const { return m_sfmlWindow; }
+
 		bool isOpen() const { return m_isOpen; }
 
 		Vector2i getSize() const { return m_size; }
@@ -89,11 +90,10 @@ namespace syn
 		const Timestamped<Event::MouseWheelScrollEvent>& lastScrollEvent() const { return m_lastScroll; }
 
 		shared_ptr<Theme> theme() const { return m_theme; }
+
 		double fps() const { return m_fps; }
-
-		UICircuitPanel* getCircuitPanel() const { return m_circuitPanel; }
-
-		UnitFactory* getUnitFactory() const { return m_unitFactory; }
+		
+		UIComponent* getRoot() const { return m_root; }
 
 		NVGcontext* getContext() const { return m_vg; }
 
@@ -106,17 +106,8 @@ namespace syn
 		void forfeitFocus(UIComponent* a_comp);
 
 		bool OpenWindow(sf::WindowHandle a_system_window);
+
 		void CloseWindow();
-
-		void save(ByteChunk* a_data) const;
-		int load(ByteChunk* a_data, int startPos);
-
-		void reset();
-
-		template <typename UnitType>
-		void registerUnitControl(function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)> a_unitControlConstructor);
-
-		UIUnitControl* createUnitControl(unsigned a_classId, int a_unitId);
 
 		void queueExternalMessage(GUIMessage* a_msg);
 
@@ -162,7 +153,7 @@ namespace syn
 		UnitFactory* m_unitFactory;
 
 		UIComponent* m_root;
-		UICircuitPanel* m_circuitPanel;
+		std::function<UIComponent*(MainWindow*)> m_rootConstructor;
 		shared_ptr<Theme> m_theme;
 
 		PerfGraph m_fpsGraph;
@@ -170,16 +161,8 @@ namespace syn
 		unsigned m_frameCount;
 		double m_fps;
 
-		map<unsigned, function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)>> m_unitControlMap;
-
 		spsc_queue<GUIMessage*> m_guiInternalMsgQueue;
 		spsc_queue<GUIMessage*> m_guiExternalMsgQueue;
 	};
-
-	template <typename UnitType>
-	void VOSIMWindow::registerUnitControl(function<UIUnitControl*(VOSIMWindow*, VoiceManager*, int)> a_unitControlConstructor) {
-		unsigned unitClassId = UnitType("").getClassIdentifier();
-		m_unitControlMap[unitClassId] = a_unitControlConstructor;
-	}
 }
 #endif

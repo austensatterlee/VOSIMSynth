@@ -21,6 +21,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __UNITFACTORY__
 
 #include "Unit.h"
+#include "MemoryPool.h"
 
 #include <vector>
 #include <set>
@@ -57,7 +58,8 @@ namespace syn
 	{
 	public:
 
-		UnitFactory() {}
+		UnitFactory()
+		{}
 
 		virtual ~UnitFactory() {
 			m_prototypes.clear();
@@ -73,6 +75,9 @@ namespace syn
 		set<string> getGroupNames() const;
 
 		vector<string> getPrototypeNames(const string& group) const;
+		vector<string> getPrototypeNames() const;
+
+		const FactoryPrototype* getFactoryPrototype(const string& a_prototypeName) const;
 
 		Unit* createUnit(int a_protoNum, const string& a_name = "");
 
@@ -103,7 +108,7 @@ namespace syn
 		int getPrototypeIdx_(unsigned a_classId) const;
 
 	private:
-		vector<FactoryPrototype*> m_prototypes;
+		vector<FactoryPrototype> m_prototypes;
 		set<string> m_group_names;
 		set<string> m_generatedNameHistory;
 
@@ -112,11 +117,11 @@ namespace syn
 
 	template <typename T, typename>
 	void UnitFactory::addUnitPrototype(const string& a_group_name, const string& a_unit_name) {
-		FactoryPrototype* prototype = new FactoryPrototype(a_group_name, new T(a_unit_name), sizeof(T));
+		FactoryPrototype prototype{ a_group_name, new T(a_unit_name), sizeof(T) };
 		m_prototypes.push_back(prototype);
-		m_group_names.insert(prototype->group_name);
-		m_class_identifiers[prototype->prototype->getClassIdentifier()] = m_prototypes.size() - 1;
-	}
+		m_group_names.insert(prototype.group_name);
+		m_class_identifiers[prototype.prototype->getClassIdentifier()] = m_prototypes.size() - 1;
+	}	
 }
 
 #endif
