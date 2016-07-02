@@ -33,8 +33,8 @@ void synui::UIControlPanel::clearUnitControl() {
 	if (unitCtrl) {
 		m_currUnitContainer->makeSelected(false);
 		m_scrollPanel->removeChild(static_cast<UIComponent*>(unitCtrl));
+		m_scrollPanel->setScrollPos({ 0,0 });
 	}
-
 	m_currUnitContainer = nullptr;
 }
 

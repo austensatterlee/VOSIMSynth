@@ -62,14 +62,14 @@ namespace synui
 			digitCol->setChildrenSpacing(0);
 			digitCol->setChildResizePolicy(UICell::CMATCHMAX);
 			UIButton* upArrow = new UIButton(m_window, "", ENTYPO_UP);
-			upArrow->setFontSize(14);
+			upArrow->setFontSize(12);
 			UILabel* digitBox = new UILabel(m_window);
 			digitBox->setAlignment(NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER);
-			digitBox->setFontSize(14);
+			digitBox->setFontSize(12);
 			digitBox->setText("0");
 			digitBox->setFontFace(theme()->mFontMono);
 			UIButton* downArrow = new UIButton(m_window, "", ENTYPO_DOWN); 
-			downArrow->setFontSize(14);
+			downArrow->setFontSize(13);
 
 			int digitNum = m_digitBoxes.size();
 			auto upFunc = [this, digitNum]() {this->onUpArrow_(digitNum); };
@@ -224,11 +224,11 @@ namespace synui
 			Vector2i sepBegin = m_digitCols[i]->getAbsPos() + Vector2i{ m_digitCols[i]->size().x() + 2.5, 0 } - getAbsPos();
 			Vector2i sepEnd = sepBegin + Vector2i{0, m_digitCols[i]->size().y()};
 			NVGpaint separatorPaint = nvgLinearGradient(a_nvg,
-				sepBegin.x(), sepBegin.y(),
-				sepBegin.x() + 1.0f, sepBegin.y(),
+				sepBegin.x()+ 0.5, sepBegin.y(),
+				sepBegin.x() + 1.5f, sepBegin.y(),
 				Color(0.1f, 1.0f), Color(0.3f, 1.0f));
-			nvgMoveTo(a_nvg, sepBegin.x(), sepBegin.y());
-			nvgLineTo(a_nvg, sepEnd.x(), sepEnd.y());
+			nvgMoveTo(a_nvg, sepBegin.x() + 1.0f, sepBegin.y());
+			nvgLineTo(a_nvg, sepEnd.x() + 1.0f, sepEnd.y());
 			nvgStrokePaint(a_nvg, separatorPaint);
 			nvgStroke(a_nvg); 
 
@@ -237,8 +237,8 @@ namespace synui
 				sepBegin.x() + 1.5f, sepBegin.y(),
 				sepBegin.x() + 2.5f, sepBegin.y(),
 				Color(0.3f, 1.0f), Color(0.1f, 1.0f)); 
-			nvgMoveTo(a_nvg, sepBegin.x() + 1.5f, sepBegin.y());
-			nvgLineTo(a_nvg, sepEnd.x() + 1.5f, sepEnd.y());
+			nvgMoveTo(a_nvg, sepBegin.x() + 2.0f, sepBegin.y());
+			nvgLineTo(a_nvg, sepEnd.x() + 2.0f, sepEnd.y());
 			nvgStrokePaint(a_nvg, separatorPaint);
 			nvgStroke(a_nvg);
 		}
