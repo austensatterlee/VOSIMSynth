@@ -45,29 +45,31 @@ namespace synui
 	class UILayout;
 	struct Theme;
 
+	// Generic UI components:
 	class UIButton;
 	class UICell;
 	class UICol;
 	class UIRow;
 	class UILabel;
-	class UIParamControl;
-	class UITextSlider;
-	class UIDigitControl;
 	class UITextBox;
 	class UIColorWheel;
-	class UIUnitControl;
-	class UIDefaultUnitControl;
-	class UIUnitContainer;
-	class UIDefaultUnitContainer;
-	class UIUnitPort;
 	class UIWindow;
-	class UIWire;
 	class UIPlot;
+	class UIScrollPanel;
 
 	// VOSIMSynth specific:
 	class UICircuitPanel;
 	class UIControlPanel;
 	class UIUnitSelector;
+	class UIWire;
+	class UIUnitControl;
+	class UIDefaultUnitControl;
+	class UIUnitContainer;
+	class UIDefaultUnitContainer;
+	class UIUnitPort;
+	class UIParamControl;
+	class UITextSlider;
+	class UIDigitControl;
 
 	using Eigen::Vector2f;
 	using Eigen::Vector3f;

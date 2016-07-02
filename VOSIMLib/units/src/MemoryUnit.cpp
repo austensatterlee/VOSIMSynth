@@ -127,7 +127,7 @@ namespace syn
 		addInput_("in");
 		m_iSize = addInput_("size");
 		addOutput_("out");
-		m_pBufDelay = addParameter_({ "time", 0.001, 1.0, 0.001, UnitParameter::EUnitsType::Seconds });
+		m_pBufDelay = addParameter_({ "time", 0.001, 1.0, 0.001, UnitParameter::EUnitsType::Seconds, 3 });
 		m_pBufFreq = addParameter_({ "freq", 1.0, 10000.0, 1.0, UnitParameter::EUnitsType::Freq });
 		m_pBufBPMFreq = addParameter_({ "rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM });		
 		getParameter(m_pBufFreq).setVisible(false);

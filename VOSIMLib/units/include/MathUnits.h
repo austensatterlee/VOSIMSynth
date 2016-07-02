@@ -59,16 +59,16 @@ namespace syn
 	};
 
 	/**
-	 * Bilinear/trapezoidal integrator
-	 */
+	* Bilinear/trapezoidal integrator
+	*/
 	class BLIntegrator
 	{
 	public:
 		BLIntegrator();
 
 		/**
-		 * Set normalized cutoff frequency in the range (0,1), where 1 is nyquist.
-		 */
+		* Set normalized cutoff frequency in the range (0,1), where 1 is nyquist.
+		*/
 		void setFc(double a_newfc);
 
 		double process(double a_input);
@@ -99,26 +99,6 @@ namespace syn
 	};
 
 	/**
-	* 1 Pole Filter (Lag)
-	*/
-	class OnePoleLP : public Unit
-	{
-		DERIVE_UNIT(OnePoleLP)
-	public:
-		explicit OnePoleLP(const string& a_name);
-
-		OnePoleLP(const OnePoleLP& a_rhs);
-
-	protected:
-		void MSFASTCALL process_() GCCFASTCALL override;
-
-	private:
-		int m_pFc;
-		int m_iFcAdd, m_iFcMul;
-		double m_state;
-	};
-
-	/**
 	 * Full-wave rectifier
 	 */
 	class RectifierUnit : public Unit
@@ -137,22 +117,7 @@ namespace syn
 	};
 
 	/**
-	 * Performs multiplies two signals and then adds a third signal as a bias
-	 */
-	class MACUnit : public Unit
-	{
-		DERIVE_UNIT(MACUnit)
-	public:
-		explicit MACUnit(const string& a_name);
-
-		MACUnit(const MACUnit& a_rhs);
-
-	protected:
-		void MSFASTCALL process_() GCCFASTCALL override;
-	};
-
-	/**
-	 * Applies gain to the difference between the two inputs (like an op amp)
+	 * Multiplies two signals together
 	 */
 	class GainUnit : public Unit
 	{
@@ -165,8 +130,8 @@ namespace syn
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
 	private:
-		int m_pGain, m_pScale;
-		int m_iGain, m_iInput, m_iInvInput;
+		int m_pGain;
+		int m_iGain, m_iInput;
 	};
 
 	/**
@@ -232,9 +197,8 @@ namespace syn
 		void MSFASTCALL process_() GCCFASTCALL override;
 
 	private:
-		int m_pInputRange;
+		int m_pMinInput, m_pMaxInput;
 		int m_pMinOutput, m_pMaxOutput;
-		int m_pMinOutputScale, m_pMaxOutputScale;
 	};
 
 	/**
@@ -288,9 +252,7 @@ namespace syn
 }
 
 CEREAL_REGISTER_TYPE(syn::DCRemoverUnit)
-CEREAL_REGISTER_TYPE(syn::OnePoleLP)
 CEREAL_REGISTER_TYPE(syn::RectifierUnit)
-CEREAL_REGISTER_TYPE(syn::MACUnit)
 CEREAL_REGISTER_TYPE(syn::GainUnit)
 CEREAL_REGISTER_TYPE(syn::SummerUnit)
 CEREAL_REGISTER_TYPE(syn::ConstantUnit)

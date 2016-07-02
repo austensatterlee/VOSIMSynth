@@ -190,7 +190,10 @@ namespace synui
 	}
 
 	void UIComponent::setRelPos(const Vector2i& a_pos) {
+		bool isDirty = a_pos != m_pos;
 		m_pos = a_pos;
+		if (m_parent && isDirty)
+			m_parent->_onChildMoved(this);
 	}
 
 	Vector2i UIComponent::getAbsPos() const {
@@ -202,7 +205,7 @@ namespace synui
 	}
 
 	void UIComponent::move(const Vector2i& a_dist) {
-		m_pos += a_dist;
+		setRelPos(getRelPos() + a_dist); 
 	}
 
 	Vector2i UIComponent::size() const {
@@ -272,7 +275,7 @@ namespace synui
 	}
 
 	UIComponent* UIComponent::findChild(const UICoord& a_pt, const string& a_filterGroup) const {
-		UICoord relPt(a_pt, this);
+		UICoord relPt(a_pt);
 		for (auto const& kv : m_ZPlaneMap) {
 			for (UIComponent* child : kv.second) {
 				if (a_filterGroup.empty() || getChildGroup(child) == a_filterGroup) {
@@ -285,7 +288,7 @@ namespace synui
 	}
 
 	UIComponent* UIComponent::findChildRecursive(const UICoord& a_pt) const {
-		UICoord relPt(a_pt, this);
+		UICoord relPt(a_pt);
 		for (auto const& kv : m_ZPlaneMap) {
 			for (UIComponent* child : kv.second) {
 				if (child->visible() && child->contains(relPt))
@@ -346,7 +349,7 @@ namespace synui
 				if (!child->visible())
 					continue;
 				bool hasMouse = child->contains(a_relCursor);
-				bool hadMouse = child->contains(a_relCursor - a_diffCursor);
+				bool hadMouse = child->contains(UICoord{ a_relCursor.globalCoord() - a_diffCursor });
 				if (hasMouse != hadMouse)
 					child->onMouseEnter(a_relCursor, a_diffCursor, hasMouse);
 				if (hasMouse || hadMouse) {

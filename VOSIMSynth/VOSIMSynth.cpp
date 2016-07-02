@@ -88,7 +88,6 @@ void VOSIMSynth::makeInstrument() {
 	m_unitFactory->addUnitPrototype<syn::ConstantUnit>("Math", "Const");
 	m_unitFactory->addUnitPrototype<syn::SummerUnit>("Math", "Sum");
 	m_unitFactory->addUnitPrototype<syn::GainUnit>("Math", "Gain");
-	m_unitFactory->addUnitPrototype<syn::MACUnit>("Math", "MAC");
 	m_unitFactory->addUnitPrototype<syn::LerpUnit>("Math", "Affine");
 	m_unitFactory->addUnitPrototype<syn::RectifierUnit>("Math", "Rect");
 	m_unitFactory->addUnitPrototype<syn::PitchToFreqUnit>("Math", "Pitch2Freq");

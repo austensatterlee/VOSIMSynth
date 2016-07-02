@@ -10,9 +10,11 @@ namespace synui
 		Theme(NVGcontext* ctx);
 
 		/* Fonts */
+		int mFontLight;
 		int mFontNormal;
 		int mFontBold;
 		int mFontIcons;
+		int mFontMono;
 
 		/* Spacing-related parameters */
 		int mStandardFontSize;

@@ -178,16 +178,23 @@ namespace syn
 		return m_controlType;
 	}
 
-	void UnitParameter::setControlType(EControlType a_newControlType) {
+	UnitParameter& UnitParameter::setControlType(EControlType a_newControlType) {
 		m_controlType = a_newControlType;
+		return *this;
+	}
+
+	UnitParameter& UnitParameter::setUnitsType(EUnitsType a_newUnitsType) {
+		m_unitsType = a_newUnitsType;
+		return *this;
 	}
 
 	bool UnitParameter::isVisible() const {
 		return m_isVisible;
 	}
 
-	void UnitParameter::setVisible(bool a_visible) {
+	UnitParameter& UnitParameter::setVisible(bool a_visible) {
 		m_isVisible = a_visible;
+		return *this;
 	}
 
 	bool UnitParameter::getBool() const {

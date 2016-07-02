@@ -96,3 +96,42 @@ void syn::TrapStateVariableFilter::process_() {
 	setOutputChannel_(m_oBP, BPOut);
 	setOutputChannel_(m_oN, NOut);
 }
+
+
+syn::OnePoleLP::OnePoleLP(const string& a_name) :
+	Unit(a_name),
+	m_pFc(addParameter_(UnitParameter("fc", 0.01, 20000.0, 1.0, UnitParameter::Freq))),
+	m_state(0.0) 
+{
+	addInput_("in");
+	m_iFcAdd = addInput_("fc");
+	m_iFcMul = addInput_("fc[x]", 1.0);
+	addOutput_("out");
+}
+
+void syn::OnePoleLP::process_() {
+	double input = getInputValue(0);
+	double fc = getParameter(m_pFc).getDouble() * getInputValue(m_iFcMul) + getInputValue(m_iFcAdd); // freq cutoff
+	fc = CLAMP(fc, getParameter(m_pFc).getMin(), getParameter(m_pFc).getMax());
+	fc = fc / getFs();
+	double wc = 2 * tan(DSP_PI * fc / 2.0);
+	double gain = wc / (1 + wc);
+	double trap_in = gain * (input - m_state);
+	double output = trap_in + m_state;
+	m_state = trap_in + output;
+	setOutputChannel_(0, output);
+}
+
+syn::LadderFilter::LadderFilter(const string& a_name) :
+	Unit(a_name),
+	m_pFc(addParameter_(UnitParameter("fc", 0.01, 20000.0, 1.0, UnitParameter::Freq)))
+{
+	addInput_("in");
+	m_iFcAdd = addInput_("fc");
+	m_iFcMul = addInput_("fc[x]", 1.0);
+	addOutput_("out");
+}
+
+void syn::LadderFilter::process_() {
+	
+}

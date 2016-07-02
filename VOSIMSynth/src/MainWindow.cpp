@@ -224,6 +224,7 @@ void synui::MainWindow::_handleEvents() {
 		break;
 		case Event::MouseButtonPressed:
 		{
+			m_sfmlWindow->requestFocus();
 			float clickTime = m_timer.getElapsedTime().asSeconds() - m_lastClick.time.asSeconds();
 			float clickDist = (cursorPos().cast<float>() - Vector2f{ m_lastClick.data.x, m_lastClick.data.y }).norm();
 			bool isDblClick = clickTime < 0.1 && clickDist <= 3.0;

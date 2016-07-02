@@ -73,8 +73,45 @@ namespace syn
 	protected:
 		double m_prevInput;
 	};
+	
+
+	/**
+	* 1 Pole Filter (Lag)
+	*/
+	class OnePoleLP : public Unit
+	{
+		DERIVE_UNIT(OnePoleLP)
+	public:
+		explicit OnePoleLP(const string& a_name);
+
+		OnePoleLP(const OnePoleLP& a_rhs) : OnePoleLP(a_rhs.getName()) {};
+
+	protected:
+		void MSFASTCALL process_() GCCFASTCALL override;
+
+	private:
+		int m_pFc;
+		int m_iFcAdd, m_iFcMul;
+		double m_state;
+	};
+
+	class LadderFilter : public Unit
+	{
+		DERIVE_UNIT(LadderFilter)
+	public:
+		explicit LadderFilter(const string& a_name);
+		LadderFilter(const LadderFilter& a_rhs) : LadderFilter(a_rhs.getName()) {};
+	protected:
+		void MSFASTCALL process_() GCCFASTCALL override;
+	private:
+		int m_pFc;
+		int m_iFcAdd, m_iFcMul;
+		OnePoleLP m_ladder[4];
+	};
 }
 
 CEREAL_REGISTER_TYPE(syn::StateVariableFilter)
 CEREAL_REGISTER_TYPE(syn::TrapStateVariableFilter)
+CEREAL_REGISTER_TYPE(syn::OnePoleLP)
+CEREAL_REGISTER_TYPE(syn::LadderFilter)
 #endif

@@ -75,7 +75,6 @@ namespace synui
 		void setLayout(shared_ptr<UILayout> a_layout);
 		virtual void performLayout(NVGcontext* a_nvg);
 
-
 		shared_ptr<UIComponent> getSharedPtr();
 
 		virtual bool contains(const UICoord& a_pt) const;
@@ -161,6 +160,8 @@ namespace synui
 		virtual void setChildrenStyles(NVGcontext* a_nvg) {};
 
 	private:
+		virtual void _onChildMoved(UIComponent* a_child) {};
+
 		virtual void _onAddChild(shared_ptr<UIComponent> a_newchild) {};
 
 		virtual void _onRemoveChild() {};

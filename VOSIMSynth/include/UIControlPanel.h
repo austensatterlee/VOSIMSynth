@@ -42,6 +42,7 @@ namespace synui {
 	private:
 		void _onResize() override;
 		UIWindow* m_ctrlWindow;
+		UIScrollPanel* m_scrollPanel;
 		UIUnitContainer* m_currUnitContainer;
 	};
 }

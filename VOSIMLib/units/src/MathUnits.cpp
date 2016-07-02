@@ -64,31 +64,6 @@ void syn::DCRemoverUnit::process_() {
 	setOutputChannel_(0, output);
 }
 
-syn::OnePoleLP::OnePoleLP(const string& a_name) :
-	Unit(a_name),
-	m_pFc(addParameter_(UnitParameter("fc", 0.01, 20000.0, 1.0, UnitParameter::Freq))),
-	m_state(0.0) {
-	addInput_("in");
-	m_iFcAdd = addInput_("fc");
-	m_iFcMul = addInput_("fc[x]", 1.0);
-	addOutput_("out");
-}
-
-syn::OnePoleLP::OnePoleLP(const OnePoleLP& a_rhs) : OnePoleLP(a_rhs.getName()) {}
-
-void syn::OnePoleLP::process_() {
-	double input = getInputValue(0);
-	double fc = getParameter(m_pFc).getDouble() * getInputValue(m_iFcMul) + getInputValue(m_iFcAdd); // freq cutoff
-	fc = CLAMP(fc, getParameter(m_pFc).getMin(), getParameter(m_pFc).getMax());
-	fc = fc / getFs();
-	double wc = 2 * tan(DSP_PI * fc / 2.0);
-	double gain = wc / (1 + wc);
-	double trap_in = gain * (input - m_state);
-	double output = trap_in + m_state;
-	m_state = trap_in + output;
-	setOutputChannel_(0, output);
-}
-
 syn::RectifierUnit::RectifierUnit(const string& a_name) :
 	Unit(a_name),
 	m_pRectType(addParameter_(UnitParameter{ "type",{"full","half"} }))
@@ -114,31 +89,12 @@ void syn::RectifierUnit::process_() {
 	setOutputChannel_(0, output);
 }
 
-syn::MACUnit::MACUnit(const string& a_name) :
-	Unit(a_name) {
-	addInput_("in");
-	addInput_("a[x]", 1.0);
-	addInput_("b[+]");
-	addOutput_("a*in+b");
-}
-
-syn::MACUnit::MACUnit(const MACUnit& a_rhs) :
-	MACUnit(a_rhs.getName()) { }
-
-void syn::MACUnit::process_() {
-	double output = getInputValue(0);
-	output *= getInputValue(1);
-	output += getInputValue(2);
-	setOutputChannel_(0, output);
-}
-
 syn::GainUnit::GainUnit(const string& a_name) :
 	Unit(a_name),
-	m_pGain(addParameter_(UnitParameter("gain", 0.0, 1.0, 1.0))),
-	m_pScale(addParameter_(UnitParameter("scale", scale_selections, scale_values))) {
-	m_iInput = addInput_("in[+]");
-	m_iInvInput = addInput_("in[-]");
-	m_iGain = addInput_("gain[x]", 1.0);
+	m_pGain(addParameter_(UnitParameter("gain", -1E4, 1E4, 1.0, UnitParameter::None, 2)))
+{
+	m_iInput = addInput_("in");
+	m_iGain = addInput_("g[x]", 1.0);
 	addOutput_("out");
 }
 
@@ -146,8 +102,8 @@ syn::GainUnit::GainUnit(const GainUnit& a_rhs) :
 	GainUnit(a_rhs.getName()) { }
 
 void syn::GainUnit::process_() {
-	double input = getInputValue(m_iInput) - getInputValue(m_iInvInput);
-	double gain = getParameter(m_pGain).getDouble() * getParameter(m_pScale).getEnum();
+	double input = getInputValue(m_iInput);
+	double gain = getParameter(m_pGain).getDouble();
 	gain *= getInputValue(m_iGain);
 	setOutputChannel_(0, input * gain);
 }
@@ -212,11 +168,10 @@ void syn::PanningUnit::process_() {
 
 syn::LerpUnit::LerpUnit(const string& a_name) :
 	Unit(a_name) {
-	m_pInputRange = addParameter_(UnitParameter("input", { "bipolar","unipolar" }));
-	m_pMinOutput = addParameter_(UnitParameter("min out", -1.0, 1.0, 0.0));
-	m_pMinOutputScale = addParameter_(UnitParameter("min scale", scale_selections, scale_values));
-	m_pMaxOutput = addParameter_(UnitParameter("max out", -1.0, 1.0, 1.0));
-	m_pMaxOutputScale = addParameter_(UnitParameter("max scale", scale_selections, scale_values));
+	m_pMinInput = addParameter_(UnitParameter("min in", -1E6, 1E6, 0.0).setControlType(UnitParameter::Unbounded));
+	m_pMaxInput = addParameter_(UnitParameter("max in", -1E6, 1E6, 0.0).setControlType(UnitParameter::Unbounded));
+	m_pMinOutput = addParameter_(UnitParameter("min out", -1E6, 1E6, 0.0).setControlType(UnitParameter::Unbounded));
+	m_pMaxOutput = addParameter_(UnitParameter("max out", -1E6, 1E6, 1.0).setControlType(UnitParameter::Unbounded));
 	addInput_("in");
 	addOutput_("out");
 }
@@ -226,16 +181,11 @@ syn::LerpUnit::LerpUnit(const LerpUnit& a_rhs) :
 
 void syn::LerpUnit::process_() {
 	double input = getInputValue(0);
-	double a_scale = getParameter(m_pMinOutputScale).getEnum();
-	double a = getParameter(m_pMinOutput).getDouble() * a_scale;
-	double b_scale = getParameter(m_pMaxOutputScale).getEnum();
-	double b = getParameter(m_pMaxOutput).getDouble() * b_scale;
-	double output;
-	if (getParameter(m_pInputRange).getInt() == 1) {
-		output = LERP(a, b, input);
-	}
-	else {
-		output = LERP(a, b, 0.5*(input + 1));
-	}
+	double aIn = getParameter(m_pMinInput).getDouble();
+	double bIn = getParameter(m_pMaxInput).getDouble();
+	double aOut = getParameter(m_pMinOutput).getDouble();
+	double bOut = getParameter(m_pMaxOutput).getDouble();
+	double inputNorm = INVLERP(aIn, bIn, input);
+	double output = LERP(aOut, bOut, inputNorm);	
 	setOutputChannel_(0, output);
 }

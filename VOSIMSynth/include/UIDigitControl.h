@@ -36,21 +36,30 @@ namespace synui {
 	public:
 		UIDigitControl(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId, int a_paramId);
 		double getValue() const;
+		string getStrValue() const;
 		int getDigit(int a_digit);
 		void setDigit(int a_digit, int a_value);
+		void incrDigit(int a_digit, int a_amt);
+		void decrDigit(int a_digit, int a_amt);
 	protected:
+		void draw(NVGcontext* a_nvg) override;
 		void updateValue_() override;
 		void setValue_(const string& a_num);
 		void setNumDigits_(int a_numDigits);
+		void onUpArrow_(int a_digit);
+		void onDownArrow_(int a_digit);
 	private:
 		int m_decimalLoc;
 
 		string m_strValue;
-		vector<UITextBox*> m_textBoxes;
+		vector<UILabel*> m_digitBoxes;
 		vector<UIButton*> m_upArrows;
 		vector<UIButton*> m_downArrows;
-		UIRow* m_row;
+		UICol* m_mainCol;
+		UIRow* m_digitsRow;
 		vector<UICol*> m_digitCols;
+		UICol* m_signCol;
+		UILabel* m_signLabel;
 	};
 }
 

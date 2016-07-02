@@ -96,11 +96,13 @@ namespace syn
 		bool setPrecision(int a_precision);
 
 		EControlType getControlType() const;
-		void setControlType(EControlType a_newControlType);
+		UnitParameter& setControlType(EControlType a_newControlType);
+
+		UnitParameter& setUnitsType(EUnitsType a_newUnitsType);
+
+		UnitParameter& setVisible(bool a_visible);
 
 		bool isVisible() const;
-
-		void setVisible(bool a_visible);
 
 		
 		bool set(double a_value);
