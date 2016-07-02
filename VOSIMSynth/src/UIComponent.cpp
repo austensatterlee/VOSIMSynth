@@ -3,7 +3,7 @@
 
 //#define DRAW_COMPONENT_BOUNDS
 
-namespace syn
+namespace synui
 {
 	UIComponent::UIComponent(MainWindow* a_window):
 		m_parent(nullptr), m_window(a_window), m_visible(true), m_focused(false), m_hovered(false),
@@ -303,13 +303,13 @@ namespace syn
 			newSize[1] = m_size[1];
 
 		if (m_minSize[0] >= 0)
-			newSize[0] = MAX(m_minSize[0], newSize[0]);
+			newSize[0] = syn::MAX(m_minSize[0], newSize[0]);
 		if (m_minSize[1] >= 0)
-			newSize[1] = MAX(m_minSize[1], newSize[1]);
+			newSize[1] = syn::MAX(m_minSize[1], newSize[1]);
 		if (m_maxSize[0] >= 0)
-			newSize[0] = MIN(m_maxSize[0], newSize[0]);
+			newSize[0] = syn::MIN(m_maxSize[0], newSize[0]);
 		if (m_maxSize[1] >= 0)
-			newSize[1] = MIN(m_maxSize[1], newSize[1]);
+			newSize[1] = syn::MIN(m_maxSize[1], newSize[1]);
 		if (m_size != newSize) {
 			m_size = newSize;
 			_onResize();
@@ -321,18 +321,18 @@ namespace syn
 	void UIComponent::setMinSize(const Vector2i& a_minSize) {
 		m_minSize = a_minSize;
 		if (m_maxSize[0] >= 0)
-			m_maxSize[0] = MAX(m_maxSize[0], a_minSize[0]);
+			m_maxSize[0] = syn::MAX(m_maxSize[0], a_minSize[0]);
 		if (m_maxSize[1] >= 0)
-			m_maxSize[1] = MAX(m_maxSize[1], a_minSize[1]);
+			m_maxSize[1] = syn::MAX(m_maxSize[1], a_minSize[1]);
 		setSize(m_size);
 	}
 
 	void UIComponent::setMaxSize(const Vector2i& a_maxSize) {
 		m_maxSize = a_maxSize;
 		if (m_minSize[0] >= 0)
-			m_minSize[0] = MIN(m_minSize[0], a_maxSize[0]);
+			m_minSize[0] = syn::MIN(m_minSize[0], a_maxSize[0]);
 		if (m_minSize[1] >= 0)
-			m_minSize[1] = MIN(m_minSize[1], a_maxSize[1]);
+			m_minSize[1] = syn::MIN(m_minSize[1], a_maxSize[1]);
 		setSize(m_size);
 	}
 

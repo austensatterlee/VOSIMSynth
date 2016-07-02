@@ -6,7 +6,7 @@
 #include <Theme.h>
 
 
-syn::UIWire::UIWire(MainWindow* a_window, UICircuitPanel* a_circuitPanel, int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort) :
+synui::UIWire::UIWire(MainWindow* a_window, UICircuitPanel* a_circuitPanel, int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort) :
 	UIComponent{a_window},
 	m_fromUnit(a_fromUnit),
 	m_fromPort(a_fromPort),
@@ -16,13 +16,13 @@ syn::UIWire::UIWire(MainWindow* a_window, UICircuitPanel* a_circuitPanel, int a_
 	m_hoverDistance(INFINITY)
 {}
 
-bool syn::UIWire::contains(const UICoord& a_pt) const {
+bool synui::UIWire::contains(const UICoord& a_pt) const {
 	// Otherwise compute distance to line and verify it is below a threshold
 	double distance = pointLineDistance(a_pt.localCoord(this), fromPt().localCoord(this), toPt().localCoord(this));
 	return distance <= 2;
 }
 
-void syn::UIWire::onMouseEnter(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) {
+void synui::UIWire::onMouseEnter(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) {
 	UIComponent::onMouseEnter(a_relCursor, a_diffCursor, a_isEntering);
 	m_hoverDistance = pointLineDistance(a_relCursor.localCoord(this), fromPt().localCoord(this), toPt().localCoord(this));
 	if (a_isEntering)
@@ -31,13 +31,13 @@ void syn::UIWire::onMouseEnter(const UICoord& a_relCursor, const Vector2i& a_dif
 		m_circuitPanel->clearSelectedWire(this);
 }
 
-bool syn::UIWire::onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
+bool synui::UIWire::onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	UIComponent::onMouseMove(a_relCursor, a_diffCursor);
 	m_hoverDistance = pointLineDistance(a_relCursor.localCoord(this), fromPt().localCoord(this), toPt().localCoord(this));
 	return false;
 }
 
-bool syn::UIWire::onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
+bool synui::UIWire::onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	UIUnitContainer* selectedUnit = m_circuitPanel->findUnitContainer(a_relCursor);
 	m_isDragging = false;
 
@@ -60,7 +60,7 @@ bool syn::UIWire::onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCu
 	return true;
 }
 
-syn::UIComponent* syn::UIWire::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+synui::UIComponent* synui::UIWire::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	Vector2i frompt = fromPt().localCoord(this);
 	Vector2i topt = toPt().localCoord(this);
 
@@ -71,15 +71,15 @@ syn::UIComponent* syn::UIWire::onMouseDown(const UICoord& a_relCursor, const Vec
 	return this;
 }
 
-Eigen::Vector2i syn::UIWire::destVector() const {
+Eigen::Vector2i synui::UIWire::destVector() const {
 	return{ toUnit(),toPort() };
 }
 
-Eigen::Vector2i syn::UIWire::originVector() const {
+Eigen::Vector2i synui::UIWire::originVector() const {
 	return{ fromUnit(),fromPort() };
 }
 
-syn::UICoord syn::UIWire::fromPt() const {
+synui::UICoord synui::UIWire::fromPt() const {
 	Vector2i fromPos;
 	if (m_isDragging && !m_isDraggingInput) {
 		fromPos = m_window->cursorPos();
@@ -90,7 +90,7 @@ syn::UICoord syn::UIWire::fromPt() const {
 	return UICoord{ fromPos };
 }
 
-syn::UICoord syn::UIWire::toPt() const {
+synui::UICoord synui::UIWire::toPt() const {
 	Vector2i toPos;
 	if (m_isDragging && m_isDraggingInput) {
 		toPos = m_window->cursorPos();
@@ -101,7 +101,7 @@ syn::UICoord syn::UIWire::toPt() const {
 	return UICoord{ toPos };
 }
 
-void syn::UIWire::draw(NVGcontext* a_nvg) {
+void synui::UIWire::draw(NVGcontext* a_nvg) {
 	Vector2i fromPos = fromPt().localCoord(this);
 	Vector2i toPos = toPt().localCoord(this);
 	Vector2f rawWire = (toPos - fromPos).cast<float>();

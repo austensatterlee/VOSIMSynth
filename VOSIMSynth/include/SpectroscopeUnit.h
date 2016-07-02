@@ -36,10 +36,11 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 using std::vector;
 using std::array;
 
-namespace syn
+namespace synui
 {
-	class SpectroscopeUnit : public Unit
+	class SpectroscopeUnit : public syn::Unit
 	{
+		DERIVE_UNIT(SpectroscopeUnit)
 	public:
 		SpectroscopeUnit(const string& a_name);
 
@@ -59,15 +60,6 @@ namespace syn
 		void MSFASTCALL process_() GCCFASTCALL override;
 
 	private:
-		string _getClassName() const override {
-			return "SpectroscopeUnit";
-		};
-
-		Unit* _clone() const override {
-			return new SpectroscopeUnit(*this);
-		};
-
-	private:
 		friend class SpectroscopeUnitControl;
 		int m_bufferIndex;
 		int m_inBufferSize, m_outBufferSize;
@@ -85,7 +77,7 @@ namespace syn
 	class SpectroscopeUnitControl : public UIUnitControl
 	{
 	public:
-		SpectroscopeUnitControl(MainWindow* a_window, VoiceManager* a_vm, int a_unitId); 
+		SpectroscopeUnitControl(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId); 
 
 	protected:
 		void draw(NVGcontext* a_nvg) override;
@@ -99,3 +91,5 @@ namespace syn
 		UIDefaultUnitControl* m_defCtrl;
 	};
 }
+
+CEREAL_REGISTER_TYPE(synui::SpectroscopeUnit)

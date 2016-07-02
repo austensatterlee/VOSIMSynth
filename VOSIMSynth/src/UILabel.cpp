@@ -1,7 +1,7 @@
 #include "UILabel.h"
 #include "Theme.h"
 
-syn::UILabel::UILabel(MainWindow* a_window):
+synui::UILabel::UILabel(MainWindow* a_window):
 	UIComponent(a_window),
 	m_fontFace(theme()->mFontNormal), 
 	m_color(1.0f,1.0f,1.0f,1.0f),
@@ -12,62 +12,62 @@ syn::UILabel::UILabel(MainWindow* a_window):
 	_updateMinSize();	
 }
 
-void syn::UILabel::setText(const string& a_newText) {
+void synui::UILabel::setText(const string& a_newText) {
 	m_text = a_newText;
 	_updateMinSize();
 }
 
-void syn::UILabel::setFontSize(float a_newFontSize) {
+void synui::UILabel::setFontSize(float a_newFontSize) {
 	m_fontSize = a_newFontSize;
 	_updateMinSize();
 }
 
-void syn::UILabel::setFontBlur(float a_fontBlur) {
+void synui::UILabel::setFontBlur(float a_fontBlur) {
 	m_fontBlur = a_fontBlur;
 }
 
-float syn::UILabel::fontBlur() const {
+float synui::UILabel::fontBlur() const {
 	return m_fontBlur;
 }
 
-int syn::UILabel::fontFace() const {
+int synui::UILabel::fontFace() const {
 	return m_fontFace;
 }
 
-void syn::UILabel::setFontColor(const Color& a_newColor) {
+void synui::UILabel::setFontColor(const Color& a_newColor) {
 	m_color = a_newColor;
 }
 
-void syn::UILabel::setFontFace(int a_fontFace) {
+void synui::UILabel::setFontFace(int a_fontFace) {
 	m_fontFace = a_fontFace;
 	_updateMinSize();
 }
 
-void syn::UILabel::setAlignment(int a_newAlign) {
+void synui::UILabel::setAlignment(int a_newAlign) {
 	m_align = a_newAlign;
 }
 
-const string& syn::UILabel::text() const {
+const string& synui::UILabel::text() const {
 	return m_text;
 }
 
-float syn::UILabel::fontSize() const {
+float synui::UILabel::fontSize() const {
 	return m_fontSize;
 }
 
-const syn::Color& syn::UILabel::fontColor() const {
+const synui::Color& synui::UILabel::fontColor() const {
 	return m_color;
 }
 
-int syn::UILabel::alignment() const {
+int synui::UILabel::alignment() const {
 	return m_align;
 }
 
-syn::UIComponent* syn::UILabel::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+synui::UIComponent* synui::UILabel::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	return nullptr;
 }
 
-void syn::UILabel::draw(NVGcontext* a_nvg) {
+void synui::UILabel::draw(NVGcontext* a_nvg) {
 	nvgFontFaceId(a_nvg, m_fontFace);
 	nvgFontBlur(a_nvg, m_fontBlur);	
 	nvgFontSize(a_nvg, m_fontSize);
@@ -102,13 +102,13 @@ void syn::UILabel::draw(NVGcontext* a_nvg) {
 	nvgText(a_nvg, pos[0], pos[1], m_text.c_str(), nullptr);
 }
 
-void syn::UILabel::_updateMinSize() {
+void synui::UILabel::_updateMinSize() {
 	float bounds[4];
 	NVGcontext* nvg = m_window->getContext();
 	nvgSave(nvg);
 	nvgFontSize(nvg, m_fontSize);
-	nvgTextBounds(nvg, 0, 0, m_text.c_str(), nullptr, bounds);
+	float width = nvgTextBounds(nvg, 0, 0, m_text.c_str(), nullptr, bounds);
 	nvgRestore(nvg);
-	Vector2i textSize{bounds[2] - bounds[0],bounds[3] - bounds[1]};
+	Vector2i textSize{width, bounds[3] - bounds[1]};
 	setMinSize(textSize);
 }

@@ -213,7 +213,7 @@ EHost IPlugVST::GetHost()
   return host;
 }
 
-void IPlugVST::AttachAppWindow(syn::MainWindow* a_vosimWindow) {
+void IPlugVST::AttachAppWindow(synui::MainWindow* a_vosimWindow) {
       if (a_vosimWindow)
       {
         IPlugBase::AttachAppWindow(a_vosimWindow);
@@ -238,7 +238,7 @@ void IPlugVST::AttachAppWindow(syn::MainWindow* a_vosimWindow) {
 
 void IPlugVST::ResizeGraphics(int w, int h)
 {
-    syn::MainWindow* vosimWindow = GetAppWindow();
+    synui::MainWindow* vosimWindow = GetAppWindow();
 
   if (vosimWindow)
   {
@@ -481,7 +481,7 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
     }
     case effEditOpen:
     {
-       syn::MainWindow* pGraphics = _this->GetAppWindow();
+       synui::MainWindow* pGraphics = _this->GetAppWindow();
       
       if (pGraphics)
       {

@@ -22,6 +22,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include <vector>
 #include <map>
+#include <cereal/types/vector.hpp>
 
 using std::string;
 using std::map;
@@ -129,6 +130,41 @@ namespace syn
 		double getNorm() const;
 		string getValueString() const;
 		string getUnitsString() const;
+
+//		template<typename Archive>
+//		void serialize(Archive& ar) {
+//			ar( cereal::make_nvp("name", m_name),
+//				cereal::make_nvp("id", m_id),
+//				cereal::make_nvp("value", m_value),
+//				cereal::make_nvp("default-value", m_defaultValue),
+//				cereal::make_nvp("min-value", m_min),
+//				cereal::make_nvp("max-value", m_max),
+//				cereal::make_nvp("log-min-value", m_logMin),
+//				cereal::make_nvp("log-range-value", m_logRange),
+//				cereal::make_nvp("visible", m_isVisible),
+//				cereal::make_nvp("data-type", m_type),
+//				cereal::make_nvp("units-type", m_unitsType),
+//				cereal::make_nvp("control-type", m_controlType),
+//				cereal::make_nvp("precision", m_displayPrecision),
+//				cereal::make_nvp("display-texts", m_displayTexts)
+//			);
+//		}
+		template<typename Archive>
+		void save(Archive& ar) const {
+			string value_str = getValueString();
+			ar(cereal::make_nvp("value-str", value_str));
+			ar(cereal::make_nvp("data-type", m_type));
+			ar(cereal::make_nvp("display-texts", m_displayTexts));
+		}
+		
+		template<typename Archive>
+		void load(Archive& ar) {
+			string value_str;
+			ar(cereal::make_nvp("value-str", value_str));
+			ar(cereal::make_nvp("data-type", m_type));
+			ar(cereal::make_nvp("display-texts", m_displayTexts));
+			setFromString(value_str);
+		}
 	private:
 		string m_name;
 		int m_id;
@@ -146,6 +182,12 @@ namespace syn
 		{
 			double m_value;
 			string m_text;
+
+			template<typename Archive>
+			void serialize(Archive& ar) {
+				ar(cereal::make_nvp("text", m_text),
+				   cereal::make_nvp("value", m_value));
+			}
 		};
 
 		vector<DisplayText> m_displayTexts;

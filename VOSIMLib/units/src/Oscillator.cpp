@@ -146,7 +146,7 @@ namespace syn
 		TunedOscillator(a_rhs.getName()) {}
 
 	void TunedOscillator::process_() {
-		double tune = getParameter(m_pTune).getDouble() + 128 * getInputValue(m_iNote);
+		double tune = getParameter(m_pTune).getDouble() + getInputValue(m_iNote);
 		double oct = getParameter(m_pOctave).getInt();
 		m_pitch = tune + oct * 12;
 		Oscillator::process_();
@@ -166,14 +166,6 @@ namespace syn
 		setOutputChannel_(m_oOut, m_gain * output + m_bias);
 	}
 
-	string BasicOscillator::_getClassName() const {
-		return "BasicOscillator";
-	}
-
-	Unit* BasicOscillator::_clone() const {
-		return new BasicOscillator(*this);
-	}
-
 	LFOOscillator::LFOOscillator(const string& a_name) :
 		Oscillator(a_name),
 		m_oQuadOut(addOutput_("quad")),
@@ -184,7 +176,7 @@ namespace syn
 	{
 		m_pBPMFreq = addParameter_({ "rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM });
 		getParameter(m_pBPMFreq).setVisible(false);
-		m_pFreq = addParameter_({ "freq", 0.01, 30.0, 1.0, UnitParameter::EUnitsType::Freq });
+		m_pFreq = addParameter_({ "freq", 0.01, 100.0, 1.0, UnitParameter::EUnitsType::Freq });
 		m_pWaveform = addParameter_(UnitParameter("waveform", WAVE_SHAPE_NAMES));
 		m_pTempoSync = addParameter_(UnitParameter("tempo sync", false));
 	}
@@ -192,14 +184,6 @@ namespace syn
 	LFOOscillator::LFOOscillator(const LFOOscillator& a_rhs) :
 		LFOOscillator(a_rhs.getName())
 	{
-	}
-
-	string LFOOscillator::_getClassName() const {
-		return "LFOOscillator";
-	}
-
-	Unit* LFOOscillator::_clone() const {
-		return new LFOOscillator(*this);
 	}
 
 	void LFOOscillator::process_() {
@@ -221,10 +205,8 @@ namespace syn
 		int shape = getParameter(m_pWaveform).getInt();
 		output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period, true);
 		setOutputChannel_(m_oOut, m_gain * output + m_bias);
-		///  Output quad output
-		/// \todo <experimentation>
-		double quadoutput;
-		quadoutput = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase + 0.25, m_period, true);
+
+		double quadoutput = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase + 0.25, m_period, true);
 		setOutputChannel_(m_oQuadOut, m_gain * quadoutput + m_bias);
 	}
 

@@ -3,7 +3,7 @@
 #include "UI.h"
 #include <nanovg.h>
 
-namespace syn
+namespace synui
 {
 	__declspec(align(16)) struct Theme
 	{

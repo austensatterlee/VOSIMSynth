@@ -19,10 +19,12 @@ namespace syn
 	 */
 	class MidiNoteUnit : public Unit
 	{
+		DERIVE_UNIT(MidiNoteUnit)
 	public:
 		explicit MidiNoteUnit(const string& a_name) :
 			Unit(a_name) {
-			addOutput_("out");
+			addOutput_("pitch");
+			addOutput_("freq");
 		}
 
 		MidiNoteUnit(const MidiNoteUnit& a_rhs) :
@@ -30,17 +32,9 @@ namespace syn
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override {
-			setOutputChannel_(0, getNote() * 0.0078125);
+			setOutputChannel_(0, getNote());
+			setOutputChannel_(1, pitchToFreq(getNote()));
 		};
-
-	private:
-		string _getClassName() const override {
-			return "MidiNoteUnit";
-		}
-
-		Unit* _clone() const override {
-			return new MidiNoteUnit(*this);
-		}
 	};
 
 	/**
@@ -48,6 +42,7 @@ namespace syn
 	 */
 	class VelocityUnit : public Unit
 	{
+		DERIVE_UNIT(VelocityUnit)
 	public:
 		explicit VelocityUnit(const string& a_name) :
 			Unit(a_name) {
@@ -61,15 +56,6 @@ namespace syn
 		void MSFASTCALL process_() GCCFASTCALL override {
 			setOutputChannel_(0, getVelocity() * 0.0078125);
 		};
-
-	private:
-		string _getClassName() const override {
-			return "VelocityUnit";
-		}
-
-		Unit* _clone() const override {
-			return new VelocityUnit(*this);
-		}
 	};
 
 	/**
@@ -77,6 +63,7 @@ namespace syn
 	*/
 	class GateUnit : public Unit
 	{
+		DERIVE_UNIT(GateUnit)
 	public:
 		explicit GateUnit(const string& a_name) :
 			Unit(a_name) {
@@ -90,15 +77,6 @@ namespace syn
 		void MSFASTCALL process_() GCCFASTCALL override {
 			setOutputChannel_(0, static_cast<double>(isNoteOn()));
 		};
-
-	private:
-		string _getClassName() const override {
-			return "GateUnit";
-		}
-
-		Unit* _clone() const override {
-			return new GateUnit(*this);
-		}
 	};
 
 	/**
@@ -106,6 +84,7 @@ namespace syn
 	 */
 	class MidiCCUnit : public Unit
 	{
+		DERIVE_UNIT(MidiCCUnit)
 	public:
 		explicit MidiCCUnit(const string& a_name) :
 			Unit(a_name),
@@ -140,17 +119,14 @@ namespace syn
 		}
 
 	private:
-		string _getClassName() const override {
-			return "MidiCCUnit";
-		}
-
-		Unit* _clone() const override {
-			return new MidiCCUnit(*this);
-		}
-
-	private:
 		int m_pCC, m_pLearn;
 		double m_value;
 	};
 }
+
+CEREAL_REGISTER_TYPE(syn::MidiNoteUnit)
+CEREAL_REGISTER_TYPE(syn::VelocityUnit)
+CEREAL_REGISTER_TYPE(syn::GateUnit)
+CEREAL_REGISTER_TYPE(syn::MidiCCUnit)
+
 #endif

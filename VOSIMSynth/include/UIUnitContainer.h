@@ -30,14 +30,14 @@ Copyright 2016, Austen Satterlee
 #include "UIWindow.h"
 #include <Unit.h>
 
-namespace syn
+namespace synui
 {
 
 	class UIUnitContainer: public virtual UIComponent
 	{
 		friend class UICircuitPanel;
 	public:
-		UIUnitContainer(MainWindow* a_window, UICircuitPanel* a_circuitPanel, VoiceManager* a_vm, UIUnitControl* a_unitCtrl);
+		UIUnitContainer(MainWindow* a_window, UICircuitPanel* a_circuitPanel, syn::VoiceManager* a_vm, UIUnitControl* a_unitCtrl);
 
 		int getUnitId() const {
 			return m_unitId;
@@ -70,7 +70,7 @@ namespace syn
 	protected:
 		vector<UIUnitPort*> m_inPorts;
 		vector<UIUnitPort*> m_outPorts;
-		VoiceManager* m_vm;
+		syn::VoiceManager* m_vm;
 		UICircuitPanel* m_circuitPanel;
 		int m_unitId;
 		bool m_isSelected;
@@ -80,9 +80,11 @@ namespace syn
 	class UIDefaultUnitContainer : public UIUnitContainer
 	{
 	public:
-		UIDefaultUnitContainer(MainWindow* a_window, UICircuitPanel* a_circuitPanel, VoiceManager* a_vm, UIUnitControl* a_unitCtrl);
+		UIDefaultUnitContainer(MainWindow* a_window, UICircuitPanel* a_circuitPanel, syn::VoiceManager* a_vm, UIUnitControl* a_unitCtrl);
 		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		bool onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
+	private:
+		void _onResize() override;
 	protected:
 		UIButton* m_closeButton;
 		UIRow* m_titleRow;
@@ -94,7 +96,7 @@ namespace syn
 	class UIInputUnitContainer : public UIUnitContainer
 	{
 	public:
-		UIInputUnitContainer(MainWindow* a_window, UICircuitPanel* a_circuitPanel, VoiceManager* a_vm, UIUnitControl* a_unitCtrl);
+		UIInputUnitContainer(MainWindow* a_window, UICircuitPanel* a_circuitPanel, syn::VoiceManager* a_vm, UIUnitControl* a_unitCtrl);
 	private:
 		UIRow* m_titleRow;
 		UICol* m_col;
@@ -105,7 +107,7 @@ namespace syn
 	class UIOutputUnitContainer : public UIUnitContainer
 	{
 	public:
-		UIOutputUnitContainer(MainWindow* a_window, UICircuitPanel* a_circuitPanel, VoiceManager* a_vm, UIUnitControl* a_unitCtrl);
+		UIOutputUnitContainer(MainWindow* a_window, UICircuitPanel* a_circuitPanel, syn::VoiceManager* a_vm, UIUnitControl* a_unitCtrl);
 	private:
 		UIRow* m_titleRow;
 		UICol* m_col;

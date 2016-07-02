@@ -28,22 +28,23 @@ Copyright 2016, Austen Satterlee
 #ifndef __UIDEFAULTUNITCONTROL__
 #define __UIDEFAULTUNITCONTROL__
 #include "UIUnitControl.h"
-#include "UITextSlider.h"
 #include "UICell.h"
 
-namespace syn
+namespace synui
 {
+	class UIParamControl;
+
 	class UIDefaultUnitControl : public UIUnitControl
 	{
 	public:
-		UIDefaultUnitControl(MainWindow* a_window, VoiceManager* a_vm, int a_unitId);
+		UIDefaultUnitControl(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId);
 		void notifyChildResized(UIComponent* a_child) override;
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 	private:
 		void _onResize() override;
 	private:
-		vector<UITextSlider*> m_paramControls;
+		vector<UIParamControl*> m_paramControls;
 		UICol* m_col;
 	};
 }

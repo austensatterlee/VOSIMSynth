@@ -23,7 +23,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <UILabel.h>
 #include <UIPlot.h>
 
-namespace syn
+namespace synui
 {
 	const vector<string> bufferSizeSelections = { "128","256","512","1024","2048","4096" };
 	const vector<double> bufferSizeValues = { 128,256,512,1024,2048,4096 };
@@ -31,9 +31,9 @@ namespace syn
 	SpectroscopeUnit::SpectroscopeUnit(const string& a_name) :
 		Unit(a_name),
 		m_bufferIndex(0),
-		m_pBufferSize(addParameter_(UnitParameter("buffer size", bufferSizeSelections, bufferSizeValues))),
-		m_pTimeSmooth(addParameter_(UnitParameter("time smooth", 0.0, 1.0, 0.1))),
-		m_pUpdatePeriod(addParameter_(UnitParameter("update interval", 0.0, 1.0, 0.5))),
+		m_pBufferSize(addParameter_(syn::UnitParameter("buffer size", bufferSizeSelections, bufferSizeValues))),
+		m_pTimeSmooth(addParameter_(syn::UnitParameter("time smooth", 0.0, 1.0, 0.1))),
+		m_pUpdatePeriod(addParameter_(syn::UnitParameter("update interval", 0.0, 1.0, 0.5))),
 		m_samplesSinceLastUpdate(0),
 		m_isActive(true) {
 		addInput_("in");
@@ -47,7 +47,7 @@ namespace syn
 
 		m_window.resize(m_inBufferSize);
 		for (int i = 0; i < m_inBufferSize; i++) {
-			m_window[i] = blackman_harris(i, m_inBufferSize);
+			m_window[i] = syn::blackman_harris(i, m_inBufferSize);
 		}
 	}
 
@@ -56,12 +56,12 @@ namespace syn
 			int newBufferSize = getParameter(m_pBufferSize).getEnum();
 			m_inBufferSize = newBufferSize;
 			m_outBufferSize = newBufferSize >> 1;
-			m_bufferIndex = WRAP(m_bufferIndex, m_inBufferSize);
+			m_bufferIndex = syn::WRAP(m_bufferIndex, m_inBufferSize);
 			
 
 			m_window.resize(m_inBufferSize);
 			for (int i = 0; i < m_inBufferSize; i++) {
-				m_window[i] = blackman_harris(i, m_inBufferSize);
+				m_window[i] = syn::blackman_harris(i, m_inBufferSize);
 			}
 		}
 	}
@@ -70,7 +70,7 @@ namespace syn
 		m_timeBuffer[m_bufferIndex] = getInputValue(0);
 
 		m_samplesSinceLastUpdate++;
-		int updatePeriod = LERP<double>(16, m_inBufferSize, 1 - getParameter(m_pUpdatePeriod).getDouble());
+		int updatePeriod = syn::LERP<double>(16, m_inBufferSize, 1 - getParameter(m_pUpdatePeriod).getDouble());
 		if (m_samplesSinceLastUpdate >= updatePeriod && m_isActive) {
 			m_samplesSinceLastUpdate = 0;
 
@@ -95,10 +95,10 @@ namespace syn
 			}
 			
 		}
-		m_bufferIndex = WRAP(m_bufferIndex + 1, m_inBufferSize);
+		m_bufferIndex = syn::WRAP(m_bufferIndex + 1, m_inBufferSize);
 	}
 
-	SpectroscopeUnitControl::SpectroscopeUnitControl(MainWindow* a_window, VoiceManager* a_vm, int a_unitId) :
+	SpectroscopeUnitControl::SpectroscopeUnitControl(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId) :
 		UIUnitControl(a_window, a_vm, a_unitId), 
 		m_col(new UICol(a_window)),
 		m_statusLabel(new UILabel(a_window)),

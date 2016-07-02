@@ -38,14 +38,6 @@ namespace syn
 	VosimOscillator::VosimOscillator(const VosimOscillator& a_rhs) :
 		VosimOscillator(a_rhs.getName()) { }
 
-	string VosimOscillator::_getClassName() const {
-		return "VosimOscillator";
-	}
-
-	Unit* VosimOscillator::_clone() const {
-		return new VosimOscillator(*this);
-	}
-
 	void VosimOscillator::process_() {
 		m_num_pulses = getParameter(m_pNumPulses).getInt();
 		m_pulse_tune = CLAMP<double>(getInputValue(m_iPulseTuneMul)*getParameter(m_pPulseTune).getDouble() + getInputValue(m_iPulseTuneAdd), 0, 1);
@@ -82,7 +74,7 @@ namespace syn
 			pulse_freq = min_freq;
 		}
 		else {
-			pulse_freq = LERP<double>(min_freq, MAX_PULSE_FREQ, m_pulse_tune);
+			pulse_freq = pow(2.0,LERP<double>(log2(min_freq), log2(MAX_PULSE_FREQ), m_pulse_tune));
 		}
 		m_pulse_step = pulse_freq / getFs();
 	}
@@ -100,14 +92,6 @@ namespace syn
 	FormantOscillator::FormantOscillator(const FormantOscillator& a_rhs) :
 		FormantOscillator(a_rhs.getName()) { }
 
-	string FormantOscillator::_getClassName() const {
-		return "FormantOscillator";
-	}
-
-	Unit* FormantOscillator::_clone() const {
-		return new FormantOscillator(*this);
-	}
-
 	void FormantOscillator::process_() {
 		TunedOscillator::process_();
 		double formant_freq;
@@ -119,7 +103,7 @@ namespace syn
 		}
 		else {
 			double fmt_pitch_norm = CLAMP<double>(getInputValue(m_iFmtMul)*getParameter(m_pFmt).getDouble() + getInputValue(m_iFmtAdd), 0, 1);
-			formant_freq = LERP<double>(m_freq, MAX_FMT_FREQ, fmt_pitch_norm);
+			formant_freq = pow(2.0,LERP<double>(log2(m_freq), log2(MAX_FMT_FREQ), fmt_pitch_norm));
 			cos_width = 1 + 8 * CLAMP<double>(getInputValue(m_iWidthMul)*getParameter(m_pWidth).getDouble() + getInputValue(m_iWidthAdd), 0, 1);
 		}
 

@@ -6,14 +6,14 @@
 #include "Theme.h"
 
 
-syn::UIUnitPort::UIUnitPort(MainWindow* a_window, UICircuitPanel* a_circuitPanel, VoiceManager* a_vm, int a_unitId, int a_portNum, bool a_isInput) :
+synui::UIUnitPort::UIUnitPort(MainWindow* a_window, UICircuitPanel* a_circuitPanel, syn::VoiceManager* a_vm, int a_unitId, int a_portNum, bool a_isInput) :
 	UIComponent{a_window},
 	m_vm(a_vm),
 	m_circuitPanel(a_circuitPanel),
 	m_unitId(a_unitId),
 	m_portNum(a_portNum),
 	m_isInput(a_isInput) {
-	const Unit& unit = m_vm->getUnit(m_unitId);
+	const syn::Unit& unit = m_vm->getUnit(m_unitId);
 	string portName;
 	if (m_isInput) {
 		portName = unit.getInputName(m_portNum);
@@ -25,20 +25,20 @@ syn::UIUnitPort::UIUnitPort(MainWindow* a_window, UICircuitPanel* a_circuitPanel
 	NVGcontext* nvg = m_window->getContext();
 	nvgFontSize(nvg, (float)theme()->mPortFontSize);
 	nvgTextBounds(nvg, 0, 0, portName.c_str(), nullptr, bounds);
-	textWidth = MAX(bounds[2] - bounds[0],10.0f);
+	textWidth = syn::MAX(bounds[2] - bounds[0],10.0f);
 	setMinSize(Vector2i{textWidth, theme()->mPortFontSize});
 }
 
-bool syn::UIUnitPort::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
+bool synui::UIUnitPort::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	return true;
 }
 
-syn::UIComponent* syn::UIUnitPort::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+synui::UIComponent* synui::UIUnitPort::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	m_isDragging = true;
 	return this;
 }
 
-bool syn::UIUnitPort::onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
+bool synui::UIUnitPort::onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	m_isDragging = false;
 	UIUnitContainer* selectedUnit = m_circuitPanel->findUnitContainer(UICoord(m_window->cursorPos()));
 	if (selectedUnit && selectedUnit != m_parent) {
@@ -55,8 +55,8 @@ bool syn::UIUnitPort::onMouseUp(const UICoord& a_relCursor, const Vector2i& a_di
 	return true;
 }
 
-void syn::UIUnitPort::draw(NVGcontext* a_nvg) {
-	const Unit& unit = m_vm->getUnit(m_unitId);
+void synui::UIUnitPort::draw(NVGcontext* a_nvg) {
+	const syn::Unit& unit = m_vm->getUnit(m_unitId);
 	string portName;
 
 	Color bgColor;

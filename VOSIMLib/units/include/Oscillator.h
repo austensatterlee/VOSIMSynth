@@ -92,6 +92,7 @@ namespace syn
 
 	class BasicOscillator : public TunedOscillator
 	{
+		DERIVE_UNIT(BasicOscillator)
 	public:
 		explicit BasicOscillator(const string& a_name);
 
@@ -101,14 +102,11 @@ namespace syn
 		int m_pWaveform;
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
-	private:
-		string _getClassName() const override;
-
-		Unit* _clone() const override;
 	};
 
 	class LFOOscillator : public Oscillator
 	{
+		DERIVE_UNIT(LFOOscillator)
 	public:
 		explicit LFOOscillator(const string& a_name);
 
@@ -130,10 +128,8 @@ namespace syn
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
 		void onParamChange_(int a_paramId) override;
-	private:
-		string _getClassName() const override;
-
-		Unit* _clone() const override;
 	};
-};
+}
+CEREAL_REGISTER_TYPE(syn::BasicOscillator)
+CEREAL_REGISTER_TYPE(syn::LFOOscillator)
 #endif

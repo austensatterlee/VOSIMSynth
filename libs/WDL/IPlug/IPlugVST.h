@@ -14,7 +14,7 @@ class IPlugVST : public IPlugBase
 {
 protected:
 	// Added by Austen 4/11
-	void AttachAppWindow(syn::MainWindow* a_vosimWindow) override;
+	void AttachAppWindow(synui::MainWindow* a_vosimWindow) override;
 public:
 	IPlugVST(IPlugInstanceInfo instanceInfo,
 	         int nParams,

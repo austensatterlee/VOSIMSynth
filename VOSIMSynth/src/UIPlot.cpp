@@ -3,12 +3,12 @@
 #include <tables.h>
 
 
-namespace syn {
+namespace synui {
 	UIPlot::UIPlot(MainWindow* a_window) :
 		UIComponent(a_window),
 		m_minBounds{ 0, -1 },
 		m_maxBounds{ 1, 1 },
-		m_autoAdjustSpeed(1.0),
+		m_autoAdjustSpeed(60.0),
 		m_yBufPtr(nullptr),
 		m_bufSize(0),
 		m_nScreenPts(0),
@@ -57,17 +57,17 @@ namespace syn {
 
 	Vector2i UIPlot::toScreenCoords(const Vector2f& a_sampleCoords) const {
 		Vector2f unitCoords;
-		unitCoords[1] = INVLERP(m_minBounds.y(), m_maxBounds.y(), a_sampleCoords.y());
+		unitCoords[1] = syn::INVLERP(m_minBounds.y(), m_maxBounds.y(), a_sampleCoords.y());
 		switch (m_xScale) {
 		case LogScale2:
-			unitCoords[0] = INVLERP(log2(m_minBounds.x()), log2(m_maxBounds.x()), log2(a_sampleCoords.x()));
+			unitCoords[0] = syn::INVLERP(log2(m_minBounds.x()), log2(m_maxBounds.x()), log2(a_sampleCoords.x()));
 			break;
 		case LogScale10:
-			unitCoords[0] = INVLERP(log10(m_minBounds.x()), log10(m_maxBounds.x()), log10(a_sampleCoords.x()));
+			unitCoords[0] = syn::INVLERP(log10(m_minBounds.x()), log10(m_maxBounds.x()), log10(a_sampleCoords.x()));
 			break;
 		default:
 		case LinScale:
-			unitCoords[0] = INVLERP(m_minBounds.x(), m_maxBounds.x(), a_sampleCoords.x());
+			unitCoords[0] = syn::INVLERP(m_minBounds.x(), m_maxBounds.x(), a_sampleCoords.x());
 			break;
 		}
 
@@ -80,17 +80,17 @@ namespace syn {
 	Vector2f UIPlot::toSampleCoords(const Vector2i& a_screenCoords) const {
 		Vector2f unitCoords = { a_screenCoords.x() * 1.0 / size().x(), 1.0 - a_screenCoords.y() * 1.0 / size().y() };
 		Vector2f sampleCoords;
-		sampleCoords[1] = LERP<double>(m_minBounds.y(), m_maxBounds.y(), unitCoords.y());
+		sampleCoords[1] = syn::LERP<double>(m_minBounds.y(), m_maxBounds.y(), unitCoords.y());
 		switch (m_xScale) {
 		case LogScale2:
-			sampleCoords[0] = pow(2.0, LERP(log2(m_minBounds.x()), log2(m_maxBounds.x()), unitCoords.x()));
+			sampleCoords[0] = pow(2.0, syn::LERP(log2(m_minBounds.x()), log2(m_maxBounds.x()), unitCoords.x()));
 			break;
 		case LogScale10:
-			sampleCoords[0] = pow(10.0, LERP(log10(m_minBounds.x()), log10(m_maxBounds.x()), unitCoords.x()));
+			sampleCoords[0] = pow(10.0, syn::LERP(log10(m_minBounds.x()), log10(m_maxBounds.x()), unitCoords.x()));
 			break;
 		default:
 		case LinScale:
-			sampleCoords[0] = LERP(m_minBounds.x(), m_maxBounds.x(), unitCoords.x());
+			sampleCoords[0] = syn::LERP(m_minBounds.x(), m_maxBounds.x(), unitCoords.x());
 			break;
 		}
 		return sampleCoords;
@@ -124,7 +124,7 @@ namespace syn {
 		nvgFillColor(a_nvg, tickLabelColor);
 		nvgBeginPath(a_nvg);
 		// Zero Y tick
-		double zeroPct = INVLERP<double>(m_minBounds.y(), m_maxBounds.y(), 0.0);
+		double zeroPct = syn::INVLERP<double>(m_minBounds.y(), m_maxBounds.y(), 0.0);
 		Vector2i zeroScreenPt = toScreenCoords({ 0.0, 0.0 });
 		nvgMoveTo(a_nvg, 0.0f, zeroScreenPt.y());
 		nvgLineTo(a_nvg, size().x(), zeroScreenPt.y());
@@ -137,7 +137,7 @@ namespace syn {
 		char buf[256];
 		while (yTickNeg>0.0 || yTickPos <= 1.0) {
 			if (yTickNeg > 0.0) {
-				double samplePtPos = LERP<double>(m_minBounds.y(), m_maxBounds.y(), yTickNeg);
+				double samplePtPos = syn::LERP<double>(m_minBounds.y(), m_maxBounds.y(), yTickNeg);
 				Vector2i screenPtPos = toScreenCoords({ 0.0, samplePtPos });
 				nvgMoveTo(a_nvg, 0.0f, screenPtPos.y());
 				nvgLineTo(a_nvg, 10.0f, screenPtPos.y());
@@ -145,7 +145,7 @@ namespace syn {
 				nvgText(a_nvg, 0.0f, screenPtPos.y(), buf, nullptr);
 			}
 			if (yTickPos <= 1.0) {
-				double samplePtPos = LERP<double>(m_minBounds.y(), m_maxBounds.y(), yTickPos);
+				double samplePtPos = syn::LERP<double>(m_minBounds.y(), m_maxBounds.y(), yTickPos);
 				Vector2i screenPtPos = toScreenCoords({ 0.0, samplePtPos });
 				nvgMoveTo(a_nvg, 0.0f, screenPtPos.y());
 				nvgLineTo(a_nvg, 10.0f, screenPtPos.y());
@@ -169,20 +169,20 @@ namespace syn {
 			double sampleVal;
 			switch (m_interpPolicy) {
 			case SincInterp:
-				sampleVal = getresampled_single(m_yBufPtr, m_bufSize, bufPhase, m_nScreenPts, lut_blimp_table_online);
+				sampleVal = syn::getresampled_single(m_yBufPtr, m_bufSize, bufPhase, m_nScreenPts, syn::lut_blimp_table_online);
 				break;
 			case LinInterp:
 			default:
 			{
 				int currOffset = static_cast<int>(bufPhase * m_bufSize);
-				int nextOffset = WRAP(currOffset + 1, m_bufSize);
-				sampleVal = LERP(m_yBufPtr[currOffset], m_yBufPtr[nextOffset], bufPhase * m_bufSize - currOffset);
+				int nextOffset = syn::WRAP(currOffset + 1, m_bufSize);
+				sampleVal = syn::LERP(m_yBufPtr[currOffset], m_yBufPtr[nextOffset], bufPhase * m_bufSize - currOffset);
 				break;
 			}
 			}
-			Vector2i screenPt = toScreenCoords(Vector2f{ LERP<double>(m_minBounds.x(),m_maxBounds.x(),bufPhase), sampleVal });
-			yExtrema[1] = MAX<double>(yExtrema[1], sampleVal);
-			yExtrema[0] = MIN<double>(yExtrema[0], sampleVal);
+			Vector2i screenPt = toScreenCoords(Vector2f{syn::LERP<double>(m_minBounds.x(),m_maxBounds.x(),bufPhase), sampleVal });
+			yExtrema[1] = syn::MAX<double>(yExtrema[1], sampleVal);
+			yExtrema[0] = syn::MIN<double>(yExtrema[0], sampleVal);
 			if (j == 0)
 				nvgMoveTo(a_nvg, screenPt[0], screenPt[1]);
 			else
@@ -204,15 +204,20 @@ namespace syn {
 	}
 
 	void UIPlot::_onResize() {
-		m_nScreenPts = size().x() << 1;
+		m_nScreenPts = size().x();
 		_updateStatusLabel();
 	}
 
 	void UIPlot::_updateYBounds(const Vector2f& a_yExtrema) {
 		// update extrema
-		double margin = 0.10*(a_yExtrema[1] - a_yExtrema[0]);
-		double minSetPoint = a_yExtrema[0] - margin;
-		double maxSetPoint = a_yExtrema[1] + margin;
+		double lo = a_yExtrema[0], hi = a_yExtrema[1];
+		bool isextremanan = isnan(lo) || isnan(hi);
+		if (isextremanan) {
+			lo = -1; hi = 1;
+		}
+		double margin = 0.10*syn::MAX(hi - lo,1E-2);
+		double minSetPoint = lo - margin;
+		double maxSetPoint = hi + margin;
 		double coeff = m_autoAdjustSpeed / m_window->fps();
 		m_minBounds[1] = m_minBounds.y() + coeff * (minSetPoint - m_minBounds.y());
 		m_maxBounds[1] = m_maxBounds.y() + coeff * (maxSetPoint - m_maxBounds.y());

@@ -12,7 +12,7 @@
 static int nWndClassReg = 0;
 static const char* wndClassName = "VOSIMWndClass";
 
-void syn::MainWindow::_OpenWindowImplem(sf::WindowHandle a_system_window) {
+void synui::MainWindow::_OpenWindowImplem(sf::WindowHandle a_system_window) {
 
 	if (nWndClassReg++ == 0) {
 		WNDCLASS wndClass = { NULL, drawFunc, 0, 0, m_HInstance, 0, NULL, 0, 0, wndClassName };
@@ -29,7 +29,7 @@ void syn::MainWindow::_OpenWindowImplem(sf::WindowHandle a_system_window) {
 	}
 }
 
-void syn::MainWindow::_CloseWindowImplem() {
+void synui::MainWindow::_CloseWindowImplem() {
 	SetWindowLongW(m_sfmlWindow->getSystemHandle(), GWL_STYLE, GetWindowLongW(m_sfmlWindow->getSystemHandle(), GWL_STYLE) & ~WS_CHILD);
 
 	DestroyWindow(m_timerWindow);
@@ -41,7 +41,7 @@ void syn::MainWindow::_CloseWindowImplem() {
 	}
 }
 
-LRESULT CALLBACK syn::MainWindow::drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam) {
+LRESULT CALLBACK synui::MainWindow::drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam) {
 	if (Message == WM_CREATE) {
 		LPCREATESTRUCT lpcs = (LPCREATESTRUCT)LParam;
 		SetWindowLongPtr(Handle, GWLP_USERDATA, (LPARAM)(lpcs->lpCreateParams));		
@@ -69,7 +69,7 @@ LRESULT CALLBACK syn::MainWindow::drawFunc(HWND Handle, UINT Message, WPARAM WPa
 }
 #endif
 
-syn::MainWindow::MainWindow(int a_width, int a_height, std::function<UIComponent*(MainWindow*)> a_rootComponentConstructor) :
+synui::MainWindow::MainWindow(int a_width, int a_height, std::function<UIComponent*(MainWindow*)> a_rootComponentConstructor) :
 	m_HInstance(nullptr),
 	m_timerWindow(nullptr),
 	m_sfmlWindow(nullptr),
@@ -89,7 +89,7 @@ syn::MainWindow::MainWindow(int a_width, int a_height, std::function<UIComponent
 }
 
 
-syn::MainWindow::~MainWindow() {
+synui::MainWindow::~MainWindow() {
 	CloseWindow();
 
 	delete m_root; m_root = nullptr;
@@ -97,7 +97,7 @@ syn::MainWindow::~MainWindow() {
 	nvgDeleteGL3(m_vg); m_vg = nullptr;
 }
 
-void syn::MainWindow::_initialize() {
+void synui::MainWindow::_initialize() {
 	sf::ContextSettings settings;
 	settings.depthBits = 32;
 	settings.stencilBits = 8;
@@ -138,7 +138,7 @@ void syn::MainWindow::_initialize() {
 	initGraph(&m_fpsGraph, GRAPH_RENDER_FPS, "FPS");
 }
 
-void syn::MainWindow::_runLoop() {
+void synui::MainWindow::_runLoop() {
 	double cpuStartTime = m_timer.getElapsedTime().asSeconds();
 	m_sfmlWindow->setActive(true); 
 
@@ -167,7 +167,7 @@ void syn::MainWindow::_runLoop() {
 	updateGraph(&m_fpsGraph, 1./m_fps);
 }
 
-void syn::MainWindow::_handleEvents() {
+void synui::MainWindow::_handleEvents() {
 	if (m_draggingComponent) {
 		m_draggingComponent->onMouseDrag(UICoord(cursorPos()), { 0,0 });
 	}
@@ -260,16 +260,16 @@ void syn::MainWindow::_handleEvents() {
 	} // end event-handler loop
 }
 
-void syn::MainWindow::_updateCursorPos(const Vector2i& newPos) {
+void synui::MainWindow::_updateCursorPos(const Vector2i& newPos) {
 	m_dCursor = newPos - m_cursor;
 	m_cursor = newPos;
 }
 
-void syn::MainWindow::_queueInternalMessage(GUIMessage* a_msg) {
+void synui::MainWindow::_queueInternalMessage(GUIMessage* a_msg) {
 	m_guiInternalMsgQueue.push(a_msg);
 }
 
-void syn::MainWindow::_flushMessageQueues() {
+void synui::MainWindow::_flushMessageQueues() {
 	GUIMessage* msg;
 	while (m_guiInternalMsgQueue.pop(msg)) {
 		_processMessage(msg);
@@ -279,16 +279,16 @@ void syn::MainWindow::_flushMessageQueues() {
 	}
 }
 
-void syn::MainWindow::_processMessage(GUIMessage* a_msg) {
+void synui::MainWindow::_processMessage(GUIMessage* a_msg) {
 	a_msg->action(this, &a_msg->data);
 	delete a_msg;
 }
 
-void syn::MainWindow::queueExternalMessage(GUIMessage* a_msg) {
+void synui::MainWindow::queueExternalMessage(GUIMessage* a_msg) {
 	m_guiExternalMsgQueue.push(a_msg);
 }
 
-void syn::MainWindow::setFocus(UIComponent* a_comp) {
+void synui::MainWindow::setFocus(UIComponent* a_comp) {
 	while (!m_focusPath.empty()) {  // clear focus
 		if (m_focusPath.front() == a_comp)
 			break;
@@ -306,19 +306,19 @@ void syn::MainWindow::setFocus(UIComponent* a_comp) {
 	}
 }
 
-Eigen::Vector2i syn::MainWindow::cursorPos() const {
+Eigen::Vector2i synui::MainWindow::cursorPos() const {
 	return m_cursor;
 }
 
-Eigen::Vector2i syn::MainWindow::diffCursorPos() const {
+Eigen::Vector2i synui::MainWindow::diffCursorPos() const {
 	return m_dCursor;
 }
 
-Eigen::Vector2i syn::MainWindow::size() const {
+Eigen::Vector2i synui::MainWindow::size() const {
 	return m_size;
 }
 
-void syn::MainWindow::forfeitFocus(UIComponent* a_comp) {
+void synui::MainWindow::forfeitFocus(UIComponent* a_comp) {
 	if (!a_comp->focused())
 		return;
 	while (!m_focusPath.empty()) {
@@ -332,7 +332,7 @@ void syn::MainWindow::forfeitFocus(UIComponent* a_comp) {
 		m_draggingComponent = nullptr;
 }
 
-bool syn::MainWindow::OpenWindow(sf::WindowHandle a_system_window) {
+bool synui::MainWindow::OpenWindow(sf::WindowHandle a_system_window) {
 	if (m_sfmlWindow) {
 		sf::ContextSettings settings;
 		settings.depthBits = 32;
@@ -349,7 +349,7 @@ bool syn::MainWindow::OpenWindow(sf::WindowHandle a_system_window) {
 	return true;
 }
 
-void syn::MainWindow::CloseWindow() {
+void synui::MainWindow::CloseWindow() {
 	m_isOpen = false;
 	m_sfmlWindow->setVisible(false);
 	m_timer.pause();

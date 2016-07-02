@@ -39,7 +39,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 using namespace std;
 
-namespace syn
+namespace synui
 {
 	class UIComponent;
 	class UILayout;
@@ -50,9 +50,10 @@ namespace syn
 	class UICol;
 	class UIRow;
 	class UILabel;
-	class UITextBox;
+	class UIParamControl;
 	class UITextSlider;
 	class UIDigitControl;
+	class UITextBox;
 	class UIColorWheel;
 	class UIUnitControl;
 	class UIDefaultUnitControl;
@@ -194,7 +195,7 @@ namespace syn
 		double ablength = (a - b).norm();
 		Eigen::Vector2d abnorm = (a - b).template cast<double>() * (1.0 / ablength);
 		double proj = (pt - b).template cast<double>().dot(abnorm);
-		proj = CLAMP<double>(proj, 0, ablength);
+		proj = syn::CLAMP<double>(proj, 0, ablength);
 		return (b.template cast<double>() + abnorm * proj).template cast<T>();
 	}
 
@@ -262,12 +263,12 @@ namespace syn
 		 */
 		template <typename... Args>
 		bool operator()(const function<StoreType(Args...)>& a_func, Args... args) {
-			bool redraw_cond = isDirty();
-			if (redraw_cond) {
+			bool refresh_cond = isDirty();
+			if (refresh_cond) {
 				a_func(args...);
 				m_isFirstUpdate = false;
 			}
-			return redraw_cond;
+			return refresh_cond;
 		}
 
 		template <typename... Args>

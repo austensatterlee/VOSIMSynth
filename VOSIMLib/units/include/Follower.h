@@ -29,15 +29,14 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "Unit.h"
 
-using namespace std;
-
 namespace syn
 {
 	/**
-	* Full-wave rectifier
+	* Envelope follower
 	*/
 	class FollowerUnit : public Unit
 	{
+		DERIVE_UNIT(FollowerUnit)
 	public:
 		explicit FollowerUnit(const string& a_name);
 
@@ -46,15 +45,6 @@ namespace syn
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
 	private:
-		string _getClassName() const override {
-			return "FollowerUnit";
-		}
-
-		Unit* _clone() const override {
-			return new FollowerUnit(*this);
-		}
-
-	private:
 		double m_w;
 		double m_output;
 
@@ -62,5 +52,7 @@ namespace syn
 		int m_pBeta;
 	};
 };
+
+CEREAL_REGISTER_TYPE(syn::FollowerUnit)
 
 #endif

@@ -4,7 +4,7 @@
 #include "UILabel.h"
 #include <numeric>
 
-namespace syn
+namespace synui
 {
 	BoxLayout::BoxLayout(Orientation orientation, Alignment alignment,
 		int margin, int spacing)
@@ -32,7 +32,7 @@ namespace syn
 			Vector2i targetSize = ps.cwiseMax(fs);
 
 			size[axis1] += targetSize[axis1];
-			size[axis2] = MAX(size[axis2], targetSize[axis2] + 2 * mMargin);
+			size[axis2] = syn::MAX(size[axis2], targetSize[axis2] + 2 * mMargin);
 			first = false;
 		}
 		return size;
@@ -115,7 +115,7 @@ namespace syn
 
 			bool indentCur = indent && label == nullptr;
 			height += targetSize.y();
-			width = MAX(width, targetSize.x() + 2 * mMargin + (indentCur ? mGroupIndent : 0));
+			width = syn::MAX(width, targetSize.x() + 2 * mMargin + (indentCur ? mGroupIndent : 0));
 
 			if (label)
 				indent = !label->text().empty();
@@ -169,9 +169,9 @@ namespace syn
 
 		Vector2i size(
 			2 * mMargin + std::accumulate(grid[0].begin(), grid[0].end(), 0)
-			+ MAX((int)grid[0].size() - 1, 0) * mSpacing[0],
+			+ syn::MAX((int)grid[0].size() - 1, 0) * mSpacing[0],
 			2 * mMargin + std::accumulate(grid[1].begin(), grid[1].end(), 0)
-			+ MAX((int)grid[1].size() - 1, 0) * mSpacing[1]
+			+ syn::MAX((int)grid[1].size() - 1, 0) * mSpacing[1]
 		);
 
 		if (dynamic_cast<const UIWindow *>(widget))
@@ -210,8 +210,8 @@ namespace syn
 					fs[1] ? fs[1] : ps[1]
 				);
 
-				grid[axis1][i1] = MAX(grid[axis1][i1], targetSize[axis1]);
-				grid[axis2][i2] = MAX(grid[axis2][i2], targetSize[axis2]);
+				grid[axis1][i1] = syn::MAX(grid[axis1][i1], targetSize[axis1]);
+				grid[axis2][i2] = syn::MAX(grid[axis2][i2], targetSize[axis2]);
 			}
 		}
 	}
@@ -417,7 +417,7 @@ namespace syn
 					for (int i = anchor.pos[axis];
 						i < anchor.pos[axis] + anchor.size[axis]; ++i) {
 						if (sizes[i] == 0 && anchor.size[axis] == 1)
-							grid[i] = MAX(grid[i], targetSize);
+							grid[i] = syn::MAX(grid[i], targetSize);
 						currentSize += grid[i];
 						totalStretch += stretch[i];
 					}

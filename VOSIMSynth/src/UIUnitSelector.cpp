@@ -2,7 +2,7 @@
 #include "UnitFactory.h"
 #include "Theme.h"
 
-syn::UIUnitSelector::UIUnitSelector(MainWindow* a_window, UnitFactory* a_unitFactory) :
+synui::UIUnitSelector::UIUnitSelector(MainWindow* a_window, syn::UnitFactory* a_unitFactory) :
 	UIWindow{a_window, "Unit Selector"},
 	m_autoWidth(0),
 	m_autoHeight(0),
@@ -14,7 +14,7 @@ syn::UIUnitSelector::UIUnitSelector(MainWindow* a_window, UnitFactory* a_unitFac
 	lockPosition(true);
 }
 
-syn::UIComponent* syn::UIUnitSelector::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+synui::UIComponent* synui::UIUnitSelector::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	int row = 0;
 	int group = 0;
 	set<string> gNames = m_unitFactory->getGroupNames();
@@ -49,7 +49,7 @@ syn::UIComponent* syn::UIUnitSelector::onMouseDown(const UICoord& a_relCursor, c
 	return nullptr;
 }
 
-bool syn::UIUnitSelector::onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
+bool synui::UIUnitSelector::onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	int row = 0;
 	int group = 0;
 	set<string> gNames = m_unitFactory->getGroupNames();
@@ -80,7 +80,7 @@ bool syn::UIUnitSelector::onMouseMove(const UICoord& a_relCursor, const Vector2i
 	return false;
 }
 
-void syn::UIUnitSelector::draw(NVGcontext* a_nvg) {
+void synui::UIUnitSelector::draw(NVGcontext* a_nvg) {
 	UIWindow::draw(a_nvg);
 	int groupFontSize = theme()->mUnitSelectorGroupFontSize;
 	int protoFontSize = theme()->mUnitSelectorProtoFontSize;
@@ -102,7 +102,7 @@ void syn::UIUnitSelector::draw(NVGcontext* a_nvg) {
 		else
 			nvgFillColor(a_nvg, theme()->mTextColor);
 		nvgFontSize(a_nvg, groupFontSize);
-		m_autoWidth = MAX<int>(m_autoWidth, 5 + nvgText(a_nvg, 0, m_autoHeight, gName.c_str(), nullptr));
+		m_autoWidth = syn::MAX<int>(m_autoWidth, 5 + nvgText(a_nvg, 0, m_autoHeight, gName.c_str(), nullptr));
 		m_autoHeight += groupFontSize;
 		if (group == m_currGroup) {
 			nvgFontSize(a_nvg, protoFontSize);
@@ -113,7 +113,7 @@ void syn::UIUnitSelector::draw(NVGcontext* a_nvg) {
 					nvgFillColor(a_nvg, theme()->mHighlightedTextColor);
 				else
 					nvgFillColor(a_nvg, theme()->mTextColor);
-				m_autoWidth = MAX<int>(m_autoWidth, 5 + nvgText(a_nvg, m_indentAmt, m_autoHeight, pNames[j].c_str(), nullptr));
+				m_autoWidth = syn::MAX<int>(m_autoWidth, 5 + nvgText(a_nvg, m_indentAmt, m_autoHeight, pNames[j].c_str(), nullptr));
 				m_autoHeight += protoFontSize;
 			}
 		}

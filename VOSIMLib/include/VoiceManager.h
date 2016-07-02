@@ -135,8 +135,7 @@ namespace syn
 
 		const Circuit* getVoiceCircuit(int a_voiceId) const;
 
-		void save(ByteChunk* a_data) const;
-		int load(ByteChunk* a_data, int startPos);
+		void setPrototypeCircuit(const Circuit* a_circ);
 
 	private:
 		/**

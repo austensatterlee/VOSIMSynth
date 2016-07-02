@@ -28,6 +28,7 @@ namespace syn
 {
 	class VosimOscillator : public TunedOscillator
 	{
+		DERIVE_UNIT(VosimOscillator)
 	public:
 		explicit VosimOscillator(string name);
 
@@ -36,11 +37,6 @@ namespace syn
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
 		void MSFASTCALL updatePhaseStep_() GCCFASTCALL override;
-
-	private:
-		string _getClassName() const override;
-
-		Unit* _clone() const override;
 
 	private:
 		double m_pulse_step, m_pulse_tune;
@@ -53,6 +49,7 @@ namespace syn
 
 	class FormantOscillator : public TunedOscillator
 	{
+		DERIVE_UNIT(FormantOscillator)
 	public:
 
 		explicit FormantOscillator(string name);
@@ -61,11 +58,6 @@ namespace syn
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
-
-	private:
-		string _getClassName() const override;
-
-		Unit* _clone() const override;
 
 	private:
 		int m_pWidth;
@@ -77,5 +69,8 @@ namespace syn
 		int m_iFmtMul;
 	};
 }
+
+CEREAL_REGISTER_TYPE(syn::VosimOscillator)
+CEREAL_REGISTER_TYPE(syn::FormantOscillator)
 
 #endif

@@ -18,6 +18,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "Circuit.h"
+#include "DSPMath.h"
 #include <unordered_set>
 #include <functional>
 
@@ -26,8 +27,6 @@ using std::unordered_set;
 
 namespace syn
 {
-	Circuit::Circuit() :
-		Circuit("") {}
 
 	Circuit::Circuit(const string& a_name) :
 		Unit(a_name)
@@ -78,6 +77,10 @@ namespace syn
 	}
 
 	int Circuit::addUnit(Unit* a_unit) {
+		// increment name until there is no collision
+		while(m_units.contains(a_unit->getName())) {
+			a_unit->_setName(incrementSuffix(a_unit->getName()));
+		}
 		int retval = m_units.add(a_unit->getName(), a_unit);
 		if (retval < 0)
 			return retval;
@@ -90,6 +93,10 @@ namespace syn
 	}
 
 	bool Circuit::addUnit(Unit* a_unit, int a_unitId) {
+		// increment name until there is no collision
+		while (m_units.contains(a_unit->getName())) {
+			a_unit->_setName(incrementSuffix(a_unit->getName()));
+		}
 		bool retval = m_units.add(a_unit->getName(), a_unitId, a_unit);
 		if (!retval)
 			return false;
@@ -104,10 +111,6 @@ namespace syn
 	const vector<ConnectionRecord>& Circuit::getConnections() const {
 		return m_connectionRecords;
 	};
-
-	Unit* Circuit::_clone() const {
-		return new Circuit(*this);
-	}
 
 	void Circuit::_recomputeGraph()
 	{

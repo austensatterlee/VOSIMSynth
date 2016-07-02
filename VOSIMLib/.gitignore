@@ -1,8 +1,1 @@
-# Doxygen
-doc/
-
-# IDEA
-.idea/
-
-build/
-main.cpp
+src/table_data.cpp

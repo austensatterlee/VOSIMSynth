@@ -21,6 +21,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __NAMEDCONTAINER__
 #include <array>
 #include <functional>
+#include <cereal/cereal.hpp>
 
 #if defined(_MSC_VER)
 #define MSFASTCALL __fastcall
@@ -43,6 +44,20 @@ namespace syn
 		array<int, MAXSIZE> m_indices;
 		array<string, MAXSIZE> m_names;
 		size_t m_size;
+
+		struct SerializableItem
+		{
+			int index;
+			string name;
+			T item;
+			template <class Archive>
+			void serialize(Archive& ar) {
+				ar(cereal::make_nvp("index", index),
+				   cereal::make_nvp("name", name),
+				   cereal::make_nvp("item", item));
+			}
+		};
+
 	public:
 		NamedContainer() :
 			m_size(0)
@@ -102,6 +117,27 @@ namespace syn
 		const int* getIndices() const;
 
 		const string* getNames() const;
+
+		template<typename Archive>
+		void save(Archive& ar) const {
+			cereal::size_type size = m_size;
+			ar(cereal::make_size_tag(size));
+			for(int i=0;i<m_size;i++) {
+				SerializableItem item{ m_indices[i], m_names[m_indices[i]], m_data[m_indices[i]] };
+				ar(item);
+			}
+		}
+
+		template<typename Archive>
+		void load(Archive& ar) {
+			cereal::size_type size;
+			ar(cereal::make_size_tag(size));
+			for(int i=0;i<size;i++) {
+				SerializableItem item;
+				ar(item);
+				add(item.name, item.index, item.item);
+			}
+		}
 
 	private:
 		int getItemIndex(int a_itemId) const;

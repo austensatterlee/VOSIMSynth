@@ -34,6 +34,7 @@ namespace syn
 {
 	class StateVariableFilter : public Unit
 	{
+		DERIVE_UNIT(StateVariableFilter)
 	public:
 		explicit StateVariableFilter(const string& a_name);
 
@@ -44,26 +45,36 @@ namespace syn
 
 		void MSFASTCALL process_() GCCFASTCALL override;
 
-	private:
-		string _getClassName() const override {
-			return "StateVariableFilter";
-		};
-
-		Unit* _clone() const override {
-			return new StateVariableFilter(*this);
-		};
-
-	private:
+	protected:
 		int m_pFc, m_pRes;
 		int m_iResAdd, m_iResMul;
 		int m_iFcAdd, m_iFcMul;
 		int m_oLP, m_oBP, m_oN, m_oHP;
 		double m_prevBPOut, m_prevLPOut;
-		double m_F, m_Q;
+		double m_F, m_damp;
 
 		const double c_minRes = 1.0;
 		const double c_maxRes = 10.0;
 		const int c_oversamplingFactor = 8;
 	};
+
+	class TrapStateVariableFilter : public StateVariableFilter
+	{
+		DERIVE_UNIT(TrapStateVariableFilter)
+	public:
+		explicit TrapStateVariableFilter(const string& a_name);
+
+		TrapStateVariableFilter(const TrapStateVariableFilter& a_rhs) :
+			TrapStateVariableFilter(a_rhs.getName()) {}
+
+	protected:
+		void MSFASTCALL process_() GCCFASTCALL override;
+
+	protected:
+		double m_prevInput;
+	};
 }
+
+CEREAL_REGISTER_TYPE(syn::StateVariableFilter)
+CEREAL_REGISTER_TYPE(syn::TrapStateVariableFilter)
 #endif

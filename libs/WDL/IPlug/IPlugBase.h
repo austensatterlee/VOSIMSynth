@@ -19,7 +19,7 @@
 
 // All version ints are stored as 0xVVVVRRMM: V = version, R = revision, M = minor revision.
 
-namespace syn {
+namespace synui {
     class MainWindow;
 }
 
@@ -28,13 +28,13 @@ class IPlugBase
 
     // Changes made by Austen (4/11)
 private:
-    syn::MainWindow* m_appWindow;
+    synui::MainWindow* m_appWindow;
 protected:
-    virtual void AttachAppWindow(syn::MainWindow* a_appWindow) {
+    virtual void AttachAppWindow(synui::MainWindow* a_appWindow) {
         m_appWindow = a_appWindow;
     }
 public:
-    syn::MainWindow* GetAppWindow() const {
+    synui::MainWindow* GetAppWindow() const {
         return m_appWindow;
     }
     // End changes made by Austen (4/11)

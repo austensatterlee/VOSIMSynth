@@ -29,7 +29,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __UICONTROLPANEL__
 #include "UIComponent.h"
 
-namespace syn {
+namespace synui {
 	class UIControlPanel : public UIComponent
 	{
 	public:

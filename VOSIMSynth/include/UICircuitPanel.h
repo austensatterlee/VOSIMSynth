@@ -33,19 +33,18 @@ Copyright 2016, Austen Satterlee
 #include <queue>
 #include <map>
 
-namespace syn
-{
-	class UnitFactory;
-	class VoiceManager;
 
+
+namespace synui
+{
 	class UICircuitPanel : public UIComponent
 	{
 		friend class VOSIMComponent;
 	public:
-		typedef function<UIUnitContainer*(MainWindow*, UICircuitPanel*, VoiceManager*, UIUnitControl*)> UnitContainerConstructor;
-		typedef function<UIUnitControl*(MainWindow*, VoiceManager*, int)> UnitControllerConstructor;
+		typedef function<UIUnitContainer*(MainWindow*, UICircuitPanel*, syn::VoiceManager*, UIUnitControl*)> UnitContainerConstructor;
+		typedef function<UIUnitControl*(MainWindow*, syn::VoiceManager*, int)> UnitControllerConstructor;
 	public:
-		UICircuitPanel(MainWindow* a_window, VoiceManager* a_vm, UnitFactory* a_unitFactory, UIUnitSelector* a_unitSelector, UIControlPanel* a_controlPanel);
+		UICircuitPanel(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_unitFactory, UIUnitSelector* a_unitSelector, UIControlPanel* a_controlPanel);
 		UIUnitContainer* findUnitContainer(const UICoord& a_pt) const;
 		UIUnitContainer* findUnitContainer(int a_unitId) const;
 		void requestAddConnection(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);
@@ -86,8 +85,8 @@ namespace syn
 		vector<UIUnitContainer*> m_unitContainers;
 		vector<UIWire*> m_wires;
 		vector<UIWire*> m_wireSelectionQueue;
-		VoiceManager* m_vm;
-		UnitFactory* m_unitFactory;
+		syn::VoiceManager* m_vm;
+		syn::UnitFactory* m_unitFactory;
 		UIUnitSelector* m_unitSelector;
 		UIControlPanel* m_unitControlPanel;
 		UIUnitContainer* m_inputs;

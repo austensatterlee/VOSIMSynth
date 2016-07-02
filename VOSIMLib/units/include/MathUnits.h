@@ -83,6 +83,7 @@ namespace syn
 	 */
 	class DCRemoverUnit : public Unit
 	{
+		DERIVE_UNIT(DCRemoverUnit)
 	public:
 		explicit DCRemoverUnit(const string& a_name);
 
@@ -90,11 +91,6 @@ namespace syn
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
-
-	private:
-		string _getClassName() const override;
-
-		Unit* _clone() const override;
 
 	private:
 		int m_pAlpha;
@@ -105,20 +101,16 @@ namespace syn
 	/**
 	* 1 Pole Filter (Lag)
 	*/
-	class LagUnit : public Unit
+	class OnePoleLP : public Unit
 	{
+		DERIVE_UNIT(OnePoleLP)
 	public:
-		explicit LagUnit(const string& a_name);
+		explicit OnePoleLP(const string& a_name);
 
-		LagUnit(const LagUnit& a_rhs);
+		OnePoleLP(const OnePoleLP& a_rhs);
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
-
-	private:
-		string _getClassName() const override;
-
-		Unit* _clone() const override;
 
 	private:
 		int m_pFc;
@@ -131,6 +123,7 @@ namespace syn
 	 */
 	class RectifierUnit : public Unit
 	{
+		DERIVE_UNIT(RectifierUnit)
 	public:
 		explicit RectifierUnit(const string& a_name);
 
@@ -138,11 +131,6 @@ namespace syn
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
-
-	private:
-		string _getClassName() const override;
-
-		Unit* _clone() const override;
 
 	private:
 		int m_pRectType;
@@ -153,6 +141,7 @@ namespace syn
 	 */
 	class MACUnit : public Unit
 	{
+		DERIVE_UNIT(MACUnit)
 	public:
 		explicit MACUnit(const string& a_name);
 
@@ -160,11 +149,6 @@ namespace syn
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
-
-	private:
-		string _getClassName() const override;
-
-		Unit* _clone() const override;
 	};
 
 	/**
@@ -172,6 +156,7 @@ namespace syn
 	 */
 	class GainUnit : public Unit
 	{
+		DERIVE_UNIT(GainUnit)
 	public:
 		explicit GainUnit(const string& a_name);
 
@@ -179,12 +164,6 @@ namespace syn
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
-
-	private:
-		string _getClassName() const override;
-
-		Unit* _clone() const override;
-
 	private:
 		int m_pGain, m_pScale;
 		int m_iGain, m_iInput, m_iInvInput;
@@ -195,6 +174,7 @@ namespace syn
 	*/
 	class SummerUnit : public Unit
 	{
+		DERIVE_UNIT(SummerUnit)
 	public:
 		explicit SummerUnit(const string& a_name);
 
@@ -202,11 +182,6 @@ namespace syn
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
-
-	private:
-		string _getClassName() const override;
-
-		Unit* _clone() const override;
 	};
 
 	/**
@@ -214,6 +189,7 @@ namespace syn
 	 */
 	class ConstantUnit : public Unit
 	{
+		DERIVE_UNIT(ConstantUnit)
 	public:
 		explicit ConstantUnit(const string& a_name);
 
@@ -221,11 +197,6 @@ namespace syn
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
-
-	private:
-		string _getClassName() const override;
-
-		Unit* _clone() const override;
 	};
 
 	/**
@@ -233,6 +204,7 @@ namespace syn
 	*/
 	class PanningUnit : public Unit
 	{
+		DERIVE_UNIT(PanningUnit)
 	public:
 		explicit PanningUnit(const string& a_name);
 
@@ -243,10 +215,6 @@ namespace syn
 
 	protected:
 		int m_pBalance1, m_pBalance2;
-	private:
-		string _getClassName() const override;
-
-		Unit* _clone() const override;
 	};
 
 	/**
@@ -254,6 +222,7 @@ namespace syn
 	*/
 	class LerpUnit : public Unit
 	{
+		DERIVE_UNIT(LerpUnit)
 	public:
 		explicit LerpUnit(const string& a_name);
 
@@ -263,21 +232,17 @@ namespace syn
 		void MSFASTCALL process_() GCCFASTCALL override;
 
 	private:
-		string _getClassName() const override;
-
-		Unit* _clone() const override;
-
-	private:
 		int m_pInputRange;
 		int m_pMinOutput, m_pMaxOutput;
 		int m_pMinOutputScale, m_pMaxOutputScale;
 	};
 
 	/**
-	* Affine transform
+	* Pitch (normalized midi note) to frequency conversion
 	*/
 	class PitchToFreqUnit : public Unit
 	{
+		DERIVE_UNIT(PitchToFreqUnit)
 	public:
 		explicit PitchToFreqUnit(const string& a_name) : Unit(a_name) 
 		{
@@ -292,14 +257,46 @@ namespace syn
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override {
-			setOutputChannel_(0,pitchToFreq(128*getInputValue(0)));
+			setOutputChannel_(0,pitchToFreq(getInputValue(0)));
+		}
+	};
+
+
+	/**
+	* Frequency to pitch (normalized midi note) conversion
+	*/
+	class FreqToPitchUnit : public Unit
+	{
+		DERIVE_UNIT(FreqToPitchUnit)
+	public:
+		explicit FreqToPitchUnit(const string& a_name) : Unit(a_name)
+		{
+			addInput_("in");
+			addOutput_("out");
 		}
 
-	private:
-		string _getClassName() const override { return "PitchToFreqUnit"; }
+		FreqToPitchUnit(const FreqToPitchUnit& a_rhs) :
+			FreqToPitchUnit(a_rhs.getName())
+		{
+		}
 
-		Unit* _clone() const override { return new PitchToFreqUnit(*this); }
+	protected:
+		void MSFASTCALL process_() GCCFASTCALL override {
+			setOutputChannel_(0, samplesToPitch(freqToSamples(getInputValue(0),getFs()),getFs()));
+		}
 	};
 }
+
+CEREAL_REGISTER_TYPE(syn::DCRemoverUnit)
+CEREAL_REGISTER_TYPE(syn::OnePoleLP)
+CEREAL_REGISTER_TYPE(syn::RectifierUnit)
+CEREAL_REGISTER_TYPE(syn::MACUnit)
+CEREAL_REGISTER_TYPE(syn::GainUnit)
+CEREAL_REGISTER_TYPE(syn::SummerUnit)
+CEREAL_REGISTER_TYPE(syn::ConstantUnit)
+CEREAL_REGISTER_TYPE(syn::PanningUnit)
+CEREAL_REGISTER_TYPE(syn::LerpUnit)
+CEREAL_REGISTER_TYPE(syn::PitchToFreqUnit)
+CEREAL_REGISTER_TYPE(syn::FreqToPitchUnit)
 
 #endif

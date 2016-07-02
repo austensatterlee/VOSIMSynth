@@ -32,14 +32,14 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "UIUnitSelector.h"
 #include "UIControlPanel.h"
 
-namespace syn {
+namespace synui {
 	class VOSIMComponent : public UIComponent
 	{
 	public:
-		VOSIMComponent(MainWindow* a_window, VoiceManager* a_vm, UnitFactory* a_unitFactory);
+		VOSIMComponent(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_unitFactory);
 
-		VoiceManager* voiceManager() const { return m_vm; }
-		UnitFactory* unitFactory() const { return m_unitFactory; }
+		syn::VoiceManager* voiceManager() const { return m_vm; }
+		syn::UnitFactory* unitFactory() const { return m_unitFactory; }
 		UICircuitPanel* circuitPanel() const { return m_circuitPanel; }
 		UIUnitSelector* unitSelector() const { return m_unitSelector; }
 		UIControlPanel* controlPanel() const { return m_controlPanel; }
@@ -57,8 +57,8 @@ namespace syn {
 		UIUnitSelector* m_unitSelector;
 		UIControlPanel* m_controlPanel;
 
-		VoiceManager* m_vm;
-		UnitFactory* m_unitFactory;
+		syn::VoiceManager* m_vm;
+		syn::UnitFactory* m_unitFactory;
 	};
 }
 

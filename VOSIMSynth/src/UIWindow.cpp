@@ -3,7 +3,7 @@
 #include "UILabel.h"
 #include "Theme.h"
 
-syn::UIWindow::UIWindow(MainWindow* a_window, const string& a_title) :
+synui::UIWindow::UIWindow(MainWindow* a_window, const string& a_title) :
 	UIComponent{ a_window },
 	m_isLocked(false) 
 {
@@ -19,11 +19,11 @@ syn::UIWindow::UIWindow(MainWindow* a_window, const string& a_title) :
 	addChild(m_headerRow);
 }
 
-void syn::UIWindow::addChildToHeader(UIComponent* a_newChild) const {
+void synui::UIWindow::addChildToHeader(UIComponent* a_newChild) const {
 	m_headerRow->addChild(a_newChild);
 }
 
-bool syn::UIWindow::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
+bool synui::UIWindow::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	if (UIComponent::onMouseDrag(a_relCursor, a_diffCursor))
 		return true;
 	if(!m_isLocked)
@@ -31,7 +31,7 @@ bool syn::UIWindow::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_di
 	return true;
 }
 
-syn::UIComponent* syn::UIWindow::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+synui::UIComponent* synui::UIWindow::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	UIComponent* child = UIComponent::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
 	if (child)
 		return child;
@@ -42,7 +42,7 @@ syn::UIComponent* syn::UIWindow::onMouseDown(const UICoord& a_relCursor, const V
 	return nullptr;
 }
 
-void syn::UIWindow::notifyChildResized(UIComponent* a_child) {
+void synui::UIWindow::notifyChildResized(UIComponent* a_child) {
 	Vector2i minSize = { 0,0 };
 	for (shared_ptr<UIComponent> child : m_children) {
 		Vector2i minChildExtent = child->getRelPos() + child->minSize();
@@ -51,11 +51,11 @@ void syn::UIWindow::notifyChildResized(UIComponent* a_child) {
 	setMinSize(minSize);
 }
 
-void syn::UIWindow::lockPosition(bool a_lockPosition) {
+void synui::UIWindow::lockPosition(bool a_lockPosition) {
 	m_isLocked = a_lockPosition;
 }
 
-void syn::UIWindow::draw(NVGcontext* a_nvg) {
+void synui::UIWindow::draw(NVGcontext* a_nvg) {
 	int ds = theme()->mWindowDropShadowSize, cr = theme()->mWindowCornerRadius;
 	int hh = theme()->mWindowHeaderHeight;
 
@@ -106,6 +106,6 @@ void syn::UIWindow::draw(NVGcontext* a_nvg) {
 	nvgStroke(a_nvg);
 }
 
-void syn::UIWindow::_onResize() {
+void synui::UIWindow::_onResize() {
 	m_headerRow->setSize({ size().x(),-1 });
 }

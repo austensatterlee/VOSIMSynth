@@ -33,7 +33,7 @@
 
 using std::list;
 
-namespace syn
+namespace synui
 {
 	class UICoord;
 

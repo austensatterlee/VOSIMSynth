@@ -33,6 +33,7 @@ namespace syn
 {
 	class ADSREnvelope : public Unit
 	{
+		DERIVE_UNIT(ADSREnvelope)
 	public:
 		explicit ADSREnvelope(const string& name);
 
@@ -46,15 +47,6 @@ namespace syn
 
 		void trigger();
 		void release();
-	private:
-		string _getClassName() const override {
-			return "ADSREnvelope";
-		};
-
-		Unit* _clone() const override {
-			return new ADSREnvelope(*this);
-		}
-
 	private:
 		enum EADSRStage
 		{
@@ -75,4 +67,5 @@ namespace syn
 		int m_iGate;
 	};
 }
+CEREAL_REGISTER_TYPE(syn::ADSREnvelope)
 #endif

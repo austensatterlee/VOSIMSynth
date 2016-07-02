@@ -6,6 +6,7 @@
 
 struct IMidiMsg;
 
+
 namespace syn {
 
 	class VoiceManager;

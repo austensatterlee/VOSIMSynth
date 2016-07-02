@@ -42,24 +42,28 @@ source_group(sftools FILES ${SFTOOLS_FILES})
 
 IF(WIN32)
   ADD_DEFINITIONS(-DSA_API -D__WINDOWS_DS__ -D__WINDOWS_MM__ -D__WINDOWS_ASIO__)
+ENDIF()
 
-  ADD_EXECUTABLE (${APP_NAME} WIN32 
-    ${PROJECT_FILES}
-    ${STANDALONE_FILES}
-    ${RESOURCE_FILES}
-    ${RTMIDI_FILES}
-    ${ASIO_FILES}
-    ${WDL_FILES}
-    ${IPLUG_FILES}
-    ${IPLUG_STANDALONE_FILES}
-    ${NANOVG_FILES}
-    ${SFTOOLS_FILES}
-    )
 
-  target_link_libraries(${APP_NAME} ${ADDITIONAL_LIBRARIES}
-    "$<$<CONFIG:Release>:${SFML_REL_LIBS}>"
-    "$<$<NOT:$<CONFIG:Release>>:${SFML_DBG_LIBS}>"
-    VOSIMLib
-    )
+ADD_EXECUTABLE (${APP_NAME} 
+  ${PROJECT_FILES}
+  ${STANDALONE_FILES}
+  ${RESOURCE_FILES}
+  ${RTMIDI_FILES}
+  ${ASIO_FILES}
+  ${WDL_FILES}
+  ${IPLUG_FILES}
+  ${IPLUG_STANDALONE_FILES}
+  ${NANOVG_FILES}
+  ${SFTOOLS_FILES}
+  )
+
+target_link_libraries(${APP_NAME} ${ADDITIONAL_LIBRARIES}
+  "$<$<CONFIG:Release>:${REL_LIBS}>"
+  "$<$<NOT:$<CONFIG:Release>>:${DBG_LIBS}>"
+  VOSIMLib
+  )
+
+IF(WIN32)
   target_link_libraries(${APP_NAME} dsound winmm comctl32 wininet)
 ENDIF()

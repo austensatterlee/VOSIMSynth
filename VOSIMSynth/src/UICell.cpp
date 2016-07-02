@@ -1,6 +1,6 @@
 #include "UICell.h"
 
-syn::UICell::UICell(MainWindow* a_window) : 
+synui::UICell::UICell(MainWindow* a_window) : 
 	UIComponent(a_window),
 	m_greedyChild(nullptr),
 	m_childResizePolicy(CNONE),
@@ -13,7 +13,7 @@ syn::UICell::UICell(MainWindow* a_window) :
 	m_packOnChildResize(true)
 {}
 
-void syn::UICell::setGreedyChild(UIComponent* a_child)
+void synui::UICell::setGreedyChild(UIComponent* a_child)
 {
 	if (m_greedyChild != a_child) {
 		m_greedyChild = a_child;
@@ -21,7 +21,7 @@ void syn::UICell::setGreedyChild(UIComponent* a_child)
 	}
 }
 
-void syn::UICell::setChildResizePolicy(ChildResizePolicy a_policy)
+void synui::UICell::setChildResizePolicy(ChildResizePolicy a_policy)
 {
 	if (m_childResizePolicy != a_policy) {
 		m_childResizePolicy = a_policy;
@@ -29,7 +29,7 @@ void syn::UICell::setChildResizePolicy(ChildResizePolicy a_policy)
 	}
 }
 
-void syn::UICell::setSelfMinSizePolicy(SelfMinSizePolicy a_policy)
+void synui::UICell::setSelfMinSizePolicy(SelfMinSizePolicy a_policy)
 {
 	if (m_selfMinSizePolicy != a_policy) {
 		m_selfMinSizePolicy = a_policy;
@@ -37,7 +37,7 @@ void syn::UICell::setSelfMinSizePolicy(SelfMinSizePolicy a_policy)
 	}
 }
 
-void syn::UICell::setSelfResizePolicy(SelfResizePolicy a_policy)
+void synui::UICell::setSelfResizePolicy(SelfResizePolicy a_policy)
 {
 	if (m_selfResizePolicy != a_policy) {
 		m_selfResizePolicy = a_policy;
@@ -45,7 +45,7 @@ void syn::UICell::setSelfResizePolicy(SelfResizePolicy a_policy)
 	}
 }
 
-void syn::UICell::setPadding(const Vector4i& a_padding)
+void synui::UICell::setPadding(const Vector4i& a_padding)
 {
 	if (m_padding != a_padding) {
 		m_padding = a_padding;
@@ -53,7 +53,7 @@ void syn::UICell::setPadding(const Vector4i& a_padding)
 	}
 }
 
-void syn::UICell::setChildrenSpacing(int a_padAmt)
+void synui::UICell::setChildrenSpacing(int a_padAmt)
 {
 	if (m_childSpacing != a_padAmt) {
 		m_childSpacing = a_padAmt;
@@ -61,17 +61,17 @@ void syn::UICell::setChildrenSpacing(int a_padAmt)
 	}
 }
 
-Eigen::Vector2i syn::UICell::innerSize() const
+Eigen::Vector2i synui::UICell::innerSize() const
 {
 	return{ size()[0] - padding()[0] - padding()[2], size()[1] - padding()[1] - padding()[3] };			
 }
 
-const Eigen::Vector4i& syn::UICell::padding() const
+const Eigen::Vector4i& synui::UICell::padding() const
 {
 	return m_padding;
 }
 
-void syn::UICol::layoutChildren_()
+void synui::UICol::layoutChildren_()
 {
 	int y = m_padding[1];
 	for (shared_ptr<UIComponent> child : m_children) {
@@ -91,7 +91,7 @@ void syn::UICol::layoutChildren_()
 	}
 }
 
-void syn::UICol::resizeChildren_()
+void synui::UICol::resizeChildren_()
 {
 	bool oldPackOnChildResize = m_packOnChildResize;
 	m_packOnChildResize = false;
@@ -105,7 +105,7 @@ void syn::UICol::resizeChildren_()
 			child->setSize({ m_maxChildMinSize[0], -1 });
 			break;
 		case CMATCHMAX:
-			child->setSize({ MIN(innerSize()[0],m_maxChildSize[0]), -1 });
+			child->setSize({ syn::MIN(innerSize()[0],m_maxChildSize[0]), -1 });
 			break;
 		case CMAX:
 			child->setSize({ innerSize()[0], -1 });
@@ -116,7 +116,7 @@ void syn::UICol::resizeChildren_()
 	m_packOnChildResize = oldPackOnChildResize;
 }
 
-void syn::UICol::updateMinSize_()
+void synui::UICol::updateMinSize_()
 {
 	m_maxChildMinSize = { 0,0 };
 	m_maxChildSize = { 0,0 };
@@ -144,7 +144,7 @@ void syn::UICol::updateMinSize_()
 	}	
 }
 
-void syn::UIRow::layoutChildren_()
+void synui::UIRow::layoutChildren_()
 {
 	int x = m_padding[0];
 	for (shared_ptr<UIComponent> child : m_children) {
@@ -164,7 +164,7 @@ void syn::UIRow::layoutChildren_()
 	}
 }
 
-void syn::UIRow::resizeChildren_()
+void synui::UIRow::resizeChildren_()
 {
 	bool oldPackOnChildResize = m_packOnChildResize;
 	m_packOnChildResize = false;
@@ -178,7 +178,7 @@ void syn::UIRow::resizeChildren_()
 			child->setSize({ -1, m_maxChildMinSize[1] });
 			break;
 		case CMATCHMAX:
-			child->setSize({ -1, MIN(innerSize()[1],m_maxChildSize[1]) });
+			child->setSize({ -1, syn::MIN(innerSize()[1],m_maxChildSize[1]) });
 			break;
 		case CMAX:
 			child->setSize({ -1, innerSize()[1] });
@@ -189,7 +189,7 @@ void syn::UIRow::resizeChildren_()
 	m_packOnChildResize = oldPackOnChildResize;
 }
 
-void syn::UIRow::updateMinSize_()
+void synui::UIRow::updateMinSize_()
 {
 	m_maxChildMinSize = { 0,0 };
 	m_maxChildSize = { 0,0 };

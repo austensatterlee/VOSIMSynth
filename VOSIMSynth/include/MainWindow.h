@@ -44,8 +44,13 @@ Copyright 2016, Austen Satterlee
 using sf::Event;
 using boost::lockfree::spsc_queue;
 using boost::lockfree::capacity;
-
 namespace syn
+{
+	class VoiceManager;
+	class UnitFactory;
+}
+
+namespace synui
 {
 	template <typename T>
 	struct Timestamped
@@ -61,9 +66,6 @@ namespace syn
 		void(*action)(MainWindow*, ByteChunk*);
 		ByteChunk data;
 	};
-
-	class VoiceManager;
-	class UnitFactory;
 
 	class MainWindow
 	{
@@ -149,8 +151,8 @@ namespace syn
 
 		UIComponent* m_draggingComponent;
 		list<UIComponent*> m_focusPath;
-		VoiceManager* m_vm;
-		UnitFactory* m_unitFactory;
+		syn::VoiceManager* m_vm;
+		syn::UnitFactory* m_unitFactory;
 
 		UIComponent* m_root;
 		std::function<UIComponent*(MainWindow*)> m_rootConstructor;

@@ -31,7 +31,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "UIComponent.h"
 #include <unordered_map>
 
-namespace syn
+namespace synui
 {
 	enum class Alignment : uint8_t {
 		Minimum = 0,

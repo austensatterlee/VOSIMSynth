@@ -55,6 +55,7 @@ namespace syn
 
 	class MemoryUnit : public Unit
 	{
+		DERIVE_UNIT(MemoryUnit)
 	public:
 		explicit MemoryUnit(const string& a_name);
 		MemoryUnit(const MemoryUnit& a_rhs);
@@ -62,9 +63,6 @@ namespace syn
 	protected:
 		void onParamChange_(int a_paramId) override;
 		void MSFASTCALL process_() GCCFASTCALL override;
-	private:
-		string _getClassName() const override;
-		Unit* _clone() const override;
 
 	private:
 		NSampleDelay m_delay;
@@ -72,6 +70,7 @@ namespace syn
 
 	class ResampleUnit : public Unit
 	{
+		DERIVE_UNIT(ResampleUnit)
 	public:
 		explicit ResampleUnit(const string& a_name);
 		ResampleUnit(const ResampleUnit& a_rhs);
@@ -79,10 +78,6 @@ namespace syn
 	protected:
 		void onParamChange_(int a_paramId) override;
 		void MSFASTCALL process_() GCCFASTCALL override;
-	private:
-		string _getClassName() const override;
-		Unit* _clone() const override;
-
 	private:
 		NSampleDelay m_delay;
 		double m_delaySamples;
@@ -94,4 +89,6 @@ namespace syn
 		int m_pBufType;
 	};
 }
+CEREAL_REGISTER_TYPE(syn::MemoryUnit)
+CEREAL_REGISTER_TYPE(syn::ResampleUnit)
 #endif

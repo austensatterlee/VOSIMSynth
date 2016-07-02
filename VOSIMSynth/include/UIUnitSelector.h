@@ -29,14 +29,12 @@ Copyright 2016, Austen Satterlee
 #define __UIUNITSELECTOR__
 #include "UIWindow.h"
 
-namespace syn
+namespace synui
 {
-	class UnitFactory;
-
 	class UIUnitSelector : public UIWindow
 	{
 	public:
-		UIUnitSelector(MainWindow* a_window, UnitFactory* a_unitFactory);
+		UIUnitSelector(MainWindow* a_window, syn::UnitFactory* a_unitFactory);
 
 		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		bool onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
@@ -74,7 +72,7 @@ namespace syn
 		int m_highlightedRow;
 
 		int m_indentAmt = 1;
-		UnitFactory* m_unitFactory;
+		syn::UnitFactory* m_unitFactory;
 	};
 }
 #endif

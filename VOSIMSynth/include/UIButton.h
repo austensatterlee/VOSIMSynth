@@ -29,7 +29,7 @@ Copyright 2016, Austen Satterlee
 #define __UIBUTTON__
 #include "UIComponent.h"
 
-namespace syn
+namespace synui
 {
 	class UIButton : public UIComponent
 	{

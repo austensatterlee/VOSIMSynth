@@ -31,7 +31,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "UIComponent.h"
 #include "UI.h"
 
-namespace syn {
+namespace synui {
 
 	class UIColorWheel : public UIComponent {
 	public:

@@ -37,6 +37,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 #define DSP_PI 3.14159265359f
+#include <regex>
+#include <cereal/cereal.hpp>
 
 namespace syn
 {
@@ -52,6 +54,9 @@ namespace syn
 		return (lerped_pt - pt1) / (pt2 - pt1);
 	}
 
+	/**
+	 * Clamps val to be in the range [min_val, max_val].
+	 */
 	template <typename T>
 	T CLAMP(const T& val, const T& min_val, const T& max_val) {
 		return val < min_val ? min_val : (val > max_val ? max_val : val);
@@ -67,6 +72,9 @@ namespace syn
 		return val1 > val2 ? val2 : val1;
 	}
 
+	/**
+	 * Computes x modulo m 
+	 */
 	template <typename T>
 	T WRAP(const T& x, const T& m) {
 		if (!m)
@@ -79,6 +87,12 @@ namespace syn
 		return newx;
 	}
 
+	/**
+	 * Wraps a number to be in the given range
+	 * \param x the number to wrap
+	 * \param left_m the left (minimum) boundary
+	 * \param right_m the right (maximum) boundary
+	 */
 	template <typename T>
 	T WRAP2(const T& x, const T& left_m, const T& right_m) {
 		const T m = right_m - left_m;
@@ -92,8 +106,20 @@ namespace syn
 		return newx;
 	}
 
+	/**
+	 * Generates a sample from a blackman-harris window.
+	 * \param a_k the index of the sample to generate, in the range [0,a_winSize).
+	 * \param a_winSize size of the window in samples
+	 */
 	double blackman_harris(int a_k, size_t a_winSize);
 
+	/////////////////////////////////////
+	// Time unit conversion functions  //
+	/////////////////////////////////////
+
+	/**
+	 * Convert pitch (midi note, 0-127) to frequency 
+	 */
 	double pitchToFreq(double pitch);
 
 	double bpmToFreq(double bpm, double tempo);
@@ -102,6 +128,33 @@ namespace syn
 
 	double periodToSamples(double seconds, double fs);
 
+	double samplesToPitch(double samples, double fs);
+
+	double samplesToFreq(double samples, double fs);
+
+	double samplesToPeriod(double samples, double fs);
+	
+	double samplesToBPM(double samples, double fs, double tempo);
+
 	double lin2db(double lin, double mindb, double maxdb);
+
+	//////////////////
+	// Misc. utils  //
+	//////////////////
+
+	/**
+	 * If a_str ends with a number, this function creates a new string with that number incremented by one.
+	 * If a_str does not end with a number, this function returns a new string with "_0" concatenated at the end.
+	 */
+	std::string incrementSuffix(const std::string& a_str);
+
+	template<typename Archive, typename T>
+	void load_cereal_nvp(Archive& ar, const std::string& a_name, T& a_ref, const T& a_default) {
+		try {
+			ar(cereal::make_nvp(a_name, a_ref));
+		}catch(cereal::Exception) {
+			a_ref = a_default;
+		}
+	}
 }
 #endif

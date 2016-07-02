@@ -97,10 +97,6 @@ namespace syn
 
 		void resetBuildCounts();
 
-		static void saveUnit(const Unit* a_unit, int a_unitId, ByteChunk* a_data);
-
-		int loadUnit(ByteChunk* a_data, int a_startPos, Unit** a_unit, int* a_unitId);
-
 	protected:
 		int getPrototypeIdx_(const string& a_name) const;
 
@@ -110,7 +106,6 @@ namespace syn
 	private:
 		vector<FactoryPrototype> m_prototypes;
 		set<string> m_group_names;
-		set<string> m_generatedNameHistory;
 
 		unordered_map<unsigned int, int> m_class_identifiers; //<! mapping from unique class IDs to prototype numbers
 	};

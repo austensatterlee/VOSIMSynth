@@ -27,6 +27,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "DSPMath.h"
 #include "tables.h"
+#include <cmath>
 
 int syn::gcd(int a, int b) {
 	while (a != 0) {
@@ -47,13 +48,12 @@ double syn::blackman_harris(int a_k, size_t a_winSize) {
 }
 
 double syn::pitchToFreq(double pitch) {
-	double freq = lut_pitch_table.getlinear(pitch);
-	return freq;
+	return lut_pitch_table.getlinear(pitch);
 }
 
 double syn::bpmToFreq(double bpm, double tempo)
 {
-	return bpm > 1e-5 ? tempo / 60.0 * 1. / bpm : 0.0;
+	return bpm > 1e-5 ? tempo / (60.0 * bpm) : 0.0;
 }
 
 double syn::freqToSamples(double freq, double fs)
@@ -66,6 +66,22 @@ double syn::periodToSamples(double seconds, double fs)
 	return seconds*fs;
 }
 
+double syn::samplesToPitch(double samples, double fs) {
+	return samples > 1e-5 ? log2(fs/(440*samples))*12. + 69 : 0.0;
+}
+
+double syn::samplesToFreq(double samples, double fs) {
+	return samples > 1e-5 ? fs / samples : 0.0;
+}
+
+double syn::samplesToPeriod(double samples, double fs) {
+	return samples / fs;
+}
+
+double syn::samplesToBPM(double samples, double fs, double tempo) {
+	return samples > 1e-5 ? tempo * samples / (60.0 * fs) : 0.0;
+}
+
 double syn::lin2db(double lin, double mindb, double maxdb) {
 	double db;
 	if (lin >= 0) {
@@ -74,4 +90,19 @@ double syn::lin2db(double lin, double mindb, double maxdb) {
 		db = -lut_db_table.getlinear(LERP(mindb, maxdb, -lin));
 	}
 	return db;
+}
+
+std::string syn::incrementSuffix(const std::string& a_str) {
+	std::regex rexp("^(.*?[^\\d])(\\d+)$");
+	std::smatch match;
+	regex_match(a_str, match, rexp);
+	if (!match[2].matched) {
+		// numbered suffix not found	
+		std::string newstring = a_str + "_0";
+		return newstring;
+	} else {
+		int suffix_num = stoi(match[2].str());
+		std::string new_name = match[1].str() + std::to_string(suffix_num + 1);
+		return new_name;
+	}
 }

@@ -160,7 +160,7 @@ namespace syn
 		int		bkwd_table_index = index;
 		while (bkwd_filt_phase < blimp_table.size()) {
 #ifdef DO_LERP_FOR_SINC
-			double bkwd_filt_sample = blimp_table.getlinear(filt_phase / blimp_table.size());
+			double bkwd_filt_sample = blimp_table.getlinear(bkwd_filt_phase / blimp_table.size());
 #else
 			double bkwd_filt_sample = blimp_table.getraw(static_cast<int>(bkwd_filt_phase));
 #endif
@@ -177,7 +177,7 @@ namespace syn
 		int		fwd_table_index = index + 1;
 		while (fwd_filt_phase < blimp_table.size()) {
 #ifdef DO_LERP_FOR_SINC
-			double fwd_filt_sample = blimp_table.getlinear(filt_phase / blimp_table.size());
+			double fwd_filt_sample = blimp_table.getlinear(fwd_filt_phase / blimp_table.size());
 #else
 			double fwd_filt_sample = blimp_table.getraw(static_cast<int>(fwd_filt_phase));
 #endif

@@ -18,6 +18,7 @@ set(STANDALONE_DIR ${VOSIMSYNTH_DIR}/standalone CACHE PATH "")
 set(VST2_SDK ${LIBS_DIR}/VST_SDK CACHE PATH "")
 set(SFTOOLS_DIR ${LIBS_DIR}/sftools CACHE PATH "")
 set(EIGEN_DIR ${LIBS_DIR}/eigen CACHE PATH "")
+set(CEREAL_DIR ${LIBS_DIR}/cereal CACHE PATH "")
 set(RESOURCES_DIR ${VOSIMSYNTH_DIR}/resources CACHE PATH "")
 set(GLEW_ROOT "C:/Program Files (x86)/glew" CACHE PATH "")
 set(SFML_ROOT "C:/Program Files/sfml" CACHE PATH "")
@@ -184,6 +185,11 @@ set(Boost_DETAILED_FAILURE_MSG True)
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
+# Add VOSIMLib
+include_directories(${IPLUG_DIR})
+include_directories(${CEREAL_DIR}/include)
+add_subdirectory(${VOSIMLIB_DIR} VOSIMLib)
+
 # Add SFML
 set(SFML_STATIC true)
 set(SFML_STATIC_LIBRARIES true)
@@ -215,10 +221,6 @@ list(APPEND ADDITIONAL_LIBRARIES ${OPENGL_LIBRARIES})
 #message(STATUS "OPENGL libs: ${OPENGL_LIBRARIES}" )
 
 list(REMOVE_DUPLICATES ADDITIONAL_LIBRARIES)
-
-# Add VOSIMLib
-include_directories(${IPLUG_DIR})
-add_subdirectory(${VOSIMLIB_DIR} VOSIMLib)
 
 
 ################################

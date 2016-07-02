@@ -2,7 +2,7 @@
 #include <Eigen/QR>
 #include <Eigen/Geometry>
 
-namespace syn {
+namespace synui {
 	UIColorWheel::UIColorWheel(MainWindow *parent, const Color& rgb)
 		: UIComponent(parent), mDragRegion(None) 
 	{

@@ -30,18 +30,18 @@ Copyright 2016, Austen Satterlee
 #include "UIComponent.h"
 #include <VoiceManager.h>
 
-namespace syn
+namespace synui
 {
 	class UIUnitControl : public UIComponent
 	{
 	public:
-		UIUnitControl(MainWindow* a_window, VoiceManager* a_vm, int a_unitId) :
+		UIUnitControl(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId) :
 			UIComponent{a_window},
 			m_vm(a_vm),
 			m_unitId(a_unitId) {}
 		int unitId() const { return m_unitId; }
 	protected:
-		VoiceManager* m_vm;
+		syn::VoiceManager* m_vm;
 		int m_unitId;
 	};
 }

@@ -3,7 +3,7 @@
 #include <regex>
 
 
-namespace syn
+namespace synui
 {
 	UITextBox::UITextBox(MainWindow* a_window, const string& value)
 		: UIComponent(a_window),

@@ -2,23 +2,22 @@
 #include "UITextBox.h"
 #include "UIButton.h"
 #include "UICell.h"
+#include "UnitParameter.h"
 
-namespace syn
+namespace synui
 {
-	UIDigitControl::UIDigitControl(MainWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId) :
-		UIComponent(a_window),
+	UIDigitControl::UIDigitControl(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId, int a_paramId) :
+		UIParamControl(a_window, a_vm, a_unitId, a_paramId),
 		m_decimalLoc(-1),
-		m_value(""),
-		m_row( new UIRow(a_window) ),
-		m_vm(a_vm),
-		m_unitId(a_unitId),
-		m_paramId(a_paramId)
+		m_strValue(""),
+		m_row( new UIRow(a_window) )
 	{
 		addChild(m_row);
 		m_row->setChildrenSpacing(0);
+		UIDigitControl::updateValue_();
 	}
 
-	void UIDigitControl::setNumDigits(int a_numDigits) {
+	void UIDigitControl::setNumDigits_(int a_numDigits) {
 		while (m_digitCols.size() > a_numDigits) {
 			m_row->removeChild(m_digitCols.back());
 			m_digitCols.pop_back();
@@ -40,8 +39,8 @@ namespace syn
 			downArrow->setFontSize(10);
 
 			int digitNum = m_textBoxes.size();
-			auto upFunc = [this, digitNum]() {this->setDigit(digitNum, WRAP<int>(this->getDigit(digitNum) + 1, 10)); };
-			auto downFunc = [this, digitNum]() {this->setDigit(digitNum, WRAP<int>(this->getDigit(digitNum) - 1, 10)); };
+			auto upFunc = [this, digitNum]() {this->setDigit(digitNum, syn::WRAP<int>(this->getDigit(digitNum) + 1, 10)); };
+			auto downFunc = [this, digitNum]() {this->setDigit(digitNum, syn::WRAP<int>(this->getDigit(digitNum) - 1, 10)); };
 			upArrow->setCallback(upFunc);
 			downArrow->setCallback(downFunc);
 
@@ -61,18 +60,18 @@ namespace syn
 		setMinSize(m_row->minSize());
 	}
 
-	void UIDigitControl::setValue(const string& a_num) {
-		setNumDigits(a_num.size());
+	void UIDigitControl::setValue_(const string& a_num) {
+		setNumDigits_(a_num.size());
 		m_decimalLoc = static_cast<int>(a_num.find_first_of("."));
 		if (m_decimalLoc == string::npos) m_decimalLoc = -1;
 		for (int i = 0; i<a_num.size(); i++) {
 			m_textBoxes[i]->setValue(a_num.substr(i, 1));
 		}
-		m_value = a_num;
+		m_strValue = a_num;
 	}
 
 	double UIDigitControl::getValue() const {
-		return stod(m_value);
+		return stod(m_strValue);
 	}
 
 	int UIDigitControl::getDigit(int a_digit) {
@@ -82,6 +81,14 @@ namespace syn
 
 	void UIDigitControl::setDigit(int a_digit, int a_value) {
 		if (a_digit == m_decimalLoc) return;
+		if (a_value < 0 || a_value > 9) return;
 		m_textBoxes[a_digit]->setValue(to_string(a_value));
+		m_strValue[a_digit] = to_string(a_value)[0];
+		setParamFromString(m_strValue);
+	}
+
+	void UIDigitControl::updateValue_() {
+		UIParamControl::updateValue_();
+		setValue_(m_param->getValueString());
 	}
 }

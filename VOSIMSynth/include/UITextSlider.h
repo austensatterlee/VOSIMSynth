@@ -27,41 +27,28 @@ Copyright 2016, Austen Satterlee
 
 #ifndef __UITEXTSLIDER__
 #define __UITEXTSLIDER__
-#include "UIComponent.h"
-#include "UITextBox.h"
+#include "UIParamControl.h"
 
-namespace syn
+namespace synui
 {
-	class UnitParameter;
-
-	class UITextSlider : public UIComponent
+	class UITextSlider : public UIParamControl
 	{
 	public:
-		UITextSlider(MainWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId);
+		UITextSlider(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId, int a_paramId);
 
 		bool onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
 		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 		bool onMouseScroll(const UICoord& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) override;
-		void setValueFromString(const string& a_str);
+		
 	protected:
 		void draw(NVGcontext* a_nvg) override;
+		void updateValue_() override;
 	private:
 		void _onResize() override;
-		void _updateValue();
 		void _updateMinSize();
 	private:
-		double m_value;
-		VoiceManager* m_vm;
 		UITextBox* m_textBox;
 		UIRow* m_row;
-		UILabel* m_nameLabel;
-		UILabel* m_valueLabel;
-		UILabel* m_unitsLabel;
-		int m_unitId;
-		int m_paramId;
-		const UnitParameter* m_param;
-
-		bool m_isValueDirty = false;
 	};
 }
 #endif

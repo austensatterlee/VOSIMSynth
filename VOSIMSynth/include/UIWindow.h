@@ -29,7 +29,7 @@ Copyright 2016, Austen Satterlee
 #define __UIWINDOW__
 #include "UIComponent.h"
 
-namespace syn
+namespace synui
 {
 	class UIWindow : public UIComponent
 	{

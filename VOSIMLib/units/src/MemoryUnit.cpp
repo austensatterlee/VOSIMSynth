@@ -108,16 +108,6 @@ namespace syn
 	{
 	}
 
-	string MemoryUnit::_getClassName() const
-	{
-		return "MemoryUnit";
-	}
-
-	Unit* MemoryUnit::_clone() const
-	{
-		return new MemoryUnit(*this);
-	}
-
 	void MemoryUnit::onParamChange_(int a_paramId)
 	{
 	}
@@ -149,16 +139,6 @@ namespace syn
 	ResampleUnit::ResampleUnit(const ResampleUnit& a_rhs) :
 		ResampleUnit(a_rhs.getName())
 	{
-	}
-
-	string ResampleUnit::_getClassName() const
-	{
-		return "ResampleUnit";
-	}
-
-	Unit* ResampleUnit::_clone() const
-	{
-		return new ResampleUnit(*this);
 	}
 
 	void ResampleUnit::onParamChange_(int a_paramId)

@@ -2,7 +2,7 @@
 #include "UIUnitContainer.h"
 #include "VoiceManager.h"
 
-syn::VOSIMComponent::VOSIMComponent(MainWindow* a_window, VoiceManager* a_vm, UnitFactory* a_unitFactory): UIComponent(a_window), m_vm(a_vm), m_unitFactory(a_unitFactory) {
+synui::VOSIMComponent::VOSIMComponent(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_unitFactory): UIComponent(a_window), m_vm(a_vm), m_unitFactory(a_unitFactory) {
 	m_unitSelector = new UIUnitSelector(m_window, m_unitFactory);
 	m_controlPanel = new UIControlPanel(m_window);
 	m_circuitPanel = new UICircuitPanel(m_window, m_vm, m_unitFactory, m_unitSelector, m_controlPanel);
@@ -11,7 +11,7 @@ syn::VOSIMComponent::VOSIMComponent(MainWindow* a_window, VoiceManager* a_vm, Un
 	addChild(m_circuitPanel);
 }
 
-void syn::VOSIMComponent::save(ByteChunk* a_data) const {
+void synui::VOSIMComponent::save(ByteChunk* a_data) const {
 	const vector<UIUnitContainer*>& units = m_circuitPanel->getUnits();
 	int nUnits = units.size() - 2; // skip input/output units
 	a_data->Put<int>(&nUnits);
@@ -30,7 +30,7 @@ void syn::VOSIMComponent::save(ByteChunk* a_data) const {
 	}
 }
 
-int syn::VOSIMComponent::load(ByteChunk* a_data, int startPos) const {
+int synui::VOSIMComponent::load(ByteChunk* a_data, int startPos) const {
 	/* Reset CircuitPanel */
 	m_circuitPanel->reset();
 
@@ -54,23 +54,23 @@ int syn::VOSIMComponent::load(ByteChunk* a_data, int startPos) const {
 		}
 	}
 	// Add wires
-	const vector<ConnectionRecord>& records = m_vm->getPrototypeCircuit()->getConnections();
+	const vector<syn::ConnectionRecord>& records = m_vm->getPrototypeCircuit()->getConnections();
 	for (int i = 0; i < records.size(); i++) {
-		const ConnectionRecord& rec = records[i];
+		const syn::ConnectionRecord& rec = records[i];
 		if (m_vm->getPrototypeCircuit()->hasUnit(rec.from_id) && m_vm->getPrototypeCircuit()->hasUnit(rec.to_id))
 			m_circuitPanel->onAddConnection_(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
 	}
 	return startPos;
 }
 
-void syn::VOSIMComponent::notifyChildResized(UIComponent* a_child) {
+void synui::VOSIMComponent::notifyChildResized(UIComponent* a_child) {
 	_onResize();
 }
 
-void syn::VOSIMComponent::draw(NVGcontext* a_nvg) {
+void synui::VOSIMComponent::draw(NVGcontext* a_nvg) {
 }
 
-void syn::VOSIMComponent::_onResize() {
+void synui::VOSIMComponent::_onResize() {
 	m_controlPanel->setSize({ size().x() - 4, 200 });
 	m_controlPanel->setRelPos({ 2, size().y() - 5 - m_controlPanel->size().y() });
 

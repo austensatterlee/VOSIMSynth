@@ -3,7 +3,7 @@
 #include <array>
 #include <Commdlg.h>
 
-namespace syn
+namespace synui
 {
 	array<char, 8> utf8(int c) {
 		array<char, 8> seq;

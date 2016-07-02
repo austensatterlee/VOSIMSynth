@@ -23,13 +23,13 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "UIPlot.h"
 #include "UILabel.h"
 
-namespace syn
+namespace synui
 {
 	OscilloscopeUnit::OscilloscopeUnit(const string& a_name) :
 		Unit(a_name),
 		m_bufferIndex(0),
-		m_pBufferSize(addParameter_(UnitParameter("buffer size", 16, 96000, 256))),
-		m_pNumPeriods(addParameter_(UnitParameter("periods", 1, 16, 1))),
+		m_pBufferSize(addParameter_(syn::UnitParameter("buffer size", 16, 96000, 256))),
+		m_pNumPeriods(addParameter_(syn::UnitParameter("periods", 1, 16, 1))),
 		m_lastPhase(0.0),
 		m_lastSync(0),
 		m_syncCount(0) 
@@ -52,7 +52,7 @@ namespace syn
 		if (a_paramId == m_pBufferSize) {
 			int newBufferSize = getParameter(m_pBufferSize).getInt();
 			int oldBufferSize = m_bufferSize;
-			m_bufferIndex = WRAP(m_bufferIndex, newBufferSize);
+			m_bufferIndex = syn::WRAP(m_bufferIndex, newBufferSize);
 			m_bufferSize = newBufferSize;
 			if (m_bufferSize > oldBufferSize) {
 				m_buffer.resize(m_bufferSize);
@@ -68,7 +68,7 @@ namespace syn
 		m_lastSync++;
 		m_lastPhase = phase;
 		m_buffer[m_bufferIndex] = getInputValue(0);		
-		m_bufferIndex = WRAP(m_bufferIndex + 1, m_bufferSize);
+		m_bufferIndex = syn::WRAP(m_bufferIndex + 1, m_bufferSize);
 	}
 
 	void OscilloscopeUnit::_sync() {
@@ -81,7 +81,7 @@ namespace syn
 		}
 	}
 
-	OscilloscopeUnitControl::OscilloscopeUnitControl(MainWindow* a_window, VoiceManager* a_vm, int a_unitId) :
+	OscilloscopeUnitControl::OscilloscopeUnitControl(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId) :
 		UIUnitControl{ a_window, a_vm, a_unitId },
 		m_col(new UICol(a_window)),
 		m_statusLabel(new UILabel(a_window)),
@@ -98,6 +98,7 @@ namespace syn
 		addChild(m_col);
 		
 		m_plot->setStatusLabel(m_statusLabel);
+		m_plot->setInterpPolicy(UIPlot::SincInterp);
 
 		setMinSize(minSize().cwiseMax(m_col->minSize()));
 	}

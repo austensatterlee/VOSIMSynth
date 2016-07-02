@@ -465,13 +465,13 @@ def main(pargs):
     blsaw /= blsaw.max()
 
     """Offline and online BLIMP for resampling"""
-    OFFLINE_BLIMP_INTERVALS = 513
+    OFFLINE_BLIMP_INTERVALS = 257
     OFFLINE_BLIMP_RES = 2048
 
-    ONLINE_BLIMP_INTERVALS = 5
-    ONLINE_BLIMP_RES = 1024
+    ONLINE_BLIMP_INTERVALS = 11
+    ONLINE_BLIMP_RES = 2048
 
-    blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS,ONLINE_BLIMP_RES,fc=20e3)
+    blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS,ONLINE_BLIMP_RES,fc=19e3)
     blimp_offline = GenerateBlimp(OFFLINE_BLIMP_INTERVALS,OFFLINE_BLIMP_RES,fc=22e3)
 
     blimp_online /= blimp_online.max()

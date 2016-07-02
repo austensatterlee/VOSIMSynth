@@ -19,13 +19,21 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __UNIT__
 #define __UNIT__
-
+#include <cereal/types/polymorphic.hpp>
+#include <cereal/archives/json.hpp>
 #include "NamedContainer.h"
 #include "UnitParameter.h"
 
 #define MAX_PARAMS 16
 #define MAX_INPUTS 8
 #define MAX_OUTPUTS 8
+
+#define DERIVE_UNIT(TYPE) \
+	string _getClassName() const override {return #TYPE;}\
+	Unit* _clone() const override {return new TYPE(*this);}\
+public:\
+	TYPE() : TYPE("") {}\
+private:
 
 namespace syn
 {
@@ -53,8 +61,8 @@ namespace syn
 		const double* src;
 	};
 
-	const vector<string> g_bpmStrs = { "1/64", "1/32", "3/64", "1/16", "3/32", "1/8", "3/16", "1/4", "3/8", "1/2", "3/4", "1", "3/2", "2", "5/2", "3", "7/2", "4" };
-	const vector<double> g_bpmVals = { 1.0 / 64.0, 1.0 / 32.0, 3.0 / 64.0, 1.0 / 16.0, 3.0 / 32.0, 1.0 / 8.0, 3.0 / 16.0, 1.0 / 4.0, 3.0 / 8.0, 1.0 / 2.0, 3.0 / 4.0, 1.0, 3.0 / 2.0, 2.0, 5.0/2.0, 3.0, 7.0/2.0, 4.0 };
+	const vector<string> g_bpmStrs = { "4", "7/2", "3", "5/2", "2", "3/2", "1", "3/4", "1/2", "3/8", "1/4", "3/16", "1/8", "3/32", "1/16", "3/64", "1/32", "1/64" };
+	const vector<double> g_bpmVals = { 4.0, 7.0 / 2.0, 3.0, 5.0 / 2.0, 2.0, 3.0 / 2.0, 1.0, 3.0 / 4.0, 1.0 / 2.0, 3.0 / 8.0, 1.0 / 4.0, 3.0 / 16.0, 1.0 / 8.0, 3.0 / 32.0, 1.0 / 16.0, 3.0 / 64.0, 1.0 / 32.0, 1.0 / 64.0 };
 
 	/**
 	 * \class Unit
@@ -65,14 +73,34 @@ namespace syn
 	 * and a transition function, Unit::process_, which updates the Unit's outputs given the state
 	 * of the Unit and the current inputs + parameters.
 	 *
-	 * New units should be derived by subclassing Unit, using Unit::addInput_, Unit::addOutput_, and Unit::addParameter_ to configure the unit in its constructor.
+	 * New units should be derived by adding the DERIVE_UNIT macro immediately after the class declaration, and using
+	 * Unit::addInput_, Unit::addOutput_, and Unit::addParameter_ to configure the unit in its constructor. 
+	 * A constructor taking a single string argument should be supplied. The default constructor is generated automatically.
+	 * Lastly, register the unit with cereal using the CEREAL_REGISTER_TYPE macro. This call must be placed in the global namespace.
+	 * For example:
+	 * \code{.cpp}
+	 * namespace mynamespace {
+	 *		class DerivedUnit : public Unit {
+	 *			DERIVE_UNIT(DerivedUnit)
+	 *		public:
+	 *			DerivedUnit(const string& a_name) : Unit(a_name) 
+	 *			{
+	 *			...set up class internals...
+	 *			}
+	 *		};
+	 * }
+	 * CEREAL_REGISTER_TYPE(mynamespace::DerivedUnit)
+	 * \endcode
+	 *
+	 * The macros ensure that the code needed to enable serialization and cloning of your class are included:
 	 * To allow the unit to be cloned, it is necessary to implement a copy constructor, Unit::_clone, and Unit::_getClassName. Unit::_clone should simply return a
 	 * new copy of the derived class, for example:
-	 *
+	 * \code{.cpp}
 	 *		Unit* DerivedUnit::_clone(){ return new DerivedUnit(*this); }
+	 * \endcode
 	 *
-	 * Unit::_getClassName should simply return a string form of the class name. This is used for serialization.
-	 *
+	 * Unit::_getClassName should simply return a string form of the class name. This is used for factory construction.
+	 * 
 	 */
 	class Unit
 	{
@@ -179,7 +207,31 @@ namespace syn
 		 * Copies this unit into newly allocated memory (the caller is responsible for releasing the memory).
 		 * Connections to other units are not preserved in the clone.
 		 */
-		Unit* clone() const;
+		Unit* clone() const; 
+		
+		template<class Archive>
+		void save(Archive& archive) const {
+			unsigned int classId = getClassIdentifier();
+			archive(
+				cereal::make_nvp("class-id", classId),
+				cereal::make_nvp("name", m_name),
+				cereal::make_nvp("parameters", m_parameters)
+			);
+		}
+
+		template<class Archive>
+		void load(Archive& archive) {
+			NamedContainer<UnitParameter, MAX_PARAMS> tmpparams;
+			archive(
+				cereal::make_nvp("name", m_name),
+				cereal::make_nvp("parameters", tmpparams)
+			);
+
+			for(int i=0;i<tmpparams.size();i++) {
+				int index = tmpparams.getIndices()[i];
+				setParameterFromString(index,tmpparams[index].getValueString());
+			}
+		}
 
 	protected:
 		/**

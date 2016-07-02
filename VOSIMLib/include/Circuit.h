@@ -28,6 +28,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 using std::vector;
 using std::list;
 
+#define MAX_UNITS 64
+
 namespace syn
 {
 	struct ConnectionRecord
@@ -40,6 +42,14 @@ namespace syn
 		bool operator==(const ConnectionRecord& a_other) const {
 			bool res = (from_id == a_other.from_id && from_port == a_other.from_port && to_id == a_other.to_id && to_port == a_other.to_port);
 			return res;
+		}
+
+		template<typename Archive>
+		void serialize(Archive& ar) {
+			ar(CEREAL_NVP(from_id),
+			   CEREAL_NVP(from_port),
+			   CEREAL_NVP(to_id),
+			   CEREAL_NVP(to_port));
 		}
 	};
 
@@ -58,45 +68,22 @@ namespace syn
 				setOutputChannel_(i, getInputValue(i));
 			}
 		}
-
-	private:
-		inline string _getClassName() const override {
-			return "_PassthroughUnit";
-		}
-
-		Unit* _clone() const override {
-			return new PassthroughUnit(*this);
-		}
 	};
 
 	class InputUnit : public PassthroughUnit
 	{
+		DERIVE_UNIT(InputUnit)
 	public:
 		explicit InputUnit(const string& a_name) : PassthroughUnit(a_name) {}
 		InputUnit(const InputUnit& a_other) : InputUnit(a_other.getName()) {}
-	private:
-		string _getClassName() const override {
-			return "_InputUnit";
-		}
-
-		Unit* _clone() const override {
-			return new InputUnit(*this);
-		}
 	};
 
 	class OutputUnit : public PassthroughUnit
 	{
+		DERIVE_UNIT(OutputUnit)
 	public:
 		explicit OutputUnit(const string& a_name) : PassthroughUnit(a_name) {}
 		OutputUnit(const OutputUnit& a_other) : OutputUnit(a_other.getName()) {}
-	private:
-		string _getClassName() const override {
-			return "_OutputUnit";
-		}
-
-		Unit* _clone() const override {
-			return new OutputUnit(*this);
-		}
 	};
 
 	/**
@@ -109,9 +96,8 @@ namespace syn
 	*/
 	class Circuit : public Unit
 	{
+		DERIVE_UNIT(Circuit)
 	public:
-		Circuit();
-
 		explicit Circuit(const string& a_name);
 
 		Circuit(const Circuit& a_other);
@@ -187,6 +173,51 @@ namespace syn
 		bool disconnectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier, int
 			a_toInputPort);
 
+		template<typename Archive>
+		void save(Archive& ar) const {
+			ar(cereal::base_class<Unit>(this));
+
+			int nUnits = getNumUnits(), nConnections = m_connectionRecords.size();
+			NamedContainer<std::shared_ptr<Unit>, MAX_UNITS> tmpunits;
+			for (int i = 0; i<nUnits; i++) {
+				int index = m_units.getIndices()[i];
+				tmpunits.add(m_units.getItemName(index), index, std::shared_ptr<Unit>(m_units[index]->clone()));
+			}
+
+			ar(cereal::make_nvp("num-units", nUnits));			
+			ar(cereal::make_nvp("units", tmpunits));
+			ar(cereal::make_nvp("num-connections", nConnections));
+			ar(cereal::make_nvp("connections", m_connectionRecords));
+		}
+
+		template<class Archive>
+		void load(Archive& ar) {
+			ar(cereal::base_class<Unit>(this));
+
+			// load data
+			int nUnits, nConnections;
+			NamedContainer<std::shared_ptr<Unit>, MAX_UNITS> tmpunits;
+			vector<ConnectionRecord> tmprecords;
+			ar(cereal::make_nvp("num-units", nUnits));
+			ar(cereal::make_nvp("units", tmpunits));
+			ar(cereal::make_nvp("num-connections", nConnections));
+			ar(cereal::make_nvp("connections", tmprecords));	
+
+			// add units
+			int inputUnitIndex = m_units.find(m_inputUnit);
+			int outputUnitIndex = m_units.find(m_outputUnit);
+			for(int i=0;i<nUnits;i++) {
+				int index = tmpunits.getIndices()[i];
+				if (index == inputUnitIndex || index == outputUnitIndex)
+					continue;
+				addUnit(tmpunits[index]->clone(), index);
+			}
+			// connect units
+			for (const ConnectionRecord& cr : tmprecords) {
+				connectInternal(cr.from_id, cr.from_port, cr.to_id, cr.to_port);
+			}
+		}
+
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
 
@@ -209,18 +240,12 @@ namespace syn
 		int addExternalOutput_(const string& a_name);
 
 	private:
-		string _getClassName() const override {
-			return "Circuit";
-		};
-
-		Unit* _clone() const override;
-
 		void _recomputeGraph();
 
 	private:
 		friend class VoiceManager;
 
-		NamedContainer<Unit*, 64> m_units;
+		NamedContainer<Unit*, MAX_UNITS> m_units;
 		vector<ConnectionRecord> m_connectionRecords;
 		InputUnit* m_inputUnit;
 		OutputUnit* m_outputUnit;
@@ -351,4 +376,8 @@ namespace syn
 		return result;
 	}
 };
+
+CEREAL_REGISTER_TYPE(syn::OutputUnit)
+CEREAL_REGISTER_TYPE(syn::InputUnit)
+CEREAL_REGISTER_TYPE(syn::Circuit)
 #endif // __Circuit__

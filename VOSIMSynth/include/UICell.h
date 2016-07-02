@@ -29,7 +29,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __UICELL__
 #include "UIComponent.h"
 
-namespace syn
+namespace synui
 {
 	/**
 	 * Basic layout management unit. Automatically position children along one dimension. 

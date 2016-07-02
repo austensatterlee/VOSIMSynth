@@ -38,23 +38,8 @@ const syn::FactoryPrototype* syn::UnitFactory::getFactoryPrototype(const string&
 
 syn::Unit* syn::UnitFactory::createUnit(int a_protoNum, const string& a_name) {
 	Unit* unit = m_prototypes[a_protoNum].prototype->clone();
-
 	// Generate default name
-	string newname;
-	if (!a_name.empty() && m_generatedNameHistory.find(a_name) == m_generatedNameHistory.end()) {
-		newname = a_name;
-	}
-	else {
-		char namebuf[MAX_UNIT_NAME_LEN];
-		do {
-			snprintf(namebuf, 256, "%s_%d", unit->getName().c_str(), m_prototypes[a_protoNum].build_count);
-			newname = namebuf;
-			m_prototypes[a_protoNum].build_count++;
-		} while (m_generatedNameHistory.find(newname) != m_generatedNameHistory.end());
-	}
-
-	unit->_setName(newname);
-	m_generatedNameHistory.insert(newname);
+	unit->_setName(m_prototypes[a_protoNum].name);
 	return unit;
 }
 
@@ -104,67 +89,6 @@ void syn::UnitFactory::resetBuildCounts() {
 	for (FactoryPrototype& prototype : m_prototypes) {
 		prototype.build_count = 0;
 	}
-	m_generatedNameHistory.clear();
-}
-
-void syn::UnitFactory::saveUnit(const Unit* a_unit, int a_unitId, ByteChunk* a_data) {
-	unsigned classId = a_unit->getClassIdentifier();
-	a_data->Put<unsigned>(&classId);
-	a_data->Put<int>(&a_unitId);
-	a_data->PutStr(a_unit->getName().c_str());
-	int nParams = a_unit->getNumParameters();
-	a_data->Put<int>(&nParams);
-	for (int i = 0; i < nParams; i++) {
-		double val = a_unit->getParameter(i).getDouble();
-		int prec = a_unit->getParameter(i).getPrecision();
-		a_data->Put<double>(&val);
-		a_data->Put<int>(&prec);
-	}
-	int reserved = 64;
-	a_data->Put<int>(&reserved);
-	for (int i = 0; i < reserved; i++) {
-		char reservedByte = 0;
-		a_data->Put<char>(&reservedByte);
-	}
-}
-
-int syn::UnitFactory::loadUnit(ByteChunk* a_data, int a_startPos, Unit** a_unit, int* a_unitId) {
-	int startPos = a_startPos;
-
-	unsigned classId;
-	startPos = a_data->Get<unsigned>(&classId, startPos);
-
-	int unitId;
-	startPos = a_data->Get<int>(&unitId, startPos);
-
-	WDL_String tmp_unitName;
-	startPos = a_data->GetStr(&tmp_unitName, startPos);
-	string unitName = tmp_unitName.Get();
-
-	int nParams;
-	startPos = a_data->Get<int>(&nParams, startPos);
-
-	*a_unit = createUnit(classId, unitName);
-	*a_unitId = unitId;
-	for (int i = 0; i < nParams; i++) {
-		double val;
-		int prec;
-		startPos = a_data->Get<double>(&val, startPos);
-		startPos = a_data->Get<int>(&prec, startPos);
-		if (*a_unit && (*a_unit)->hasParameter(i)) {
-			(*a_unit)->setParameterValue(i, val);
-			(*a_unit)->setParameterPrecision(i, prec);
-		}
-	}
-	if (*a_unit) {
-		for (int i = 0; i < nParams; i++) {
-			(*a_unit)->onParamChange_(i);
-		}
-	}
-	int reserved;
-	startPos = a_data->Get<int>(&reserved, startPos);
-	startPos += reserved;
-	return startPos;
 }
 
 int syn::UnitFactory::getPrototypeIdx_(const string& a_name) const {

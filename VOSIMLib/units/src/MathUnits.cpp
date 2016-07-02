@@ -64,15 +64,7 @@ void syn::DCRemoverUnit::process_() {
 	setOutputChannel_(0, output);
 }
 
-string syn::DCRemoverUnit::_getClassName() const {
-	return "DCRemoverUnit";
-}
-
-syn::Unit* syn::DCRemoverUnit::_clone() const {
-	return new DCRemoverUnit(*this);
-}
-
-syn::LagUnit::LagUnit(const string& a_name) :
+syn::OnePoleLP::OnePoleLP(const string& a_name) :
 	Unit(a_name),
 	m_pFc(addParameter_(UnitParameter("fc", 0.01, 20000.0, 1.0, UnitParameter::Freq))),
 	m_state(0.0) {
@@ -82,9 +74,9 @@ syn::LagUnit::LagUnit(const string& a_name) :
 	addOutput_("out");
 }
 
-syn::LagUnit::LagUnit(const LagUnit& a_rhs) : LagUnit(a_rhs.getName()) {}
+syn::OnePoleLP::OnePoleLP(const OnePoleLP& a_rhs) : OnePoleLP(a_rhs.getName()) {}
 
-void syn::LagUnit::process_() {
+void syn::OnePoleLP::process_() {
 	double input = getInputValue(0);
 	double fc = getParameter(m_pFc).getDouble() * getInputValue(m_iFcMul) + getInputValue(m_iFcAdd); // freq cutoff
 	fc = CLAMP(fc, getParameter(m_pFc).getMin(), getParameter(m_pFc).getMax());
@@ -95,14 +87,6 @@ void syn::LagUnit::process_() {
 	double output = trap_in + m_state;
 	m_state = trap_in + output;
 	setOutputChannel_(0, output);
-}
-
-string syn::LagUnit::_getClassName() const {
-	return "LagUnit";
-}
-
-syn::Unit* syn::LagUnit::_clone() const {
-	return new LagUnit(*this);
 }
 
 syn::RectifierUnit::RectifierUnit(const string& a_name) :
@@ -130,14 +114,6 @@ void syn::RectifierUnit::process_() {
 	setOutputChannel_(0, output);
 }
 
-string syn::RectifierUnit::_getClassName() const {
-	return "RectifierUnit";
-}
-
-syn::Unit* syn::RectifierUnit::_clone() const {
-	return new RectifierUnit(*this);
-}
-
 syn::MACUnit::MACUnit(const string& a_name) :
 	Unit(a_name) {
 	addInput_("in");
@@ -154,14 +130,6 @@ void syn::MACUnit::process_() {
 	output *= getInputValue(1);
 	output += getInputValue(2);
 	setOutputChannel_(0, output);
-}
-
-string syn::MACUnit::_getClassName() const {
-	return "MACUnit";
-}
-
-syn::Unit* syn::MACUnit::_clone() const {
-	return new MACUnit(*this);
 }
 
 syn::GainUnit::GainUnit(const string& a_name) :
@@ -184,14 +152,6 @@ void syn::GainUnit::process_() {
 	setOutputChannel_(0, input * gain);
 }
 
-string syn::GainUnit::_getClassName() const {
-	return "GainUnit";
-}
-
-syn::Unit* syn::GainUnit::_clone() const {
-	return new GainUnit(*this);
-}
-
 syn::SummerUnit::SummerUnit(const string& a_name) :
 	Unit(a_name)
 {
@@ -208,20 +168,11 @@ void syn::SummerUnit::process_() {
 	setOutputChannel_(0, output);
 }
 
-string syn::SummerUnit::_getClassName() const {
-	return "SummerUnit";
-}
-
-syn::Unit* syn::SummerUnit::_clone() const {
-	return new SummerUnit(*this);
-}
-
 syn::ConstantUnit::ConstantUnit(const string& a_name) :
 	Unit(a_name) 
 {
-	addParameter_(UnitParameter{ "out",-1.0,1.0,0.0 });
-	addParameter_(UnitParameter{ "scale",scale_selections,scale_values });
-	getParameter("scale").setControlType(UnitParameter::EControlType::Unbounded);
+	addParameter_(UnitParameter{ "out",-1E6,1E6,0.0,UnitParameter::None,2 });
+	getParameter("out").setControlType(UnitParameter::EControlType::Unbounded);
 	addOutput_("out");
 }
 
@@ -230,17 +181,7 @@ syn::ConstantUnit::ConstantUnit(const ConstantUnit& a_rhs) :
 
 void syn::ConstantUnit::process_() {
 	double output = getParameter(0).getDouble();
-	double scale = getParameter(1).getEnum();
-	output = output * scale;
 	setOutputChannel_(0, output);
-}
-
-string syn::ConstantUnit::_getClassName() const {
-	return "ConstantUnit";
-}
-
-syn::Unit* syn::ConstantUnit::_clone() const {
-	return new ConstantUnit(*this);
 }
 
 syn::PanningUnit::PanningUnit(const string& a_name) :
@@ -267,14 +208,6 @@ void syn::PanningUnit::process_() {
 	bal2 = 0.5*(1+CLAMP(bal2, -1.0, 1.0));
 	setOutputChannel_(0, (1 - bal1) * in1 + (1 - bal2) * in2);
 	setOutputChannel_(1, bal1 * in1 + bal2 * in2);
-}
-
-string syn::PanningUnit::_getClassName() const {
-	return "PanningUnit";
-}
-
-syn::Unit* syn::PanningUnit::_clone() const {
-	return new PanningUnit(*this);
 }
 
 syn::LerpUnit::LerpUnit(const string& a_name) :
@@ -305,12 +238,4 @@ void syn::LerpUnit::process_() {
 		output = LERP(a, b, 0.5*(input + 1));
 	}
 	setOutputChannel_(0, output);
-}
-
-string syn::LerpUnit::_getClassName() const {
-	return "LerpUnit";
-}
-
-syn::Unit* syn::LerpUnit::_clone() const {
-	return new LerpUnit(*this);
 }

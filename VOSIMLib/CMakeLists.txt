@@ -22,3 +22,6 @@ source_group(VOSIMLib-units\\include FILES ${VOSIMLIB_UNIT_HDRS})
 add_library(VOSIMLib STATIC 
   ${VOSIMLIB_FILES}
   )
+
+add_executable(unit_tests ${VOSIMLIB_DIR}/tests/serialization.cpp)
+target_link_libraries(unit_tests VOSIMLib)

@@ -21,18 +21,19 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __VOSIMSYNTH__
 
 #include "IPlug_include_in_plug_hdr.h"
-#include <MemoryPool.h>
 
-using namespace syn;
 using namespace std;
 
-namespace syn
-{
+namespace synui {
 	class VOSIMComponent;
+}
+
+namespace syn {
 	class VoiceManager;
 	class MIDIReceiver;
 	class UnitFactory;
 }
+
 
 class VOSIMSynth : public IPlug
 {
@@ -73,12 +74,12 @@ public:
 
 	void OnGUIClose() override;
 
-	VOSIMComponent* getVOSIMComponent() const;
+	synui::VOSIMComponent* getVOSIMComponent() const;
 
 private:
-	MIDIReceiver* m_MIDIReceiver;
-	VoiceManager* m_voiceManager;
-	UnitFactory* m_unitFactory;
+	syn::MIDIReceiver* m_MIDIReceiver;
+	syn::VoiceManager* m_voiceManager;
+	syn::UnitFactory* m_unitFactory;
 
 	int m_tempo;
 	unsigned m_tickCount;

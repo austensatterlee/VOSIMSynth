@@ -28,10 +28,11 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <Unit.h>
 #include "UIUnitControl.h"
 
-namespace syn
+namespace synui
 {
-	class OscilloscopeUnit : public Unit
+	class OscilloscopeUnit : public syn::Unit
 	{
+		DERIVE_UNIT(OscilloscopeUnit)
 	public:
 		explicit OscilloscopeUnit(const string& a_name);
 
@@ -46,13 +47,6 @@ namespace syn
 		void MSFASTCALL process_() GCCFASTCALL override;
 
 	private:
-		string _getClassName() const override {
-			return "OscilloscopeUnit";
-		};
-
-		Unit* _clone() const override {
-			return new OscilloscopeUnit(*this);
-		};
 
 		void _sync();
 	private:
@@ -74,7 +68,7 @@ namespace syn
 	{
 
 	public:
-		OscilloscopeUnitControl(MainWindow* a_window, VoiceManager* a_vm, int a_unitId);
+		OscilloscopeUnitControl(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId);
 
 	protected:
 		void draw(NVGcontext* a_nvg) override;
@@ -88,3 +82,5 @@ namespace syn
 		UIDefaultUnitControl* m_defCtrl;
 	};
 }
+
+CEREAL_REGISTER_TYPE(synui::OscilloscopeUnit)

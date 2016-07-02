@@ -1,7 +1,7 @@
 #include "Theme.h"
 #include "vosimsynth_resources.h"
 
-namespace syn
+namespace synui
 {
 	Theme::Theme(NVGcontext* ctx) {
 		mStandardFontSize = 14;

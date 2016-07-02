@@ -9,7 +9,7 @@
 #include <UILabel.h>
 #include <UIUnitControl.h>
 
-syn::UIUnitContainer::UIUnitContainer(MainWindow* a_window, UICircuitPanel* a_circuitPanel, VoiceManager* a_vm, UIUnitControl* a_unitCtrl) :
+synui::UIUnitContainer::UIUnitContainer(MainWindow* a_window, UICircuitPanel* a_circuitPanel, syn::VoiceManager* a_vm, UIUnitControl* a_unitCtrl) :
 	UIComponent(a_window),
 	m_vm(a_vm),
 	m_circuitPanel(a_circuitPanel),
@@ -19,7 +19,7 @@ syn::UIUnitContainer::UIUnitContainer(MainWindow* a_window, UICircuitPanel* a_ci
 {
 }
 
-syn::UIUnitPort* syn::UIUnitContainer::getSelectedInPort(const syn::UICoord& a_pt) const {
+synui::UIUnitPort* synui::UIUnitContainer::getSelectedInPort(const synui::UICoord& a_pt) const {
 	for (UIUnitPort* port : m_inPorts) {
 		if (port->contains(a_pt))
 			return port;
@@ -27,7 +27,7 @@ syn::UIUnitPort* syn::UIUnitContainer::getSelectedInPort(const syn::UICoord& a_p
 	return nullptr;
 }
 
-syn::UIUnitPort* syn::UIUnitContainer::getSelectedOutPort(const UICoord& a_pt) const {
+synui::UIUnitPort* synui::UIUnitContainer::getSelectedOutPort(const UICoord& a_pt) const {
 	for (UIUnitPort* port : m_outPorts) {
 		if (port->contains(a_pt))
 			return port;
@@ -35,24 +35,24 @@ syn::UIUnitPort* syn::UIUnitContainer::getSelectedOutPort(const UICoord& a_pt) c
 	return nullptr;
 }
 
-void syn::UIUnitContainer::close() const {
+void synui::UIUnitContainer::close() const {
 	m_circuitPanel->requestDeleteUnit(m_unitId);
 }
 
-bool syn::UIUnitContainer::onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
+bool synui::UIUnitContainer::onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	UIComponent::onMouseMove(a_relCursor, a_diffCursor);
 	return true;
 }
 
-void syn::UIUnitContainer::makeSelected(bool a_isSelected) {
+void synui::UIUnitContainer::makeSelected(bool a_isSelected) {
 	m_isSelected = a_isSelected;
 }
 
-bool syn::UIUnitContainer::isSelected() const {
+bool synui::UIUnitContainer::isSelected() const {
 	return m_isSelected;
 }
 
-void syn::UIUnitContainer::draw(NVGcontext* a_nvg) {
+void synui::UIUnitContainer::draw(NVGcontext* a_nvg) {
 	int ds = theme()->mWindowDropShadowSize, cr = theme()->mWindowCornerRadius;
 
 	/* Draw window */
@@ -80,7 +80,7 @@ void syn::UIUnitContainer::draw(NVGcontext* a_nvg) {
 	nvgFill(a_nvg);
 }
 
-syn::UIDefaultUnitContainer::UIDefaultUnitContainer(MainWindow* a_window, UICircuitPanel* a_circuitPanel, VoiceManager* a_vm, UIUnitControl* a_unitCtrl) :
+synui::UIDefaultUnitContainer::UIDefaultUnitContainer(MainWindow* a_window, UICircuitPanel* a_circuitPanel, syn::VoiceManager* a_vm, UIUnitControl* a_unitCtrl) :
 	UIComponent(a_window),
 	UIUnitContainer(a_window, a_circuitPanel, a_vm, a_unitCtrl),
 	m_titleRow(new UIRow(a_window)),
@@ -91,12 +91,12 @@ syn::UIDefaultUnitContainer::UIDefaultUnitContainer(MainWindow* a_window, UICirc
 	addChild(m_col);
 	m_col->addChild(m_titleRow);
 	m_col->addChild(m_portRow);
+	m_col->setChildResizePolicy(UICell::CMAX);
 	m_portRow->setChildResizePolicy(UICell::CNONE);
-	m_portRow->setChildrenSpacing(2);
 	m_portCols[0]->setChildResizePolicy(UICell::CMATCHMIN);
 	m_portCols[1]->setChildResizePolicy(UICell::CMATCHMIN);
 
-	const Unit& unit = m_vm->getUnit(m_unitId);
+	const syn::Unit& unit = m_vm->getUnit(m_unitId);
 
 	int nIn = unit.getNumInputs();
 	int nOut = unit.getNumOutputs();
@@ -113,34 +113,39 @@ syn::UIDefaultUnitContainer::UIDefaultUnitContainer(MainWindow* a_window, UICirc
 
 	m_portRow->addChild(m_portCols[0]);
 	m_portRow->addChild(m_portCols[1]);
+	m_portRow->setGreedyChild(!m_inPorts.empty() ? m_portCols[0] : m_portCols[1]);
 
 	m_closeButton = new UIButton(a_window, "", ENTYPO_TRASH);
 	m_closeButton->setCallback([&]() {
 		this->close();
 	});
-	m_closeButton->setRelPos({m_closeButton->getRelPos().x(), 2});
 	m_closeButton->setSize({theme()->mWindowHeaderHeight, theme()->mWindowHeaderHeight - 6});
 	m_closeButton->setFontSize(10);
 	UILabel *title = new UILabel(a_window);
 	title->setText(unit.getName());
 	m_titleRow->addChild(title);
 	m_titleRow->addChild(m_closeButton);
+	m_titleRow->setGreedyChild(title);
 	setMinSize(m_col->minSize());
 }
 
-syn::UIComponent* syn::UIDefaultUnitContainer::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+synui::UIComponent* synui::UIDefaultUnitContainer::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	UIComponent* child = UIComponent::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
 	if (child)
 		return child;
 	return this;
 }
 
-bool syn::UIDefaultUnitContainer::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
+bool synui::UIDefaultUnitContainer::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	move(a_diffCursor);
 	return true;
 }
 
-syn::UIInputUnitContainer::UIInputUnitContainer(MainWindow* a_window, UICircuitPanel* a_circuitPanel, VoiceManager* a_vm, UIUnitControl* a_unitCtrl) :
+void synui::UIDefaultUnitContainer::_onResize() {
+	m_col->setSize(size());
+}
+
+synui::UIInputUnitContainer::UIInputUnitContainer(MainWindow* a_window, UICircuitPanel* a_circuitPanel, syn::VoiceManager* a_vm, UIUnitControl* a_unitCtrl) :
 	UIComponent(a_window),
 	UIUnitContainer(a_window, a_circuitPanel, a_vm, a_unitCtrl),
 	m_titleRow(new UIRow(a_window)),
@@ -155,7 +160,7 @@ syn::UIInputUnitContainer::UIInputUnitContainer(MainWindow* a_window, UICircuitP
 	m_portRow->setChildrenSpacing(2);
 	m_portCol->setChildResizePolicy(UICell::CMATCHMIN);
 
-	const Unit& unit = m_vm->getUnit(m_unitId);
+	const syn::Unit& unit = m_vm->getUnit(m_unitId);
 
 	int nOut = unit.getNumOutputs();
 
@@ -172,7 +177,7 @@ syn::UIInputUnitContainer::UIInputUnitContainer(MainWindow* a_window, UICircuitP
 	setMinSize(m_col->minSize());
 }
 
-syn::UIOutputUnitContainer::UIOutputUnitContainer(MainWindow* a_window, UICircuitPanel* a_circuitPanel, VoiceManager* a_vm, UIUnitControl* a_unitCtrl) :
+synui::UIOutputUnitContainer::UIOutputUnitContainer(MainWindow* a_window, UICircuitPanel* a_circuitPanel, syn::VoiceManager* a_vm, UIUnitControl* a_unitCtrl) :
 	UIComponent(a_window),
 	UIUnitContainer(a_window, a_circuitPanel, a_vm, a_unitCtrl),
 	m_titleRow(new UIRow(a_window)),
@@ -187,7 +192,7 @@ syn::UIOutputUnitContainer::UIOutputUnitContainer(MainWindow* a_window, UICircui
 	m_portRow->setChildrenSpacing(2);
 	m_portCol->setChildResizePolicy(UICell::CMATCHMIN);
 
-	const Unit& unit = m_vm->getUnit(m_unitId);
+	const syn::Unit& unit = m_vm->getUnit(m_unitId);
 
 	int nIn = unit.getNumInputs();
 

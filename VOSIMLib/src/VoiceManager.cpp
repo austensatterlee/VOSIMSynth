@@ -269,59 +269,14 @@ namespace syn
 		return m_allVoices[a_voiceId];
 	}
 
-	void VoiceManager::save(ByteChunk* a_data) const {
-		int nUnits = m_instrument->m_units.size();
-		a_data->Put<int>(&nUnits);
-		for (int i = 0; i < nUnits; i++) {
-			int unitid = m_instrument->m_units.getIndices()[i];
-			const Unit& unit = m_instrument->getUnit(unitid);
-			m_factory->saveUnit(&unit, unitid, a_data);
-		}
-		const vector<ConnectionRecord>& connections = m_instrument->getConnections();
-		int nConnections = connections.size();
-		a_data->Put<int>(&nConnections);
-		for (int i = 0; i < connections.size(); i++) {
-			const ConnectionRecord& record = connections[i];
-			a_data->Put<ConnectionRecord>(&record);
-		}
-	}
-
-	int VoiceManager::load(ByteChunk* a_data, int startPos) {
-		vector<int> unitIds(m_instrument->m_units.size());
-		std::copy(m_instrument->m_units.getIndices(), m_instrument->m_units.getIndices() + m_instrument->m_units.size(), &unitIds[0]);
-		for (int i = 0; i < unitIds.size(); i++) {
-			m_instrument->removeUnit(unitIds[i]);
-			for(Circuit* voice : m_allVoices) {
-				voice->removeUnit(unitIds[i]);
-			}
-		}
-
-		int nUnits, nConnections;
-		startPos = a_data->Get<int>(&nUnits, startPos);
-		for (int i = 0; i < nUnits; i++) {
-			Unit* unit;
-			int unitId;
-			startPos = m_factory->loadUnit(a_data, startPos, &unit, &unitId);
-			if (unit) {
-				m_instrument->addUnit(unit->clone(), unitId);
-				for (Circuit* voice : m_allVoices) {
-					voice->addUnit(unit->clone(), unitId);
-				}
-				delete unit;
-			}
-		}
-		startPos = a_data->Get<int>(&nConnections, startPos);
-		for (int i = 0; i < nConnections; i++) {
-			ConnectionRecord record;
-			startPos = a_data->Get<ConnectionRecord>(&record, startPos);
-			if (m_instrument->hasUnit(record.from_id) && m_instrument->hasUnit(record.to_id)) {
-				m_instrument->connectInternal(record.from_id, record.from_port, record.to_id, record.to_port);
-				for (Circuit* voice : m_allVoices) {
-					voice->connectInternal(record.from_id, record.from_port, record.to_id, record.to_port);
-				}
-			}
-		}
-		return startPos;
+	void VoiceManager::setPrototypeCircuit(const Circuit* a_circ) {
+		double fs = m_instrument->getFs();
+		double tempo = m_instrument->getTempo();
+		delete m_instrument;
+		m_instrument = static_cast<Circuit*>(a_circ->clone());
+		m_instrument->setFs(fs);
+		m_instrument->setTempo(tempo);
+		setMaxVoices(getMaxVoices());
 	}
 
 	int VoiceManager::getNumUnits() const {

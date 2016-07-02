@@ -28,35 +28,29 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __UIDIGITCONTROL__
 #define __UIDIGITCONTROL__
 
-#include "UIComponent.h"
+#include "UIParamControl.h"
 
-namespace syn {
-	class UIDigitControl : public UIComponent
+namespace synui {
+	class UIDigitControl : public UIParamControl
 	{
 	public:
-		UIDigitControl(MainWindow* a_window, VoiceManager* a_vm, int a_unitId, int a_paramId);
-
-		void setNumDigits(int a_numDigits);
-
-		void setValue(const string& a_num);
-
+		UIDigitControl(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId, int a_paramId);
 		double getValue() const;
-
 		int getDigit(int a_digit);
-
 		void setDigit(int a_digit, int a_value);
+	protected:
+		void updateValue_() override;
+		void setValue_(const string& a_num);
+		void setNumDigits_(int a_numDigits);
 	private:
 		int m_decimalLoc;
 
-		string m_value;
+		string m_strValue;
 		vector<UITextBox*> m_textBoxes;
 		vector<UIButton*> m_upArrows;
 		vector<UIButton*> m_downArrows;
 		UIRow* m_row;
 		vector<UICol*> m_digitCols;
-
-		VoiceManager* m_vm;
-		int m_unitId, m_paramId;
 	};
 }
 

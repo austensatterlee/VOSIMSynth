@@ -2,7 +2,7 @@
 #include "Theme.h"
 #include <array>
 
-namespace syn
+namespace synui
 {
 	UIButton::UIButton(MainWindow* a_window, const string& caption, int icon)
 		: UIComponent(a_window), mCaption(caption), mIcon(icon),
