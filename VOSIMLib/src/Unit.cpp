@@ -189,7 +189,7 @@ namespace syn
 		unit->m_midiData = m_midiData;
 		// Copy parameter values
 		const int* indices = m_parameters.getIndices();
-		for(int i=0;i<m_parameters.size();i++) {
+		for (int i = 0; i < m_parameters.size(); i++) {
 			unit->m_parameters[indices[i]].setFromString(m_parameters[indices[i]].getValueString());
 		}
 		// Copy audio config data

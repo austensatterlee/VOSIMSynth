@@ -56,7 +56,7 @@ namespace syn
 	{
 		UnitPort() : UnitPort(0.0) {}
 		UnitPort(double a_defVal) : defVal(a_defVal), src(nullptr) {}
-		
+
 		double defVal;
 		const double* src;
 	};
@@ -74,7 +74,7 @@ namespace syn
 	 * of the Unit and the current inputs + parameters.
 	 *
 	 * New units should be derived by adding the DERIVE_UNIT macro immediately after the class declaration, and using
-	 * Unit::addInput_, Unit::addOutput_, and Unit::addParameter_ to configure the unit in its constructor. 
+	 * Unit::addInput_, Unit::addOutput_, and Unit::addParameter_ to configure the unit in its constructor.
 	 * A constructor taking a single string argument should be supplied. The default constructor is generated automatically.
 	 * Lastly, register the unit with cereal using the CEREAL_REGISTER_TYPE macro. This call must be placed in the global namespace.
 	 * For example:
@@ -83,7 +83,7 @@ namespace syn
 	 *		class DerivedUnit : public Unit {
 	 *			DERIVE_UNIT(DerivedUnit)
 	 *		public:
-	 *			DerivedUnit(const string& a_name) : Unit(a_name) 
+	 *			DerivedUnit(const string& a_name) : Unit(a_name)
 	 *			{
 	 *			...set up class internals...
 	 *			}
@@ -100,12 +100,12 @@ namespace syn
 	 * \endcode
 	 *
 	 * Unit::_getClassName should simply return a string form of the class name. This is used for factory construction.
-	 * 
+	 *
 	 */
 	class Unit
 	{
 	public:
-		Unit(); 
+		Unit();
 
 		explicit Unit(const string& a_name);
 
@@ -207,8 +207,8 @@ namespace syn
 		 * Copies this unit into newly allocated memory (the caller is responsible for releasing the memory).
 		 * Connections to other units are not preserved in the clone.
 		 */
-		Unit* clone() const; 
-		
+		Unit* clone() const;
+
 		template<class Archive>
 		void save(Archive& archive) const {
 			unsigned int classId = getClassIdentifier();
@@ -226,10 +226,9 @@ namespace syn
 				cereal::make_nvp("name", m_name),
 				cereal::make_nvp("parameters", tmpparams)
 			);
-
-			for(int i=0;i<tmpparams.size();i++) {
+			for (int i = 0; i < tmpparams.size(); i++) {
 				int index = tmpparams.getIndices()[i];
-				setParameterFromString(index,tmpparams[index].getValueString());
+				m_parameters[index].setFromString(tmpparams[index].getValueString());
 			}
 		}
 

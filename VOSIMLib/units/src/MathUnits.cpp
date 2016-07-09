@@ -91,7 +91,7 @@ void syn::RectifierUnit::process_() {
 
 syn::GainUnit::GainUnit(const string& a_name) :
 	Unit(a_name),
-	m_pGain(addParameter_(UnitParameter("gain", -1E4, 1E4, 1.0, UnitParameter::None, 2)))
+	m_pGain(addParameter_(UnitParameter("gain", -1E4, 1E4, 1.0, UnitParameter::None, 2).setControlType(UnitParameter::Unbounded)))
 {
 	m_iInput = addInput_("in");
 	m_iGain = addInput_("g[x]", 1.0);

@@ -49,13 +49,13 @@ namespace synui
 		mTextSliderFontSize = 16;
 
 		/* Port */
-		mPortFontSize = 12;
+		mPortFontSize = 14;
 
-		mInputPortBG = Color(Vector3f{0.55f , 0.775f, 1.f}, 0.32f);
-		mInputPortHighlightedBG = Color(Vector3f{0.55f , 0.775f, 1.f}, 0.52f);
+		mInputPortBG = Color(Vector3f{ 0.55f , 0.775f, 1.f }, 0.32f);
+		mInputPortHighlightedBG = Color(Vector3f{ 0.55f , 0.775f, 1.f }, 0.52f);
 
-		mOutputPortBG = Color(Vector3f{0.93f , 0.76f, 0.66f}.normalized(), 0.32f);
-		mOutputPortHighlightedBG = Color(Vector3f{0.93f , 0.76f, 0.66f}.normalized(), 0.52f);
+		mOutputPortBG = Color(Vector3f{ 0.93f , 0.76f, 0.66f }.normalized(), 0.32f);
+		mOutputPortHighlightedBG = Color(Vector3f{ 0.93f , 0.76f, 0.66f }.normalized(), 0.52f);
 
 		/* Wire parameters */
 		mWireColor = Color(Vector3f(0.5f, 0.0f, 0.0f), 0.9f);
@@ -71,13 +71,13 @@ namespace synui
 		/* Circuit Panel */
 
 		mFontLight = nvgCreateFontMem(ctx, "sans-light", roboto_light_ttf,
-		                              roboto_light_ttf_size, 0);
+			roboto_light_ttf_size, 0);
 		mFontNormal = nvgCreateFontMem(ctx, "sans", opensans_regular_ttf,
-		                               opensans_regular_ttf_size, 0);
+			opensans_regular_ttf_size, 0);
 		mFontBold = nvgCreateFontMem(ctx, "sans-bold", roboto_black_ttf,
-		                             roboto_black_ttf_size, 0);
+			roboto_black_ttf_size, 0);
 		mFontIcons = nvgCreateFontMem(ctx, "icons", entypo_ttf,
-		                              entypo_ttf_size, 0);
+			entypo_ttf_size, 0);
 		mFontMono = nvgCreateFontMem(ctx, "mono", inconsolata_regular_ttf, inconsolata_regular_ttf_size, 0);
 		if (mFontNormal == -1 || mFontBold == -1 || mFontIcons == -1)
 			throw runtime_error("Could not load fonts!");

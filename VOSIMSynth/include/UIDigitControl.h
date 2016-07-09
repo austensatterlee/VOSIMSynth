@@ -38,7 +38,6 @@ namespace synui {
 		double getValue() const;
 		string getStrValue() const;
 		int getDigit(int a_digit);
-		void setDigit(int a_digit, int a_value);
 		void incrDigit(int a_digit, int a_amt);
 		void decrDigit(int a_digit, int a_amt);
 	protected:
@@ -51,7 +50,6 @@ namespace synui {
 	private:
 		int m_decimalLoc;
 
-		string m_strValue;
 		vector<UILabel*> m_digitBoxes;
 		vector<UIButton*> m_upArrows;
 		vector<UIButton*> m_downArrows;
@@ -61,6 +59,8 @@ namespace synui {
 		UICol* m_signCol;
 		UILabel* m_signLabel;
 	};
+
+	string extractDigits(const string& a_str);
 }
 
 #endif

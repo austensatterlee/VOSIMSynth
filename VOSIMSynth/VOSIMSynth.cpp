@@ -29,6 +29,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "StateVariableFilter.h"
 #include "include/OscilloscopeUnit.h"
 #include "include/SpectroscopeUnit.h"
+#include "WaveShapers.h"
 #include "fft.h"
 #include "MainWindow.h"
 #include "MIDIReceiver.h"
@@ -52,18 +53,18 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 void VOSIMSynth::makeGraphics() {
 	syn::VoiceManager* vm = m_voiceManager;
 	syn::UnitFactory* uf = m_unitFactory;
-	synui::MainWindow* vosimWindow = new synui::MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm,uf](synui::MainWindow* a_win)-> synui::UIComponent* {
-		                                                  return new synui::VOSIMComponent(a_win, vm, uf);
-	                                                  });
+	synui::MainWindow* vosimWindow = new synui::MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm, uf](synui::MainWindow* a_win)-> synui::UIComponent* {
+		return new synui::VOSIMComponent(a_win, vm, uf);
+	});
 	vosimWindow->setHInstance(gHInstance);
 	AttachAppWindow(vosimWindow);
 
 	getVOSIMComponent()->circuitPanel()->registerUnitControl<synui::OscilloscopeUnit>([](synui::MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId)-> synui::UIUnitControl* {
-		                   return new synui::OscilloscopeUnitControl(a_window, a_vm, a_unitId);
-	                   });
+		return new synui::OscilloscopeUnitControl(a_window, a_vm, a_unitId);
+	});
 	getVOSIMComponent()->circuitPanel()->registerUnitControl<synui::SpectroscopeUnit>([](synui::MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId)-> synui::UIUnitControl* {
-		                   return new synui::SpectroscopeUnitControl(a_window, a_vm, a_unitId);
-	                   });
+		return new synui::SpectroscopeUnitControl(a_window, a_vm, a_unitId);
+	});
 }
 
 void VOSIMSynth::makeInstrument() {
@@ -93,6 +94,8 @@ void VOSIMSynth::makeInstrument() {
 	m_unitFactory->addUnitPrototype<syn::PitchToFreqUnit>("Math", "Pitch2Freq");
 	m_unitFactory->addUnitPrototype<syn::FreqToPitchUnit>("Math", "Freq2Pitch");
 
+	m_unitFactory->addUnitPrototype<syn::InvTanUnit>("Waveshapers", "InvTan");
+
 	m_unitFactory->addUnitPrototype<syn::GateUnit>("MIDI", "Gate");
 	m_unitFactory->addUnitPrototype<syn::MidiNoteUnit>("MIDI", "Pitch");
 	m_unitFactory->addUnitPrototype<syn::VelocityUnit>("MIDI", "Vel");
@@ -112,11 +115,11 @@ void VOSIMSynth::makeInstrument() {
 
 VOSIMSynth::~VOSIMSynth() {
 	if (m_voiceManager)
-	DELETE_NULL(m_voiceManager);
+		DELETE_NULL(m_voiceManager);
 	if (m_unitFactory)
-	DELETE_NULL(m_unitFactory);
+		DELETE_NULL(m_unitFactory);
 	if (m_MIDIReceiver)
-	DELETE_NULL(m_MIDIReceiver);
+		DELETE_NULL(m_MIDIReceiver);
 }
 
 void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) {
@@ -159,7 +162,7 @@ int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
 
 	string input;
 	startPos = pChunk->Get(&input, startPos);
-	stringstream ss{input};
+	stringstream ss{ input };
 	shared_ptr<syn::Unit> circuit;
 	{
 		cereal::JSONInputArchive ar(ss);
