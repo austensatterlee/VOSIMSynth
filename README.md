@@ -8,4 +8,4 @@ cd _vsbuild
 cmake .. -G "Visual Studio 14 2015"
 ```
 
-![screenshot](https://raw.github.com/austensatterlee/VOSIMSynth/modular/screenshots/VOSIMProject_1.png)
+![screenshot](https://raw.github.com/austensatterlee/VOSIMSynth/newgraphics/screenshots/VOSIMProject_1.png)
