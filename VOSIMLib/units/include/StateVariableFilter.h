@@ -82,16 +82,27 @@ namespace syn
 	{
 		DERIVE_UNIT(OnePoleLP)
 	public:
+		enum Param
+		{
+			Fc = 0
+		};
+
+		enum Input
+		{
+			AudioIn = 0,
+			FcAdd,
+			FcMul
+		};
+
 		explicit OnePoleLP(const string& a_name);
 
 		OnePoleLP(const OnePoleLP& a_rhs) : OnePoleLP(a_rhs.getName()) {};
 
+		double getState() const;
+
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
-
 	private:
-		int m_pFc;
-		int m_iFcAdd, m_iFcMul;
 		double m_state;
 	};
 
@@ -99,14 +110,30 @@ namespace syn
 	{
 		DERIVE_UNIT(LadderFilter)
 	public:
+		enum Param
+		{
+			Fc = 0,
+			Fb
+		};
+
+		enum Input
+		{
+			AudioIn = 0,
+			FcAdd,
+			FcMul
+		};
+
 		explicit LadderFilter(const string& a_name);
 		LadderFilter(const LadderFilter& a_rhs) : LadderFilter(a_rhs.getName()) {};
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
+		void onParamChange_(int a_paramId) override;
+		void onInputConnection_(int a_inputPort) override;
+		void onInputDisconnection_(int a_inputPort) override;
+		void onFsChange_() override;
 	private:
-		int m_pFc;
-		int m_iFcAdd, m_iFcMul;
 		OnePoleLP m_ladder[4];
+		double m_u;
 	};
 }
 

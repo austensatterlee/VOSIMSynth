@@ -22,7 +22,7 @@ Eigen::Vector2i synui::UIScrollPanel::getScrollOffset() const {
 bool synui::UIScrollPanel::onMouseScroll(const UICoord& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) {
 	if (UIComponent::onMouseScroll(a_relCursor, a_diffCursor, a_scrollAmt))
 		return true;
-	scroll({0,10 * a_scrollAmt});
+	scroll({0,-10 * a_scrollAmt});
 	return true;
 }
 
@@ -64,4 +64,26 @@ void synui::UIScrollPanel::_onChildMoved(UIComponent* a_child) {
 		updateChildPosition_(a_child->getSharedPtr());
 	}
 	updateExtents_();
+}
+
+void synui::UIScrollPanel::draw(NVGcontext* a_nvg) {
+	// Draw vertical scroll bar
+	if (m_maxExtent.y()) {
+		float scrollBarWidth = 10.0f;
+		nvgBeginPath(a_nvg);
+		nvgRect(a_nvg, size().x() - scrollBarWidth, 0.0f, scrollBarWidth, size().y());
+		nvgFillColor(a_nvg, Color(0.7f, 0.75f));
+		nvgFill(a_nvg);
+
+		int vBarHeight = 10.0f;
+		int vBarLoc = m_scrollOffset.y() * (size().y() - vBarHeight) * (1.0f / m_maxExtent.y());
+		nvgBeginPath(a_nvg);
+		nvgRect(a_nvg, size().x() - scrollBarWidth, vBarLoc, scrollBarWidth, vBarHeight);
+		NVGpaint barPaint = nvgLinearGradient(a_nvg,
+			0.0f, vBarLoc,
+			0.0f, vBarLoc + vBarHeight,
+			Color(0.5f, 1.0f), Color(0.4f, 1.0f));
+		nvgFillPaint(a_nvg, barPaint);
+		nvgFill(a_nvg);
+	}
 }

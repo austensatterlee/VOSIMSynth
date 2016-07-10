@@ -169,7 +169,7 @@ namespace synui
 
 	int UIDigitControl::getDigit(int a_digit) {
 		if (a_digit == m_decimalLoc) return -1;
-		return stoi(m_digitBoxes[a_digit]->text());
+		return stoi(extractDigits(m_digitBoxes[a_digit]->text()));
 	}
 
 	void UIDigitControl::incrDigit(int a_digit, int a_amt) {

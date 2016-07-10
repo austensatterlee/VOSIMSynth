@@ -55,6 +55,8 @@ namespace synui {
 		void _onRemoveChild() override;
 
 		void _onChildMoved(UIComponent* a_child) override;
+	protected:
+		void draw(NVGcontext* a_nvg) override;
 	private:
 		Vector2i m_minExtent;
 		Vector2i m_maxExtent;

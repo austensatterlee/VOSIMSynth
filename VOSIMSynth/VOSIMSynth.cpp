@@ -72,6 +72,7 @@ void VOSIMSynth::makeInstrument() {
 	m_unitFactory->addUnitPrototype<syn::StateVariableFilter>("Filters", "SVF");
 	m_unitFactory->addUnitPrototype<syn::TrapStateVariableFilter>("Filters", "TSVF");
 	m_unitFactory->addUnitPrototype<syn::OnePoleLP>("Filters", "Lag");
+	m_unitFactory->addUnitPrototype<syn::LadderFilter>("Filters", "Ladder");
 
 	m_unitFactory->addUnitPrototype<syn::BasicOscillator>("Oscillators", "Basic");
 	m_unitFactory->addUnitPrototype<syn::VosimOscillator>("Oscillators", "VOSIM");
