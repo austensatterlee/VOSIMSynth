@@ -31,6 +31,8 @@ void synui::UIScrollPanel::setChildrenStyles(NVGcontext* a_nvg) {
 }
 
 void synui::UIScrollPanel::updateExtents_() {
+	m_maxExtent = { 0,0 };
+	m_minExtent = { 0,0 };
 	for (shared_ptr<UIComponent> child : m_children) {
 		m_minExtent = m_minExtent.cwiseMin(m_originalPositions[child.get()]);
 		m_maxExtent = m_maxExtent.cwiseMax(m_originalPositions[child.get()] + child->size() - size());
