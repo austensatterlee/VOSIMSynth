@@ -64,9 +64,21 @@ namespace syn
 		};
 	public:
 		UnitParameter();
+		/**
+		 * Creates a boolean parameter
+		 */
 		UnitParameter(const string& a_name, bool a_defaultValue);
+		/**
+		 * Creates an integer parameter
+		 */
 		UnitParameter(const string& a_name, int a_min, int a_max, int a_defaultValue, EUnitsType a_unitsType = None);
+		/**
+		 * Creates an enumerated parameter
+		 */
 		UnitParameter(const string& a_name, const vector<string>& a_optionNames, const vector<double>& a_optionValues = {}, int a_defaultOption = 0, EUnitsType a_unitsType = None);
+		/**
+		 * Creates a real-number parameter
+		 */
 		UnitParameter(const string& a_name, double a_min, double a_max, double a_defaultValue, EUnitsType m_unitsType = None, int a_displayPrecision = 2);
 
 		/**

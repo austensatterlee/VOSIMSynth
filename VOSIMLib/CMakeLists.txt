@@ -19,6 +19,10 @@ source_group(VOSIMLib\\include FILES ${VOSIMLIB_HDRS})
 source_group(VOSIMLib-units FILES ${VOSIMLIB_UNIT_SRCS})
 source_group(VOSIMLib-units\\include FILES ${VOSIMLIB_UNIT_HDRS})
 
+if(WIN32)
+  add_definitions(-DWIN32_LEAN_AND_MEAN)
+endif()
+
 add_library(VOSIMLib STATIC 
   ${VOSIMLIB_FILES}
   )

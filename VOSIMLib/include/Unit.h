@@ -111,16 +111,35 @@ namespace syn
 
 		virtual ~Unit() { }
 
+		/**
+		 * Clears the unit outputs and calls the unit's process_ method.
+		 */
 		void MSFASTCALL tick() GCCFASTCALL;
 
+		/**
+		 * Notify the unit of a sample rate change
+		 */
 		void setFs(double a_newFs);
 
+		/**
+		 * Notify the unit of a tempo change
+		 */
 		void setTempo(double a_newTempo);
 
+		/**
+		 * Notify the unit of a note on event 
+		 */
 		void noteOn(int a_note, int a_velocity);
-
+		
+		/**
+		 * Notify the unit of a note off event
+		 */
 		void noteOff(int a_note, int a_velocity);
 
+		/**
+		 * Notify the unit that one of its internal parameters changed. 
+		 * This is automatically called by the internal UnitParameter.
+		 */
 		void notifyParameterChanged(int a_id);
 
 		double getFs() const;
@@ -133,29 +152,58 @@ namespace syn
 
 		int getVelocity() const;
 
-		//void sendMidiEvent();
+		/**
+		 * This method is used to determine the lifespan of a voice.
+		 * By default, this method returns true when a note is on and false otherwise.
+		 * It should be overriden to suite the unit's specific needs.
+		 */
 		virtual bool isActive() const;
 
+		/**
+		 * Returns a pointer to the unit's parent Circuit, or nullptr if there is none.
+		 */
 		const Circuit* getParent() const;
 
+		/**
+		 * Determines whether or not the unit contains a specific parameter.
+		 */
 		template <typename ID>
 		bool hasParameter(const ID& a_paramId) const;
 
+		/**
+		 * Returns a reference to the requested parameter.
+		 */
 		template <typename ID>
 		UnitParameter& getParameter(const ID& a_identifier);
 
 		template <typename ID>
 		const UnitParameter& getParameter(const ID& a_identifier) const;
 
+		/**
+		 * Sets the value of an internal parameter
+		 * \see UnitParameter::set
+		 */
 		template <typename ID, typename T>
 		bool setParameterValue(const ID& a_identifier, const T& a_value);
-
+		
+		/**
+		 * Sets the value of an internal parameter using a normalized value in the range [0,1].
+		 * \see UnitParameter::setNorm
+		 */
 		template <typename ID, typename T>
 		bool setParameterNorm(const ID& a_identifier, const T& a_value);
-
+		
+		/**
+		 * Sets the quantization level of an internal parameter.
+		 * \see UnitParameter::setPrecision
+		 */
 		template <typename ID>
 		bool setParameterPrecision(const ID& a_identifier, int a_value);
 
+		/**
+		 * Sets the value of an internal parameter using a string value.
+		 * \see UnitParameter::setFromString
+		 */
 		template <typename ID>
 		bool setParameterFromString(const ID& a_identifier, const string& a_value);
 

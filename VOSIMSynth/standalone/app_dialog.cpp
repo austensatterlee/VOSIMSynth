@@ -2,6 +2,7 @@
 
 #ifdef OS_WIN
 #include "asio.h"
+#include "windowsx.h"
 #endif
 
 const int kNumIOVSOptions = 9;

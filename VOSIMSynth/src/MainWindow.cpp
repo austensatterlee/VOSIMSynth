@@ -155,11 +155,10 @@ void synui::MainWindow::_runLoop() {
 	
 	m_sfmlWindow->display();
 	m_frameCount++;
+	m_sfmlWindow->setActive(false);
 
 	_flushMessageQueues();
 	_handleEvents();
-
-	m_sfmlWindow->setActive(false);
 
 	double dCpuTime = m_timer.getElapsedTime().asSeconds() - cpuStartTime;
 	double fps = 1. / dCpuTime;
@@ -188,7 +187,6 @@ void synui::MainWindow::_handleEvents() {
 		case Event::LostFocus:
 			break;
 		case Event::GainedFocus:
-			m_sfmlWindow->setActive(true);
 			break;
 		case Event::TextEntered:
 			if (event.text.unicode >= 32 && event.text.unicode <= 126) {
@@ -224,7 +222,6 @@ void synui::MainWindow::_handleEvents() {
 		break;
 		case Event::MouseButtonPressed:
 		{
-			m_sfmlWindow->requestFocus();
 			float clickTime = m_timer.getElapsedTime().asSeconds() - m_lastClick.time.asSeconds();
 			float clickDist = (cursorPos().cast<float>() - Vector2f{ m_lastClick.data.x, m_lastClick.data.y }).norm();
 			bool isDblClick = clickTime < 0.1 && clickDist <= 3.0;

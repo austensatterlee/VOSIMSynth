@@ -65,7 +65,6 @@ if(MSVC)
   set(MSVC_DISABLED_WARNINGS /wd4996 /wd4224 /wd4244 /wd4091 /wd4018)
   add_compile_options("${MSVC_DISABLED_WARNINGS}")
   add_definitions(-D_ENABLE_ATOMIC_ALIGNMENT_FIX)
-  add_definitions(-DWIN32_LEAN_AND_MEAN)
   # /Ox full opt                        /Ob2 any suitable inline function expansion
   # /Oi enable intrinsics               /Ot favor fast code
   # /GL whole program optimization      /arch:SSE2 simd extensions

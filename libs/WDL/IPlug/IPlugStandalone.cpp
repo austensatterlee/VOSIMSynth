@@ -1,6 +1,6 @@
 #include "IPlugStandalone.h"
+#include "MainWindow.h"
 #ifndef OS_IOS
-  #include "IGraphics.h"
   extern HWND gHWND;
 #endif
 
@@ -54,7 +54,7 @@ IPlugStandalone::IPlugStandalone(IPlugInstanceInfo instanceInfo,
 void IPlugStandalone::ResizeGraphics(int w, int h)
 {
   #ifndef OS_IOS
-  IGraphics* pGraphics = GetGUI();
+  synui::MainWindow* pGraphics = GetAppWindow();
   if (pGraphics)
   {
     #ifdef OS_OSX

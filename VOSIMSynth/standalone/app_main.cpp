@@ -1,4 +1,5 @@
 #include "app_main.h"
+#include <MainWindow.h>
 
 #ifdef OS_WIN
   #include <windows.h>
@@ -602,7 +603,7 @@ bool ChooseMidiOutput(const char* pPortName)
 
 extern bool AttachGUI()
 {
-  IGraphics* pGraphics = gPluginInstance->GetGUI();
+  synui::MainWindow* pGraphics = gPluginInstance->GetAppWindow();
 
   if (pGraphics)
   {
