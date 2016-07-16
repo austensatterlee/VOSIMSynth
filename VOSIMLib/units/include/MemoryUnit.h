@@ -40,6 +40,7 @@ namespace syn
 	{
 	public:
 		NSampleDelay();
+		double getCurrOutput() const;
 		double process(double a_input);
 		double getPastSample(double a_offset);
 		void resizeBuffer(double a_newBufSize);
@@ -51,6 +52,7 @@ namespace syn
 		double m_nBufSamples;
 		double m_curReadPhase;
 		double m_curWritePhase;
+		double m_currOutput;
 	};
 
 	class MemoryUnit : public Unit
@@ -72,6 +74,28 @@ namespace syn
 	{
 		DERIVE_UNIT(ResampleUnit)
 	public:
+		enum Parameter
+		{
+			BufDelay = 0,
+			BufFreq,
+			BufBPMFreq,
+			BufType,
+			DryGain
+		};
+
+		enum Output
+		{
+			Out = 0,
+			Send
+		};
+
+		enum Input
+		{
+			In = 0,
+			Receive,
+			SizeMod
+		};
+
 		explicit ResampleUnit(const string& a_name);
 		ResampleUnit(const ResampleUnit& a_rhs);
 
@@ -81,12 +105,6 @@ namespace syn
 	private:
 		NSampleDelay m_delay;
 		double m_delaySamples;
-		int m_iSize;
-
-		int m_pBufDelay;
-		int m_pBufFreq;
-		int m_pBufBPMFreq;
-		int m_pBufType;
 	};
 }
 CEREAL_REGISTER_TYPE(syn::MemoryUnit)

@@ -48,16 +48,22 @@ namespace synui {
 	public:
 		UIPlot(MainWindow* a_window);
 
-		void setBufferPtr(const double* a_yBufPtr, int a_bufSize);
+		void setNumBuffers(int a_numBuffers);
+		void setBufferPtr(int a_bufIndex, const double* a_yBufPtr, int a_bufSize);
 
 		/**
 		 * Set minimum and maximum X sample values
 		 */
 		void setXBounds(const Vector2f& a_xBounds);
 		/**
-		* Set minimum and maximum Y sample values
-		*/
+		 * Set minimum and maximum Y sample values
+		 */
 		void setYBounds(const Vector2f& a_yBounds);
+		/**
+		 * Set the speed at which the Y-axis bounds adjust to fit the buffer's extrema.
+		 * The dimensions of speed parameter are roughly the number of frames required for the bounds to catch up to the extrema.
+		 */
+		void setAutoAdjustSpeed(double a_speed) { m_autoAdjustSpeed = a_speed; }
 
 		void setInterpPolicy(InterpPolicy a_policy);
 		void setXScale(XScale a_xScale) {
@@ -89,8 +95,9 @@ namespace synui {
 		Vector2f m_minBounds, m_maxBounds;
 		double m_autoAdjustSpeed;
 
-		const double* m_yBufPtr;
-		int m_bufSize;
+		int m_numBuffers;
+		vector<const double*> m_yBufPtrs;
+		vector<int> m_bufSizes;
 		int m_nScreenPts;
 		Vector2i m_crosshairPos;
 		string m_xUnits, m_yUnits;
@@ -99,6 +106,8 @@ namespace synui {
 
 		InterpPolicy m_interpPolicy;
 		XScale m_xScale;
+
+		const vector<Color> m_colors = { Color(1.0,0.0,0.0,1.0f), Color(0.0,1.0,0.0,1.0f), Color(0.0,0.0,1.0,1.0f) };
 	};
 }
 

@@ -28,35 +28,40 @@ namespace synui
 	OscilloscopeUnit::OscilloscopeUnit(const string& a_name) :
 		Unit(a_name),
 		m_bufferIndex(0),
-		m_pBufferSize(addParameter_(syn::UnitParameter("buffer size", 16, 96000, 256))),
-		m_pNumPeriods(addParameter_(syn::UnitParameter("periods", 1, 16, 1))),
 		m_lastPhase(0.0),
 		m_lastSync(0),
-		m_syncCount(0) 
+		m_syncCount(0),
+		m_numBuffers(2)
 	{
-		addInput_("in");
+		addParameter_(BufferSize, syn::UnitParameter("buffer size", 16, 96000, 256));
+		addParameter_(NumPeriods, syn::UnitParameter("periods", 1, 16, 1));
+		m_bufferSize = getParameter(BufferSize).getInt();
+		m_buffers.resize(m_numBuffers);
+		for(int i=0;i<m_numBuffers;i++) {
+			addInput_("in"+to_string(i));
+			m_buffers[i].resize(getParameter(BufferSize).getMax());
+		}
 		m_iPhase = addInput_("ph");
-		m_bufferSize = getParameter(m_pBufferSize).getInt();
-		m_buffer.resize(getParameter(m_pBufferSize).getMax());
 	}
 
-	const double* OscilloscopeUnit::getBufferPtr() const {
-		return &m_buffer[0];
+	int OscilloscopeUnit::getNumBuffers() const
+	{
+		return m_numBuffers;
 	}
 
-	int OscilloscopeUnit::getBufferSize() const {
-		return m_bufferSize;
+	const double* OscilloscopeUnit::getBufferPtr(int a_bufIndex) const {
+		return &m_buffers[a_bufIndex][0];
+	}
+
+	int OscilloscopeUnit::getBufferSize(int a_bufIndex) const {
+		return getInputSource(a_bufIndex) ? m_bufferSize : 0;
 	}
 
 	void OscilloscopeUnit::onParamChange_(int a_paramId) {
-		if (a_paramId == m_pBufferSize) {
-			int newBufferSize = getParameter(m_pBufferSize).getInt();
-			int oldBufferSize = m_bufferSize;
+		if (a_paramId == BufferSize) {
+			int newBufferSize = getParameter(BufferSize).getInt();
 			m_bufferIndex = syn::WRAP(m_bufferIndex, newBufferSize);
 			m_bufferSize = newBufferSize;
-			if (m_bufferSize > oldBufferSize) {
-				m_buffer.resize(m_bufferSize);
-			}
 		}
 	}
 
@@ -67,14 +72,16 @@ namespace synui
 		}
 		m_lastSync++;
 		m_lastPhase = phase;
-		m_buffer[m_bufferIndex] = getInputValue(0);		
+		for (int i = 0; i < m_numBuffers; i++) {
+			m_buffers[i][m_bufferIndex] = getInputValue(i);
+		}
 		m_bufferIndex = syn::WRAP(m_bufferIndex + 1, m_bufferSize);
 	}
 
 	void OscilloscopeUnit::_sync() {
 		m_syncCount++;
-		if (m_syncCount >= getParameter(m_pNumPeriods).getInt()) {
-			setParameterValue(m_pBufferSize, m_lastSync);
+		if (m_syncCount >= getParameter(NumPeriods).getInt()) {
+			setParameterValue(BufferSize, m_lastSync);
 			m_bufferIndex = 0;
 			m_lastSync = 0;
 			m_syncCount = 0;
@@ -98,7 +105,7 @@ namespace synui
 		addChild(m_col);
 		
 		m_plot->setStatusLabel(m_statusLabel);
-		m_plot->setInterpPolicy(UIPlot::SincInterp);
+		m_plot->setInterpPolicy(UIPlot::LinInterp);
 
 		setMinSize(minSize().cwiseMax(m_col->minSize()));
 	}
@@ -109,6 +116,9 @@ namespace synui
 
 	void OscilloscopeUnitControl::draw(NVGcontext* a_nvg) {
 		const OscilloscopeUnit* unit = static_cast<const OscilloscopeUnit*>(&m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()));
-		m_plot->setBufferPtr(unit->getBufferPtr(), unit->getBufferSize());
+		m_plot->setNumBuffers(unit->getNumBuffers());
+		for (int i = 0; i < unit->getNumBuffers(); i++) {
+			m_plot->setBufferPtr(i,unit->getBufferPtr(i), unit->getBufferSize(i));
+		}
 	}
 }

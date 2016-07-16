@@ -34,13 +34,20 @@ namespace synui
 	{
 		DERIVE_UNIT(OscilloscopeUnit)
 	public:
+		enum Parameter
+		{
+			BufferSize,
+			NumPeriods
+		};
+
 		explicit OscilloscopeUnit(const string& a_name);
 
 		OscilloscopeUnit(const OscilloscopeUnit& a_rhs) :
 			OscilloscopeUnit(a_rhs.getName()) {}
 
-		const double* getBufferPtr() const;
-		int getBufferSize() const;
+		int getNumBuffers() const;
+		const double* getBufferPtr(int a_bufIndex) const;
+		int getBufferSize(int a_bufIndex) const;
 
 	protected:
 		void onParamChange_(int a_paramId) override;
@@ -53,11 +60,10 @@ namespace synui
 		friend class OscilloscopeUnitControl;
 		int m_bufferIndex;
 		int m_bufferSize;
-		int m_pBufferSize;
-		int m_pNumPeriods;
 		int m_iPhase;
 
-		vector<double> m_buffer;
+		int m_numBuffers;
+		vector<vector<double>> m_buffers;
 
 		double m_lastPhase;
 		int m_lastSync;
@@ -66,7 +72,6 @@ namespace synui
 
 	class OscilloscopeUnitControl : public UIUnitControl
 	{
-
 	public:
 		OscilloscopeUnitControl(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId);
 

@@ -19,7 +19,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "SpectroscopeUnit.h"
 #include <DSPMath.h>
-#include <tables.h>
 #include <UILabel.h>
 #include <UIPlot.h>
 
@@ -35,15 +34,16 @@ namespace synui
 		m_pTimeSmooth(addParameter_(syn::UnitParameter("time smooth", 0.0, 1.0, 0.1))),
 		m_pUpdatePeriod(addParameter_(syn::UnitParameter("update interval", 0.0, 1.0, 0.5))),
 		m_samplesSinceLastUpdate(0),
-		m_isActive(true) {
+		m_isStale(true)
+	{
 		addInput_("in");
 
 		m_inBufferSize = getParameter(m_pBufferSize).getEnum();
 		m_outBufferSize = m_inBufferSize >> 1;
 		int maxBufferSize = getParameter(m_pBufferSize).getEnum(getParameter(m_pBufferSize).getMax());
-		m_timeBuffer.resize(maxBufferSize);
-		m_freqBuffer.resize(maxBufferSize);
-		m_outBuffer.resize(maxBufferSize);
+		m_timeDomainBuffer.resize(maxBufferSize);
+		m_freqDomainBuffer.resize(maxBufferSize);
+		m_magnitudeBuffer.resize(maxBufferSize);
 
 		m_window.resize(m_inBufferSize);
 		for (int i = 0; i < m_inBufferSize; i++) {
@@ -57,7 +57,6 @@ namespace synui
 			m_inBufferSize = newBufferSize;
 			m_outBufferSize = newBufferSize >> 1;
 			m_bufferIndex = syn::WRAP(m_bufferIndex, m_inBufferSize);
-			
 
 			m_window.resize(m_inBufferSize);
 			for (int i = 0; i < m_inBufferSize; i++) {
@@ -67,39 +66,36 @@ namespace synui
 	}
 
 	void SpectroscopeUnit::process_() {
-		m_timeBuffer[m_bufferIndex] = getInputValue(0);
+		m_timeDomainBuffer[m_bufferIndex] = getInputValue(0) * m_window[m_bufferIndex];
 
 		m_samplesSinceLastUpdate++;
-		int updatePeriod = syn::LERP<double>(16, m_inBufferSize, 1 - getParameter(m_pUpdatePeriod).getDouble());
-		if (m_samplesSinceLastUpdate >= updatePeriod && m_isActive) {
+		int updatePeriod = syn::LERP<double>(getFs()*0.001, m_inBufferSize, 1 - getParameter(m_pUpdatePeriod).getDouble());
+		if (!m_isStale && m_samplesSinceLastUpdate >= updatePeriod) {
 			m_samplesSinceLastUpdate = 0;
 
-			for (int j = 0; j < m_inBufferSize; j++) {
-				m_freqBuffer[j].im = 0;
-				m_freqBuffer[j].re = m_window[j] * m_timeBuffer[j];
-			}
-
 			// Execute FFT on freq buffers
-			WDL_fft(&m_freqBuffer[0], m_inBufferSize, 0);
+			ffts_plan_t* plan = ffts_init_1d_real(m_inBufferSize, FFTS_FORWARD);
+			ffts_execute(plan, &m_timeDomainBuffer[0], &m_freqDomainBuffer[0]);
+			ffts_free(plan);
 
 			// Copy freq magnitudes to output buffers
 			double timeSmooth = getParameter(m_pTimeSmooth).getDouble();
 			for (int j = 0; j < m_outBufferSize; j++) {
-				int k = WDL_fft_permute(m_inBufferSize, j);
-				double target = m_freqBuffer[k].re * m_freqBuffer[k].re + m_freqBuffer[k].im * m_freqBuffer[k].im;
+				double target = m_freqDomainBuffer[j].real() * m_freqDomainBuffer[j].real() + m_freqDomainBuffer[j].imag() * m_freqDomainBuffer[j].imag();
 				if (target)
 					target = 10 * log10(target); // this is scaled by 10 because we didn't take the square root above
 				else
 					target = -120; // minimum dB
-				m_outBuffer[j] = m_outBuffer[j] + (1.0 / 60.0) * (1 - timeSmooth) * (target - m_outBuffer[j]);
+				m_magnitudeBuffer[j] = m_magnitudeBuffer[j] + (1.0 / 60.0) * (1 - timeSmooth) * (target - m_magnitudeBuffer[j]);
 			}
-			
+
+			m_isStale = true;
 		}
 		m_bufferIndex = syn::WRAP(m_bufferIndex + 1, m_inBufferSize);
 	}
 
 	SpectroscopeUnitControl::SpectroscopeUnitControl(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId) :
-		UIUnitControl(a_window, a_vm, a_unitId), 
+		UIUnitControl(a_window, a_vm, a_unitId),
 		m_col(new UICol(a_window)),
 		m_statusLabel(new UILabel(a_window)),
 		m_plot(new UIPlot(a_window)),
@@ -119,6 +115,9 @@ namespace synui
 		m_plot->setXUnits("Hz");
 		m_plot->setYUnits("dB");
 		m_plot->setInterpPolicy(UIPlot::SincInterp);
+		m_plot->setAutoAdjustSpeed(120);
+
+		m_plot->setNumBuffers(1);
 
 		setMinSize(minSize().cwiseMax(m_col->minSize()));
 	}
@@ -128,10 +127,11 @@ namespace synui
 	}
 
 	void SpectroscopeUnitControl::draw(NVGcontext* a_nvg) {
-		const SpectroscopeUnit* unit = static_cast<const SpectroscopeUnit*>(&m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()));
+		SpectroscopeUnit* unit = static_cast<SpectroscopeUnit*>(&m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()));
 		const double minFreq = 20;
 		int minIndex = ceil(minFreq * unit->getBufferSize() / (0.5 * unit->getFs()));
-		m_plot->setBufferPtr(unit->getBufferPtr() + minIndex, unit->getBufferSize() - minIndex);
+		m_plot->setBufferPtr(0, unit->getBufferPtr() + minIndex, unit->getBufferSize() - minIndex);
 		m_plot->setXBounds({ (minIndex * 1.0 / unit->getBufferSize()) * 0.5 * unit->getFs(),unit->getFs()*0.5 });
+		unit->setDirty();
 	}
 }

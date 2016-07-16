@@ -29,8 +29,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "StateVariableFilter.h"
 #include "include/OscilloscopeUnit.h"
 #include "include/SpectroscopeUnit.h"
-#include "WaveShapers.h"
-#include "fft.h"
+#include "WaveShapers.h" 
 #include "MainWindow.h"
 #include "MIDIReceiver.h"
 #include "VoiceManager.h"
@@ -45,7 +44,6 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 	:
 	IPLUG_CTOR(0, 1, instanceInfo), m_tempo(0) {
 	TRACE;
-	WDL_fft_init();
 	makeInstrument();
 	makeGraphics();
 }

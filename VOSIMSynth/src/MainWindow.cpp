@@ -13,7 +13,6 @@ static int nWndClassReg = 0;
 static const char* wndClassName = "VOSIMWndClass";
 
 void synui::MainWindow::_OpenWindowImplem(sf::WindowHandle a_system_window) {
-
 	if (nWndClassReg++ == 0) {
 		WNDCLASS wndClass = { NULL, drawFunc, 0, 0, m_HInstance, 0, NULL, 0, 0, wndClassName };
 		RegisterClass(&wndClass);
@@ -44,18 +43,18 @@ void synui::MainWindow::_CloseWindowImplem() {
 LRESULT CALLBACK synui::MainWindow::drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam) {
 	if (Message == WM_CREATE) {
 		LPCREATESTRUCT lpcs = (LPCREATESTRUCT)LParam;
-		SetWindowLongPtr(Handle, GWLP_USERDATA, (LPARAM)(lpcs->lpCreateParams));		
+		SetWindowLongPtr(Handle, GWLP_USERDATA, (LPARAM)(lpcs->lpCreateParams));
 
 		int mSec = int(1000.0 / 60.0);
-		SetTimer(Handle, NULL, mSec, NULL);	
-		
+		SetTimer(Handle, NULL, mSec, NULL);
+
 		return 0;
 	}
 
 	MainWindow* _this = reinterpret_cast<MainWindow*>(GetWindowLongPtr(Handle, GWLP_USERDATA));
 	if (!_this || !_this->isOpen())
 		return DefWindowProc(Handle, Message, WParam, LParam);
-	
+
 	switch (Message) {
 	case WM_TIMER:
 	{
@@ -88,7 +87,6 @@ synui::MainWindow::MainWindow(int a_width, int a_height, std::function<UICompone
 	_initialize();
 }
 
-
 synui::MainWindow::~MainWindow() {
 	CloseWindow();
 
@@ -104,7 +102,7 @@ void synui::MainWindow::_initialize() {
 	settings.antialiasingLevel = 8;
 	settings.majorVersion = 3;
 	m_sfmlWindow = new sf::RenderWindow(sf::VideoMode(size()[0], size()[1]), "MainWindow", sf::Style::None, settings);
-	
+
 	m_sfmlWindow->setVisible(false);
 	m_sfmlWindow->setActive(false);
 
@@ -119,7 +117,7 @@ void synui::MainWindow::_initialize() {
 	glGetError();
 
 	// Setup NanoVG context
-	if(m_vg) {
+	if (m_vg) {
 		nvgDeleteGL3(m_vg);
 	}
 
@@ -134,25 +132,25 @@ void synui::MainWindow::_initialize() {
 		m_root = m_rootConstructor(this);
 		m_root->setSize(size());
 	}
-	
+
 	initGraph(&m_fpsGraph, GRAPH_RENDER_FPS, "FPS");
 }
 
 void synui::MainWindow::_runLoop() {
 	double cpuStartTime = m_timer.getElapsedTime().asSeconds();
-	m_sfmlWindow->setActive(true); 
+	m_sfmlWindow->setActive(true);
 
-	Color bgColor = colorFromHSL(0.9f, 0.6f, 0.22f);
+	Color bgColor = colorFromHSL(0.9f, 0.4f, 0.22f);
 
 	glViewport(0, 0, getSize()[0], getSize()[1]);
 	glClearColor(bgColor.r(), bgColor.g(), bgColor.b(), 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-	
+
 	nvgBeginFrame(m_vg, getSize()[0], getSize()[1], 1.0);
 	m_root->recursiveDraw(m_vg);
 	//renderGraph(m_vg, 5, 5, &m_fpsGraph);
 	nvgEndFrame(m_vg);
-	
+
 	m_sfmlWindow->display();
 	m_frameCount++;
 	m_sfmlWindow->setActive(false);
@@ -162,8 +160,8 @@ void synui::MainWindow::_runLoop() {
 
 	double dCpuTime = m_timer.getElapsedTime().asSeconds() - cpuStartTime;
 	double fps = 1. / dCpuTime;
-	m_fps = m_fps + 0.5*(fps - m_fps);
-	updateGraph(&m_fpsGraph, 1./m_fps);
+	m_fps = m_fps + 0.0125*(fps - m_fps);
+	//updateGraph(&m_fpsGraph, 1./m_fps);
 }
 
 void synui::MainWindow::_handleEvents() {

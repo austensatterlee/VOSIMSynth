@@ -22,6 +22,7 @@ set(CEREAL_DIR ${LIBS_DIR}/cereal CACHE PATH "")
 set(RESOURCES_DIR ${VOSIMSYNTH_DIR}/resources CACHE PATH "")
 set(GLEW_ROOT "C:/Program Files (x86)/glew" CACHE PATH "")
 set(SFML_ROOT "C:/Program Files/sfml" CACHE PATH "")
+set(FFTS_ROOT "C:/Program Files (x86)/ffts" CACHE PATH "")
 
 message (STATUS "Path to nanovg is ${NANOVG_DIR}")
 message (STATUS "Path to sftools is ${SFTOOLS_DIR}")
@@ -94,11 +95,6 @@ add_definitions(-DPNG_NO_ASSEMBLER_CODE -DPNG_LIBPNG_SPECIALBUILD)
 ################################
 # Collect sources
 ################################
-
-##
-# WDL 
-##
-set(WDL_FILES ${WDL_DIR}/fft.c ${WDL_DIR}/fft.h)
 
 ##
 # libs
@@ -218,6 +214,11 @@ find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIR})
 list(APPEND ADDITIONAL_LIBRARIES ${OPENGL_LIBRARIES})
 #message(STATUS "OPENGL libs: ${OPENGL_LIBRARIES}" )
+
+# Link FFTS
+include_directories(${FFTS_ROOT}/include)
+list(APPEND DBG_LIBS ${FFTS_ROOT}/ffts_staticd.lib)
+list(APPEND REL_LIBS ${FFTS_ROOT}/ffts_static.lib)
 
 list(REMOVE_DUPLICATES ADDITIONAL_LIBRARIES)
 

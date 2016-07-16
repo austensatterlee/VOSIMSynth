@@ -27,7 +27,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 #include "Unit.h"
 #include "DSPMath.h"
-#include "fft.h"
+#include <ffts.h>
+#include <complex>
 #include <array>
 #include <vector>
 #include "UIUnitControl.h"
@@ -35,6 +36,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 using std::vector;
 using std::array;
+using std::complex;
 
 namespace synui
 {
@@ -52,7 +54,12 @@ namespace synui
 		}
 
 		const double* getBufferPtr() const {
-			return &m_outBuffer[0];
+			return &m_magnitudeBuffer[0];
+		}
+
+		void setDirty()
+		{
+			m_isStale = false;
 		}
 
 	protected:
@@ -67,17 +74,17 @@ namespace synui
 
 		int m_samplesSinceLastUpdate;
 
-		vector<double> m_timeBuffer;
-		vector<WDL_FFT_COMPLEX> m_freqBuffer;
-		vector<double> m_outBuffer;
+		vector<float> m_timeDomainBuffer;
+		vector<complex<float> > m_freqDomainBuffer;
+		vector<double> m_magnitudeBuffer;
 		vector<double> m_window;
-		bool m_isActive;
+		bool m_isStale;
 	};
 
 	class SpectroscopeUnitControl : public UIUnitControl
 	{
 	public:
-		SpectroscopeUnitControl(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId); 
+		SpectroscopeUnitControl(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId);
 
 	protected:
 		void draw(NVGcontext* a_nvg) override;

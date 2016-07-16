@@ -127,12 +127,15 @@ namespace syn
 		 * Retrieves a unit from a specific voice circuit.
 		 * If the given voice id is negative, the unit is retrieved from the prototype circuit.
 		 */
-		const Unit& getUnit(int a_id, int a_voiceId = -1);
+		Unit& getUnit(int a_id, int a_voiceId = -1);
+		const Unit& getUnit(int a_id, int a_voiceId = -1) const;
 
 		int getNumUnits() const;
 
+		Circuit* getPrototypeCircuit();
 		const Circuit* getPrototypeCircuit() const;
 
+		Circuit* getVoiceCircuit(int a_voiceId);
 		const Circuit* getVoiceCircuit(int a_voiceId) const;
 
 		void setPrototypeCircuit(const Circuit* a_circ);

@@ -260,8 +260,17 @@ namespace syn
 		a_msg->action(m_instrument, true, &a_msg->data);
 	}
 
+	Circuit* VoiceManager::getPrototypeCircuit() {
+		return m_instrument;
+	}
+
 	const Circuit* VoiceManager::getPrototypeCircuit() const {
 		return m_instrument;
+	}
+
+	Circuit* VoiceManager::getVoiceCircuit(int a_voiceId)
+	{
+		return m_allVoices[a_voiceId];
 	}
 
 	const Circuit* VoiceManager::getVoiceCircuit(int a_voiceId) const
@@ -283,7 +292,14 @@ namespace syn
 		return m_instrument->getNumUnits();
 	}
 
-	const Unit& VoiceManager::getUnit(int a_id, int a_voiceInd) {
+	Unit& VoiceManager::getUnit(int a_id, int a_voiceInd) {
+		if (a_voiceInd >= 0) {
+			return m_allVoices[a_voiceInd]->getUnit(a_id);
+		}
+		return m_instrument->getUnit(a_id);
+	}
+
+	const Unit& VoiceManager::getUnit(int a_id, int a_voiceInd) const {
 		if (a_voiceInd >= 0) {
 			return m_allVoices[a_voiceInd]->getUnit(a_id);
 		}

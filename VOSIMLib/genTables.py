@@ -71,7 +71,7 @@ def GenerateBlit(pts,nharmonics=None):
     pts = (pts*2)/2+1
     nharmonics = nharmonics or pts/2
     blit_spectrum = zeros(pts,dtype=complex128)
-    blit_spectrum[:nharmonics] = 1.0*1j
+    blit_spectrum[:nharmonics] = 1.0
     blit = fft.fftshift(fft.irfft(blit_spectrum))
     blit = blit/blit.max()
     return blit
