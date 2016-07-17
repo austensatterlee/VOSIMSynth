@@ -224,7 +224,7 @@ namespace synui {
 		double margin = 0.10*syn::MAX(hi - lo, 1E-2);
 		double minSetPoint = lo - margin;
 		double maxSetPoint = hi + margin;
-		double coeff = 1 / (m_autoAdjustSpeed * m_window->fps());
+		double coeff = m_autoAdjustSpeed / m_window->fps();
 		m_minBounds[1] = m_minBounds.y() + coeff * (minSetPoint - m_minBounds.y());
 		m_maxBounds[1] = m_maxBounds.y() + coeff * (maxSetPoint - m_maxBounds.y());
 		_updateStatusLabel();

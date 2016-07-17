@@ -57,10 +57,10 @@ namespace synui
 		mOutputPortBG = Color(Vector3f{ 0.93f , 0.76f, 0.66f }.normalized(), 0.32f);
 		mOutputPortHighlightedBG = Color(Vector3f{ 0.93f , 0.76f, 0.66f }.normalized(), 0.52f);
 
-		/* Wire parameters */
-		mWireColor = Color(Vector3f(0.5f, 0.0f, 0.0f), 0.9f);
+		/* Wires */
+		mWireColor = Color(Vector3f(0.5f, 0.5f, 0.5f), 0.9f);
 		mWireInnerShadowColor = Color(Vector3f(0.15f, 0.0f, 0.0f), 0.8f);
-		mSelectedWireColor = Color(Vector3f(0.8f, 0.3f, 0.3f), 1.0f);
+		mSelectedWireColor = Color(Vector3f(0.8f, 0.8f, 0.3f), 1.0f);
 
 		/* Unit selector */
 		mUnitSelectorProtoFontSize = 16;

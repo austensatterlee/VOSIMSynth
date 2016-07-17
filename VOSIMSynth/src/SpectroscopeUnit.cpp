@@ -115,7 +115,7 @@ namespace synui
 		m_plot->setXUnits("Hz");
 		m_plot->setYUnits("dB");
 		m_plot->setInterpPolicy(UIPlot::SincInterp);
-		m_plot->setAutoAdjustSpeed(120);
+		m_plot->setAutoAdjustSpeed(10);
 
 		m_plot->setNumBuffers(1);
 
