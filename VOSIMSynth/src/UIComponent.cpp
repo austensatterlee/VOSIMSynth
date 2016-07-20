@@ -412,12 +412,7 @@ namespace synui
 
 	void UIComponent::bringToFront(UIComponent* a_child) {
 		int frontZOrder = 0;
-		setZOrder(a_child, frontZOrder);
-	}
-
-	void UIComponent::pushToBack(UIComponent* a_child) {
-		int backZOrder = m_ZPlaneMap.rbegin()->first;
-		setZOrder(a_child, backZOrder, false);
+		setZOrder(a_child, getZOrder(a_child), true);
 	}
 
 	int UIComponent::getZOrder(UIComponent* a_child) {

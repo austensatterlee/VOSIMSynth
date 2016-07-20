@@ -46,6 +46,19 @@ synui::UIUnitControl* synui::UIControlPanel::getCurrentUnitControl() const {
 	return m_currUnitContainer ? m_currUnitContainer->getUnitControl().get() : nullptr;
 }
 
+bool synui::UIControlPanel::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
+	grow({ 0, -a_diffCursor.y() });
+	return true;
+}
+
+synui::UIComponent* synui::UIControlPanel::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+	if (a_relCursor.localCoord(this).y() < theme()->mWindowHeaderHeight) {
+		return this;
+	}
+	UIComponent* child = UIComponent::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
+	return child;
+}
+
 void synui::UIControlPanel::_onResize() {
 	m_ctrlWindow->setSize(size());
 	m_scrollPanel->setSize(size() - Vector2i{ 0, theme()->mWindowHeaderHeight });

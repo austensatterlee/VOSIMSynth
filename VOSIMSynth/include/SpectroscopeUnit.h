@@ -44,18 +44,16 @@ namespace synui
 	{
 		DERIVE_UNIT(SpectroscopeUnit)
 	public:
-		SpectroscopeUnit(const string& a_name);
+		explicit SpectroscopeUnit(const string& a_name);
 
 		SpectroscopeUnit(const SpectroscopeUnit& a_rhs) :
 			SpectroscopeUnit(a_rhs.getName()) {}
 
-		size_t getBufferSize() const {
-			return m_outBufferSize;
-		}
+		virtual ~SpectroscopeUnit();
 
-		const double* getBufferPtr() const {
-			return &m_magnitudeBuffer[0];
-		}
+		int getNumBuffers() const;
+		const double* getBufferPtr(int a_bufIndex) const;
+		int getBufferSize(int a_bufIndex) const;
 
 		void setDirty()
 		{
@@ -74,11 +72,14 @@ namespace synui
 
 		int m_samplesSinceLastUpdate;
 
-		vector<float> m_timeDomainBuffer;
-		vector<complex<float> > m_freqDomainBuffer;
-		vector<double> m_magnitudeBuffer;
+		int m_numBuffers;
+		vector<vector<float> > m_timeDomainBuffers;
+		vector<vector<complex<float> > > m_freqDomainBuffers;
+		vector<vector<double> > m_magnitudeBuffers;
 		vector<double> m_window;
 		bool m_isStale;
+
+		ffts_plan_t *m_plan;
 	};
 
 	class SpectroscopeUnitControl : public UIUnitControl

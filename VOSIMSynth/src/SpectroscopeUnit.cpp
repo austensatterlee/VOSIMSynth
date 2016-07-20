@@ -31,24 +31,49 @@ namespace synui
 		Unit(a_name),
 		m_bufferIndex(0),
 		m_pBufferSize(addParameter_(syn::UnitParameter("buffer size", bufferSizeSelections, bufferSizeValues))),
-		m_pTimeSmooth(addParameter_(syn::UnitParameter("time smooth", 0.0, 1.0, 0.1))),
+		m_pTimeSmooth(addParameter_(syn::UnitParameter("time smooth", 0.0, 1.0, 0.0))),
 		m_pUpdatePeriod(addParameter_(syn::UnitParameter("update interval", 0.0, 1.0, 0.5))),
 		m_samplesSinceLastUpdate(0),
+		m_numBuffers(2),
 		m_isStale(true)
 	{
-		addInput_("in");
-
 		m_inBufferSize = getParameter(m_pBufferSize).getEnum();
 		m_outBufferSize = m_inBufferSize >> 1;
-		int maxBufferSize = getParameter(m_pBufferSize).getEnum(getParameter(m_pBufferSize).getMax());
-		m_timeDomainBuffer.resize(maxBufferSize);
-		m_freqDomainBuffer.resize(maxBufferSize);
-		m_magnitudeBuffer.resize(maxBufferSize);
+		m_plan = ffts_init_1d_real(m_inBufferSize, FFTS_FORWARD);
+		int maxInBufferSize = getParameter(m_pBufferSize).getEnum(getParameter(m_pBufferSize).getMax());
+		int maxOutBufferSize = maxInBufferSize >> 1;
+
+		m_timeDomainBuffers.resize(m_numBuffers);
+		m_freqDomainBuffers.resize(m_numBuffers);
+		m_magnitudeBuffers.resize(m_numBuffers);
+		for (int i = 0; i < m_numBuffers; i++) {
+			addInput_("in" + to_string(i));
+			m_timeDomainBuffers[i].resize(maxInBufferSize);
+			m_freqDomainBuffers[i].resize(maxOutBufferSize);
+			m_magnitudeBuffers[i].resize(maxOutBufferSize);
+		}
 
 		m_window.resize(m_inBufferSize);
 		for (int i = 0; i < m_inBufferSize; i++) {
 			m_window[i] = syn::blackman_harris(i, m_inBufferSize);
 		}
+	}
+
+	SpectroscopeUnit::~SpectroscopeUnit() {
+		ffts_free(m_plan);
+		m_plan = nullptr;
+	}
+
+	int SpectroscopeUnit::getNumBuffers() const {
+		return m_numBuffers;
+	}
+
+	const double* SpectroscopeUnit::getBufferPtr(int a_bufIndex) const {
+		return &m_magnitudeBuffers[a_bufIndex][0];
+	}
+
+	int SpectroscopeUnit::getBufferSize(int a_bufIndex) const {
+		return getInputSource(a_bufIndex) ? m_outBufferSize : 0;
 	}
 
 	void SpectroscopeUnit::onParamChange_(int a_paramId) {
@@ -58,6 +83,9 @@ namespace synui
 			m_outBufferSize = newBufferSize >> 1;
 			m_bufferIndex = syn::WRAP(m_bufferIndex, m_inBufferSize);
 
+			ffts_free(m_plan);
+			m_plan = ffts_init_1d_real(m_inBufferSize, FFTS_FORWARD);
+
 			m_window.resize(m_inBufferSize);
 			for (int i = 0; i < m_inBufferSize; i++) {
 				m_window[i] = syn::blackman_harris(i, m_inBufferSize);
@@ -66,7 +94,9 @@ namespace synui
 	}
 
 	void SpectroscopeUnit::process_() {
-		m_timeDomainBuffer[m_bufferIndex] = getInputValue(0) * m_window[m_bufferIndex];
+		for (int i = 0; i < m_numBuffers; i++) {
+			m_timeDomainBuffers[i][m_bufferIndex] = getInputValue(i) * m_window[m_bufferIndex];
+		}
 
 		m_samplesSinceLastUpdate++;
 		int updatePeriod = syn::LERP<double>(getFs()*0.001, m_inBufferSize, 1 - getParameter(m_pUpdatePeriod).getDouble());
@@ -74,19 +104,19 @@ namespace synui
 			m_samplesSinceLastUpdate = 0;
 
 			// Execute FFT on freq buffers
-			ffts_plan_t* plan = ffts_init_1d_real(m_inBufferSize, FFTS_FORWARD);
-			ffts_execute(plan, &m_timeDomainBuffer[0], &m_freqDomainBuffer[0]);
-			ffts_free(plan);
+			for (int i = 0; i < m_numBuffers; i++) {
+				ffts_execute(m_plan, &m_timeDomainBuffers[i][0], &m_freqDomainBuffers[i][0]);
 
-			// Copy freq magnitudes to output buffers
-			double timeSmooth = getParameter(m_pTimeSmooth).getDouble();
-			for (int j = 0; j < m_outBufferSize; j++) {
-				double target = m_freqDomainBuffer[j].real() * m_freqDomainBuffer[j].real() + m_freqDomainBuffer[j].imag() * m_freqDomainBuffer[j].imag();
-				if (target)
-					target = 10 * log10(target); // this is scaled by 10 because we didn't take the square root above
-				else
-					target = -120; // minimum dB
-				m_magnitudeBuffer[j] = m_magnitudeBuffer[j] + (1.0 / 60.0) * (1 - timeSmooth) * (target - m_magnitudeBuffer[j]);
+				// Copy freq magnitudes to output buffers
+				double timeSmooth = getParameter(m_pTimeSmooth).getDouble();
+				for (int j = 0; j < m_outBufferSize; j++) {
+					double target = m_freqDomainBuffers[i][j].real() * m_freqDomainBuffers[i][j].real() + m_freqDomainBuffers[i][j].imag() * m_freqDomainBuffers[i][j].imag();
+					if (target)
+						target = syn::MAX(10 * log10(target), -60.0); // this is scaled by 10 because we didn't take the square root above
+					else
+						target = -60; // minimum dB
+					m_magnitudeBuffers[i][j] = m_magnitudeBuffers[i][j] + (1 - timeSmooth) * (target - m_magnitudeBuffers[i][j]);
+				}
 			}
 
 			m_isStale = true;
@@ -115,9 +145,7 @@ namespace synui
 		m_plot->setXUnits("Hz");
 		m_plot->setYUnits("dB");
 		m_plot->setInterpPolicy(UIPlot::SincInterp);
-		m_plot->setAutoAdjustSpeed(10);
-
-		m_plot->setNumBuffers(1);
+		m_plot->setAutoAdjustSpeed(10.);
 
 		setMinSize(minSize().cwiseMax(m_col->minSize()));
 	}
@@ -128,10 +156,15 @@ namespace synui
 
 	void SpectroscopeUnitControl::draw(NVGcontext* a_nvg) {
 		SpectroscopeUnit* unit = static_cast<SpectroscopeUnit*>(&m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()));
-		const double minFreq = 20;
-		int minIndex = ceil(minFreq * unit->getBufferSize() / (0.5 * unit->getFs()));
-		m_plot->setBufferPtr(0, unit->getBufferPtr() + minIndex, unit->getBufferSize() - minIndex);
-		m_plot->setXBounds({ (minIndex * 1.0 / unit->getBufferSize()) * 0.5 * unit->getFs(),unit->getFs()*0.5 });
+		const double minFreq = 80;
+
+		m_plot->setNumBuffers(unit->getNumBuffers());
+		for (int i = 0; i < unit->getNumBuffers(); i++) {
+			int minIndex = ceil(minFreq * unit->getBufferSize(i) / (0.5 * unit->getFs()));
+			m_plot->setBufferPtr(i, unit->getBufferPtr(i) + minIndex, unit->getBufferSize(i) - minIndex);
+			if(unit->getBufferSize(i))
+				m_plot->setXBounds({ (minIndex * 1.0 / unit->getBufferSize(i)) * 0.5 * unit->getFs(),unit->getFs()*0.5 });
+		}
 		unit->setDirty();
 	}
 }

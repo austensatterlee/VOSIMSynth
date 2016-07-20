@@ -5,10 +5,15 @@
 synui::VOSIMComponent::VOSIMComponent(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_unitFactory): UIComponent(a_window), m_vm(a_vm), m_unitFactory(a_unitFactory) {
 	m_unitSelector = new UIUnitSelector(m_window, m_unitFactory);
 	m_controlPanel = new UIControlPanel(m_window);
+	m_controlPanel->setSize({ -1,200 });
+
 	m_circuitPanel = new UICircuitPanel(m_window, m_vm, m_unitFactory, m_unitSelector, m_controlPanel);
 	addChild(m_unitSelector);
+	setZOrder(m_unitSelector, 1);
 	addChild(m_controlPanel);
+	setZOrder(m_controlPanel, 0);
 	addChild(m_circuitPanel);
+	setZOrder(m_circuitPanel, 2);
 }
 
 void synui::VOSIMComponent::save(ByteChunk* a_data) const {
@@ -71,7 +76,7 @@ void synui::VOSIMComponent::draw(NVGcontext* a_nvg) {
 }
 
 void synui::VOSIMComponent::_onResize() {
-	m_controlPanel->setSize({ size().x() - 4, 200 });
+	m_controlPanel->setSize({ size().x() - 4, -1 });
 	m_controlPanel->setRelPos({ 2, size().y() - 5 - m_controlPanel->size().y() });
 
 	m_unitSelector->setRelPos({ 0,0 });

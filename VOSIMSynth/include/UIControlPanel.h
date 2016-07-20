@@ -39,6 +39,8 @@ namespace synui {
 		UIUnitContainer* getCurrentUnitContainer() const;
 		UIUnitControl* getCurrentUnitControl() const;
 
+		bool onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
+		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 	private:
 		void _onResize() override;
 		UIWindow* m_ctrlWindow;

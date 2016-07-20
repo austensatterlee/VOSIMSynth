@@ -93,7 +93,7 @@ void VOSIMSynth::makeInstrument() {
 	m_unitFactory->addUnitPrototype<syn::PitchToFreqUnit>("Math", "Pitch2Freq");
 	m_unitFactory->addUnitPrototype<syn::FreqToPitchUnit>("Math", "Freq2Pitch");
 
-	m_unitFactory->addUnitPrototype<syn::InvTanUnit>("Waveshapers", "InvTan");
+	m_unitFactory->addUnitPrototype<syn::TanhUnit>("Waveshapers", "tanh");
 
 	m_unitFactory->addUnitPrototype<syn::GateUnit>("MIDI", "Gate");
 	m_unitFactory->addUnitPrototype<syn::MidiNoteUnit>("MIDI", "Pitch");

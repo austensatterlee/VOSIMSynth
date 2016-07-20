@@ -134,7 +134,6 @@ namespace synui
 		virtual void onFocusEvent(bool a_isFocused);
 
 		void bringToFront(UIComponent* a_child);
-		void pushToBack(UIComponent* a_child);
 
 		int getZOrder(UIComponent* a_child);
 

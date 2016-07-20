@@ -69,7 +69,7 @@ namespace syn
 		TunedOscillator::updatePhaseStep_();
 		double pulse_freq;
 		double min_freq = m_num_pulses * m_freq;
-		int MAX_PULSE_FREQ = 4000;
+		int MAX_PULSE_FREQ = 3000;
 		if (min_freq > MAX_PULSE_FREQ) {
 			pulse_freq = min_freq;
 		}
@@ -96,7 +96,7 @@ namespace syn
 		TunedOscillator::process_();
 		double formant_freq;
 		double cos_width;
-		int MAX_FMT_FREQ = 4000;
+		int MAX_FMT_FREQ = 3000;
 		if (m_freq > MAX_FMT_FREQ) {
 			formant_freq = m_freq;
 			cos_width = 1;

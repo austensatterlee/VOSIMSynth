@@ -31,24 +31,24 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <DSPMath.h>
 
 namespace syn {
-	class InvTanUnit : public Unit
+	class TanhUnit : public Unit
 	{
-		DERIVE_UNIT(InvTanUnit)
+		DERIVE_UNIT(TanhUnit)
 	public:
-		explicit InvTanUnit(const string& a_name) : Unit(a_name)
+		explicit TanhUnit(const string& a_name) : Unit(a_name)
 		{
 			addInput_("in");
 			addOutput_("out");
 		}
-		InvTanUnit(const InvTanUnit& a_rhs) : InvTanUnit(a_rhs.getName()) {}
+		TanhUnit(const TanhUnit& a_rhs) : TanhUnit(a_rhs.getName()) {}
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override {
 			double input = getInputValue(0);
-			setOutputChannel_(0, atan(input) / DSP_PI*0.5);
+			setOutputChannel_(0, tanh(input));
 		}
 	};
 }
 
-CEREAL_REGISTER_TYPE(syn::InvTanUnit);
+CEREAL_REGISTER_TYPE(syn::TanhUnit);
 
 #endif
