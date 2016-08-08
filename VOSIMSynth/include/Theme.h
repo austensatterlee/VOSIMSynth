@@ -25,6 +25,15 @@ namespace synui
 		int mWindowDropShadowSize;
 		int mButtonCornerRadius;
 
+		/* Tabs */
+		int mTabBorderWidth;
+		int mTabInnerMargin;
+		int mTabMinButtonWidth;
+		int mTabMaxButtonWidth;
+		int mTabControlWidth;
+		int mTabButtonHorizontalPadding;
+		int mTabButtonVerticalPadding;
+
 		/* Text slider parameters */
 		int mTextSliderFontSize;
 

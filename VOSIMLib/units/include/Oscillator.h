@@ -41,6 +41,28 @@ namespace syn
 	class Oscillator : public Unit
 	{
 	public:
+		enum Param
+		{
+			pGain = 0,
+			pPhaseOffset,
+			pUnipolar,
+			NumParams
+		};
+
+		enum Output
+		{
+			oOut = 0,
+			oPhase,
+			NumOutputs
+		};
+
+		enum Input
+		{
+			iGainMul = 0,
+			iPhaseAdd,
+			NumInputs
+		};
+
 		explicit Oscillator(const string& a_name);
 
 	protected:
@@ -58,21 +80,24 @@ namespace syn
 		double m_freq;
 		double m_gain;
 		double m_bias;
-
-		int m_oOut;
-		int m_oPhase;
-	private:
-		int m_pGain;
-		int m_pPhaseOffset;
-		int m_pUnipolar;
-
-		int m_iGainMul;
-		int m_iPhaseAdd;
 	};
 
 	class TunedOscillator : public Oscillator
 	{
 	public:
+		enum Param
+		{
+			pTune = Oscillator::NumParams,
+			pOctave,
+			NumParams
+		};
+
+		enum Input
+		{
+			iNote = Oscillator::NumInputs,
+			NumInputs
+		};
+
 		explicit TunedOscillator(const string& a_name);
 
 		explicit TunedOscillator(const TunedOscillator& a_rhs);
@@ -83,23 +108,20 @@ namespace syn
 		void onNoteOn_() override;
 	protected:
 		double m_pitch;
-	private:
-		int m_pTune;
-		int m_pOctave;
-
-		int m_iNote;
 	};
 
 	class BasicOscillator : public TunedOscillator
 	{
 		DERIVE_UNIT(BasicOscillator)
 	public:
+		enum Param
+		{
+			pWaveform = TunedOscillator::NumParams
+		};
 		explicit BasicOscillator(const string& a_name);
 
 		explicit BasicOscillator(const BasicOscillator& a_rhs);
 
-	protected:
-		int m_pWaveform;
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
 	};
@@ -108,6 +130,27 @@ namespace syn
 	{
 		DERIVE_UNIT(LFOOscillator)
 	public:
+		enum Param
+		{
+			pWaveform = Oscillator::NumParams,
+			pBPMFreq,
+			pFreq,
+			pTempoSync,
+			NumParams
+		};
+
+		enum Input
+		{
+			iFreqAdd = Oscillator::NumInputs,
+			iFreqMul,
+			iSync
+		};
+
+		enum Output
+		{
+			oQuadOut = Oscillator::NumOutputs
+		};
+
 		explicit LFOOscillator(const string& a_name);
 
 		explicit LFOOscillator(const LFOOscillator& a_rhs);
@@ -115,14 +158,6 @@ namespace syn
 		explicit LFOOscillator(const BasicOscillator& a_rhs) : LFOOscillator(a_rhs.getName()) {}
 
 	protected:
-		int m_oQuadOut;
-
-		int m_pWaveform;
-		int m_pBPMFreq;
-		int m_pFreq;
-		int m_pTempoSync;
-		int m_iFreqAdd, m_iFreqMul;
-		int m_iSync;
 
 		double m_lastSync;
 	protected:

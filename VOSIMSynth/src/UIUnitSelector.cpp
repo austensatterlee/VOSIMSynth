@@ -3,15 +3,14 @@
 #include "Theme.h"
 
 synui::UIUnitSelector::UIUnitSelector(MainWindow* a_window, syn::UnitFactory* a_unitFactory) :
-	UIWindow{a_window, "Unit Selector"},
+	UIComponent(a_window),
 	m_autoWidth(0),
 	m_autoHeight(0),
 	m_currGroup(-1),
 	m_currPrototype(-1),
-	m_highlightedRow(-1),
+	m_highlightedRow(-1), 
 	m_unitFactory(a_unitFactory) 
 {
-	lockPosition(true);
 }
 
 synui::UIComponent* synui::UIUnitSelector::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
@@ -81,7 +80,6 @@ bool synui::UIUnitSelector::onMouseMove(const UICoord& a_relCursor, const Vector
 }
 
 void synui::UIUnitSelector::draw(NVGcontext* a_nvg) {
-	UIWindow::draw(a_nvg);
 	int groupFontSize = theme()->mUnitSelectorGroupFontSize;
 	int protoFontSize = theme()->mUnitSelectorProtoFontSize;
 

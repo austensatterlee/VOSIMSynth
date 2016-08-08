@@ -74,26 +74,26 @@ namespace syn
 	{
 		DERIVE_UNIT(ResampleUnit)
 	public:
-		enum Parameter
+		enum Param
 		{
-			BufDelay = 0,
-			BufFreq,
-			BufBPMFreq,
-			BufType,
-			DryGain
+			pBufDelay = 0,
+			pBufFreq,
+			pBufBPMFreq,
+			pBufType,
+			pDryGain
 		};
 
 		enum Output
 		{
-			Out = 0,
-			Send
+			oOut = 0,
+			oSend
 		};
 
 		enum Input
 		{
-			In = 0,
-			Receive,
-			SizeMod
+			iIn = 0,
+			iReceive,
+			iSizeMod
 		};
 
 		explicit ResampleUnit(const string& a_name);

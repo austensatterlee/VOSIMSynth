@@ -84,14 +84,14 @@ namespace syn
 	public:
 		enum Param
 		{
-			Fc = 0
+			pFc = 0
 		};
 
 		enum Input
 		{
-			AudioIn = 0,
-			FcAdd,
-			FcMul
+			iAudioIn = 0,
+			iFcAdd,
+			iFcMul
 		};
 
 		explicit OnePoleLP(const string& a_name);
@@ -104,6 +104,8 @@ namespace syn
 		void MSFASTCALL process_() GCCFASTCALL override;
 	private:
 		double m_state;
+		double m_phase;
+		double m_phaseStep;
 	};
 
 	class LadderFilter : public Unit
@@ -112,15 +114,15 @@ namespace syn
 	public:
 		enum Param
 		{
-			Fc = 0,
-			Fb
+			pFc = 0,
+			pFb
 		};
 
 		enum Input
 		{
-			AudioIn = 0,
-			FcAdd,
-			FcMul
+			iAudioIn = 0,
+			iFcAdd,
+			iFcMul
 		};
 
 		explicit LadderFilter(const string& a_name);

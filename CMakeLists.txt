@@ -9,31 +9,25 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # define source directories
 set(LIBS_DIR ${CMAKE_SOURCE_DIR}/libs CACHE PATH "")
-set(NANOVG_DIR ${LIBS_DIR}/nanovg CACHE PATH "")
-set(WDL_DIR ${LIBS_DIR}/wdl CACHE PATH "")
-set(IPLUG_DIR ${WDL_DIR}/iplug CACHE PATH "")
-set(VOSIMLIB_DIR ${CMAKE_SOURCE_DIR}/vosimlib CACHE PATH "")
-set(VOSIMSYNTH_DIR ${CMAKE_SOURCE_DIR}/vosimsynth CACHE PATH "")
-set(STANDALONE_DIR ${VOSIMSYNTH_DIR}/standalone CACHE PATH "")
+
+set(NANOVG_ROOT ${LIBS_DIR}/nanovg CACHE PATH "")
+set(WDL_ROOT ${LIBS_DIR}/wdl CACHE PATH "")
+set(IPLUG_ROOT ${WDL_ROOT}/iplug CACHE PATH "")
 set(VST2_SDK ${LIBS_DIR}/VST_SDK CACHE PATH "")
-set(SFTOOLS_DIR ${LIBS_DIR}/sftools CACHE PATH "")
-set(EIGEN_DIR ${LIBS_DIR}/eigen CACHE PATH "")
-set(CEREAL_DIR ${LIBS_DIR}/cereal CACHE PATH "")
-set(RESOURCES_DIR ${VOSIMSYNTH_DIR}/resources CACHE PATH "")
+set(EIGEN_ROOT ${LIBS_DIR}/eigen CACHE PATH "")
+set(CEREAL_ROOT ${LIBS_DIR}/cereal CACHE PATH "")
 set(GLEW_ROOT "C:/Program Files (x86)/glew" CACHE PATH "")
 set(SFML_ROOT "C:/Program Files/sfml" CACHE PATH "")
-set(FFTS_ROOT "C:/Program Files (x86)/ffts" CACHE PATH "")
+set(SFTOOLS_ROOT ${LIBS_DIR}/sftools CACHE PATH "")
+set(NONIUS_ROOT ${LIBS_DIR}/nonius CACHE PATH "")
 
-message (STATUS "Path to nanovg is ${NANOVG_DIR}")
-message (STATUS "Path to sftools is ${SFTOOLS_DIR}")
-message (STATUS "Path to wdl is ${WDL_DIR}")
-message (STATUS "Path to iplug is ${IPLUG_DIR}")
-message (STATUS "Path to vosimlib is ${VOSIMLIB_DIR}")
-message (STATUS "Path to vosimsynth is ${VOSIMSYNTH_DIR}")
-message (STATUS "Path to vosimsynth standalone is ${STANDALONE_DIR}")
-message (STATUS "Path to VST2SDK is ${VST2_SDK}")
-message (STATUS "Path to GLEW is ${GLEW_DIR}")
-message (STATUS "Path to SFML is ${SFML_DIR}")
+set(FFTS_ROOT "C:/Program Files (x86)/ffts" CACHE PATH "")
+set(FFTS_INCLUDE_DIR ${FFTS_ROOT}/include CACHE PATH "")
+
+set(VOSIMLIB_ROOT ${CMAKE_SOURCE_DIR}/vosimlib CACHE PATH "")
+set(VOSIMSYNTH_ROOT ${CMAKE_SOURCE_DIR}/vosimsynth CACHE PATH "")
+set(RESOURCES_DIR ${VOSIMSYNTH_ROOT}/resources CACHE PATH "")
+set(STANDALONE_ROOT ${VOSIMSYNTH_ROOT}/standalone CACHE PATH "")
 
 message (STATUS "Build tool is ${CMAKE_BUILD_TOOL}")
 message (STATUS "System is ${CMAKE_SYSTEM_NAME}")
@@ -81,39 +75,35 @@ if(MSVC)
   # /LTCG link time code generation
   # /OPT:REF remove code that is never referenced
   # /OPT:ICF perform identical COMDAT folding
-  set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
-  set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
+  set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
+  set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
 endif()
 
 # configurations for all compilers
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG" CACHE STRING "")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -D_DEBUG" CACHE STRING "")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUGLIBPNG" CACHE STRING "")
-add_definitions(-DWDL_FFT_REALSIZE=8)
-add_definitions(-DPNG_NO_ASSEMBLER_CODE -DPNG_LIBPNG_SPECIALBUILD) 
+add_compile_options("$<$<NOT:$<CONFIG:Release>>:-D_DEBUG>")
+# add_compile_options("$<$<CONFIG:Release>:-DNDEBUGLIBPNG>")
+# add_compile_options(-DPNG_NO_ASSEMBLER_CODE -DPNG_LIBPNG_SPECIALBUILD) 
 
 ################################
-# Collect sources
+# Collect VOSIMSynth sources
 ################################
-
-##
-# libs
-##
 
 ##
 # VOSIMSynth 
 ##
-file(GLOB PROJECT_SRCS ${VOSIMSYNTH_DIR}/src/*.cpp)
-set(PROJECT_SRCS ${PROJECT_SRCS};${VOSIMSYNTH_DIR}/vosimsynth.cpp)
-file(GLOB PROJECT_HDRS ${VOSIMSYNTH_DIR}/include/*.h)
+file(GLOB PROJECT_SRCS ${VOSIMSYNTH_ROOT}/src/*.cpp)
+set(PROJECT_SRCS ${PROJECT_SRCS};${VOSIMSYNTH_ROOT}/vosimsynth.cpp)
+file(GLOB PROJECT_HDRS ${VOSIMSYNTH_ROOT}/include/*.h)
 set(PROJECT_FILES ${PROJECT_SRCS};${PROJECT_HDRS})
 
-set(RESOURCE_FILES ${VOSIMSYNTH_DIR}/vosimsynth.rc ${VOSIMSYNTH_DIR}/include/resource.h)
-set_source_files_properties(${VOSIMSYNTH_DIR}/vosimsynth.rc LANGUAGE RC)
+set(RESOURCE_FILES ${VOSIMSYNTH_ROOT}/vosimsynth.rc ${VOSIMSYNTH_ROOT}/include/resource.h)
+set_source_files_properties(${VOSIMSYNTH_ROOT}/vosimsynth.rc LANGUAGE RC)
 
-##
-# Compile resources into C code to be compiled into the exe
-##
+include_directories(${VOSIMSYNTH_ROOT}/include)
+
+##############################################################
+# Compile resources into C code to be compiled into the exe  #
+##############################################################
 add_executable(bin2c ${RESOURCES_DIR}/bin2c.c)
 set(RES_BIN vosimsynth_resources.cpp vosimsynth_resources.h)
 set(bin2c_cmdline ${RES_BIN})
@@ -135,41 +125,63 @@ list(APPEND RESOURCE_FILES ${CMAKE_CURRENT_BINARY_DIR}/vosimsynth_resources.cpp)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
+#############################################
+# Configure project-integrated dependencies #
+#############################################
+
 ##
-# IPlug source files
+# WDL
+##
+include_directories(${WDL_ROOT})
+
+##
+# IPlug
 ##
 set(IPLUG_FILES
-  ${IPLUG_DIR}/Containers.h ${IPLUG_DIR}/Hosts.cpp ${IPLUG_DIR}/Hosts.h
-  ${IPLUG_DIR}/IPlugBase.cpp ${IPLUG_DIR}/IPlugBase.h
-  ${IPLUG_DIR}/IPlugOSDetect.h ${IPLUG_DIR}/IPlugStructs.cpp
-  ${IPLUG_DIR}/IPlugStructs.h ${IPLUG_DIR}/IPlugVST.cpp
-  ${IPLUG_DIR}/IPlugVST.h ${IPLUG_DIR}/IPlug_Prefix.pch
-  ${IPLUG_DIR}/IPlug_include_in_plug_hdr.h
-  ${IPLUG_DIR}/IPlug_include_in_plug_src.h ${IPLUG_DIR}/Log.cpp
-  ${IPLUG_DIR}/Log.h
+  ${IPLUG_ROOT}/Containers.h ${IPLUG_ROOT}/Hosts.cpp ${IPLUG_ROOT}/Hosts.h
+  ${IPLUG_ROOT}/IPlugBase.cpp ${IPLUG_ROOT}/IPlugBase.h
+  ${IPLUG_ROOT}/IPlugOSDetect.h ${IPLUG_ROOT}/IPlugStructs.cpp
+  ${IPLUG_ROOT}/IPlugStructs.h ${IPLUG_ROOT}/IPlugVST.cpp
+  ${IPLUG_ROOT}/IPlugVST.h ${IPLUG_ROOT}/IPlug_Prefix.pch
+  ${IPLUG_ROOT}/IPlug_include_in_plug_hdr.h
+  ${IPLUG_ROOT}/IPlug_include_in_plug_src.h ${IPLUG_ROOT}/Log.cpp
+  ${IPLUG_ROOT}/Log.h
 )
+include_directories(${IPLUG_ROOT})
 
 ##
-# NanoVG source files
+# NanoVG
 ##
 add_definitions(-DNANOVG_GL3_IMPLEMENTATION -DNANOVG_GLEW)
-file(GLOB NANOVG_FILES ${NANOVG_DIR}/src/*.c ${NANOVG_DIR}/src/*.h)
+file(GLOB NANOVG_FILES ${NANOVG_ROOT}/src/*.c ${NANOVG_ROOT}/src/*.h)
+include_directories(${NANOVG_ROOT}/src)
 
 ##
-# sftools source files
+# sftools
 ##
-file(GLOB SFTOOLS_FILES ${SFTOOLS_DIR}/include/sftools/*.hpp
-  ${SFTOOLS_DIR}/include/sftools/Animation/*.hpp
-  ${SFTOOLS_DIR}/include/sftools/ResourceManager/*.hpp
-  ${SFTOOLS_DIR}/include/sftools/Common/*.hpp
-  ${SFTOOLS_DIR}/include/sftools/Singleton/*.hpp)
+file(GLOB SFTOOLS_FILES ${SFTOOLS_ROOT}/include/sftools/*.hpp
+  ${SFTOOLS_ROOT}/include/sftools/Animation/*.hpp
+  ${SFTOOLS_ROOT}/include/sftools/ResourceManager/*.hpp
+  ${SFTOOLS_ROOT}/include/sftools/Common/*.hpp
+  ${SFTOOLS_ROOT}/include/sftools/Singleton/*.hpp)
+include_directories(${SFTOOLS_ROOT}/include)
 
-################################
-# Compile/include dependencies
-################################
+##
+# Cereal
+##
+include_directories(${CEREAL_ROOT}/include)
 
-list(APPEND CMAKE_PREFIX_PATH ${GLEW_DIR})
-list(APPEND CMAKE_PREFIX_PATH ${SFML_DIR})
+##
+# Eigen
+##
+include_directories(${EIGEN_ROOT})
+
+######################################
+# Configure precompiled dependencies #
+######################################
+
+list(APPEND CMAKE_PREFIX_PATH ${GLEW_ROOT})
+list(APPEND CMAKE_PREFIX_PATH ${SFML_ROOT})
 list(REMOVE_DUPLICATES CMAKE_PREFIX_PATH)
 
 set(BUILD_SHARED_LIBS false)
@@ -181,9 +193,9 @@ find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Add VOSIMLib
-include_directories(${IPLUG_DIR})
-include_directories(${CEREAL_DIR}/include)
-add_subdirectory(${VOSIMLIB_DIR} VOSIMLib)
+add_subdirectory(${VOSIMLIB_ROOT} VOSIMLib)
+include_directories(${VOSIMLIB_ROOT}/include)
+include_directories(${VOSIMLIB_ROOT}/units/include)
 
 # Add SFML
 set(SFML_STATIC true)
@@ -216,27 +228,21 @@ list(APPEND ADDITIONAL_LIBRARIES ${OPENGL_LIBRARIES})
 #message(STATUS "OPENGL libs: ${OPENGL_LIBRARIES}" )
 
 # Link FFTS
-include_directories(${FFTS_ROOT}/include)
-list(APPEND DBG_LIBS ${FFTS_ROOT}/ffts_staticd.lib)
-list(APPEND REL_LIBS ${FFTS_ROOT}/ffts_static.lib)
+find_library(FFTS_RELEASE_LIBRARY ffts ffts_static PATHS ${FFTS_ROOT} PATH_SUFFIXES lib)
+find_library(FFTS_DEBUG_LIBRARY fftsd ffts_staticd PATHS ${FFTS_ROOT} PATH_SUFFIXES lib)
+include_directories(${FFTS_INCLUDE_DIR})
+list(APPEND DBG_LIBS ${FFTS_DEBUG_LIBRARY})
+list(APPEND REL_LIBS ${FFTS_RELEASE_LIBRARY})
 
 list(REMOVE_DUPLICATES ADDITIONAL_LIBRARIES)
 
 
 ################################
-# Include header directories
+# Specify targets
 ################################
 
-include_directories(${NANOVG_DIR}/src)
-include_directories(${WDL_DIR})
-include_directories(${VOSIMSYNTH_DIR}/include)
-include_directories(${SFTOOLS_DIR}/include)
-include_directories(${EIGEN_DIR})
-include_directories(${VOSIMLIB_DIR}/include)
-include_directories(${VOSIMLIB_DIR}/units/include)
-
 # Add standalone project
-add_subdirectory(${STANDALONE_DIR} "standalone")
+add_subdirectory(${STANDALONE_ROOT} standalone)
 
 add_definitions(-DVST_API -DDLL_BUILD -DVST_FORCE_DEPRECATED)
 
@@ -258,9 +264,8 @@ add_library(${PLUGIN_NAME} SHARED
   ${SFTOOLS_FILES}
   )
 
-message(STATUS "REL LIBS: $<$<CONFIG:Release>:${REL_LIBS}>")
-message(STATUS "DBG LIBS: $<$<NOT:$<CONFIG:Release>>:${DBG_LIBS}>")
-  
+message(STATUS "REL LIBS: ${REL_LIBS}>")
+message(STATUS "DBG LIBS: ${DBG_LIBS}>")
 
 target_link_libraries(${PLUGIN_NAME} ${ADDITIONAL_LIBRARIES}
   "$<$<CONFIG:Release>:${REL_LIBS}>"

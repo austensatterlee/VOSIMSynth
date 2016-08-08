@@ -30,6 +30,22 @@ namespace syn
 	{
 		DERIVE_UNIT(VosimOscillator)
 	public:
+		enum Param
+		{
+			pPulseTune = TunedOscillator::NumParams,
+			pNumPulses,
+			pPulseDecay,
+			NumParams
+		};
+
+		enum Input
+		{
+			iPulseTuneAdd = TunedOscillator::NumInputs,
+			iPulseTuneMul,
+			iDecayMul,
+			NumInputs
+		};
+
 		explicit VosimOscillator(string name);
 
 		VosimOscillator(const VosimOscillator& a_rhs);
@@ -41,16 +57,28 @@ namespace syn
 	private:
 		double m_pulse_step, m_pulse_tune;
 		int m_num_pulses;
-		int m_pPulseTune;
-		int m_iPulseTuneAdd, m_iPulseTuneMul;
-		int m_pNumPulses;
-		int m_pPulseDecay;
 	};
 
 	class FormantOscillator : public TunedOscillator
 	{
 		DERIVE_UNIT(FormantOscillator)
 	public:
+		
+		enum Param
+		{
+			pWidth = TunedOscillator::NumParams,
+			pFmt,
+			NumParams
+		};
+
+		enum Input
+		{
+			iWidthAdd = TunedOscillator::NumInputs,
+			iFmtAdd,
+			iWidthMul,
+			iFmtMul,
+			NumInputs
+		};
 
 		explicit FormantOscillator(string name);
 
@@ -58,15 +86,6 @@ namespace syn
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
-
-	private:
-		int m_pWidth;
-		int m_pFmt;
-
-		int m_iWidthAdd;
-		int m_iFmtAdd;
-		int m_iWidthMul;
-		int m_iFmtMul;
 	};
 }
 

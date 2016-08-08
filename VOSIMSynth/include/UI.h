@@ -56,6 +56,9 @@ namespace synui
 	class UIWindow;
 	class UIPlot;
 	class UIScrollPanel;
+	class UIStackedComponent;
+	class UITabHeader;
+	class UITabWidget;
 
 	// VOSIMSynth specific:
 	class UICircuitPanel;

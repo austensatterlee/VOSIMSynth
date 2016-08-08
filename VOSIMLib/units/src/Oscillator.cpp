@@ -69,14 +69,16 @@ namespace syn
 		m_period(1),
 		m_freq(0.0),
 		m_gain(0.0),
-		m_bias(0.0),
-		m_oOut(addOutput_("out")),
-		m_oPhase(addOutput_("ph")),
-		m_pGain(addParameter_({ "gain", 0.0, 1.0, 1.0 })),
-		m_pPhaseOffset(addParameter_({ "phase", 0.0, 1.0, 0.0 })),
-		m_pUnipolar(addParameter_(UnitParameter("unipolar", false))),
-		m_iGainMul(addInput_("g[x]", 1.0)),
-		m_iPhaseAdd(addInput_("ph")) { }
+		m_bias(0.0)
+	{
+		addOutput_(oOut, "out");
+		addOutput_(oPhase, "ph");
+		addParameter_(pGain, { "gain", 0.0, 1.0, 1.0 });
+		addParameter_(pPhaseOffset, { "phase", 0.0, 1.0, 0.0 });
+		addParameter_(pUnipolar, UnitParameter("unipolar", false));
+		addInput_(iGainMul, "g[x]", 1.0);
+		addInput_(iPhaseAdd, "ph");
+	}
 
 	void Oscillator::sync_() {}
 
@@ -110,10 +112,10 @@ namespace syn
 	}
 
 	void Oscillator::process_() {
-		double phase_offset = getParameter(m_pPhaseOffset).getDouble() + getInputValue(m_iPhaseAdd);
-		m_gain = getParameter(m_pGain).getDouble() * getInputValue(m_iGainMul);
+		double phase_offset = getParameter(pPhaseOffset).getDouble() + getInputValue(iPhaseAdd);
+		m_gain = getParameter(pGain).getDouble() * getInputValue(iGainMul);
 		m_bias = 0;
-		if (getParameter(m_pUnipolar).getBool()) {
+		if (getParameter(pUnipolar).getBool()) {
 			// make signal unipolar
 			m_gain *= 0.5;
 			m_bias = m_gain;
@@ -121,7 +123,7 @@ namespace syn
 		updatePhaseStep_();
 		tickPhase_(phase_offset);
 
-		setOutputChannel_(m_oPhase, m_phase);
+		setOutputChannel_(oPhase, m_phase);
 	}
 
 	void TunedOscillator::onNoteOn_() {
@@ -136,49 +138,51 @@ namespace syn
 
 	TunedOscillator::TunedOscillator(const string& a_name) :
 		Oscillator(a_name),
-		m_pitch(0),
-		m_pTune(addParameter_({ "semi", -12.0, 12.0, 0.0 })),
-		m_pOctave(addParameter_({ "oct", -3, 3, 0 })) {
-		m_iNote = addInput_("pitch");
+		m_pitch(0)
+	{
+		addParameter_(pTune, { "semi", -12.0, 12.0, 0.0 });
+		addParameter_(pOctave, { "oct", -3, 3, 0 });
+		addInput_(iNote, "pitch");
 	}
 
 	TunedOscillator::TunedOscillator(const TunedOscillator& a_rhs) :
 		TunedOscillator(a_rhs.getName()) {}
 
 	void TunedOscillator::process_() {
-		double tune = getParameter(m_pTune).getDouble() + getInputValue(m_iNote);
-		double oct = getParameter(m_pOctave).getInt();
+		double tune = getParameter(pTune).getDouble() + getInputValue(iNote);
+		double oct = getParameter(pOctave).getInt();
 		m_pitch = tune + oct * 12;
 		Oscillator::process_();
 	}
 
 	BasicOscillator::BasicOscillator(const string& a_name) :
-		TunedOscillator(a_name),
-		m_pWaveform(addParameter_(UnitParameter("waveform", WAVE_SHAPE_NAMES))) { }
+		TunedOscillator(a_name)
+	{
+		addParameter_(pWaveform, UnitParameter("waveform", WAVE_SHAPE_NAMES));
+	}
 
 	BasicOscillator::BasicOscillator(const BasicOscillator& a_rhs) : BasicOscillator(a_rhs.getName()) {}
 
 	void BasicOscillator::process_() {
 		TunedOscillator::process_();
 		double output;
-		int shape = getParameter(m_pWaveform).getInt();
+		int shape = getParameter(pWaveform).getInt();
 		output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period, false);
-		setOutputChannel_(m_oOut, m_gain * output + m_bias);
+		setOutputChannel_(oOut, m_gain * output + m_bias);
 	}
 
 	LFOOscillator::LFOOscillator(const string& a_name) :
 		Oscillator(a_name),
-		m_oQuadOut(addOutput_("quad")),
-		m_iFreqAdd(addInput_("freq")),
-		m_iFreqMul(addInput_("freq[x]", 1.0)),
-		m_iSync(addInput_("sync")),
 		m_lastSync(0.0)
 	{
-		m_pBPMFreq = addParameter_({ "rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM });
-		getParameter(m_pBPMFreq).setVisible(false);
-		m_pFreq = addParameter_({ "freq", 0.01, 100.0, 1.0, UnitParameter::EUnitsType::Freq });
-		m_pWaveform = addParameter_(UnitParameter("waveform", WAVE_SHAPE_NAMES));
-		m_pTempoSync = addParameter_(UnitParameter("tempo sync", false));
+		addOutput_(oQuadOut, "quad");
+		addInput_(iFreqAdd, "freq");
+		addInput_(iFreqMul, "freq[x]", 1.0);
+		addInput_(iSync, "sync");
+		addParameter_(pBPMFreq, UnitParameter( "rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM ).setVisible(false));		
+		addParameter_(pFreq, UnitParameter( "freq", 0.01, 100.0, 1.0, UnitParameter::EUnitsType::Freq ));
+		addParameter_(pWaveform, UnitParameter("waveform", WAVE_SHAPE_NAMES));
+		addParameter_(pTempoSync, UnitParameter("tempo sync", false));
 	}
 
 	LFOOscillator::LFOOscillator(const LFOOscillator& a_rhs) :
@@ -188,33 +192,33 @@ namespace syn
 
 	void LFOOscillator::process_() {
 		// determine frequency
-		if (getParameter(m_pTempoSync).getBool()) {
-			m_freq = bpmToFreq(getParameter(m_pBPMFreq).getEnum(getInputValue(m_iFreqMul) * (getParameter(m_pBPMFreq).getInt()+getInputValue(m_iFreqAdd))), getTempo());
+		if (getParameter(pTempoSync).getBool()) {
+			m_freq = bpmToFreq(getParameter(pBPMFreq).getEnum(getInputValue(iFreqMul) * (getParameter(pBPMFreq).getInt()+getInputValue(iFreqAdd))), getTempo());
 		}
 		else {
-			m_freq = getInputValue(m_iFreqMul) * (getParameter(m_pFreq).getDouble() + getInputValue(m_iFreqAdd));
+			m_freq = getInputValue(iFreqMul) * (getParameter(pFreq).getDouble() + getInputValue(iFreqAdd));
 		}
 		// sync
-		if (m_lastSync <= 0.0 && getInputValue(m_iSync) > 0.0) {
+		if (m_lastSync <= 0.0 && getInputValue(iSync) > 0.0) {
 			m_basePhase = 0.0;
 			sync_();
 		}
-		m_lastSync = getInputValue(m_iSync);
+		m_lastSync = getInputValue(iSync);
 		Oscillator::process_();
 		double output;
-		int shape = getParameter(m_pWaveform).getInt();
+		int shape = getParameter(pWaveform).getInt();
 		output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period, true);
-		setOutputChannel_(m_oOut, m_gain * output + m_bias);
+		setOutputChannel_(oOut, m_gain * output + m_bias);
 
 		double quadoutput = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase + 0.25, m_period, true);
-		setOutputChannel_(m_oQuadOut, m_gain * quadoutput + m_bias);
+		setOutputChannel_(oQuadOut, m_gain * quadoutput + m_bias);
 	}
 
 	void LFOOscillator::onParamChange_(int a_paramId) {
-		if (a_paramId == m_pTempoSync) {
-			bool useTempoSync = getParameter(m_pTempoSync).getBool();
-			getParameter(m_pFreq).setVisible(!useTempoSync);
-			getParameter(m_pBPMFreq).setVisible(useTempoSync);
+		if (a_paramId == pTempoSync) {
+			bool useTempoSync = getParameter(pTempoSync).getBool();
+			getParameter(pFreq).setVisible(!useTempoSync);
+			getParameter(pBPMFreq).setVisible(useTempoSync);
 		}
 	}
 }

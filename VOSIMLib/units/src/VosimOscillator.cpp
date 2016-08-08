@@ -27,22 +27,24 @@ namespace syn
 		TunedOscillator(name),
 		m_pulse_step(0.0),
 		m_pulse_tune(0),
-		m_num_pulses(1),
-		m_pPulseTune(addParameter_({ "fp", 0.0, 1.0, 0.0 })),
-		m_pNumPulses(addParameter_({ "num", 1, 8, 1 })),
-		m_pPulseDecay(addParameter_({ "dec", 0.0, 1.0, 0.0 })) {
-		m_iPulseTuneAdd = addInput_("fp");
-		m_iPulseTuneMul = addInput_("fp[x]", 1.0);
+		m_num_pulses(1)
+	{
+		addParameter_(pPulseTune, { "fp", 0.0, 1.0, 0.0 });
+		addParameter_(pNumPulses, { "num", 1, 8, 1 });
+		addParameter_(pPulseDecay, { "dec", 0.0, 1.0, 0.0 });
+		addInput_(iPulseTuneAdd, "fp");
+		addInput_(iPulseTuneMul, "fp[x]", 1.0);
+		addInput_(iDecayMul, "dec[x]", 1.0);
 	}
 
 	VosimOscillator::VosimOscillator(const VosimOscillator& a_rhs) :
 		VosimOscillator(a_rhs.getName()) { }
 
 	void VosimOscillator::process_() {
-		m_num_pulses = getParameter(m_pNumPulses).getInt();
-		m_pulse_tune = CLAMP<double>(getInputValue(m_iPulseTuneMul)*getParameter(m_pPulseTune).getDouble() + getInputValue(m_iPulseTuneAdd), 0, 1);
+		m_num_pulses = getParameter(pNumPulses).getInt();
+		m_pulse_tune = CLAMP<double>(getInputValue(iPulseTuneMul)*getParameter(pPulseTune).getDouble() + getInputValue(iPulseTuneAdd), 0, 1);
 		TunedOscillator::process_();
-		double pulse_decay = getParameter(m_pPulseDecay).getDouble();
+		double pulse_decay = CLAMP<double>(getInputValue(iDecayMul)*getParameter(pPulseDecay).getDouble(), 0, 1);
 
 		double output = 0.0;
 
@@ -62,7 +64,7 @@ namespace syn
 			output = pulseval * abs(pulseval);
 			output *= curr_pulse_gain * sqrt(m_pulse_step / m_phase_step);
 		}
-		setOutputChannel_(m_oOut, m_gain * output + m_bias);
+		setOutputChannel_(oOut, m_gain * output + m_bias);
 	}
 
 	void VosimOscillator::updatePhaseStep_() {
@@ -80,13 +82,14 @@ namespace syn
 	}
 
 	FormantOscillator::FormantOscillator(string name) :
-		TunedOscillator(name),
-		m_pWidth(addParameter_({ "width", 0.0, 1.0, 0.0 })),
-		m_pFmt(addParameter_({ "fmt", 0.0, 1.0, 0.0 })) {
-		m_iWidthAdd = addInput_("w");
-		m_iWidthMul = addInput_("w[x]", 1.0);
-		m_iFmtAdd = addInput_("fmt");
-		m_iFmtMul = addInput_("fmt[x]", 1.0);
+		TunedOscillator(name)
+	{
+		addParameter_(pWidth, { "width", 0.0, 1.0, 0.0 });
+		addParameter_(pFmt, { "fmt", 0.0, 1.0, 0.0 });
+		addInput_(iWidthAdd, "w");
+		addInput_(iWidthMul, "w[x]", 1.0);
+		addInput_(iFmtAdd, "fmt");
+		addInput_(iFmtMul, "fmt[x]", 1.0);
 	}
 
 	FormantOscillator::FormantOscillator(const FormantOscillator& a_rhs) :
@@ -102,9 +105,9 @@ namespace syn
 			cos_width = 1;
 		}
 		else {
-			double fmt_pitch_norm = CLAMP<double>(getInputValue(m_iFmtMul)*getParameter(m_pFmt).getDouble() + getInputValue(m_iFmtAdd), 0, 1);
+			double fmt_pitch_norm = CLAMP<double>(getInputValue(iFmtMul)*getParameter(pFmt).getDouble() + getInputValue(iFmtAdd), 0, 1);
 			formant_freq = pow(2.0,LERP<double>(log2(m_freq), log2(MAX_FMT_FREQ), fmt_pitch_norm));
-			cos_width = 1 + 8 * CLAMP<double>(getInputValue(m_iWidthMul)*getParameter(m_pWidth).getDouble() + getInputValue(m_iWidthAdd), 0, 1);
+			cos_width = 1 + 8 * CLAMP<double>(getInputValue(iWidthMul)*getParameter(pWidth).getDouble() + getInputValue(iWidthAdd), 0, 1);
 		}
 
 		double formant_step = formant_freq / getFs();
@@ -115,6 +118,6 @@ namespace syn
 		double sinval = lut_sin.getlinear(formant_phase + 0.5);
 		double cosval = 0.5 * (1 + lut_sin.getlinear(cos_phase - 0.25));
 		double output = sinval * cosval * sqrt(cos_width);
-		setOutputChannel_(m_oOut, m_gain * output + m_bias);
+		setOutputChannel_(oOut, m_gain * output + m_bias);
 	}
 }

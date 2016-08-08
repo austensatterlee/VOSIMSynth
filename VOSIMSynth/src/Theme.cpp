@@ -12,6 +12,15 @@ namespace synui
 		mWindowDropShadowSize = 4;
 		mButtonCornerRadius = 2;
 
+		/* Tabs */
+		mTabBorderWidth = 0.75f;
+		mTabInnerMargin = 5;
+		mTabMinButtonWidth = 20;
+		mTabMaxButtonWidth = 160;
+		mTabControlWidth = 20;
+		mTabButtonHorizontalPadding = 10;
+		mTabButtonVerticalPadding = 2;
+
 		mDropShadow = Color(0, 128);
 		mTransparent = Color(0, 0);
 		mBorderDark = Color(29, 255);

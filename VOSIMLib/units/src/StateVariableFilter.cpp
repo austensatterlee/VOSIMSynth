@@ -102,10 +102,10 @@ syn::OnePoleLP::OnePoleLP(const string& a_name) :
 	Unit(a_name),
 	m_state(0.0)
 {
-	addParameter_(Fc, UnitParameter("fc", 0.01, 20000.0, 1.0, UnitParameter::Freq));
-	addInput_(AudioIn, "in");
-	addInput_(FcAdd, "fc");
-	addInput_(FcMul, "fc[x]", 1.0);
+	addParameter_(pFc, UnitParameter("fc", 0.01, 20000.0, 1.0, UnitParameter::Freq));
+	addInput_(iAudioIn, "in");
+	addInput_(iFcAdd, "fc");
+	addInput_(iFcMul, "fc[x]", 1.0);
 	addOutput_("out");
 }
 
@@ -115,14 +115,14 @@ double syn::OnePoleLP::getState() const {
 
 void syn::OnePoleLP::process_() {
 	// Calculate gain for specified cutoff
-	double fc = getParameter(Fc).getDouble() * getInputValue(FcMul) + getInputValue(FcAdd); // freq cutoff
-	fc = CLAMP(fc, getParameter(Fc).getMin(), getParameter(Fc).getMax());
+	double fc = getParameter(pFc).getDouble() * getInputValue(iFcMul) + getInputValue(iFcAdd); // freq cutoff
+	fc = CLAMP(fc, getParameter(pFc).getMin(), getParameter(pFc).getMax());
 	fc = fc / getFs();
 	double wc = 2 * tan(DSP_PI * fc / 2.0);
+	double gain = wc / (2 + wc);
 
 	// Calculate output
 	double input = getInputValue(0);	
-	double gain = wc / (1 + wc);
 	double trap_in = gain * (input - m_state);
 	double output = trap_in + m_state;
 	m_state = trap_in + output;
@@ -133,23 +133,23 @@ syn::LadderFilter::LadderFilter(const string& a_name) :
 	Unit(a_name),
 	m_u(0.0)
 {
-	addParameter_(Fc, UnitParameter("fc", 0.01, 20000.0, 1.0, UnitParameter::Freq));
-	addParameter_(Fb, UnitParameter("fb", 0.0, 1.0, 0.0));
-	addInput_(AudioIn, "in");
-	addInput_(FcAdd, "fc");
-	addInput_(FcMul, "fc[x]", 1.0);
+	addParameter_(pFc, UnitParameter("fc", 0.01, 20000.0, 1.0, UnitParameter::Freq));
+	addParameter_(pFb, UnitParameter("fb", 0.0, 1.0, 0.0));
+	addInput_(iAudioIn, "in");
+	addInput_(iFcAdd, "fc");
+	addInput_(iFcMul, "fc[x]", 1.0);
 	addOutput_("out");
 
-	m_ladder[0].connectInput(OnePoleLP::AudioIn, &m_u);
-	m_ladder[1].connectInput(OnePoleLP::AudioIn, &m_ladder[0].getOutputValue(0));
-	m_ladder[2].connectInput(OnePoleLP::AudioIn, &m_ladder[1].getOutputValue(0));
-	m_ladder[3].connectInput(OnePoleLP::AudioIn, &m_ladder[2].getOutputValue(0));
+	m_ladder[0].connectInput(OnePoleLP::iAudioIn, &m_u);
+	m_ladder[1].connectInput(OnePoleLP::iAudioIn, &m_ladder[0].getOutputValue(0));
+	m_ladder[2].connectInput(OnePoleLP::iAudioIn, &m_ladder[1].getOutputValue(0));
+	m_ladder[3].connectInput(OnePoleLP::iAudioIn, &m_ladder[2].getOutputValue(0));
 }
 
 void syn::LadderFilter::process_() {
 	// Calculate gain for specified cutoff
-	double fc = getParameter(Fc).getDouble() * getInputValue(FcMul) + getInputValue(FcAdd); // freq cutoff
-	fc = CLAMP(fc, getParameter(Fc).getMin(), getParameter(Fc).getMax());
+	double fc = getParameter(pFc).getDouble() * getInputValue(iFcMul) + getInputValue(iFcAdd); // freq cutoff
+	fc = CLAMP(fc, getParameter(pFc).getMin(), getParameter(pFc).getMax());
 	fc = fc / getFs();
 	double wc = 2 * tan(DSP_PI * fc / 2.0);
 
@@ -159,7 +159,7 @@ void syn::LadderFilter::process_() {
 	double g3 = g1*g2;
 	double g4 = g1*g3;
 	double S = g3 * m_ladder[0].getState() + g2 * m_ladder[1].getState() + g1 * m_ladder[2].getState() + m_ladder[3].getState();
-	double k = getParameter(Fb).getDouble();
+	double k = getParameter(pFb).getDouble();
 	m_u = (getInputValue(0) - k * S) / (1 + k*g4);
 	m_ladder[0].tick();
 	m_ladder[1].tick();
@@ -169,39 +169,39 @@ void syn::LadderFilter::process_() {
 }
 
 void syn::LadderFilter::onParamChange_(int a_paramId) {
-	if(a_paramId==Fc) {
-		m_ladder[0].setParameterValue(OnePoleLP::Fc, getParameter(Fc).getDouble());
-		m_ladder[1].setParameterValue(OnePoleLP::Fc, getParameter(Fc).getDouble());
-		m_ladder[2].setParameterValue(OnePoleLP::Fc, getParameter(Fc).getDouble());
-		m_ladder[3].setParameterValue(OnePoleLP::Fc, getParameter(Fc).getDouble());
+	if(a_paramId==pFc) {
+		m_ladder[0].setParameterValue(OnePoleLP::pFc, getParameter(pFc).getDouble());
+		m_ladder[1].setParameterValue(OnePoleLP::pFc, getParameter(pFc).getDouble());
+		m_ladder[2].setParameterValue(OnePoleLP::pFc, getParameter(pFc).getDouble());
+		m_ladder[3].setParameterValue(OnePoleLP::pFc, getParameter(pFc).getDouble());
 	}
 }
 
 void syn::LadderFilter::onInputConnection_(int a_inputPort) {
-	if (a_inputPort == FcAdd) {
-		m_ladder[0].connectInput(OnePoleLP::FcAdd, getInputSource(FcAdd));
-		m_ladder[1].connectInput(OnePoleLP::FcAdd, getInputSource(FcAdd));
-		m_ladder[2].connectInput(OnePoleLP::FcAdd, getInputSource(FcAdd));
-		m_ladder[3].connectInput(OnePoleLP::FcAdd, getInputSource(FcAdd));
-	} else if(a_inputPort == FcMul) {
-		m_ladder[0].connectInput(OnePoleLP::FcMul, getInputSource(FcMul));
-		m_ladder[1].connectInput(OnePoleLP::FcMul, getInputSource(FcMul));
-		m_ladder[2].connectInput(OnePoleLP::FcMul, getInputSource(FcMul));
-		m_ladder[3].connectInput(OnePoleLP::FcMul, getInputSource(FcMul));
+	if (a_inputPort == iFcAdd) {
+		m_ladder[0].connectInput(OnePoleLP::iFcAdd, getInputSource(iFcAdd));
+		m_ladder[1].connectInput(OnePoleLP::iFcAdd, getInputSource(iFcAdd));
+		m_ladder[2].connectInput(OnePoleLP::iFcAdd, getInputSource(iFcAdd));
+		m_ladder[3].connectInput(OnePoleLP::iFcAdd, getInputSource(iFcAdd));
+	} else if(a_inputPort == iFcMul) {
+		m_ladder[0].connectInput(OnePoleLP::iFcMul, getInputSource(iFcMul));
+		m_ladder[1].connectInput(OnePoleLP::iFcMul, getInputSource(iFcMul));
+		m_ladder[2].connectInput(OnePoleLP::iFcMul, getInputSource(iFcMul));
+		m_ladder[3].connectInput(OnePoleLP::iFcMul, getInputSource(iFcMul));
 	}
 }
 
 void syn::LadderFilter::onInputDisconnection_(int a_inputPort) {
-	if (a_inputPort == FcAdd) {
-		m_ladder[0].connectInput(OnePoleLP::FcAdd, getInputSource(FcAdd));
-		m_ladder[1].connectInput(OnePoleLP::FcAdd, getInputSource(FcAdd));
-		m_ladder[2].connectInput(OnePoleLP::FcAdd, getInputSource(FcAdd));
-		m_ladder[3].connectInput(OnePoleLP::FcAdd, getInputSource(FcAdd));
-	} else if (a_inputPort == FcMul) {
-		m_ladder[0].connectInput(OnePoleLP::FcMul, getInputSource(FcMul));
-		m_ladder[1].connectInput(OnePoleLP::FcMul, getInputSource(FcMul));
-		m_ladder[2].connectInput(OnePoleLP::FcMul, getInputSource(FcMul));
-		m_ladder[3].connectInput(OnePoleLP::FcMul, getInputSource(FcMul));
+	if (a_inputPort == iFcAdd) {
+		m_ladder[0].connectInput(OnePoleLP::iFcAdd, getInputSource(iFcAdd));
+		m_ladder[1].connectInput(OnePoleLP::iFcAdd, getInputSource(iFcAdd));
+		m_ladder[2].connectInput(OnePoleLP::iFcAdd, getInputSource(iFcAdd));
+		m_ladder[3].connectInput(OnePoleLP::iFcAdd, getInputSource(iFcAdd));
+	} else if (a_inputPort == iFcMul) {
+		m_ladder[0].connectInput(OnePoleLP::iFcMul, getInputSource(iFcMul));
+		m_ladder[1].connectInput(OnePoleLP::iFcMul, getInputSource(iFcMul));
+		m_ladder[2].connectInput(OnePoleLP::iFcMul, getInputSource(iFcMul));
+		m_ladder[3].connectInput(OnePoleLP::iFcMul, getInputSource(iFcMul));
 	}
 }
 

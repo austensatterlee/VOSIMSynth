@@ -1,21 +1,24 @@
+
 Clone the libraries in this directory according to the readme in each
 sub-folder.
 
 Additional required libraries (not in this directory):
-- *SFML*
-  - https://github.com/SFML/SFML.git
+- **SFML**
+  - *https://github.com/SFML/SFML.git*
   - Build and install with CMake
-- *GLEW*
-  - https://github.com/Perlmint/glew-cmake.git
+- **GLEW**
+  - *https://github.com/Perlmint/glew-cmake.git*
   - Build and install with CMake
-- *Boost.Lockfree*
-  - http://www.boost.org/users/download/
+- **Boost.Lockfree**
+  - *http://www.boost.org/users/download/*
   - If CMake can't locate it, add the install directory to an environment variable called BOOST_ROOT.
-- *FFTS*
-  - Original repo: https://github.com/anthonix/ffts
-  - Windows compatible: https://github.com/linkotec/ffts
-  - Set the cmake variable `FFTS_ROOT` to the installation location. Place
-    the static libraries directly in that directory, and then copy the
-    ffts header file into a subdirectory named `include`.
+- **FFTS**
+  - Original repo: *https://github.com/anthonix/ffts*
+  - Windows compatible: *https://github.com/linkotec/ffts*
+  - Set the cmake variable `FFTS_ROOT` to the library directory. Relative
+    to that directory, place the static libraries inside `lib/`, and then
+    copy the `ffts.h` header file to `include/ffts/ffts.h`.
 
-When building statically linked libraries with MSVC, use the "/MT" compiler flag to ensure it has the same runtime as VOSIMSynth.
+**Note for MSVC**
+
+When building statically linked libraries with MSVC, use the `/MT` compiler flag for release builds and `/MTd` for debug builds to ensure it is compiled with the same runtime as VOSIMSynth.

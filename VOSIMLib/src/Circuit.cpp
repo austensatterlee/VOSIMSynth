@@ -158,9 +158,8 @@ namespace syn
 	}
 
 	bool Circuit::isActive() const {
-		const int* unitIndices = m_units.getIndices();
-		for (int i = 0; i < m_units.size(); i++) {			
-			if (m_units[unitIndices[i]]->isActive())
+		for (Unit* unit : m_procGraph) {
+			if (unit->isActive())
 				return true;
 		}
 		return false;

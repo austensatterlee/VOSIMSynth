@@ -130,16 +130,16 @@ namespace syn
 		Unit(a_name),
 		m_delaySamples(0)
 	{
-		addInput_(In, "in");
-		addInput_(Receive, "recv");
-		addInput_(SizeMod, "size");
-		addOutput_(Out, "out");
-		addOutput_(Send, "send");
-		addParameter_(BufDelay, UnitParameter("time", 0.0001, 1.0, 0.0001, UnitParameter::EUnitsType::Seconds, 4));
-		addParameter_(BufFreq, UnitParameter("freq", 1.0, 10000.0, 10000.0, UnitParameter::EUnitsType::Freq).setVisible(false));
-		addParameter_(BufBPMFreq, UnitParameter("rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM).setVisible(false));
-		addParameter_(BufType, UnitParameter("units", { "sec","Hz","BPM" }, { BufDelay, BufFreq, BufBPMFreq }));
-		addParameter_(DryGain, UnitParameter("dry", 0.0, 1.0, 0.0));
+		addInput_(iIn, "in");
+		addInput_(iReceive, "recv");
+		addInput_(iSizeMod, "size");
+		addOutput_(oOut, "out");
+		addOutput_(oSend, "send");
+		addParameter_(pBufDelay, UnitParameter("time", 0.0001, 1.0, 0.0001, UnitParameter::EUnitsType::Seconds, 4));
+		addParameter_(pBufFreq, UnitParameter("freq", 1.0, 10000.0, 10000.0, UnitParameter::EUnitsType::Freq).setVisible(false));
+		addParameter_(pBufBPMFreq, UnitParameter("rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM).setVisible(false));
+		addParameter_(pBufType, UnitParameter("units", { "sec","Hz","BPM" }, { pBufDelay, pBufFreq, pBufBPMFreq }));
+		addParameter_(pDryGain, UnitParameter("dry", 0.0, 1.0, 0.0));
 		m_delay.resizeBuffer(48000);
 	}
 
@@ -152,11 +152,11 @@ namespace syn
 	{
 		int newtype;
 		switch (a_paramId) {
-		case BufType:
-			newtype = getParameter(BufType).getInt();
-			getParameter(BufDelay).setVisible(newtype == 0);
-			getParameter(BufFreq).setVisible(newtype == 1);
-			getParameter(BufBPMFreq).setVisible(newtype == 2);
+		case pBufType:
+			newtype = getParameter(pBufType).getInt();
+			getParameter(pBufDelay).setVisible(newtype == 0);
+			getParameter(pBufFreq).setVisible(newtype == 1);
+			getParameter(pBufBPMFreq).setVisible(newtype == 2);
 			break;
 		default:
 			break;
@@ -165,26 +165,26 @@ namespace syn
 
 	void ResampleUnit::process_()
 	{
-		int bufType = getParameter(BufType).getEnum();
+		int bufType = getParameter(pBufType).getEnum();
 		switch (bufType) {
-		case BufDelay:
-			m_delaySamples = periodToSamples(getParameter(BufDelay).getDouble() + getInputValue(SizeMod), getFs());
+		case pBufDelay:
+			m_delaySamples = periodToSamples(getParameter(pBufDelay).getDouble() + getInputValue(iSizeMod), getFs());
 			break;
-		case BufFreq:
-			m_delaySamples = freqToSamples(getParameter(BufFreq).getDouble() + getInputValue(SizeMod), getFs());
+		case pBufFreq:
+			m_delaySamples = freqToSamples(getParameter(pBufFreq).getDouble() + getInputValue(iSizeMod), getFs());
 			break;
-		case BufBPMFreq:
-			m_delaySamples = freqToSamples(bpmToFreq(getParameter(BufBPMFreq).getEnum(getParameter(BufBPMFreq).getInt() + getInputValue(SizeMod)), getTempo()), getFs());
+		case pBufBPMFreq:
+			m_delaySamples = freqToSamples(bpmToFreq(getParameter(pBufBPMFreq).getEnum(getParameter(pBufBPMFreq).getInt() + getInputValue(iSizeMod)), getTempo()), getFs());
 			break;
 		default:
 			break;
 		}
 		m_delay.resizeBuffer(m_delaySamples);
-		double input = getInputValue(In);
-		double receive = getInputValue(Receive);
-		double dryMix = input * getParameter(DryGain).getDouble();
+		double input = getInputValue(iIn);
+		double receive = getInputValue(iReceive);
+		double dryMix = input * getParameter(pDryGain).getDouble();
 		double output = m_delay.process(input + receive);
-		setOutputChannel_(Out, output + dryMix);
-		setOutputChannel_(Send, output);
+		setOutputChannel_(oOut, output + dryMix);
+		setOutputChannel_(oSend, output);
 	}
 }

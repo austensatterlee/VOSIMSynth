@@ -27,7 +27,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 #include "Unit.h"
 #include "DSPMath.h"
-#include <ffts.h>
+#include <ffts/ffts.h>
 #include <complex>
 #include <array>
 #include <vector>

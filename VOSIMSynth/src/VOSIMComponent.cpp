@@ -1,19 +1,32 @@
 #include "VOSIMComponent.h"
 #include "UIUnitContainer.h"
 #include "VoiceManager.h"
+#include "UITabComponent.h"
 
-synui::VOSIMComponent::VOSIMComponent(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_unitFactory): UIComponent(a_window), m_vm(a_vm), m_unitFactory(a_unitFactory) {
+synui::VOSIMComponent::VOSIMComponent(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_unitFactory): 
+	UIComponent(a_window), 
+	m_vm(a_vm), 
+	m_unitFactory(a_unitFactory) 
+{
 	m_unitSelector = new UIUnitSelector(m_window, m_unitFactory);
 	m_controlPanel = new UIControlPanel(m_window);
 	m_controlPanel->setSize({ -1,200 });
 
+	m_topPanel = new UITabWidget(m_window);
+	m_leftPanel = new UITabWidget(m_window);
+
 	m_circuitPanel = new UICircuitPanel(m_window, m_vm, m_unitFactory, m_unitSelector, m_controlPanel);
-	addChild(m_unitSelector);
-	setZOrder(m_unitSelector, 1);
+	addChild(m_leftPanel);
+	m_leftPanel->addTab("Unit", m_unitSelector);
+	m_leftPanel->setActiveTab(0);
+
 	addChild(m_controlPanel);
 	setZOrder(m_controlPanel, 0);
-	addChild(m_circuitPanel);
-	setZOrder(m_circuitPanel, 2);
+
+	addChild(m_topPanel);
+	setZOrder(m_topPanel, 1);
+	m_topPanel->addTab("Circuit Editor", m_circuitPanel);
+	m_topPanel->setActiveTab(0);
 }
 
 void synui::VOSIMComponent::save(ByteChunk* a_data) const {
@@ -79,9 +92,11 @@ void synui::VOSIMComponent::_onResize() {
 	m_controlPanel->setSize({ size().x() - 4, -1 });
 	m_controlPanel->setRelPos({ 2, size().y() - 5 - m_controlPanel->size().y() });
 
-	m_unitSelector->setRelPos({ 0,0 });
-	m_unitSelector->setSize({ -1,m_controlPanel->getRelPos().y() - 1 });
+	m_leftPanel->setRelPos({ 0,0 });
+	m_leftPanel->setSize({ -1,m_controlPanel->getRelPos().y() - 1 });
+	m_leftPanel->performLayout(m_window->getContext());
 
-	m_circuitPanel->setRelPos({ m_unitSelector->size().x()+1, 0 });
-	m_circuitPanel->setSize({ size().x() - m_circuitPanel->getRelPos().x(), m_controlPanel->getRelPos().y()-1 });
+	m_topPanel->setRelPos({ m_leftPanel->size().x()+1, 0 });
+	m_topPanel->setSize({ size().x() - m_topPanel->getRelPos().x(), m_controlPanel->getRelPos().y() - 1 });
+	m_topPanel->performLayout(m_window->getContext());
 };

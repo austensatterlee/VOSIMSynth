@@ -53,7 +53,9 @@ namespace synui {
 	private:
 		void _onResize() override;
 	private:
+		UITabWidget* m_topPanel;
 		UICircuitPanel* m_circuitPanel;
+		UITabWidget* m_leftPanel;
 		UIUnitSelector* m_unitSelector;
 		UIControlPanel* m_controlPanel;
 

@@ -27,11 +27,11 @@ Copyright 2016, Austen Satterlee
 
 #ifndef __UIUNITSELECTOR__
 #define __UIUNITSELECTOR__
-#include "UIWindow.h"
+#include "UIComponent.h"
 
 namespace synui
 {
-	class UIUnitSelector : public UIWindow
+	class UIUnitSelector : public UIComponent
 	{
 	public:
 		UIUnitSelector(MainWindow* a_window, syn::UnitFactory* a_unitFactory);
