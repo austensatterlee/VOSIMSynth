@@ -37,6 +37,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "include/UICircuitPanel.h"
 #include "include/VOSIMComponent.h"
 #include <cereal/archives/json.hpp>
+#include <tables.h>
 
 using namespace std;
 
@@ -44,8 +45,12 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 	:
 	IPLUG_CTOR(0, 1, instanceInfo), m_tempo(0) {
 	TRACE;
+	SYN_ENABLE_DENORMAL_ROUNDING();
 	makeInstrument();
 	makeGraphics();
+	syn::lut_bl_tri_table();
+	syn::lut_bl_saw_table();
+	syn::lut_bl_square_table();
 }
 
 void VOSIMSynth::makeGraphics() {
@@ -113,12 +118,9 @@ void VOSIMSynth::makeInstrument() {
 }
 
 VOSIMSynth::~VOSIMSynth() {
-	if (m_voiceManager)
-		DELETE_NULL(m_voiceManager);
-	if (m_unitFactory)
-		DELETE_NULL(m_unitFactory);
-	if (m_MIDIReceiver)
-		DELETE_NULL(m_MIDIReceiver);
+	boost::checked_delete(m_voiceManager);
+	boost::checked_delete(m_unitFactory);
+	boost::checked_delete(m_MIDIReceiver);
 }
 
 void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) {

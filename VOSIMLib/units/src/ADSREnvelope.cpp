@@ -33,7 +33,8 @@ namespace syn
 		m_pDecay(addParameter_(UnitParameter("dec", 0.0, 1.0, 0.01))),
 		m_pSustain(addParameter_(UnitParameter("sus", 0.0, 1.0, 1.0))),
 		m_pRelease(addParameter_(UnitParameter("rel", 0.0, 1.0, 0.01))),
-		m_pTimeScale(addParameter_(UnitParameter("timescale", 1, 10, 1))) {
+		m_pTimeScale(addParameter_(UnitParameter("timescale", 1, 10, 1))) 
+	{
 		m_iGate = addInput_("trig");
 		addOutput_("out");
 	}
@@ -75,6 +76,7 @@ namespace syn
 		}
 
 		/* Handle segment change */
+		
 		if (m_phase >= 1.0) {
 			if (m_currStage == Attack) {
 				m_currStage = Decay;
@@ -95,13 +97,17 @@ namespace syn
 			}
 		}
 
-		double output = LERP(m_initial, m_target, m_phase);
+		//double output = LERP(m_initial, m_target, m_phase);
+		//@todo: this is just a test. it should be done more cleanly, possible in a new nonlinear unit 
+		//double tau = -segment_time / -13.8;
+		double shape = 0.3; // std::exp(-1.0 / (tau*getFs()));
+		double output = LERP<double>(m_initial,m_target,INVLERP<double>(1,shape,pow(shape, m_phase)));
 		setOutputChannel_(0, output);
 
-		if ((!m_isActive || m_currStage == Release) && getInputValue(m_iGate) > 0.0) {
+		if ((!m_isActive || m_currStage == Release) && getInputValue(m_iGate) > 0.5) {
 			trigger();
 		}
-		else if (m_currStage != Release && getInputValue(m_iGate) <= 0.0) {
+		else if (m_currStage != Release && getInputValue(m_iGate) <= 0.5) {
 			release();
 		}
 	}

@@ -55,7 +55,7 @@ namespace syn
 	double NSampleDelay::getPastSample(double a_offset)
 	{
 		int bufferReadPhase = WRAP(m_curReadPhase - a_offset, m_nBufSamples);
-		return getresampled_single(&m_buffer[0], ceil(m_nBufSamples), bufferReadPhase, m_nBufSamples, lut_blimp_table_online);
+		return getresampled_single(&m_buffer[0], ceil(m_nBufSamples), bufferReadPhase, m_nBufSamples, lut_blimp_table_online());
 	}
 
 	void NSampleDelay::resizeBuffer(double a_nBufSamples)

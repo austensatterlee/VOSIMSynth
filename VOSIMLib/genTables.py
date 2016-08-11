@@ -1,3 +1,4 @@
+import numpy as np
 from numpy import *
 from scipy import signal as ss
 import re
@@ -21,8 +22,7 @@ def MinimumPhase(n,realCepstrum):
     realFreq = zeros(n)
     imagFreq = zeros(n)
     realTime[0] = realCepstrum[0]
-    for i in xrange(1,nd2):
-        realTime[i] = 2*realCepstrum[i]
+    realTime[1:nd2] = 2*realCepstrum[1:nd2]
     if ((n%2)==0):
         realTime[nd2] = realCepstrum[nd2]
 
@@ -31,6 +31,27 @@ def MinimumPhase(n,realCepstrum):
 
     minimumPhase = realTime
     return minimumPhase
+
+def GenerateMinBLEP(nZeroCrossings, nOverSampling):
+    n = (nZeroCrossings * 2 * nOverSampling) + 1
+    buffer1 = zeros(n)
+    buffer2 = zeros(n)
+
+    a = -float(nZeroCrossings)
+    b = float(nZeroCrossings)
+    x = (a + arange(n)/float(n-1)*(b-a))
+    buffer1 = sinc(x)
+
+    buffer1 *= blackman(n)
+
+    buffer2 = RealCepstrum(n,buffer1)
+    buffer1 = MinimumPhase(n,buffer2)
+
+    minBLEP = buffer1.cumsum()
+
+    minBLEP/=minBLEP[n-1]
+
+    return minBLEP
 
 def DSF(f0, fm, a, N, pts=None):
     """
@@ -76,29 +97,47 @@ def GenerateBlit(pts,nharmonics=None):
     blit = blit/blit.max()
     return blit
 
+def bl_prefilter():
+    prefilter_lhalf=[0.0028,-0.0119,0.0322,-0.0709,0.1375,-0.2544,0.4385,-0.6334,1.7224]
+    prefilter=make_symmetric_l(prefilter_lhalf)
+    return prefilter
+
 def GenerateBLSaw(nharmonics,npoints=None):
     """ Generate band limited sawtooth wave """
     npoints = npoints or nharmonics*2+1
-    nfft = npoints
-    hpts = nharmonics or npoints/2+1
-    hind = arange(1,hpts)
-    freqmags = zeros(npoints/2+1,dtype=complex128)
-    freqmags[hind] = 1j*1./hind
-    blsaw = fft.fftshift(fft.irfft(freqmags,n=nfft))
-    return normalize_power(blsaw)
+    maxharmonic = npoints/2-1 if npoints%2 else npoints/2
 
-def GenerateBLSquare(npoints):
+    harmonics = [x for x in xrange(1,npoints) if x<=maxharmonic]
+
+    gains = [1./x for x in harmonics]
+
+    sample_pts = arange(npoints)*2.0*pi/npoints
+    blsaw = sum([g*sin(h*sample_pts) for g,h in zip(gains,harmonics)],axis=0)
+    return blsaw/blsaw.max()
+
+def GenerateBLSquare(nharmonics,npoints=None):
     npoints = npoints or nharmonics*2+1
     maxharmonic = npoints/2-1 if npoints%2 else npoints/2
 
-    harmonics = [x for x in xrange(npoints) if x<=maxharmonic and x%2]
-    harmonics = harmonics[:maxharmonic]
+    harmonics = [x for x in xrange(1,npoints) if x<=maxharmonic and x%2]
 
     gains = [1./x for x in harmonics]
 
     sample_pts = arange(npoints)*2.0*pi/npoints;
     blsquare = sum([g*sin(h*sample_pts) for g,h in zip(gains,harmonics)],axis=0)
-    return normalize_power(blsquare)
+    return blsquare/blsquare.max()
+
+def GenerateBLTriangle(nharmonics,npoints=None):
+    npoints = npoints or nharmonics*2+1
+    maxharmonic = npoints/2-1 if npoints%2 else npoints/2
+
+    harmonics = [x for x in xrange(1,npoints) if x<=maxharmonic and x%2]
+
+    gains = [1./x**2 if not i%2 else -1./x**2 for i,x in enumerate(harmonics)]
+
+    sample_pts = arange(npoints)*2.0*pi/npoints
+    bltri = sum([g*sin(h*sample_pts) for g,h in zip(gains,harmonics)],axis=0)
+    return bltri/bltri.max()
 
 def GenerateBlimp(intervals=10,resolution=2048,fs=48000,fc=20000,beta=9.,apgain=0.9,apbeta=0.7,ret_half=True):
     """
@@ -127,27 +166,6 @@ def GenerateBlimp(intervals=10,resolution=2048,fs=48000,fc=20000,beta=9.,apgain=
     else:
         return blimp
 
-def GenerateMinBLEP(nZeroCrossings, nOverSampling):
-    n = (nZeroCrossings * 2 * nOverSampling) + 1
-    buffer1 = zeros(n)
-    buffer2 = zeros(n)
-
-    a = -float(nZeroCrossings)
-    b = float(nZeroCrossings)
-    x = (a + arange(n)/float(n-1)*(b-a))
-    buffer1 = sinc(x)
-
-    buffer1 *= blackman(n)
-
-    buffer2 = RealCepstrum(n,buffer1)
-    buffer1 = MinimumPhase(n,buffer2)
-
-    minBLEP = buffer1.cumsum()
-
-    minBLEP/=minBLEP[n-1]
-
-    return minBLEP
-
 def GenerateSine(n):
     k = arange(n)
     T = 1./n
@@ -157,17 +175,6 @@ def GenerateSine(n):
 def GeneratePitchTable(notestart,notefinish,npoints):
     N = linspace(notestart,notefinish,npoints)
     return N,440*2**((N-69.)/12.)
-
-def GenerateInvPitchTable(pitchtable):
-    invpitchlen = ceil(len(pitchtable)*1./min(diff(pitchtable)))
-    invpitchtable = arange(invpitchlen)[1:]*1./invpitchlen*max(pitchtable)
-    return log2(invpitchtable)
-
-def GenerateDecibalTable(db1,db2,npoints):
-    x = arange(npoints)*1.0/npoints
-    dbx = x*(db2-db1)+db1
-    dbtable = exp(dbx/20.)
-    return dbx,dbtable
 
 """Tools"""
 def RewriteAutomatedSection(full_text,tag,replacement_text):
@@ -195,22 +202,22 @@ def RewriteAutomatedSection(full_text,tag,replacement_text):
 def MakeTableStr(table,name,ctype="double"):
     rows = int(sqrt(table.size))
     cols = int(ceil(sqrt(table.size)))
-    showstr = "{} {}[{}] = {{\n".format(ctype,name,table.size)
+    tablestr = "{} {}[{}] = {{\n".format(ctype,name,table.size)
     cellstr = "{:.18f}"
     ind = 0
     for i in xrange(rows):
         if i!=0:
-            showstr+='\n'
+            tablestr+='\n'
         for j in xrange(cols):
-            showstr+=cellstr.format(table[ind])
-            showstr+=','
+            tablestr+=cellstr.format(table[ind])
+            tablestr+=','
             ind+=1
             if ind>=table.size:
                 break
         if ind>table.size:
             break
-    showstr+="\n};\n"
-    return showstr
+    tablestr+="\n};\n"
+    return tablestr
 
 def make_symmetric_r(right_half):
     left_half = list(reversed(right_half))
@@ -229,8 +236,9 @@ def magspec(signal, pts=None, fs=None, xlogscale=True, ylogscale=True, **kwargs)
     if(xlogscale):
         freqs = log2(freqs)
     signalfft = fft.fft(signal,n=pts)[1:pts/2]/pts
-    if(all(signalfft) and ylogscale):
+    if ylogscale:
         mag = 20*log10(abs(signalfft))
+        mag[np.isinf(mag)] = -180 # min db
         ylabel = "dB"
     else:
         mag = abs(signalfft)**2
@@ -294,31 +302,8 @@ def unitplot(*sigs,**kwargs):
 def lerp(a,b,frac):
     return (b-a)*frac + a
 
-def upsample(signal,amt,filt,filt_res=1):
-    """
-    signal - signal to upsample
-    amt - integer amount to upsample
-    filt - interpolation kernel
-    filt_res - interpolation kernel oversampling factor
-
-    """
-    siglen = len(signal)
-    newsiglen = siglen * amt
-    newsig = zeros(newsiglen)
-    halffiltlen = len(filt)/filt_res/2
-    # y[ j + iL ] = sum_{k=0}^{K} x[ i - k ] * h[ j + k*L]
-    # i = index of original sample
-    # j = index of interpolated sample
-    # L = upsample amount
-    for i in xrange(siglen):
-        for j in xrange(amt):
-            newsigind = j + i*amt
-            for k in xrange(-halffiltlen,halffiltlen+1):
-                filtind = filt_res*(j + k*amt + halffiltlen)
-                sigind = clip( i - k, 0, siglen-1 )
-                if filtind>=0 and filtind < 2*halffiltlen*filt_res:
-                    newsig[ newsigind ] += signal[ sigind ] * filt[ filtind ]
-    return newsig
+def invlerp(a,b,pt):
+    return (pt-a)*1.0/(b-a)
 
 def resample(signal, new_table_size, filt, filt_res, numperiods=1, isperiodic=True, useinterp=True):
     """
@@ -441,28 +426,33 @@ def main(pargs):
     """Sin table"""
     SINE_RES = 1024
     sintable = GenerateSine(SINE_RES)
+
     """Pitch table"""
     PITCH_RES = 1024
     MIN_PITCH = -128
     MAX_PITCH = 128
     pitches,pitchtable = GeneratePitchTable(MIN_PITCH,MAX_PITCH,PITCH_RES)
-    """DB table"""
-    DB_RES = 1024
-    MIN_DB = -120
-    MAX_DB = 0
-    decibals,dbtable = GenerateDecibalTable(MIN_DB,MAX_DB,DB_RES)
 
     """Prefilter for bandlimited waveforms"""
-    prefilter_lhalf=[0.0028,-0.0119,0.0322,-0.0709,0.1375,-0.2544,0.4385,-0.6334,1.7224]
-    prefilter=make_symmetric_l(prefilter_lhalf)
-
+    prefilter = bl_prefilter()
 
     """Bandlimited saw wave"""
-    BLSAW_RES = 8192
-    BLSAW_HARMONICS = BLSAW_RES/2
-    blsaw = GenerateBLSaw(BLSAW_HARMONICS,BLSAW_RES)
-    blimp_online = convolve( prefilter, blsaw, 'same' ) # apply gain to high frequencies
-    blsaw /= blsaw.max()
+    BLSAW_HARMONICS = 4096
+    blsaw = GenerateBLSaw(BLSAW_HARMONICS)
+    blsaw = convolve( prefilter, blsaw, 'same' ) # apply gain to high frequencies
+    blsaw = normalize_power(blsaw)
+
+    """Bandlimited square wave"""
+    BLSQUARE_HARMONICS = 4096
+    blsquare = GenerateBLSquare(BLSQUARE_HARMONICS)
+    blsquare = convolve( prefilter, blsquare, 'same' )
+    blsquare = normalize_power(blsquare)
+
+    """Bandlimited triangle wave"""
+    BLTRI_HARMONICS = 4096
+    bltri = GenerateBLTriangle(BLTRI_HARMONICS)
+    bltri = convolve( prefilter, bltri, 'same' )
+    bltri = normalize_power(bltri)
 
     """Offline and online BLIMP for resampling"""
     OFFLINE_BLIMP_INTERVALS = 257
@@ -497,20 +487,23 @@ def main(pargs):
                 input_min = MIN_PITCH,
                 input_max = MAX_PITCH,
                 isPeriodic=False)],
-            ['BL_SAW',dict(classname="ResampledLookupTable", data=blsaw,
+            ['BL_SAW_TABLE',dict(classname="ResampledLookupTable", data=blsaw,
                 size=len(blsaw),
-                blimp_online="lut_blimp_table_online",
-                blimp_offline="lut_blimp_table_offline")],
-            ['SIN',dict(classname="LookupTable",data=sintable,
+                blimp_online="lut_blimp_table_online()",
+                blimp_offline="lut_blimp_table_offline()")],
+            ['BL_SQUARE_TABLE',dict(classname="ResampledLookupTable", data=blsquare,
+                size=len(blsquare),
+                blimp_online="lut_blimp_table_online()",
+                blimp_offline="lut_blimp_table_offline()")],
+            ['BL_TRI_TABLE',dict(classname="ResampledLookupTable", data=bltri,
+                size=len(bltri),
+                blimp_online="lut_blimp_table_online()",
+                blimp_offline="lut_blimp_table_offline()")],
+            ['SIN_TABLE',dict(classname="LookupTable",data=sintable,
                 size=len(sintable),
                 input_min = 0,
                 input_max = 1,
-                isPeriodic = True)],
-            ['DB_TABLE',dict(classname="LookupTable",data=dbtable,
-                size=len(dbtable),
-                input_min = MIN_DB,
-                input_max = MAX_DB,
-                isPeriodic = False)]
+                isPeriodic = True)]
             ]
     macrodefines = [
             ]
@@ -520,6 +513,7 @@ def main(pargs):
     for macroname,macroval in macrodefines:
         line = "#define {} {}".format(macroname, macroval)
         macrodefine_code += line + "\n"
+
     # Generate lookup table structures
     tabledata_def = ""
     tabledata_decl = ""
@@ -542,9 +536,15 @@ def main(pargs):
                 val = "true" if val else "false"
             currargs.append("{}".format(val))
         tableargs = "{}, ".format(name)+", ".join(currargs)
-        tableobj_currdef = "const {} lut_{}({});\n".format(classname,name.lower(),tableargs);
+        tableobj_currdef = """
+inline {0:}& lut_{1:}(){{
+    static {0:} table({2:});
+    return table;
+}}
+""".format(classname,name.lower(),tableargs);
         tableobj_def += tableobj_currdef
 
+    # Backup old table data file
     if os.path.isfile(TABLEDATA_FILE):
         if v:
             print "Backing up old {}...".format(TABLEDATA_FILE)
@@ -552,11 +552,13 @@ def main(pargs):
         with open(TABLEDATA_FILE+'.bk','w') as fp:
             fp.write(old_table_data)
 
+    # Write new table data file
     if v:
         print "Writing new {}...".format(TABLEDATA_FILE)
     with open(TABLEDATA_FILE,'w') as fp:
         fp.write(tabledata_def)
 
+    # Back up old table header file
     if os.path.isfile(TABLEHDR_FILE):
         if v:
             print "Backing up old {}...".format(TABLEHDR_FILE)
@@ -564,13 +566,13 @@ def main(pargs):
         with open('{}.bk'.format(TABLEHDR_FILE),'w') as fp:
             fp.write(old_code)
 
-        if v:
-            print "Writing new {}...".format(TABLEHDR_FILE)
-        new_code = RewriteAutomatedSection(old_code,'lut_defs', tableobj_def)
-        new_code = RewriteAutomatedSection(new_code,'macro_defs', macrodefine_code)
-        new_code = RewriteAutomatedSection(new_code,'table_decl', tabledata_decl)
-        with open(TABLEHDR_FILE, 'w') as fp:
-            fp.write(new_code)
+    if v:
+        print "Writing new {}...".format(TABLEHDR_FILE)
+    new_code = RewriteAutomatedSection(old_code,'lut_defs', tableobj_def)
+    new_code = RewriteAutomatedSection(new_code,'macro_defs', macrodefine_code)
+    new_code = RewriteAutomatedSection(new_code,'table_decl', tabledata_decl)
+    with open(TABLEHDR_FILE, 'w') as fp:
+        fp.write(new_code)
 
 if __name__=="__main__":
     import argparse as ap

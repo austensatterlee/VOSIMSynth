@@ -112,9 +112,9 @@ namespace synui
 				for (int j = 0; j < m_outBufferSize; j++) {
 					double target = m_freqDomainBuffers[i][j].real() * m_freqDomainBuffers[i][j].real() + m_freqDomainBuffers[i][j].imag() * m_freqDomainBuffers[i][j].imag();
 					if (target)
-						target = syn::MAX(10 * log10(target), -60.0); // this is scaled by 10 because we didn't take the square root above
+						target = syn::MAX(10 * log10(target), -120.0); // this is scaled by 10 because we didn't take the square root above
 					else
-						target = -60; // minimum dB
+						target = -120; // minimum dB
 					m_magnitudeBuffers[i][j] = m_magnitudeBuffers[i][j] + (1 - timeSmooth) * (target - m_magnitudeBuffers[i][j]);
 				}
 			}
@@ -145,7 +145,8 @@ namespace synui
 		m_plot->setXUnits("Hz");
 		m_plot->setYUnits("dB");
 		m_plot->setInterpPolicy(UIPlot::SincInterp);
-		m_plot->setAutoAdjustSpeed(10.);
+		m_plot->setAutoAdjustSpeed(0.);
+		m_plot->setYBounds({ -60,60 });
 
 		setMinSize(minSize().cwiseMax(m_col->minSize()));
 	}
@@ -160,7 +161,7 @@ namespace synui
 
 		m_plot->setNumBuffers(unit->getNumBuffers());
 		for (int i = 0; i < unit->getNumBuffers(); i++) {
-			int minIndex = ceil(minFreq * unit->getBufferSize(i) / (0.5 * unit->getFs()));
+			int minIndex = ceil(minFreq * unit->getBufferSize(i) * 2.0 / unit->getFs());
 			m_plot->setBufferPtr(i, unit->getBufferPtr(i) + minIndex, unit->getBufferSize(i) - minIndex);
 			if(unit->getBufferSize(i))
 				m_plot->setXBounds({ (minIndex * 1.0 / unit->getBufferSize(i)) * 0.5 * unit->getFs(),unit->getFs()*0.5 });

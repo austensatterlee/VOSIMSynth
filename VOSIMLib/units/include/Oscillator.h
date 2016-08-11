@@ -36,8 +36,6 @@ namespace syn
 
 	const vector<string> WAVE_SHAPE_NAMES{ "Saw", "Sine", "Tri", "Square" };
 
-	double sampleWaveShape(WAVE_SHAPE shape, double phase, double period, bool useNaive);
-
 	class Oscillator : public Unit
 	{
 	public:

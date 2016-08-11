@@ -23,42 +23,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn
 {
-	double sampleWaveShape(WAVE_SHAPE shape, double phase, double period, bool useNaive) {
-		double output;
-		switch (static_cast<int>(shape)) {
-		case SAW_WAVE:
-			if (useNaive) {
-				phase = WRAP(phase, 1.0);
-				if (phase < 0.5)
-					output = 2 * phase;
-				else
-					output = 2 * phase - 2;
-			}
-			else {
-				output = lut_bl_saw.getresampled(phase, period);
-			}
-			break;
-		case SINE_WAVE:
-			output = lut_sin.getlinear(phase);
-			break;
-		case TRI_WAVE:
-			phase = WRAP(phase, 1.0);
-			output = phase <= 0.5 ? 4 * phase - 1 : -4 * (phase - 0.5) + 1;
-			break;
-		case SQUARE_WAVE:
-			if (useNaive) {
-				phase = WRAP(phase, 1.0);
-				output = phase <= 0.5 ? 1 : -1;
-			}
-			else
-				output = -lut_bl_saw.getresampled(phase + 0.5, period) + lut_bl_saw.getresampled(phase, period);
-			break;
-		default:
-			output = 0;
-			break;
-		}
-		return output;
-	}
 
 	Oscillator::Oscillator(const string& a_name) :
 		Unit(a_name),
@@ -166,8 +130,22 @@ namespace syn
 	void BasicOscillator::process_() {
 		TunedOscillator::process_();
 		double output;
-		int shape = getParameter(pWaveform).getInt();
-		output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period, false);
+		WAVE_SHAPE shape = static_cast<WAVE_SHAPE>(getParameter(pWaveform).getInt());
+		switch(shape) {
+		case SAW_WAVE: 
+			output = lut_bl_saw_table().getresampled(m_phase, m_period);
+			break;
+		case SINE_WAVE: 
+			output = lut_sin_table().getlinear(m_phase);
+			break;
+		case TRI_WAVE: 
+			output = lut_bl_tri_table().getresampled(m_phase, m_period);
+			break;
+		default:
+		case SQUARE_WAVE: 
+			output = lut_bl_square_table().getresampled(m_phase, m_period);
+			break;
+		}
 		setOutputChannel_(oOut, m_gain * output + m_bias);
 	}
 
@@ -205,12 +183,28 @@ namespace syn
 		}
 		m_lastSync = getInputValue(iSync);
 		Oscillator::process_();
-		double output;
-		int shape = getParameter(pWaveform).getInt();
-		output = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase, m_period, true);
+		double output,quadoutput;
+		WAVE_SHAPE shape = static_cast<WAVE_SHAPE>(getParameter(pWaveform).getInt());
+		switch (shape) {
+		case SAW_WAVE:
+			output = naive_saw(m_phase);
+			quadoutput = naive_saw(m_phase+0.25);
+			break;
+		case SINE_WAVE:
+			output = lut_sin_table().getlinear(m_phase);
+			quadoutput = lut_sin_table().getlinear(m_phase + 0.25);
+			break;
+		case TRI_WAVE:
+			output = naive_tri(m_phase);
+			quadoutput = naive_tri(m_phase + 0.25);
+			break;
+		default:
+		case SQUARE_WAVE:
+			output = naive_square(m_phase);
+			quadoutput = naive_square(m_phase + 0.25);
+			break;
+		}
 		setOutputChannel_(oOut, m_gain * output + m_bias);
-
-		double quadoutput = sampleWaveShape(static_cast<WAVE_SHAPE>(shape), m_phase + 0.25, m_period, true);
 		setOutputChannel_(oQuadOut, m_gain * quadoutput + m_bias);
 	}
 

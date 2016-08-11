@@ -51,10 +51,10 @@ if (MINGW)
 endif (MINGW)
 
 if(MSVC)
-  # Runtime library
-  set(MSVC_REL /EHsc /MT)
-  set(MSVC_RDEB /EHsc /MTd)
-  set(MSVC_DEB /EHsc /MTd)
+  # Runtime library, exceptions, parallel compilation
+  set(MSVC_REL /MT /MP)
+  set(MSVC_RDEB /EHsc /MTd /MP)
+  set(MSVC_DEB /EHsc /MTd /MP)
 
   # Disable some warnings
   set(MSVC_DISABLED_WARNINGS /wd4996 /wd4224 /wd4244 /wd4091 /wd4018)
@@ -63,10 +63,10 @@ if(MSVC)
   # /Ox full opt                        /Ob2 any suitable inline function expansion
   # /Oi enable intrinsics               /Ot favor fast code
   # /GL whole program optimization      /arch:SSE2 simd extensions
-  # /fp:fast fast floating point model  /Qpar enable parallel code gen
+  # /fp:fast floating point model       /Qpar enable parallel code gen
   # /Oy omit frame pointers             /GT fiber-safe optimizations
-  list(APPEND MSVC_REL /Ox /Ob2 /Oi /Ot /GL /arch:SSE2 /fp:fast /Qpar /Oy /GT)
-  list(APPEND MSVC_RDEB /Ob2 /Oi /arch:SSE2 /fp:fast /GT)
+  list(APPEND MSVC_REL /Ox /GL /Ob2 /Oi /Ot /Oy /arch:SSE2 /fp:fast /fp:except- /Qpar /GT)
+  list(APPEND MSVC_RDEB /Ob2 /Oi /Oy /arch:SSE2 /fp:fast /Qpar /GT)
   add_compile_options("$<$<CONFIG:Release>:${MSVC_REL}>")
   add_compile_options("$<$<CONFIG:RelWithDebInfo>:${MSVC_RDEB}>")
   add_compile_options("$<$<CONFIG:Debug>:${MSVC_DEB}>")
@@ -75,6 +75,7 @@ if(MSVC)
   # /LTCG link time code generation
   # /OPT:REF remove code that is never referenced
   # /OPT:ICF perform identical COMDAT folding
+  set(CMAKE_STATIC_LINKER_FLAGS_RELEASE "${CMAKE_STATIC_LINKER_FLAGS_RELEASE} /LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
   set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
   set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
 endif()
@@ -121,7 +122,7 @@ add_custom_command(
   COMMENT "Running bin2c"
   PRE_BUILD VERBATIM)
 
-list(APPEND RESOURCE_FILES ${CMAKE_CURRENT_BINARY_DIR}/vosimsynth_resources.cpp)
+list(APPEND RESOURCE_FILES ${CMAKE_CURRENT_BINARY_DIR}/vosimsynth_resources.cpp ${CMAKE_CURRENT_BINARY_DIR}/vosimsynth_resources.h)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 

@@ -41,7 +41,7 @@ syn::StateVariableFilter::StateVariableFilter(const string& a_name) :
 void syn::StateVariableFilter::process_() {
 	double fc = getInputValue(m_iFcMul) * (getParameter(m_pFc).getDouble() + getInputValue(m_iFcAdd));
 	fc = CLAMP(fc, getParameter(m_pFc).getMin(), getParameter(m_pFc).getMax());
-	m_F = 2 * lut_sin.getlinear(0.5 * fc / (getFs() * c_oversamplingFactor));
+	m_F = 2 * lut_sin_table().getlinear(0.5 * fc / (getFs() * c_oversamplingFactor));
 
 	double input_res = getInputValue(m_iResMul) * getParameter(m_pRes).getDouble() + getInputValue(m_iResAdd);
 	input_res = CLAMP<double>(input_res, 0, 1);

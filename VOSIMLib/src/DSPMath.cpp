@@ -38,17 +38,12 @@ int syn::gcd(int a, int b) {
 	return b;
 }
 
-double syn::blackman_harris(int a_k, size_t a_winSize) {
-	static const double a[4] = {0.35875, 0.48829, 0.14128, 0.01168};
-	double phase = a_k * 1.0 / (a_winSize - 1);
-	double s1 = lut_sin.getlinear(phase + 0.25);
-	double s2 = lut_sin.getlinear(2 * phase + 0.25);
-	double s3 = lut_sin.getlinear(3 * phase + 0.25);
-	return a[0] - a[1] * s1 + a[2] * s2 - a[3] * s3;
+double syn::pitchToFreq(double pitch) {
+	return lut_pitch_table().getlinear(pitch);
 }
 
-double syn::pitchToFreq(double pitch) {
-	return lut_pitch_table.getlinear(pitch);
+double syn::naive_pitchToFreq(double pitch) {
+	return 440.0 * std::pow(2, (pitch - 69) / 12.);
 }
 
 double syn::bpmToFreq(double bpm, double tempo)
@@ -82,14 +77,36 @@ double syn::samplesToBPM(double samples, double fs, double tempo) {
 	return samples > 1e-5 ? tempo * samples / (60.0 * fs) : 0.0;
 }
 
-double syn::lin2db(double lin, double mindb, double maxdb) {
-	double db;
-	if (lin >= 0) {
-		db = lut_db_table.getlinear(LERP(mindb, maxdb, lin));
-	} else {
-		db = -lut_db_table.getlinear(LERP(mindb, maxdb, -lin));
-	}
-	return db;
+double syn::lin2db(double lin) {
+	return 20 * log10(MAX<double>(lin, 0));
+}
+
+double syn::db2lin(double db) {
+	return pow(10, db / 20.);
+}
+
+double syn::blackman_harris(int a_k, size_t a_winSize) {
+	static const double a[4] = { 0.35875, 0.48829, 0.14128, 0.01168 };
+	double phase = a_k * 1.0 / (a_winSize - 1);
+	double s1 = lut_sin_table().getlinear(phase + 0.25);
+	double s2 = lut_sin_table().getlinear(2 * phase + 0.25);
+	double s3 = lut_sin_table().getlinear(3 * phase + 0.25);
+	return a[0] - a[1] * s1 + a[2] * s2 - a[3] * s3;
+}
+
+double syn::naive_tri(double a_phase) {
+	a_phase = WRAP(a_phase, 1.0);
+	return a_phase <= 0.5 ? 4 * a_phase - 1 : -4 * (a_phase - 0.5) + 1;
+}
+
+double syn::naive_saw(double a_phase) {
+	a_phase = WRAP(a_phase, 1.0);
+	return a_phase < 0.5 ? 2 * a_phase : 2 * a_phase - 2;
+}
+
+double syn::naive_square(double a_phase) {
+	a_phase = WRAP(a_phase, 1.0);
+	return a_phase <= 0.5 ? 1 : -1;
 }
 
 std::string syn::incrementSuffix(const std::string& a_str) {

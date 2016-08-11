@@ -90,14 +90,18 @@ namespace syn
 		bool remove(const IDType& a_itemId);
 
 		/**
-		 * Retrieves an item from the container, either by its name, index, or a reference to the item itself.
+		 * Retrieves an item from the container by name.
 		 * \returns A reference to the item
 		 */
-		template<typename IDType>
-		T& MSFASTCALL operator[](const IDType& a_itemId) GCCFASTCALL;
+		T& MSFASTCALL operator[](const string& a_itemName) GCCFASTCALL;
+		const T& MSFASTCALL operator[](const string& a_itemName) GCCFASTCALL const;
 
-		template<typename IDType>
-		const T& MSFASTCALL operator[](const IDType& a_itemId) GCCFASTCALL const;
+		/**
+		* Retrieves an item from the container by index.
+		* \returns A reference to the item
+		*/
+		T& MSFASTCALL operator[](int a_itemIndex) GCCFASTCALL;
+		const T& MSFASTCALL operator[](int a_itemIndex) GCCFASTCALL const;
 
 		/**
 		 * Verifies if an item is in the container, either by its name, index, or a reference to the item itself.
@@ -202,17 +206,25 @@ namespace syn
 	}
 
 	template <typename T, int MAXSIZE>
-	template <typename IDType>
-	T& NamedContainer<T, MAXSIZE>::operator[](const IDType& a_itemID) {
-		int itemidx = getItemIndex(a_itemID);
+	T& NamedContainer<T, MAXSIZE>::operator[](const string& a_itemName) {
+		int itemidx = getItemIndex(a_itemName);
 		return m_data[itemidx];
 	}
 
 	template <typename T, int MAXSIZE>
-	template <typename IDType>
-	const T& NamedContainer<T, MAXSIZE>::operator[](const IDType& a_itemID) const {
-		int itemidx = getItemIndex(a_itemID);
+	const T& NamedContainer<T, MAXSIZE>::operator[](const string& a_itemName) const {
+		int itemidx = getItemIndex(a_itemName);
 		return m_data[itemidx];
+	}
+
+	template <typename T, int MAXSIZE>
+	T& NamedContainer<T, MAXSIZE>::operator[](int a_itemIndex) {
+		return m_data[a_itemIndex];
+	}
+	
+	template <typename T, int MAXSIZE>
+	const T& NamedContainer<T, MAXSIZE>::operator[](int a_itemIndex) const {
+		return m_data[a_itemIndex];
 	}
 
 	template <typename T, int MAXSIZE>

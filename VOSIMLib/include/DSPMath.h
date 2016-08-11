@@ -36,6 +36,15 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define GCCFASTCALL __attribute__((fastcall))
 #endif
 
+// Disable denormals for SSE processors
+// Adapted from Tonic (github.com/TonicAudio/Tonic)
+#if (defined (__SSE__) || defined (_WIN32))
+#include <xmmintrin.h>
+#define  SYN_ENABLE_DENORMAL_ROUNDING() _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON)
+#else
+#define  SYN_ENABLE_DENORMAL_ROUNDING()
+#endif
+
 #define DSP_PI 3.14159265359f
 #include <regex>
 #include <cereal/cereal.hpp>
@@ -106,13 +115,6 @@ namespace syn
 		return newx;
 	}
 
-	/**
-	 * Generates a sample from a blackman-harris window.
-	 * \param a_k the index of the sample to generate, in the range [0,a_winSize).
-	 * \param a_winSize size of the window in samples
-	 */
-	double blackman_harris(int a_k, size_t a_winSize);
-
 	/////////////////////////////////////
 	// Time unit conversion functions  //
 	/////////////////////////////////////
@@ -121,6 +123,7 @@ namespace syn
 	 * Convert pitch (midi note, 0-127) to frequency 
 	 */
 	double pitchToFreq(double pitch);
+	double naive_pitchToFreq(double pitch);
 
 	double bpmToFreq(double bpm, double tempo);
 
@@ -136,7 +139,23 @@ namespace syn
 	
 	double samplesToBPM(double samples, double fs, double tempo);
 
-	double lin2db(double lin, double mindb, double maxdb);
+	double lin2db(double lin);
+	double db2lin(double db);
+
+	/////////////////////////
+	// Waveform generators //
+	/////////////////////////
+
+	/**
+	* Generates a sample from a blackman-harris window.
+	* \param a_k the index of the sample to generate, in the range [0,a_winSize).
+	* \param a_winSize size of the window in samples
+	*/
+	double blackman_harris(int a_k, size_t a_winSize);
+
+	double naive_tri(double a_phase);
+	double naive_saw(double a_phase);
+	double naive_square(double a_phase);	
 
 	//////////////////
 	// Misc. utils  //

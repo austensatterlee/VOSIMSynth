@@ -129,6 +129,7 @@ namespace synui {
 		nvgStrokeColor(a_nvg, tickColor);
 		nvgFillColor(a_nvg, tickLabelColor);
 		nvgBeginPath(a_nvg);
+
 		// Zero Y tick
 		double zeroPct = syn::INVLERP<double>(m_minBounds.y(), m_maxBounds.y(), 0.0);
 		Vector2i zeroScreenPt = toScreenCoords({ 0.0, 0.0 });
@@ -170,23 +171,28 @@ namespace synui {
 			double bufPhase = 0.0;
 			nvgBeginPath(a_nvg);
 			for (int j = 0; j < m_nScreenPts; j++) {
-				double sampleVal;
+				// Compute the current point's Y-axis value
+				double yVal;
 				switch (m_interpPolicy) {
 				case SincInterp:
-					sampleVal = syn::getresampled_single(m_yBufPtrs[i], m_bufSizes[i], bufPhase, m_nScreenPts, syn::lut_blimp_table_online);
+					yVal = syn::getresampled_single(m_yBufPtrs[i], m_bufSizes[i], bufPhase, m_nScreenPts, syn::lut_blimp_table_online());
 					break;
 				case LinInterp:
 				default:
-				{
-					int currOffset = static_cast<int>(bufPhase * m_bufSizes[i]);
-					int nextOffset = syn::WRAP(currOffset + 1, m_bufSizes[i]);
-					sampleVal = syn::LERP(m_yBufPtrs[i][currOffset], m_yBufPtrs[i][nextOffset], bufPhase * m_bufSizes[i] - currOffset);
-					break;
+					{
+						int currOffset = static_cast<int>(bufPhase * m_bufSizes[i]);
+						int nextOffset = syn::WRAP(currOffset + 1, m_bufSizes[i]);
+						yVal = syn::LERP(m_yBufPtrs[i][currOffset], m_yBufPtrs[i][nextOffset], bufPhase * m_bufSizes[i] - currOffset);
+						break;
+					}
 				}
-				}
-				Vector2i screenPt = toScreenCoords(Vector2f{ syn::LERP<double>(m_minBounds.x(),m_maxBounds.x(),bufPhase), sampleVal });
-				yExtrema[1] = syn::MAX<double>(yExtrema[1], sampleVal);
-				yExtrema[0] = syn::MIN<double>(yExtrema[0], sampleVal);
+				// Compute the X-axis location
+				double xVal = syn::LERP<double>(m_minBounds.x(), m_maxBounds.x(), bufPhase);
+				// Transform the point to screen coordinates
+				Vector2i screenPt = toScreenCoords(Vector2f{ xVal , yVal });
+				yExtrema[1] = syn::MAX<double>(yExtrema[1], yVal);
+				yExtrema[0] = syn::MIN<double>(yExtrema[0], yVal);
+				// Draw the point
 				if (j == 0)
 					nvgMoveTo(a_nvg, screenPt[0], screenPt[1]);
 				else
@@ -210,7 +216,7 @@ namespace synui {
 	}
 
 	void UIPlot::_onResize() {
-		m_nScreenPts = size().x();
+		m_nScreenPts = size().x()>>1;
 		_updateStatusLabel();
 	}
 

@@ -19,31 +19,28 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "tables.h"
 #include "DSPMath.h"
-#include <cstdlib>
 #include <math.h>
-#include "../../libs/wdl/fft.h"
 
 namespace syn
 {
 	LookupTable::LookupTable(const double* a_tableptr, int a_size, double a_input_min, double a_input_max, bool a_isPeriodic) :
 		m_size(a_size),
+		m_input_min(a_input_min),
+		m_input_max(a_input_max),
 		m_isperiodic(a_isPeriodic),
 		m_table(a_tableptr),
-		m_input_min(a_input_min),
-		m_input_max(a_input_max) {
+		m_diff_table(a_size)
+	{
 		m_norm_bias = a_input_min;
 		m_norm_scale = 1. / (a_input_max - a_input_min);
 		m_normalizePhase = !(a_input_min == 0 && a_input_max == 1);
 		/* Construct difference table for linear interpolation */
-		m_diff_table = new double[a_size];
+		m_diff_table.resize(a_size);
 		for (int i = 0; i < a_size - 1; i++) {
 			m_diff_table[i] = a_tableptr[i + 1] - a_tableptr[i];
 		}
 		/* If table is periodic, the last difference wraps around */
-		if (a_isPeriodic)
-			m_diff_table[m_size - 1] = m_table[0] - m_table[m_size - 1];
-		else
-			m_diff_table[m_size - 1] = 0.0;
+		m_diff_table[m_size - 1] = a_isPeriodic ? m_table[0] - m_table[m_size - 1] : 0.0;
 	}
 
 	double LookupTable::getlinear(double phase) const {
@@ -75,23 +72,23 @@ namespace syn
 		LookupTable(a_table, a_size, 0, 1, true),
 		m_blimp_table_online(a_blimp_table_online),
 		m_blimp_table_offline(a_blimp_table_offline),
-		m_resampled_sizes(nullptr),
-		m_resampled_tables(nullptr),
-		m_num_resampled_tables(0) {
-		resample_tables(a_blimp_table_offline);
+		m_resampled_sizes(0),
+		m_resampled_tables(0),
+		m_num_resampled_tables(0) 
+	{
+		resample_tables();
 	}
 
-	void ResampledLookupTable::resample_tables(const BlimpTable& blimp_table_offline) {
+	void ResampledLookupTable::resample_tables() {
 		/* Construct resampled tables at ratios of powers of two */
 		m_num_resampled_tables = MAX<double>(1, log2(m_size) - 3);
-		m_resampled_tables = static_cast<double**>(malloc(sizeof(double*) * m_num_resampled_tables));
-		m_resampled_sizes = new int[m_num_resampled_tables];
+		m_resampled_sizes.resize(m_num_resampled_tables);
+		m_resampled_tables.resize(m_num_resampled_tables);
 		double currsize = m_size;
 		for (int i = 0; i < m_num_resampled_tables; i++) {
-			int table_size = static_cast<size_t>(currsize);
-			m_resampled_tables[i] = static_cast<double*>(malloc(sizeof(double) * table_size));
 			m_resampled_sizes[i] = currsize;
-			resample_table(m_table, m_size, m_resampled_tables[i], currsize, blimp_table_offline);
+			m_resampled_tables[i].resize(currsize);
+			resample_table(m_table, m_size, &m_resampled_tables[i][0], m_resampled_sizes[i], m_blimp_table_offline);
 			currsize *= 0.5;
 		}
 	}
@@ -109,7 +106,42 @@ namespace syn
 				min_size_diff_index = i;
 			}
 		}
-		return getresampled_single(m_resampled_tables[min_size_diff_index], m_resampled_sizes[min_size_diff_index], phase, period, m_blimp_table_online);
+		return getresampled_single(&m_resampled_tables[min_size_diff_index][0], m_resampled_sizes[min_size_diff_index], phase, period, m_blimp_table_online);
+	}
+
+	BlimpTable& lut_blimp_table_offline() {
+		static BlimpTable* table = new BlimpTable(BLIMP_TABLE_OFFLINE, 263169, 257, 2048);
+		return *table;
+	}
+
+	BlimpTable& lut_blimp_table_online() {
+		static BlimpTable* table = new BlimpTable(BLIMP_TABLE_ONLINE, 11265, 11, 2048);
+		return *table;
+	}
+
+	LookupTable& lut_pitch_table() {
+		static LookupTable* table = new LookupTable(PITCH_TABLE, 1024, -128, 128, false);
+		return *table;
+	}
+
+	ResampledLookupTable& lut_bl_saw_table() {
+		static ResampledLookupTable* table = new ResampledLookupTable(BL_SAW_TABLE, 8193, lut_blimp_table_online(), lut_blimp_table_offline());
+		return *table;
+	}
+
+	ResampledLookupTable& lut_bl_square_table() {
+		static ResampledLookupTable* table = new ResampledLookupTable(BL_SQUARE_TABLE, 8193, lut_blimp_table_online(), lut_blimp_table_offline());
+		return *table;
+	}
+
+	ResampledLookupTable& lut_bl_tri_table() {
+		static ResampledLookupTable* table = new ResampledLookupTable(BL_TRI_TABLE, 8193, lut_blimp_table_online(), lut_blimp_table_offline());
+		return *table;
+	}
+
+	LookupTable& lut_sin_table() {
+		static LookupTable* table = new LookupTable(SIN_TABLE, 1024, 0, 1, true);
+		return *table;
 	}
 
 	void resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table, bool normalize) {
@@ -170,7 +202,7 @@ namespace syn
 			output += bkwd_filt_sample * table[bkwd_table_index--];
 			bkwd_filt_phase += blimp_step;
 			filt_sum += bkwd_filt_sample;
-	}
+		}
 
 		// Forward pass
 		double	fwd_filt_phase = blimp_step - offset;

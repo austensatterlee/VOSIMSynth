@@ -54,7 +54,7 @@ namespace syn
 
 		if (curr_pulse_num < m_num_pulses) {
 			double pulse_phase = unwrapped_pulse_phase - curr_pulse_num;
-			double pulseval = lut_sin.getlinear(pulse_phase);
+			double pulseval = lut_sin_table().getlinear(pulse_phase);
 
 			double curr_pulse_gain = 1.0;
 			while (curr_pulse_num--) {
@@ -115,8 +115,8 @@ namespace syn
 		formant_phase = WRAP(formant_phase, 1.0);
 		double cos_phase = CLAMP<double>(m_phase * cos_width, 0, 1);
 
-		double sinval = lut_sin.getlinear(formant_phase + 0.5);
-		double cosval = 0.5 * (1 + lut_sin.getlinear(cos_phase - 0.25));
+		double sinval = lut_sin_table().getlinear(formant_phase + 0.5);
+		double cosval = 0.5 * (1 + lut_sin_table().getlinear(cos_phase - 0.25));
 		double output = sinval * cosval * sqrt(cos_width);
 		setOutputChannel_(oOut, m_gain * output + m_bias);
 	}
