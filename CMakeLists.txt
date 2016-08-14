@@ -66,7 +66,7 @@ if(MSVC)
   # /fp:fast floating point model       /Qpar enable parallel code gen
   # /Oy omit frame pointers             /GT fiber-safe optimizations
   list(APPEND MSVC_REL /Ox /GL /Ob2 /Oi /Ot /Oy /arch:SSE2 /fp:fast /fp:except- /Qpar /GT)
-  list(APPEND MSVC_RDEB /Ob2 /Oi /Oy /arch:SSE2 /fp:fast /Qpar /GT)
+  list(APPEND MSVC_RDEB /Ox /Ob2 /Oi /Ot /Oy /arch:SSE2 /fp:fast /Qpar /GT)
   add_compile_options("$<$<CONFIG:Release>:${MSVC_REL}>")
   add_compile_options("$<$<CONFIG:RelWithDebInfo>:${MSVC_RDEB}>")
   add_compile_options("$<$<CONFIG:Debug>:${MSVC_DEB}>")

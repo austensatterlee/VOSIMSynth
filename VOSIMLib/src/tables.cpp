@@ -33,7 +33,6 @@ namespace syn
 	{
 		m_norm_bias = a_input_min;
 		m_norm_scale = 1. / (a_input_max - a_input_min);
-		m_normalizePhase = !(a_input_min == 0 && a_input_max == 1);
 		/* Construct difference table for linear interpolation */
 		m_diff_table.resize(a_size);
 		for (int i = 0; i < a_size - 1; i++) {
@@ -44,9 +43,7 @@ namespace syn
 	}
 
 	double LookupTable::getlinear(double phase) const {
-		if (m_normalizePhase) {
-			phase = (phase - m_norm_bias) * m_norm_scale;
-		}
+		phase = (phase - m_norm_bias) * m_norm_scale;
 		if (m_isperiodic) {
 			phase = WRAP(phase, 1.0);
 			phase *= m_size;
@@ -57,10 +54,7 @@ namespace syn
 		}
 
 		int int_index = int(phase);
-		double frac_index = phase - int_index;
-		double val1 = m_table[int_index];
-		double diff = m_diff_table[int_index];
-		return val1 + diff * frac_index;
+		return m_table[int_index] + m_diff_table[int_index] * (phase - int_index);
 	}
 
 	double LookupTable::getraw(int index) const {
@@ -81,7 +75,7 @@ namespace syn
 
 	void ResampledLookupTable::resample_tables() {
 		/* Construct resampled tables at ratios of powers of two */
-		m_num_resampled_tables = MAX<double>(1, log2(m_size) - 3);
+		m_num_resampled_tables = MAX<double>(1, log2(m_size) - 2);
 		m_resampled_sizes.resize(m_num_resampled_tables);
 		m_resampled_tables.resize(m_num_resampled_tables);
 		double currsize = m_size;
@@ -107,41 +101,6 @@ namespace syn
 			}
 		}
 		return getresampled_single(&m_resampled_tables[min_size_diff_index][0], m_resampled_sizes[min_size_diff_index], phase, period, m_blimp_table_online);
-	}
-
-	BlimpTable& lut_blimp_table_offline() {
-		static BlimpTable* table = new BlimpTable(BLIMP_TABLE_OFFLINE, 263169, 257, 2048);
-		return *table;
-	}
-
-	BlimpTable& lut_blimp_table_online() {
-		static BlimpTable* table = new BlimpTable(BLIMP_TABLE_ONLINE, 11265, 11, 2048);
-		return *table;
-	}
-
-	LookupTable& lut_pitch_table() {
-		static LookupTable* table = new LookupTable(PITCH_TABLE, 1024, -128, 128, false);
-		return *table;
-	}
-
-	ResampledLookupTable& lut_bl_saw_table() {
-		static ResampledLookupTable* table = new ResampledLookupTable(BL_SAW_TABLE, 8193, lut_blimp_table_online(), lut_blimp_table_offline());
-		return *table;
-	}
-
-	ResampledLookupTable& lut_bl_square_table() {
-		static ResampledLookupTable* table = new ResampledLookupTable(BL_SQUARE_TABLE, 8193, lut_blimp_table_online(), lut_blimp_table_offline());
-		return *table;
-	}
-
-	ResampledLookupTable& lut_bl_tri_table() {
-		static ResampledLookupTable* table = new ResampledLookupTable(BL_TRI_TABLE, 8193, lut_blimp_table_online(), lut_blimp_table_offline());
-		return *table;
-	}
-
-	LookupTable& lut_sin_table() {
-		static LookupTable* table = new LookupTable(SIN_TABLE, 1024, 0, 1, true);
-		return *table;
 	}
 
 	void resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table, bool normalize) {
@@ -190,11 +149,12 @@ namespace syn
 		// Backward pass
 		double	bkwd_filt_phase = offset;
 		int		bkwd_table_index = index;
+		double bkwd_filt_sample;
 		while (bkwd_filt_phase < blimp_table.size()) {
 #ifdef DO_LERP_FOR_SINC
-			double bkwd_filt_sample = blimp_table.getlinear(bkwd_filt_phase / blimp_table.size());
+			bkwd_filt_sample = blimp_table.getlinear(bkwd_filt_phase / blimp_table.size());
 #else
-			double bkwd_filt_sample = blimp_table.getraw(static_cast<int>(bkwd_filt_phase));
+			bkwd_filt_sample = blimp_table.getraw(static_cast<int>(bkwd_filt_phase));
 #endif
 			if (bkwd_table_index < 0) {
 				bkwd_table_index = size - 1;
@@ -207,11 +167,12 @@ namespace syn
 		// Forward pass
 		double	fwd_filt_phase = blimp_step - offset;
 		int		fwd_table_index = index + 1;
+		double fwd_filt_sample;
 		while (fwd_filt_phase < blimp_table.size()) {
 #ifdef DO_LERP_FOR_SINC
-			double fwd_filt_sample = blimp_table.getlinear(fwd_filt_phase / blimp_table.size());
+			fwd_filt_sample = blimp_table.getlinear(fwd_filt_phase / blimp_table.size());
 #else
-			double fwd_filt_sample = blimp_table.getraw(static_cast<int>(fwd_filt_phase));
+			fwd_filt_sample = blimp_table.getraw(static_cast<int>(fwd_filt_phase));
 #endif
 			if (fwd_table_index >= size) {
 				fwd_table_index = 0;

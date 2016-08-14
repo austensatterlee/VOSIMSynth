@@ -4,8 +4,9 @@ from scipy import signal as ss
 import re
 import os,sys
 
-TABLEDATA_FILE = "src/table_data.cpp"
-TABLEHDR_FILE = "include/tables.h"
+LUT_TABLEDATA_FILE = "src/table_data.cpp"
+LUT_TABLEHDR_FILE = "include/lut_tables.h"
+LUT_TABLESRC_FILE = "src/lut_tables.cpp"
 
 def RealCepstrum(n,signal):
     freq = fft.fft(signal)
@@ -517,7 +518,8 @@ def main(pargs):
     # Generate lookup table structures
     tabledata_def = ""
     tabledata_decl = ""
-    tableobj_def = ""
+    tableobjfuncs_decl = ""
+    tableobjfuncs_def = ""
     for name,struct in tables:
         tabledata_def += MakeTableStr(struct['data'],name)
         tabledata_decl += "extern double {}[];\n".format(name)
@@ -536,42 +538,57 @@ def main(pargs):
                 val = "true" if val else "false"
             currargs.append("{}".format(val))
         tableargs = "{}, ".format(name)+", ".join(currargs)
-        tableobj_currdef = """
-inline {0:}& lut_{1:}(){{
-    static {0:} table({2:});
-    return table;
-}}
-""".format(classname,name.lower(),tableargs);
-        tableobj_def += tableobj_currdef
+        tableobjfunc_currdecl = """{0:}& lut_{1:}();\n""".format(classname,name.lower())
+        tableobjfunc_currdef = """{0:}& lut_{1:}(){{ static {0:} table({2:}); return table; }}\n""".format(classname,name.lower(),tableargs)
+        tableobjfuncs_decl += tableobjfunc_currdecl
+        tableobjfuncs_def += tableobjfunc_currdef
 
     # Backup old table data file
-    if os.path.isfile(TABLEDATA_FILE):
+    if os.path.isfile(LUT_TABLEDATA_FILE):
         if v:
-            print "Backing up old {}...".format(TABLEDATA_FILE)
-        old_table_data = open(TABLEDATA_FILE,'r').read()
-        with open(TABLEDATA_FILE+'.bk','w') as fp:
+            print "Backing up old {}...".format(LUT_TABLEDATA_FILE)
+        old_table_data = open(LUT_TABLEDATA_FILE,'r').read()
+        with open(LUT_TABLEDATA_FILE+'.bk','w') as fp:
             fp.write(old_table_data)
 
     # Write new table data file
     if v:
-        print "Writing new {}...".format(TABLEDATA_FILE)
-    with open(TABLEDATA_FILE,'w') as fp:
+        print "Writing new {}...".format(LUT_TABLEDATA_FILE)
+    with open(LUT_TABLEDATA_FILE,'w') as fp:
         fp.write(tabledata_def)
 
     # Back up old table header file
-    if os.path.isfile(TABLEHDR_FILE):
+    old_code = ""
+    if os.path.isfile(LUT_TABLEHDR_FILE):
         if v:
-            print "Backing up old {}...".format(TABLEHDR_FILE)
-        old_code = open('{}'.format(TABLEHDR_FILE),'r').read()
-        with open('{}.bk'.format(TABLEHDR_FILE),'w') as fp:
+            print "Backing up old {}...".format(LUT_TABLEHDR_FILE)
+        old_code = open('{}'.format(LUT_TABLEHDR_FILE),'r').read()
+        with open('{}.bk'.format(LUT_TABLEHDR_FILE),'w') as fp:
             fp.write(old_code)
 
     if v:
-        print "Writing new {}...".format(TABLEHDR_FILE)
-    new_code = RewriteAutomatedSection(old_code,'lut_defs', tableobj_def)
+        print "Writing new {}...".format(LUT_TABLEHDR_FILE)
+
+    new_code = RewriteAutomatedSection(old_code,'lut_decl', tableobjfuncs_decl)
     new_code = RewriteAutomatedSection(new_code,'macro_defs', macrodefine_code)
     new_code = RewriteAutomatedSection(new_code,'table_decl', tabledata_decl)
-    with open(TABLEHDR_FILE, 'w') as fp:
+    with open(LUT_TABLEHDR_FILE, 'w') as fp:
+        fp.write(new_code)
+
+    # Back up old table src file
+    old_code = ""
+    if os.path.isfile(LUT_TABLESRC_FILE):
+        if v:
+            print "Backing up old {}...".format(LUT_TABLESRC_FILE)
+        old_code = open('{}'.format(LUT_TABLESRC_FILE),'r').read()
+        with open('{}.bk'.format(LUT_TABLESRC_FILE),'w') as fp:
+            fp.write(old_code)
+
+    if v:
+        print "Writing new {}...".format(LUT_TABLESRC_FILE)
+
+    new_code = RewriteAutomatedSection(old_code, 'lut_defs', tableobjfuncs_def)
+    with open(LUT_TABLESRC_FILE, 'w') as fp:
         fp.write(new_code)
 
 if __name__=="__main__":

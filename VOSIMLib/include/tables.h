@@ -20,22 +20,10 @@
 #ifndef __TABLES__
 #define __TABLES__
 
-#define DO_LERP_FOR_SINC
+//#define DO_LERP_FOR_SINC
 #include <vector>
-#include <memory>
+#include "lut_tables.h"
 
-/*::macro_defs::*/
-/*::/macro_defs::*/
-
-/*::table_decl::*/
-extern double BLIMP_TABLE_OFFLINE[];
-extern double BLIMP_TABLE_ONLINE[];
-extern double PITCH_TABLE[];
-extern double BL_SAW_TABLE[];
-extern double BL_SQUARE_TABLE[];
-extern double BL_TRI_TABLE[];
-extern double SIN_TABLE[];
-/*::/table_decl::*/
 namespace syn
 {
 	class LookupTable
@@ -61,7 +49,7 @@ namespace syn
 	protected:
 		int m_size;
 		double m_input_min, m_input_max;
-		bool m_normalizePhase, m_isperiodic;
+		bool m_isperiodic;
 		double m_norm_bias;
 		double m_norm_scale;
 		const double* m_table;
@@ -121,23 +109,6 @@ namespace syn
 		const BlimpTable& m_blimp_table_online;
 		const BlimpTable& m_blimp_table_offline;
 	};
-
-	/*::lut_defs::*/
-
-	BlimpTable& lut_blimp_table_offline();
-
-	BlimpTable& lut_blimp_table_online();
-
-	LookupTable& lut_pitch_table();
-
-	ResampledLookupTable& lut_bl_saw_table();
-
-	ResampledLookupTable& lut_bl_square_table();
-
-	ResampledLookupTable& lut_bl_tri_table();
-
-	LookupTable& lut_sin_table();
-	/*::/lut_defs::*/
 
 	/**
 	 * Retrieve a single sample from table as if it were resampled to have
