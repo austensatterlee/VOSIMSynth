@@ -62,7 +62,7 @@ namespace syn
 
 	public:
 		VoiceManager(UnitFactory* a_factory) :
-			m_queuedActions(MAX_VOICEMANAGER_MSG_QUEUE_SIZE),
+			m_queuedActions{ MAX_VOICEMANAGER_MSG_QUEUE_SIZE },
 			m_numActiveVoices(0),
 			m_maxVoices(0),
 			m_bufferSize(1),
@@ -70,15 +70,11 @@ namespace syn
 			m_voiceStack(0),
 			m_idleVoiceStack(0),
 			m_garbageList(0),
-			m_instrument(new Circuit("main")),
+			m_instrument{ "main" },
 			m_factory(a_factory)
 		{ };
 
-		~VoiceManager() {
-			delete m_instrument;
-			for(int i=0;i<m_allVoices.size();i++) {
-				delete m_allVoices[i];
-			}			
+		virtual ~VoiceManager() {
 		}
 
 		void MSFASTCALL tick(const double* a_left_input, const double* a_right_input, double* a_left_output, double* a_right_output) GCCFASTCALL;
@@ -130,15 +126,13 @@ namespace syn
 		Unit& getUnit(int a_id, int a_voiceId = -1);
 		const Unit& getUnit(int a_id, int a_voiceId = -1) const;
 
-		int getNumUnits() const;
-
 		Circuit* getPrototypeCircuit();
 		const Circuit* getPrototypeCircuit() const;
 
 		Circuit* getVoiceCircuit(int a_voiceId);
 		const Circuit* getVoiceCircuit(int a_voiceId) const;
 
-		void setPrototypeCircuit(const Circuit* a_circ);
+		void setPrototypeCircuit(const Circuit& a_circ);
 
 	private:
 		/**
@@ -172,8 +166,8 @@ namespace syn
 		VoiceIndexList m_voiceStack;
 		VoiceIndexList m_idleVoiceStack;
 		VoiceIndexList m_garbageList; /// pre-allocated storage for collecting idle voices during audio processing
-		vector<Circuit*> m_allVoices;
-		Circuit* m_instrument;
+		vector<Circuit> m_allVoices;
+		Circuit m_instrument;
 		UnitFactory* m_factory;
 	};
 }

@@ -64,8 +64,6 @@ public:
 
 	void OnActivate(bool active) override;
 
-	bool isTransportRunning();
-
 	int getTickCount() const {
 		return m_tickCount;
 	}

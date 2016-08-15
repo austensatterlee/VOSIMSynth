@@ -30,18 +30,18 @@ namespace syn
 			m_voiceMap[a_note].unsafe_resize(m_maxVoices);
 		}
 		m_voiceMap[a_note].push_right(vind);
-		m_allVoices[vind]->noteOn(a_note, a_velocity);
+		m_allVoices[vind].noteOn(a_note, a_velocity);
 		m_numActiveVoices++;
 		return vind;
 	}
 
 	void VoiceManager::_makeIdle(int a_voiceIndex) {
 		if (m_numActiveVoices > 0) {
-			Circuit* voice = m_allVoices[a_voiceIndex];
-			int note = voice->getNote();
-			int vel = voice->getVelocity();
+			Circuit& voice = m_allVoices[a_voiceIndex];
+			int note = voice.getNote();
+			int vel = voice.getVelocity();
 			if (m_voiceMap.find(note) != m_voiceMap.end()) {
-				voice->noteOff(note, vel);
+				voice.noteOff(note, vel);
 				m_voiceMap[note].remove(a_voiceIndex);
 				m_voiceStack.remove(a_voiceIndex);
 				m_idleVoiceStack.push_right(a_voiceIndex);
@@ -74,7 +74,7 @@ namespace syn
 			int vind;
 			unsigned off = 0;
 			while (m_voiceMap[a_noteNumber].peek(vind, off++)) {
-				m_allVoices[vind]->noteOff(a_noteNumber, a_velocity);
+				m_allVoices[vind].noteOff(a_noteNumber, a_velocity);
 			}
 		}
 	}
@@ -82,9 +82,9 @@ namespace syn
 	void VoiceManager::sendControlChange(int a_cc, double a_value) {
 		// Send control change to all voices
 		for (int i = 0; i < m_maxVoices; i++) {
-			m_allVoices[i]->notifyMidiControlChange(a_cc, a_value);
+			m_allVoices[i].notifyMidiControlChange(a_cc, a_value);
 		}
-		m_instrument->notifyMidiControlChange(a_cc, a_value);
+		m_instrument.notifyMidiControlChange(a_cc, a_value);
 	}
 
 	void VoiceManager::setMaxVoices(unsigned a_newMax) {
@@ -109,18 +109,17 @@ namespace syn
 		}
 
 		while (m_allVoices.size() > a_newMax) {
-			delete m_allVoices.back();
 			m_allVoices.pop_back();
 		}
 
 		for (unsigned i = 0; i < m_allVoices.size(); i++) {
-			m_allVoices[i] = static_cast<Circuit*>(m_instrument->clone());
+			m_allVoices[i] = { m_instrument };
 			m_idleVoiceStack.push_right(i);
 		}
 
 		while (m_allVoices.size() < a_newMax) {
 			m_idleVoiceStack.push_right(m_allVoices.size());
-			m_allVoices.push_back(static_cast<Circuit*>(m_instrument->clone()));
+			m_allVoices.push_back({ m_instrument });
 		}
 		m_numActiveVoices = 0;
 	}
@@ -132,8 +131,8 @@ namespace syn
 		int voiceInd;
 		for (int i = 0; i < nVoices; i++) {
 			m_voiceStack.peek(voiceInd, i);
-			Circuit* voice = m_allVoices[voiceInd];
-			if (!voice->isActive()) {
+			Circuit& voice = m_allVoices[voiceInd];
+			if (!voice.isActive()) {
 				m_garbageList.push_right(voiceInd);
 			}
 		}
@@ -152,13 +151,13 @@ namespace syn
 
 		for (int i = 0; i < nVoices; i++) {
 			m_voiceStack.peek(voiceInd, i);
-			Circuit* voice = m_allVoices[voiceInd];
+			Circuit& voice = m_allVoices[voiceInd];
 			for (int j = 0; j < bufsize; j++) {
-				voice->connectInput(0, a_left_input + j);
-				voice->connectInput(1, a_right_input + j);
-				voice->tick();
-				a_left_output[j] += voice->getOutputValue(0);
-				a_right_output[j] += voice->getOutputValue(1);
+				voice.connectInput(0, a_left_input + j);
+				voice.connectInput(1, a_right_input + j);
+				voice.tick();
+				a_left_output[j] += voice.getOutputValue(0);
+				a_right_output[j] += voice.getOutputValue(1);
 			}
 		}
 
@@ -170,7 +169,7 @@ namespace syn
 			VoiceMap::const_iterator it;
 			int voice;
 			for (it = m_voiceMap.cbegin(); it != m_voiceMap.cend(); ++it) {
-				if (it->second.peek(voice) && m_allVoices[voice]->isActive()) {
+				if (it->second.peek(voice) && m_allVoices[voice].isActive()) {
 					return voice;
 				}
 			}
@@ -201,7 +200,7 @@ namespace syn
 			VoiceMap::const_iterator it;
 			int voice;
 			for (it = m_voiceMap.cbegin(); it != m_voiceMap.cend(); ++it) {
-				if (it->second.peek(voice) && m_allVoices[voice]->isActive()) {
+				if (it->second.peek(voice) && m_allVoices[voice].isActive()) {
 					return voice;
 				}
 			}
@@ -220,7 +219,7 @@ namespace syn
 			unsigned off = 0;
 			int vnum;
 			while (vlist.peek(vnum, off++)) {
-				if (m_allVoices[vnum]->isActive())
+				if (m_allVoices[vnum].isActive())
 					voices.push_back(vnum);
 			}
 		}
@@ -255,63 +254,54 @@ namespace syn
 	void VoiceManager::_processAction(RTMessage* a_msg) {
 		// Apply action to all voices
 		for (int i = 0; i < m_maxVoices; i++) {
-			a_msg->action(m_allVoices[i], false, &a_msg->data);
+			a_msg->action(&m_allVoices[i], false, &a_msg->data);
 		}
-		a_msg->action(m_instrument, true, &a_msg->data);
+		a_msg->action(&m_instrument, true, &a_msg->data);
 	}
 
 	Circuit* VoiceManager::getPrototypeCircuit() {
-		return m_instrument;
+		return &m_instrument;
 	}
 
 	const Circuit* VoiceManager::getPrototypeCircuit() const {
-		return m_instrument;
+		return &m_instrument;
 	}
 
 	Circuit* VoiceManager::getVoiceCircuit(int a_voiceId)
 	{
-		return m_allVoices[a_voiceId];
+		return &m_allVoices[a_voiceId];
 	}
 
 	const Circuit* VoiceManager::getVoiceCircuit(int a_voiceId) const
 	{
-		return m_allVoices[a_voiceId];
+		return &m_allVoices[a_voiceId];
 	}
 
-	void VoiceManager::setPrototypeCircuit(const Circuit* a_circ) {
-		double fs = m_instrument->getFs();
-		double tempo = m_instrument->getTempo();
-		delete m_instrument;
-		m_instrument = static_cast<Circuit*>(a_circ->clone());
-		m_instrument->setFs(fs);
-		m_instrument->setTempo(tempo);
+	void VoiceManager::setPrototypeCircuit(const Circuit& a_circ) {
+		m_instrument = Circuit{ a_circ };
 		setMaxVoices(getMaxVoices());
-	}
-
-	int VoiceManager::getNumUnits() const {
-		return m_instrument->getNumUnits();
 	}
 
 	Unit& VoiceManager::getUnit(int a_id, int a_voiceInd) {
 		if (a_voiceInd >= 0) {
-			return m_allVoices[a_voiceInd]->getUnit(a_id);
+			return m_allVoices[a_voiceInd].getUnit(a_id);
 		}
-		return m_instrument->getUnit(a_id);
+		return m_instrument.getUnit(a_id);
 	}
 
 	const Unit& VoiceManager::getUnit(int a_id, int a_voiceInd) const {
 		if (a_voiceInd >= 0) {
-			return m_allVoices[a_voiceInd]->getUnit(a_id);
+			return m_allVoices[a_voiceInd].getUnit(a_id);
 		}
-		return m_instrument->getUnit(a_id);
+		return m_instrument.getUnit(a_id);
 	}
 
 	void VoiceManager::setFs(double a_newFs) {
 		// Apply new sampling frequency to all voices
 		for (int i = 0; i < m_maxVoices; i++) {
-			m_allVoices[i]->setFs(a_newFs);
+			m_allVoices[i].setFs(a_newFs);
 		}
-		m_instrument->setFs(a_newFs);
+		m_instrument.setFs(a_newFs);
 	}
 
 	void VoiceManager::setBufferSize(int a_blockSize) {
@@ -321,8 +311,8 @@ namespace syn
 	void VoiceManager::setTempo(double a_newTempo) {
 		// Apply new tempo to all voices
 		for (int i = 0; i < m_maxVoices; i++) {
-			m_allVoices[i]->setTempo(a_newTempo);
+			m_allVoices[i].setTempo(a_newTempo);
 		}
-		m_instrument->setTempo(a_newTempo);
+		m_instrument.setTempo(a_newTempo);
 	}
 }

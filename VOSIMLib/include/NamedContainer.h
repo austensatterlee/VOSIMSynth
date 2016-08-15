@@ -103,6 +103,9 @@ namespace syn
 		T& MSFASTCALL operator[](int a_itemIndex) GCCFASTCALL;
 		const T& MSFASTCALL operator[](int a_itemIndex) GCCFASTCALL const;
 
+		T& MSFASTCALL getByIndex(int a_itemIndex) GCCFASTCALL;
+		const T& MSFASTCALL getByIndex(int a_itemIndex) GCCFASTCALL const;
+
 		/**
 		 * Verifies if an item is in the container, either by its name, index, or a reference to the item itself.
 		 * \returns True if the item exists, false otherwise.
@@ -188,6 +191,7 @@ namespace syn
 		if (index == -1)
 			return false;
 		m_existances[index] = false;
+		m_names[index] = "";
 
 		// update index list
 		for(int i=0;i<m_size;i++) {
@@ -218,13 +222,23 @@ namespace syn
 	}
 
 	template <typename T, int MAXSIZE>
-	T& NamedContainer<T, MAXSIZE>::operator[](int a_itemIndex) {
-		return m_data[a_itemIndex];
+	T& NamedContainer<T, MAXSIZE>::operator[](int a_itemId) {
+		return m_data[a_itemId];
 	}
 	
 	template <typename T, int MAXSIZE>
-	const T& NamedContainer<T, MAXSIZE>::operator[](int a_itemIndex) const {
-		return m_data[a_itemIndex];
+	const T& NamedContainer<T, MAXSIZE>::operator[](int a_itemId) const {
+		return m_data[a_itemId];
+	}
+
+	template <typename T, int MAXSIZE>
+	T& NamedContainer<T, MAXSIZE>::getByIndex(int a_itemIndex) {
+		return m_data[m_indices[a_itemIndex]];
+	}
+
+	template <typename T, int MAXSIZE>
+	const T& NamedContainer<T, MAXSIZE>::getByIndex(int a_itemIndex) const {
+		return m_data[m_indices[a_itemIndex]];
 	}
 
 	template <typename T, int MAXSIZE>
@@ -257,15 +271,15 @@ namespace syn
 	}
 
 	template <typename T, int MAXSIZE>
-	int NamedContainer<T, MAXSIZE>::getItemIndex(int a_itemIndex) const {
-		return m_existances[a_itemIndex] ? a_itemIndex : -1;
+	int NamedContainer<T, MAXSIZE>::getItemIndex(int a_itemId) const {
+		return m_existances[a_itemId] ? a_itemId : -1;
 	}
 
 	template <typename T, int MAXSIZE>
 	int NamedContainer<T, MAXSIZE>::getItemIndex(const string& a_name) const {
 		for (int i = 0; i < m_size; i++) {
-			if (m_existances[i] && m_names[i] == a_name) 
-				return i;			
+			if (m_names[m_indices[i]] == a_name)
+				return m_indices[i];			
 		}
 		return -1;
 	}
@@ -273,8 +287,8 @@ namespace syn
 	template <typename T, int MAXSIZE>
 	int NamedContainer<T, MAXSIZE>::getItemIndex(const T& a_item) const {
 		for (int i = 0; i < m_size; i++) {
-			if (m_existances[i] && m_data[i] == a_item)
-				return i;
+			if (m_data[m_indices[i]] == a_item)
+				return m_indices[i];
 		}
 		return -1;
 	}

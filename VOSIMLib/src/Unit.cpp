@@ -181,20 +181,26 @@ namespace syn
 		return retval;
 	}
 
+	void Unit::copyFrom_(const Unit& a_other) {
+		// Copy name
+		m_name = a_other.m_name;
+		// Copy midi status
+		m_midiData = a_other.m_midiData;
+		// Copy audio config data
+		setFs(a_other.m_audioConfig.fs);
+		setTempo(a_other.m_audioConfig.tempo);
+		// Copy parameter values
+		const string* paramNames = m_parameters.getNames();
+		for (int i = 0; i < m_parameters.size(); i++) {
+			const string& paramName = paramNames[i];
+			if (a_other.hasParameter(paramName))
+				m_parameters[paramName].setFromString(a_other.m_parameters[paramName].getValueString());
+		}
+	}
+
 	Unit* Unit::clone() const {
 		Unit* unit = _clone();
-		// Copy name
-		unit->m_name = m_name;
-		// Copy midi status
-		unit->m_midiData = m_midiData;
-		// Copy parameter values
-		const int* indices = m_parameters.getIndices();
-		for (int i = 0; i < m_parameters.size(); i++) {
-			unit->m_parameters[indices[i]].setFromString(m_parameters[indices[i]].getValueString());
-		}
-		// Copy audio config data
-		unit->setFs(m_audioConfig.fs);
-		unit->setTempo(m_audioConfig.tempo);
+		unit->copyFrom_(*this);
 		return unit;
 	}
 

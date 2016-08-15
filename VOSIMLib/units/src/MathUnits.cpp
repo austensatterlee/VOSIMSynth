@@ -43,8 +43,8 @@ double syn::BLIntegrator::process(double a_input) {
 syn::DCRemoverUnit::DCRemoverUnit(const string& a_name) :
 	Unit(a_name),
 	m_pAlpha(addParameter_(UnitParameter("hp", 0.0, 1.0, 0.995))),
-	m_lastInput(0.0),
-	m_lastOutput(0.0) {
+	m_lastOutput(0.0),
+	m_lastInput(0.0) {
 	addInput_("in");
 	addOutput_("out");
 }

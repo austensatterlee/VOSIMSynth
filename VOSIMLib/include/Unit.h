@@ -246,7 +246,6 @@ namespace syn
 		* \returns True if the connection existed, false if it was already disconnected.
 		*/
 		bool disconnectInput(int a_toInputPort);
-
 		const string& getName() const;
 
 		unsigned int getClassIdentifier() const;
@@ -315,6 +314,8 @@ namespace syn
 
 		int addParameter_(const UnitParameter& a_param);
 		bool addParameter_(int a_id, const UnitParameter& a_param);
+
+		void copyFrom_(const Unit& a_other);
 
 	private:
 		virtual inline string _getClassName() const = 0;

@@ -31,6 +31,7 @@ namespace syn
 	Circuit::Circuit(const string& a_name) :
 		Unit(a_name)
 	{
+		m_procGraph.fill(nullptr);
 		InputUnit* inputUnit = new InputUnit("inputs");
 		OutputUnit* outputUnit = new OutputUnit("outputs");
 		m_units.add("inputs", inputUnit);
@@ -56,6 +57,34 @@ namespace syn
 			const ConnectionRecord& rec = a_other.m_connectionRecords[i];
 			connectInternal(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
 		}
+		copyFrom_(a_other);
+	}
+
+	Circuit& Circuit::operator=(const Circuit& a_other) {
+		if (this != &a_other) {
+			// delete old units
+			const int* unitIndices = m_units.getIndices();
+			for (int i = 0; i<m_units.size();) {
+				Unit* unit = m_units[unitIndices[i]];
+				if (unit != m_inputUnit && unit != m_outputUnit)
+					removeUnit(unit);
+				else
+					i++;
+			}
+			// copy new units
+			const int* otherUnitIndices = a_other.m_units.getIndices();
+			for (int i = 0; i < a_other.m_units.size(); i++) {
+				Unit* unit = a_other.m_units[otherUnitIndices[i]];
+				if (unit != a_other.m_inputUnit && unit != a_other.m_outputUnit)
+					addUnit(a_other.m_units[otherUnitIndices[i]]->clone(), otherUnitIndices[i]);
+			}
+			for (int i = 0; i < a_other.m_connectionRecords.size(); i++) {
+				const ConnectionRecord& rec = a_other.m_connectionRecords[i];
+				connectInternal(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
+			}
+			copyFrom_(a_other);
+		}
+		return *this;
 	}
 
 	Circuit::~Circuit() {
@@ -66,8 +95,8 @@ namespace syn
 
 	void Circuit::process_() {
 		// tick units in processing graph
-		for (Unit* unit : m_procGraph) {
-			unit->tick();
+		for (Unit** unit = m_procGraph.data(); *unit!=nullptr; unit++ ) {
+			(*unit)->tick();
 		}
 
 		/* Push internally connected output signals to circuit output ports */
@@ -115,7 +144,6 @@ namespace syn
 	void Circuit::_recomputeGraph()
 	{
 		list<int> sinks;
-		m_procGraph.clear();
 		// Find sinks
 		const int* unitIndices = m_units.getIndices();
 		for (int i = 0; i < m_units.size(); i++) {
@@ -126,6 +154,11 @@ namespace syn
 			}
 		}
 		sinks.push_back(getOutputUnitId());
+
+		// reset proc graph
+		m_procGraph.fill(nullptr);
+
+		Unit** procGraph_ptr = m_procGraph.data();
 
 		unordered_set<int> permClosedSet;
 		unordered_set<int> tempClosedSet;
@@ -147,7 +180,7 @@ namespace syn
 			}
 			permClosedSet.insert(unitId);
 			tempClosedSet.erase(unitId);
-			m_procGraph.push_back(m_units[unitId]);
+			*(procGraph_ptr++) = m_units[unitId];
 		};
 		// DFS
 		while (!sinks.empty()) {
@@ -158,8 +191,8 @@ namespace syn
 	}
 
 	bool Circuit::isActive() const {
-		for (Unit* unit : m_procGraph) {
-			if (unit->isActive())
+		for (Unit* const* unit = m_procGraph.data(); *unit != nullptr; unit++) {
+			if ((*unit)->isActive())
 				return true;
 		}
 		return false;
@@ -244,9 +277,9 @@ namespace syn
 		return m_units.size();
 	}
 
-	const list<Unit*>& Circuit::getProcGraph() const
+	Unit* const* Circuit::getProcGraph() const
 	{
-		return m_procGraph;
+		return m_procGraph.data();
 	}
 
 	void Circuit::notifyMidiControlChange(int a_cc, double a_value) {

@@ -102,6 +102,8 @@ namespace syn
 
 		Circuit(const Circuit& a_other);
 
+		Circuit& operator=(const Circuit& a_other);
+
 		virtual ~Circuit();
 
 		/**
@@ -122,7 +124,7 @@ namespace syn
 
 		int getNumUnits() const;
 
-		const list<Unit*>& getProcGraph() const;
+		Unit* const* getProcGraph() const;
 
 		void notifyMidiControlChange(int a_cc, double a_value);
 
@@ -250,7 +252,7 @@ namespace syn
 		InputUnit* m_inputUnit;
 		OutputUnit* m_outputUnit;
 
-		list<Unit*> m_procGraph;
+		array<Unit*, MAX_UNITS> m_procGraph;
 	};
 
 	template <typename UID>

@@ -82,10 +82,6 @@ namespace syn
 
 	double NSampleDelay::process(double a_input)
 	{
-		if (isnan(m_buffer[m_curReadPhase]) || isinf(m_buffer[m_curReadPhase])) {
-			clearBuffer();
-		}
-
 		// Read
 		int rInd1 = static_cast<int>(m_curReadPhase);
 		int rInd2 = WRAP<int>(rInd1 + 1, m_arraySize);

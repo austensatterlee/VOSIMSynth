@@ -112,7 +112,7 @@ void VOSIMSynth::makeInstrument() {
 	m_unitFactory->addUnitPrototype<syn::OutputUnit>("", "Output");
 
 	m_voiceManager = new syn::VoiceManager(m_unitFactory);
-	m_voiceManager->setMaxVoices(6);
+	m_voiceManager->setMaxVoices(8);
 
 	m_MIDIReceiver = new syn::MIDIReceiver(m_voiceManager);
 }
@@ -169,8 +169,9 @@ int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
 		cereal::JSONInputArchive ar(ss);
 		ar(cereal::make_nvp("circuit", circuit));
 	}
-	m_voiceManager->setPrototypeCircuit(static_cast<const syn::Circuit*>(circuit.get()));
-
+	getVOSIMComponent()->circuitPanel()->reset();
+	m_voiceManager->setPrototypeCircuit(*static_cast<const syn::Circuit*>(circuit.get()));
+	Reset();
 	startPos = getVOSIMComponent()->load(pChunk, startPos);
 	return startPos;
 }
@@ -189,11 +190,6 @@ void VOSIMSynth::OnGUIClose() {}
 
 synui::VOSIMComponent* VOSIMSynth::getVOSIMComponent() const {
 	return static_cast<synui::VOSIMComponent*>(GetAppWindow()->getRoot());
-}
-
-bool VOSIMSynth::isTransportRunning() {
-	GetTime(&m_timeInfo);
-	return m_timeInfo.mTransportIsRunning;
 }
 
 void VOSIMSynth::Reset() {
