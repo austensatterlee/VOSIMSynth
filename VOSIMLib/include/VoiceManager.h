@@ -23,7 +23,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "Circuit.h"
 #include "Unit.h"
 #include "UnitFactory.h"
-#include "AtomicContainers.h"
+#include "CircularContainers.h"
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/lockfree/policies.hpp>
 #include <map>
@@ -152,8 +152,8 @@ namespace syn
 		int _findIdleVoice();
 
 	private:
-		typedef AtomicQueue<int> VoiceIndexList;
-		typedef map<int, AtomicQueue<int>> VoiceMap;
+		typedef CircularQueue<int> VoiceIndexList;
+		typedef map<int, CircularQueue<int>> VoiceMap;
 
 		spsc_queue<RTMessage*> m_queuedActions;
 

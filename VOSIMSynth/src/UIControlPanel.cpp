@@ -1,31 +1,30 @@
 #include "UIControlPanel.h"
 #include "UIUnitContainer.h"
 #include "UIUnitControl.h"
-#include "UIWindow.h"
 #include "UIScrollPanel.h"
 #include <Theme.h>
+#include <UITabComponent.h>
 
-synui::UIControlPanel::UIControlPanel(MainWindow* a_window):
+synui::UIControlPanel::UIControlPanel(MainWindow* a_window, UITabWidget* a_ctrlPanelTabHeader):
 	UIComponent(a_window),
-	m_ctrlWindow(new UIWindow(a_window, "Control Panel")),
 	m_scrollPanel(new UIScrollPanel(a_window)),
-	m_currUnitContainer(nullptr)
+	m_currUnitContainer(nullptr),
+	m_parentTabComponent(a_ctrlPanelTabHeader)
 {
-	addChild(m_ctrlWindow);
-	m_ctrlWindow->addChild(m_scrollPanel);
-	m_scrollPanel->setRelPos({ 0,theme()->mWindowHeaderHeight });
-	m_ctrlWindow->lockPosition(true);
+	addChild(m_scrollPanel);
 }
 
-void synui::UIControlPanel::showUnitControl(UIUnitContainer* a_unitCointainer) {
+void synui::UIControlPanel::showUnitControl(UIUnitContainer* a_unitContainer) {
 	clearUnitControl();
-	m_currUnitContainer = a_unitCointainer;
+	m_currUnitContainer = a_unitContainer;
 	m_currUnitContainer->makeSelected(true);
 
 	shared_ptr<UIUnitControl> unitCtrl = m_currUnitContainer->getUnitControl();
 	m_scrollPanel->addChild(unitCtrl);
 	unitCtrl->setRelPos({ 0, 0});
-	unitCtrl->setSize(size() - Vector2i{ 0, theme()->mWindowHeaderHeight });
+	unitCtrl->setSize(m_size);
+	if (m_parentTabComponent)
+		m_parentTabComponent->setActiveTab(m_parentTabComponent->tabIndex(this));
 }
 
 void synui::UIControlPanel::clearUnitControl() {
@@ -46,23 +45,13 @@ synui::UIUnitControl* synui::UIControlPanel::getCurrentUnitControl() const {
 	return m_currUnitContainer ? m_currUnitContainer->getUnitControl().get() : nullptr;
 }
 
-bool synui::UIControlPanel::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
-	grow({ 0, -a_diffCursor.y() });
-	return true;
-}
-
-synui::UIComponent* synui::UIControlPanel::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
-	if (a_relCursor.localCoord(this).y() < theme()->mWindowHeaderHeight) {
-		return this;
-	}
-	UIComponent* child = UIComponent::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
-	return child;
+void synui::UIControlPanel::draw(NVGcontext* a_nvg) {
+	
 }
 
 void synui::UIControlPanel::_onResize() {
-	m_ctrlWindow->setSize(size());
-	m_scrollPanel->setSize(size() - Vector2i{ 0, theme()->mWindowHeaderHeight });
+	m_scrollPanel->setSize(m_size - Vector2i::Ones());
 	UIUnitControl* unitCtrl = getCurrentUnitControl();
 	if (unitCtrl)
-		unitCtrl->setSize(size() - Vector2i{ 0, theme()->mWindowHeaderHeight });
+		unitCtrl->setSize(m_size - Vector2i::Ones());
 }

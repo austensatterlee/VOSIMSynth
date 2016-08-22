@@ -120,5 +120,13 @@ namespace synui
 		for (int i = 0; i < unit->getNumBuffers(); i++) {
 			m_plot->setBufferPtr(i,unit->getBufferPtr(i), unit->getBufferSize(i));
 		}
+		
+		nvgBeginPath(a_nvg);
+		nvgFillColor(a_nvg, Color(0.3f, 1.0f));
+		Vector2i lPos = m_statusLabel->getRelPos();
+		Vector2i lSize = m_statusLabel->size();
+		nvgRect(a_nvg, lPos.x(), lPos.y(), lSize.x(), lSize.y());
+		nvgFill(a_nvg);
+
 	}
 }

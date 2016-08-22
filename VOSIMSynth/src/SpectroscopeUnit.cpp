@@ -35,11 +35,10 @@ namespace synui
 		m_pUpdatePeriod(addParameter_(syn::UnitParameter("update interval", 0.0, 1.0, 0.5))),
 		m_samplesSinceLastUpdate(0),
 		m_numBuffers(2),
-		m_isStale(true)
+		m_isStale(true),
+		m_plan(nullptr)
 	{
-		m_inBufferSize = getParameter(m_pBufferSize).getEnum();
-		m_outBufferSize = m_inBufferSize >> 1;
-		m_plan = ffts_init_1d_real(m_inBufferSize, FFTS_FORWARD);
+		SpectroscopeUnit::onParamChange_(m_pBufferSize);
 		int maxInBufferSize = getParameter(m_pBufferSize).getEnum(getParameter(m_pBufferSize).getMax());
 		int maxOutBufferSize = maxInBufferSize >> 1;
 
@@ -51,11 +50,6 @@ namespace synui
 			m_timeDomainBuffers[i].resize(maxInBufferSize);
 			m_freqDomainBuffers[i].resize(maxOutBufferSize);
 			m_magnitudeBuffers[i].resize(maxOutBufferSize);
-		}
-
-		m_window.resize(m_inBufferSize);
-		for (int i = 0; i < m_inBufferSize; i++) {
-			m_window[i] = syn::blackman_harris(i, m_inBufferSize);
 		}
 	}
 
@@ -79,11 +73,13 @@ namespace synui
 	void SpectroscopeUnit::onParamChange_(int a_paramId) {
 		if (a_paramId == m_pBufferSize) {
 			int newBufferSize = getParameter(m_pBufferSize).getEnum();
+			if (m_inBufferSize == newBufferSize) return;
+
 			m_inBufferSize = newBufferSize;
 			m_outBufferSize = newBufferSize >> 1;
 			m_bufferIndex = syn::WRAP(m_bufferIndex, m_inBufferSize);
-
-			ffts_free(m_plan);
+			
+			if(m_plan) ffts_free(m_plan);
 			m_plan = ffts_init_1d_real(m_inBufferSize, FFTS_FORWARD);
 
 			m_window.resize(m_inBufferSize);
@@ -109,13 +105,16 @@ namespace synui
 
 				// Copy freq magnitudes to output buffers
 				double timeSmooth = getParameter(m_pTimeSmooth).getDouble();
+				double target;
+				double currTimeSmooth;
 				for (int j = 0; j < m_outBufferSize; j++) {
-					double target = m_freqDomainBuffers[i][j].real() * m_freqDomainBuffers[i][j].real() + m_freqDomainBuffers[i][j].imag() * m_freqDomainBuffers[i][j].imag();
+					target = m_freqDomainBuffers[i][j].real() * m_freqDomainBuffers[i][j].real() + m_freqDomainBuffers[i][j].imag() * m_freqDomainBuffers[i][j].imag();
 					if (target)
-						target = syn::MAX(10 * log10(target), -120.0); // this is scaled by 10 because we didn't take the square root above
+						target = syn::MAX(10 * log10(target), -180.0); // this is scaled by 10 because we didn't take the square root above
 					else
-						target = -120; // minimum dB
-					m_magnitudeBuffers[i][j] = m_magnitudeBuffers[i][j] + (1 - timeSmooth) * (target - m_magnitudeBuffers[i][j]);
+						target = -180; // minimum dB
+					currTimeSmooth = (1-timeSmooth) / (j*1.0/m_outBufferSize + 1.0);
+					m_magnitudeBuffers[i][j] = m_magnitudeBuffers[i][j] + currTimeSmooth * (target - m_magnitudeBuffers[i][j]);
 				}
 			}
 

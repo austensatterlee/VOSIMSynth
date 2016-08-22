@@ -43,7 +43,7 @@ namespace synui
 	public:
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		UIComponent(MainWindow* a_window);
+		UIComponent(MainWindow* a_window, const string& a_name="");
 
 		virtual ~UIComponent() {}
 
@@ -51,6 +51,9 @@ namespace synui
 
 		void addChild(UIComponent* a_newChild, const string& a_group="");
 		void addChild(shared_ptr<UIComponent> a_newChild, const string& a_group="");
+
+		template<typename ComponentType, typename... Args>
+		ComponentType* add(const Args&... args);
 
 		const string& getChildGroup(UIComponent* a_child) const;
 		const vector<UIComponent*>& getGroup(const string& a_group) const;
@@ -155,7 +158,7 @@ namespace synui
 		void setMinSize(const Vector2i& a_minSize);
 
 	protected:
-		virtual void draw(NVGcontext* a_nvg) {};
+		virtual void draw(NVGcontext* a_nvg);
 		virtual void setChildrenStyles(NVGcontext* a_nvg) {};
 
 	private:
@@ -168,6 +171,7 @@ namespace synui
 		virtual void _onResize() {};
 
 	protected:
+		string m_name;
 		UIComponent* m_parent;
 		MainWindow* m_window;
 		shared_ptr<UILayout> m_layout;
@@ -177,50 +181,28 @@ namespace synui
 		map<string, vector<UIComponent*> > m_groupMap;
 		map<UIComponent*, string> m_reverseGroupMap;
 
+		std::function<void(UIComponent*, NVGcontext*)> m_draw;
+		std::function<bool(UIComponent*, const UICoord&, const Vector2i&)> m_onMouseDrag;
+		std::function<bool(UIComponent*, const UICoord&, const Vector2i&)> m_onMouseMove;
+		std::function<void(UIComponent*, const UICoord&, const Vector2i&, bool)> m_onMouseEnter;
+		std::function<UIComponent*(UIComponent*, const UICoord&, bool)> m_onMouseDown;
+		std::function<bool(UIComponent*, const UICoord&)> m_onMouseUp;
+		std::function<bool(UIComponent*, const UICoord&, int)> m_onMouseScroll;
+		std::function<bool(UIComponent*, sf::Uint32)> m_onTextEntered;
+		std::function<bool(UIComponent*, const sf::Event::KeyEvent&)> m_onKeyDown;
+		std::function<bool(UIComponent*, const sf::Event::KeyEvent&)> m_onKeyUp;
+
+
 		bool m_visible, m_focused, m_hovered;
 		Vector2i m_pos, m_size;
 		Vector2i m_minSize, m_maxSize;
 	};
 
-	class UIResizeHandle : public UIComponent
-	{
-	public:
-		UIResizeHandle(MainWindow* a_window)
-			: UIComponent{a_window} {
-			setMinSize({10,10});
-		}
-
-		bool onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override {
-			m_dragCallback(a_relCursor, a_diffCursor);
-			return true;
-		}
-
-		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override {
-			return this;
-		}
-
-		void setDragCallback(const function<void(const UICoord&, const Vector2i&)>& a_callback) {
-			m_dragCallback = a_callback;
-		}
-
-	protected:
-		void draw(NVGcontext* a_nvg) override {
-			nvgBeginPath(a_nvg);
-			if (hovered())
-				nvgStrokeColor(a_nvg, Color(1.0f, 1.0f));
-			else
-				nvgStrokeColor(a_nvg, Color(1.0, 0.7f));
-			nvgMoveTo(a_nvg, 0.0f, size()[1]);
-			nvgLineTo(a_nvg, size()[0], 0.0f);
-			nvgMoveTo(a_nvg, size()[0] / 3.0f, size()[1]);
-			nvgLineTo(a_nvg, size()[0], size()[1] / 3.0f);
-			nvgMoveTo(a_nvg, size()[0] * 2.0f / 3.0f, size()[1]);
-			nvgLineTo(a_nvg, size()[0], size()[1] * 2.0f / 3.0f);
-			nvgStroke(a_nvg);
-		}
-
-	private:
-		function<void(const UICoord& a_relCursor, const Vector2i& a_diffCursor)> m_dragCallback;
-	};
+	template <typename ComponentType, typename ... Args>
+	ComponentType* UIComponent::add(const Args&... args) {
+		ComponentType* ret = new ComponentType(m_window);
+		addChild(ret);
+		return ret;
+	}
 };
 #endif

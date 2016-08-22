@@ -5,10 +5,29 @@
 
 namespace synui
 {
-	UIComponent::UIComponent(MainWindow* a_window):
-		m_parent(nullptr), m_window(a_window), m_visible(true), m_focused(false), m_hovered(false),
-		m_pos(0, 0), m_size(0, 0), m_minSize(-1, -1), m_maxSize(-1, -1) 
+	UIComponent::UIComponent(MainWindow* a_window, const string& a_name) :
+		m_parent(nullptr), 
+		m_window(a_window), 
+		m_visible(true), 
+		m_focused(false), 
+		m_hovered(false),
+		m_pos(0, 0), 
+		m_size(0, 0), 
+		m_minSize(-1, -1), 
+		m_maxSize(-1, -1), 
+		m_name(a_name) 
 	{
+		m_draw = ([](UIComponent*, NVGcontext*) {return; });
+		m_onMouseDrag = ([](UIComponent*, const UICoord&, const Vector2i&) {return false; });
+		m_onMouseMove = ([](UIComponent*, const UICoord&, const Vector2i&) {return false; });
+		m_onMouseEnter = ([](UIComponent*, const UICoord&, const Vector2i&, bool) {return; });
+		m_onMouseDown = ([](UIComponent*, const UICoord&, bool) {return nullptr; });
+		m_onMouseUp = ([](UIComponent*, const UICoord&) {return false; });
+		m_onMouseScroll = ([](UIComponent*, const UICoord&, int) {return false; });
+		m_onTextEntered = ([](UIComponent*, sf::Uint32) {return false; });
+		m_onKeyDown = ([](UIComponent*, const sf::Event::KeyEvent&) {return false; });
+		m_onKeyUp = ([](UIComponent*, const sf::Event::KeyEvent&) {return false; });
+
 		setVisible(true);
 	}
 
@@ -120,7 +139,7 @@ namespace synui
 	}
 
 	shared_ptr<UIComponent> UIComponent::getChild(int i, const string& a_group) const {
-		if(a_group.empty())
+		if (a_group.empty())
 			return m_children[i];
 		return getChild(m_groupMap.at(a_group)[i]);
 	}
@@ -168,16 +187,14 @@ namespace synui
 	void UIComponent::performLayout(NVGcontext* a_nvg) {
 		if (m_layout) {
 			m_layout->performLayout(a_nvg, this);
-		}
-		else {
+		} else {
 			for (auto c : m_children) {
 				c->performLayout(a_nvg);
 			}
 		}
 	}
 
-	shared_ptr<UIComponent> UIComponent::getSharedPtr()
-	{
+	shared_ptr<UIComponent> UIComponent::getSharedPtr() {
 		return shared_from_this();
 	}
 
@@ -205,7 +222,7 @@ namespace synui
 	}
 
 	void UIComponent::move(const Vector2i& a_dist) {
-		setRelPos(getRelPos() + a_dist); 
+		setRelPos(getRelPos() + a_dist);
 	}
 
 	Vector2i UIComponent::size() const {
@@ -213,7 +230,7 @@ namespace synui
 	}
 
 	Vector2i UIComponent::minSize() const {
-		return m_minSize;
+		return m_layout ? m_layout->preferredSize(m_window->getContext(), this) : m_minSize;
 	}
 
 	Vector2i UIComponent::maxSize() const {
@@ -249,15 +266,15 @@ namespace synui
 	}
 
 	bool UIComponent::onTextEntered(sf::Uint32 a_unicode) {
-		return false;
+		return m_onTextEntered(this, a_unicode);
 	}
 
 	bool UIComponent::onKeyDown(const sf::Event::KeyEvent& a_key) {
-		return false;
+		return m_onKeyDown(this, a_key);
 	}
 
 	bool UIComponent::onKeyUp(const sf::Event::KeyEvent& a_key) {
-		return false;
+		return m_onKeyUp(this, a_key);
 	}
 
 	void UIComponent::setVisible(bool a_visible) {
@@ -330,6 +347,10 @@ namespace synui
 		setSize(m_size);
 	}
 
+	void UIComponent::draw(NVGcontext* a_nvg) {
+		m_draw(this, a_nvg);
+	}
+
 	void UIComponent::setMaxSize(const Vector2i& a_maxSize) {
 		m_maxSize = a_maxSize;
 		if (m_minSize[0] >= 0)
@@ -340,7 +361,7 @@ namespace synui
 	}
 
 	bool UIComponent::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
-		return false;
+		return m_onMouseDrag(this, a_relCursor, a_diffCursor);
 	}
 
 	bool UIComponent::onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
@@ -349,7 +370,7 @@ namespace synui
 				if (!child->visible())
 					continue;
 				bool hasMouse = child->contains(a_relCursor);
-				bool hadMouse = child->contains(UICoord{ a_relCursor.globalCoord() - a_diffCursor });
+				bool hadMouse = child->contains(UICoord{a_relCursor.globalCoord() - a_diffCursor});
 				if (hasMouse != hadMouse)
 					child->onMouseEnter(a_relCursor, a_diffCursor, hasMouse);
 				if (hasMouse || hadMouse) {
@@ -358,11 +379,12 @@ namespace synui
 				}
 			}
 		}
-		return false;
+		return m_onMouseMove(this, a_relCursor, a_diffCursor);
 	}
 
 	void UIComponent::onMouseEnter(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering) {
 		m_hovered = a_isEntering;
+		m_onMouseEnter(this, a_relCursor, a_diffCursor, a_isEntering);
 	}
 
 	UIComponent* UIComponent::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
@@ -377,7 +399,7 @@ namespace synui
 				}
 			}
 		}
-		return nullptr;
+		return m_onMouseDown(this, a_relCursor, a_isDblClick);
 	}
 
 	bool UIComponent::onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
@@ -389,7 +411,7 @@ namespace synui
 					return true;
 			}
 		}
-		return false;
+		return m_onMouseUp(this, a_relCursor);
 	}
 
 	bool UIComponent::onMouseScroll(const UICoord& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) {
@@ -401,7 +423,7 @@ namespace synui
 					return true;
 			}
 		}
-		return false;
+		return m_onMouseScroll(this, a_relCursor, a_scrollAmt);
 	}
 
 	void UIComponent::onFocusEvent(bool a_isFocused) {

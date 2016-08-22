@@ -97,117 +97,107 @@ void syn::TrapStateVariableFilter::process_() {
 	setOutputChannel_(m_oN, NOut);
 }
 
+void syn::_OnePoleLP::setFc(double a_fc, double a_fs) {
+	a_fc = DSP_PI * a_fc / a_fs;
+	double g = tan(a_fc);
+
+	m_G = g / (1 + g);
+}
+
+double syn::_OnePoleLP::process(double a_input) {
+	double trap_in = m_G * (a_input - m_state);
+	double output = trap_in + m_state;
+	m_state = trap_in + output;
+	return output;
+}
+
+void syn::_OnePoleLP::reset() {
+	m_state = 0.0;
+}
 
 syn::OnePoleLP::OnePoleLP(const string& a_name) :
-	Unit(a_name),
-	m_state(0.0)
+	Unit(a_name)
 {
 	addParameter_(pFc, UnitParameter("fc", 0.01, 20000.0, 1.0, UnitParameter::Freq));
 	addInput_(iAudioIn, "in");
 	addInput_(iFcAdd, "fc");
 	addInput_(iFcMul, "fc[x]", 1.0);
-	addOutput_("out");
+	addOutput_(oLP, "LP");
+	addOutput_(oHP, "HP");
 }
 
 double syn::OnePoleLP::getState() const {
-	return m_state;
+	return implem.m_state;
 }
 
 void syn::OnePoleLP::process_() {
 	// Calculate gain for specified cutoff
-	double fc = getParameter(pFc).getDouble() * getInputValue(iFcMul) + getInputValue(iFcAdd); // freq cutoff
+	double fc = (getParameter(pFc).getDouble() + getInputValue(iFcAdd)) * getInputValue(iFcMul); // freq cutoff
 	fc = CLAMP(fc, getParameter(pFc).getMin(), getParameter(pFc).getMax());
-	fc = fc / getFs();
-	double wc = 2 * tan(DSP_PI * fc / 2.0);
-	double gain = wc / (2 + wc);
+	implem.setFc(fc, getFs());
 
-	// Calculate output
-	double input = getInputValue(0);	
-	double trap_in = gain * (input - m_state);
-	double output = trap_in + m_state;
-	m_state = trap_in + output;
-	setOutputChannel_(0, output);
+	double input = getInputValue(0);
+	double output = implem.process(input);
+	setOutputChannel_(oLP, output);
+	setOutputChannel_(oHP, input - output);
 }
 
 syn::LadderFilter::LadderFilter(const string& a_name) :
-	Unit(a_name),
-	m_u(0.0)
+	Unit(a_name)
 {
-	addParameter_(pFc, UnitParameter("fc", 0.01, 20000.0, 1.0, UnitParameter::Freq));
-	addParameter_(pFb, UnitParameter("fb", 0.0, 1.0, 0.0));
+	addParameter_(pFc, UnitParameter("fc", 0.01, 20000.0, 10000.0, UnitParameter::Freq));
+	addParameter_(pFb, UnitParameter("res", 0.0, 1.0, 0.0));
+	addParameter_(pDrv, UnitParameter("drv", 0.0, 1.0, 0.0));
 	addInput_(iAudioIn, "in");
 	addInput_(iFcAdd, "fc");
 	addInput_(iFcMul, "fc[x]", 1.0);
 	addOutput_("out");
-
-	m_ladder[0].connectInput(OnePoleLP::iAudioIn, &m_u);
-	m_ladder[1].connectInput(OnePoleLP::iAudioIn, &m_ladder[0].getOutputValue(0));
-	m_ladder[2].connectInput(OnePoleLP::iAudioIn, &m_ladder[1].getOutputValue(0));
-	m_ladder[3].connectInput(OnePoleLP::iAudioIn, &m_ladder[2].getOutputValue(0));
 }
 
 void syn::LadderFilter::process_() {
+	double input = getInputValue(iAudioIn);
 	// Calculate gain for specified cutoff
-	double fc = getParameter(pFc).getDouble() * getInputValue(iFcMul) + getInputValue(iFcAdd); // freq cutoff
+	double fs = getFs() * c_oversamplingFactor;
+
+	double fc = (getParameter(pFc).getDouble() + getInputValue(iFcAdd)) * getInputValue(iFcMul); // freq cutoff
 	fc = CLAMP(fc, getParameter(pFc).getMin(), getParameter(pFc).getMax());
-	fc = fc / getFs();
-	double wc = 2 * tan(DSP_PI * fc / 2.0);
 
-	// Calculate output
-	double g1 = wc / (1 + wc);
-	double g2 = g1*g1;
-	double g3 = g1*g2;
-	double g4 = g1*g3;
-	double S = g3 * m_ladder[0].getState() + g2 * m_ladder[1].getState() + g1 * m_ladder[2].getState() + m_ladder[3].getState();
-	double k = getParameter(pFb).getDouble();
-	m_u = (getInputValue(0) - k * S) / (1 + k*g4);
-	m_ladder[0].tick();
-	m_ladder[1].tick();
-	m_ladder[2].tick();
-	m_ladder[3].tick();
-	setOutputChannel_(0, m_ladder[3].getOutputValue(0));
-}
+	double wd = DSP_PI * fc / fs;
 
-void syn::LadderFilter::onParamChange_(int a_paramId) {
-	if(a_paramId==pFc) {
-		m_ladder[0].setParameterValue(OnePoleLP::pFc, getParameter(pFc).getDouble());
-		m_ladder[1].setParameterValue(OnePoleLP::pFc, getParameter(pFc).getDouble());
-		m_ladder[2].setParameterValue(OnePoleLP::pFc, getParameter(pFc).getDouble());
-		m_ladder[3].setParameterValue(OnePoleLP::pFc, getParameter(pFc).getDouble());
+	// Prepare parameter values and insert them into each stage.
+	double g = 4 * DSP_PI * VT * fc * (1.0 - wd) / (1.0 + wd);
+	double dV0, dV1, dV2, dV3;
+	double drive = 4 * (1+getParameter(pDrv).getDouble());
+	double res = 3.5*getParameter(pFb).getDouble();
+
+	int i = c_oversamplingFactor;
+	while (i--) {
+		dV0 = -g * (fast_tanh_poly((drive * input + res * m_V[3]) / (2.0 * VT)) + m_tV[0]);
+		m_V[0] += (dV0 + m_dV[0]) / (2.0 * fs);
+		m_dV[0] = dV0;
+		m_tV[0] = fast_tanh_poly(m_V[0] / (2.0 * VT));
+
+		dV1 = g * (m_tV[0] - m_tV[1]);
+		m_V[1] += (dV1 + m_dV[1]) / (2.0 * fs);
+		m_dV[1] = dV1;
+		m_tV[1] = fast_tanh_poly(m_V[1] / (2.0 * VT));
+
+		dV2 = g * (m_tV[1] - m_tV[2]);
+		m_V[2] += (dV2 + m_dV[2]) / (2.0 * fs);
+		m_dV[2] = dV2;
+		m_tV[2] = fast_tanh_poly(m_V[2] / (2.0 * VT));
+
+		dV3 = g * (m_tV[2] - m_tV[3]);
+		m_V[3] += (dV3 + m_dV[3]) / (2.0 * fs);
+		m_dV[3] = dV3;
+		m_tV[3] = fast_tanh_poly(m_V[3] / (2.0 * VT));
 	}
-}
 
-void syn::LadderFilter::onInputConnection_(int a_inputPort) {
-	if (a_inputPort == iFcAdd) {
-		m_ladder[0].connectInput(OnePoleLP::iFcAdd, getInputSource(iFcAdd));
-		m_ladder[1].connectInput(OnePoleLP::iFcAdd, getInputSource(iFcAdd));
-		m_ladder[2].connectInput(OnePoleLP::iFcAdd, getInputSource(iFcAdd));
-		m_ladder[3].connectInput(OnePoleLP::iFcAdd, getInputSource(iFcAdd));
-	} else if(a_inputPort == iFcMul) {
-		m_ladder[0].connectInput(OnePoleLP::iFcMul, getInputSource(iFcMul));
-		m_ladder[1].connectInput(OnePoleLP::iFcMul, getInputSource(iFcMul));
-		m_ladder[2].connectInput(OnePoleLP::iFcMul, getInputSource(iFcMul));
-		m_ladder[3].connectInput(OnePoleLP::iFcMul, getInputSource(iFcMul));
-	}
-}
-
-void syn::LadderFilter::onInputDisconnection_(int a_inputPort) {
-	if (a_inputPort == iFcAdd) {
-		m_ladder[0].connectInput(OnePoleLP::iFcAdd, getInputSource(iFcAdd));
-		m_ladder[1].connectInput(OnePoleLP::iFcAdd, getInputSource(iFcAdd));
-		m_ladder[2].connectInput(OnePoleLP::iFcAdd, getInputSource(iFcAdd));
-		m_ladder[3].connectInput(OnePoleLP::iFcAdd, getInputSource(iFcAdd));
-	} else if (a_inputPort == iFcMul) {
-		m_ladder[0].connectInput(OnePoleLP::iFcMul, getInputSource(iFcMul));
-		m_ladder[1].connectInput(OnePoleLP::iFcMul, getInputSource(iFcMul));
-		m_ladder[2].connectInput(OnePoleLP::iFcMul, getInputSource(iFcMul));
-		m_ladder[3].connectInput(OnePoleLP::iFcMul, getInputSource(iFcMul));
-	}
+	setOutputChannel_(0, m_V[3]);
 }
 
 void syn::LadderFilter::onFsChange_() {
-	m_ladder[0].setFs(getFs());
-	m_ladder[1].setFs(getFs());
-	m_ladder[2].setFs(getFs());
-	m_ladder[3].setFs(getFs());
+	fill(m_V.begin(), m_V.end(), 0.0);
+	fill(m_dV.begin(), m_dV.end(), 0.0);
+	fill(m_tV.begin(), m_tV.end(), 0.0);
 }

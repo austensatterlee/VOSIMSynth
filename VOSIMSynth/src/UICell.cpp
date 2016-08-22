@@ -82,7 +82,6 @@ void synui::UICol::layoutChildren_()
 	}
 
 	// If there's extra space left over, expand the greedy child
-	// If there is no greedy child, shrink the cell to get rid of the extra space
 	int extraHeight = innerSize().y() - y;
 	if (m_greedyChild) {
 		int greedyCellHeight = m_greedyChild->size()[1] + extraHeight;

@@ -49,12 +49,17 @@ namespace synui {
 
 		void updateChildPosition_(shared_ptr<UIComponent> a_child);
 
+		Vector2i scrollBarPos() const;
+		Vector2i scrollBarSize() const;
+
 	private:
 		void _onAddChild(shared_ptr<UIComponent> a_newchild) override;
 
 		void _onRemoveChild() override;
 
 		void _onChildMoved(UIComponent* a_child) override;
+
+		void _onResize() override;
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 	private:
@@ -63,6 +68,8 @@ namespace synui {
 		Vector2i m_scrollOffset;
 		std::map<UIComponent*, Vector2i> m_originalPositions;
 		std::map<UIComponent*, bool> m_dirtyMap;
+
+		float m_scrollBarWidth = 10.0f;
 	};
 }
 #endif

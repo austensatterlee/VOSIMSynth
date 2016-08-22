@@ -33,19 +33,20 @@ namespace synui {
 	class UIControlPanel : public UIComponent
 	{
 	public:
-		UIControlPanel(MainWindow* a_window);
+		UIControlPanel(MainWindow* a_window, UITabWidget* a_ctrlPanelTabHeader = nullptr);
 		void showUnitControl(UIUnitContainer* a_unitCtrl);
 		void clearUnitControl();
 		UIUnitContainer* getCurrentUnitContainer() const;
 		UIUnitControl* getCurrentUnitControl() const;
 
-		bool onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
-		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
+	protected:
+		void draw(NVGcontext* a_nvg) override;
 	private:
 		void _onResize() override;
-		UIWindow* m_ctrlWindow;
+	private:
 		UIScrollPanel* m_scrollPanel;
 		UIUnitContainer* m_currUnitContainer;
+		UITabWidget* m_parentTabComponent;
 	};
 }
 

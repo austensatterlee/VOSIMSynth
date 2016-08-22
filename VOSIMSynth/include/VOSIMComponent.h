@@ -53,11 +53,11 @@ namespace synui {
 	private:
 		void _onResize() override;
 	private:
-		UITabWidget* m_topPanel;
+		UITabWidget* m_rightPanel;
 		UICircuitPanel* m_circuitPanel;
+		UIControlPanel* m_controlPanel;
 		UITabWidget* m_leftPanel;
 		UIUnitSelector* m_unitSelector;
-		UIControlPanel* m_controlPanel;
 
 		syn::VoiceManager* m_vm;
 		syn::UnitFactory* m_unitFactory;

@@ -26,8 +26,7 @@ namespace syn
 
 		m_voiceStack.push_right(vind);
 		if (m_voiceMap.find(a_note) == m_voiceMap.end()) {
-			// should be okay since nobody else should be trying to access a note that doesn't exist
-			m_voiceMap[a_note].unsafe_resize(m_maxVoices);
+			m_voiceMap[a_note].resize(m_maxVoices);
 		}
 		m_voiceMap[a_note].push_right(vind);
 		m_allVoices[vind].noteOn(a_note, a_velocity);
@@ -94,9 +93,9 @@ namespace syn
 		m_maxVoices = a_newMax;
 
 		// Resize buffers
-		m_idleVoiceStack.unsafe_resize(m_maxVoices);
-		m_voiceStack.unsafe_resize(m_maxVoices);
-		m_garbageList.unsafe_resize(m_maxVoices);
+		m_idleVoiceStack.resize(m_maxVoices);
+		m_voiceStack.resize(m_maxVoices);
+		m_garbageList.resize(m_maxVoices);
 
 		int vind;
 		while (!m_voiceStack.empty()) {
@@ -113,13 +112,13 @@ namespace syn
 		}
 
 		for (unsigned i = 0; i < m_allVoices.size(); i++) {
-			m_allVoices[i] = { m_instrument };
+			m_allVoices[i] = Circuit(m_instrument);
 			m_idleVoiceStack.push_right(i);
 		}
 
 		while (m_allVoices.size() < a_newMax) {
 			m_idleVoiceStack.push_right(m_allVoices.size());
-			m_allVoices.push_back({ m_instrument });
+			m_allVoices.push_back(Circuit(m_instrument));
 		}
 		m_numActiveVoices = 0;
 	}

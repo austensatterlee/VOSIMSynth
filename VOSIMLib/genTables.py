@@ -11,17 +11,14 @@ LUT_TABLESRC_FILE = "src/lut_tables.cpp"
 def RealCepstrum(n,signal):
     freq = fft.fft(signal)
     freq = log(abs(freq))
-    realTime = real(fft.ifft(freq))
+    realCepstrum = real(fft.ifft(freq))
 
-    realCepstrum = realTime
     return realCepstrum
 
 def MinimumPhase(n,realCepstrum):
     nd2 = n/2
     realTime = zeros(n)
     imagTime = zeros(n)
-    realFreq = zeros(n)
-    imagFreq = zeros(n)
     realTime[0] = realCepstrum[0]
     realTime[1:nd2] = 2*realCepstrum[1:nd2]
     if ((n%2)==0):
@@ -228,6 +225,18 @@ def make_symmetric_l(left_half):
     right_half = list(reversed(left_half))
     return hstack([left_half[:-1],right_half])
 
+def clipdb(s,cutoff):
+    clipped = s[:]
+    spos = abs(s)
+    mspos = max(spos)
+    if not mspos:
+        return s
+    if cutoff >= 0:
+        return s
+    thresh = mspos*10**(cutoff/20.)
+    clipped[spos<thresh] = thresh
+    return clipped
+
 def magspec(signal, pts=None, fs=None, xlogscale=True, ylogscale=True, **kwargs):
     from matplotlib import pyplot as plt
     pts = pts or len(signal)
@@ -237,9 +246,9 @@ def magspec(signal, pts=None, fs=None, xlogscale=True, ylogscale=True, **kwargs)
     if(xlogscale):
         freqs = log2(freqs)
     signalfft = fft.fft(signal,n=pts)[1:pts/2]/pts
+    signalfft = clipdb(signalfft,-180)
     if ylogscale:
         mag = 20*log10(abs(signalfft))
-        mag[np.isinf(mag)] = -180 # min db
         ylabel = "dB"
     else:
         mag = abs(signalfft)**2
@@ -262,8 +271,10 @@ def maggain(signal1,signal2,pts=None,fs=None,xlogscale=True,ylogscale=True,**kwa
     fs = fs or 1.
     linfreqs = freqs = k*1./fftlength*fs
     signal1fft = fft.fft(signal1,n=fftlength)[1:fftlength/2]/fftlength
+    signal1fft = clipdb(signal1fft,-180)
     signal2fft = fft.fft(signal2,n=fftlength)[1:fftlength/2]/fftlength
-    if(all(signal1fft) and all(signal2fft) and ylogscale):
+    signal2fft = clipdb(signal2fft,-180)
+    if ylogscale:
         mag1 = 20*log10(abs(signal1fft))
         mag2 = 20*log10(abs(signal2fft))
         gain = mag2-mag1

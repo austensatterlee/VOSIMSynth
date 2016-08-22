@@ -27,6 +27,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __STATEVARIABLEFILTER__
 #define __STATEVARIABLEFILTER__
 #include "Unit.h"
+#include "DSPMath.h"
 
 using namespace std;
 
@@ -36,6 +37,9 @@ namespace syn
 	{
 		DERIVE_UNIT(StateVariableFilter)
 	public:
+
+		const int c_oversamplingFactor = 8;
+
 		explicit StateVariableFilter(const string& a_name);
 
 		StateVariableFilter(const StateVariableFilter& a_rhs) :
@@ -55,7 +59,6 @@ namespace syn
 
 		const double c_minRes = 1.0;
 		const double c_maxRes = 10.0;
-		const int c_oversamplingFactor = 8;
 	};
 
 	class TrapStateVariableFilter : public StateVariableFilter
@@ -73,11 +76,26 @@ namespace syn
 	protected:
 		double m_prevInput;
 	};
+
+	/**
+	 * 1 Pole "TPT" implementation
+	 */
+	struct _OnePoleLP
+	{
+		void setFc(double a_fc, double a_fs);
+
+		double process(double a_input);
+
+		void reset();
+
+		double m_state = 0.0;
+		double m_G = 0.0;
+	};
 	
 
 	/**
-	* 1 Pole Filter (Lag)
-	*/
+	 * 1 Pole "TPT" unit wrapper
+	 */
 	class OnePoleLP : public Unit
 	{
 		DERIVE_UNIT(OnePoleLP)
@@ -94,6 +112,12 @@ namespace syn
 			iFcMul
 		};
 
+		enum Output
+		{
+			oLP = 0,
+			oHP = 1
+		};
+
 		explicit OnePoleLP(const string& a_name);
 
 		OnePoleLP(const OnePoleLP& a_rhs) : OnePoleLP(a_rhs.getName()) {};
@@ -103,19 +127,21 @@ namespace syn
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
 	private:
-		double m_state;
-		double m_phase;
-		double m_phaseStep;
+		_OnePoleLP implem;
 	};
 
 	class LadderFilter : public Unit
 	{
 		DERIVE_UNIT(LadderFilter)
 	public:
+		const int c_oversamplingFactor = 4;
+		const double VT = 0.312;
+
 		enum Param
 		{
 			pFc = 0,
-			pFb
+			pFb,
+			pDrv
 		};
 
 		enum Input
@@ -125,17 +151,17 @@ namespace syn
 			iFcMul
 		};
 
+	public:
 		explicit LadderFilter(const string& a_name);
 		LadderFilter(const LadderFilter& a_rhs) : LadderFilter(a_rhs.getName()) {};
+
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
-		void onParamChange_(int a_paramId) override;
-		void onInputConnection_(int a_inputPort) override;
-		void onInputDisconnection_(int a_inputPort) override;
 		void onFsChange_() override;
-	private:
-		OnePoleLP m_ladder[4];
-		double m_u;
+
+		array<double, 4> m_V;
+		array<double, 4> m_dV;
+		array<double, 4> m_tV;
 	};
 }
 

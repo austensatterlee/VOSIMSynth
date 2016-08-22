@@ -39,12 +39,26 @@ void synui::UIScrollPanel::updateExtents_() {
 	}
 	m_scrollOffset = m_scrollOffset.cwiseMax(m_minExtent);
 	m_scrollOffset = m_scrollOffset.cwiseMin(m_maxExtent);
+	setMinSize({ m_maxExtent.x() + m_scrollBarWidth, -1 });
 }
 
 void synui::UIScrollPanel::updateChildPosition_(shared_ptr<UIComponent> a_child) {
+	// Suppress the call to _onChildMoved
 	m_dirtyMap[a_child.get()] = false;
+	// Move child to match scroll offset
 	a_child->setRelPos(m_originalPositions[a_child.get()] - m_scrollOffset);
+	// Stop suppressing calls to _onChildMoved
 	m_dirtyMap[a_child.get()] = true;
+}
+
+Eigen::Vector2i synui::UIScrollPanel::scrollBarPos() const {
+	int yBar = m_scrollOffset.y() * (size().y() - scrollBarSize().y()) * (1.0f / m_maxExtent.y());
+	int xBar = size().x() - scrollBarSize().x();
+	return Vector2i{ xBar,yBar };
+}
+
+Eigen::Vector2i synui::UIScrollPanel::scrollBarSize() const {
+	return Vector2i{ m_scrollBarWidth, 10.0f };
 }
 
 void synui::UIScrollPanel::notifyChildResized(UIComponent* a_child) {
@@ -63,27 +77,32 @@ void synui::UIScrollPanel::_onRemoveChild() {
 void synui::UIScrollPanel::_onChildMoved(UIComponent* a_child) {
 	if (m_dirtyMap[a_child]) {
 		m_originalPositions[a_child] = a_child->getRelPos();
+		updateExtents_();
 		updateChildPosition_(a_child->getSharedPtr());
 	}
+}
+
+void synui::UIScrollPanel::_onResize() {
 	updateExtents_();
 }
 
 void synui::UIScrollPanel::draw(NVGcontext* a_nvg) {
 	// Draw vertical scroll bar
-	if (m_maxExtent.y()) {
-		float scrollBarWidth = 10.0f;
+	if (m_maxExtent.y() > size().y()) {
+		
 		nvgBeginPath(a_nvg);
-		nvgRect(a_nvg, size().x() - scrollBarWidth, 0.0f, scrollBarWidth, size().y());
 		nvgFillColor(a_nvg, Color(0.7f, 0.75f));
+		nvgRect(a_nvg, size().x() - m_scrollBarWidth, 0.0f, m_scrollBarWidth, size().y());
 		nvgFill(a_nvg);
 
-		int vBarHeight = 10.0f;
-		int vBarLoc = m_scrollOffset.y() * (size().y() - vBarHeight) * (1.0f / m_maxExtent.y());
+		Vector2i barPos = scrollBarPos();
+		Vector2i barSize = scrollBarSize();
+
 		nvgBeginPath(a_nvg);
-		nvgRect(a_nvg, size().x() - scrollBarWidth, vBarLoc, scrollBarWidth, vBarHeight);
+		nvgRect(a_nvg, barPos.x(), barPos.y(), barSize.x(), barSize.y());
 		NVGpaint barPaint = nvgLinearGradient(a_nvg,
-			0.0f, vBarLoc,
-			0.0f, vBarLoc + vBarHeight,
+			0.0f, barPos.y(),
+			0.0f, barPos.y() + barSize.y(),
 			Color(0.5f, 1.0f), Color(0.4f, 1.0f));
 		nvgFillPaint(a_nvg, barPaint);
 		nvgFill(a_nvg);

@@ -45,14 +45,12 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define  SYN_ENABLE_DENORMAL_ROUNDING()
 #endif
 
-#define DSP_PI 3.14159265359f
+#define DSP_PI 3.14159265358979323846264338327950288
 #include <regex>
 #include <cereal/cereal.hpp>
 
 namespace syn
 {
-	inline int gcd(int a, int b);
-
 	template <typename T>
 	T LERP(const T& pt1, const T& pt2, const T& frac) {
 		return (pt2 - pt1)*frac + pt1;
@@ -67,17 +65,17 @@ namespace syn
 	 * Clamps val to be in the range [min_val, max_val].
 	 */
 	template <typename T>
-	T CLAMP(const T& val, const T& min_val, const T& max_val) {
+	constexpr const T& CLAMP(const T& val, const T& min_val, const T& max_val) {
 		return val < min_val ? min_val : (val > max_val ? max_val : val);
 	}
 
 	template <typename T>
-	T MAX(const T& val1, const T& val2) {
+	constexpr const T& MAX(const T& val1, const T& val2) {
 		return val1 < val2 ? val2 : val1;
 	}
 
 	template <typename T>
-	T MIN(const T& val1, const T& val2) {
+	constexpr const T& MIN(const T& val1, const T& val2) {
 		return val1 > val2 ? val2 : val1;
 	}
 
@@ -113,6 +111,11 @@ namespace syn
 		while (newx < left_m)
 			newx += m;
 		return newx;
+	}
+
+	template <typename T>
+	T sgn(const T& val) {
+		return (T(0) < val) - (val < T(0));
 	}
 
 	/////////////////////////////////////
@@ -152,10 +155,19 @@ namespace syn
 	* \param a_winSize size of the window in samples
 	*/
 	double blackman_harris(int a_k, size_t a_winSize);
+	double hanning(int a_k, size_t a_winSize);
 
 	double naive_tri(double a_phase);
 	double naive_saw(double a_phase);
 	double naive_square(double a_phase);	
+
+
+	/// Best if |x|<3.1
+	template<typename T>
+	T fast_tanh_poly(const T& x_) {
+		T x = abs(x_);
+		return sgn(x_)*(-.67436811832e-5 + (.2468149110712040 + (.583691066395175e-1 + .3357335044280075e-1*x)*x)*x) / (.2464845986383725 + (.609347197060491e-1 + (.1086202599228572 + .2874707922475963e-1*x)*x)*x);
+	}
 
 	//////////////////
 	// Misc. utils  //

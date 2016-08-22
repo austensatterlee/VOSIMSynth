@@ -23,6 +23,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <mutex>
 #include <atomic>
 #include <stdexcept>
+#include <boost/core/checked_delete.hpp>
 
 namespace syn
 {
@@ -44,18 +45,17 @@ namespace syn
 	}
 
 	/**
-	 * Atomic single-reader single-writer ring buffer.
 	 * Allows constant time access to any element, and constant time popping and pushing to either side.
 	 * Allows linear time removal of any element, and linear time searching for an element.
 	 * Sizes are limited to powers of two, up to 128.
 	 */
 	template <typename T>
-	class AtomicQueue
+	class CircularQueue
 	{
 	public:
-		AtomicQueue();
-		explicit AtomicQueue(unsigned a_maxsize);
-		virtual ~AtomicQueue();
+		CircularQueue();
+		explicit CircularQueue(unsigned a_maxsize);
+		virtual ~CircularQueue();
 
 		bool push_left(const T& a_item);
 		bool push_right(const T& a_item);
@@ -78,110 +78,98 @@ namespace syn
 		}
 
 		unsigned max_size() const {
-			unsigned size = m_maxsize.load(std::memory_order_seq_cst);
-			return size + 1;
+			return m_maxsize + 1;
 		}
 
 		/**
-		 * Resizes the maximum capacity of the queue. Should not be called during concurrent execution.
+		 * Resizes the maximum capacity of the queue.
 		 */
-		bool unsafe_resize(unsigned a_maxsize);
+		bool resize(unsigned a_maxsize);
 	private:
 		typedef uint8_t qindex_t;
 		typedef uint8_t qsize_t;
-		std::atomic<qsize_t> m_maxsize;
-		std::atomic<qindex_t> m_left_index; /// Elements exit via the front of the queue
-		std::atomic<qindex_t> m_right_index; /// Elements enter via the back of the queue
+		qsize_t m_maxsize;
+		qindex_t m_left_index; /// Elements exit via the front of the queue
+		qindex_t m_right_index; /// Elements enter via the back of the queue
 		T* m_data;
-		std::mutex m_resizeMutex;
 	};
 
 	template <typename T>
-	AtomicQueue<T>::AtomicQueue() :
-		AtomicQueue(2) {}
+	CircularQueue<T>::CircularQueue() :
+		CircularQueue(2) 
+	{}
 
 	template <typename T>
-	AtomicQueue<T>::AtomicQueue(unsigned a_maxsize):
+	CircularQueue<T>::CircularQueue(unsigned a_maxsize):
 		m_left_index(0),
 		m_right_index(0),
-		m_data(nullptr) {
-		unsafe_resize(a_maxsize);
+		m_data(nullptr)
+	{
+		resize(a_maxsize);
 	}
 
 	template <typename T>
-	AtomicQueue<T>::~AtomicQueue() {
-
-		if (m_data) {
-			free(m_data);
-		}
-		m_data = nullptr;
+	CircularQueue<T>::~CircularQueue() {
+		boost::checked_delete(m_data);
 	}
 
 	template <typename T>
-	bool AtomicQueue<T>::push_left(const T& a_item) {
-		// do nothing if full
-		unsigned oldright = m_right_index.load(std::memory_order_seq_cst);
-		unsigned oldleft = m_left_index.load(std::memory_order_seq_cst);
+	bool CircularQueue<T>::push_left(const T& a_item) {
 		// check if adding a new a_item will cause the right and exit to meet.
 		// we can wrap around m_maxsize like this because we are guaranteed it is one less than a power of 2 (e.g. 0xFF=0x100-0x01).
-		unsigned newleft = (oldleft - 1) & m_maxsize;
-		if (newleft == oldright)
+		unsigned newleft = (m_left_index - 1) & m_maxsize;
+		// do nothing if full
+		if (newleft == m_right_index)
 			return false;
 		// store value
 		m_data[newleft] = a_item;
 		// store new right
-		m_left_index.store(newleft, std::memory_order_seq_cst);
+		m_left_index = newleft;
 		return true;
 	}
 
 	template <typename T>
-	bool AtomicQueue<T>::push_right(const T& a_item) {
-		// do nothing if full
-		unsigned oldright = m_right_index.load(std::memory_order_seq_cst);
-		unsigned oldleft = m_left_index.load(std::memory_order_seq_cst);
+	bool CircularQueue<T>::push_right(const T& a_item) {
 		// check if adding a new a_item will cause the right and exit to meet.
-		unsigned newright = (oldright + 1) & m_maxsize;
-		if (newright == oldleft)
+		unsigned newright = (m_right_index + 1) & m_maxsize;
+		// do nothing if full
+		if (newright == m_left_index)
 			return false;
 		// store value
-		m_data[oldright] = a_item;
+		m_data[m_right_index] = a_item;
 		// store new right
-		m_right_index.store(newright, std::memory_order_seq_cst);
+		m_right_index = newright;
 		return true;
 	}
 
 	template <typename T>
-	bool AtomicQueue<T>::pop_left(T& a_item) {
+	bool CircularQueue<T>::pop_left(T& a_item) {
 		// do nothing if empty
-		unsigned oldright = m_right_index.load(std::memory_order_seq_cst);
-		unsigned oldleft = m_left_index.load(std::memory_order_seq_cst);
-		if (oldleft == oldright)
+		if (m_left_index == m_right_index)
 			return false;
 		// retrieve value
-		a_item = m_data[oldleft];
+		a_item = m_data[m_left_index];
 		// store new exit
-		m_left_index.store((oldleft + 1) & m_maxsize, std::memory_order_seq_cst);
+		m_left_index = (m_left_index + 1) & m_maxsize;
 		return true;
 	}
 
 	template <typename T>
-	bool AtomicQueue<T>::pop_right(T& a_item) {
+	bool CircularQueue<T>::pop_right(T& a_item) {
 		// do nothing if empty
-		unsigned oldright = m_right_index.load(std::memory_order_seq_cst);
-		unsigned oldleft = m_left_index.load(std::memory_order_seq_cst);
-		if (oldleft == oldright)
+		if (m_left_index == m_right_index)
 			return false;
-		unsigned newright = (oldright - 1) & m_maxsize;
+		unsigned newright = (m_right_index - 1) & m_maxsize;
 		// retrieve value
 		a_item = m_data[newright];
 		// store new exit
-		m_right_index.store(newright, std::memory_order_seq_cst);
+		m_right_index = newright;
 		return true;
 	}
 
 	template <typename T>
-	bool AtomicQueue<T>::pop(T& a_item, unsigned a_offset) {
-		AtomicQueue<T> tmpq(a_offset);
+	bool CircularQueue<T>::pop(T& a_item, unsigned a_offset) {
+		CircularQueue<T> tmpq(a_offset);
 		T tmpblock;
 		bool success = true;
 		for (int i = 0; i < a_offset - 1; i++) {
@@ -201,20 +189,20 @@ namespace syn
 	}
 
 	template <typename T>
-	bool AtomicQueue<T>::peek_left(T& a_item) const {
+	bool CircularQueue<T>::peek_left(T& a_item) const {
 		return peek(a_item, 0);
 	}
 
 
 	template <typename T>
-	bool AtomicQueue<T>::peek_right(T& a_item) const {
-		unsigned right = m_right_index.load(std::memory_order_seq_cst);
-		unsigned left = m_left_index.load(std::memory_order_seq_cst);
+	bool CircularQueue<T>::peek_right(T& a_item) const {
+		unsigned right = m_right_index;
+		unsigned left = m_left_index;
 		unsigned offset;
 		if (right > left) {
 			offset = right - 1 - left;
 		} else if (right < left) {
-			unsigned size = m_maxsize.load(std::memory_order_seq_cst);
+			unsigned size = m_maxsize;
 			offset = right + size - left;
 		} else {
 			return false;
@@ -223,9 +211,9 @@ namespace syn
 	}
 
 	template <typename T>
-	bool AtomicQueue<T>::peek(T& a_item, unsigned a_offset) const {
-		unsigned right = m_right_index.load(std::memory_order_seq_cst);
-		unsigned left = m_left_index.load(std::memory_order_seq_cst);
+	bool CircularQueue<T>::peek(T& a_item, unsigned a_offset) const {
+		unsigned right = m_right_index;
+		unsigned left = m_left_index;
 		a_offset = (a_offset + left) & m_maxsize;
 		// ensure the offset refers to a non-empty block
 		if (right > left && (a_offset >= left && a_offset < right)) {
@@ -240,14 +228,14 @@ namespace syn
 	}
 
 	template <typename T>
-	bool AtomicQueue<T>::empty() const {
-		unsigned right = m_right_index.load(std::memory_order_seq_cst);
-		unsigned left = m_left_index.load(std::memory_order_seq_cst);
+	bool CircularQueue<T>::empty() const {
+		unsigned right = m_right_index;
+		unsigned left = m_left_index;
 		return right == left;
 	}
 
 	template <typename T>
-	int AtomicQueue<T>::find(const T& a_item) const {
+	int CircularQueue<T>::find(const T& a_item) const {
 		T tmp;
 		unsigned i = 0;
 		while (peek(tmp, i)) {
@@ -258,8 +246,8 @@ namespace syn
 	}
 
 	template <typename T>
-	bool AtomicQueue<T>::remove(const T& a_item) {
-		AtomicQueue<T> tmpq(m_maxsize);
+	bool CircularQueue<T>::remove(const T& a_item) {
+		CircularQueue<T> tmpq(m_maxsize);
 		T tmpblock;
 		bool success = false;
 		// "uncover" requested item by temporarily storing the data above it on another queue
@@ -278,15 +266,14 @@ namespace syn
 	}
 
 	template <typename T>
-	bool AtomicQueue<T>::unsafe_resize(unsigned a_maxsize) {
-		std::lock_guard<std::mutex> lock(m_resizeMutex);
+	bool CircularQueue<T>::resize(unsigned a_maxsize) {
 		if (!a_maxsize)
 			return false;
 
 		a_maxsize = next_power_of_2(a_maxsize + 1);
 		a_maxsize = a_maxsize >= 256 ? 256 : a_maxsize;
 		uint8_t newsize = static_cast<uint8_t>(a_maxsize);
-		m_maxsize.store(newsize - 1, std::memory_order_seq_cst);
+		m_maxsize = newsize - 1;
 
 		if (!m_data) {
 			m_data = static_cast<T*>(calloc(newsize, sizeof(T)));
@@ -294,7 +281,7 @@ namespace syn
 			m_data = static_cast<T*>(realloc(m_data, newsize * sizeof(T)));
 		}
 		if (!m_data) {
-			throw std::runtime_error("Unable to allocate memory for AtomicQueue");
+			throw std::runtime_error("Unable to allocate memory for CircularQueue");
 		}
 		return true;
 	}

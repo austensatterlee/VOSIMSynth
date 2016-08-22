@@ -29,15 +29,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "tables.h"
 #include <cmath>
 
-int syn::gcd(int a, int b) {
-	while (a != 0) {
-		int c = a;
-		a = b % a;
-		b = c;
-	}
-	return b;
-}
-
 double syn::pitchToFreq(double pitch) {
 	return lut_pitch_table().getlinear(pitch);
 }
@@ -92,6 +83,10 @@ double syn::blackman_harris(int a_k, size_t a_winSize) {
 	double s2 = lut_sin_table().getlinear(2 * phase + 0.25);
 	double s3 = lut_sin_table().getlinear(3 * phase + 0.25);
 	return a[0] - a[1] * s1 + a[2] * s2 - a[3] * s3;
+}
+
+double syn::hanning(int a_k, size_t a_winSize) {
+	return 0.5*(1 - lut_sin_table().getlinear(a_k * 1.0 / (a_winSize - 1)));
 }
 
 double syn::naive_tri(double a_phase) {

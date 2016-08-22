@@ -25,16 +25,13 @@ using namespace std;
 
 namespace syn
 {
-	Unit::Unit() :
-		m_name{ "" },
-		m_parent{ nullptr },
-		m_audioConfig{},
-		m_midiData{} { }
+	Unit::Unit() : Unit("")
+	{}
 
 	Unit::Unit(const string& a_name) :
 		m_name{ a_name },
 		m_parent{ nullptr },
-		m_audioConfig{},
+		m_audioConfig{44.1e3, 120},
 		m_midiData{} { }
 
 	unsigned int Unit::getClassIdentifier() const {
