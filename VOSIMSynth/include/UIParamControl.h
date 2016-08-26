@@ -43,9 +43,11 @@ namespace synui {
 		void setParamValue(double a_val);
 		void setParamNorm(double a_normval);
 		void nudgeParam(double a_logScale, double a_linScale);
+		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 	protected:
 		virtual void updateValue_();
 		void draw(NVGcontext* a_nvg) override;
+	
 	protected:
 		syn::VoiceManager* m_vm;
 		int m_unitId;
@@ -54,6 +56,7 @@ namespace synui {
 		UILabel* m_nameLabel;
 		UILabel* m_valueLabel;
 		UILabel* m_unitsLabel;
+		UITextBox* m_textBox;
 
 		double m_normValue;
 		bool m_isValueDirty = false;

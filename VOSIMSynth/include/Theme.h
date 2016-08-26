@@ -34,7 +34,7 @@ namespace synui
 		int mTabButtonHorizontalPadding;
 		int mTabButtonVerticalPadding;
 
-		/* Text slider parameters */
+		/* Param control properties */
 		int mTextSliderFontSize;
 
 		/* Port parameters */

@@ -12,13 +12,6 @@ set(RESOURCES_DIR ${CMAKE_SOURCE_DIR}/vosimsynth/resources CACHE PATH "")
 set(STANDALONE_ROOT ${CMAKE_SOURCE_DIR}/vosimsynth/standalone CACHE PATH "")
 
 ##
-# NanoVG
-##
-add_definitions(-DNANOVG_GL3_IMPLEMENTATION -DNANOVG_GLEW)
-file(GLOB NANOVG_FILES ${NANOVG_ROOT}/src/*.c ${NANOVG_ROOT}/src/*.h)
-include_directories(${NANOVG_ROOT}/src)
-
-##
 # sftools
 ##
 file(GLOB SFTOOLS_FILES ${SFTOOLS_ROOT}/include/sftools/*.hpp
@@ -59,6 +52,13 @@ list(APPEND ADDITIONAL_LIBRARIES ${GLEW_LIBRARY})
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIR})
 list(APPEND ADDITIONAL_LIBRARIES ${OPENGL_LIBRARIES})
+
+##
+# NanoVG
+##
+add_definitions(-DNANOVG_GLEW -DNANOVG_GL3_IMPLEMENTATION -DSTB_IMAGE_STATIC)
+file(GLOB NANOVG_FILES ${NANOVG_ROOT}/src/*.c ${NANOVG_ROOT}/src/*.h)
+include_directories(${NANOVG_ROOT}/src)
 
 ##############################################################
 # Compile resources into C code to be compiled into the exe  #
@@ -122,10 +122,11 @@ add_library(${PLUGIN_NAME} SHARED
   )
 
 list(REMOVE_DUPLICATES ADDITIONAL_LIBRARIES)
-target_link_libraries(${PLUGIN_NAME} ${ADDITIONAL_LIBRARIES}
+target_link_libraries(${PLUGIN_NAME}
   "$<$<CONFIG:Release>:${REL_LIBS}>"
   "$<$<NOT:$<CONFIG:Release>>:${DBG_LIBS}>"
   VOSIMLib
+ ${ADDITIONAL_LIBRARIES}
   )
 
 if (WIN32)

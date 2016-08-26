@@ -35,8 +35,13 @@ namespace syn {
 	{
 		DERIVE_UNIT(TanhUnit)
 	public:
+		enum Param
+		{
+			pSat = 0
+		};
 		explicit TanhUnit(const string& a_name) : Unit(a_name)
 		{
+			addParameter_(pSat, UnitParameter("sat", 1.0, 10.0, 1.0));
 			addInput_("in");
 			addOutput_("out");
 		}
@@ -44,7 +49,8 @@ namespace syn {
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override {
 			double input = getInputValue(0);
-			setOutputChannel_(0, tanh(input));
+			double sat = getParameter(pSat).getDouble();
+			setOutputChannel_(0, fast_tanh_poly(input*sat)/fast_tanh_poly(sat));
 		}
 	};
 }

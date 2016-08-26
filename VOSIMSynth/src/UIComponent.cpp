@@ -160,6 +160,14 @@ namespace synui
 		return -1;
 	}
 
+	void UIComponent::setChildIndex(int a_old_ind, int a_new_ind) {
+		shared_ptr<UIComponent> child = getChild(a_old_ind);
+		m_children.erase(m_children.begin() + a_old_ind);
+		_onRemoveChild();
+		m_children.insert(m_children.begin() + a_new_ind, child);
+		_onAddChild(child);
+	}
+
 	int UIComponent::numChildren() const {
 		return m_children.size();
 	}

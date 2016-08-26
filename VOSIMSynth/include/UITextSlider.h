@@ -47,7 +47,6 @@ namespace synui
 		void _onResize() override;
 		void _updateMinSize();
 	private:
-		UITextBox* m_textBox;
 		UIRow* m_row;
 	};
 }

@@ -29,11 +29,11 @@ namespace syn
 		m_initial(0),
 		m_target(1),
 		m_isActive(false),
-		m_pAttack(addParameter_(UnitParameter("atk", 0.0, 1.0, 0.01))),
-		m_pDecay(addParameter_(UnitParameter("dec", 0.0, 1.0, 0.01))),
-		m_pSustain(addParameter_(UnitParameter("sus", 0.0, 1.0, 1.0))),
-		m_pRelease(addParameter_(UnitParameter("rel", 0.0, 1.0, 0.01))),
-		m_pTimeScale(addParameter_(UnitParameter("timescale", 1, 10, 1))) 
+		m_pAttack(addParameter_(UnitParameter("atk", 0.0, 1.0, 0.001))),
+		m_pDecay(addParameter_(UnitParameter("dec", 0.0, 1.0, 0.1))),
+		m_pSustain(addParameter_(UnitParameter("sus", 0.0, 1.0, 0.707))),
+		m_pRelease(addParameter_(UnitParameter("rel", 0.0, 1.0, 0.20))),
+		m_pTimeScale(addParameter_(UnitParameter("timescale", 1, 10, 1, UnitParameter::Seconds)))
 	{
 		m_iGate = addInput_("trig");
 		addOutput_("out");

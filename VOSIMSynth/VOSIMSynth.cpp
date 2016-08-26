@@ -45,7 +45,6 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 	:
 	IPLUG_CTOR(0, 1, instanceInfo), m_tempo(0) {
 	TRACE;
-	SYN_ENABLE_DENORMAL_ROUNDING();
 	makeInstrument();
 	makeGraphics();
 	syn::lut_bl_tri_table();

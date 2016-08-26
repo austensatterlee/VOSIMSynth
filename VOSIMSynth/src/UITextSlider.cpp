@@ -9,17 +9,6 @@
 synui::UITextSlider::UITextSlider(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId, int a_paramId) :
 	UIParamControl{ a_window, a_vm, a_unitId, a_paramId }
 {
-	m_textBox = new UITextBox(m_window);
-	m_textBox->setVisible(false);
-	m_textBox->setCallback([&](const string& a_str)-> bool {
-		setParamFromString(a_str);
-		m_textBox->setVisible(false);
-		m_row->setVisible(true);
-		return true;
-	});
-	m_textBox->setFontSize(theme()->mTextSliderFontSize);
-	addChild(m_textBox);
-
 	m_row = new UIRow(a_window);
 	m_row->setChildrenSpacing(0);
 	m_row->setSelfMinSizePolicy(UICell::SNONE);
@@ -48,7 +37,7 @@ bool synui::UITextSlider::onMouseDrag(const UICoord& a_relCursor, const Vector2i
 		double normval = m_param->getNorm();
 		double targetValue = (a_relCursor.localCoord(this)[0]) * (1.0 / size()[0]);
 		double error = normval - targetValue;
-		double adjust_speed = 0.5;
+		double adjust_speed = 0.25;
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift))
 			adjust_speed *= 0.1;
 		normval = normval - adjust_speed * error;
@@ -60,19 +49,12 @@ bool synui::UITextSlider::onMouseDrag(const UICoord& a_relCursor, const Vector2i
 }
 
 synui::UIComponent* synui::UITextSlider::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
-	UIComponent* retval = UIComponent::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
-	if (retval)
-		return retval;
+	UIComponent* retval = UIParamControl::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
+	if (retval) return retval;
 
 	if (a_isDblClick) {
 		setParamValue(m_param->getDefaultValue());
 		return nullptr;
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)) {
-		m_textBox->setVisible(true);
-		m_row->setVisible(false);
-		m_window->setFocus(m_textBox);
-		return m_textBox->onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
 	}
 	return this;
 }
@@ -117,7 +99,6 @@ void synui::UITextSlider::_updateMinSize() {
 }
 
 void synui::UITextSlider::_onResize() {
-	m_textBox->setSize(size());
 	m_row->setSize(size());
 }
 

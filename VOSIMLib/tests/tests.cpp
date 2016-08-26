@@ -48,15 +48,14 @@ void test_serialization(){
 
 double test_fasttanh_poly() {
 	const int N = 48000;
-	vector<double> phases(N);
 	vector<double> base_tanh_results(N);
 	vector<double> fast_tanh_poly_results(N);
-	uniform_real_distribution<> _phaseGenerator(-4.0, 4.0);
-	std::transform(&phases[0], &phases[N-1], &phases[0], [&_phaseGenerator](double& x)->double {return _phaseGenerator(RandomDevice); });
 	double avg_error = 0;
+	double phase;
 	for(int i=0;i<N;i++) {		
-		base_tanh_results[i] = std::tanh(phases[i]);
-		fast_tanh_poly_results[i] = syn::fast_tanh_poly<double>(phases[i]);
+		phase = i*8.0 / N - 4;
+		base_tanh_results[i] = std::tanh(phase);
+		fast_tanh_poly_results[i] = syn::fast_tanh_poly<double>(phase);
 		avg_error += abs(base_tanh_results[i] - fast_tanh_poly_results[i]);
 	}
 	avg_error *= 1./N;
@@ -64,9 +63,34 @@ double test_fasttanh_poly() {
 	return avg_error;
 }
 
+double test_denormals() {
+	const double epsilon = std::numeric_limits<double>::min();
+	const int N = 2.88e6;
+	const double fs = 48e3;
+	syn::LadderFilter ladder("ladder");
+	double input = 1.0;
+	ladder.setFs(fs);
+	ladder.setParameterValue(syn::LadderFilter::pFc, 1000.0);
+	ladder.connectInput(0, &input);
+
+	double x;
+	int ndenormals = 0;
+	for(int i=0;i<N;i++)
+	{
+		input = 1.0;
+		ladder.tick();
+		x = ladder.getOutputValue(0);
+		if (std::abs(x) < epsilon) ndenormals++;
+		input = 0.0;
+	}
+	std::cout << "# Denormals: " << ndenormals << "/" << N << std::endl;
+	return ndenormals * 1.0 / N;
+}
+
 int main() 
 {
+	test_denormals();
 	test_fasttanh_poly();
-	test_serialization();
+	//test_serialization();
 	return 0;
 }

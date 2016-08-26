@@ -51,6 +51,7 @@ namespace synui
 
 		void addChild(UIComponent* a_newChild, const string& a_group="");
 		void addChild(shared_ptr<UIComponent> a_newChild, const string& a_group="");
+		
 
 		template<typename ComponentType, typename... Args>
 		ComponentType* add(const Args&... args);
@@ -63,7 +64,9 @@ namespace synui
 
 		shared_ptr<UIComponent> getChild(int i, const string& a_group="") const;
 		shared_ptr<UIComponent> getChild(const UIComponent* a_comp) const;
+		
 		int getChildIndex(const UIComponent* a_comp) const;
+		void setChildIndex(int a_old_ind, int a_new_ind);
 
 		int numChildren() const;
 

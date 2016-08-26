@@ -36,15 +36,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define GCCFASTCALL __attribute__((fastcall))
 #endif
 
-// Disable denormals for SSE processors
-// Adapted from Tonic (github.com/TonicAudio/Tonic)
-#if (defined (__SSE__) || defined (_WIN32))
-#include <xmmintrin.h>
-#define  SYN_ENABLE_DENORMAL_ROUNDING() _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON)
-#else
-#define  SYN_ENABLE_DENORMAL_ROUNDING()
-#endif
-
 #define DSP_PI 3.14159265358979323846264338327950288
 #include <regex>
 #include <cereal/cereal.hpp>

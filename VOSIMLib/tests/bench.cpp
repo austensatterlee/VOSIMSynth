@@ -10,12 +10,14 @@
 #include <algorithm>
 #include <random>
 #include <string>
+#include <StateVariableFilter.h>
 
 #define trig_benches 1
+#define ladder_benches 1
 #define modulus_benches 1
-#define lut_saw_benches 0
-#define lut_pitch_benches 0
-#define container_benches 0
+#define lut_saw_benches 1
+#define lut_pitch_benches 1
+#define container_benches 1
 
 std::random_device RandomDevice;
 
@@ -62,6 +64,48 @@ NONIUS_BENCHMARK("syn::fast_tanh::poly", [](nonius::chronometer& meter) {
 	for (int i = 0; i<runs; i++) phases[i] = i * 20.0 / runs - 10.;
 	double x;
 	meter.measure([&x, &phases](int i) { x = syn::fast_tanh_poly<double>(phases[i]); });
+})
+#endif
+
+#if ladder_benches
+NONIUS_BENCHMARK("ladder", [](nonius::chronometer& meter) {
+	const int runs = meter.runs();
+	std::vector<double> phases(runs);
+	syn::LadderFilter ladder("ladder");
+	double input = 1.0;
+	ladder.setParameterValue(syn::LadderFilter::pFc, 10000.0);
+	ladder.connectInput(0, &input);
+
+	for (int i = 0; i<runs; i++) phases[i] = i * 20.0 / runs - 10.;
+	double x;
+	meter.measure([&x, &input, &ladder](int i)
+	{
+		input = 1.0;
+		for (int j = 0; j < 48000; j++) {
+			ladder.tick();
+			x = ladder.getOutputValue(0);
+		}
+	});
+})
+
+NONIUS_BENCHMARK("ladder", [](nonius::chronometer& meter) {
+	const int runs = meter.runs();
+	std::vector<double> phases(runs);
+	syn::LadderFilter ladder("ladder");
+	double input = 1.0;
+	ladder.setParameterValue(syn::LadderFilter::pFc, 10000.0);
+	ladder.connectInput(0, &input);
+
+	for (int i = 0; i<runs; i++) phases[i] = i * 20.0 / runs - 10.;
+	double x;
+	meter.measure([&x, &input, &ladder](int i)
+	{
+		input = 1.0;
+		for (int j = 0; j < 48000; j++) {
+			ladder.tick();
+			x = ladder.getOutputValue(0);
+		}
+	});
 })
 #endif
 

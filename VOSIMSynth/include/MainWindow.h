@@ -35,7 +35,6 @@ Copyright 2016, Austen Satterlee
 #include <boost/lockfree/policies.hpp>
 #include <list>
 
-#include "nanovg.h"
 #include "UI.h"
 #include "perf.h"
 

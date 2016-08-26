@@ -40,6 +40,10 @@ namespace synui {
 		int getDigit(int a_digit);
 		void incrDigit(int a_digit, int a_amt);
 		void decrDigit(int a_digit, int a_amt);
+
+		bool onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) override;
+		bool onMouseScroll(const UICoord& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) override;
+		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 		void updateValue_() override;
@@ -47,20 +51,25 @@ namespace synui {
 		void setNumDigits_(int a_numDigits);
 		void onUpArrow_(int a_digit);
 		void onDownArrow_(int a_digit);
+		void setDecimalLoc(int a_digit); /// set the decimal point to the right of the given column (e.g. 0 removes any fractional part)
 	private:
-		int m_decimalLoc;
+		virtual void _onResize() override;;
+	private:
+		shared_ptr<UICol> m_decimalCol;
 
 		vector<UILabel*> m_digitBoxes;
 		vector<UIButton*> m_upArrows;
 		vector<UIButton*> m_downArrows;
-		UICol* m_mainCol;
+		UICell* m_mainCell;
 		UIRow* m_digitsRow;
 		vector<UICol*> m_digitCols;
 		UICol* m_signCol;
 		UILabel* m_signLabel;
+		Color m_digitColor;
 	};
 
 	string extractDigits(const string& a_str);
+	int extractPrecision(const string& a_str);
 }
 
 #endif

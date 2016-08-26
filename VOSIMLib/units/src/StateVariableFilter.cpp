@@ -167,7 +167,7 @@ void syn::LadderFilter::process_() {
 	// Prepare parameter values and insert them into each stage.
 	double g = 4 * DSP_PI * VT * fc * (1.0 - wd) / (1.0 + wd);
 	double dV0, dV1, dV2, dV3;
-	double drive = 4 * (1+getParameter(pDrv).getDouble());
+	double drive = 1+3*getParameter(pDrv).getDouble();
 	double res = 3.5*getParameter(pFb).getDouble();
 
 	int i = c_oversamplingFactor;

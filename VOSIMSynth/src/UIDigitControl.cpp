@@ -8,20 +8,44 @@
 
 namespace synui
 {
+	string extractDigits(const string& a_str)
+	{
+		string digitStr = "";
+		for (int i = 0; i < a_str.size(); i++) {
+			if (isdigit(a_str[i])) {
+				digitStr += a_str[i];
+			}
+		}
+		return digitStr;
+	}
+
+	int extractPrecision(const string& a_str) {
+		int count = 0;
+		int i = a_str.size() - 1;
+		while(i--){
+			if (isdigit(a_str[i]) || a_str[i]=='.') {
+				if (a_str[i] == '.') return count;
+				count++;
+			}
+		}
+		return -1;
+	}
+
 	UIDigitControl::UIDigitControl(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId, int a_paramId) :
 		UIParamControl(a_window, a_vm, a_unitId, a_paramId),
-		m_decimalLoc(-1),
-		m_mainCol(new UICol(a_window)),
+		m_mainCell(new UIRow(a_window)),
 		m_digitsRow(new UIRow(a_window)),
 		m_signCol(new UICol(a_window)),
-		m_signLabel(new UILabel(a_window))
+		m_signLabel(new UILabel(a_window)),
+		m_decimalCol(new UICol(a_window)),
+		m_digitColor(0.05f,0.01f,0.01f,1.0f)
 	{
-		addChild(m_mainCol);
+		addChild(m_mainCell);
 		// Set up first row
 		m_nameLabel = new UILabel(a_window);
 		m_nameLabel->setFontSize(16);
-		m_nameLabel->setFontSize(16);
 		m_unitsLabel = new UILabel(a_window);
+		m_unitsLabel->setFontSize(16);
 		UIRow* nameRow = new UIRow(a_window);
 		nameRow->addChild(m_nameLabel);
 		nameRow->setGreedyChild(m_nameLabel);
@@ -31,19 +55,34 @@ namespace synui
 		valueRow->addChild(m_unitsLabel);
 		valueRow->setGreedyChild(m_digitsRow);
 		valueRow->setChildResizePolicy(UICell::CMATCHMAX);
+		valueRow->setPadding({ 2,2,2,2 });
 		// Add rows to main column
-		m_mainCol->addChild(nameRow);
-		m_mainCol->addChild(valueRow);
-		m_mainCol->setChildResizePolicy(UICell::CMAX);
+		m_mainCell->addChild(nameRow);
+		m_mainCell->addChild(valueRow);
+		m_mainCell->setChildResizePolicy(UICell::CMAX);
+		m_mainCell->setChildrenSpacing(0.0);
+		
+		UILabel* decimalLbl = m_decimalCol->add<UILabel>(a_window);
+		decimalLbl->setText(".");
+		decimalLbl->setFontFace(theme()->mFontMono);
+		decimalLbl->setAlignment(NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER);
+		decimalLbl->setFontSize(14);
+		decimalLbl->setFontColor(m_digitColor);
+		m_decimalCol->setVisible(false);
+		m_decimalCol->setGreedyChild(decimalLbl);
 
-		m_digitsRow->setChildrenSpacing(6);
-		m_digitsRow->setPadding({ 6,6,6,6 });
-		m_digitsRow->setChildResizePolicy(UICell::CMATCHMAX);
-		m_digitsRow->addChild(m_signCol);
 		m_signCol->addChild(m_signLabel);
 		m_signCol->setGreedyChild(m_signLabel);
 		m_signLabel->setAlignment(NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER);
 		m_signLabel->setFontSize(14);
+		m_signLabel->setFontColor(m_digitColor);
+		m_signLabel->setFontFace(theme()->mFontMono);
+
+		m_digitsRow->setChildrenSpacing(1);
+		m_digitsRow->setChildResizePolicy(UICell::CMATCHMIN);
+		m_digitsRow->addChild(m_signCol);
+		m_digitsRow->addChild(m_decimalCol);
+		
 		UIDigitControl::updateValue_();
 	}
 
@@ -61,14 +100,21 @@ namespace synui
 			digitCol->setChildrenSpacing(0);
 			digitCol->setChildResizePolicy(UICell::CMATCHMAX);
 			UIButton* upArrow = new UIButton(m_window, "", ENTYPO_UP);
+			upArrow->setIconPosition(UIButton::IconPosition::LeftCentered);
+			upArrow->setTextColor(Color(0.95f, 0.95f, 0.90f, 1.0f));
 			upArrow->setFontSize(12);
+			upArrow->setBackgroundColor(Color(0.1f, 0.1f, 0.1f, 1.0f));
 			UILabel* digitBox = new UILabel(m_window);
 			digitBox->setAlignment(NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER);
-			digitBox->setFontSize(12);
+			digitBox->setFontSize(14);
 			digitBox->setText("0");
 			digitBox->setFontFace(theme()->mFontMono);
+			digitBox->setFontColor(m_digitColor);
 			UIButton* downArrow = new UIButton(m_window, "", ENTYPO_DOWN);
-			downArrow->setFontSize(13);
+			downArrow->setIconPosition(UIButton::IconPosition::LeftCentered);
+			downArrow->setTextColor(Color(0.95f, 0.95f, 0.90f, 1.0f));
+			downArrow->setBackgroundColor(Color(0.1f, 0.1f, 0.1f, 1.0f));
+			downArrow->setFontSize(12);
 
 			int digitNum = m_digitBoxes.size();
 			auto upFunc = [this, digitNum]() {this->onUpArrow_(digitNum); };
@@ -110,42 +156,35 @@ namespace synui
 		}
 	}
 
-	string extractDigits(const string& a_str)
-	{
-		string digitStr = "";
-		for (int i = 0; i < a_str.size(); i++) {
-			if (isdigit(a_str[i])) {
-				digitStr += a_str[i];
-			}
+	void UIDigitControl::setDecimalLoc(int a_digit) {
+		if (a_digit < 0 || a_digit>(m_digitBoxes.size()-1)) {
+			m_decimalCol->setVisible(false);
+			return;
 		}
-		return digitStr;
+		m_decimalCol->setVisible(true);
+		m_decimalCol->getChild(0)->setSize({ -1, m_digitsRow->size().y() });
+		m_digitsRow->setChildIndex(m_digitsRow->getChildIndex(m_decimalCol.get()), a_digit);
+	}
+
+	void UIDigitControl::_onResize() {
+		m_mainCell->setSize(size());
 	}
 
 	void UIDigitControl::setValue_(const string& a_num) {
-		m_decimalLoc = static_cast<int>(a_num.find_first_of("."));
-		if (m_decimalLoc == string::npos)
-			m_decimalLoc = -1;
-		else if (a_num[0] == '-' || a_num[0] == '+')
-			m_decimalLoc -= 1;
 
 		string digitStr = extractDigits(a_num);
 		if (m_digitBoxes.size() <= digitStr.size())
 			setNumDigits_(digitStr.size());
 
+		int decimalLoc = extractPrecision(a_num);
+		setDecimalLoc(m_digitBoxes.size() - decimalLoc);
+
 		for (int i = 0; i < m_digitBoxes.size(); i++) {
-			if (i == m_decimalLoc) {
-				m_digitBoxes[m_digitBoxes.size() - 1 - i]->setText(".0");
-			}
-			else {
-				m_digitBoxes[m_digitBoxes.size() - 1 - i]->setText("0");
-			}
+			m_digitBoxes[m_digitBoxes.size() - 1 - i]->setText("0");
 		}
 
 		for (int i = 0; i < digitStr.size(); i++) {
-			if (i == m_decimalLoc)
-				m_digitBoxes[m_digitBoxes.size() - digitStr.size() + i]->setText("." + digitStr.substr(i, 1));
-			else
-				m_digitBoxes[m_digitBoxes.size() - digitStr.size() + i]->setText(digitStr.substr(i, 1));
+			m_digitBoxes[m_digitBoxes.size() - digitStr.size() + i]->setText(digitStr.substr(i, 1));
 		}
 
 		double num = stod(a_num);
@@ -168,7 +207,6 @@ namespace synui
 	}
 
 	int UIDigitControl::getDigit(int a_digit) {
-		if (a_digit == m_decimalLoc) return -1;
 		return stoi(extractDigits(m_digitBoxes[a_digit]->text()));
 	}
 
@@ -180,6 +218,19 @@ namespace synui
 		nudgeParam(m_digitCols.size() - 1 - a_digit, -a_amt);
 	}
 
+	bool UIDigitControl::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
+		return UIParamControl::onMouseDrag(a_relCursor, a_diffCursor);
+	}
+
+	bool UIDigitControl::onMouseScroll(const UICoord& a_relCursor, const Vector2i& a_diffCursor, int a_scrollAmt) {
+		return UIParamControl::onMouseScroll(a_relCursor, a_diffCursor, a_scrollAmt);
+		
+	}
+
+	UIComponent* UIDigitControl::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
+		return UIParamControl::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
+	}
+
 	void UIDigitControl::draw(NVGcontext* a_nvg) {
 		UIParamControl::draw(a_nvg);
 
@@ -188,46 +239,68 @@ namespace synui
 		NVGpaint bgPaint;
 
 		nvgBeginPath(a_nvg);
-		boxPos = m_digitsRow->getAbsPos() - getAbsPos() + Vector2i{ 6, 6 };
-		boxSize = m_digitsRow->size() - Vector2i{ 12, 12 };
+		boxPos = m_digitsRow->getAbsPos() - getAbsPos();
+		boxSize = m_digitsRow->size();
 		bgPaint = nvgLinearGradient(a_nvg,
-			boxPos.x(), boxPos.y(),
-			boxPos.x(), boxPos.y() + size().y()*4.0f / 5.0f,
-			Color(0.3f, 1.0f), Color(0.2f, 1.0f));
-		nvgRoundedRect(a_nvg, boxPos.x(), boxPos.y(), boxSize.x(), boxSize.y(), 3.0f);
+			boxPos.x(), boxPos.y() + boxSize.y() * 8. / 9,
+			boxPos.x(), boxPos.y() + boxSize.y(),
+			Color(0.15f, 1.0f), Color(0.7f, 1.0f));
+		nvgRoundedRect(a_nvg, boxPos.x(), boxPos.y(), boxSize.x(), boxSize.y(), 6.0f);
 		nvgFillPaint(a_nvg, bgPaint);
 		nvgFill(a_nvg);
 
 		nvgBeginPath(a_nvg);
-		boxPos = m_digitsRow->getAbsPos() - getAbsPos() + Vector2i{ 6, 6 };
-		boxSize = m_digitsRow->size() - Vector2i{ 12, 12 };
+		boxPos = { m_digitsRow->getAbsPos().x(), m_digitBoxes[0]->getAbsPos().y() };
+		boxPos -= getAbsPos();
+		boxSize = { m_digitBoxes.back()->getAbsPos().x() + m_digitBoxes.back()->size().x() - m_digitsRow->getAbsPos().x(), m_digitBoxes.front()->size().y() };
+		bgPaint = nvgBoxGradient(a_nvg,
+			boxPos.x() + 2.0, boxPos.y() + 2.0,
+			boxSize.x() - 4.0, boxSize.y() - 4.0,
+			1.0f, 1.0f,
+			Color(0.65,0.6,0.55f, 1.0f), Color(0.2,0.2,0.2f, 1.0f));
+		nvgRoundedRect(a_nvg, boxPos.x(), boxPos.y(), boxSize.x(), boxSize.y(), 1.0f);
+		nvgFillPaint(a_nvg, bgPaint);
+		nvgFill(a_nvg);
+
+		nvgBeginPath(a_nvg);
+		boxPos = m_digitsRow->getAbsPos() - getAbsPos();
+		boxSize = m_digitsRow->size();
 		bgPaint = nvgBoxGradient(a_nvg,
 			boxPos.x(), boxPos.y(),
 			boxSize.x(), boxSize.y(),
 			6.0f, 12.0f,
-			Color(0.0f, 0.0f, 0.2f, 1.0f), Color(0.0f, 0.0f));
+			Color(0.2f, 0.0f, 0.0f, 0.9f), Color(0.0f, 0.0f));
 		nvgRect(a_nvg, boxPos.x() - 6, boxPos.y() - 6, boxSize.x() + 12, boxSize.y() + 12);
-		nvgRoundedRect(a_nvg, boxPos.x(), boxPos.y(), boxSize.x(), boxSize.y(), 3.0f);
+		nvgRoundedRect(a_nvg, boxPos.x(), boxPos.y(), boxSize.x(), boxSize.y(), 6.0f);
 		nvgPathWinding(a_nvg, NVG_HOLE);
 		nvgFillPaint(a_nvg, bgPaint);
 		nvgFill(a_nvg);
 
-		for (int i = 0; i < m_digitBoxes.size() - 1; i++) {
-			nvgBeginPath(a_nvg);
-			nvgStrokeWidth(a_nvg, 1.0f);
-			Vector2i sepBegin = m_digitBoxes[i]->getAbsPos() - getAbsPos() + Vector2i{m_digitBoxes[i]->size().x(), 0};
-			nvgMoveTo(a_nvg, sepBegin.x() + 3.0f, sepBegin.y());
-			nvgLineTo(a_nvg, sepBegin.x() + 3.0f, sepBegin.y() + m_digitBoxes[i]->size().y());
-			nvgStrokeColor(a_nvg, Color(0.7f,1.0f));
-			nvgStroke(a_nvg);
+		nvgBeginPath(a_nvg);
+		Vector2i sepBegin = m_digitCols[0]->getAbsPos() - getAbsPos();
+		nvgMoveTo(a_nvg, sepBegin.x(), sepBegin.y());
+		nvgLineTo(a_nvg, sepBegin.x(), sepBegin.y() + m_digitCols[0]->size().y());
+		sepBegin = m_decimalCol->getAbsPos() - getAbsPos();
+		nvgMoveTo(a_nvg, sepBegin.x() + m_decimalCol->size().x(), sepBegin.y());
+		nvgLineTo(a_nvg, sepBegin.x() + m_decimalCol->size().x(), sepBegin.y() + m_decimalCol->size().y());
+		for (int i = 0; i < m_digitCols.size()-1; i++) {
+			sepBegin = m_digitCols[i]->getAbsPos() - getAbsPos() + m_digitCols[i]->size().x()*Vector2i::Unit(0);
+			nvgMoveTo(a_nvg, sepBegin.x(), sepBegin.y());
+			nvgLineTo(a_nvg, sepBegin.x(), sepBegin.y() + m_digitCols[i]->size().y());
 		}
+		nvgStrokeColor(a_nvg, Color(0.0f, 0.134f));
+		nvgStrokeWidth(a_nvg, 1.0f);
+		nvgStroke(a_nvg);
 	}
 
 	void UIDigitControl::updateValue_() {
 		UIParamControl::updateValue_();
-		int nDigits = 1 + ceil(log10(m_param->getMax())) + (m_param->getPrecision() > 0 ? m_param->getPrecision() + 1 : 0);
+		int nDigits = ceil(log10(m_param->getMax())) + (m_param->getPrecision() > 0 ? m_param->getPrecision() + 1 : 0);
 		setNumDigits_(nDigits);
 		setValue_(m_param->getValueString());
-		setMinSize(m_mainCol->minSize());
+		setMinSize(m_mainCell->minSize());
+
+		m_textBox->setRelPos(m_digitBoxes[0]->getAbsPos() - getAbsPos());
+		m_textBox->setSize({ m_digitBoxes.back()->getAbsPos().x() - m_digitBoxes.front()->getAbsPos().x(), m_digitBoxes.front()->size().y() });
 	}
 }

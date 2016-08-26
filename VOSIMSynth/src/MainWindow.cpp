@@ -1,6 +1,13 @@
+#ifndef STB_IMAGE_IMPLEMENTATION
+	#define STB_IMAGE_IMPLEMENTATION
+#endif
 #include "MainWindow.h"
-#include "GL/glew.h"
-#include "nanovg_gl.h"
+#ifdef NANOVG_GLEW
+	#include "GL/glew.h"
+#endif
+#ifdef NANOVG_GL3_IMPLEMENTATION 
+	#include "nanovg_gl.h"
+#endif
 #include "Theme.h"
 #include "VOSIMComponent.h"
 #include <sftools/ResourceManager.hpp>
