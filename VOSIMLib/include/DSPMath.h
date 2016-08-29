@@ -155,9 +155,17 @@ namespace syn
 
 	/// Best if |x|<3.1
 	template<typename T>
-	T fast_tanh_poly(const T& x_) {
+	T fast_tanh_rat(const T& x_) {
 		T x = abs(x_);
 		return sgn(x_)*(-.67436811832e-5 + (.2468149110712040 + (.583691066395175e-1 + .3357335044280075e-1*x)*x)*x) / (.2464845986383725 + (.609347197060491e-1 + (.1086202599228572 + .2874707922475963e-1*x)*x)*x);
+	}
+
+	template<typename T>
+	T fast_tanh_rat2(const T& x) {
+		const double ax = abs(x);
+		const double x2 = x * x;
+		const double z = x * (0.773062670268356 + ax + (0.757118539838817 + 0.0139332362248817 * x2 * x2) * x2 * ax);
+		return(z / (0.795956503022967 + abs(z)));
 	}
 
 	//////////////////

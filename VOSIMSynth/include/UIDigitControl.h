@@ -55,17 +55,16 @@ namespace synui {
 	private:
 		virtual void _onResize() override;;
 	private:
+		UICell* m_mainCell;
 		shared_ptr<UICol> m_decimalCol;
-
+		UIRow* m_digitsRow;
 		vector<UILabel*> m_digitBoxes;
+		vector<UICol*> m_digitCols;
+		Color m_digitColor;
 		vector<UIButton*> m_upArrows;
 		vector<UIButton*> m_downArrows;
-		UICell* m_mainCell;
-		UIRow* m_digitsRow;
-		vector<UICol*> m_digitCols;
 		UICol* m_signCol;
 		UILabel* m_signLabel;
-		Color m_digitColor;
 	};
 
 	string extractDigits(const string& a_str);

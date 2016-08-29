@@ -30,6 +30,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "UIComponent.h"
 
 namespace synui {
+
 	class UIPlot : public UIComponent
 	{
 	public:

@@ -12,8 +12,8 @@ namespace synui
 			if (mCallback)
 				mCallback(i);
 		});
-		addChild(mHeader);
-		addChild(mContent);
+		addChild(mHeader,"header");
+		addChild(mContent,"content");
 	}
 
 	void UITabWidget::setActiveTab(int tabIndex) {
@@ -101,6 +101,9 @@ namespace synui
 		return mHeader->tabLabelAt(index);
 	}
 
+	const UITabHeader& UITabWidget::header() const { return *mHeader; }
+	const UIStackedComponent& UITabWidget::content() const { return *mContent; }
+
 	void UITabWidget::performLayout(NVGcontext* ctx) {
 		int headerHeight = mHeader->minSize().y();
 		int margin = theme()->mTabInnerMargin;
@@ -150,15 +153,14 @@ namespace synui
 
 			nvgRestore(ctx);
 		}
+		setMinSize(calcMinSize(ctx));
 	}
 
 	void UITabWidget::notifyChildResized(UIComponent* a_child) {
-		setMinSize(calcMinSize(m_window->getContext()));
 		performLayout(m_window->getContext());
 	}
 
-	void UITabWidget::_onResize() {
-		setMinSize(calcMinSize(m_window->getContext()));
+	void UITabWidget::_onResize() {		
 		performLayout(m_window->getContext());
 	}
 }

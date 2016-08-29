@@ -19,8 +19,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __UNIT__
 #define __UNIT__
+#include <eigen/Core>
 #include <cereal/types/polymorphic.hpp>
 #include <cereal/archives/json.hpp>
+
 #include "NamedContainer.h"
 #include "UnitParameter.h"
 
@@ -105,6 +107,8 @@ namespace syn
 	class Unit
 	{
 	public:
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 		Unit();
 
 		explicit Unit(const string& a_name);
@@ -135,6 +139,11 @@ namespace syn
 		 * Notify the unit of a note off event
 		 */
 		void noteOff(int a_note, int a_velocity);
+
+    /**
+     * Reset the units internal state (if any)
+     */
+    virtual void reset() {};
 
 		/**
 		 * Notify the unit that one of its internal parameters changed. 

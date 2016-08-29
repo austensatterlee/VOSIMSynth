@@ -62,14 +62,6 @@ namespace synui
 			_updateMinSize();
 		}
 
-		const Color& backgroundColor() const {
-			return mBackgroundColor;
-		}
-
-		void setBackgroundColor(const Color& backgroundColor) {
-			mBackgroundColor = backgroundColor;
-		}
-
 		const Color& textColor() const {
 			return mTextColor;
 		}
@@ -157,7 +149,6 @@ namespace synui
 		IconPosition mIconPosition;
 		bool mPushed;
 		int mFlags;
-		Color mBackgroundColor;
 		Color mTextColor;
 		bool mEnabled;
 		function<void()> mCallback;

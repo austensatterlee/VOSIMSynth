@@ -34,35 +34,27 @@ namespace synui
 	UIDigitControl::UIDigitControl(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId, int a_paramId) :
 		UIParamControl(a_window, a_vm, a_unitId, a_paramId),
 		m_mainCell(new UIRow(a_window)),
-		m_digitsRow(new UIRow(a_window)),
-		m_signCol(new UICol(a_window)),
-		m_signLabel(new UILabel(a_window)),
 		m_decimalCol(new UICol(a_window)),
-		m_digitColor(0.05f,0.01f,0.01f,1.0f)
+		m_digitsRow(new UIRow(a_window)),
+		m_digitColor(0.05f,0.01f,0.01f,1.0f),
+		m_signCol(new UICol(a_window)),
+		m_signLabel(new UILabel(a_window))
 	{
 		addChild(m_mainCell);
-		// Set up first row
-		m_nameLabel = new UILabel(a_window);
-		m_nameLabel->setFontSize(16);
-		m_unitsLabel = new UILabel(a_window);
-		m_unitsLabel->setFontSize(16);
-		UIRow* nameRow = new UIRow(a_window);
-		nameRow->addChild(m_nameLabel);
-		nameRow->setGreedyChild(m_nameLabel);
 		// Set up second row
 		UIRow* valueRow = new UIRow(a_window);
 		valueRow->addChild(m_digitsRow);
-		valueRow->addChild(m_unitsLabel);
 		valueRow->setGreedyChild(m_digitsRow);
 		valueRow->setChildResizePolicy(UICell::CMATCHMAX);
 		valueRow->setPadding({ 2,2,2,2 });
 		// Add rows to main column
-		m_mainCell->addChild(nameRow);
 		m_mainCell->addChild(valueRow);
 		m_mainCell->setChildResizePolicy(UICell::CMAX);
+		m_mainCell->setSelfMinSizePolicy(UICell::SNONE);
 		m_mainCell->setChildrenSpacing(0.0);
+		m_mainCell->setGreedyChild(valueRow);
 		
-		UILabel* decimalLbl = m_decimalCol->add<UILabel>(a_window);
+		UILabel* decimalLbl = m_decimalCol->add<UILabel>("");
 		decimalLbl->setText(".");
 		decimalLbl->setFontFace(theme()->mFontMono);
 		decimalLbl->setAlignment(NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER);
@@ -73,8 +65,8 @@ namespace synui
 
 		m_signCol->addChild(m_signLabel);
 		m_signCol->setGreedyChild(m_signLabel);
-		m_signLabel->setAlignment(NVG_ALIGN_MIDDLE | NVG_ALIGN_CENTER);
-		m_signLabel->setFontSize(14);
+		m_signLabel->setAlignment(NVG_ALIGN_MIDDLE | NVG_ALIGN_RIGHT);
+		m_signLabel->setFontSize(12);
 		m_signLabel->setFontColor(m_digitColor);
 		m_signLabel->setFontFace(theme()->mFontMono);
 
@@ -171,7 +163,6 @@ namespace synui
 	}
 
 	void UIDigitControl::setValue_(const string& a_num) {
-
 		string digitStr = extractDigits(a_num);
 		if (m_digitBoxes.size() <= digitStr.size())
 			setNumDigits_(digitStr.size());
@@ -242,9 +233,9 @@ namespace synui
 		boxPos = m_digitsRow->getAbsPos() - getAbsPos();
 		boxSize = m_digitsRow->size();
 		bgPaint = nvgLinearGradient(a_nvg,
-			boxPos.x(), boxPos.y() + boxSize.y() * 8. / 9,
+			boxPos.x(), boxPos.y() + boxSize.y() * 15. / 16,
 			boxPos.x(), boxPos.y() + boxSize.y(),
-			Color(0.15f, 1.0f), Color(0.7f, 1.0f));
+			Color(0.1f, 1.0f), Color(0.3f, 1.0f));
 		nvgRoundedRect(a_nvg, boxPos.x(), boxPos.y(), boxSize.x(), boxSize.y(), 6.0f);
 		nvgFillPaint(a_nvg, bgPaint);
 		nvgFill(a_nvg);
@@ -254,8 +245,8 @@ namespace synui
 		boxPos -= getAbsPos();
 		boxSize = { m_digitBoxes.back()->getAbsPos().x() + m_digitBoxes.back()->size().x() - m_digitsRow->getAbsPos().x(), m_digitBoxes.front()->size().y() };
 		bgPaint = nvgBoxGradient(a_nvg,
-			boxPos.x() + 2.0, boxPos.y() + 2.0,
-			boxSize.x() - 4.0, boxSize.y() - 4.0,
+			boxPos.x()+2.0, boxPos.y()+2.0,
+			boxSize.x()-4.0, boxSize.y()-4.0,
 			1.0f, 1.0f,
 			Color(0.65,0.6,0.55f, 1.0f), Color(0.2,0.2,0.2f, 1.0f));
 		nvgRoundedRect(a_nvg, boxPos.x(), boxPos.y(), boxSize.x(), boxSize.y(), 1.0f);
@@ -298,7 +289,7 @@ namespace synui
 		int nDigits = ceil(log10(m_param->getMax())) + (m_param->getPrecision() > 0 ? m_param->getPrecision() + 1 : 0);
 		setNumDigits_(nDigits);
 		setValue_(m_param->getValueString());
-		setMinSize(m_mainCell->minSize());
+		m_mainCell->setSize(size());
 
 		m_textBox->setRelPos(m_digitBoxes[0]->getAbsPos() - getAbsPos());
 		m_textBox->setSize({ m_digitBoxes.back()->getAbsPos().x() - m_digitBoxes.front()->getAbsPos().x(), m_digitBoxes.front()->size().y() });

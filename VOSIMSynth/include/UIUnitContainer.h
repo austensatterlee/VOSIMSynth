@@ -19,7 +19,7 @@ Copyright 2016, Austen Satterlee
 
 /**
 *  \file UIUnitContainer.h
-*  \brief
+*  \brief Representation of a Unit on the CircuitPanel.
 *  \details
 *  \author Austen Satterlee
 *  \date 04/2016

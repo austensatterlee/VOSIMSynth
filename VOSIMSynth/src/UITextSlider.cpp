@@ -104,6 +104,9 @@ void synui::UITextSlider::_onResize() {
 
 void synui::UITextSlider::updateValue_() {
 	UIParamControl::updateValue_();
+	m_unitsLabel->setText(m_unitsStr);
+	m_nameLabel->setText(m_nameStr);
+	m_valueLabel->setText(m_valueStr);
 	m_textBox->setValue(m_valueLabel->text());
 	m_textBox->setUnits(m_unitsLabel->text());
 	_updateMinSize();

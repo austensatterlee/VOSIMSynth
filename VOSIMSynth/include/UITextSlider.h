@@ -48,6 +48,7 @@ namespace synui
 		void _updateMinSize();
 	private:
 		UIRow* m_row;
+		UILabel *m_nameLabel, *m_valueLabel, *m_unitsLabel;
 	};
 }
 #endif

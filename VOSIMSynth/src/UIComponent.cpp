@@ -15,7 +15,8 @@ namespace synui
 		m_size(0, 0), 
 		m_minSize(-1, -1), 
 		m_maxSize(-1, -1), 
-		m_name(a_name) 
+		m_name(a_name),
+		m_bgColor(0.0f,0.0f)
 	{
 		m_draw = ([](UIComponent*, NVGcontext*) {return; });
 		m_onMouseDrag = ([](UIComponent*, const UICoord&, const Vector2i&) {return false; });
@@ -52,6 +53,7 @@ namespace synui
 		nvgTranslate(a_nvg, m_pos[0], m_pos[1]);
 		nvgSave(a_nvg);
 		draw(a_nvg);
+		m_draw(this, a_nvg);
 		nvgRestore(a_nvg);
 
 		nvgSave(a_nvg);
@@ -192,9 +194,18 @@ namespace synui
 		m_layout = a_layout;
 	}
 
+	Vector2i UIComponent::preferredSize(NVGcontext* a_nvg) {
+		if(m_layout) {
+			return m_layout->preferredSize(a_nvg, this);
+		}
+		return m_size;		
+	}
+		
+	
 	void UIComponent::performLayout(NVGcontext* a_nvg) {
 		if (m_layout) {
 			m_layout->performLayout(a_nvg, this);
+			setSize(m_layout->preferredSize(a_nvg, this));
 		} else {
 			for (auto c : m_children) {
 				c->performLayout(a_nvg);
@@ -261,6 +272,10 @@ namespace synui
 		return m_window->theme();
 	}
 
+	MainWindow* UIComponent::window() const {
+		return m_window;
+	}
+
 	bool UIComponent::visible() const {
 		return m_visible;
 	}
@@ -271,6 +286,10 @@ namespace synui
 
 	bool UIComponent::hovered() const {
 		return m_hovered;
+	}
+
+	bool UIComponent::dragging() const {
+		return m_dragging;
 	}
 
 	bool UIComponent::onTextEntered(sf::Uint32 a_unicode) {
@@ -355,9 +374,9 @@ namespace synui
 		setSize(m_size);
 	}
 
-	void UIComponent::draw(NVGcontext* a_nvg) {
-		m_draw(this, a_nvg);
-	}
+	Color UIComponent::backgroundColor() const { return m_bgColor; }
+
+	void UIComponent::draw(NVGcontext* a_nvg) {}
 
 	void UIComponent::setMaxSize(const Vector2i& a_maxSize) {
 		m_maxSize = a_maxSize;
@@ -402,8 +421,10 @@ namespace synui
 					continue;
 				if (child->contains(a_relCursor)) {
 					UIComponent* ret = child->onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
-					if (ret)
+					if (ret) {
+						ret->m_dragging = true;
 						return ret;
+					}
 				}
 			}
 		}
@@ -411,6 +432,7 @@ namespace synui
 	}
 
 	bool UIComponent::onMouseUp(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
+		m_dragging = false;
 		for (auto const& kv : m_ZPlaneMap) {
 			for (UIComponent* child : kv.second) {
 				if (!child->visible())

@@ -44,17 +44,13 @@ namespace synui
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 		UIComponent(MainWindow* a_window, const string& a_name="");
-
 		virtual ~UIComponent() {}
 
 		void recursiveDraw(NVGcontext* a_nvg);
-
 		void addChild(UIComponent* a_newChild, const string& a_group="");
 		void addChild(shared_ptr<UIComponent> a_newChild, const string& a_group="");
-		
-
 		template<typename ComponentType, typename... Args>
-		ComponentType* add(const Args&... args);
+		ComponentType* add(const string& a_group, const Args&... args);
 
 		const string& getChildGroup(UIComponent* a_child) const;
 		const vector<UIComponent*>& getGroup(const string& a_group) const;
@@ -79,31 +75,25 @@ namespace synui
 		void setLayout(UILayout* a_layout);
 
 		void setLayout(shared_ptr<UILayout> a_layout);
+		Vector2i preferredSize(NVGcontext* a_nvg);
 		virtual void performLayout(NVGcontext* a_nvg);
 
 		shared_ptr<UIComponent> getSharedPtr();
-
-		virtual bool contains(const UICoord& a_pt) const;
 
 		UIComponent* findChild(const UICoord& a_pt, const string& a_filterGroup="") const;
 		UIComponent* findChildRecursive(const UICoord& a_pt) const;
 
 		Vector2i getRelPos() const;
-
 		Vector2i getRelCenter() const;
-
 		void setRelPos(const Vector2i& a_pos);
 
 		Vector2i getAbsPos() const;
-
 		Vector2i getAbsCenter() const;
 
 		void move(const Vector2i& a_dist);
 
 		Vector2i size() const;
-
 		Vector2i minSize() const;
-
 		Vector2i maxSize() const;
 
 		/**
@@ -117,14 +107,16 @@ namespace synui
 		NVGcontext* nvgContext() const;
 		sf::RenderWindow* sfmlWindow() const;
 		shared_ptr<Theme> theme() const;
+		MainWindow* window() const;;
 
 		bool visible() const;
 		bool focused() const;
-
 		bool hovered() const;
+		bool dragging() const;
 
 		void setVisible(bool a_visible);
 
+		virtual bool contains(const UICoord& a_pt) const;
 		virtual bool onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor);
 		virtual bool onMouseMove(const UICoord& a_relCursor, const Vector2i& a_diffCursor);
 		virtual void onMouseEnter(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isEntering);
@@ -134,15 +126,12 @@ namespace synui
 		virtual bool onTextEntered(sf::Uint32 a_unicode);
 		virtual bool onKeyDown(const sf::Event::KeyEvent& a_key);
 		virtual bool onKeyUp(const sf::Event::KeyEvent& a_key);
-
 		virtual void notifyChildResized(UIComponent* a_child) {};
-
 		virtual void onFocusEvent(bool a_isFocused);
 
 		void bringToFront(UIComponent* a_child);
 
 		int getZOrder(UIComponent* a_child);
-
 		/**
 		 * Sets a components z-order. 
 		 * If the component already has the given z-order, it is brought to the front of that z-order.
@@ -154,12 +143,25 @@ namespace synui
 		* Sets maximum size constraint. To unconstrain a dimension, set it to a negative number.
 		*/
 		void setMaxSize(const Vector2i& a_maxSize);
-
 		/**
 		* Sets minimum size constraint. To unconstrain a dimension, set it to a negative number.
 		*/
 		void setMinSize(const Vector2i& a_minSize);
 
+	public:
+		Color backgroundColor() const;
+		void setBackgroundColor(const Color& a_bgColor) { m_bgColor = a_bgColor; }
+
+		std::function<void(UIComponent*, NVGcontext*)> m_draw;
+		std::function<bool(UIComponent*, const UICoord&, const Vector2i&)> m_onMouseDrag;
+		std::function<bool(UIComponent*, const UICoord&, const Vector2i&)> m_onMouseMove;
+		std::function<void(UIComponent*, const UICoord&, const Vector2i&, bool)> m_onMouseEnter;
+		std::function<UIComponent*(UIComponent*, const UICoord&, bool)> m_onMouseDown;
+		std::function<bool(UIComponent*, const UICoord&)> m_onMouseUp;
+		std::function<bool(UIComponent*, const UICoord&, int)> m_onMouseScroll;
+		std::function<bool(UIComponent*, sf::Uint32)> m_onTextEntered;
+		std::function<bool(UIComponent*, const sf::Event::KeyEvent&)> m_onKeyDown;
+		std::function<bool(UIComponent*, const sf::Event::KeyEvent&)> m_onKeyUp;
 	protected:
 		virtual void draw(NVGcontext* a_nvg);
 		virtual void setChildrenStyles(NVGcontext* a_nvg) {};
@@ -184,27 +186,17 @@ namespace synui
 		map<string, vector<UIComponent*> > m_groupMap;
 		map<UIComponent*, string> m_reverseGroupMap;
 
-		std::function<void(UIComponent*, NVGcontext*)> m_draw;
-		std::function<bool(UIComponent*, const UICoord&, const Vector2i&)> m_onMouseDrag;
-		std::function<bool(UIComponent*, const UICoord&, const Vector2i&)> m_onMouseMove;
-		std::function<void(UIComponent*, const UICoord&, const Vector2i&, bool)> m_onMouseEnter;
-		std::function<UIComponent*(UIComponent*, const UICoord&, bool)> m_onMouseDown;
-		std::function<bool(UIComponent*, const UICoord&)> m_onMouseUp;
-		std::function<bool(UIComponent*, const UICoord&, int)> m_onMouseScroll;
-		std::function<bool(UIComponent*, sf::Uint32)> m_onTextEntered;
-		std::function<bool(UIComponent*, const sf::Event::KeyEvent&)> m_onKeyDown;
-		std::function<bool(UIComponent*, const sf::Event::KeyEvent&)> m_onKeyUp;
-
-
-		bool m_visible, m_focused, m_hovered;
+		bool m_visible, m_focused, m_hovered, m_dragging;
 		Vector2i m_pos, m_size;
 		Vector2i m_minSize, m_maxSize;
+
+		Color m_bgColor;
 	};
 
 	template <typename ComponentType, typename ... Args>
-	ComponentType* UIComponent::add(const Args&... args) {
-		ComponentType* ret = new ComponentType(m_window);
-		addChild(ret);
+	ComponentType* UIComponent::add(const string& a_group, const Args&... args) {
+		ComponentType* ret = new ComponentType(m_window, args...);
+		addChild(ret, a_group);
 		return ret;
 	}
 };

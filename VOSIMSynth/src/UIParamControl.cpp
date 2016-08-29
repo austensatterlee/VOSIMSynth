@@ -10,9 +10,6 @@ synui::UIParamControl::UIParamControl(MainWindow* a_window, syn::VoiceManager* a
 	m_unitId(a_unitId),
 	m_paramId(a_paramId), 
 	m_param(nullptr),
-	m_nameLabel(nullptr),
-	m_valueLabel(nullptr),
-	m_unitsLabel(nullptr),
 	m_normValue(0.0),
 	m_isValueDirty(true)
 {
@@ -103,15 +100,11 @@ void synui::UIParamControl::setParamFromString(const string& a_str) {
 void synui::UIParamControl::updateValue_() {
 	const syn::UnitParameter& param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).getParameter(m_paramId);
 	m_param = &param;
-	string valueStr = param.getValueString();
-	if(m_nameLabel)
-		m_nameLabel->setText(param.getName());
-	if(m_unitsLabel)
-		m_unitsLabel->setText(param.getUnitsString());
-	if(m_valueLabel)
-		m_valueLabel->setText(valueStr);
+	m_valueStr = param.getValueString();
+	m_nameStr = param.getName();
+	m_unitsStr = param.getUnitsString();
 	if (m_textBox)
-		m_textBox->setValue(valueStr);
+		m_textBox->setValue(m_valueStr);
 	m_normValue = param.getNorm();
 }
 

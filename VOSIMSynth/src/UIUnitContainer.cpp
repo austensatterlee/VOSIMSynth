@@ -92,9 +92,14 @@ synui::UIDefaultUnitContainer::UIDefaultUnitContainer(MainWindow* a_window, UICi
 	m_col->addChild(m_titleRow);
 	m_col->addChild(m_portRow);
 	m_col->setChildResizePolicy(UICell::CMAX);
+	m_col->setSelfMinSizePolicy(UICell::SFIT);
+	m_titleRow->setSelfMinSizePolicy(UICell::SFIT);
 	m_portRow->setChildResizePolicy(UICell::CNONE);
+	m_portRow->setSelfMinSizePolicy(UICell::SFIT);
 	m_portCols[0]->setChildResizePolicy(UICell::CMATCHMIN);
+	m_portCols[0]->setSelfMinSizePolicy(UICell::SFIT);
 	m_portCols[1]->setChildResizePolicy(UICell::CMATCHMIN);
+	m_portCols[1]->setSelfMinSizePolicy(UICell::SFIT);
 
 	const syn::Unit& unit = m_vm->getUnit(m_unitId);
 
@@ -154,11 +159,15 @@ synui::UIInputUnitContainer::UIInputUnitContainer(MainWindow* a_window, UICircui
 	m_portCol(new UICol(a_window))
 {
 	addChild(m_col);
+	m_titleRow->setSelfMinSizePolicy(UICell::SFIT);
 	m_col->addChild(m_titleRow);
 	m_col->addChild(m_portRow);
+	m_col->setSelfMinSizePolicy(UICell::SFIT);
 	m_portRow->setChildResizePolicy(UICell::CNONE);
+	m_portRow->setSelfMinSizePolicy(UICell::SFIT);
 	m_portRow->setChildrenSpacing(2);
 	m_portCol->setChildResizePolicy(UICell::CMATCHMIN);
+	m_portCol->setSelfMinSizePolicy(UICell::SFIT);
 
 	const syn::Unit& unit = m_vm->getUnit(m_unitId);
 

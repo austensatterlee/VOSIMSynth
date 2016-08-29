@@ -14,9 +14,9 @@
 
 #define trig_benches 1
 #define ladder_benches 1
-#define modulus_benches 1
-#define lut_saw_benches 1
-#define lut_pitch_benches 1
+#define modulus_benches 0
+#define lut_saw_benches 0
+#define lut_pitch_benches 0
 #define container_benches 1
 
 std::random_device RandomDevice;
@@ -58,12 +58,20 @@ NONIUS_BENCHMARK("std::tanh", [](nonius::chronometer& meter) {
 	meter.measure([&x, &phases](int i) { x = std::tanh(phases[i]); });
 })
 
-NONIUS_BENCHMARK("syn::fast_tanh::poly", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("syn::fast_tanh_rat", [](nonius::chronometer& meter) {
 	const int runs = meter.runs();
 	std::vector<double> phases(runs);
-	for (int i = 0; i<runs; i++) phases[i] = i * 20.0 / runs - 10.;
+	for (int i = 0; i<runs; i++) phases[i] = i * 6. / runs - 3.;
 	double x;
-	meter.measure([&x, &phases](int i) { x = syn::fast_tanh_poly<double>(phases[i]); });
+	meter.measure([&x, &phases](int i) { x = syn::fast_tanh_rat<double>(phases[i]); });
+})
+
+NONIUS_BENCHMARK("syn::fast_tanh_rat_2", [](nonius::chronometer& meter) {
+	const int runs = meter.runs();
+	std::vector<double> phases(runs);
+	for (int i = 0; i<runs; i++) phases[i] = i * 6. / runs - 3.;
+	double x;
+	meter.measure([&x, &phases](int i) { x = syn::fast_tanh_rat2<double>(phases[i]); });
 })
 #endif
 
@@ -74,9 +82,10 @@ NONIUS_BENCHMARK("ladder", [](nonius::chronometer& meter) {
 	syn::LadderFilter ladder("ladder");
 	double input = 1.0;
 	ladder.setParameterValue(syn::LadderFilter::pFc, 10000.0);
+	ladder.setParameterValue(syn::LadderFilter::pFb, 1.0);
+	ladder.setParameterValue(syn::LadderFilter::pDrv, 1.0);
 	ladder.connectInput(0, &input);
 
-	for (int i = 0; i<runs; i++) phases[i] = i * 20.0 / runs - 10.;
 	double x;
 	meter.measure([&x, &input, &ladder](int i)
 	{
@@ -84,27 +93,53 @@ NONIUS_BENCHMARK("ladder", [](nonius::chronometer& meter) {
 		for (int j = 0; j < 48000; j++) {
 			ladder.tick();
 			x = ladder.getOutputValue(0);
+			input = 0.0;
 		}
+		return x;
 	});
 })
 
-NONIUS_BENCHMARK("ladder", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("svf", [](nonius::chronometer& meter) {
 	const int runs = meter.runs();
 	std::vector<double> phases(runs);
-	syn::LadderFilter ladder("ladder");
+	syn::StateVariableFilter svf("ladder");
 	double input = 1.0;
-	ladder.setParameterValue(syn::LadderFilter::pFc, 10000.0);
-	ladder.connectInput(0, &input);
+	svf.setParameterValue(0, 10000.0);
+	svf.setParameterValue(1, 1.0);
+	svf.connectInput(0, &input);
 
-	for (int i = 0; i<runs; i++) phases[i] = i * 20.0 / runs - 10.;
 	double x;
-	meter.measure([&x, &input, &ladder](int i)
+	meter.measure([&x, &input, &svf](int i)
 	{
 		input = 1.0;
 		for (int j = 0; j < 48000; j++) {
-			ladder.tick();
-			x = ladder.getOutputValue(0);
+			svf.tick();
+			x = svf.getOutputValue(0);
+			input = 0.0;
 		}
+		return x;
+	});
+})
+
+NONIUS_BENCHMARK("trapezoidal svf", [](nonius::chronometer& meter) {
+	const int runs = meter.runs();
+	std::vector<double> phases(runs);
+	syn::TrapStateVariableFilter tsvf("ladder");
+	double input = 1.0;
+	tsvf.setParameterValue(0, 10000.0);
+	tsvf.setParameterValue(1, 1.0);
+	tsvf.connectInput(0, &input);
+
+	double x;
+	meter.measure([&x, &input, &tsvf](int i)
+	{
+		input = 1.0;
+		for (int j = 0; j < 48000; j++) {
+			tsvf.tick();
+			x = tsvf.getOutputValue(0);
+			input = 0.0;
+		}
+		return x;
 	});
 })
 #endif
@@ -179,7 +214,7 @@ NONIUS_BENCHMARK("naive pitch2freq", [](nonius::chronometer& meter) {
 #endif
 
 #if container_benches
-#define container_size 1024
+#define container_size 64
 NONIUS_BENCHMARK("NamedContainer []", [](nonius::chronometer& meter)
 {
 	std::uniform_int_distribution<> _accessGenerator(0, container_size-1);

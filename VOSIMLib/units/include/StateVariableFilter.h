@@ -26,10 +26,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 #ifndef __STATEVARIABLEFILTER__
 #define __STATEVARIABLEFILTER__
-#include "Unit.h"
-#include "DSPMath.h"
 
-using namespace std;
+#include "Unit.h"
 
 namespace syn
 {
@@ -82,6 +80,9 @@ namespace syn
 	 */
 	struct _OnePoleLP
 	{
+		/**
+		 * Set forward gain by specifying cutoff frequency and sampling rate.
+		 */
 		void setFc(double a_fc, double a_fs);
 
 		double process(double a_input);
@@ -89,7 +90,7 @@ namespace syn
 		void reset();
 
 		double m_state = 0.0;
-		double m_G = 0.0;
+		double m_G = 0.0; /// feed forward gain
 	};
 	
 
@@ -130,38 +131,57 @@ namespace syn
 		_OnePoleLP implem;
 	};
 
-	class LadderFilter : public Unit
+	struct LadderFilterBase : public Unit
+	{
+    public:
+      explicit LadderFilterBase(const string& a_name);
+
+      const int c_oversamplingFactor = 4;
+      const double VT = 0.312;
+
+      enum Param
+      {
+        pFc = 0,
+        pFb,
+        pDrv
+      };
+
+      enum Input
+      {
+        iAudioIn = 0,
+        iFcAdd,
+        iFcMul
+      };
+	};
+
+	class LadderFilter : public LadderFilterBase
 	{
 		DERIVE_UNIT(LadderFilter)
 	public:
-		const int c_oversamplingFactor = 4;
-		const double VT = 0.312;
-
-		enum Param
-		{
-			pFc = 0,
-			pFb,
-			pDrv
-		};
-
-		enum Input
-		{
-			iAudioIn = 0,
-			iFcAdd,
-			iFcMul
-		};
-
-	public:
 		explicit LadderFilter(const string& a_name);
 		LadderFilter(const LadderFilter& a_rhs) : LadderFilter(a_rhs.getName()) {};
-
+		void reset() override;
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
-		void onFsChange_() override;
-
+	protected:
 		array<double, 4> m_V;
 		array<double, 4> m_dV;
 		array<double, 4> m_tV;
+	};
+
+	class LadderFilterTwo : public LadderFilterBase
+	{
+		DERIVE_UNIT(LadderFilterTwo)
+	public:
+		explicit LadderFilterTwo(const string& a_name);
+		LadderFilterTwo(const LadderFilterTwo& a_rhs) : LadderFilterTwo(a_rhs.getName()) {};
+		void reset() override;
+	protected:
+		void MSFASTCALL process_() GCCFASTCALL override;
+	protected:
+		typedef Eigen::Matrix<double, 5, 1> Vector5d;
+		_OnePoleLP m_LP[4];
+		Vector5d m_ffGains; /// state feed forward gains
 	};
 }
 
@@ -169,4 +189,5 @@ CEREAL_REGISTER_TYPE(syn::StateVariableFilter)
 CEREAL_REGISTER_TYPE(syn::TrapStateVariableFilter)
 CEREAL_REGISTER_TYPE(syn::OnePoleLP)
 CEREAL_REGISTER_TYPE(syn::LadderFilter)
+CEREAL_REGISTER_TYPE(syn::LadderFilterTwo)
 #endif

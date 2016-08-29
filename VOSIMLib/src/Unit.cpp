@@ -41,6 +41,7 @@ namespace syn
 
 	void Unit::setFs(double a_newFs) {
 		m_audioConfig.fs = a_newFs;
+		reset();
 		onFsChange_();
 	}
 

@@ -6,10 +6,10 @@ namespace synui
 {
 	UIButton::UIButton(MainWindow* a_window, const string& caption, int icon)
 		: UIComponent(a_window), mCaption(caption), mIcon(icon),
-		  mIconPosition(IconPosition::LeftCentered), mPushed(false),
-		  mFlags(NormalButton), mBackgroundColor(Color(0, 0)),
-		  mTextColor(Color(0, 0)), mEnabled(true) 
+		mIconPosition(IconPosition::LeftCentered), mPushed(false),
+		mFlags(NormalButton), mTextColor({ 0, 0 }), mEnabled(true)
 	{
+		setBackgroundColor({ 0.0f,0.0f });
 		m_fontSize = theme()->mButtonFontSize;
 		_updateMinSize();
 	}
@@ -95,13 +95,13 @@ namespace synui
 		nvgRoundedRect(ctx, 1, 1.0f, size().x() - 2,
 		               size().y() - 2, theme()->mButtonCornerRadius - 1);
 
-		if (mBackgroundColor.w() != 0) {
-			nvgFillColor(ctx, Color(mBackgroundColor.head<3>(), 1.f));
+		if (backgroundColor().w() != 0) {
+			nvgFillColor(ctx, Color(backgroundColor().head<3>(), 1.f));
 			nvgFill(ctx);
 			if (mPushed) {
 				gradTop.a = gradBot.a = 0.8f;
 			} else {
-				double v = 1 - mBackgroundColor.w();
+				double v = 1 - backgroundColor().w();
 				gradTop.a = gradBot.a = mEnabled ? v : v * .5f + .5f;
 			}
 		}

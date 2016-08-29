@@ -1,14 +1,13 @@
 #include "UIDefaultUnitControl.h"
 #include "UITextSlider.h"
 #include "UIDigitControl.h"
+#include "UILayout.h"
+#include "UILabel.h"
 
 synui::UIDefaultUnitControl::UIDefaultUnitControl(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId) :
 	UIUnitControl(a_window, a_vm, a_unitId)
 {
-	m_col = new UICol(a_window);
-	m_col->setChildResizePolicy(UICell::CMAX);
-	m_col->setSelfResizePolicy(UICell::SRNONE);
-	addChild(m_col);
+	setLayout(new GroupLayout(2,2,4,5));
 
 	const syn::Unit& unit = a_vm->getUnit(a_unitId);
 	int nParams = unit.getNumParameters();
@@ -29,13 +28,12 @@ synui::UIDefaultUnitControl::UIDefaultUnitControl(MainWindow* a_window, syn::Voi
 		}
 		m_paramControls.push_back(paramCtrl);
 		paramCtrl->setVisible(unit.getParameter(i).isVisible());
-		m_col->addChild(paramCtrl);
+		UILabel* m_label = add<UILabel>("labels");
+		m_label->setText(paramCtrl->getName());
+		m_label->setVisible(paramCtrl->visible());
+		addChild(paramCtrl,"controls");
 	}
-	m_col->pack();
-}
 
-void synui::UIDefaultUnitControl::notifyChildResized(UIComponent* a_child) {
-	setMinSize(m_col->minSize());
 }
 
 void synui::UIDefaultUnitControl::draw(NVGcontext* a_nvg)
@@ -46,19 +44,21 @@ void synui::UIDefaultUnitControl::draw(NVGcontext* a_nvg)
 	for (UIParamControl* paramControl : m_paramControls)
 	{
 		const syn::UnitParameter& param = unit.getParameter(i);
+		UILabel* lbl = static_cast<UILabel*>(getGroup("labels")[i]);
 		if (param.isVisible() != paramControl->visible())
 		{
 			paramControl->setVisible(param.isVisible());
+			lbl->setVisible(paramControl->visible());
 			isDirty = true;
 		}
 		i++;
 	}
 	if (isDirty) {
-		m_col->pack();
+		performLayout(a_nvg);
 	}
 }
 
 void synui::UIDefaultUnitControl::_onResize()
 {
-	m_col->setSize(size());
+	performLayout(m_window->getContext());
 }

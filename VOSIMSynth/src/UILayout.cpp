@@ -107,7 +107,7 @@ namespace synui
 				height += (label == nullptr) ? mSpacing : mGroupSpacing;
 			first = false;
 
-			Vector2i ps = c->minSize(), fs = c->size();
+			Vector2i ps = c->preferredSize(ctx), fs = c->size();
 			Vector2i targetSize(
 				fs[0] ? fs[0] : ps[0],
 				fs[1] ? fs[1] : ps[1]
@@ -146,8 +146,8 @@ namespace synui
 			Vector2i fs = c->size();
 
 			Vector2i targetSize(
-				fs[0] ? fs[0] : ps[0],
-				fs[1] ? fs[1] : ps[1]
+				ps[0] ? ps[0] : fs[0],
+				ps[1] ? ps[1] : fs[1]
 			);
 
 			c->setRelPos(Vector2i(mMargin + (indentCur ? mGroupIndent : 0), height));

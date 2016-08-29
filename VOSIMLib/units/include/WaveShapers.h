@@ -50,7 +50,7 @@ namespace syn {
 		void MSFASTCALL process_() GCCFASTCALL override {
 			double input = getInputValue(0);
 			double sat = getParameter(pSat).getDouble();
-			setOutputChannel_(0, fast_tanh_poly(input*sat)/fast_tanh_poly(sat));
+			setOutputChannel_(0, fast_tanh_rat(input*sat)/fast_tanh_rat(sat));
 		}
 	};
 }

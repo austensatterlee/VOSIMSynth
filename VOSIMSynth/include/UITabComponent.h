@@ -67,6 +67,9 @@ namespace synui {
 		/// Retrieves the label of the tab at a specific index.
 		const std::string &tabLabelAt(int index) const;
 
+		const UITabHeader& header() const;
+		const UIStackedComponent& content() const;
+
 		/**
 		* Retrieves the index of a specific tab using its tab label.
 		* Returns -1 if there is no such tab.

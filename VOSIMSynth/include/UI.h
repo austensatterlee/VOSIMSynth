@@ -60,6 +60,12 @@ namespace synui
 	class UITabHeader;
 	class UITabWidget;
 
+	// UI Layouts
+	class BoxLayout;
+	class GroupLayout;
+	class GridLayout;
+	class AdvancedGridLayout;
+
 	// VOSIMSynth specific:
 	class UICircuitPanel;
 	class UIControlPanel;

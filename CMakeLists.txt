@@ -42,9 +42,9 @@ endif (MINGW)
 
 if(MSVC)
   # Runtime library, exceptions, parallel compilation
-  set(MSVC_REL /MT /MP)
-  set(MSVC_RDEB /EHsc /MTd /MP)
-  set(MSVC_DEB /EHsc /MTd /MP)
+  set(MSVC_REL /EHsc /MT)
+  set(MSVC_RDEB /EHsc /MTd)
+  set(MSVC_DEB /EHsc /MTd)
 
   # Disable some warnings
   set(MSVC_DISABLED_WARNINGS /wd4996 /wd4224 /wd4244 /wd4091 /wd4018)
@@ -97,15 +97,16 @@ set(IPLUG_FILES
 )
 include_directories(${IPLUG_ROOT})
 
-##
-# Cereal
-##
-include_directories(${CEREAL_ROOT}/include)
 
 ##
 # Eigen
 ##
 include_directories(${EIGEN_ROOT})
+
+##
+# Cereal
+##
+include_directories(${CEREAL_ROOT}/include)
 
 ######################################
 # Configure precompiled dependencies #

@@ -2,7 +2,9 @@
 #include "UIUnitContainer.h"
 #include "VoiceManager.h"
 #include "UITabComponent.h"
-#include <UILayout.h>
+#include "UILayout.h"
+#include "UIStackedComponent.h"
+#include <string>
 
 synui::VOSIMComponent::VOSIMComponent(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_unitFactory): 
 	UIComponent(a_window), 
@@ -22,6 +24,41 @@ synui::VOSIMComponent::VOSIMComponent(MainWindow* a_window, syn::VoiceManager* a
 	m_leftPanel->addTab("Unit", m_unitSelector);
 	m_leftPanel->addTab("Edit", m_controlPanel);
 	m_leftPanel->setActiveTab(0);
+	m_leftPanel->m_onMouseDown = [](UIComponent* self, const UICoord& a_loc, bool a_isDblClick)->UIComponent*
+	{
+		Vector2i click = a_loc.localCoord(self);
+		if(abs(click.x() - self->size().x()) < 5) {
+			return self;
+		}
+		return nullptr;
+	};
+	m_leftPanel->m_draw = [](UIComponent* self, NVGcontext* a_nvg)
+	{
+		const UIStackedComponent& content = static_cast<UITabWidget*>(self)->content();
+
+		Vector2i globalClick = self->window()->cursorPos();
+		Vector2i click = UICoord(globalClick).localCoord(self);
+		Vector2i size = self->size();
+
+		if (abs(click.x() - size.x()) < 5) {
+			float glow_width = 2;
+			Color inner(1.0f, 0.3f);
+			Color outer(1.0f, 0.0f);
+
+			Vector2i glow_pos(size.x() - glow_width/2.0f, content.getRelPos().y());
+			Vector2i glow_size( glow_width, content.size().y());
+			nvgBeginPath(a_nvg);
+			NVGpaint glow = nvgBoxGradient(a_nvg, glow_pos.x(), glow_pos.y(), glow_size.x(), glow_size.y(), 4*glow_width, 4*glow_width, inner, outer);
+			nvgRect(a_nvg, glow_pos.x()- 4*glow_width, glow_pos.y(), glow_size.x()+8*glow_width, glow_size.y());
+			nvgFillPaint(a_nvg, glow);
+			nvgFill(a_nvg);
+		}
+	};
+	m_leftPanel->m_onMouseDrag = [](UIComponent* self, const UICoord& a_loc, const Vector2i& a_dloc)
+	{
+		self->grow({ a_dloc.x(), 0 });
+		return true;
+	};
 
 	addChild(m_rightPanel);
 	setZOrder(m_rightPanel, 1);
@@ -82,7 +119,8 @@ int synui::VOSIMComponent::load(ByteChunk* a_data, int startPos) const {
 }
 
 void synui::VOSIMComponent::notifyChildResized(UIComponent* a_child) {
-	_onResize();
+	m_rightPanel->setRelPos({ m_leftPanel->size().x() + 5, 5 });
+	m_rightPanel->setSize({ size().x() - 5 - m_rightPanel->getRelPos().x(), size().y() - 5 });
 }
 
 void synui::VOSIMComponent::draw(NVGcontext* a_nvg) {
@@ -90,10 +128,8 @@ void synui::VOSIMComponent::draw(NVGcontext* a_nvg) {
 
 void synui::VOSIMComponent::_onResize() {
 	m_leftPanel->setRelPos({ 5,5 });
-	m_leftPanel->setSize({ 190, size().y()-5 });
-	m_leftPanel->performLayout(m_window->getContext());
+	m_leftPanel->setMinSize({syn::MAX(m_leftPanel->minSize().x(),190), size().y()-5 });
 
 	m_rightPanel->setRelPos({ m_leftPanel->size().x()+5, 5 });
 	m_rightPanel->setSize({ size().x() - 5 - m_rightPanel->getRelPos().x(), size().y()-5 });
-	m_rightPanel->performLayout(m_window->getContext());
 };

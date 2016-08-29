@@ -44,6 +44,13 @@ namespace synui {
 		void setParamNorm(double a_normval);
 		void nudgeParam(double a_logScale, double a_linScale);
 		UIComponent* onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) override;
+
+		const string& getName() const { return m_nameStr; }
+
+		const string& getUnitsStr() const { return m_unitsStr; }
+
+		const string& getValueStr() const { return m_valueStr; }
+
 	protected:
 		virtual void updateValue_();
 		void draw(NVGcontext* a_nvg) override;
@@ -53,9 +60,7 @@ namespace synui {
 		int m_unitId;
 		int m_paramId;
 		const syn::UnitParameter* m_param;
-		UILabel* m_nameLabel;
-		UILabel* m_valueLabel;
-		UILabel* m_unitsLabel;
+		string m_nameStr, m_unitsStr, m_valueStr;
 		UITextBox* m_textBox;
 
 		double m_normValue;

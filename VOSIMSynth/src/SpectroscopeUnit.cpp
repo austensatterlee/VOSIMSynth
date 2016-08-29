@@ -136,6 +136,7 @@ namespace synui
 		m_statusLabel->setSize({ -1,8 });
 		m_col->setChildResizePolicy(UICell::CMAX);
 		m_col->setSelfResizePolicy(UICell::SRNONE);
+		m_col->setSelfMinSizePolicy(UICell::SNONE);
 		m_col->setGreedyChild(m_plot);
 		addChild(m_col);
 

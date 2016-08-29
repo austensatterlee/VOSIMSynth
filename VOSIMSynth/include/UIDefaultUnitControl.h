@@ -19,7 +19,7 @@ Copyright 2016, Austen Satterlee
 
 /**
 *  \file UIDefaultUnitControl.h
-*  \brief
+*  \brief Complete GUI for a single unit, containing all necessary UIParamControls. Displayed in UIControlPanel.
 *  \details
 *  \author Austen Satterlee
 *  \date 04/2016
@@ -38,14 +38,12 @@ namespace synui
 	{
 	public:
 		UIDefaultUnitControl(MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId);
-		void notifyChildResized(UIComponent* a_child) override;
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 	private:
 		void _onResize() override;
 	private:
 		vector<UIParamControl*> m_paramControls;
-		UICol* m_col;
 	};
 }
 #endif
