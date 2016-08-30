@@ -32,6 +32,11 @@ syn::FollowerUnit::FollowerUnit(const string& a_name) :
 syn::FollowerUnit::FollowerUnit(const FollowerUnit& a_rhs) :
 	FollowerUnit(a_rhs.getName()) {}
 
+void syn::FollowerUnit::reset() {
+	m_w = 0.0;
+	m_output = 0.0;
+}
+
 void syn::FollowerUnit::process_() {
 	double alpha = getParameter(m_pAlpha).getDouble();
 	double beta = getParameter(m_pBeta).getDouble();

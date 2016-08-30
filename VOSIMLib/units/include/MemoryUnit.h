@@ -62,6 +62,8 @@ namespace syn
 		explicit MemoryUnit(const string& a_name);
 		MemoryUnit(const MemoryUnit& a_rhs);
 
+		virtual void reset() override;
+
 	protected:
 		void onParamChange_(int a_paramId) override;
 		void MSFASTCALL process_() GCCFASTCALL override;
@@ -98,6 +100,8 @@ namespace syn
 
 		explicit ResampleUnit(const string& a_name);
 		ResampleUnit(const ResampleUnit& a_rhs);
+
+		void reset() override;
 
 	protected:
 		void onParamChange_(int a_paramId) override;

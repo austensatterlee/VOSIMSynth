@@ -99,6 +99,29 @@ NONIUS_BENCHMARK("ladder", [](nonius::chronometer& meter) {
 	});
 })
 
+NONIUS_BENCHMARK("ladder_B", [](nonius::chronometer& meter) {
+	const int runs = meter.runs();
+	std::vector<double> phases(runs);
+	syn::LadderFilterTwo ladder("ladder");
+	double input = 1.0;
+	ladder.setParameterValue(syn::LadderFilter::pFc, 10000.0);
+	ladder.setParameterValue(syn::LadderFilter::pFb, 1.0);
+	ladder.setParameterValue(syn::LadderFilter::pDrv, 1.0);
+	ladder.connectInput(0, &input);
+
+	double x;
+	meter.measure([&x, &input, &ladder](int i)
+	{
+		input = 1.0;
+		for (int j = 0; j < 48000; j++) {
+			ladder.tick();
+			x = ladder.getOutputValue(0);
+			input = 0.0;
+		}
+		return x;
+	});
+})
+
 NONIUS_BENCHMARK("svf", [](nonius::chronometer& meter) {
 	const int runs = meter.runs();
 	std::vector<double> phases(runs);

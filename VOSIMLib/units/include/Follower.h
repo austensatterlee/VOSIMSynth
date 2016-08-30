@@ -41,7 +41,7 @@ namespace syn
 		explicit FollowerUnit(const string& a_name);
 
 		FollowerUnit(const FollowerUnit& a_rhs);
-
+		void reset() override;
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
 	private:

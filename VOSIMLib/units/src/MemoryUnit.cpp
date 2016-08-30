@@ -110,6 +110,8 @@ namespace syn
 	{
 	}
 
+	void MemoryUnit::reset() { m_delay.clearBuffer(); }
+
 	void MemoryUnit::onParamChange_(int a_paramId)
 	{
 	}
@@ -143,6 +145,8 @@ namespace syn
 		ResampleUnit(a_rhs.getName())
 	{
 	}
+
+	void ResampleUnit::reset() { m_delay.clearBuffer(); }
 
 	void ResampleUnit::onParamChange_(int a_paramId)
 	{

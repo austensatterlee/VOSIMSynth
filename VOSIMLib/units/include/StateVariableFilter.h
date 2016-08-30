@@ -43,6 +43,8 @@ namespace syn
 		StateVariableFilter(const StateVariableFilter& a_rhs) :
 			StateVariableFilter(a_rhs.getName()) {}
 
+		virtual void reset() override;
+
 	protected:
 
 		void MSFASTCALL process_() GCCFASTCALL override;
@@ -68,6 +70,7 @@ namespace syn
 		TrapStateVariableFilter(const TrapStateVariableFilter& a_rhs) :
 			TrapStateVariableFilter(a_rhs.getName()) {}
 
+		virtual void reset() override;
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
 
@@ -124,6 +127,8 @@ namespace syn
 		OnePoleLP(const OnePoleLP& a_rhs) : OnePoleLP(a_rhs.getName()) {};
 
 		double getState() const;
+
+		virtual void reset() override;;
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
