@@ -11,13 +11,15 @@
 #include <random>
 #include <string>
 #include <StateVariableFilter.h>
+#include "Circuit.h"
+#include "MemoryUnit.h"
 
-#define trig_benches 1
+#define trig_benches 0
 #define ladder_benches 1
 #define modulus_benches 0
 #define lut_saw_benches 0
 #define lut_pitch_benches 0
-#define container_benches 1
+#define container_benches 0
 
 std::random_device RandomDevice;
 
@@ -36,9 +38,18 @@ NONIUS_BENCHMARK("syn::lut_sin.getlinear", [](nonius::chronometer& meter) {
 	const int runs = meter.runs();
 	std::vector<double> phases(runs);
 	const syn::LookupTable& lut_sin_table = syn::lut_sin_table();
-	for(int i=0;i<runs;i++) phases[i]=i*1.0/runs*lut_sin_table.size();
+	for(int i=0;i<runs;i++) phases[i]=i*1.0/runs;
 	double x;
 	meter.measure([&x, &phases, &lut_sin_table](int i) { x = lut_sin_table.getlinear(phases[i]); });
+})
+
+NONIUS_BENCHMARK("syn::lut_sin.getlinear_periodic", [](nonius::chronometer& meter) {
+	const int runs = meter.runs();
+	std::vector<double> phases(runs);
+	const syn::LookupTable& lut_sin_table = syn::lut_sin_table();
+	for (int i = 0; i<runs; i++) phases[i] = i*1.0 / runs;
+	double x;
+	meter.measure([&x, &phases, &lut_sin_table](int i) { x = lut_sin_table.getlinear_periodic(phases[i]); });
 })
 
 NONIUS_BENCHMARK("std::sin", [](nonius::chronometer& meter) {
@@ -78,55 +89,47 @@ NONIUS_BENCHMARK("syn::fast_tanh_rat_2", [](nonius::chronometer& meter) {
 #if ladder_benches
 NONIUS_BENCHMARK("ladder", [](nonius::chronometer& meter) {
 	const int runs = meter.runs();
-	std::vector<double> phases(runs);
 	syn::LadderFilter ladder("ladder");
 	double input = 1.0;
+	ladder.setFs(48000.0);
 	ladder.setParameterValue(syn::LadderFilter::pFc, 10000.0);
 	ladder.setParameterValue(syn::LadderFilter::pFb, 1.0);
-	ladder.setParameterValue(syn::LadderFilter::pDrv, 1.0);
+	ladder.setParameterValue(syn::LadderFilter::pDrv, 0.0);
 	ladder.connectInput(0, &input);
 
 	double x;
 	meter.measure([&x, &input, &ladder](int i)
 	{
-		input = 1.0;
-		for (int j = 0; j < 48000; j++) {
-			ladder.tick();
-			x = ladder.getOutputValue(0);
-			input = 0.0;
-		}
+		ladder.tick();
+		x = ladder.getOutputValue(0);			
 		return x;
 	});
 })
 
 NONIUS_BENCHMARK("ladder_B", [](nonius::chronometer& meter) {
 	const int runs = meter.runs();
-	std::vector<double> phases(runs);
 	syn::LadderFilterTwo ladder("ladder");
 	double input = 1.0;
+	ladder.setFs(48000.0);
 	ladder.setParameterValue(syn::LadderFilter::pFc, 10000.0);
 	ladder.setParameterValue(syn::LadderFilter::pFb, 1.0);
-	ladder.setParameterValue(syn::LadderFilter::pDrv, 1.0);
+	ladder.setParameterValue(syn::LadderFilter::pDrv, 0.0);
 	ladder.connectInput(0, &input);
 
 	double x;
 	meter.measure([&x, &input, &ladder](int i)
 	{
-		input = 1.0;
-		for (int j = 0; j < 48000; j++) {
-			ladder.tick();
-			x = ladder.getOutputValue(0);
-			input = 0.0;
-		}
+		ladder.tick();
+		x = ladder.getOutputValue(0);
 		return x;
 	});
 })
 
 NONIUS_BENCHMARK("svf", [](nonius::chronometer& meter) {
 	const int runs = meter.runs();
-	std::vector<double> phases(runs);
 	syn::StateVariableFilter svf("ladder");
 	double input = 1.0;
+	svf.setFs(48000.0);
 	svf.setParameterValue(0, 10000.0);
 	svf.setParameterValue(1, 1.0);
 	svf.connectInput(0, &input);
@@ -134,21 +137,17 @@ NONIUS_BENCHMARK("svf", [](nonius::chronometer& meter) {
 	double x;
 	meter.measure([&x, &input, &svf](int i)
 	{
-		input = 1.0;
-		for (int j = 0; j < 48000; j++) {
-			svf.tick();
-			x = svf.getOutputValue(0);
-			input = 0.0;
-		}
+		svf.tick();
+		x = svf.getOutputValue(0);	
 		return x;
 	});
 })
 
 NONIUS_BENCHMARK("trapezoidal svf", [](nonius::chronometer& meter) {
 	const int runs = meter.runs();
-	std::vector<double> phases(runs);
 	syn::TrapStateVariableFilter tsvf("ladder");
 	double input = 1.0;
+	tsvf.setFs(48000.0);
 	tsvf.setParameterValue(0, 10000.0);
 	tsvf.setParameterValue(1, 1.0);
 	tsvf.connectInput(0, &input);
@@ -156,12 +155,33 @@ NONIUS_BENCHMARK("trapezoidal svf", [](nonius::chronometer& meter) {
 	double x;
 	meter.measure([&x, &input, &tsvf](int i)
 	{
-		input = 1.0;
-		for (int j = 0; j < 48000; j++) {
-			tsvf.tick();
-			x = tsvf.getOutputValue(0);
-			input = 0.0;
-		}
+		tsvf.tick();
+		x = tsvf.getOutputValue(0);
+		return x;
+	});
+})
+
+
+NONIUS_BENCHMARK("memory circuit", [](nonius::chronometer& meter) {
+	const int runs = meter.runs();
+	const int nUnits = 60;
+	syn::Circuit mycircuit("main");
+	mycircuit.setFs(48000.0);
+	syn::MemoryUnit *units[nUnits];
+	units[0] = new syn::MemoryUnit("u0");
+	mycircuit.addUnit(units[0], 2);
+	for (int i = 1; i < nUnits; i++) {
+		units[i] = new syn::MemoryUnit("u" + to_string(i));
+		mycircuit.addUnit(units[i], i+2);
+		mycircuit.connectInternal(i+2 - 1, 0, i+2, 0);
+	}
+	mycircuit.connectInternal(nUnits - 1 + 2, 0, 1, 0);
+
+	double x;
+	meter.measure([&x, &mycircuit](int i)
+	{
+		mycircuit.tick();
+		x = mycircuit.getOutputValue(0);
 		return x;
 	});
 })

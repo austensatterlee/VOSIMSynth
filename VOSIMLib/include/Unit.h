@@ -230,7 +230,7 @@ namespace syn
 
 		const double& getInputValue(int a_index) const;
 
-		const double* Unit::getInputSource(int a_index) const;
+		const double* getInputSource(int a_index) const;
 
 		int getNumParameters() const;
 

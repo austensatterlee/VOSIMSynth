@@ -44,15 +44,16 @@ namespace syn
 
 	double LookupTable::getlinear(double phase) const {
 		phase = (phase - m_norm_bias) * m_norm_scale;
-		if (m_isperiodic) {
-			phase = WRAP(phase, 1.0);
-			phase *= m_size;
-		}
-		else {
-			phase = CLAMP(phase, 0.0, 1.0);
-			phase *= m_size - 1;
-		}
+		phase = CLAMP(phase, 0.0, 1.0);
+		phase *= m_size - 1;
+		int int_index = int(phase);
+		return m_table[int_index] + m_diff_table[int_index] * (phase - int_index);
+	}
 
+	double LookupTable::getlinear_periodic(double phase) const {
+		phase = (phase - m_norm_bias) * m_norm_scale;
+		phase = WRAP(phase, 1.0);
+		phase *= m_size;
 		int int_index = int(phase);
 		return m_table[int_index] + m_diff_table[int_index] * (phase - int_index);
 	}
@@ -152,7 +153,7 @@ namespace syn
 		double bkwd_filt_sample;
 		while (bkwd_filt_phase < blimp_table.size()) {
 #ifdef DO_LERP_FOR_SINC
-			bkwd_filt_sample = blimp_table.getlinear(bkwd_filt_phase / blimp_table.size());
+			bkwd_filt_sample = blimp_table.getlinear_peri(bkwd_filt_phase / blimp_table.size());
 #else
 			bkwd_filt_sample = blimp_table.getraw(static_cast<int>(bkwd_filt_phase));
 #endif

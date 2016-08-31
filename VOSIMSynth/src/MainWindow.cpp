@@ -27,6 +27,7 @@ void synui::MainWindow::_OpenWindowImplem(sf::WindowHandle a_system_window) {
 
 	SetWindowLongW(m_sfmlWindow->getSystemHandle(), GWL_STYLE, GetWindowLongW(m_sfmlWindow->getSystemHandle(), GWL_STYLE) | WS_CHILD);
 	SetParent(m_sfmlWindow->getSystemHandle(), a_system_window);
+	
 
 	m_timerWindow = CreateWindow(wndClassName, "VOSIMTimerWindow", NULL, 0, 0, 0, 0, NULL, NULL, m_HInstance, this);
 

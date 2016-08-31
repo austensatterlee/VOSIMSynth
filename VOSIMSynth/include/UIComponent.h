@@ -195,7 +195,7 @@ namespace synui
 
 	template <typename ComponentType, typename ... Args>
 	ComponentType* UIComponent::add(const string& a_group, const Args&... args) {
-		ComponentType* ret = new ComponentType(m_window, args...);
+		ComponentType* ret = new ComponentType(m_window, std::forward<Args>(args)...);
 		addChild(ret, a_group);
 		return ret;
 	}

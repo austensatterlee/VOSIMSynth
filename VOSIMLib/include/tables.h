@@ -40,6 +40,7 @@ namespace syn
 		};
 
 		double getlinear(double phase) const;
+		double getlinear_periodic(double phase) const;
 		double getraw(int index) const;
 
 		int size() const {

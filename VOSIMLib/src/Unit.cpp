@@ -54,6 +54,7 @@ namespace syn
 		m_midiData.note = a_note;
 		m_midiData.velocity = a_velocity;
 		m_midiData.isNoteOn = true;
+		reset();
 		onNoteOn_();
 	}
 
