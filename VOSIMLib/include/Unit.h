@@ -120,6 +120,8 @@ namespace syn
 		 */
 		void MSFASTCALL tick() GCCFASTCALL;
 
+		void MSFASTCALL tick(const Eigen::Array<double, -1, -1, Eigen::RowMajor>& a_inputs, Eigen::Array<double, -1, -1, Eigen::RowMajor>& a_outputs) GCCFASTCALL;
+
 		/**
 		 * Notify the unit of a sample rate change
 		 */
@@ -140,10 +142,10 @@ namespace syn
 		 */
 		void noteOff(int a_note, int a_velocity);
 
-    /**
-     * Reset the units internal state (if any)
-     */
-    virtual void reset() {};
+		/**
+		 * Reset the units internal state (if any)
+		 */
+		virtual void reset() {};
 
 		/**
 		 * Notify the unit that one of its internal parameters changed. 
@@ -187,6 +189,12 @@ namespace syn
 
 		template <typename ID>
 		const UnitParameter& getParameter(const ID& a_identifier) const;
+
+		template <typename ID>
+		const string& getParameterName(const ID& a_identifier) const;
+
+		template <typename ID, typename T>
+		T getParameterValue(const ID& a_identifier) const;
 
 		/**
 		 * Sets the value of an internal parameter
@@ -360,6 +368,16 @@ namespace syn
 	template <typename ID>
 	const UnitParameter& Unit::getParameter(const ID& a_identifier) const {
 		return m_parameters[a_identifier];
+	}
+
+	template <typename ID>
+	const string& Unit::getParameterName(const ID& a_identifier) const {
+		return m_parameters[a_identifier].getName();
+	}
+
+	template <typename ID, typename T>
+	T Unit::getParameterValue(const ID& a_identifier) const {
+		return m_parameters[a_identifier].template get<T>();
 	}
 
 	template <typename ID>

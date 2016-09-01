@@ -18,6 +18,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "Unit.h"
+#include "DSPMath.h"
 
 using std::hash;
 
@@ -122,6 +123,32 @@ namespace syn
 		}
 
 		process_();
+	}
+
+	void Unit::tick(const Eigen::Array<double,-1,-1, Eigen::RowMajor>& a_inputs, Eigen::Array<double, -1, -1, Eigen::RowMajor>& a_outputs) {
+		const double* oldSources[MAX_INPUTS];
+		size_t nSamples = a_inputs.cols();
+		int nInputs = MIN<int>(a_inputs.rows(),m_inputPorts.size());
+		// record original input sources
+		for(int i=0;i<nInputs;i++) {
+			oldSources[i] = m_inputPorts.getByIndex(i).src;
+		}
+		for(int i=0;i<nSamples;i++) {
+			// nudge input sources by one sample
+			for(int j=0;j<nInputs;j++) {
+				m_inputPorts.getByIndex(j).src = &a_inputs(j, i);
+			}	
+			
+			tick();
+
+			// record outputs
+			for (int j = 0; j < m_outputSignals.size(); j++)
+				a_outputs(j,i) = m_outputSignals.getByIndex(j);
+		}
+		// restore original input sources
+		for(int i=0;i<nInputs;i++) {
+			m_inputPorts.getByIndex(i).src = oldSources[i];
+		}
 	}
 
 	int Unit::addInput_(const string& a_name, double a_default) {

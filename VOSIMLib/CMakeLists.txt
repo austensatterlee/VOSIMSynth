@@ -4,10 +4,11 @@ project(VOSIMLib)
 ##
 # VOSIMLib source files
 ##
-file(GLOB VOSIMLIB_HDRS ${VOSIMLIB_ROOT}/include/*.h)
-file(GLOB VOSIMLIB_SRCS ${VOSIMLIB_ROOT}/src/*.cpp)
-file(GLOB VOSIMLIB_UNIT_HDRS ${VOSIMLIB_ROOT}/units/include/*.h)
-file(GLOB VOSIMLIB_UNIT_SRCS ${VOSIMLIB_ROOT}/units/src/*.cpp)
+file(GLOB VOSIMLIB_HDRS include/*.h)
+file(GLOB VOSIMLIB_SRCS src/*.cpp)
+file(GLOB VOSIMLIB_UNIT_HDRS units/include/*.h)
+file(GLOB VOSIMLIB_UNIT_SRCS units/src/*.cpp)
+file(GLOB VOSIMLIB_PYTHON_SRCS python/*.cpp)
 set(VOSIMLIB_FILES ${VOSIMLIB_HDRS};${VOSIMLIB_UNIT_HDRS})
 set(VOSIMLIB_FILES ${VOSIMLIB_FILES};${VOSIMLIB_SRCS};${VOSIMLIB_UNIT_SRCS})
 
@@ -21,6 +22,9 @@ include_directories(${VOSIMLIB_ROOT}/include ${VOSIMLIB_ROOT}/units/include)
 add_library(VOSIMLib STATIC ${VOSIMLIB_FILES})
 
 add_subdirectory(tests tests)
+
+pybind11_add_module(pyVOSIMLib ${VOSIMLIB_PYTHON_SRCS})
+target_link_libraries(pyVOSIMLib PRIVATE VOSIMLib)
 
 if(WIN32)
   target_compile_definitions(VOSIMLib PRIVATE -DWIN32_LEAN_AND_MEAN)

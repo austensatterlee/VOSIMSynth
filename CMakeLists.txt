@@ -12,6 +12,7 @@ set(WDL_ROOT ${LIBS_DIR}/wdl CACHE PATH "")
 set(IPLUG_ROOT ${WDL_ROOT}/iplug CACHE PATH "")
 set(EIGEN_ROOT ${LIBS_DIR}/eigen CACHE PATH "")
 set(CEREAL_ROOT ${LIBS_DIR}/cereal CACHE PATH "")
+set(PYBIND11_ROOT ${LIBS_DIR}/pybind11 CACHE PATH "")
 
 set(FFTS_ROOT "C:/Program Files (x86)/ffts" CACHE PATH "")
 set(FFTS_INCLUDE_DIR ${FFTS_ROOT}/include CACHE PATH "")
@@ -107,6 +108,11 @@ include_directories(${EIGEN_ROOT})
 # Cereal
 ##
 include_directories(${CEREAL_ROOT}/include)
+
+##
+# pybind11
+##
+add_subdirectory(${PYBIND11_ROOT})
 
 ######################################
 # Configure precompiled dependencies #

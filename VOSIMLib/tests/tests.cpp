@@ -13,6 +13,7 @@
 #include <random>
 #include <cmath>
 #include <DSPMath.h>
+#include "MemoryUnit.h"
 
 std::random_device RandomDevice;
 
@@ -106,4 +107,36 @@ TEST_CASE("Detect subnormals in ladder filter processing.",	"[ladder-denormal]")
 	int ndenormals = detect_denormals(ladder_out);
 	INFO( "Denormal count: " << ndenormals << "/" << N);
 	REQUIRE(ndenormals == 0);
+}
+
+TEST_CASE("Test stateless MemoryUnit::tick", "[unit]") {
+	syn::MemoryUnit mu("mu0");
+	typedef Eigen::Array<double, -1, -1, Eigen::RowMajor> io_type;
+	io_type inputs(1, 10);
+	io_type outputs(1, 10);
+	for(int i=0;i<10;i++) {
+		inputs(0, i) = i;
+	}
+	INFO("Inputs: " << inputs);
+	mu.tick(inputs, outputs);
+	INFO("Outputs: " << outputs);
+	REQUIRE(outputs(0, 0) == 0);
+	REQUIRE(outputs(0, 1) == 0);
+	Eigen::Map<io_type> out_slice(outputs.row(0).data() + 2, outputs.cols() - 2);
+	Eigen::Map<io_type> in_slice(inputs.row(0).data(), inputs.cols() - 2);
+	REQUIRE((out_slice == in_slice).all());
+}
+
+
+TEST_CASE("Test stateless StateVariableFilter::tick", "[unit]") {
+	syn::StateVariableFilter svf("svf0");
+	Eigen::Array<double, -1, -1, Eigen::RowMajor> inputs(1, 10);
+	Eigen::Array<double, -1, -1, Eigen::RowMajor> outputs(4, 10);
+	INFO("Inputs: " << inputs);
+	for (int i = 0; i<10; i++) {
+		inputs(0, i) = i;
+	}
+	svf.tick(inputs, outputs);
+	INFO("Outputs: " << outputs);
+	REQUIRE(outputs.any());
 }

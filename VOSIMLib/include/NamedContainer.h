@@ -59,6 +59,9 @@ namespace syn
 		};
 
 	public:
+		const size_t max_size = MAXSIZE;
+		typedef T item_type;
+
 		NamedContainer() :
 			m_size(0)
 		{
@@ -154,6 +157,19 @@ namespace syn
 		int getItemIndex(const T& a_item) const;
 
 		int _getNextId();
+	private:
+		template<typename _T>
+		struct id_comparator
+		{
+			typedef _T first_argument_type;
+			typedef _T second_argument_type;
+			typedef bool result_type;
+
+			constexpr bool operator()(const _T& _Left, const _T& _Right) const
+			{	// apply operator< to operands
+				return (_Left>=0) && (_Left < _Right);
+			}
+		};
 	};
 
 	template <typename T, int MAXSIZE>
@@ -178,7 +194,7 @@ namespace syn
 
 		// update index list
 		m_indices[m_size] = a_index;
-		std::sort(m_indices.begin(), m_indices.end(), std::greater<int>());
+		std::sort(m_indices.begin(), m_indices.end(), id_comparator<int>());
 
 		m_size++;
 		return true;
@@ -203,7 +219,7 @@ namespace syn
 				break;
 			}
 		}
-		std::sort(m_indices.begin(), m_indices.end(), std::greater<int>());
+		std::sort(m_indices.begin(), m_indices.end(), id_comparator<int>());
 
 		m_size--;
 		return true;
