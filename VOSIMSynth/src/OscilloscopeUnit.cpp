@@ -23,6 +23,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "UIPlot.h"
 #include "UILabel.h"
 
+#include "common.h"
+
+CEREAL_REGISTER_TYPE(synui::OscilloscopeUnit);
+
 namespace synui
 {
 	OscilloscopeUnit::OscilloscopeUnit(const string& a_name) :

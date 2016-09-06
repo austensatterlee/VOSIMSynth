@@ -20,6 +20,9 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "ADSREnvelope.h"
 #include "DSPMath.h"
 
+#include "common.h"
+CEREAL_REGISTER_TYPE(syn::ADSREnvelope);
+
 namespace syn
 {
 	ADSREnvelope::ADSREnvelope(const string& name) :

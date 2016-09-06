@@ -5,8 +5,10 @@ set(PLUGIN_NAME VOSIMSynth)
 
 set(NANOVG_ROOT ${LIBS_DIR}/nanovg CACHE PATH "")
 set(VST2_SDK ${LIBS_DIR}/VST_SDK CACHE PATH "")
-set(GLEW_ROOT "C:/Program Files (x86)/glew" CACHE PATH "")
-set(SFML_ROOT "C:/Program Files/sfml" CACHE PATH "")
+set(GLEW_ROOT_64 "${LIBS_DIR_SYS}/glew" CACHE PATH "")
+set(GLEW_ROOT_32 "${LIBS_DIR_SYS}/glew" CACHE PATH "")
+set(SFML_ROOT_64 "${LIBS_DIR_SYS}/SFML" CACHE PATH "")
+set(SFML_ROOT_32 "${LIBS_DIR_SYS}/SFML" CACHE PATH "")
 set(SFTOOLS_ROOT ${LIBS_DIR}/sftools CACHE PATH "")
 set(RESOURCES_DIR ${CMAKE_SOURCE_DIR}/vosimsynth/resources CACHE PATH "")
 set(STANDALONE_ROOT ${CMAKE_SOURCE_DIR}/vosimsynth/standalone CACHE PATH "")
@@ -22,9 +24,14 @@ file(GLOB SFTOOLS_FILES ${SFTOOLS_ROOT}/include/sftools/*.hpp
 include_directories(${SFTOOLS_ROOT}/include)
 
 # Ensure cmake searches specified paths
-list(APPEND CMAKE_PREFIX_PATH ${GLEW_ROOT})
-list(APPEND CMAKE_PREFIX_PATH ${SFML_ROOT})
-list(REMOVE_DUPLICATES CMAKE_PREFIX_PATH)
+
+if(ARCH EQUAL 64)
+  set(SFML_ROOT ${SFML_ROOT_64})
+  set(GLEW_ROOT ${GLEW_ROOT_64})
+else()
+  set(SFML_ROOT ${SFML_ROOT_32})
+  set(GLEW_ROOT ${GLEW_ROOT_32})
+endif()
 
 # Add SFML cmake module
 set(SFML_STATIC true)
@@ -41,10 +48,13 @@ list(APPEND ADDITIONAL_LIBRARIES ${SFML_DEPENDENCIES})
 message(STATUS "SFML include: ${SFML_INCLUDE_DIR}")
 
 # GLEW
-find_package(glew REQUIRED)
+message(STATUS "GLEW_ROOT: ${GLEW_ROOT}")
+set(CMAKE_PREFIX_PATH ${GLEW_ROOT})
+find_package(GLEW REQUIRED)
 add_definitions(-DGLEW_MX -DGLEW_STATIC)
 include_directories(${GLEW_INCLUDE_DIR})
-#message(STATUS "GLEW libs: ${GLEW_LIBRARY}" )
+message(STATUS "GLEW libs: ${GLEW_LIBRARY}" )
+message(STATUS "GLEW includes: ${GLEW_INCLUDE_DIRS}" )
 string(REGEX REPLACE "(.*)\\.(.*)" "\\1$<$<CONFIG:Debug>:d>.\\2" GLEW_LIBRARY "${GLEW_LIBRARY}")
 list(APPEND ADDITIONAL_LIBRARIES ${GLEW_LIBRARY})
 

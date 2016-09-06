@@ -141,7 +141,7 @@ namespace syn
     public:
       explicit LadderFilterBase(const string& a_name);
 
-      const int c_oversamplingFactor = 4;
+      const int c_oversamplingFactor = 8;
       const double VT = 0.312;
 
       enum Param
@@ -189,10 +189,4 @@ namespace syn
 		Vector5d m_ffGains; /// state feed forward gains
 	};
 }
-
-CEREAL_REGISTER_TYPE(syn::StateVariableFilter)
-CEREAL_REGISTER_TYPE(syn::TrapStateVariableFilter)
-CEREAL_REGISTER_TYPE(syn::OnePoleLP)
-CEREAL_REGISTER_TYPE(syn::LadderFilter)
-CEREAL_REGISTER_TYPE(syn::LadderFilterTwo)
 #endif

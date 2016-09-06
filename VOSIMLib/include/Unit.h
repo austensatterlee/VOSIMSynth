@@ -19,16 +19,16 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __UNIT__
 #define __UNIT__
-#include <eigen/Core>
-#include <cereal/types/polymorphic.hpp>
-#include <cereal/archives/json.hpp>
-
 #include "NamedContainer.h"
 #include "UnitParameter.h"
+#include "UnitFactory.h"
+
+#include <eigen/Core>
 
 #define MAX_PARAMS 16
 #define MAX_INPUTS 8
 #define MAX_OUTPUTS 8
+#define UNIT_BUF_LEN 8
 
 #define DERIVE_UNIT(TYPE) \
 	string _getClassName() const override {return #TYPE;}\
@@ -119,8 +119,6 @@ namespace syn
 		 * Clears the unit outputs and calls the unit's process_ method.
 		 */
 		void MSFASTCALL tick() GCCFASTCALL;
-
-		void MSFASTCALL tick(const Eigen::Array<double, -1, -1, Eigen::RowMajor>& a_inputs, Eigen::Array<double, -1, -1, Eigen::RowMajor>& a_outputs) GCCFASTCALL;
 
 		/**
 		 * Notify the unit of a sample rate change
@@ -236,6 +234,9 @@ namespace syn
 		template <typename ID>
 		const double& getOutputValue(const ID& a_identifier) const;
 
+		template <typename ID>
+		const double* getOutputBuffer(const ID& a_identifier) const;
+
 		const double& getInputValue(int a_index) const;
 
 		const double* getInputSource(int a_index) const;
@@ -248,7 +249,7 @@ namespace syn
 
 		/**
 		* Connect the specified input port to a location in memory.
-		* \param a_toInputPort The desired input port of this unit
+		* \param a_inputPort The desired input port of this unit
 		* \param a_src A pointer to the memory to read the input from
 		*/
 		void connectInput(int a_inputPort, const double* a_src);
@@ -295,7 +296,7 @@ namespace syn
 				m_parameters[index].setFromString(tmpparams[index].getValueString());
 			}
 		}
-
+		
 	protected:
 		/**
 		 * Called when a parameter has been modified. This function should be overridden
@@ -342,10 +343,18 @@ namespace syn
 		void _setName(const string& a_name);
 
 		virtual Unit* _clone() const = 0;
+
 	private:
 		friend class UnitFactory;
 		friend class Circuit;
+	public:
+		typedef ::Eigen::Array<double, -1, -1, Eigen::RowMajor> dynamic_buffer_t;
+		//typedef Eigen::Array<double, UNIT_BUF_LEN, 1> fixed_buffer_t;
+		typedef ::std::array<double, UNIT_BUF_LEN> fixed_buffer_t;
 
+		void MSFASTCALL tick(const dynamic_buffer_t& a_inputs, dynamic_buffer_t& a_outputs) GCCFASTCALL;
+
+	private:
 		string m_name;
 		NamedContainer<UnitParameter, MAX_PARAMS> m_parameters;
 		NamedContainer<double, MAX_OUTPUTS> m_outputSignals;

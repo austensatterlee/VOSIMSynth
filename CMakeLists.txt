@@ -5,6 +5,16 @@ enable_language(C CXX RC)
 set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
+if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+  set(ARCH 64)
+  set(LIBS_DIR_SYS "C:/Program Files")
+  set(PYTHON_EXECUTABLE "C:/Python27/python.exe" CACHE PATH "")
+else()
+  set(ARCH 32)
+  set(LIBS_DIR_SYS "C:/Program Files (x86)")
+  set(PYTHON_EXECUTABLE "C:/Python27_32bit/python.exe" CACHE PATH "")
+endif()
+
 # define source directories
 set(LIBS_DIR ${CMAKE_SOURCE_DIR}/libs CACHE PATH "")
 
@@ -14,7 +24,7 @@ set(EIGEN_ROOT ${LIBS_DIR}/eigen CACHE PATH "")
 set(CEREAL_ROOT ${LIBS_DIR}/cereal CACHE PATH "")
 set(PYBIND11_ROOT ${LIBS_DIR}/pybind11 CACHE PATH "")
 
-set(FFTS_ROOT "C:/Program Files (x86)/ffts" CACHE PATH "")
+set(FFTS_ROOT "${LIBS_DIR_SYS}/ffts" CACHE PATH "")
 set(FFTS_INCLUDE_DIR ${FFTS_ROOT}/include CACHE PATH "")
 
 set(VOSIMLIB_ROOT ${CMAKE_SOURCE_DIR}/vosimlib CACHE PATH "")
@@ -56,8 +66,17 @@ if(MSVC)
   # /GL whole program optimization      /arch:SSE2 simd extensions
   # /fp:fast floating point model       /Qpar enable parallel code gen
   # /Oy omit frame pointers             /GT fiber-safe optimizations
-  list(APPEND MSVC_REL /Ox /GL /Ob2 /Oi /Ot /Oy /arch:SSE2 /fp:fast /fp:except- /Qpar /GT)
-  list(APPEND MSVC_RDEB /Ox /Ob2 /Oi /Ot /Oy /arch:SSE2 /fp:fast /Qpar /GT)
+  list(APPEND MSVC_REL /Ox /GL /Ob2 /Oi /Ot /Oy /fp:fast /fp:except- /Qpar /GT)
+  list(APPEND MSVC_RDEB /Ox /Ob2 /Oi /Ot /Oy /fp:fast /Qpar /GT)
+
+  if(ARCH EQUAL 32)
+    list(APPEND MSVC_REL /arch:SSE2)
+    list(APPEND MSVC_RDEB /arch:SSE2)
+  elseif(ARCH EQUAL 64)
+    list(APPEND MSVC_REL /arch:AVX2)
+    list(APPEND MSVC_RDEB /arch:AVX2)
+  endif()
+    
   add_compile_options("$<$<CONFIG:Release>:${MSVC_REL}>")
   add_compile_options("$<$<CONFIG:RelWithDebInfo>:${MSVC_RDEB}>")
   add_compile_options("$<$<CONFIG:Debug>:${MSVC_DEB}>")

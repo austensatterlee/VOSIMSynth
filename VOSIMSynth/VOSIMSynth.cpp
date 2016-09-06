@@ -19,6 +19,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "VOSIMSynth.h"
 #include "IPlug_include_in_plug_src.h"
+
+#include "common.h"
 #include "Oscillator.h"
 #include "VosimOscillator.h"
 #include "ADSREnvelope.h"
@@ -36,7 +38,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "UnitFactory.h"
 #include "include/UICircuitPanel.h"
 #include "include/VOSIMComponent.h"
-#include <cereal/archives/json.hpp>
+
 #include <tables.h>
 
 using namespace std;
@@ -70,7 +72,7 @@ void VOSIMSynth::makeGraphics() {
 }
 
 void VOSIMSynth::makeInstrument() {
-	m_unitFactory = new syn::UnitFactory();
+	m_unitFactory = &syn::UnitFactory::instance();
 	m_unitFactory->addUnitPrototype<syn::StateVariableFilter>("Filters", "SVF");
 	m_unitFactory->addUnitPrototype<syn::TrapStateVariableFilter>("Filters", "TSVF");
 	m_unitFactory->addUnitPrototype<syn::OnePoleLP>("Filters", "Lag");
@@ -85,7 +87,7 @@ void VOSIMSynth::makeInstrument() {
 	m_unitFactory->addUnitPrototype<syn::LFOOscillator>("Modulators", "LFO");
 
 	m_unitFactory->addUnitPrototype<syn::MemoryUnit>("DSP", "Unit Delay");
-	m_unitFactory->addUnitPrototype<syn::ResampleUnit>("DSP", "Var Delay");
+	m_unitFactory->addUnitPrototype<syn::VariableMemoryUnit>("DSP", "Var Delay");
 	m_unitFactory->addUnitPrototype<syn::PanningUnit>("DSP", "Pan");
 	m_unitFactory->addUnitPrototype<syn::FollowerUnit>("DSP", "Follow");
 	m_unitFactory->addUnitPrototype<syn::DCRemoverUnit>("DSP", "DC Trap");
@@ -149,7 +151,7 @@ void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg) {
 bool VOSIMSynth::SerializeState(ByteChunk* pChunk) {
 	shared_ptr<syn::Unit> circuit(m_voiceManager->getPrototypeCircuit()->clone());
 	stringstream ss; {
-		cereal::JSONOutputArchive ar(ss);
+		cereal::XMLOutputArchive ar(ss);
 		ar(cereal::make_nvp("circuit", circuit));
 	}
 	pChunk->PutStr(ss.str().c_str());
@@ -166,7 +168,7 @@ int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
 	stringstream ss{ input };
 	shared_ptr<syn::Unit> circuit;
 	{
-		cereal::JSONInputArchive ar(ss);
+		cereal::XMLInputArchive ar(ss);
 		ar(cereal::make_nvp("circuit", circuit));
 	}
 	getVOSIMComponent()->circuitPanel()->reset();

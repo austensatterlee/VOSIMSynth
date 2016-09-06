@@ -59,26 +59,6 @@ namespace syn
 	};
 
 	/**
-	* Bilinear/trapezoidal integrator
-	*/
-	class BLIntegrator
-	{
-	public:
-		BLIntegrator();
-
-		/**
-		* Set normalized cutoff frequency in the range (0,1), where 1 is nyquist.
-		*/
-		void setFc(double a_newfc);
-
-		double process(double a_input);
-
-	private:
-		double m_state;
-		double m_normfc; /// normalized cutoff frequency
-	};
-
-	/**
 	 * DC-remover
 	 */
 	class DCRemoverUnit : public Unit
@@ -250,15 +230,5 @@ namespace syn
 		}
 	};
 }
-
-CEREAL_REGISTER_TYPE(syn::DCRemoverUnit)
-CEREAL_REGISTER_TYPE(syn::RectifierUnit)
-CEREAL_REGISTER_TYPE(syn::GainUnit)
-CEREAL_REGISTER_TYPE(syn::SummerUnit)
-CEREAL_REGISTER_TYPE(syn::ConstantUnit)
-CEREAL_REGISTER_TYPE(syn::PanningUnit)
-CEREAL_REGISTER_TYPE(syn::LerpUnit)
-CEREAL_REGISTER_TYPE(syn::PitchToFreqUnit)
-CEREAL_REGISTER_TYPE(syn::FreqToPitchUnit)
 
 #endif

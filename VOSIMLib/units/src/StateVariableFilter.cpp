@@ -21,6 +21,13 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "DSPMath.h"
 #include "tables.h"
 
+#include "common.h"
+CEREAL_REGISTER_TYPE(syn::StateVariableFilter);
+CEREAL_REGISTER_TYPE(syn::TrapStateVariableFilter);
+CEREAL_REGISTER_TYPE(syn::OnePoleLP);
+CEREAL_REGISTER_TYPE(syn::LadderFilter);
+CEREAL_REGISTER_TYPE(syn::LadderFilterTwo);
+
 syn::StateVariableFilter::StateVariableFilter(const string& a_name) :
   Unit(a_name),
   m_pFc(addParameter_(UnitParameter("fc", 0.01, 20000.0, 10000.0, UnitParameter::Freq))),

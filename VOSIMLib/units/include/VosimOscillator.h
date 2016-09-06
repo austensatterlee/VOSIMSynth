@@ -88,8 +88,4 @@ namespace syn
 		void MSFASTCALL process_() GCCFASTCALL override;
 	};
 }
-
-CEREAL_REGISTER_TYPE(syn::VosimOscillator)
-CEREAL_REGISTER_TYPE(syn::FormantOscillator)
-
 #endif

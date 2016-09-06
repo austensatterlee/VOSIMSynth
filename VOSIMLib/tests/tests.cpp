@@ -1,19 +1,19 @@
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
 
-#include <cereal/archives/json.hpp>
-#include <cereal/archives/xml.hpp>
+#include "common.h"
 #include "Unit.h"
 #include "StateVariableFilter.h"
 #include "Oscillator.h"
 #include "Circuit.h"
+#include "MemoryUnit.h"
+
 #include <iostream>
 #include <sstream>
 #include <memory>
 #include <random>
 #include <cmath>
 #include <DSPMath.h>
-#include "MemoryUnit.h"
 
 std::random_device RandomDevice;
 
@@ -28,34 +28,36 @@ T detect_denormals(const std::vector<T>& a_data) {
 	return ndenormals;
 }
 
-void serialization_example() {
+TEST_CASE("Serialization example.", "[serialization]") {
 	syn::Circuit* circ = new syn::Circuit("main");
 	syn::Unit* svfUnit = new syn::StateVariableFilter("svfUnit");
 	syn::Unit* oscUnit = new syn::BasicOscillator("oscUnit");
 	circ->addUnit(svfUnit);
 	circ->addUnit(oscUnit);
 	circ->connectInternal("oscUnit", 0, "svfUnit", 0);
-	std::stringstream ss; {
+	std::stringstream ss;
+	{
 		cereal::XMLOutputArchive oarchive(ss);
 		shared_ptr<syn::Unit> tmpUnit(circ->clone());
 		oarchive(tmpUnit);
 	}
-	std::cout << ss.str() << std::endl;
-	std::cout << "----------" << std::endl;
-
-	syn::Unit* readUnit; {
+	string circuit_str1 = ss.str();
+	syn::Circuit* readUnit;
+	{
 		cereal::XMLInputArchive iarchive(ss);
 		shared_ptr<syn::Unit> tmpUnit;
 		iarchive(tmpUnit);
-		readUnit = tmpUnit->clone();
+		readUnit = dynamic_cast<syn::Circuit*>(tmpUnit->clone());
 	}
-
-	std::stringstream ss2; {
+	REQUIRE(readUnit != nullptr);
+	std::stringstream ss2;
+	{
 		cereal::XMLOutputArchive oarchive(ss2);
-		shared_ptr<syn::Unit> tmpUnit(circ->clone());
+		shared_ptr<syn::Unit> tmpUnit(readUnit->clone());
 		oarchive(tmpUnit);
 	}
-	std::cout << ss2.str() << std::endl;
+	string circuit_str2 = ss2.str();
+	REQUIRE(circuit_str1 == circuit_str2);
 }
 
 template<typename Out, typename In>
@@ -110,21 +112,40 @@ TEST_CASE("Detect subnormals in ladder filter processing.",	"[ladder-denormal]")
 }
 
 TEST_CASE("Test stateless MemoryUnit::tick", "[unit]") {
-	syn::MemoryUnit mu("mu0");
-	typedef Eigen::Array<double, -1, -1, Eigen::RowMajor> io_type;
-	io_type inputs(1, 10);
-	io_type outputs(1, 10);
-	for(int i=0;i<10;i++) {
-		inputs(0, i) = i;
+	SECTION("Single MemoryUnit tick") {
+		syn::MemoryUnit mu("mu0");
+		double input = 1.0;
+		mu.connectInput(0, &input);
+		mu.tick();
+		double out1 = mu.getOutputValue(0);
+		mu.tick();
+		double out2 = mu.getOutputValue(0);
+		REQUIRE(out1 == 0.0);
+		REQUIRE(out2 == 1.0);
 	}
-	INFO("Inputs: " << inputs);
-	mu.tick(inputs, outputs);
-	INFO("Outputs: " << outputs);
-	REQUIRE(outputs(0, 0) == 0);
-	REQUIRE(outputs(0, 1) == 0);
-	Eigen::Map<io_type> out_slice(outputs.row(0).data() + 2, outputs.cols() - 2);
-	Eigen::Map<io_type> in_slice(inputs.row(0).data(), inputs.cols() - 2);
-	REQUIRE((out_slice == in_slice).all());
+
+	SECTION("Buffer MemoryUnit tick") {
+		syn::MemoryUnit mu("mu0");
+		typedef Eigen::Array<double, -1, -1, Eigen::RowMajor> io_type;
+		io_type inputs(1, 10);
+		io_type outputs(1, 10);
+		for (int i = 0; i<10; i++) {
+			inputs(0, i) = i;
+		}
+		INFO("Inputs: " << inputs);
+		mu.tick(inputs, outputs);
+		INFO("Outputs: " << outputs);
+		REQUIRE(outputs(0, 0) == 0);
+		REQUIRE(outputs(0, 1) == 0);
+		REQUIRE(outputs(0, 2) == 1);
+		REQUIRE(outputs(0, 3) == 2);
+		REQUIRE(outputs(0, 4) == 3);
+		REQUIRE(outputs(0, 5) == 4);
+		REQUIRE(outputs(0, 6) == 5);
+		REQUIRE(outputs(0, 7) == 6);
+		REQUIRE(outputs(0, 8) == 7);
+		REQUIRE(outputs(0, 9) == 8);
+	}
 }
 
 
@@ -132,10 +153,10 @@ TEST_CASE("Test stateless StateVariableFilter::tick", "[unit]") {
 	syn::StateVariableFilter svf("svf0");
 	Eigen::Array<double, -1, -1, Eigen::RowMajor> inputs(1, 10);
 	Eigen::Array<double, -1, -1, Eigen::RowMajor> outputs(4, 10);
-	INFO("Inputs: " << inputs);
 	for (int i = 0; i<10; i++) {
 		inputs(0, i) = i;
 	}
+	INFO("Inputs: " << inputs);
 	svf.tick(inputs, outputs);
 	INFO("Outputs: " << outputs);
 	REQUIRE(outputs.any());

@@ -31,10 +31,7 @@ namespace syn
 			MidiNoteUnit(a_rhs.getName()) { }
 
 	protected:
-		void MSFASTCALL process_() GCCFASTCALL override {
-			setOutputChannel_(0, getNote());
-			setOutputChannel_(1, pitchToFreq(getNote()));
-		};
+		void MSFASTCALL process_() GCCFASTCALL override;;
 	};
 
 	/**
@@ -123,10 +120,5 @@ namespace syn
 		double m_value;
 	};
 }
-
-CEREAL_REGISTER_TYPE(syn::MidiNoteUnit)
-CEREAL_REGISTER_TYPE(syn::VelocityUnit)
-CEREAL_REGISTER_TYPE(syn::GateUnit)
-CEREAL_REGISTER_TYPE(syn::MidiCCUnit)
 
 #endif

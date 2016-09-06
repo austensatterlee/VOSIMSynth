@@ -1,6 +1,17 @@
 #include "MathUnits.h"
 #include "DSPMath.h"
 
+#include "common.h"
+CEREAL_REGISTER_TYPE(syn::DCRemoverUnit);
+CEREAL_REGISTER_TYPE(syn::RectifierUnit);
+CEREAL_REGISTER_TYPE(syn::GainUnit);
+CEREAL_REGISTER_TYPE(syn::SummerUnit);
+CEREAL_REGISTER_TYPE(syn::ConstantUnit);
+CEREAL_REGISTER_TYPE(syn::PanningUnit);
+CEREAL_REGISTER_TYPE(syn::LerpUnit);
+CEREAL_REGISTER_TYPE(syn::PitchToFreqUnit);
+CEREAL_REGISTER_TYPE(syn::FreqToPitchUnit);
+
 syn::MovingAverage::MovingAverage() :
 	m_windowSize(1),
 	m_lastOutput(0.0) {
@@ -26,18 +37,6 @@ double syn::MovingAverage::process(double a_input) {
 
 double syn::MovingAverage::getPastInputSample(int a_offset) {
 	return m_delay.getPastSample(a_offset);
-}
-
-syn::BLIntegrator::BLIntegrator() : m_state(0), m_normfc(0) {}
-
-void syn::BLIntegrator::setFc(double a_newfc) {
-	m_normfc = a_newfc / 2;
-}
-
-double syn::BLIntegrator::process(double a_input) {
-	a_input = m_normfc * a_input;
-	m_state = 2 * a_input + m_state;
-	return m_state;
 }
 
 syn::DCRemoverUnit::DCRemoverUnit(const string& a_name) :

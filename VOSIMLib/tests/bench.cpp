@@ -14,12 +14,13 @@
 #include "Circuit.h"
 #include "MemoryUnit.h"
 
-#define trig_benches 0
+#define trig_benches 1
 #define ladder_benches 1
+#define circuit_benches 0
 #define modulus_benches 0
 #define lut_saw_benches 0
-#define lut_pitch_benches 0
-#define container_benches 0
+#define lut_pitch_benches 1
+#define container_benches 1
 
 std::random_device RandomDevice;
 
@@ -160,8 +161,9 @@ NONIUS_BENCHMARK("trapezoidal svf", [](nonius::chronometer& meter) {
 		return x;
 	});
 })
+#endif
 
-
+#ifdef circuit_benches
 NONIUS_BENCHMARK("memory circuit", [](nonius::chronometer& meter) {
 	const int runs = meter.runs();
 	const int nUnits = 60;

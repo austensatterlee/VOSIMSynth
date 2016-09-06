@@ -199,5 +199,5 @@ namespace synui
 		addChild(ret, a_group);
 		return ret;
 	}
-};
+}
 #endif

@@ -52,7 +52,4 @@ namespace syn
 		int m_pBeta;
 	};
 };
-
-CEREAL_REGISTER_TYPE(syn::FollowerUnit)
-
 #endif

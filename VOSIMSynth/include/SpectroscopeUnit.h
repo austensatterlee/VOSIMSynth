@@ -99,5 +99,3 @@ namespace synui
 		UIDefaultUnitControl* m_defCtrl;
 	};
 }
-
-CEREAL_REGISTER_TYPE(synui::SpectroscopeUnit)

@@ -29,6 +29,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "DSPMath.h"
 #include <tables.h>
 
+#include "common.h"
+CEREAL_REGISTER_TYPE(syn::MemoryUnit);
+CEREAL_REGISTER_TYPE(syn::VariableMemoryUnit);
+
 using namespace std;
 
 namespace syn
@@ -65,7 +69,7 @@ namespace syn
 		int requiredBufSize = ceil(a_nBufSamples);
 		if (requiredBufSize > m_buffer.size())
 			m_buffer.resize(requiredBufSize);
-		m_arraySize = m_buffer.size();
+		m_arraySize = static_cast<int>(m_buffer.size());
 		m_nBufSamples = a_nBufSamples;
 		m_curReadPhase = WRAP<double>(m_curWritePhase - m_nBufSamples, m_arraySize);
 	}
@@ -77,7 +81,7 @@ namespace syn
 
 	int NSampleDelay::size() const
 	{
-		return m_buffer.size();
+		return static_cast<int>(m_buffer.size());
 	}
 
 	double NSampleDelay::process(double a_input)
@@ -103,6 +107,7 @@ namespace syn
 		addInput_("in");
 		addOutput_("out");
 		m_delay.resizeBuffer(1.0);
+		MemoryUnit::reset();
 	}
 
 	MemoryUnit::MemoryUnit(const MemoryUnit& a_rhs) :
@@ -124,7 +129,7 @@ namespace syn
 	//---------------------
 	// ResampleUnit
 	//---------------------
-	ResampleUnit::ResampleUnit(const string& a_name) :
+	VariableMemoryUnit::VariableMemoryUnit(const string& a_name) :
 		Unit(a_name),
 		m_delaySamples(0)
 	{
@@ -141,14 +146,14 @@ namespace syn
 		m_delay.resizeBuffer(48000);
 	}
 
-	ResampleUnit::ResampleUnit(const ResampleUnit& a_rhs) :
-		ResampleUnit(a_rhs.getName())
+	VariableMemoryUnit::VariableMemoryUnit(const VariableMemoryUnit& a_rhs) :
+		VariableMemoryUnit(a_rhs.getName())
 	{
 	}
 
-	void ResampleUnit::reset() { m_delay.clearBuffer(); }
+	void VariableMemoryUnit::reset() { m_delay.clearBuffer(); }
 
-	void ResampleUnit::onParamChange_(int a_paramId)
+	void VariableMemoryUnit::onParamChange_(int a_paramId)
 	{
 		int newtype;
 		switch (a_paramId) {
@@ -163,7 +168,7 @@ namespace syn
 		}
 	}
 
-	void ResampleUnit::process_()
+	void VariableMemoryUnit::process_()
 	{
 		int bufType = getParameter(pBufType).getEnum();
 		switch (bufType) {

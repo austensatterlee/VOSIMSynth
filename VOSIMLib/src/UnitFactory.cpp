@@ -1,5 +1,15 @@
 #include "UnitFactory.h"
 #include "Containers.h"
+#include "Unit.h"
+
+syn::FactoryPrototype::FactoryPrototype(std::string a_group_name, Unit* a_unit, size_t a_class_size)
+	: classIdentifier(a_unit->getClassIdentifier()),
+	  group_name(a_group_name),
+	  name(a_unit->getName()),
+	  prototype(a_unit),
+	  build_count{0},
+	  size(a_class_size) 
+{}
 
 set<string> syn::UnitFactory::getGroupNames() const {
 	set<string> groupnames;

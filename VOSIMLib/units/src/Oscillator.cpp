@@ -21,6 +21,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "DSPMath.h"
 #include "tables.h"
 
+#include "common.h"
+CEREAL_REGISTER_TYPE(syn::BasicOscillator);
+CEREAL_REGISTER_TYPE(syn::LFOOscillator);
+
 namespace syn
 {
 

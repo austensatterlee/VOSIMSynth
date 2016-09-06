@@ -22,6 +22,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <UILabel.h>
 #include <UIPlot.h>
 
+#include "common.h"
+
+CEREAL_REGISTER_TYPE(synui::SpectroscopeUnit);
+
 namespace synui
 {
 	const vector<string> bufferSizeSelections = { "128","256","512","1024","2048","4096" };

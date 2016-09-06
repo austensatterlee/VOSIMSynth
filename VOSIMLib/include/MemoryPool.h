@@ -56,7 +56,7 @@ class MemoryPool
 	std::vector<Chunk*> m_freeChunks;
 	std::vector<Chunk*> m_usedChunks;
 	Chunk m_head;
-	int m_bytesUsed;
+	size_t m_bytesUsed;
 public:
 	MemoryPool(size_t a_numBytes);
 

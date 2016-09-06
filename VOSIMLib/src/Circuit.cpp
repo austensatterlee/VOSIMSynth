@@ -22,12 +22,16 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <unordered_set>
 #include <functional>
 
+#include "common.h"
+CEREAL_REGISTER_TYPE(syn::Circuit);
+CEREAL_REGISTER_TYPE(syn::OutputUnit);
+CEREAL_REGISTER_TYPE(syn::InputUnit);
+
 using std::vector;
 using std::unordered_set;
 
 namespace syn
 {
-
 	Circuit::Circuit(const string& a_name) :
 		Unit(a_name)
 	{
@@ -274,7 +278,7 @@ namespace syn
 	}
 
 	int Circuit::getNumUnits() const {
-		return m_units.size();
+		return static_cast<int>(m_units.size());
 	}
 
 	Unit* const* Circuit::getProcGraph() const

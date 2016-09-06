@@ -20,6 +20,9 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "Unit.h"
 #include "DSPMath.h"
 
+#include "common.h"
+CEREAL_REGISTER_TYPE(syn::Unit);
+
 using std::hash;
 
 using namespace std;
@@ -33,11 +36,13 @@ namespace syn
 		m_name{ a_name },
 		m_parent{ nullptr },
 		m_audioConfig{44.1e3, 120},
-		m_midiData{} { }
+		m_midiData{} 
+	{
+	}
 
 	unsigned int Unit::getClassIdentifier() const {
 		hash<string> hash_fn;
-		return hash_fn(_getClassName());
+		return static_cast<unsigned int>(hash_fn(_getClassName()));
 	}
 
 	void Unit::setFs(double a_newFs) {
@@ -89,15 +94,15 @@ namespace syn
 	}
 
 	int Unit::getNumParameters() const {
-		return m_parameters.size();
+		return static_cast<int>(m_parameters.size());
 	}
 
 	int Unit::getNumInputs() const {
-		return m_inputPorts.size();
+		return static_cast<int>(m_inputPorts.size());
 	}
 
 	int Unit::getNumOutputs() const {
-		return m_outputSignals.size();
+		return static_cast<int>(m_outputSignals.size());
 	}
 
 	const string& Unit::getName() const {
@@ -116,19 +121,14 @@ namespace syn
 		return m_parent;
 	}
 
-	void Unit::tick() {
-		// Clear outputs
-		for (int i = 0; i < m_outputSignals.size(); i++) {
-			m_outputSignals[m_outputSignals.getIndices()[i]] = 0.0;
-		}
-
+	void Unit::tick() {	
 		process_();
 	}
 
 	void Unit::tick(const Eigen::Array<double,-1,-1, Eigen::RowMajor>& a_inputs, Eigen::Array<double, -1, -1, Eigen::RowMajor>& a_outputs) {
 		const double* oldSources[MAX_INPUTS];
-		size_t nSamples = a_inputs.cols();
-		int nInputs = MIN<int>(a_inputs.rows(),m_inputPorts.size());
+		int nSamples = a_inputs.cols();
+		int nInputs = MIN<int>(a_inputs.rows(),static_cast<int>(m_inputPorts.size()));
 		// record original input sources
 		for(int i=0;i<nInputs;i++) {
 			oldSources[i] = m_inputPorts.getByIndex(i).src;
@@ -160,7 +160,7 @@ namespace syn
 	}
 
 	bool Unit::addOutput_(int a_id, const string& a_name) {
-		return m_outputSignals.add(a_name, a_id, 0);
+		return m_outputSignals.add(a_name, a_id, 0.0);
 	}
 
 	bool Unit::addParameter_(int a_id, const UnitParameter& a_param) {
@@ -173,7 +173,7 @@ namespace syn
 	}
 
 	int Unit::addOutput_(const string& a_name) {
-		return m_outputSignals.add(a_name, 0);
+		return m_outputSignals.add(a_name, 0.0);
 	}
 
 	int Unit::addParameter_(const UnitParameter& a_param) {

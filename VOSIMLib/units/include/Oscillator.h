@@ -163,6 +163,4 @@ namespace syn
 		void onParamChange_(int a_paramId) override;
 	};
 }
-CEREAL_REGISTER_TYPE(syn::BasicOscillator)
-CEREAL_REGISTER_TYPE(syn::LFOOscillator)
 #endif

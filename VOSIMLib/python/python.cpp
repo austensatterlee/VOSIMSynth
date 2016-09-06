@@ -1,5 +1,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
+#include <pybind11/stl.h>
 #include "Unit.h"
 #include "StateVariableFilter.h"
 #include <string>
@@ -81,56 +82,80 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
 				     Eigen::Array<double, -1, -1, Eigen::RowMajor> outputs(self.getNumOutputs(), a_inputs.cols());
 				     self.tick(a_inputs, outputs);
 				     return outputs;
-			     })
-			.def("reset", &syn::Unit::reset)
-			.def("isActive", &syn::Unit::isActive)
-			.def("setFs", &syn::Unit::setFs)
-			.def("setTempo", &syn::Unit::setTempo)
-			.def("noteOn", &syn::Unit::noteOn)
-			.def("noteOff", &syn::Unit::noteOff)
-			.def("notifyParameterChanged", &syn::Unit::notifyParameterChanged)
-			.def("getFs", &syn::Unit::getFs)
-			.def("getTempo", &syn::Unit::getTempo)
-			.def("isNoteOn", &syn::Unit::isNoteOn)
-			.def("getNote", &syn::Unit::getNote)
-			.def("getVelocity", &syn::Unit::getVelocity)
+	})
+		.def("reset", &syn::Unit::reset)
+		.def("isActive", &syn::Unit::isActive)
+		.def("setFs", &syn::Unit::setFs)
+		.def("setTempo", &syn::Unit::setTempo)
+		.def("noteOn", &syn::Unit::noteOn)
+		.def("noteOff", &syn::Unit::noteOff)
+		.def("notifyParameterChanged", &syn::Unit::notifyParameterChanged)
+		.def("getFs", &syn::Unit::getFs)
+		.def("getTempo", &syn::Unit::getTempo)
+		.def("isNoteOn", &syn::Unit::isNoteOn)
+		.def("getNote", &syn::Unit::getNote)
+		.def("getVelocity", &syn::Unit::getVelocity)
 
-			.def("hasParameter", &syn::Unit::hasParameter<std::string>)
-			.def("hasParameter", &syn::Unit::hasParameter<int>)
+		.def("getNumParameters", &syn::Unit::getNumParameters)
 
-			.def("getParameterValue", &syn::Unit::getParameterValue<std::string, double>)
-			.def("getParameterValue", &syn::Unit::getParameterValue<int, double>)
+		.def("hasParameter", &syn::Unit::hasParameter<std::string>)
+		.def("hasParameter", &syn::Unit::hasParameter<int>)
 
-			.def("getParameterName", &syn::Unit::getParameterName<std::string>)
-			.def("getParameterName", &syn::Unit::getParameterName<int>)
+		.def("getParameterValue", &syn::Unit::getParameterValue<std::string, double>)
+		.def("getParameterValue", &syn::Unit::getParameterValue<int, double>)
 
-			.def("setParameterValue", &syn::Unit::setParameterValue<std::string, double>)
-			.def("setParameterValue", &syn::Unit::setParameterValue<std::string, int>)
+		.def("getParameterName", &syn::Unit::getParameterName<std::string>)
+		.def("getParameterName", &syn::Unit::getParameterName<int>)
 
-			.def("setParameterValue", &syn::Unit::setParameterValue<int, double>)
-			.def("setParameterValue", &syn::Unit::setParameterValue<int, int>)
+		.def("setParameterValue", &syn::Unit::setParameterValue<std::string, double>)
+		.def("setParameterValue", &syn::Unit::setParameterValue<std::string, int>)
 
-			.def("setParameterNorm", &syn::Unit::setParameterNorm<std::string, double>)
-			.def("setParameterNorm", &syn::Unit::setParameterNorm<int, double>)
+		.def("setParameterValue", &syn::Unit::setParameterValue<int, double>)
+		.def("setParameterValue", &syn::Unit::setParameterValue<int, int>)
 
-			.def("setParameterPrecision", &syn::Unit::setParameterPrecision<std::string>)
-			.def("setParameterPrecision", &syn::Unit::setParameterPrecision<int>)
+		.def("setParameterNorm", &syn::Unit::setParameterNorm<std::string, double>)
+		.def("setParameterNorm", &syn::Unit::setParameterNorm<int, double>)
 
-			.def("setParameterFromString", &syn::Unit::setParameterFromString<std::string>)
-			.def("setParameterFromString", &syn::Unit::setParameterFromString<int>)
+		.def("setParameterPrecision", &syn::Unit::setParameterPrecision<std::string>)
+		.def("setParameterPrecision", &syn::Unit::setParameterPrecision<int>)
 
-			.def("hasOutput", &syn::Unit::hasOutput)
-			.def("hasInput", &syn::Unit::hasInput)
-			.def("getInputName", &syn::Unit::getInputName)
-			.def("getOutputName", &syn::Unit::getOutputName<int>)
-			.def("getNumParameters", &syn::Unit::getNumParameters)
-			.def("getNumInputs", &syn::Unit::getNumInputs)
-			.def("getNumOutputs", &syn::Unit::getNumOutputs)
-			.def("connectInput", &syn::Unit::connectInput)
-			.def("isConnected", &syn::Unit::isConnected)
-			.def("disconnectInput", &syn::Unit::disconnectInput);
+		.def("setParameterFromString", &syn::Unit::setParameterFromString<std::string>)
+		.def("setParameterFromString", &syn::Unit::setParameterFromString<int>)
+		.def_property_readonly("parameters", [](const syn::Unit& self) {
+			std::map<std::string, double> params;
+			for (int i = 0; i<self.getNumParameters(); i++) {
+				params[self.getParameterName(i)] = self.getParameterValue<string, double>(self.getParameterName(i));
+			}
+			return params;
+		})
 
-	py::class_<syn::Circuit, std::unique_ptr<syn::Circuit>, PyUnit_tpl<syn::Circuit>>(m, "Circuit", py::base<syn::Unit>())
+		.def("getNumInputs", &syn::Unit::getNumInputs)
+		.def("getInputValue", &syn::Unit::getInputValue)
+		.def("getInputName", &syn::Unit::getInputName)
+		.def("connectInput", &syn::Unit::connectInput)
+		.def("disconnectInput", &syn::Unit::disconnectInput)
+		.def("isConnected", &syn::Unit::isConnected)
+		.def("hasInput", &syn::Unit::hasInput)
+		.def_property_readonly("inputs", [] (const syn::Unit& self) {
+			std::vector<string> inputs;
+			for(int i=0;i<self.getNumInputs();i++) {
+				inputs[i] = self.getInputName(i);
+			}
+			return inputs;
+		})
+
+		.def("getNumOutputs", &syn::Unit::getNumOutputs)
+		.def("getOutputName", &syn::Unit::getOutputName<int>)
+		.def("hasOutput", &syn::Unit::hasOutput)
+		.def_property_readonly("outputs", [](const syn::Unit& self) {
+			std::vector<std::string> outputs;
+			for (int i = 0; i<self.getNumOutputs(); i++) {
+				outputs[i] = self.getOutputName(i);
+			}
+			return outputs;
+		});
+
+		py::class_<syn::Circuit, std::unique_ptr<syn::Circuit>, PyUnit_tpl<syn::Circuit>>(m, "Circuit", py::base<syn::Unit>())
 			.def(py::init<const std::string&>())
 			.def("getUnit", static_cast<syn::Unit&(syn::Circuit::*)(int)>(&syn::Circuit::getUnit))
 			.def("getConnections", &syn::Circuit::getConnections)
@@ -138,7 +163,12 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
 			.def("addUnit", [](syn::Circuit& self, syn::Unit& a_unit, int a_id) { return self.addUnit(&a_unit, a_id); })
 			.def("removeUnit", &syn::Circuit::removeUnit<int>)
 			.def("removeUnit", &syn::Circuit::removeUnit<const std::string&>)
-			.def("removeUnit", [](syn::Circuit& self, syn::Unit& a_unit) { return self.removeUnit(&a_unit); });
+			.def("removeUnit", [](syn::Circuit& self, syn::Unit& a_unit) { return self.removeUnit(&a_unit); })
+			.def("connectInternal", &syn::Circuit::connectInternal<string>)
+			.def("connectInternal", &syn::Circuit::connectInternal<int>)
+			.def("disconnectInternal", &syn::Circuit::disconnectInternal<string>)
+			.def("disconnectInternal", &syn::Circuit::disconnectInternal<int>)
+			.def("getConnections", &syn::Circuit::getConnectionsToInternalInput);
 
 	py::class_<syn::StateVariableFilter, std::unique_ptr<syn::StateVariableFilter>, PyUnit_tpl<syn::StateVariableFilter>>(m, "StateVariableFilter", py::base<syn::Unit>())
 			.def(py::init<const std::string&>());
@@ -170,7 +200,7 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
 	py::class_<syn::ADSREnvelope, std::unique_ptr<syn::ADSREnvelope>, PyUnit_tpl<syn::ADSREnvelope>>(m, "ADSREnvelope", py::base<syn::Unit>())
 		.def(py::init<const std::string&>());
 
-	py::class_<syn::ResampleUnit, std::unique_ptr<syn::ResampleUnit>, PyUnit_tpl<syn::ResampleUnit>>(m, "ResampleUnit", py::base<syn::Unit>())
+	py::class_<syn::VariableMemoryUnit, std::unique_ptr<syn::VariableMemoryUnit>, PyUnit_tpl<syn::VariableMemoryUnit>>(m, "ResampleUnit", py::base<syn::Unit>())
 		.def(py::init<const std::string&>());
 
 	return m.ptr();

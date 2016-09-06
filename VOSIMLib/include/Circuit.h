@@ -179,7 +179,7 @@ namespace syn
 		void save(Archive& ar) const {
 			ar(cereal::base_class<Unit>(this));
 
-			int nUnits = getNumUnits(), nConnections = m_connectionRecords.size();
+			size_t nUnits = getNumUnits(), nConnections = m_connectionRecords.size();
 			NamedContainer<std::shared_ptr<Unit>, MAX_UNITS> tmpunits;
 			for (int i = 0; i<nUnits; i++) {
 				int index = m_units.getIndices()[i];
@@ -301,7 +301,7 @@ namespace syn
 			return false;
 		// Erase connections
 		vector<ConnectionRecord> garbageList;
-		const int nRecords = m_connectionRecords.size();
+		const size_t nRecords = m_connectionRecords.size();
 		for (int i = 0; i < nRecords; i++) {
 			const ConnectionRecord& rec = m_connectionRecords[i];
 			if (unitId == rec.to_id || unitId == rec.from_id) {
@@ -334,7 +334,7 @@ namespace syn
 
 		// remove record of old connection
 		if(toUnit->isConnected(a_toInputPort)) {
-			const int nRecords = m_connectionRecords.size();
+			const size_t nRecords = m_connectionRecords.size();
 			for(int i=0;i<nRecords;i++) {
 				const ConnectionRecord& rec = m_connectionRecords[i];
 				if(rec.to_id == toUnitId && rec.to_port == a_toInputPort) {
@@ -379,7 +379,4 @@ namespace syn
 	}
 };
 
-CEREAL_REGISTER_TYPE(syn::OutputUnit)
-CEREAL_REGISTER_TYPE(syn::InputUnit)
-CEREAL_REGISTER_TYPE(syn::Circuit)
 #endif // __Circuit__

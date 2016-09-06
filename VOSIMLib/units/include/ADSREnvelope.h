@@ -67,5 +67,4 @@ namespace syn
 		int m_iGate;
 	};
 }
-CEREAL_REGISTER_TYPE(syn::ADSREnvelope)
 #endif

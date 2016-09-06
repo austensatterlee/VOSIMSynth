@@ -39,11 +39,11 @@ namespace syn
 	template <typename T, int MAXSIZE>
 	class NamedContainer
 	{
-		array<T,MAXSIZE> m_data;
-		array<bool,MAXSIZE> m_existances;
+		array<T, MAXSIZE> m_data;
+		array<bool, MAXSIZE> m_existances;
 		array<int, MAXSIZE> m_indices;
 		array<string, MAXSIZE> m_names;
-		size_t m_size;
+		int m_size;
 
 		struct SerializableItem
 		{
@@ -122,7 +122,7 @@ namespace syn
 		template <typename IDType>
 		const string& getItemName(const IDType& a_itemId) const;
 
-		size_t size() const;
+		int size() const;
 
 		const int* getIndices() const;
 
@@ -167,7 +167,7 @@ namespace syn
 
 			constexpr bool operator()(const _T& _Left, const _T& _Right) const
 			{	// apply operator< to operands
-				return (_Left>=0) && (_Left < _Right);
+				return (_Left>=0) && (_Left > _Right);
 			}
 		};
 	};
@@ -194,7 +194,7 @@ namespace syn
 
 		// update index list
 		m_indices[m_size] = a_index;
-		std::sort(m_indices.begin(), m_indices.end(), id_comparator<int>());
+		std::sort(std::begin(m_indices), std::end(m_indices), id_comparator<int>());
 
 		m_size++;
 		return true;
@@ -219,7 +219,7 @@ namespace syn
 				break;
 			}
 		}
-		std::sort(m_indices.begin(), m_indices.end(), id_comparator<int>());
+		std::sort(std::begin(m_indices), std::end(m_indices), id_comparator<int>());
 
 		m_size--;
 		return true;
@@ -249,12 +249,12 @@ namespace syn
 
 	template <typename T, int MAXSIZE>
 	T& NamedContainer<T, MAXSIZE>::getByIndex(int a_itemIndex) {
-		return m_data[m_indices[a_itemIndex]];
+		return m_data[m_indices[m_size-1 - a_itemIndex]];
 	}
 
 	template <typename T, int MAXSIZE>
 	const T& NamedContainer<T, MAXSIZE>::getByIndex(int a_itemIndex) const {
-		return m_data[m_indices[a_itemIndex]];
+		return m_data[m_indices[m_size-1 - a_itemIndex]];
 	}
 
 	template <typename T, int MAXSIZE>
@@ -270,7 +270,7 @@ namespace syn
 	}
 
 	template <typename T, int MAXSIZE>
-	size_t NamedContainer<T, MAXSIZE>::size() const {
+	int NamedContainer<T, MAXSIZE>::size() const {
 		return m_size;
 	}
 

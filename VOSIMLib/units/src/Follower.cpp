@@ -19,6 +19,9 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "Follower.h"
 
+#include "common.h"
+CEREAL_REGISTER_TYPE(syn::FollowerUnit);
+
 syn::FollowerUnit::FollowerUnit(const string& a_name) :
 	Unit(a_name),
 	m_w(0.0),

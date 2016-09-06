@@ -25,7 +25,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  *   \date 02/15/2016
  */
 #pragma once
-#include <Unit.h>
+#include "Unit.h"
 #include "UIUnitControl.h"
 
 namespace synui
@@ -87,5 +87,3 @@ namespace synui
 		UIDefaultUnitControl* m_defCtrl;
 	};
 }
-
-CEREAL_REGISTER_TYPE(synui::OscilloscopeUnit)

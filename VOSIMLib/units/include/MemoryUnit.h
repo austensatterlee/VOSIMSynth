@@ -72,9 +72,9 @@ namespace syn
 		NSampleDelay m_delay;
 	};
 
-	class ResampleUnit : public Unit
+	class VariableMemoryUnit : public Unit
 	{
-		DERIVE_UNIT(ResampleUnit)
+		DERIVE_UNIT(VariableMemoryUnit)
 	public:
 		enum Param
 		{
@@ -98,8 +98,8 @@ namespace syn
 			iSizeMod
 		};
 
-		explicit ResampleUnit(const string& a_name);
-		ResampleUnit(const ResampleUnit& a_rhs);
+		explicit VariableMemoryUnit(const string& a_name);
+		VariableMemoryUnit(const VariableMemoryUnit& a_rhs);
 
 		void reset() override;
 
@@ -111,6 +111,4 @@ namespace syn
 		double m_delaySamples;
 	};
 }
-CEREAL_REGISTER_TYPE(syn::MemoryUnit)
-CEREAL_REGISTER_TYPE(syn::ResampleUnit)
 #endif

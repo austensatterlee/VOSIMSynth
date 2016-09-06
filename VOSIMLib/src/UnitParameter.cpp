@@ -221,7 +221,7 @@ namespace syn
 	}
 
 	double UnitParameter::getEnum(int a_index) const {
-		a_index = CLAMP<int>(a_index, 0, m_displayTexts.size()-1);
+		a_index = CLAMP<int>(a_index, 0, static_cast<int>(m_displayTexts.size()-1));
 		return m_displayTexts[a_index].m_value;
 	}
 
