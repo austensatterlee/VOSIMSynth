@@ -47,7 +47,7 @@ namespace synui
 		explicit SpectroscopeUnit(const string& a_name);
 
 		SpectroscopeUnit(const SpectroscopeUnit& a_rhs) :
-			SpectroscopeUnit(a_rhs.getName()) {}
+			SpectroscopeUnit(a_rhs.name()) {}
 
 		virtual ~SpectroscopeUnit();
 

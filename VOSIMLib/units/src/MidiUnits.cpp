@@ -8,6 +8,6 @@ CEREAL_REGISTER_TYPE(syn::GateUnit);
 CEREAL_REGISTER_TYPE(syn::MidiCCUnit);
 
 void syn::MidiNoteUnit::process_() {
-	setOutputChannel_(0, getNote());
-	setOutputChannel_(1, pitchToFreq(getNote()));
+	setOutputChannel_(0, note());
+	setOutputChannel_(1, pitchToFreq(note()));
 }

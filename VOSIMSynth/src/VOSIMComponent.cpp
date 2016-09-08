@@ -124,6 +124,7 @@ void synui::VOSIMComponent::notifyChildResized(UIComponent* a_child) {
 }
 
 void synui::VOSIMComponent::draw(NVGcontext* a_nvg) {
+
 }
 
 void synui::VOSIMComponent::_onResize() {

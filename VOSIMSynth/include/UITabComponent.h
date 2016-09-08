@@ -34,7 +34,7 @@ namespace synui {
 	public:
 		UITabWidget(MainWindow* a_window);
 
-		void setActiveTab(int tabIndex);
+		void setActiveTab(int tabIndex) const;
 		int activeTab() const;
 		int tabCount() const;
 
@@ -53,16 +53,16 @@ namespace synui {
 		void addTab(const std::string &label, UIComponent *tab);
 
 		/// Inserts a tab into the tabs collection at the specified index and associates it with the provided UIComponent.
-		void addTab(int index, const std::string &label, UIComponent *tab);
+		void addTab(int index, const std::string &label, UIComponent *tab) const;
 
 		/**
 		* Removes the tab with the specified label and returns the index of the label.
 		* Returns whether the removal was successful.
 		*/
-		bool removeTab(const std::string &label);
+		bool removeTab(const std::string &label) const;
 
 		/// Removes the tab with the specified index.
-		void removeTab(int index);
+		void removeTab(int index) const;
 
 		/// Retrieves the label of the tab at a specific index.
 		const std::string &tabLabelAt(int index) const;
@@ -74,13 +74,13 @@ namespace synui {
 		* Retrieves the index of a specific tab using its tab label.
 		* Returns -1 if there is no such tab.
 		*/
-		int tabLabelIndex(const std::string &label);
+		int tabLabelIndex(const std::string &label) const;
 
 		/**
 		* Retrieves the index of a specific tab using a UIComponent pointer.
 		* Returns -1 if there is no such tab.
 		*/
-		int tabIndex(UIComponent* tab);
+		int tabIndex(UIComponent* tab) const;
 
 		/**
 		* This function can be invoked to ensure that the tab with the provided
@@ -89,7 +89,7 @@ namespace synui {
 		* to make the tab header follow a newly added tab, as the content of the
 		* new tab is made visible but the tab header does not track it by default.
 		*/
-		void ensureTabVisible(int index);
+		void ensureTabVisible(int index) const;
 
 		const UIComponent* tab(const std::string &label) const;
 		UIComponent* tab(const std::string &label);

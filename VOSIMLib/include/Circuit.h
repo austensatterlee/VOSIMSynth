@@ -60,11 +60,11 @@ namespace syn
 			Unit(a_name) { }
 
 		PassthroughUnit(const PassthroughUnit& a_other) :
-			PassthroughUnit(a_other.getName()) { };
+			PassthroughUnit(a_other.name()) { };
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override {
-			for (int i = 0; i < getNumInputs(); i++) {
+			for (int i = 0; i < numInputs(); i++) {
 				setOutputChannel_(i, getInputValue(i));
 			}
 		}
@@ -75,7 +75,7 @@ namespace syn
 		DERIVE_UNIT(InputUnit)
 	public:
 		explicit InputUnit(const string& a_name) : PassthroughUnit(a_name) {}
-		InputUnit(const InputUnit& a_other) : InputUnit(a_other.getName()) {}
+		InputUnit(const InputUnit& a_other) : InputUnit(a_other.name()) {}
 	};
 
 	class OutputUnit : public PassthroughUnit
@@ -83,7 +83,7 @@ namespace syn
 		DERIVE_UNIT(OutputUnit)
 	public:
 		explicit OutputUnit(const string& a_name) : PassthroughUnit(a_name) {}
-		OutputUnit(const OutputUnit& a_other) : OutputUnit(a_other.getName()) {}
+		OutputUnit(const OutputUnit& a_other) : OutputUnit(a_other.name()) {}
 	};
 
 	/**

@@ -57,7 +57,7 @@ namespace syn
 
 	void Oscillator::updatePhaseStep_() {
 		if (m_freq) {
-			m_period = getFs() / m_freq;
+			m_period = fs() / m_freq;
 			m_phase_step = 1. / m_period;
 		}
 		else {
@@ -114,7 +114,7 @@ namespace syn
 	}
 
 	TunedOscillator::TunedOscillator(const TunedOscillator& a_rhs) :
-		TunedOscillator(a_rhs.getName()) {}
+		TunedOscillator(a_rhs.name()) {}
 
 	void TunedOscillator::process_() {
 		double tune = getParameter(pTune).getDouble() + getInputValue(iNote);
@@ -129,7 +129,7 @@ namespace syn
 		addParameter_(pWaveform, UnitParameter("waveform", WAVE_SHAPE_NAMES));
 	}
 
-	BasicOscillator::BasicOscillator(const BasicOscillator& a_rhs) : BasicOscillator(a_rhs.getName()) {}
+	BasicOscillator::BasicOscillator(const BasicOscillator& a_rhs) : BasicOscillator(a_rhs.name()) {}
 
 	void BasicOscillator::process_() {
 		TunedOscillator::process_();
@@ -168,14 +168,14 @@ namespace syn
 	}
 
 	LFOOscillator::LFOOscillator(const LFOOscillator& a_rhs) :
-		LFOOscillator(a_rhs.getName())
+		LFOOscillator(a_rhs.name())
 	{
 	}
 
 	void LFOOscillator::process_() {
 		// determine frequency
 		if (getParameter(pTempoSync).getBool()) {
-			m_freq = bpmToFreq(getParameter(pBPMFreq).getEnum(getInputValue(iFreqMul) * (getParameter(pBPMFreq).getInt()+getInputValue(iFreqAdd))), getTempo());
+			m_freq = bpmToFreq(getParameter(pBPMFreq).getEnum(getInputValue(iFreqMul) * (getParameter(pBPMFreq).getInt()+getInputValue(iFreqAdd))), tempo());
 		}
 		else {
 			m_freq = getInputValue(iFreqMul) * (getParameter(pFreq).getDouble() + getInputValue(iFreqAdd));

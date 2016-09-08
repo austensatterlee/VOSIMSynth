@@ -195,7 +195,7 @@ namespace syn
 		}
 
 		PitchToFreqUnit(const PitchToFreqUnit& a_rhs) : 
-			PitchToFreqUnit(a_rhs.getName())
+			PitchToFreqUnit(a_rhs.name())
 		{
 		}
 
@@ -207,7 +207,7 @@ namespace syn
 
 
 	/**
-	* Frequency to pitch (normalized midi note) conversion
+	* Frequency to pitch conversion
 	*/
 	class FreqToPitchUnit : public Unit
 	{
@@ -220,13 +220,44 @@ namespace syn
 		}
 
 		FreqToPitchUnit(const FreqToPitchUnit& a_rhs) :
-			FreqToPitchUnit(a_rhs.getName())
+			FreqToPitchUnit(a_rhs.name())
 		{
 		}
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override {
-			setOutputChannel_(0, samplesToPitch(freqToSamples(getInputValue(0),getFs()),getFs()));
+			setOutputChannel_(0, samplesToPitch(freqToSamples(getInputValue(0),fs()),fs()));
+		}
+	};
+
+	/**
+	 * Signal switch
+	 * 
+	 * Output `a` if `ctrl` is larger than `comp`, otherwise output `b`.
+	 */
+	class SwitchUnit : public Unit
+	{
+		DERIVE_UNIT(SwitchUnit)
+	public:
+		explicit SwitchUnit(const string& a_name) : Unit(a_name)
+		{
+			addInput_("a");
+			addInput_("b");
+			addInput_("comp");
+			addInput_("ctrl");
+			addOutput_("out");
+		}
+
+		SwitchUnit(const SwitchUnit& a_rhs) :
+			SwitchUnit(a_rhs.name())
+		{
+		}
+
+	protected:
+		void MSFASTCALL process_() GCCFASTCALL override {
+			double comp = getInputValue(2);
+			double ctrl = getInputValue(3);
+			setOutputChannel_(0, ctrl>comp ? getInputValue(0) : getInputValue(1));
 		}
 	};
 }

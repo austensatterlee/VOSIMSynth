@@ -16,7 +16,7 @@ namespace synui
 		addChild(mContent,"content");
 	}
 
-	void UITabWidget::setActiveTab(int tabIndex) {
+	void UITabWidget::setActiveTab(int tabIndex) const {
 		mHeader->setActiveTab(tabIndex);
 		mContent->setSelectedIndex(tabIndex);
 	}
@@ -45,7 +45,7 @@ namespace synui
 		addTab(tabCount(), name, tab);
 	}
 
-	void UITabWidget::addTab(int index, const std::string &label, UIComponent *tab) {
+	void UITabWidget::addTab(int index, const std::string &label, UIComponent *tab) const {
 		assert(index <= tabCount());
 		// It is important to add the content first since the callback
 		// of the header will automatically fire when a new tab is added.
@@ -54,15 +54,15 @@ namespace synui
 		assert(mHeader->tabCount() == mContent->numChildren());
 	}
 
-	int UITabWidget::tabLabelIndex(const std::string &label) {
+	int UITabWidget::tabLabelIndex(const std::string &label) const {
 		return mHeader->tabIndex(label);
 	}
 
-	int UITabWidget::tabIndex(UIComponent* tab) {
+	int UITabWidget::tabIndex(UIComponent* tab) const {
 		return mContent->childIndex(tab);
 	}
 
-	void UITabWidget::ensureTabVisible(int index) {
+	void UITabWidget::ensureTabVisible(int index) const {
 		if (!mHeader->isTabVisible(index))
 			mHeader->ensureTabVisible(index);
 	}
@@ -81,7 +81,7 @@ namespace synui
 		return mContent->children()[index].get();
 	}
 
-	bool UITabWidget::removeTab(const std::string &tabName) {
+	bool UITabWidget::removeTab(const std::string &tabName) const {
 		int index = mHeader->removeTab(tabName);
 		if (index == -1)
 			return false;
@@ -89,7 +89,7 @@ namespace synui
 		return true;
 	}
 
-	void UITabWidget::removeTab(int index) {
+	void UITabWidget::removeTab(int index) const {
 		assert(mContent->numChildren() < index);
 		mHeader->removeTab(index);
 		mContent->removeChild(index);
@@ -132,11 +132,11 @@ namespace synui
 			nvgSave(ctx);
 
 			if (i == 0)
-				nvgIntersectScissor(ctx, 0, 0, activeArea.first.x() + 1, size().y());
+				nvgIntersectScissor(ctx, 0, 0, activeArea.first.x() + 1.0f, size().y());
 			else if (i == 1)
-				nvgIntersectScissor(ctx, 0 + activeArea.second.x(), 0, size().x() - activeArea.second.x(), size().y());
+				nvgIntersectScissor(ctx, activeArea.second.x(), 0, size().x() - activeArea.second.x(), size().y());
 			else
-				nvgIntersectScissor(ctx, 0, 0 + tabHeight + 2, size().x(), size().y());
+				nvgIntersectScissor(ctx, 0.0f, tabHeight, size().x(), size().y());
 
 			nvgBeginPath(ctx);
 			nvgStrokeWidth(ctx, 1.0f);
@@ -146,8 +146,8 @@ namespace synui
 			nvgStroke(ctx);
 
 			nvgBeginPath(ctx);
-			nvgRoundedRect(ctx, 0 + 0.5f, 0 + tabHeight + 0.5f, size().x() - 1,
-				size().y() - tabHeight - 2, theme()->mButtonCornerRadius);
+			nvgRoundedRect(ctx, 0 + 0.5f, 0 + tabHeight + 0.5f, size().x() - 1.0f,
+				size().y() - tabHeight - 2.0f, theme()->mButtonCornerRadius);
 			nvgStrokeColor(ctx, theme()->mBorderDark);
 			nvgStroke(ctx);
 

@@ -33,7 +33,7 @@ syn::FollowerUnit::FollowerUnit(const string& a_name) :
 }
 
 syn::FollowerUnit::FollowerUnit(const FollowerUnit& a_rhs) :
-	FollowerUnit(a_rhs.getName()) {}
+	FollowerUnit(a_rhs.name()) {}
 
 void syn::FollowerUnit::reset() {
 	m_w = 0.0;

@@ -153,7 +153,7 @@ namespace syn
 
 		explicit LFOOscillator(const LFOOscillator& a_rhs);
 
-		explicit LFOOscillator(const BasicOscillator& a_rhs) : LFOOscillator(a_rhs.getName()) {}
+		explicit LFOOscillator(const BasicOscillator& a_rhs) : LFOOscillator(a_rhs.name()) {}
 
 	protected:
 

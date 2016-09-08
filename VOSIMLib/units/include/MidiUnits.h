@@ -28,7 +28,7 @@ namespace syn
 		}
 
 		MidiNoteUnit(const MidiNoteUnit& a_rhs) :
-			MidiNoteUnit(a_rhs.getName()) { }
+			MidiNoteUnit(a_rhs.name()) { }
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;;
@@ -47,11 +47,11 @@ namespace syn
 		}
 
 		VelocityUnit(const VelocityUnit& a_rhs) :
-			VelocityUnit(a_rhs.getName()) { }
+			VelocityUnit(a_rhs.name()) { }
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override {
-			setOutputChannel_(0, getVelocity() * 0.0078125);
+			setOutputChannel_(0, velocity() * 0.0078125);
 		};
 	};
 
@@ -68,7 +68,7 @@ namespace syn
 		}
 
 		GateUnit(const GateUnit& a_rhs) :
-			GateUnit(a_rhs.getName()) { }
+			GateUnit(a_rhs.name()) { }
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override {
@@ -92,7 +92,7 @@ namespace syn
 		}
 
 		MidiCCUnit(const MidiCCUnit& a_rhs) :
-			MidiCCUnit(a_rhs.getName()) { }
+			MidiCCUnit(a_rhs.name()) { }
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override {

@@ -77,9 +77,9 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
 			.def(py::init<const std::string &>())
 			//.def("tick", &syn::Unit::tick)
 			.def("tick", [](syn::Unit& self, const Eigen::Array<double, -1, -1, Eigen::RowMajor>& a_inputs) {
-				     if (a_inputs.rows() > self.getNumInputs())
+				     if (a_inputs.rows() > self.numInputs())
 					     throw std::runtime_error("Incompatible buffer format!");
-				     Eigen::Array<double, -1, -1, Eigen::RowMajor> outputs(self.getNumOutputs(), a_inputs.cols());
+				     Eigen::Array<double, -1, -1, Eigen::RowMajor> outputs(self.numOutputs(), a_inputs.cols());
 				     self.tick(a_inputs, outputs);
 				     return outputs;
 	})
@@ -90,46 +90,25 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
 		.def("noteOn", &syn::Unit::noteOn)
 		.def("noteOff", &syn::Unit::noteOff)
 		.def("notifyParameterChanged", &syn::Unit::notifyParameterChanged)
-		.def("getFs", &syn::Unit::getFs)
-		.def("getTempo", &syn::Unit::getTempo)
+		.def("getFs", &syn::Unit::fs)
+		.def("getTempo", &syn::Unit::tempo)
 		.def("isNoteOn", &syn::Unit::isNoteOn)
-		.def("getNote", &syn::Unit::getNote)
-		.def("getVelocity", &syn::Unit::getVelocity)
+		.def("getNote", &syn::Unit::note)
+		.def("getVelocity", &syn::Unit::velocity)
 
-		.def("getNumParameters", &syn::Unit::getNumParameters)
+		.def("getNumParameters", &syn::Unit::numParameters)
 
-		.def("hasParameter", &syn::Unit::hasParameter<std::string>)
-		.def("hasParameter", &syn::Unit::hasParameter<int>)
-
-		.def("getParameterValue", &syn::Unit::getParameterValue<std::string, double>)
-		.def("getParameterValue", &syn::Unit::getParameterValue<int, double>)
-
-		.def("getParameterName", &syn::Unit::getParameterName<std::string>)
-		.def("getParameterName", &syn::Unit::getParameterName<int>)
-
-		.def("setParameterValue", &syn::Unit::setParameterValue<std::string, double>)
-		.def("setParameterValue", &syn::Unit::setParameterValue<std::string, int>)
-
-		.def("setParameterValue", &syn::Unit::setParameterValue<int, double>)
-		.def("setParameterValue", &syn::Unit::setParameterValue<int, int>)
-
-		.def("setParameterNorm", &syn::Unit::setParameterNorm<std::string, double>)
-		.def("setParameterNorm", &syn::Unit::setParameterNorm<int, double>)
-
-		.def("setParameterPrecision", &syn::Unit::setParameterPrecision<std::string>)
-		.def("setParameterPrecision", &syn::Unit::setParameterPrecision<int>)
-
-		.def("setParameterFromString", &syn::Unit::setParameterFromString<std::string>)
-		.def("setParameterFromString", &syn::Unit::setParameterFromString<int>)
+		//.def("getParameter", &syn::Unit::getParameter<const string&>)
+		//.def("getParameter", &syn::Unit::getParameter<int>)
 		.def_property_readonly("parameters", [](const syn::Unit& self) {
-			std::map<std::string, double> params;
-			for (int i = 0; i<self.getNumParameters(); i++) {
-				params[self.getParameterName(i)] = self.getParameterValue<string, double>(self.getParameterName(i));
+			std::vector<string> parameters;
+			for (int i = 0; i<self.numParameters(); i++) {
+				parameters[i] = self.parameters().getByIndex(i).getName();
 			}
-			return params;
+			return parameters;
 		})
 
-		.def("getNumInputs", &syn::Unit::getNumInputs)
+		.def("getNumInputs", &syn::Unit::numInputs)
 		.def("getInputValue", &syn::Unit::getInputValue)
 		.def("getInputName", &syn::Unit::getInputName)
 		.def("connectInput", &syn::Unit::connectInput)
@@ -138,18 +117,18 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
 		.def("hasInput", &syn::Unit::hasInput)
 		.def_property_readonly("inputs", [] (const syn::Unit& self) {
 			std::vector<string> inputs;
-			for(int i=0;i<self.getNumInputs();i++) {
+			for(int i=0;i<self.numInputs();i++) {
 				inputs[i] = self.getInputName(i);
 			}
 			return inputs;
 		})
 
-		.def("getNumOutputs", &syn::Unit::getNumOutputs)
+		.def("getNumOutputs", &syn::Unit::numOutputs)
 		.def("getOutputName", &syn::Unit::getOutputName<int>)
 		.def("hasOutput", &syn::Unit::hasOutput)
 		.def_property_readonly("outputs", [](const syn::Unit& self) {
 			std::vector<std::string> outputs;
-			for (int i = 0; i<self.getNumOutputs(); i++) {
+			for (int i = 0; i<self.numOutputs(); i++) {
 				outputs[i] = self.getOutputName(i);
 			}
 			return outputs;

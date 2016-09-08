@@ -11,6 +11,7 @@ CEREAL_REGISTER_TYPE(syn::PanningUnit);
 CEREAL_REGISTER_TYPE(syn::LerpUnit);
 CEREAL_REGISTER_TYPE(syn::PitchToFreqUnit);
 CEREAL_REGISTER_TYPE(syn::FreqToPitchUnit);
+CEREAL_REGISTER_TYPE(syn::SwitchUnit);
 
 syn::MovingAverage::MovingAverage() :
 	m_windowSize(1),
@@ -49,7 +50,7 @@ syn::DCRemoverUnit::DCRemoverUnit(const string& a_name) :
 }
 
 syn::DCRemoverUnit::DCRemoverUnit(const DCRemoverUnit& a_rhs) :
-	DCRemoverUnit(a_rhs.getName()) {}
+	DCRemoverUnit(a_rhs.name()) {}
 
 void syn::DCRemoverUnit::process_() {
 	double input = getInputValue(0);
@@ -72,7 +73,7 @@ syn::RectifierUnit::RectifierUnit(const string& a_name) :
 }
 
 syn::RectifierUnit::RectifierUnit(const RectifierUnit& a_rhs) :
-	RectifierUnit(a_rhs.getName()) { }
+	RectifierUnit(a_rhs.name()) { }
 
 void syn::RectifierUnit::process_() {
 	double input = getInputValue(0);
@@ -98,7 +99,7 @@ syn::GainUnit::GainUnit(const string& a_name) :
 }
 
 syn::GainUnit::GainUnit(const GainUnit& a_rhs) :
-	GainUnit(a_rhs.getName()) { }
+	GainUnit(a_rhs.name()) { }
 
 void syn::GainUnit::process_() {
 	double input = getInputValue(m_iInput);
@@ -116,7 +117,7 @@ syn::SummerUnit::SummerUnit(const string& a_name) :
 }
 
 syn::SummerUnit::SummerUnit(const SummerUnit& a_rhs) :
-	SummerUnit(a_rhs.getName()) { }
+	SummerUnit(a_rhs.name()) { }
 
 void syn::SummerUnit::process_() {
 	double output = getInputValue(0) + getInputValue(1);
@@ -132,7 +133,7 @@ syn::ConstantUnit::ConstantUnit(const string& a_name) :
 }
 
 syn::ConstantUnit::ConstantUnit(const ConstantUnit& a_rhs) :
-	ConstantUnit(a_rhs.getName()) { }
+	ConstantUnit(a_rhs.name()) { }
 
 void syn::ConstantUnit::process_() {
 	double output = getParameter(0).getDouble();
@@ -152,7 +153,7 @@ syn::PanningUnit::PanningUnit(const string& a_name) :
 }
 
 syn::PanningUnit::PanningUnit(const PanningUnit& a_rhs) :
-	PanningUnit(a_rhs.getName()) { }
+	PanningUnit(a_rhs.name()) { }
 
 void syn::PanningUnit::process_() {
 	double in1 = getInputValue(0);
@@ -168,7 +169,7 @@ void syn::PanningUnit::process_() {
 syn::LerpUnit::LerpUnit(const string& a_name) :
 	Unit(a_name) {
 	m_pMinInput = addParameter_(UnitParameter("min in", -1E6, 1E6, 0.0).setControlType(UnitParameter::Unbounded));
-	m_pMaxInput = addParameter_(UnitParameter("max in", -1E6, 1E6, 0.0).setControlType(UnitParameter::Unbounded));
+	m_pMaxInput = addParameter_(UnitParameter("max in", -1E6, 1E6, 1.0).setControlType(UnitParameter::Unbounded));
 	m_pMinOutput = addParameter_(UnitParameter("min out", -1E6, 1E6, 0.0).setControlType(UnitParameter::Unbounded));
 	m_pMaxOutput = addParameter_(UnitParameter("max out", -1E6, 1E6, 1.0).setControlType(UnitParameter::Unbounded));
 	addInput_("in");
@@ -176,7 +177,7 @@ syn::LerpUnit::LerpUnit(const string& a_name) :
 }
 
 syn::LerpUnit::LerpUnit(const LerpUnit& a_rhs) :
-	LerpUnit(a_rhs.getName()) { }
+	LerpUnit(a_rhs.name()) { }
 
 void syn::LerpUnit::process_() {
 	double input = getInputValue(0);

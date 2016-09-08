@@ -73,11 +73,11 @@ namespace syn
 		onParamChange_(a_id);
 	}
 
-	double Unit::getFs() const {
+	double Unit::fs() const {
 		return m_audioConfig.fs;
 	}
 
-	double Unit::getTempo() const {
+	double Unit::tempo() const {
 		return m_audioConfig.tempo;
 	}
 
@@ -85,27 +85,29 @@ namespace syn
 		return m_midiData.isNoteOn;
 	}
 
-	int Unit::getNote() const {
+	int Unit::note() const {
 		return m_midiData.note;
 	}
 
-	int Unit::getVelocity() const {
+	int Unit::velocity() const {
 		return m_midiData.velocity;
 	}
 
-	int Unit::getNumParameters() const {
+	const NamedContainer<double, 8>& Unit::outputs() const { return m_outputSignals; }
+
+	int Unit::numParameters() const {
 		return static_cast<int>(m_parameters.size());
 	}
 
-	int Unit::getNumInputs() const {
+	int Unit::numInputs() const {
 		return static_cast<int>(m_inputPorts.size());
 	}
 
-	int Unit::getNumOutputs() const {
+	int Unit::numOutputs() const {
 		return static_cast<int>(m_outputSignals.size());
 	}
 
-	const string& Unit::getName() const {
+	const string& Unit::name() const {
 		return m_name;
 	}
 
@@ -119,6 +121,10 @@ namespace syn
 
 	const Circuit* Unit::getParent() const {
 		return m_parent;
+	}
+
+	const NamedContainer<UnitParameter, MAX_PARAMS>& Unit::parameters() const {
+		return m_parameters;
 	}
 
 	void Unit::tick() {	

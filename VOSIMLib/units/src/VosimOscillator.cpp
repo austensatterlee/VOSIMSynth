@@ -42,7 +42,7 @@ namespace syn
 	}
 
 	VosimOscillator::VosimOscillator(const VosimOscillator& a_rhs) :
-		VosimOscillator(a_rhs.getName()) { }
+		VosimOscillator(a_rhs.name()) { }
 
 	void VosimOscillator::process_() {
 		m_num_pulses = getParameter(pNumPulses).getInt();
@@ -82,7 +82,7 @@ namespace syn
 		else {
 			pulse_freq = pow(2.0,LERP<double>(log2(min_freq), log2(MAX_PULSE_FREQ), m_pulse_tune));
 		}
-		m_pulse_step = pulse_freq / getFs();
+		m_pulse_step = pulse_freq / fs();
 	}
 
 	FormantOscillator::FormantOscillator(string name) :
@@ -97,7 +97,7 @@ namespace syn
 	}
 
 	FormantOscillator::FormantOscillator(const FormantOscillator& a_rhs) :
-		FormantOscillator(a_rhs.getName()) { }
+		FormantOscillator(a_rhs.name()) { }
 
 	void FormantOscillator::process_() {
 		TunedOscillator::process_();
@@ -114,7 +114,7 @@ namespace syn
 			cos_width = 1 + 8 * CLAMP<double>(getInputValue(iWidthMul)*getParameter(pWidth).getDouble() + getInputValue(iWidthAdd), 0, 1);
 		}
 
-		double formant_step = formant_freq / getFs();
+		double formant_step = formant_freq / fs();
 		double formant_phase = m_phase * formant_step / m_phase_step;
 		formant_phase = WRAP(formant_phase, 1.0);
 		double cos_phase = CLAMP<double>(m_phase * cos_width, 0, 1);

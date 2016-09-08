@@ -37,8 +37,8 @@ namespace syn
 	void VoiceManager::_makeIdle(int a_voiceIndex) {
 		if (m_numActiveVoices > 0) {
 			Circuit& voice = m_allVoices[a_voiceIndex];
-			int note = voice.getNote();
-			int vel = voice.getVelocity();
+			int note = voice.note();
+			int vel = voice.velocity();
 			if (m_voiceMap.find(note) != m_voiceMap.end()) {
 				voice.noteOff(note, vel);
 				m_voiceMap[note].remove(a_voiceIndex);

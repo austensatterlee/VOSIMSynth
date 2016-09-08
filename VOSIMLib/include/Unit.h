@@ -28,7 +28,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define MAX_PARAMS 16
 #define MAX_INPUTS 8
 #define MAX_OUTPUTS 8
-#define UNIT_BUF_LEN 8
 
 #define DERIVE_UNIT(TYPE) \
 	string _getClassName() const override {return #TYPE;}\
@@ -151,15 +150,15 @@ namespace syn
 		 */
 		void notifyParameterChanged(int a_id);
 
-		double getFs() const;
+		double fs() const;
 
-		double getTempo() const;
+		double tempo() const;
 
 		bool isNoteOn() const;
 
-		int getNote() const;
+		int note() const;
 
-		int getVelocity() const;
+		int velocity() const;
 
 		/**
 		 * This method is used to determine the lifespan of a voice.
@@ -187,6 +186,8 @@ namespace syn
 
 		template <typename ID>
 		const UnitParameter& getParameter(const ID& a_identifier) const;
+
+		const NamedContainer<UnitParameter, MAX_PARAMS>& Unit::parameters() const;
 
 		template <typename ID>
 		const string& getParameterName(const ID& a_identifier) const;
@@ -222,11 +223,15 @@ namespace syn
 		template <typename ID>
 		bool setParameterFromString(const ID& a_identifier, const string& a_value);
 
-		bool hasOutput(int a_outputPort) const;
-
 		bool hasInput(int a_inputPort) const;
 
 		string getInputName(int a_index) const;
+
+		const double& getInputValue(int a_index) const;
+
+		const double* getInputSource(int a_index) const;
+
+		bool hasOutput(int a_outputPort) const;
 
 		template <typename ID>
 		string getOutputName(const ID& a_identifier) const;
@@ -234,18 +239,13 @@ namespace syn
 		template <typename ID>
 		const double& getOutputValue(const ID& a_identifier) const;
 
-		template <typename ID>
-		const double* getOutputBuffer(const ID& a_identifier) const;
+		const NamedContainer<double, MAX_OUTPUTS>& outputs() const;
 
-		const double& getInputValue(int a_index) const;
+		int numParameters() const;
 
-		const double* getInputSource(int a_index) const;
+		int numInputs() const;
 
-		int getNumParameters() const;
-
-		int getNumInputs() const;
-
-		int getNumOutputs() const;
+		int numOutputs() const;
 
 		/**
 		* Connect the specified input port to a location in memory.
@@ -264,7 +264,7 @@ namespace syn
 		* \returns True if the connection existed, false if it was already disconnected.
 		*/
 		bool disconnectInput(int a_toInputPort);
-		const string& getName() const;
+		const string& name() const;
 
 		unsigned int getClassIdentifier() const;
 
@@ -349,8 +349,6 @@ namespace syn
 		friend class Circuit;
 	public:
 		typedef ::Eigen::Array<double, -1, -1, Eigen::RowMajor> dynamic_buffer_t;
-		//typedef Eigen::Array<double, UNIT_BUF_LEN, 1> fixed_buffer_t;
-		typedef ::std::array<double, UNIT_BUF_LEN> fixed_buffer_t;
 
 		void MSFASTCALL tick(const dynamic_buffer_t& a_inputs, dynamic_buffer_t& a_outputs) GCCFASTCALL;
 

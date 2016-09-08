@@ -111,7 +111,7 @@ namespace syn
 	}
 
 	MemoryUnit::MemoryUnit(const MemoryUnit& a_rhs) :
-		MemoryUnit(a_rhs.getName())
+		MemoryUnit(a_rhs.name())
 	{
 	}
 
@@ -147,7 +147,7 @@ namespace syn
 	}
 
 	VariableMemoryUnit::VariableMemoryUnit(const VariableMemoryUnit& a_rhs) :
-		VariableMemoryUnit(a_rhs.getName())
+		VariableMemoryUnit(a_rhs.name())
 	{
 	}
 
@@ -173,13 +173,13 @@ namespace syn
 		int bufType = getParameter(pBufType).getEnum();
 		switch (bufType) {
 		case pBufDelay:
-			m_delaySamples = periodToSamples(getParameter(pBufDelay).getDouble() + getInputValue(iSizeMod), getFs());
+			m_delaySamples = periodToSamples(getParameter(pBufDelay).getDouble() + getInputValue(iSizeMod), fs());
 			break;
 		case pBufFreq:
-			m_delaySamples = freqToSamples(getParameter(pBufFreq).getDouble() + getInputValue(iSizeMod), getFs());
+			m_delaySamples = freqToSamples(getParameter(pBufFreq).getDouble() + getInputValue(iSizeMod), fs());
 			break;
 		case pBufBPMFreq:
-			m_delaySamples = freqToSamples(bpmToFreq(getParameter(pBufBPMFreq).getEnum(getParameter(pBufBPMFreq).getInt() + getInputValue(iSizeMod)), getTempo()), getFs());
+			m_delaySamples = freqToSamples(bpmToFreq(getParameter(pBufBPMFreq).getEnum(getParameter(pBufBPMFreq).getInt() + getInputValue(iSizeMod)), tempo()), fs());
 			break;
 		default:
 			break;

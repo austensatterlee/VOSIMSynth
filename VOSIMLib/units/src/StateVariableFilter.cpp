@@ -53,7 +53,7 @@ void syn::StateVariableFilter::reset() {
 void syn::StateVariableFilter::process_() {
   double fc = getInputValue(m_iFcMul) * (getParameter(m_pFc).getDouble() + getInputValue(m_iFcAdd));
   fc = CLAMP(fc, getParameter(m_pFc).getMin(), getParameter(m_pFc).getMax());
-  m_F = 2 * lut_sin_table().getlinear_periodic(0.5 * fc / (getFs() * c_oversamplingFactor));
+  m_F = 2 * lut_sin_table().getlinear_periodic(0.5 * fc / (fs() * c_oversamplingFactor));
 
   double input_res = getInputValue(m_iResMul) * getParameter(m_pRes).getDouble() + getInputValue(m_iResAdd);
   input_res = CLAMP<double>(input_res, 0, 1);
@@ -91,7 +91,7 @@ void syn::TrapStateVariableFilter::reset() {
 void syn::TrapStateVariableFilter::process_() {
   double fc = getInputValue(m_iFcMul) * (getParameter(m_pFc).getDouble() + getInputValue(m_iFcAdd));
   fc = CLAMP(fc, getParameter(m_pFc).getMin(), getParameter(m_pFc).getMax());
-  m_F = tan(DSP_PI * fc / (getFs() * c_oversamplingFactor));
+  m_F = tan(DSP_PI * fc / (fs() * c_oversamplingFactor));
 
   double input_res = getInputValue(m_iResMul) * getParameter(m_pRes).getDouble() + getInputValue(m_iResAdd);
   input_res = CLAMP<double>(input_res, 0, 1);
@@ -157,7 +157,7 @@ void syn::OnePoleLP::process_() {
   // Calculate gain for specified cutoff
   double fc = (getParameter(pFc).getDouble() + getInputValue(iFcAdd)) * getInputValue(iFcMul); // freq cutoff
   fc = CLAMP(fc, getParameter(pFc).getMin(), getParameter(pFc).getMax());
-  implem.setFc(fc, getFs());
+  implem.setFc(fc, fs());
 
   double input = getInputValue(0);
   double output = implem.process(input);
@@ -190,7 +190,7 @@ void syn::LadderFilter::reset() {
 void syn::LadderFilter::process_() {
   double input = getInputValue(iAudioIn);
   // Calculate gain for specified cutoff
-  double fs = getFs() * c_oversamplingFactor;
+  double fs = LadderFilter::fs() * c_oversamplingFactor;
 
   double fc = (getParameter(pFc).getDouble() + getInputValue(iFcAdd)) * getInputValue(iFcMul); // freq cutoff
   fc = CLAMP(fc, getParameter(pFc).getMin(), getParameter(pFc).getMax());
@@ -201,7 +201,7 @@ void syn::LadderFilter::process_() {
   double g = 4 * DSP_PI * VT * fc * (1.0 - wd) / (1.0 + wd);
   double dV0, dV1, dV2, dV3;
   double drive = 1+3*getParameter(pDrv).getDouble();
-  double res = 3.5*getParameter(pFb).getDouble();
+  double res = 3.9*getParameter(pFb).getDouble();
 
   int i = c_oversamplingFactor;
   while (i--) {
@@ -243,13 +243,13 @@ void syn::LadderFilterTwo::reset() {
 void syn::LadderFilterTwo::process_() {
 	double input = getInputValue(iAudioIn);
 	// Calculate gain for specified cutoff
-	double fs = getFs() * c_oversamplingFactor;
+	double fs = LadderFilterTwo::fs() * c_oversamplingFactor;
 
 	double fc, drive, res;
 	fc = (getParameter(pFc).getDouble() + getInputValue(iFcAdd)) * getInputValue(iFcMul); // freq cutoff
 	fc = CLAMP(fc, getParameter(pFc).getMin(), getParameter(pFc).getMax());
 	drive = 1.0 + 3.0 * getParameter(pDrv).getDouble();
-	res = 3.0*getParameter(pFb).getDouble();
+	res = 3.9*getParameter(pFb).getDouble();
 
 	m_LP[0].setFc(fc, fs);
 	m_LP[1].m_G = m_LP[0].m_G;

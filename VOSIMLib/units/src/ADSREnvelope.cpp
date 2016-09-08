@@ -43,7 +43,7 @@ namespace syn
 	}
 
 	ADSREnvelope::ADSREnvelope(const ADSREnvelope& a_rhs) :
-		ADSREnvelope(a_rhs.getName()) {}
+		ADSREnvelope(a_rhs.name()) {}
 
 	void ADSREnvelope::process_() {
 		/* Determine phase increment based on current segment */
@@ -75,7 +75,7 @@ namespace syn
 			m_phase += 1;
 		}
 		else {
-			m_phase += 1.0 / (getFs() * segment_time);
+			m_phase += 1.0 / (fs() * segment_time);
 		}
 
 		/* Handle segment change */

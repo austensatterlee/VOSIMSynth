@@ -54,7 +54,7 @@ namespace syn
 		};
 
 		Filter(const Filter& a_rhs) :
-			Filter(a_rhs.getName(), XCoefs, YCoefs) { }
+			Filter(a_rhs.name(), XCoefs, YCoefs) { }
 
 		virtual ~Filter() { };
 

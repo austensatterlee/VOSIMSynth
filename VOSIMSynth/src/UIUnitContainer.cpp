@@ -103,8 +103,8 @@ synui::UIDefaultUnitContainer::UIDefaultUnitContainer(MainWindow* a_window, UICi
 
 	const syn::Unit& unit = m_vm->getUnit(m_unitId);
 
-	int nIn = unit.getNumInputs();
-	int nOut = unit.getNumOutputs();
+	int nIn = unit.numInputs();
+	int nOut = unit.numOutputs();
 
 	for (int i = 0; i < nIn; i++) {
 		m_inPorts.push_back(new UIUnitPort(a_window, a_circuitPanel, a_vm, m_unitId, i, true));
@@ -127,7 +127,7 @@ synui::UIDefaultUnitContainer::UIDefaultUnitContainer(MainWindow* a_window, UICi
 	m_closeButton->setSize({theme()->mWindowHeaderHeight, theme()->mWindowHeaderHeight - 6});
 	m_closeButton->setFontSize(10);
 	UILabel *title = new UILabel(a_window);
-	title->setText(unit.getName());
+	title->setText(unit.name());
 	m_titleRow->addChild(title);
 	m_titleRow->addChild(m_closeButton);
 	m_titleRow->setGreedyChild(title);
@@ -171,7 +171,7 @@ synui::UIInputUnitContainer::UIInputUnitContainer(MainWindow* a_window, UICircui
 
 	const syn::Unit& unit = m_vm->getUnit(m_unitId);
 
-	int nOut = unit.getNumOutputs();
+	int nOut = unit.numOutputs();
 
 	for (int i = 0; i < nOut; i++) {
 		m_outPorts.push_back(new UIUnitPort(a_window, a_circuitPanel, a_vm, m_unitId, i, false));
@@ -181,7 +181,7 @@ synui::UIInputUnitContainer::UIInputUnitContainer(MainWindow* a_window, UICircui
 	m_portRow->addChild(m_portCol);
 
 	UILabel* title = new UILabel(a_window);
-	title->setText(unit.getName());
+	title->setText(unit.name());
 	m_titleRow->addChild(title);
 	setMinSize(m_col->minSize());
 }
@@ -203,7 +203,7 @@ synui::UIOutputUnitContainer::UIOutputUnitContainer(MainWindow* a_window, UICirc
 
 	const syn::Unit& unit = m_vm->getUnit(m_unitId);
 
-	int nIn = unit.getNumInputs();
+	int nIn = unit.numInputs();
 
 	for (int i = 0; i < nIn; i++) {
 		m_inPorts.push_back(new UIUnitPort(a_window, a_circuitPanel, a_vm, m_unitId, i, true));
@@ -213,7 +213,7 @@ synui::UIOutputUnitContainer::UIOutputUnitContainer(MainWindow* a_window, UICirc
 	m_portRow->addChild(m_portCol);
 
 	UILabel *title = new UILabel(a_window);
-	title->setText(unit.getName());
+	title->setText(unit.name());
 	m_titleRow->addChild(title);
 	setMinSize(m_col->minSize());
 }

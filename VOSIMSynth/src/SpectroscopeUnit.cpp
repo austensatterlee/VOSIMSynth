@@ -99,7 +99,7 @@ namespace synui
 		}
 
 		m_samplesSinceLastUpdate++;
-		int updatePeriod = syn::LERP<double>(getFs()*0.001, m_inBufferSize, 1 - getParameter(m_pUpdatePeriod).getDouble());
+		int updatePeriod = syn::LERP<double>(fs()*0.001, m_inBufferSize, 1 - getParameter(m_pUpdatePeriod).getDouble());
 		if (!m_isStale && m_samplesSinceLastUpdate >= updatePeriod) {
 			m_samplesSinceLastUpdate = 0;
 
@@ -165,10 +165,10 @@ namespace synui
 
 		m_plot->setNumBuffers(unit->getNumBuffers());
 		for (int i = 0; i < unit->getNumBuffers(); i++) {
-			int minIndex = ceil(minFreq * unit->getBufferSize(i) * 2.0 / unit->getFs());
+			int minIndex = ceil(minFreq * unit->getBufferSize(i) * 2.0 / unit->fs());
 			m_plot->setBufferPtr(i, unit->getBufferPtr(i) + minIndex, unit->getBufferSize(i) - minIndex);
 			if(unit->getBufferSize(i))
-				m_plot->setXBounds({ (minIndex * 1.0 / unit->getBufferSize(i)) * 0.5 * unit->getFs(),unit->getFs()*0.5 });
+				m_plot->setXBounds({ (minIndex * 1.0 / unit->getBufferSize(i)) * 0.5 * unit->fs(),unit->fs()*0.5 });
 		}
 		unit->setDirty();
 	}

@@ -43,7 +43,7 @@ namespace synui
 		explicit OscilloscopeUnit(const string& a_name);
 
 		OscilloscopeUnit(const OscilloscopeUnit& a_rhs) :
-			OscilloscopeUnit(a_rhs.getName()) {}
+			OscilloscopeUnit(a_rhs.name()) {}
 
 		int getNumBuffers() const;
 		const double* getBufferPtr(int a_bufIndex) const;

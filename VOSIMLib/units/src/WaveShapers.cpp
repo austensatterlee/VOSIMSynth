@@ -8,7 +8,7 @@ syn::TanhUnit::TanhUnit(const string& a_name): Unit(a_name) {
 	addOutput_("out");
 }
 
-syn::TanhUnit::TanhUnit(const TanhUnit& a_rhs): TanhUnit(a_rhs.getName()) {}
+syn::TanhUnit::TanhUnit(const TanhUnit& a_rhs): TanhUnit(a_rhs.name()) {}
 
 void syn::TanhUnit::process_() {
 	double input = getInputValue(0);

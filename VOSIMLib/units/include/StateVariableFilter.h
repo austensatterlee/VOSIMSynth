@@ -41,7 +41,7 @@ namespace syn
 		explicit StateVariableFilter(const string& a_name);
 
 		StateVariableFilter(const StateVariableFilter& a_rhs) :
-			StateVariableFilter(a_rhs.getName()) {}
+			StateVariableFilter(a_rhs.name()) {}
 
 		virtual void reset() override;
 
@@ -68,7 +68,7 @@ namespace syn
 		explicit TrapStateVariableFilter(const string& a_name);
 
 		TrapStateVariableFilter(const TrapStateVariableFilter& a_rhs) :
-			TrapStateVariableFilter(a_rhs.getName()) {}
+			TrapStateVariableFilter(a_rhs.name()) {}
 
 		virtual void reset() override;
 	protected:
@@ -124,7 +124,7 @@ namespace syn
 
 		explicit OnePoleLP(const string& a_name);
 
-		OnePoleLP(const OnePoleLP& a_rhs) : OnePoleLP(a_rhs.getName()) {};
+		OnePoleLP(const OnePoleLP& a_rhs) : OnePoleLP(a_rhs.name()) {};
 
 		double getState() const;
 
@@ -164,7 +164,7 @@ namespace syn
 		DERIVE_UNIT(LadderFilter)
 	public:
 		explicit LadderFilter(const string& a_name);
-		LadderFilter(const LadderFilter& a_rhs) : LadderFilter(a_rhs.getName()) {};
+		LadderFilter(const LadderFilter& a_rhs) : LadderFilter(a_rhs.name()) {};
 		void reset() override;
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
@@ -179,7 +179,7 @@ namespace syn
 		DERIVE_UNIT(LadderFilterTwo)
 	public:
 		explicit LadderFilterTwo(const string& a_name);
-		LadderFilterTwo(const LadderFilterTwo& a_rhs) : LadderFilterTwo(a_rhs.getName()) {};
+		LadderFilterTwo(const LadderFilterTwo& a_rhs) : LadderFilterTwo(a_rhs.name()) {};
 		void reset() override;
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;

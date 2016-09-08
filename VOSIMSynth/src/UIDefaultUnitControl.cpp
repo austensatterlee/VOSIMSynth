@@ -10,7 +10,7 @@ synui::UIDefaultUnitControl::UIDefaultUnitControl(MainWindow* a_window, syn::Voi
 	setLayout(new GroupLayout(2,2,4,5));
 
 	const syn::Unit& unit = a_vm->getUnit(a_unitId);
-	int nParams = unit.getNumParameters();
+	int nParams = unit.numParameters();
 	for (int i = 0; i < nParams; i++) {
 		UIParamControl* paramCtrl;
 		if (unit.getParameter(i).getType() == syn::UnitParameter::Double || unit.getParameter(i).getType() == syn::UnitParameter::Int) {

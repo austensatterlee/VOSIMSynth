@@ -49,7 +49,7 @@ namespace syn
 	}
 
 	Circuit::Circuit(const Circuit& a_other) :
-		Circuit(a_other.getName()) 
+		Circuit(a_other.name()) 
 	{
 		const int* unitIndices = a_other.m_units.getIndices();
 		for (int i = 0; i < a_other.m_units.size(); i++) {
@@ -111,15 +111,15 @@ namespace syn
 
 	int Circuit::addUnit(Unit* a_unit) {
 		// increment name until there is no collision
-		while(m_units.contains(a_unit->getName())) {
-			a_unit->_setName(incrementSuffix(a_unit->getName()));
+		while(m_units.contains(a_unit->name())) {
+			a_unit->_setName(incrementSuffix(a_unit->name()));
 		}
-		int retval = m_units.add(a_unit->getName(), a_unit);
+		int retval = m_units.add(a_unit->name(), a_unit);
 		if (retval < 0)
 			return retval;
 		a_unit->_setParent(this);
-		a_unit->setFs(getFs());
-		a_unit->setTempo(getTempo());
+		a_unit->setFs(fs());
+		a_unit->setTempo(tempo());
 		a_unit->m_midiData = m_midiData;
 		_recomputeGraph();
 		return retval;
@@ -127,15 +127,15 @@ namespace syn
 
 	bool Circuit::addUnit(Unit* a_unit, int a_unitId) {
 		// increment name until there is no collision
-		while (m_units.contains(a_unit->getName())) {
-			a_unit->_setName(incrementSuffix(a_unit->getName()));
+		while (m_units.contains(a_unit->name())) {
+			a_unit->_setName(incrementSuffix(a_unit->name()));
 		}
-		bool retval = m_units.add(a_unit->getName(), a_unitId, a_unit);
+		bool retval = m_units.add(a_unit->name(), a_unitId, a_unit);
 		if (!retval)
 			return false;
 		a_unit->_setParent(this);
-		a_unit->setFs(getFs());
-		a_unit->setTempo(getTempo());
+		a_unit->setFs(fs());
+		a_unit->setTempo(tempo());
 		a_unit->m_midiData = m_midiData;
 		_recomputeGraph();
 		return true;
@@ -153,7 +153,7 @@ namespace syn
 		for (int i = 0; i < m_units.size(); i++) {
 			int index = unitIndices[i];
 			Unit* unit = m_units[index];
-			if (!unit->getNumOutputs()) {
+			if (!unit->numOutputs()) {
 				sinks.push_back(index);
 			}
 		}
@@ -173,7 +173,7 @@ namespace syn
 				return;
 			tempClosedSet.insert(unitId);
 
-			int nPorts = node->getNumInputs();
+			int nPorts = node->numInputs();
 			for (int i = 0; i < nPorts; i++) {
 				const vector<std::pair<int, int> >& conns = getConnectionsToInternalInput(unitId, i);
 				if (!conns.empty()) {
@@ -205,28 +205,28 @@ namespace syn
 	void Circuit::onFsChange_() {
 		const int* unitIndices = m_units.getIndices();
 		for (int i = 0; i < m_units.size(); i++) {
-			m_units[unitIndices[i]]->setFs(getFs());
+			m_units[unitIndices[i]]->setFs(fs());
 		}
 	}
 
 	void Circuit::onTempoChange_() {
 		const int* unitIndices = m_units.getIndices();
 		for (int i = 0; i < m_units.size(); i++) {
-			m_units[unitIndices[i]]->setTempo(getTempo());
+			m_units[unitIndices[i]]->setTempo(tempo());
 		}
 	}
 
 	void Circuit::onNoteOn_() {
 		const int* unitIndices = m_units.getIndices();
 		for (int i = 0; i < m_units.size(); i++) {
-			m_units[unitIndices[i]]->noteOn(getNote(), getVelocity());
+			m_units[unitIndices[i]]->noteOn(note(), velocity());
 		}
 	}
 
 	void Circuit::onNoteOff_() {
 		const int* unitIndices = m_units.getIndices();
 		for (int i = 0; i < m_units.size(); i++) {
-			m_units[unitIndices[i]]->noteOff(getNote(), getVelocity());
+			m_units[unitIndices[i]]->noteOff(note(), velocity());
 		}
 	}
 
