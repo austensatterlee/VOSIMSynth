@@ -50,27 +50,27 @@ namespace syn
 		double segment_time;
 		switch (m_currStage) {
 		case Attack:
-			segment_time = getParameter(m_pAttack).getDouble();
+			segment_time = param(m_pAttack).getDouble();
 			m_initial = 0;
 			// skip decay segment if its length is zero
-			m_target = getParameter(m_pDecay).getDouble() != 0 ? 1.0 : getParameter(m_pSustain).getDouble();
+			m_target = param(m_pDecay).getDouble() != 0 ? 1.0 : param(m_pSustain).getDouble();
 			break;
 		case Decay:
-			segment_time = getParameter(m_pDecay).getDouble();
-			m_target = getParameter(m_pSustain).getDouble();
+			segment_time = param(m_pDecay).getDouble();
+			m_target = param(m_pSustain).getDouble();
 			break;
 		case Sustain:
 			segment_time = 0;
-			m_initial = getParameter(m_pSustain).getDouble();
-			m_target = getParameter(m_pSustain).getDouble();
+			m_initial = param(m_pSustain).getDouble();
+			m_target = param(m_pSustain).getDouble();
 			break;
 		case Release:
-			segment_time = getParameter(m_pRelease).getDouble();
+			segment_time = param(m_pRelease).getDouble();
 			break;
 		default:
 			throw std::logic_error("Invalid envelope stage");
 		}
-		segment_time = segment_time * getParameter(m_pTimeScale).getInt();
+		segment_time = segment_time * param(m_pTimeScale).getInt();
 		if (!segment_time) { // for zero second segment time, advance phase pointer to next segment
 			m_phase += 1;
 		}
@@ -107,10 +107,10 @@ namespace syn
 		double output = LERP<double>(m_initial,m_target,INVLERP<double>(1,shape,pow(shape, m_phase)));
 		setOutputChannel_(0, output);
 
-		if ((!m_isActive || m_currStage == Release) && getInputValue(m_iGate) > 0.5) {
+		if ((!m_isActive || m_currStage == Release) && readInput(m_iGate) > 0.5) {
 			trigger();
 		}
-		else if (m_currStage != Release && getInputValue(m_iGate) <= 0.5) {
+		else if (m_currStage != Release && readInput(m_iGate) <= 0.5) {
 			release();
 		}
 	}
@@ -123,7 +123,7 @@ namespace syn
 
 	void ADSREnvelope::release() {
 		m_currStage = Release;
-		m_initial = getOutputValue(0);
+		m_initial = readOutput(0);
 		m_target = 0;
 		m_phase = 0;
 	}

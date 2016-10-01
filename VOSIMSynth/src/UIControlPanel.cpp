@@ -18,18 +18,23 @@ void synui::UIControlPanel::showUnitControl(UIUnitContainer* a_unitContainer) {
 	clearUnitControl();
 	m_currUnitContainer = a_unitContainer;
 	m_currUnitContainer->makeSelected(true);
+	m_currUnitContainer->m_onClose = [this](const UIUnitContainer*) { this->clearUnitControl(); };
 
 	shared_ptr<UIUnitControl> unitCtrl = m_currUnitContainer->getUnitControl();
 	m_scrollPanel->addChild(unitCtrl);
+	setMinSize(m_scrollPanel->minSize());
+	m_scrollPanel->setSize(m_size - Vector2i::Ones());
 	unitCtrl->setRelPos({ 0, 0});
-	unitCtrl->setSize(m_size);
+	unitCtrl->setSize(m_size - Vector2i::Ones());
 	if (m_parentTabComponent)
 		m_parentTabComponent->setActiveTab(m_parentTabComponent->tabIndex(this));
 }
 
 void synui::UIControlPanel::clearUnitControl() {
 	UIUnitControl* unitCtrl = getCurrentUnitControl();
+	
 	if (unitCtrl) {
+		m_currUnitContainer->m_onClose = [](const UIUnitContainer*) {return; };
 		m_currUnitContainer->makeSelected(false);
 		m_scrollPanel->removeChild(static_cast<UIComponent*>(unitCtrl));
 		m_scrollPanel->setScrollPos({ 0,0 });

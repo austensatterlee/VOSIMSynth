@@ -51,16 +51,16 @@ void syn::StateVariableFilter::reset() {
 }
 
 void syn::StateVariableFilter::process_() {
-  double fc = getInputValue(m_iFcMul) * (getParameter(m_pFc).getDouble() + getInputValue(m_iFcAdd));
-  fc = CLAMP(fc, getParameter(m_pFc).getMin(), getParameter(m_pFc).getMax());
+  double fc = readInput(m_iFcMul) * (param(m_pFc).getDouble() + readInput(m_iFcAdd));
+  fc = CLAMP(fc, param(m_pFc).getMin(), param(m_pFc).getMax());
   m_F = 2 * lut_sin_table().getlinear_periodic(0.5 * fc / (fs() * c_oversamplingFactor));
 
-  double input_res = getInputValue(m_iResMul) * getParameter(m_pRes).getDouble() + getInputValue(m_iResAdd);
+  double input_res = readInput(m_iResMul) * param(m_pRes).getDouble() + readInput(m_iResAdd);
   input_res = CLAMP<double>(input_res, 0, 1);
   double res = LERP(c_minRes, c_maxRes, input_res);
   m_damp = 1.0 / res;
 
-  double input = getInputValue(0);
+  double input = readInput(0);
   double LPOut = 0, HPOut = 0, BPOut = 0;
   int i = c_oversamplingFactor;
   while (i--) {
@@ -89,16 +89,16 @@ void syn::TrapStateVariableFilter::reset() {
 }
 
 void syn::TrapStateVariableFilter::process_() {
-  double fc = getInputValue(m_iFcMul) * (getParameter(m_pFc).getDouble() + getInputValue(m_iFcAdd));
-  fc = CLAMP(fc, getParameter(m_pFc).getMin(), getParameter(m_pFc).getMax());
+  double fc = readInput(m_iFcMul) * (param(m_pFc).getDouble() + readInput(m_iFcAdd));
+  fc = CLAMP(fc, param(m_pFc).getMin(), param(m_pFc).getMax());
   m_F = tan(DSP_PI * fc / (fs() * c_oversamplingFactor));
 
-  double input_res = getInputValue(m_iResMul) * getParameter(m_pRes).getDouble() + getInputValue(m_iResAdd);
+  double input_res = readInput(m_iResMul) * param(m_pRes).getDouble() + readInput(m_iResAdd);
   input_res = CLAMP<double>(input_res, 0, 1);
   double res = LERP(c_minRes, c_maxRes, input_res);
   m_damp = 1.0 / res;
 
-  double input = getInputValue(0);
+  double input = readInput(0);
   double LPOut = 0, HPOut = 0, BPOut = 0, NOut = 0;
   int i = c_oversamplingFactor;
   while (i--) {
@@ -155,11 +155,11 @@ void syn::OnePoleLP::reset() {
 
 void syn::OnePoleLP::process_() {
   // Calculate gain for specified cutoff
-  double fc = (getParameter(pFc).getDouble() + getInputValue(iFcAdd)) * getInputValue(iFcMul); // freq cutoff
-  fc = CLAMP(fc, getParameter(pFc).getMin(), getParameter(pFc).getMax());
+  double fc = (param(pFc).getDouble() + readInput(iFcAdd)) * readInput(iFcMul); // freq cutoff
+  fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());
   implem.setFc(fc, fs());
 
-  double input = getInputValue(0);
+  double input = readInput(0);
   double output = implem.process(input);
   setOutputChannel_(oLP, output);
   setOutputChannel_(oHP, input - output);
@@ -188,20 +188,20 @@ void syn::LadderFilter::reset() {
 }
 
 void syn::LadderFilter::process_() {
-  double input = getInputValue(iAudioIn);
+  double input = readInput(iAudioIn);
   // Calculate gain for specified cutoff
   double fs = LadderFilter::fs() * c_oversamplingFactor;
 
-  double fc = (getParameter(pFc).getDouble() + getInputValue(iFcAdd)) * getInputValue(iFcMul); // freq cutoff
-  fc = CLAMP(fc, getParameter(pFc).getMin(), getParameter(pFc).getMax());
+  double fc = (param(pFc).getDouble() + readInput(iFcAdd)) * readInput(iFcMul); // freq cutoff
+  fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());
 
   double wd = DSP_PI * fc / fs;
 
   // Prepare parameter values and insert them into each stage.
   double g = 4 * DSP_PI * VT * fc * (1.0 - wd) / (1.0 + wd);
   double dV0, dV1, dV2, dV3;
-  double drive = 1+3*getParameter(pDrv).getDouble();
-  double res = 3.9*getParameter(pFb).getDouble();
+  double drive = 1+3*param(pDrv).getDouble();
+  double res = 3.9*param(pFb).getDouble();
 
   int i = c_oversamplingFactor;
   while (i--) {
@@ -241,15 +241,15 @@ void syn::LadderFilterTwo::reset() {
 }
 
 void syn::LadderFilterTwo::process_() {
-	double input = getInputValue(iAudioIn);
+	double input = readInput(iAudioIn);
 	// Calculate gain for specified cutoff
 	double fs = LadderFilterTwo::fs() * c_oversamplingFactor;
 
 	double fc, drive, res;
-	fc = (getParameter(pFc).getDouble() + getInputValue(iFcAdd)) * getInputValue(iFcMul); // freq cutoff
-	fc = CLAMP(fc, getParameter(pFc).getMin(), getParameter(pFc).getMax());
-	drive = 1.0 + 3.0 * getParameter(pDrv).getDouble();
-	res = 3.9*getParameter(pFb).getDouble();
+	fc = (param(pFc).getDouble() + readInput(iFcAdd)) * readInput(iFcMul); // freq cutoff
+	fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());
+	drive = 1.0 + 3.0 * param(pDrv).getDouble();
+	res = 3.9*param(pFb).getDouble();
 
 	m_LP[0].setFc(fc, fs);
 	m_LP[1].m_G = m_LP[0].m_G;

@@ -3,19 +3,17 @@
 #include "UnitFactory.h"
 #include "UIControlPanel.h"
 #include "UIUnitSelector.h"
-#include "UIWindow.h"
 #include "UIDefaultUnitControl.h"
 #include "UIUnitContainer.h"
 #include "UIWire.h"
 #include "Theme.h"
 
 
-synui::UICircuitPanel::UICircuitPanel(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_unitFactory, UIUnitSelector* a_unitSelector, UIControlPanel* a_controlPanel) :
+synui::UICircuitPanel::UICircuitPanel(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_unitFactory, UIUnitSelector* a_unitSelector) :
 	UIComponent{ a_window },
 	m_vm(a_vm),
 	m_unitFactory(a_unitFactory),
-	m_unitSelector(a_unitSelector),
-	m_unitControlPanel(a_controlPanel)
+	m_unitSelector(a_unitSelector)
 {
 	registerUnitContainer<syn::InputUnit>([](MainWindow* a_window, UICircuitPanel* a_circuitPanel, syn::VoiceManager* a_vm, UIUnitControl* a_unitCtrl)-> UIUnitContainer* {
 		return new UIInputUnitContainer(a_window, a_circuitPanel, a_vm, a_unitCtrl);
@@ -23,6 +21,8 @@ synui::UICircuitPanel::UICircuitPanel(MainWindow* a_window, syn::VoiceManager* a
 	registerUnitContainer<syn::OutputUnit>([](MainWindow* a_window, UICircuitPanel* a_circuitPanel, syn::VoiceManager* a_vm, UIUnitControl* a_unitCtrl)-> UIUnitContainer* {
 		return new UIOutputUnitContainer(a_window, a_circuitPanel, a_vm, a_unitCtrl);
 	});
+
+	m_onSelectUnit = [](UIUnitContainer* a_container) { a_container->makeSelected(true); };
 
 	const syn::Circuit* circ = m_vm->getPrototypeCircuit();
 	onAddUnit_(circ->getUnit(circ->getInputUnitId()).getClassIdentifier(), circ->getInputUnitId());
@@ -124,8 +124,6 @@ void synui::UICircuitPanel::requestDeleteUnit(int a_unitId) {
 	// Delete the corresponding UIUnitContainer
 	UIUnitContainer* unitContainer = findUnitContainer(a_unitId);
 	m_window->clearFocus();
-	if (m_unitControlPanel->getCurrentUnitControl() == unitContainer->getUnitControl().get())
-		m_unitControlPanel->clearUnitControl();
 	removeChild(unitContainer);
 
 	m_unitContainers.erase(find(m_unitContainers.begin(), m_unitContainers.end(), unitContainer));
@@ -178,13 +176,14 @@ void synui::UICircuitPanel::clearSelectedWire(UIWire* a_wire) {
 }
 
 void synui::UICircuitPanel::reset() {
-	m_unitControlPanel->clearUnitControl();
 	for (int i = 0; i < m_wires.size(); i++) {
 		removeChild(m_wires[i]);
 	}
 	for (int i = 0; i < m_unitContainers.size(); i++) {
-		if (m_unitContainers[i] != m_inputs && m_unitContainers[i] != m_outputs) // don't allow deletion of input or output units
+		if (m_unitContainers[i] != m_inputs && m_unitContainers[i] != m_outputs) { // don't allow deletion of input or output units
+			m_unitContainers[i]->m_onClose(m_unitContainers[i]);
 			removeChild(m_unitContainers[i]);
+		}
 	}
 	m_unitContainers.clear();
 	m_unitContainers.push_back(m_inputs);
@@ -195,15 +194,14 @@ void synui::UICircuitPanel::reset() {
 
 synui::UIComponent* synui::UICircuitPanel::onMouseDown(const UICoord& a_relCursor, const Vector2i& a_diffCursor, bool a_isDblClick) {
 	UIComponent* child = UIComponent::onMouseDown(a_relCursor, a_diffCursor, a_isDblClick);
+
 	if (child) {
 		UIUnitContainer* container = dynamic_cast<UIUnitContainer*>(child);
-		if(container) {
-			m_unitControlPanel->showUnitControl(container);
+		if (container) {
+			m_onSelectUnit(container);
 		}
 		return child;
-	}
-
-	if (m_unitSelector->selectedPrototype() >= 0) {
+	}else if (m_unitSelector->selectedPrototype() >= 0) {
 		unsigned classId = m_unitFactory->getClassId(m_unitSelector->selectedPrototypeName());
 		requestAddUnit_(classId);
 		m_unitSelector->setSelectedPrototype(-1);

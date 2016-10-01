@@ -94,15 +94,15 @@ TEST_CASE("Detect subnormals in ladder filter processing.",	"[ladder-denormal]")
 	syn::LadderFilter ladder("ladder");
 	double input = 1.0;
 	ladder.setFs(fs);
-	ladder.setParameterValue(syn::LadderFilter::pFc, 1.0);
-	ladder.setParameterValue(syn::LadderFilter::pFb, 1.0);
-	ladder.setParameterValue(syn::LadderFilter::pDrv, 1.0);
+	ladder.setParam(syn::LadderFilter::pFc, 1.0);
+	ladder.setParam(syn::LadderFilter::pFb, 1.0);
+	ladder.setParam(syn::LadderFilter::pDrv, 1.0);
 	ladder.connectInput(0, &input);
 
 	vector<double> ladder_out(N);
 	for (int i = 0; i < N; i++) {
 		ladder.tick();
-		ladder_out[i] = ladder.getOutputValue(0);
+		ladder_out[i] = ladder.readOutput(0);
 		input = 0.0;
 	}
 
@@ -117,9 +117,9 @@ TEST_CASE("Test stateless MemoryUnit::tick", "[unit]") {
 		double input = 1.0;
 		mu.connectInput(0, &input);
 		mu.tick();
-		double out1 = mu.getOutputValue(0);
+		double out1 = mu.readOutput(0);
 		mu.tick();
-		double out2 = mu.getOutputValue(0);
+		double out2 = mu.readOutput(0);
 		REQUIRE(out1 == 0.0);
 		REQUIRE(out2 == 1.0);
 	}

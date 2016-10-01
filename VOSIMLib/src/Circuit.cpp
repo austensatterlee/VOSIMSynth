@@ -51,7 +51,7 @@ namespace syn
 	Circuit::Circuit(const Circuit& a_other) :
 		Circuit(a_other.name()) 
 	{
-		const int* unitIndices = a_other.m_units.getIndices();
+		const int* unitIndices = a_other.m_units.indices();
 		for (int i = 0; i < a_other.m_units.size(); i++) {
 			Unit* unit = a_other.m_units[unitIndices[i]];
 			if(unit!=a_other.m_inputUnit && unit!=a_other.m_outputUnit)
@@ -67,7 +67,7 @@ namespace syn
 	Circuit& Circuit::operator=(const Circuit& a_other) {
 		if (this != &a_other) {
 			// delete old units
-			const int* unitIndices = m_units.getIndices();
+			const int* unitIndices = m_units.indices();
 			for (int i = 0; i<m_units.size();) {
 				Unit* unit = m_units[unitIndices[i]];
 				if (unit != m_inputUnit && unit != m_outputUnit)
@@ -76,7 +76,7 @@ namespace syn
 					i++;
 			}
 			// copy new units
-			const int* otherUnitIndices = a_other.m_units.getIndices();
+			const int* otherUnitIndices = a_other.m_units.indices();
 			for (int i = 0; i < a_other.m_units.size(); i++) {
 				Unit* unit = a_other.m_units[otherUnitIndices[i]];
 				if (unit != a_other.m_inputUnit && unit != a_other.m_outputUnit)
@@ -93,7 +93,7 @@ namespace syn
 
 	Circuit::~Circuit() {
 		for(int i=0;i<m_units.size();i++) {
-			delete m_units[m_units.getIndices()[i]];
+			delete m_units[m_units.indices()[i]];
 		}
 	}
 
@@ -105,7 +105,7 @@ namespace syn
 
 		/* Push internally connected output signals to circuit output ports */
 		for (int i = 0; i < m_outputSignals.size(); i++) {
-			setOutputChannel_(i, m_outputUnit->getOutputValue(i));
+			setOutputChannel_(i, m_outputUnit->readOutput(i));
 		}
 	}
 
@@ -149,12 +149,10 @@ namespace syn
 	{
 		list<int> sinks;
 		// Find sinks
-		const int* unitIndices = m_units.getIndices();
 		for (int i = 0; i < m_units.size(); i++) {
-			int index = unitIndices[i];
-			Unit* unit = m_units[index];
+			Unit* unit = m_units.getByIndex(i);
 			if (!unit->numOutputs()) {
-				sinks.push_back(index);
+				sinks.push_back(m_units.find(unit));
 			}
 		}
 		sinks.push_back(getOutputUnitId());
@@ -203,35 +201,35 @@ namespace syn
 	}
 
 	void Circuit::onFsChange_() {
-		const int* unitIndices = m_units.getIndices();
+		const int* unitIndices = m_units.indices();
 		for (int i = 0; i < m_units.size(); i++) {
 			m_units[unitIndices[i]]->setFs(fs());
 		}
 	}
 
 	void Circuit::onTempoChange_() {
-		const int* unitIndices = m_units.getIndices();
+		const int* unitIndices = m_units.indices();
 		for (int i = 0; i < m_units.size(); i++) {
 			m_units[unitIndices[i]]->setTempo(tempo());
 		}
 	}
 
 	void Circuit::onNoteOn_() {
-		const int* unitIndices = m_units.getIndices();
+		const int* unitIndices = m_units.indices();
 		for (int i = 0; i < m_units.size(); i++) {
 			m_units[unitIndices[i]]->noteOn(note(), velocity());
 		}
 	}
 
 	void Circuit::onNoteOff_() {
-		const int* unitIndices = m_units.getIndices();
+		const int* unitIndices = m_units.indices();
 		for (int i = 0; i < m_units.size(); i++) {
 			m_units[unitIndices[i]]->noteOff(note(), velocity());
 		}
 	}
 
 	void Circuit::onMidiControlChange_(int a_cc, double a_value) {
-		const int* unitIndices = m_units.getIndices();
+		const int* unitIndices = m_units.indices();
 		for (int i = 0; i < m_units.size(); i++) {
 			m_units[unitIndices[i]]->onMidiControlChange_(a_cc, a_value);
 		}
@@ -239,7 +237,7 @@ namespace syn
 
 	void Circuit::onInputConnection_(int a_inputPort)
 	{
-		m_inputUnit->connectInput(a_inputPort, &getInputValue(a_inputPort));
+		m_inputUnit->connectInput(a_inputPort, &readInput(a_inputPort));
 	}
 
 	void Circuit::onInputDisconnection_(int a_inputPort)

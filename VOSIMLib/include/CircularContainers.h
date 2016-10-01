@@ -20,11 +20,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __ATOMICCONTAINERS__
 #define __ATOMICCONTAINERS__
 
-#include <mutex>
-#include <atomic>
-#include <stdexcept>
-#include <boost/core/checked_delete.hpp>
-
 namespace syn
 {
 	/**
@@ -89,8 +84,8 @@ namespace syn
 		typedef uint8_t qindex_t;
 		typedef uint8_t qsize_t;
 		qsize_t m_maxsize;
-		qindex_t m_left_index; /// Elements exit via the front of the queue
-		qindex_t m_right_index; /// Elements enter via the back of the queue
+		qindex_t m_left_index;
+		qindex_t m_right_index;
 		T* m_data;
 	};
 
@@ -110,7 +105,7 @@ namespace syn
 
 	template <typename T>
 	CircularQueue<T>::~CircularQueue() {
-		boost::checked_delete(m_data);
+		delete m_data;
 	}
 
 	template <typename T>

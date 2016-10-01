@@ -93,16 +93,16 @@ NONIUS_BENCHMARK("ladder", [](nonius::chronometer& meter) {
 	syn::LadderFilter ladder("ladder");
 	double input = 1.0;
 	ladder.setFs(48000.0);
-	ladder.setParameterValue(syn::LadderFilter::pFc, 10000.0);
-	ladder.setParameterValue(syn::LadderFilter::pFb, 1.0);
-	ladder.setParameterValue(syn::LadderFilter::pDrv, 0.0);
+	ladder.setParam(syn::LadderFilter::pFc, 10000.0);
+	ladder.setParam(syn::LadderFilter::pFb, 1.0);
+	ladder.setParam(syn::LadderFilter::pDrv, 0.0);
 	ladder.connectInput(0, &input);
 
 	double x;
 	meter.measure([&x, &input, &ladder](int i)
 	{
 		ladder.tick();
-		x = ladder.getOutputValue(0);			
+		x = ladder.readOutput(0);			
 		return x;
 	});
 })
@@ -112,16 +112,16 @@ NONIUS_BENCHMARK("ladder_B", [](nonius::chronometer& meter) {
 	syn::LadderFilterTwo ladder("ladder");
 	double input = 1.0;
 	ladder.setFs(48000.0);
-	ladder.setParameterValue(syn::LadderFilter::pFc, 10000.0);
-	ladder.setParameterValue(syn::LadderFilter::pFb, 1.0);
-	ladder.setParameterValue(syn::LadderFilter::pDrv, 0.0);
+	ladder.setParam(syn::LadderFilter::pFc, 10000.0);
+	ladder.setParam(syn::LadderFilter::pFb, 1.0);
+	ladder.setParam(syn::LadderFilter::pDrv, 0.0);
 	ladder.connectInput(0, &input);
 
 	double x;
 	meter.measure([&x, &input, &ladder](int i)
 	{
 		ladder.tick();
-		x = ladder.getOutputValue(0);
+		x = ladder.readOutput(0);
 		return x;
 	});
 })
@@ -131,15 +131,15 @@ NONIUS_BENCHMARK("svf", [](nonius::chronometer& meter) {
 	syn::StateVariableFilter svf("ladder");
 	double input = 1.0;
 	svf.setFs(48000.0);
-	svf.setParameterValue(0, 10000.0);
-	svf.setParameterValue(1, 1.0);
+	svf.setParam(0, 10000.0);
+	svf.setParam(1, 1.0);
 	svf.connectInput(0, &input);
 
 	double x;
 	meter.measure([&x, &input, &svf](int i)
 	{
 		svf.tick();
-		x = svf.getOutputValue(0);	
+		x = svf.readOutput(0);	
 		return x;
 	});
 })
@@ -149,15 +149,15 @@ NONIUS_BENCHMARK("trapezoidal svf", [](nonius::chronometer& meter) {
 	syn::TrapStateVariableFilter tsvf("ladder");
 	double input = 1.0;
 	tsvf.setFs(48000.0);
-	tsvf.setParameterValue(0, 10000.0);
-	tsvf.setParameterValue(1, 1.0);
+	tsvf.setParam(0, 10000.0);
+	tsvf.setParam(1, 1.0);
 	tsvf.connectInput(0, &input);
 
 	double x;
 	meter.measure([&x, &input, &tsvf](int i)
 	{
 		tsvf.tick();
-		x = tsvf.getOutputValue(0);
+		x = tsvf.readOutput(0);
 		return x;
 	});
 })
@@ -183,7 +183,7 @@ NONIUS_BENCHMARK("memory circuit", [](nonius::chronometer& meter) {
 	meter.measure([&x, &mycircuit](int i)
 	{
 		mycircuit.tick();
-		x = mycircuit.getOutputValue(0);
+		x = mycircuit.readOutput(0);
 		return x;
 	});
 })

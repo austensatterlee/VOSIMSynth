@@ -102,15 +102,15 @@ namespace syn
 		void onParamChange_(int a_paramId) override {
 			if (a_paramId == m_pCC) {
 				m_value = 0;
-				setParameterValue(m_pLearn, false);
+				setParam(m_pLearn, false);
 			}
 		}
 
 		void onMidiControlChange_(int a_cc, double a_value) override {
-			if (getParameter(m_pLearn).getBool()) {
-				setParameterValue(m_pCC, a_cc);
+			if (param(m_pLearn).getBool()) {
+				setParam(m_pCC, a_cc);
 			}
-			if (a_cc == getParameter(m_pCC).getInt()) {
+			if (a_cc == param(m_pCC).getInt()) {
 				m_value = a_value;
 			}
 		}

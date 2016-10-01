@@ -41,9 +41,9 @@ void syn::FollowerUnit::reset() {
 }
 
 void syn::FollowerUnit::process_() {
-	double alpha = getParameter(m_pAlpha).getDouble();
-	double beta = getParameter(m_pBeta).getDouble();
-	double input = getInputValue(0) * 0.5 * (1 + alpha);
+	double alpha = param(m_pAlpha).getDouble();
+	double beta = param(m_pBeta).getDouble();
+	double input = readInput(0) * 0.5 * (1 + alpha);
 	// dc removal + rectification
 	double old_w = m_w;
 	m_w = input + alpha * old_w;

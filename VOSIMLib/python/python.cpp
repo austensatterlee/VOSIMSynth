@@ -73,68 +73,75 @@ public:
 PYBIND11_PLUGIN(pyVOSIMLib) {
 	py::module m("pyVOSIMLib", "Python bindings for VOSIMLib");
 
-	py::class_<syn::Unit, std::unique_ptr<syn::Unit>, PyUnit_tpl<>>(m, "Unit")
+	py::class_<syn::Unit, std::unique_ptr<syn::Unit>,
+	           PyUnit_tpl<syn::Unit>>(m, "Unit")
 			.def(py::init<const std::string &>())
-			//.def("tick", &syn::Unit::tick)
 			.def("tick", [](syn::Unit& self, const Eigen::Array<double, -1, -1, Eigen::RowMajor>& a_inputs) {
 				     if (a_inputs.rows() > self.numInputs())
 					     throw std::runtime_error("Incompatible buffer format!");
 				     Eigen::Array<double, -1, -1, Eigen::RowMajor> outputs(self.numOutputs(), a_inputs.cols());
 				     self.tick(a_inputs, outputs);
 				     return outputs;
-	})
-		.def("reset", &syn::Unit::reset)
-		.def("isActive", &syn::Unit::isActive)
-		.def("setFs", &syn::Unit::setFs)
-		.def("setTempo", &syn::Unit::setTempo)
-		.def("noteOn", &syn::Unit::noteOn)
-		.def("noteOff", &syn::Unit::noteOff)
-		.def("notifyParameterChanged", &syn::Unit::notifyParameterChanged)
-		.def("getFs", &syn::Unit::fs)
-		.def("getTempo", &syn::Unit::tempo)
-		.def("isNoteOn", &syn::Unit::isNoteOn)
-		.def("getNote", &syn::Unit::note)
-		.def("getVelocity", &syn::Unit::velocity)
+			     }
+			)
+			.def("tick", static_cast<void (syn::Unit::*)()>(&syn::Unit::tick))
+			.def("reset", &syn::Unit::reset)
+			.def("isActive", &syn::Unit::isActive)
+			.def("setFs", &syn::Unit::setFs)
+			.def("setTempo", &syn::Unit::setTempo)
+			.def("noteOn", &syn::Unit::noteOn)
+			.def("noteOff", &syn::Unit::noteOff)
+			.def("notifyParameterChanged", &syn::Unit::notifyParameterChanged)
+			.def("fs", &syn::Unit::fs)
+			.def("tempo", &syn::Unit::tempo)
+			.def("isNoteOn", &syn::Unit::isNoteOn)
+			.def("note", &syn::Unit::note)
+			.def("velocity", &syn::Unit::velocity)
 
-		.def("getNumParameters", &syn::Unit::numParameters)
+			.def("setParam", &syn::Unit::setParam<string,double>)
+			.def_property_readonly("parameters", [](const syn::Unit& self) {
+				                       std::map<string, double> parameters;
+				                       auto nc_parameters = self.parameters();
+				                       for (int i = 0; i < self.numParams(); i++) {
+					                       int item_id = nc_parameters.indices()[i];
+					                       parameters[self.paramName(item_id)] = self.param(item_id).get<double>();
+				                       }
+				                       return parameters;
+			                       })
 
-		//.def("getParameter", &syn::Unit::getParameter<const string&>)
-		//.def("getParameter", &syn::Unit::getParameter<int>)
-		.def_property_readonly("parameters", [](const syn::Unit& self) {
-			std::vector<string> parameters;
-			for (int i = 0; i<self.numParameters(); i++) {
-				parameters[i] = self.parameters().getByIndex(i).getName();
-			}
-			return parameters;
-		})
 
-		.def("getNumInputs", &syn::Unit::numInputs)
-		.def("getInputValue", &syn::Unit::getInputValue)
-		.def("getInputName", &syn::Unit::getInputName)
-		.def("connectInput", &syn::Unit::connectInput)
-		.def("disconnectInput", &syn::Unit::disconnectInput)
-		.def("isConnected", &syn::Unit::isConnected)
-		.def("hasInput", &syn::Unit::hasInput)
-		.def_property_readonly("inputs", [] (const syn::Unit& self) {
-			std::vector<string> inputs;
-			for(int i=0;i<self.numInputs();i++) {
-				inputs[i] = self.getInputName(i);
-			}
-			return inputs;
-		})
+			.def_property_readonly("input_names", [] (const syn::Unit& self) {
+				                       std::vector<string> input_names;
+				                       auto nc_inputs = self.inputs();
+				                       for (int i = 0; i < self.numInputs(); i++) {
+					                       int item_id = nc_inputs.indices()[i];
+					                       input_names.push_back(self.inputName(item_id));
+				                       }
+				                       return input_names;
+			                       })
 
-		.def("getNumOutputs", &syn::Unit::numOutputs)
-		.def("getOutputName", &syn::Unit::getOutputName<int>)
-		.def("hasOutput", &syn::Unit::hasOutput)
-		.def_property_readonly("outputs", [](const syn::Unit& self) {
-			std::vector<std::string> outputs;
-			for (int i = 0; i<self.numOutputs(); i++) {
-				outputs[i] = self.getOutputName(i);
-			}
-			return outputs;
-		});
+			.def("output", &syn::Unit::readOutput<string>)
+			.def("output", [](const syn::Unit& self, int a_index) { return self.outputs().getByIndex(a_index); })
+			.def_property_readonly("output_names", [](const syn::Unit& self) {
+				                       std::vector<string> output_names;
+				                       auto nc_outputs = self.outputs();
+				                       for (int i = 0; i < nc_outputs.size(); i++) {
+					                       int item_id = nc_outputs.indices()[i];
+					                       output_names.push_back(self.outputName(item_id));
+				                       }
+				                       return output_names;
+			                       })
+			.def_property_readonly("outputs", [](const syn::Unit& self) {
+				                       std::vector<double> outputs;
+				                       auto nc_outputs = self.outputs();
+				                       for (int i = 0; i < nc_outputs.size(); i++) {
+					                       int item_id = nc_outputs.indices()[i];
+					                       outputs.push_back(self.readOutput(item_id));
+				                       }
+				                       return outputs;
+			                       });
 
-		py::class_<syn::Circuit, std::unique_ptr<syn::Circuit>, PyUnit_tpl<syn::Circuit>>(m, "Circuit", py::base<syn::Unit>())
+	py::class_<syn::Circuit, std::unique_ptr<syn::Circuit>, PyUnit_tpl<syn::Circuit>>(m, "Circuit", py::base<syn::Unit>())
 			.def(py::init<const std::string&>())
 			.def("getUnit", static_cast<syn::Unit&(syn::Circuit::*)(int)>(&syn::Circuit::getUnit))
 			.def("getConnections", &syn::Circuit::getConnections)
@@ -165,22 +172,22 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
 			.def(py::init<const std::string&>());
 
 	py::class_<syn::BasicOscillator, std::unique_ptr<syn::BasicOscillator>, PyUnit_tpl<syn::BasicOscillator>>(m, "BasicOscillator", py::base<syn::Unit>())
-		.def(py::init<const std::string&>());
+			.def(py::init<const std::string&>());
 
 	py::class_<syn::LFOOscillator, std::unique_ptr<syn::LFOOscillator>, PyUnit_tpl<syn::LFOOscillator>>(m, "LFOOscillator", py::base<syn::Unit>())
-		.def(py::init<const std::string&>());
+			.def(py::init<const std::string&>());
 
 	py::class_<syn::VosimOscillator, std::unique_ptr<syn::VosimOscillator>, PyUnit_tpl<syn::VosimOscillator>>(m, "VosimOscillator", py::base<syn::Unit>())
-		.def(py::init<const std::string&>());
+			.def(py::init<const std::string&>());
 
 	py::class_<syn::FormantOscillator, std::unique_ptr<syn::FormantOscillator>, PyUnit_tpl<syn::FormantOscillator>>(m, "FormantOscillator", py::base<syn::Unit>())
-		.def(py::init<const std::string&>());
+			.def(py::init<const std::string&>());
 
 	py::class_<syn::ADSREnvelope, std::unique_ptr<syn::ADSREnvelope>, PyUnit_tpl<syn::ADSREnvelope>>(m, "ADSREnvelope", py::base<syn::Unit>())
-		.def(py::init<const std::string&>());
+			.def(py::init<const std::string&>());
 
 	py::class_<syn::VariableMemoryUnit, std::unique_ptr<syn::VariableMemoryUnit>, PyUnit_tpl<syn::VariableMemoryUnit>>(m, "ResampleUnit", py::base<syn::Unit>())
-		.def(py::init<const std::string&>());
+			.def(py::init<const std::string&>());
 
 	return m.ptr();
 }

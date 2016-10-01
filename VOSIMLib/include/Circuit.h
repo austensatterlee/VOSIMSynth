@@ -65,7 +65,7 @@ namespace syn
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override {
 			for (int i = 0; i < numInputs(); i++) {
-				setOutputChannel_(i, getInputValue(i));
+				setOutputChannel_(i, readInput(i));
 			}
 		}
 	};
@@ -139,21 +139,6 @@ namespace syn
 		 */
 		const vector<ConnectionRecord>& getConnections() const;
 
-		template <typename UID, typename PID>
-		double getInternalParameter(const UID& a_unitIdentifier, const PID& a_paramIdentifier) const;
-
-		template <typename UID, typename PID, typename T>
-		bool setInternalParameter(const UID& a_unitIdentifier, const PID& a_paramIdentifier, const T& a_value);
-
-		template <typename UID, typename PID, typename T>
-		bool setInternalParameterNorm(const UID& a_unitIdentifier, const PID& a_paramIdentifier, const T& a_value);
-
-		template <typename UID, typename PID>
-		bool setInternalParameterPrecision(const UID& a_unitIdentifier, const PID& a_paramIdentifier, int a_precision);
-
-		template <typename UID, typename PID>
-		bool setInternalParameterFromString(const UID& a_unitIdentifier, const PID& a_paramIdentifier, const string& a_value);
-
 		/**
 		 * \returns The id assigned to the newly added unit, or -1 on failure
 		 */
@@ -182,8 +167,8 @@ namespace syn
 			size_t nUnits = getNumUnits(), nConnections = m_connectionRecords.size();
 			NamedContainer<std::shared_ptr<Unit>, MAX_UNITS> tmpunits;
 			for (int i = 0; i<nUnits; i++) {
-				int index = m_units.getIndices()[i];
-				tmpunits.add(m_units.getItemName(index), index, std::shared_ptr<Unit>(m_units[index]->clone()));
+				int index = m_units.indices()[i];
+				tmpunits.add(m_units.name(index), index, std::shared_ptr<Unit>(m_units[index]->clone()));
 			}
 
 			ar(cereal::make_nvp("num-units", nUnits));			
@@ -209,7 +194,7 @@ namespace syn
 			int inputUnitIndex = m_units.find(m_inputUnit);
 			int outputUnitIndex = m_units.find(m_outputUnit);
 			for(int i=0;i<nUnits;i++) {
-				int index = tmpunits.getIndices()[i];
+				int index = tmpunits.indices()[i];
 				if (index == inputUnitIndex || index == outputUnitIndex)
 					continue;
 				addUnit(tmpunits[index]->clone(), index);
@@ -264,31 +249,6 @@ namespace syn
 	int Circuit::getUnitId(const UID& a_unitIdentifier) const {
 		return m_units.find(a_unitIdentifier);
 	}
-
-	template <typename UID, typename PID, typename T>
-	bool Circuit::setInternalParameter(const UID& a_unitIdentifier, const PID& a_paramIdentifier, const T& a_value) {
-		return m_units[a_unitIdentifier]->setParameterValue(a_paramIdentifier, a_value);
-	};
-
-	template <typename UID, typename PID, typename T>
-	bool Circuit::setInternalParameterNorm(const UID& a_unitIdentifier, const PID& a_paramIdentifier, const T& a_value) {
-		return m_units[a_unitIdentifier]->setParameterNorm(a_paramIdentifier, a_value);
-	}
-
-	template <typename UID, typename PID>
-	bool Circuit::setInternalParameterPrecision(const UID& a_unitIdentifier, const PID& a_paramIdentifier, int a_precision) {
-		return m_units[a_unitIdentifier]->setParameterPrecision(a_paramIdentifier, a_precision);
-	}
-
-	template <typename UID, typename PID>
-	bool Circuit::setInternalParameterFromString(const UID& a_unitIdentifier, const PID& a_paramIdentifier, const string& a_value) {
-		return m_units[a_unitIdentifier]->setParameterFromString(a_paramIdentifier, a_value);
-	};
-
-	template <typename UID, typename PID>
-	double Circuit::getInternalParameter(const UID& a_unitIdentifier, const PID& a_paramIdentifier) const {
-		return m_units[a_unitIdentifier]->getParameter(a_paramIdentifier).getDouble();
-	};
 
 	template <typename ID>
 	bool Circuit::removeUnit(const ID& a_unitIdentifier) {
@@ -345,7 +305,7 @@ namespace syn
 		}
 		
 		// make new connection
-		toUnit->connectInput(a_toInputPort, &fromUnit->getOutputValue(a_fromOutputPort));
+		toUnit->connectInput(a_toInputPort, &fromUnit->readOutput(a_fromOutputPort));
 
 		// record the connection upon success
 		m_connectionRecords.push_back({ fromUnitId, a_fromOutputPort, toUnitId,a_toInputPort });
@@ -361,7 +321,7 @@ namespace syn
 
 		Unit* toUnit = m_units[toId];
 		Unit* fromUnit = m_units[fromId];
-		_ASSERT(toUnit->getInputSource(a_toInputPort) == &fromUnit->getOutputValue(a_fromOutputPort));
+		_ASSERT(toUnit->inputSource(a_toInputPort) == &fromUnit->readOutput(a_fromOutputPort));
 
 		bool result = toUnit->disconnectInput(a_toInputPort);
 

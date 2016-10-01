@@ -75,7 +75,7 @@ namespace synui
 		void setLayout(UILayout* a_layout);
 
 		void setLayout(shared_ptr<UILayout> a_layout);
-		Vector2i preferredSize(NVGcontext* a_nvg);
+		Vector2i preferredSize(NVGcontext* a_nvg) const;
 		virtual void performLayout(NVGcontext* a_nvg);
 
 		shared_ptr<UIComponent> getSharedPtr();
@@ -162,6 +162,7 @@ namespace synui
 		std::function<bool(UIComponent*, sf::Uint32)> m_onTextEntered;
 		std::function<bool(UIComponent*, const sf::Event::KeyEvent&)> m_onKeyDown;
 		std::function<bool(UIComponent*, const sf::Event::KeyEvent&)> m_onKeyUp;
+		std::function<void(UIComponent*)> m_onResize;
 	protected:
 		virtual void draw(NVGcontext* a_nvg);
 		virtual void setChildrenStyles(NVGcontext* a_nvg) {};
@@ -173,7 +174,7 @@ namespace synui
 
 		virtual void _onRemoveChild() {};
 
-		virtual void _onResize() {};
+		virtual void _onResize() { };
 
 	protected:
 		string m_name;

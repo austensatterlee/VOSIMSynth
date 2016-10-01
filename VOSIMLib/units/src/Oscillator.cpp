@@ -80,10 +80,10 @@ namespace syn
 	}
 
 	void Oscillator::process_() {
-		double phase_offset = getParameter(pPhaseOffset).getDouble() + getInputValue(iPhaseAdd);
-		m_gain = getParameter(pGain).getDouble() * getInputValue(iGainMul);
+		double phase_offset = param(pPhaseOffset).getDouble() + readInput(iPhaseAdd);
+		m_gain = param(pGain).getDouble() * readInput(iGainMul);
 		m_bias = 0;
-		if (getParameter(pUnipolar).getBool()) {
+		if (param(pUnipolar).getBool()) {
 			// make signal unipolar
 			m_gain *= 0.5;
 			m_bias = m_gain;
@@ -117,8 +117,8 @@ namespace syn
 		TunedOscillator(a_rhs.name()) {}
 
 	void TunedOscillator::process_() {
-		double tune = getParameter(pTune).getDouble() + getInputValue(iNote);
-		double oct = getParameter(pOctave).getInt();
+		double tune = param(pTune).getDouble() + readInput(iNote);
+		double oct = param(pOctave).getInt();
 		m_pitch = tune + oct * 12;
 		Oscillator::process_();
 	}
@@ -134,7 +134,7 @@ namespace syn
 	void BasicOscillator::process_() {
 		TunedOscillator::process_();
 		double output;
-		WAVE_SHAPE shape = static_cast<WAVE_SHAPE>(getParameter(pWaveform).getInt());
+		WAVE_SHAPE shape = static_cast<WAVE_SHAPE>(param(pWaveform).getInt());
 		switch(shape) {
 		case SAW_WAVE: 
 			output = lut_bl_saw_table().getresampled(m_phase, m_period);
@@ -174,21 +174,21 @@ namespace syn
 
 	void LFOOscillator::process_() {
 		// determine frequency
-		if (getParameter(pTempoSync).getBool()) {
-			m_freq = bpmToFreq(getParameter(pBPMFreq).getEnum(getInputValue(iFreqMul) * (getParameter(pBPMFreq).getInt()+getInputValue(iFreqAdd))), tempo());
+		if (param(pTempoSync).getBool()) {
+			m_freq = bpmToFreq(param(pBPMFreq).getEnum(readInput(iFreqMul) * (param(pBPMFreq).getInt()+readInput(iFreqAdd))), tempo());
 		}
 		else {
-			m_freq = getInputValue(iFreqMul) * (getParameter(pFreq).getDouble() + getInputValue(iFreqAdd));
+			m_freq = readInput(iFreqMul) * (param(pFreq).getDouble() + readInput(iFreqAdd));
 		}
 		// sync
-		if (m_lastSync <= 0.0 && getInputValue(iSync) > 0.0) {
+		if (m_lastSync <= 0.0 && readInput(iSync) > 0.0) {
 			m_basePhase = 0.0;
 			sync_();
 		}
-		m_lastSync = getInputValue(iSync);
+		m_lastSync = readInput(iSync);
 		Oscillator::process_();
 		double output,quadoutput;
-		WAVE_SHAPE shape = static_cast<WAVE_SHAPE>(getParameter(pWaveform).getInt());
+		WAVE_SHAPE shape = static_cast<WAVE_SHAPE>(param(pWaveform).getInt());
 		switch (shape) {
 		case SAW_WAVE:
 			output = naive_saw(m_phase);
@@ -214,9 +214,9 @@ namespace syn
 
 	void LFOOscillator::onParamChange_(int a_paramId) {
 		if (a_paramId == pTempoSync) {
-			bool useTempoSync = getParameter(pTempoSync).getBool();
-			getParameter(pFreq).setVisible(!useTempoSync);
-			getParameter(pBPMFreq).setVisible(useTempoSync);
+			bool useTempoSync = param(pTempoSync).getBool();
+			param(pFreq).setVisible(!useTempoSync);
+			param(pBPMFreq).setVisible(useTempoSync);
 		}
 	}
 }

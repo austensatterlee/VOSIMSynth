@@ -20,7 +20,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __NAMEDCONTAINER__
 #define __NAMEDCONTAINER__
 #include <array>
-#include <functional>
 #include <cereal/cereal.hpp>
 
 #if defined(_MSC_VER)
@@ -39,6 +38,15 @@ namespace syn
 	template <typename T, int MAXSIZE>
 	class NamedContainer
 	{
+	public:
+		const size_t max_size = MAXSIZE;
+		typedef T					item_type;
+		typedef item_type&			reference;
+		typedef const item_type&    const_reference;
+		typedef item_type*          pointer;
+		typedef const item_type*    const_pointer;
+
+	private:
 		array<T, MAXSIZE> m_data;
 		array<bool, MAXSIZE> m_existances;
 		array<int, MAXSIZE> m_indices;
@@ -58,15 +66,185 @@ namespace syn
 			}
 		};
 
+		template<typename _T>
+		struct id_comparator
+		{
+			typedef _T first_argument_type;
+			typedef _T second_argument_type;
+			typedef bool result_type;
+
+			constexpr bool operator()(const _T& _Left, const _T& _Right) const
+			{	// apply operator< to operands
+				return (_Left >= 0) && (_Left > _Right);
+			}
+		};
+
 	public:
-		const size_t max_size = MAXSIZE;
-		typedef T item_type;
 
 		NamedContainer() :
 			m_size(0)
 		{
 			m_existances.fill(false);
 			m_indices.fill(-1);
+		}
+
+		class iterator : public std::iterator<std::bidirectional_iterator_tag, item_type>
+		{
+		public:
+
+			iterator()
+				: m_nc(nullptr)
+				, m_item_num(0)
+			{
+			}
+
+			iterator(NamedContainer& nc)
+				: m_nc(&nc)
+				, m_item_num(0)
+			{
+			}
+
+			iterator(NamedContainer& nc, int offset)
+				:m_nc(&nc)
+				, m_item_num(offset)
+			{
+			}
+
+			iterator(const iterator& other)
+				: m_nc(other.m_nc),
+				  m_item_num(other.m_item_num)
+			{
+			}
+
+			~iterator()
+			{
+			}
+
+			iterator& operator ++()
+			{
+				m_item_num = m_nc->next_offset(m_item_num);
+				return *this;
+			}
+
+			iterator operator ++(int)
+			{
+				iterator temp(*this);
+				temp.m_item_num = m_nc->next_offset(m_item_num);
+				return temp;
+			}
+
+			iterator& operator --()
+			{
+				m_item_num = m_nc->prev_offset(m_item_num);
+				return *this;
+			}
+
+			iterator operator --(int)
+			{
+				iterator temp(*this);
+				temp.m_item_num = m_nc->prev_offset(m_item_num);
+				return temp;
+			}
+
+			iterator operator =(const iterator& other)
+			{
+				m_nc = other.m_nc;
+				m_item_num = other.m_item_num;
+				return *this;
+			}
+
+			reference operator *()
+			{
+				return m_nc->getByIndex(m_item_num);
+			}
+
+			const_reference operator *() const
+			{
+				return m_nc->getByIndex(m_item_num);
+			}
+
+			pointer operator &()
+			{
+				return &(m_nc->getByIndex(m_item_num));
+			}
+
+			const_pointer operator &() const
+			{
+				return &(m_nc->getByIndex(m_item_num));
+			}
+
+			pointer operator ->()
+			{
+				return &(m_nc->getByIndex(m_item_num));
+			}
+
+			const_pointer operator ->() const
+			{
+				return &(m_nc->getByIndex(m_item_num));
+			}
+
+			friend bool operator == (const iterator& lhs, const iterator& rhs)
+			{
+				return lhs.m_nc == rhs.m_nc && lhs.m_item_num == rhs.m_item_num;
+			}
+
+			friend bool operator != (const iterator& lhs, const iterator& rhs)
+			{
+				return !(lhs == rhs);
+			}
+
+		private:
+			NamedContainer* m_nc;
+			int m_item_num;
+		}; 
+		
+		typedef typename std::iterator_traits<iterator>::difference_type difference_type;
+		typedef std::reverse_iterator<iterator> reverse_iterator;
+
+		int next_offset(int a_offset) const {
+			a_offset++;
+			return a_offset >= MAXSIZE ? -1 : a_offset;
+		}
+
+		int prev_offset(int a_offset) const {
+			a_offset--;
+			return a_offset < 0 ? -1 : a_offset;
+		}
+
+		iterator begin() {
+			return iterator(*this, 0);
+		}
+
+		iterator cbegin() const {
+			return iterator(*this, 0);
+		}
+
+		iterator end() {
+			return iterator(*this, m_size);
+		}
+
+		iterator cend() const {
+			return iterator(*this, m_size);
+		}
+
+		reverse_iterator rbegin()
+		{
+			return reverse_iterator(end());
+		}
+
+		reverse_iterator crbegin() const
+		{
+			return reverse_iterator(end());
+		}
+
+		reverse_iterator rend()
+		{
+			return reverse_iterator(begin());
+		}
+
+		reverse_iterator crend() const
+		{
+			return reverse_iterator(begin());
 		}
 
 		/**
@@ -120,13 +298,13 @@ namespace syn
 		int find(const IDType& a_itemId) const;
 
 		template <typename IDType>
-		const string& getItemName(const IDType& a_itemId) const;
+		const string& name(const IDType& a_itemId) const;
 
 		int size() const;
 
-		const int* getIndices() const;
+		const int* indices() const;
 
-		const string* getNames() const;
+		const string* names() const;
 
 		template<typename Archive>
 		void save(Archive& ar) const {
@@ -157,19 +335,6 @@ namespace syn
 		int getItemIndex(const T& a_item) const;
 
 		int _getNextId();
-	private:
-		template<typename _T>
-		struct id_comparator
-		{
-			typedef _T first_argument_type;
-			typedef _T second_argument_type;
-			typedef bool result_type;
-
-			constexpr bool operator()(const _T& _Left, const _T& _Right) const
-			{	// apply operator< to operands
-				return (_Left>=0) && (_Left > _Right);
-			}
-		};
 	};
 
 	template <typename T, int MAXSIZE>
@@ -247,6 +412,8 @@ namespace syn
 		return m_data[a_itemId];
 	}
 
+
+
 	template <typename T, int MAXSIZE>
 	T& NamedContainer<T, MAXSIZE>::getByIndex(int a_itemIndex) {
 		return m_data[m_indices[m_size-1 - a_itemIndex]];
@@ -275,13 +442,13 @@ namespace syn
 	}
 
 	template <typename T, int MAXSIZE>
-	const int* NamedContainer<T, MAXSIZE>::getIndices() const {
+	const int* NamedContainer<T, MAXSIZE>::indices() const {
 		return m_indices.data();
 	}
 
 	template <typename T, int MAXSIZE>
 	template <typename IDType>
-	const string& NamedContainer<T, MAXSIZE>::getItemName(const IDType& a_itemID) const {
+	const string& NamedContainer<T, MAXSIZE>::name(const IDType& a_itemID) const {
 		int itemidx = getItemIndex(a_itemID);
 		return m_names[itemidx];
 	}
@@ -310,7 +477,7 @@ namespace syn
 	}
 
 	template <typename T, int MAXSIZE>
-	string const* NamedContainer<T, MAXSIZE>::getNames() const {
+	string const* NamedContainer<T, MAXSIZE>::names() const {
 		return m_names.data();
 	}
 

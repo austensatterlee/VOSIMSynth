@@ -45,10 +45,10 @@ namespace syn
 		VosimOscillator(a_rhs.name()) { }
 
 	void VosimOscillator::process_() {
-		m_num_pulses = getParameter(pNumPulses).getInt();
-		m_pulse_tune = CLAMP<double>(getInputValue(iPulseTuneMul)*getParameter(pPulseTune).getDouble() + getInputValue(iPulseTuneAdd), 0, 1);
+		m_num_pulses = param(pNumPulses).getInt();
+		m_pulse_tune = CLAMP<double>(readInput(iPulseTuneMul)*param(pPulseTune).getDouble() + readInput(iPulseTuneAdd), 0, 1);
 		TunedOscillator::process_();
-		double pulse_decay = CLAMP<double>(getInputValue(iDecayMul)*getParameter(pPulseDecay).getDouble(), 0, 1);
+		double pulse_decay = CLAMP<double>(readInput(iDecayMul)*param(pPulseDecay).getDouble(), 0, 1);
 
 		double output = 0.0;
 
@@ -109,9 +109,9 @@ namespace syn
 			cos_width = 1;
 		}
 		else {
-			double fmt_pitch_norm = CLAMP<double>(getInputValue(iFmtMul)*getParameter(pFmt).getDouble() + getInputValue(iFmtAdd), 0, 1);
+			double fmt_pitch_norm = CLAMP<double>(readInput(iFmtMul)*param(pFmt).getDouble() + readInput(iFmtAdd), 0, 1);
 			formant_freq = pow(2.0,LERP<double>(log2(m_freq), log2(MAX_FMT_FREQ), fmt_pitch_norm));
-			cos_width = 1 + 8 * CLAMP<double>(getInputValue(iWidthMul)*getParameter(pWidth).getDouble() + getInputValue(iWidthAdd), 0, 1);
+			cos_width = 1 + 8 * CLAMP<double>(readInput(iWidthMul)*param(pWidth).getDouble() + readInput(iWidthAdd), 0, 1);
 		}
 
 		double formant_step = formant_freq / fs();

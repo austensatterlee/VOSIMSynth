@@ -53,8 +53,8 @@ syn::DCRemoverUnit::DCRemoverUnit(const DCRemoverUnit& a_rhs) :
 	DCRemoverUnit(a_rhs.name()) {}
 
 void syn::DCRemoverUnit::process_() {
-	double input = getInputValue(0);
-	double alpha = getParameter(m_pAlpha).getDouble();
+	double input = readInput(0);
+	double alpha = param(m_pAlpha).getDouble();
 	double gain = 0.5 * (1 + alpha);
 	// dc removal
 	input = input * gain;
@@ -76,9 +76,9 @@ syn::RectifierUnit::RectifierUnit(const RectifierUnit& a_rhs) :
 	RectifierUnit(a_rhs.name()) { }
 
 void syn::RectifierUnit::process_() {
-	double input = getInputValue(0);
+	double input = readInput(0);
 	double output;
-	switch (getParameter(m_pRectType).getInt()) {
+	switch (param(m_pRectType).getInt()) {
 	case 0: // full
 		output = abs(input);
 		break;
@@ -102,9 +102,9 @@ syn::GainUnit::GainUnit(const GainUnit& a_rhs) :
 	GainUnit(a_rhs.name()) { }
 
 void syn::GainUnit::process_() {
-	double input = getInputValue(m_iInput);
-	double gain = getParameter(m_pGain).getDouble();
-	gain *= getInputValue(m_iGain);
+	double input = readInput(m_iInput);
+	double gain = param(m_pGain).getDouble();
+	gain *= readInput(m_iGain);
 	setOutputChannel_(0, input * gain);
 }
 
@@ -120,7 +120,7 @@ syn::SummerUnit::SummerUnit(const SummerUnit& a_rhs) :
 	SummerUnit(a_rhs.name()) { }
 
 void syn::SummerUnit::process_() {
-	double output = getInputValue(0) + getInputValue(1);
+	double output = readInput(0) + readInput(1);
 	setOutputChannel_(0, output);
 }
 
@@ -128,7 +128,7 @@ syn::ConstantUnit::ConstantUnit(const string& a_name) :
 	Unit(a_name) 
 {
 	addParameter_(UnitParameter{ "out",-1E6,1E6,0.0,UnitParameter::None,2 });
-	getParameter("out").setControlType(UnitParameter::EControlType::Unbounded);
+	param("out").setControlType(UnitParameter::EControlType::Unbounded);
 	addOutput_("out");
 }
 
@@ -136,7 +136,7 @@ syn::ConstantUnit::ConstantUnit(const ConstantUnit& a_rhs) :
 	ConstantUnit(a_rhs.name()) { }
 
 void syn::ConstantUnit::process_() {
-	double output = getParameter(0).getDouble();
+	double output = param(0).getDouble();
 	setOutputChannel_(0, output);
 }
 
@@ -156,10 +156,10 @@ syn::PanningUnit::PanningUnit(const PanningUnit& a_rhs) :
 	PanningUnit(a_rhs.name()) { }
 
 void syn::PanningUnit::process_() {
-	double in1 = getInputValue(0);
-	double in2 = getInputValue(1);
-	double bal1 = getParameter(m_pBalance1).getDouble() + getInputValue(2);
-	double bal2 = getParameter(m_pBalance2).getDouble() + getInputValue(3);
+	double in1 = readInput(0);
+	double in2 = readInput(1);
+	double bal1 = param(m_pBalance1).getDouble() + readInput(2);
+	double bal2 = param(m_pBalance2).getDouble() + readInput(3);
 	bal1 = 0.5*(1+CLAMP(bal1, -1.0, 1.0));
 	bal2 = 0.5*(1+CLAMP(bal2, -1.0, 1.0));
 	setOutputChannel_(0, (1 - bal1) * in1 + (1 - bal2) * in2);
@@ -180,11 +180,11 @@ syn::LerpUnit::LerpUnit(const LerpUnit& a_rhs) :
 	LerpUnit(a_rhs.name()) { }
 
 void syn::LerpUnit::process_() {
-	double input = getInputValue(0);
-	double aIn = getParameter(m_pMinInput).getDouble();
-	double bIn = getParameter(m_pMaxInput).getDouble();
-	double aOut = getParameter(m_pMinOutput).getDouble();
-	double bOut = getParameter(m_pMaxOutput).getDouble();
+	double input = readInput(0);
+	double aIn = param(m_pMinInput).getDouble();
+	double bIn = param(m_pMaxInput).getDouble();
+	double aOut = param(m_pMinOutput).getDouble();
+	double bOut = param(m_pMaxOutput).getDouble();
 	double inputNorm = INVLERP(aIn, bIn, input);
 	double output = LERP(aOut, bOut, inputNorm);	
 	setOutputChannel_(0, output);

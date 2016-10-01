@@ -39,11 +39,11 @@ namespace synui
 	{
 		addParameter_(BufferSize, syn::UnitParameter("buffer size", 16, 96000, 256));
 		addParameter_(NumPeriods, syn::UnitParameter("periods", 1, 16, 1));
-		m_bufferSize = getParameter(BufferSize).getInt();
+		m_bufferSize = param(BufferSize).getInt();
 		m_buffers.resize(m_numBuffers);
 		for(int i=0;i<m_numBuffers;i++) {
 			addInput_("in"+to_string(i));
-			m_buffers[i].resize(getParameter(BufferSize).getMax());
+			m_buffers[i].resize(param(BufferSize).getMax());
 		}
 		m_iPhase = addInput_("ph");
 	}
@@ -58,34 +58,34 @@ namespace synui
 	}
 
 	int OscilloscopeUnit::getBufferSize(int a_bufIndex) const {
-		return getInputSource(a_bufIndex) ? m_bufferSize : 0;
+		return inputSource(a_bufIndex) ? m_bufferSize : 0;
 	}
 
 	void OscilloscopeUnit::onParamChange_(int a_paramId) {
 		if (a_paramId == BufferSize) {
-			int newBufferSize = getParameter(BufferSize).getInt();
+			int newBufferSize = param(BufferSize).getInt();
 			m_bufferIndex = syn::WRAP(m_bufferIndex, newBufferSize);
 			m_bufferSize = newBufferSize;
 		}
 	}
 
 	void OscilloscopeUnit::process_() {
-		double phase = getInputValue(m_iPhase);
+		double phase = readInput(m_iPhase);
 		if (phase - m_lastPhase < -0.5) {
 			_sync();
 		}
 		m_lastSync++;
 		m_lastPhase = phase;
 		for (int i = 0; i < m_numBuffers; i++) {
-			m_buffers[i][m_bufferIndex] = getInputValue(i);
+			m_buffers[i][m_bufferIndex] = readInput(i);
 		}
 		m_bufferIndex = syn::WRAP(m_bufferIndex + 1, m_bufferSize);
 	}
 
 	void OscilloscopeUnit::_sync() {
 		m_syncCount++;
-		if (m_syncCount >= getParameter(NumPeriods).getInt()) {
-			setParameterValue(BufferSize, m_lastSync);
+		if (m_syncCount >= param(NumPeriods).getInt()) {
+			setParam(BufferSize, m_lastSync);
 			m_bufferIndex = 0;
 			m_lastSync = 0;
 			m_syncCount = 0;
@@ -103,6 +103,7 @@ namespace synui
 		m_col->addChild(m_plot);
 		m_col->addChild(m_statusLabel);
 		m_statusLabel->setSize({ -1,8 });
+		m_statusLabel->setBackgroundColor(Color(0.3f, 1.0f));
 		m_col->setChildResizePolicy(UICell::CMAX);
 		m_col->setSelfResizePolicy(UICell::SRNONE);
 		m_col->setSelfMinSizePolicy(UICell::SNONE);
@@ -125,13 +126,5 @@ namespace synui
 		for (int i = 0; i < unit->getNumBuffers(); i++) {
 			m_plot->setBufferPtr(i,unit->getBufferPtr(i), unit->getBufferSize(i));
 		}
-		
-		nvgBeginPath(a_nvg);
-		nvgFillColor(a_nvg, Color(0.3f, 1.0f));
-		Vector2i lPos = m_statusLabel->getRelPos();
-		Vector2i lSize = m_statusLabel->size();
-		nvgRect(a_nvg, lPos.x(), lPos.y(), lSize.x(), lSize.y());
-		nvgFill(a_nvg);
-
 	}
 }

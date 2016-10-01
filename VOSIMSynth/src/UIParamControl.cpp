@@ -32,7 +32,7 @@ void synui::UIParamControl::setParamValue(double a_val) {
 		double val;
 		int unitId, paramId;
 		GetArgs(a_data, 0, unitId, paramId, val);
-		a_circuit->setInternalParameter(unitId, paramId, val);
+		a_circuit->getUnit(unitId).param(paramId).set(val);
 	};
 	PutArgs(&msg->data, m_unitId, m_paramId, a_val);
 	m_vm->queueAction(msg);
@@ -48,7 +48,7 @@ void synui::UIParamControl::setParamNorm(double a_normval) {
 		pos = a_data->Get<int>(&unitId, pos);
 		pos = a_data->Get<int>(&paramId, pos);
 		pos = a_data->Get<double>(&val, pos);
-		a_circuit->setInternalParameterNorm(unitId, paramId, val);
+		a_circuit->getUnit(unitId).param(paramId).setNorm(val);
 	};
 	msg->data.Put<int>(&m_unitId);
 	msg->data.Put<int>(&m_paramId);
@@ -64,7 +64,7 @@ void synui::UIParamControl::nudgeParam(double a_logScale, double a_linScale) {
 		double logScale, linScale;
 		int unitId, paramId;
 		GetArgs(a_data, 0, unitId, paramId, logScale, linScale);
-		a_circuit->getUnit(unitId).getParameter(paramId).nudge(logScale, linScale);
+		a_circuit->getUnit(unitId).param(paramId).nudge(logScale, linScale);
 	};
 	m_vm->queueAction(msg);
 	m_isValueDirty = true;
@@ -91,14 +91,14 @@ void synui::UIParamControl::setParamFromString(const string& a_str) {
 		string valStr;
 		int unitId, paramId;
 		GetArgs(a_data, 0, valStr, unitId, paramId);
-		a_circuit->setInternalParameterFromString(unitId, paramId, valStr);
+		a_circuit->getUnit(unitId).param(paramId).setFromString(valStr);
 	};
 	m_vm->queueAction(msg);
 	m_isValueDirty = true;
 }
 
 void synui::UIParamControl::updateValue_() {
-	const syn::UnitParameter& param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).getParameter(m_paramId);
+	const syn::UnitParameter& param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(m_paramId);
 	m_param = &param;
 	m_valueStr = param.getValueString();
 	m_nameStr = param.getName();
@@ -109,7 +109,7 @@ void synui::UIParamControl::updateValue_() {
 }
 
 void synui::UIParamControl::draw(NVGcontext* a_nvg) {
-	const syn::UnitParameter& param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).getParameter(m_paramId);
+	const syn::UnitParameter& param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(m_paramId);
 	double normValue = m_param->getNorm();
 	if (&param != m_param || normValue != m_normValue || m_isValueDirty) {
 		updateValue_();

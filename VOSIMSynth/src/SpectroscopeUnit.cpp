@@ -43,7 +43,7 @@ namespace synui
 		m_plan(nullptr)
 	{
 		SpectroscopeUnit::onParamChange_(m_pBufferSize);
-		int maxInBufferSize = getParameter(m_pBufferSize).getEnum(getParameter(m_pBufferSize).getMax());
+		int maxInBufferSize = param(m_pBufferSize).getEnum(param(m_pBufferSize).getMax());
 		int maxOutBufferSize = maxInBufferSize >> 1;
 
 		m_timeDomainBuffers.resize(m_numBuffers);
@@ -71,12 +71,12 @@ namespace synui
 	}
 
 	int SpectroscopeUnit::getBufferSize(int a_bufIndex) const {
-		return getInputSource(a_bufIndex) ? m_outBufferSize : 0;
+		return inputSource(a_bufIndex) ? m_outBufferSize : 0;
 	}
 
 	void SpectroscopeUnit::onParamChange_(int a_paramId) {
 		if (a_paramId == m_pBufferSize) {
-			int newBufferSize = getParameter(m_pBufferSize).getEnum();
+			int newBufferSize = param(m_pBufferSize).getEnum();
 			if (m_inBufferSize == newBufferSize) return;
 
 			m_inBufferSize = newBufferSize;
@@ -95,11 +95,11 @@ namespace synui
 
 	void SpectroscopeUnit::process_() {
 		for (int i = 0; i < m_numBuffers; i++) {
-			m_timeDomainBuffers[i][m_bufferIndex] = getInputValue(i) * m_window[m_bufferIndex];
+			m_timeDomainBuffers[i][m_bufferIndex] = readInput(i) * m_window[m_bufferIndex];
 		}
 
 		m_samplesSinceLastUpdate++;
-		int updatePeriod = syn::LERP<double>(fs()*0.001, m_inBufferSize, 1 - getParameter(m_pUpdatePeriod).getDouble());
+		int updatePeriod = syn::LERP<double>(fs()*0.001, m_inBufferSize, 1 - param(m_pUpdatePeriod).getDouble());
 		if (!m_isStale && m_samplesSinceLastUpdate >= updatePeriod) {
 			m_samplesSinceLastUpdate = 0;
 
@@ -108,7 +108,7 @@ namespace synui
 				ffts_execute(m_plan, &m_timeDomainBuffers[i][0], &m_freqDomainBuffers[i][0]);
 
 				// Copy freq magnitudes to output buffers
-				double timeSmooth = getParameter(m_pTimeSmooth).getDouble();
+				double timeSmooth = param(m_pTimeSmooth).getDouble();
 				double target;
 				double currTimeSmooth;
 				for (int j = 0; j < m_outBufferSize; j++) {
@@ -138,6 +138,7 @@ namespace synui
 		m_col->addChild(m_plot);
 		m_col->addChild(m_statusLabel);
 		m_statusLabel->setSize({ -1,8 });
+		m_statusLabel->setBackgroundColor(Color(0.3f, 1.0f));
 		m_col->setChildResizePolicy(UICell::CMAX);
 		m_col->setSelfResizePolicy(UICell::SRNONE);
 		m_col->setSelfMinSizePolicy(UICell::SNONE);

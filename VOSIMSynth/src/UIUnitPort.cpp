@@ -16,9 +16,9 @@ synui::UIUnitPort::UIUnitPort(MainWindow* a_window, UICircuitPanel* a_circuitPan
 	const syn::Unit& unit = m_vm->getUnit(m_unitId);
 	string portName;
 	if (m_isInput) {
-		portName = unit.getInputName(m_portNum);
+		portName = unit.inputName(m_portNum);
 	} else {
-		portName = unit.getOutputName(m_portNum);
+		portName = unit.outputName(m_portNum);
 	}
 	int textWidth;
 	float bounds[4];
@@ -62,10 +62,10 @@ void synui::UIUnitPort::draw(NVGcontext* a_nvg) {
 	Color bgColor;
 
 	if (m_isInput) {
-		portName = unit.getInputName(m_portNum);
+		portName = unit.inputName(m_portNum);
 		bgColor = hovered() || m_isDragging ? theme()->mInputPortHighlightedBG : theme()->mInputPortBG;
 	} else {
-		portName = unit.getOutputName(m_portNum);
+		portName = unit.outputName(m_portNum);
 		bgColor = hovered() || m_isDragging ? theme()->mOutputPortHighlightedBG : theme()->mOutputPortBG;
 	}
 

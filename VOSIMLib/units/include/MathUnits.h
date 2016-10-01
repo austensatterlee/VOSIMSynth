@@ -201,7 +201,7 @@ namespace syn
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override {
-			setOutputChannel_(0,pitchToFreq(getInputValue(0)));
+			setOutputChannel_(0,pitchToFreq(readInput(0)));
 		}
 	};
 
@@ -226,7 +226,7 @@ namespace syn
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override {
-			setOutputChannel_(0, samplesToPitch(freqToSamples(getInputValue(0),fs()),fs()));
+			setOutputChannel_(0, samplesToPitch(freqToSamples(readInput(0),fs()),fs()));
 		}
 	};
 
@@ -255,9 +255,9 @@ namespace syn
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override {
-			double comp = getInputValue(2);
-			double ctrl = getInputValue(3);
-			setOutputChannel_(0, ctrl>comp ? getInputValue(0) : getInputValue(1));
+			double comp = readInput(2);
+			double ctrl = readInput(3);
+			setOutputChannel_(0, ctrl>comp ? readInput(0) : readInput(1));
 		}
 	};
 }

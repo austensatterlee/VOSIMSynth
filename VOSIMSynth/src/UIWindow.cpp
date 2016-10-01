@@ -26,8 +26,12 @@ void synui::UIWindow::addChildToHeader(UIComponent* a_newChild) const {
 bool synui::UIWindow::onMouseDrag(const UICoord& a_relCursor, const Vector2i& a_diffCursor) {
 	if (UIComponent::onMouseDrag(a_relCursor, a_diffCursor))
 		return true;
-	if(!m_isLocked)
-		move(a_diffCursor);
+	if (!m_isLocked) {
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
+			grow(a_diffCursor);
+		else
+			move(a_diffCursor);
+	}
 	return true;
 }
 

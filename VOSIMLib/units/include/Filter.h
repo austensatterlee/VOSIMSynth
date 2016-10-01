@@ -76,7 +76,7 @@ namespace syn
 
 	template <size_t nX, size_t nY>
 	void Filter<nX, nY>::process_() {
-		XBuf[xBufInd] = getInputValue(0);
+		XBuf[xBufInd] = readInput(0);
 		YBuf[yBufInd] = 0.0;
 		double* output = &YBuf[yBufInd];
 		int i, j;

@@ -27,6 +27,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 #include "Unit.h"
 #include "UIUnitControl.h"
+#include <etl/vector.h>
 
 namespace synui
 {

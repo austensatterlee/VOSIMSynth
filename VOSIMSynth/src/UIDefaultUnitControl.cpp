@@ -10,11 +10,11 @@ synui::UIDefaultUnitControl::UIDefaultUnitControl(MainWindow* a_window, syn::Voi
 	setLayout(new GroupLayout(2,2,4,5));
 
 	const syn::Unit& unit = a_vm->getUnit(a_unitId);
-	int nParams = unit.numParameters();
+	int nParams = unit.numParams();
 	for (int i = 0; i < nParams; i++) {
 		UIParamControl* paramCtrl;
-		if (unit.getParameter(i).getType() == syn::UnitParameter::Double || unit.getParameter(i).getType() == syn::UnitParameter::Int) {
-			switch (unit.getParameter(i).getControlType()) {
+		if (unit.param(i).getType() == syn::UnitParameter::Double || unit.param(i).getType() == syn::UnitParameter::Int) {
+			switch (unit.param(i).getControlType()) {
 			case syn::UnitParameter::Unbounded:
 				paramCtrl = new UIDigitControl(a_window, m_vm, m_unitId, i);
 				break;
@@ -27,7 +27,7 @@ synui::UIDefaultUnitControl::UIDefaultUnitControl(MainWindow* a_window, syn::Voi
 			paramCtrl = new UITextSlider(a_window, m_vm, m_unitId, i);			
 		}
 		m_paramControls.push_back(paramCtrl);
-		paramCtrl->setVisible(unit.getParameter(i).isVisible());
+		paramCtrl->setVisible(unit.param(i).isVisible());
 		UILabel* m_label = add<UILabel>("labels");
 		m_label->setText(paramCtrl->getName());
 		m_label->setVisible(paramCtrl->visible());
@@ -43,7 +43,7 @@ void synui::UIDefaultUnitControl::draw(NVGcontext* a_nvg)
 	bool isDirty = false;
 	for (UIParamControl* paramControl : m_paramControls)
 	{
-		const syn::UnitParameter& param = unit.getParameter(i);
+		const syn::UnitParameter& param = unit.param(i);
 		UILabel* lbl = static_cast<UILabel*>(getGroup("labels")[i]);
 		if (param.isVisible() != paramControl->visible())
 		{

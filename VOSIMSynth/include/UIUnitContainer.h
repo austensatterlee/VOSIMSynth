@@ -65,6 +65,8 @@ namespace synui
 		void makeSelected(bool a_isSelected);
 
 		bool isSelected() const;
+	public:
+		std::function<void(const UIUnitContainer*)> m_onClose;
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 	protected:

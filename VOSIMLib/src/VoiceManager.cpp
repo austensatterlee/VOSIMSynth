@@ -155,8 +155,8 @@ namespace syn
 				voice.connectInput(0, a_left_input + j);
 				voice.connectInput(1, a_right_input + j);
 				voice.tick();
-				a_left_output[j] += voice.getOutputValue(0);
-				a_right_output[j] += voice.getOutputValue(1);
+				a_left_output[j] += voice.readOutput(0);
+				a_right_output[j] += voice.readOutput(1);
 			}
 		}
 

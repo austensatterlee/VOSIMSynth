@@ -28,6 +28,7 @@ namespace synui
 		m_onTextEntered = ([](UIComponent*, sf::Uint32) {return false; });
 		m_onKeyDown = ([](UIComponent*, const sf::Event::KeyEvent&) {return false; });
 		m_onKeyUp = ([](UIComponent*, const sf::Event::KeyEvent&) {return false; });
+		m_onResize = ([](UIComponent*) {});
 
 		setVisible(true);
 	}
@@ -194,7 +195,7 @@ namespace synui
 		m_layout = a_layout;
 	}
 
-	Vector2i UIComponent::preferredSize(NVGcontext* a_nvg) {
+	Vector2i UIComponent::preferredSize(NVGcontext* a_nvg) const {
 		if(m_layout) {
 			return m_layout->preferredSize(a_nvg, this);
 		}
@@ -360,6 +361,7 @@ namespace synui
 		if (m_size != newSize) {
 			m_size = newSize;
 			_onResize();
+			m_onResize(this);
 			if (parent())
 				parent()->notifyChildResized(this);
 		}

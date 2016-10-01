@@ -1,15 +1,13 @@
 #include "UnitFactory.h"
-#include "Containers.h"
 #include "Unit.h"
 
-syn::FactoryPrototype::FactoryPrototype(std::string a_group_name, Unit* a_unit, size_t a_class_size)
+syn::UnitFactory::FactoryPrototype::FactoryPrototype(std::string a_group_name, syn::Unit* a_unit, size_t a_class_size)
 	: classIdentifier(a_unit->getClassIdentifier()),
 	  group_name(a_group_name),
 	  name(a_unit->name()),
 	  prototype(a_unit),
 	  build_count{0},
-	  size(a_class_size) 
-{}
+	  size(a_class_size) {}
 
 set<string> syn::UnitFactory::getGroupNames() const {
 	set<string> groupnames;
@@ -38,7 +36,7 @@ vector<string> syn::UnitFactory::getPrototypeNames() const {
 	return names;
 }
 
-const syn::FactoryPrototype* syn::UnitFactory::getFactoryPrototype(const string& a_prototypeName) const {
+const syn::UnitFactory::FactoryPrototype* syn::UnitFactory::getFactoryPrototype(const string& a_prototypeName) const {
 	for (const FactoryPrototype& prototype : m_prototypes) {
 		if (prototype.name == a_prototypeName)
 			return &prototype;

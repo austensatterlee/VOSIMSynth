@@ -17,6 +17,7 @@ synui::UIUnitContainer::UIUnitContainer(MainWindow* a_window, UICircuitPanel* a_
 	m_isSelected(false),
 	m_unitCtrl(shared_ptr<UIUnitControl>(a_unitCtrl))
 {
+	m_onClose = [](const UIUnitContainer* a_self) {return; };
 }
 
 synui::UIUnitPort* synui::UIUnitContainer::getSelectedInPort(const synui::UICoord& a_pt) const {
@@ -36,6 +37,7 @@ synui::UIUnitPort* synui::UIUnitContainer::getSelectedOutPort(const UICoord& a_p
 }
 
 void synui::UIUnitContainer::close() const {
+	m_onClose(this);
 	m_circuitPanel->requestDeleteUnit(m_unitId);
 }
 

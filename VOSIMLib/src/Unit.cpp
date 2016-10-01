@@ -95,7 +95,7 @@ namespace syn
 
 	const NamedContainer<double, 8>& Unit::outputs() const { return m_outputSignals; }
 
-	int Unit::numParameters() const {
+	int Unit::numParams() const {
 		return static_cast<int>(m_parameters.size());
 	}
 
@@ -119,8 +119,12 @@ namespace syn
 		return m_midiData.isNoteOn;
 	}
 
-	const Circuit* Unit::getParent() const {
+	const Circuit* Unit::parent() const {
 		return m_parent;
+	}
+
+	string Unit::paramName(int a_index) const {
+		return m_parameters.name(a_index);
 	}
 
 	const NamedContainer<UnitParameter, MAX_PARAMS>& Unit::parameters() const {
@@ -222,10 +226,10 @@ namespace syn
 		setFs(a_other.m_audioConfig.fs);
 		setTempo(a_other.m_audioConfig.tempo);
 		// Copy parameter values
-		const string* paramNames = m_parameters.getNames();
+		const string* paramNames = m_parameters.names();
 		for (int i = 0; i < m_parameters.size(); i++) {
 			const string& paramName = paramNames[i];
-			if (a_other.hasParameter(paramName))
+			if (a_other.hasParam(paramName))
 				m_parameters[paramName].setFromString(a_other.m_parameters[paramName].getValueString());
 		}
 	}
@@ -236,12 +240,16 @@ namespace syn
 		return unit;
 	}
 
-	const double& Unit::getInputValue(int a_index) const {
+	const double& Unit::readInput(int a_index) const {
 		return m_inputPorts[a_index].src ? *m_inputPorts[a_index].src : m_inputPorts[a_index].defVal;
 	}
 
-	const double* Unit::getInputSource(int a_index) const {
+	const double* Unit::inputSource(int a_index) const {
 		return m_inputPorts[a_index].src;
+	}
+
+	const NamedContainer<UnitPort, MAX_INPUTS>& Unit::inputs() const {
+		return m_inputPorts;
 	}
 
 	bool Unit::hasOutput(int a_outputPort) const {
@@ -252,7 +260,7 @@ namespace syn
 		return m_inputPorts.contains(a_inputPort);
 	}
 
-	string Unit::getInputName(int a_index) const {
-		return m_inputPorts.getItemName(a_index);
+	string Unit::inputName(int a_index) const {
+		return m_inputPorts.name(a_index);
 	}
 }

@@ -36,22 +36,21 @@ namespace syn
 {
 	class Unit;
 
-	struct FactoryPrototype
-	{
-		FactoryPrototype(std::string a_group_name, Unit* a_unit, size_t a_class_size);
-
-		unsigned int classIdentifier;
-		std::string group_name;
-		std::string name;
-		Unit* prototype;
-		int build_count;
-		size_t size;
-	};
-
 	class UnitFactory
 	{
-		UnitFactory()
-		{}
+		UnitFactory() {} 
+
+		struct FactoryPrototype
+		{
+			FactoryPrototype(std::string a_group_name, Unit* a_unit, size_t a_class_size);
+
+			unsigned int classIdentifier;
+			std::string group_name;
+			std::string name;
+			Unit* prototype;
+			int build_count;
+			size_t size;
+		};
 
 	public:
 
@@ -68,7 +67,7 @@ namespace syn
 		/**
 		 * \brief Register a prototype unit with the factory. Prototype deletion will be taken care of upon factory destruction.
 		 */
-		template <typename T, typename = std::enable_if_t<std::is_base_of<Unit, T>::value > >
+		template <typename T, typename = std::enable_if_t<std::is_base_of<Unit, T>::value>>
 		void addUnitPrototype(const std::string& a_group_name, const std::string& a_unit_name);
 
 		set<std::string> getGroupNames() const;
@@ -111,11 +110,13 @@ namespace syn
 
 	template <typename T, typename>
 	void UnitFactory::addUnitPrototype(const std::string& a_group_name, const std::string& a_unit_name) {
-		FactoryPrototype prototype{ a_group_name, new T(a_unit_name), sizeof(T) };
+		FactoryPrototype prototype{a_group_name, new T(a_unit_name), sizeof(T)};
+		if (m_class_identifiers.find(prototype.classIdentifier) != m_class_identifiers.end())
+			return;
 		m_prototypes.push_back(prototype);
 		m_group_names.insert(prototype.group_name);
 		m_class_identifiers[prototype.classIdentifier] = m_prototypes.size() - 1;
-	}	
+	}
 }
 
 #endif

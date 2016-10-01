@@ -23,6 +23,7 @@ set(IPLUG_ROOT ${WDL_ROOT}/iplug CACHE PATH "")
 set(EIGEN_ROOT ${LIBS_DIR}/eigen CACHE PATH "")
 set(CEREAL_ROOT ${LIBS_DIR}/cereal CACHE PATH "")
 set(PYBIND11_ROOT ${LIBS_DIR}/pybind11 CACHE PATH "")
+set(ETL_ROOT ${LIBS_DIR}/etl CACHE PATH "")
 
 set(FFTS_ROOT "${LIBS_DIR_SYS}/ffts" CACHE PATH "")
 set(FFTS_INCLUDE_DIR ${FFTS_ROOT}/include CACHE PATH "")
@@ -53,9 +54,9 @@ endif (MINGW)
 
 if(MSVC)
   # Runtime library, exceptions, parallel compilation
-  set(MSVC_REL /EHsc /MT)
-  set(MSVC_RDEB /EHsc /MTd)
-  set(MSVC_DEB /EHsc /MTd)
+  set(MSVC_REL /EHsc /MT /MP)
+  set(MSVC_RDEB /EHsc /MTd /MP)
+  set(MSVC_DEB /EHsc /MTd /MP)
 
   # Disable some warnings
   set(MSVC_DISABLED_WARNINGS /wd4996 /wd4224 /wd4244 /wd4091 /wd4018)
@@ -66,8 +67,8 @@ if(MSVC)
   # /GL whole program optimization      /arch:SSE2 simd extensions
   # /fp:fast floating point model       /Qpar enable parallel code gen
   # /Oy omit frame pointers             /GT fiber-safe optimizations
-  list(APPEND MSVC_REL /Ox /GL /Ob2 /Oi /Ot /Oy /fp:fast /fp:except- /Qpar /GT)
-  list(APPEND MSVC_RDEB /Ox /Ob2 /Oi /Ot /Oy /fp:fast /Qpar /GT)
+  list(APPEND MSVC_REL /Ox /GL /Ob2 /Oi /Ot /Oy /fp:fast /fp:except- /Qpar /GT /GL)
+  list(APPEND MSVC_RDEB /Ox /Ob2 /Oi /Ot /Oy /fp:fast /Qpar /GT /GL)
 
   if(ARCH EQUAL 32)
     list(APPEND MSVC_REL /arch:SSE2)
@@ -85,9 +86,9 @@ if(MSVC)
   # /LTCG link time code generation
   # /OPT:REF remove code that is never referenced
   # /OPT:ICF perform identical COMDAT folding
-  set(CMAKE_STATIC_LINKER_FLAGS_RELEASE "${CMAKE_STATIC_LINKER_FLAGS_RELEASE} /LTCG")
-  set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
-  set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
+  set(CMAKE_STATIC_LINKER_FLAGS_RELEASE "/LTCG")
+  set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
+  set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
 endif()
 
 # configurations for all compilers
@@ -132,6 +133,11 @@ include_directories(${CEREAL_ROOT}/include)
 # pybind11
 ##
 add_subdirectory(${PYBIND11_ROOT})
+
+##
+# ETL
+##
+include_directories(${ETL_ROOT}/include)
 
 ######################################
 # Configure precompiled dependencies #

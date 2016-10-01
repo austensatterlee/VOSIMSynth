@@ -170,78 +170,55 @@ namespace syn
 		/**
 		 * Returns a pointer to the unit's parent Circuit, or nullptr if there is none.
 		 */
-		const Circuit* getParent() const;
+		const Circuit* parent() const;
 
 		/**
 		 * Determines whether or not the unit contains a specific parameter.
 		 */
 		template <typename ID>
-		bool hasParameter(const ID& a_paramId) const;
+		bool hasParam(const ID& a_paramId) const;
 
 		/**
 		 * Returns a reference to the requested parameter.
 		 */
 		template <typename ID>
-		UnitParameter& getParameter(const ID& a_identifier);
+		UnitParameter& param(const ID& a_identifier);
 
 		template <typename ID>
-		const UnitParameter& getParameter(const ID& a_identifier) const;
+		const UnitParameter& param(const ID& a_identifier) const;
 
-		const NamedContainer<UnitParameter, MAX_PARAMS>& Unit::parameters() const;
+		string paramName(int a_index) const;
 
-		template <typename ID>
-		const string& getParameterName(const ID& a_identifier) const;
-
-		template <typename ID, typename T>
-		T getParameterValue(const ID& a_identifier) const;
+		const NamedContainer<UnitParameter, MAX_PARAMS>& parameters() const;
 
 		/**
 		 * Sets the value of an internal parameter
 		 * \see UnitParameter::set
 		 */
 		template <typename ID, typename T>
-		bool setParameterValue(const ID& a_identifier, const T& a_value);
-		
-		/**
-		 * Sets the value of an internal parameter using a normalized value in the range [0,1].
-		 * \see UnitParameter::setNorm
-		 */
-		template <typename ID, typename T>
-		bool setParameterNorm(const ID& a_identifier, const T& a_value);
-		
-		/**
-		 * Sets the quantization level of an internal parameter.
-		 * \see UnitParameter::setPrecision
-		 */
-		template <typename ID>
-		bool setParameterPrecision(const ID& a_identifier, int a_value);
-
-		/**
-		 * Sets the value of an internal parameter using a string value.
-		 * \see UnitParameter::setFromString
-		 */
-		template <typename ID>
-		bool setParameterFromString(const ID& a_identifier, const string& a_value);
+		bool setParam(const ID& a_identifier, const T& a_value);
 
 		bool hasInput(int a_inputPort) const;
 
-		string getInputName(int a_index) const;
+		string inputName(int a_index) const;
 
-		const double& getInputValue(int a_index) const;
+		const double& readInput(int a_index) const;
 
-		const double* getInputSource(int a_index) const;
+		const double* inputSource(int a_index) const;
+
+		const NamedContainer<UnitPort, MAX_INPUTS>& inputs() const;
 
 		bool hasOutput(int a_outputPort) const;
 
 		template <typename ID>
-		string getOutputName(const ID& a_identifier) const;
+		string outputName(const ID& a_identifier) const;
 
 		template <typename ID>
-		const double& getOutputValue(const ID& a_identifier) const;
+		const double& readOutput(const ID& a_identifier) const;
 
 		const NamedContainer<double, MAX_OUTPUTS>& outputs() const;
 
-		int numParameters() const;
+		int numParams() const;
 
 		int numInputs() const;
 
@@ -264,6 +241,7 @@ namespace syn
 		* \returns True if the connection existed, false if it was already disconnected.
 		*/
 		bool disconnectInput(int a_toInputPort);
+
 		const string& name() const;
 
 		unsigned int getClassIdentifier() const;
@@ -292,7 +270,7 @@ namespace syn
 				cereal::make_nvp("parameters", tmpparams)
 			);
 			for (int i = 0; i < tmpparams.size(); i++) {
-				int index = tmpparams.getIndices()[i];
+				int index = tmpparams.indices()[i];
 				m_parameters[index].setFromString(tmpparams[index].getValueString());
 			}
 		}
@@ -363,28 +341,18 @@ namespace syn
 	};
 
 	template <typename ID>
-	const double& Unit::getOutputValue(const ID& a_identifier) const {
+	const double& Unit::readOutput(const ID& a_identifier) const {
 		return m_outputSignals[a_identifier];
 	}
 
 	template <typename ID>
-	UnitParameter& Unit::getParameter(const ID& a_identifier) {
+	UnitParameter& Unit::param(const ID& a_identifier) {
 		return m_parameters[a_identifier];
 	}
 
 	template <typename ID>
-	const UnitParameter& Unit::getParameter(const ID& a_identifier) const {
+	const UnitParameter& Unit::param(const ID& a_identifier) const {
 		return m_parameters[a_identifier];
-	}
-
-	template <typename ID>
-	const string& Unit::getParameterName(const ID& a_identifier) const {
-		return m_parameters[a_identifier].getName();
-	}
-
-	template <typename ID, typename T>
-	T Unit::getParameterValue(const ID& a_identifier) const {
-		return m_parameters[a_identifier].template get<T>();
 	}
 
 	template <typename ID>
@@ -394,34 +362,19 @@ namespace syn
 	}
 
 	template <typename ID>
-	bool Unit::hasParameter(const ID& a_paramId) const
+	bool Unit::hasParam(const ID& a_paramId) const
 	{
 		return m_parameters.contains(a_paramId);
 	}
 
 	template <typename ID, typename T>
-	bool Unit::setParameterValue(const ID& a_identifier, const T& a_value) {
+	bool Unit::setParam(const ID& a_identifier, const T& a_value) {
 		return m_parameters[a_identifier].set(a_value);
 	};
 
-	template <typename ID, typename T>
-	bool Unit::setParameterNorm(const ID& a_identifier, const T& a_value) {
-		return m_parameters[a_identifier].setNorm(a_value);
-	}
-
 	template <typename ID>
-	bool Unit::setParameterPrecision(const ID& a_identifier, int a_precision) {
-		return m_parameters[a_identifier].setPrecision(a_precision);
-	}
-
-	template <typename ID>
-	bool Unit::setParameterFromString(const ID& a_identifier, const string& a_value) {
-		return m_parameters[a_identifier].setFromString(a_value);
-	}
-
-	template <typename ID>
-	string Unit::getOutputName(const ID& a_identifier) const {
-		return m_outputSignals.getItemName<ID>(a_identifier);
+	string Unit::outputName(const ID& a_identifier) const {
+		return m_outputSignals.name<ID>(a_identifier);
 	};
 }
 #endif

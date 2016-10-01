@@ -75,8 +75,9 @@ namespace syn
 	}
 
 	void ResampledLookupTable::resample_tables() {
-		/* Construct resampled tables at ratios of powers of two */
-		m_num_resampled_tables = MAX<double>(1, log2(m_size) - 2);
+		/* Construct resampled tables at ratios of powers of K */
+		double K = 1.5;
+		m_num_resampled_tables = MAX<double>(2, log(1.0*m_size)/log(K))-1;
 		m_resampled_sizes.resize(m_num_resampled_tables);
 		m_resampled_tables.resize(m_num_resampled_tables);
 		double currsize = m_size;
@@ -84,7 +85,7 @@ namespace syn
 			m_resampled_sizes[i] = currsize;
 			m_resampled_tables[i].resize(currsize);
 			resample_table(m_table, m_size, &m_resampled_tables[i][0], m_resampled_sizes[i], m_blimp_table_offline);
-			currsize *= 0.5;
+			currsize *= 1./K;
 		}
 	}
 

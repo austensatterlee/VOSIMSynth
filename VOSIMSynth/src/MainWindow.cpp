@@ -337,25 +337,30 @@ void synui::MainWindow::forfeitFocus(UIComponent* a_comp) {
 }
 
 bool synui::MainWindow::OpenWindow(sf::WindowHandle a_system_window) {
-	if (m_sfmlWindow) {
-		sf::ContextSettings settings;
-		settings.depthBits = 32;
-		settings.stencilBits = 8;
-		settings.antialiasingLevel = 8;
-		settings.majorVersion = 3;
-		m_sfmlWindow->create(sf::VideoMode(size()[0], size()[1]), "MainWindow", sf::Style::None, settings);
+	if (!m_isOpen) {
+		if (m_sfmlWindow) {
+			sf::ContextSettings settings;
+			settings.depthBits = 32;
+			settings.stencilBits = 8;
+			settings.antialiasingLevel = 8;
+			settings.majorVersion = 3;
+			m_sfmlWindow->create(sf::VideoMode(size()[0], size()[1]), "MainWindow", sf::Style::None, settings);
+		}
+		_OpenWindowImplem(a_system_window);
+		m_sfmlWindow->setPosition({ 0,0 });
+		m_sfmlWindow->setVisible(true);
+		m_timer.resume();
+		m_isOpen = true;
 	}
-	_OpenWindowImplem(a_system_window);
-	m_sfmlWindow->setPosition({ 0,0 });
-	m_sfmlWindow->setVisible(true);
-	m_timer.resume();
-	m_isOpen = true;
 	return true;
 }
 
 void synui::MainWindow::CloseWindow() {
-	m_isOpen = false;
-	m_sfmlWindow->setVisible(false);
-	m_timer.pause();
-	_CloseWindowImplem();
+	if (m_isOpen) {
+		m_isOpen = false;
+		m_sfmlWindow->setVisible(false);
+		m_sfmlWindow->close();
+		m_timer.pause();
+		_CloseWindowImplem();
+	}
 }

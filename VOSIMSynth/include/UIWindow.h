@@ -52,8 +52,6 @@ namespace synui
 		void _onResize() override;
 	protected:
 		UILabel* m_title;
-		UICol* m_col;
-		UIRow* m_bodyRow;
 		UIRow* m_headerRow;
 		bool m_isLocked;
 	};

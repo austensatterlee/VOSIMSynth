@@ -4,13 +4,22 @@
 #include "UITabComponent.h"
 #include "UILayout.h"
 #include "UIStackedComponent.h"
-#include <string>
+#include "OscilloscopeUnit.h"
+#include "SpectroscopeUnit.h"
+#include "Theme.h"
 
 synui::VOSIMComponent::VOSIMComponent(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_unitFactory): 
 	UIComponent(a_window), 
 	m_vm(a_vm), 
 	m_unitFactory(a_unitFactory) 
 {
+
+	UIWindow* floatingPanelWindow = new UIWindow(m_window, "Floating");
+	m_floatingPanel = floatingPanelWindow->add<UIControlPanel>("");
+	m_floatingPanel->setRelPos({ 0, theme()->mWindowHeaderHeight });
+	UIControlPanel* floatingPanel = m_floatingPanel;
+	floatingPanelWindow->m_onResize = [floatingPanel](UIComponent* self) {floatingPanel->setSize(self->size()); };
+
 	m_rightPanel = new UITabWidget(m_window);
 	m_rightPanel->setLayout(new GroupLayout());
 	m_leftPanel = new UITabWidget(m_window);
@@ -19,7 +28,18 @@ synui::VOSIMComponent::VOSIMComponent(MainWindow* a_window, syn::VoiceManager* a
 	m_unitSelector = new UIUnitSelector(m_window, m_unitFactory);
 	m_controlPanel = new UIControlPanel(m_window,m_leftPanel);
 
-	m_circuitPanel = new UICircuitPanel(m_window, m_vm, m_unitFactory, m_unitSelector, m_controlPanel);
+	m_circuitPanel = new UICircuitPanel(m_window, m_vm, m_unitFactory, m_unitSelector);
+	m_circuitPanel->m_onSelectUnit = [this](UIUnitContainer* a_selected)
+	{
+		UIUnitControl* ctrl = a_selected->getUnitControl().get();
+		if(dynamic_cast<OscilloscopeUnitControl*>(ctrl) || dynamic_cast<SpectroscopeUnitControl*>(ctrl)) {
+			this->m_floatingPanel->showUnitControl(a_selected);
+		}
+		else {
+			this->m_controlPanel->showUnitControl(a_selected);
+		}
+	};
+
 	addChild(m_leftPanel);
 	m_leftPanel->addTab("Unit", m_unitSelector);
 	m_leftPanel->addTab("Edit", m_controlPanel);
@@ -64,6 +84,9 @@ synui::VOSIMComponent::VOSIMComponent(MainWindow* a_window, syn::VoiceManager* a
 	setZOrder(m_rightPanel, 1);
 	m_rightPanel->addTab("Circuit Editor", m_circuitPanel);
 	m_rightPanel->setActiveTab(0);
+
+	addChild(floatingPanelWindow, "float");
+	setZOrder(floatingPanelWindow, 0);
 }
 
 void synui::VOSIMComponent::save(ByteChunk* a_data) const {
@@ -133,4 +156,5 @@ void synui::VOSIMComponent::_onResize() {
 
 	m_rightPanel->setRelPos({ m_leftPanel->size().x()+5, 5 });
 	m_rightPanel->setSize({ size().x() - 5 - m_rightPanel->getRelPos().x(), size().y()-5 });
+
 };

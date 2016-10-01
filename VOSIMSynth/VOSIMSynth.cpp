@@ -120,8 +120,8 @@ void VOSIMSynth::makeInstrument() {
 }
 
 VOSIMSynth::~VOSIMSynth() {
-	boost::checked_delete(m_voiceManager);
-	boost::checked_delete(m_MIDIReceiver);
+	delete m_voiceManager;
+	delete m_MIDIReceiver;
 }
 
 void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) {

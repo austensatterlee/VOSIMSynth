@@ -55,9 +55,12 @@ namespace synui {
 	private:
 		UITabWidget* m_rightPanel;
 		UICircuitPanel* m_circuitPanel;
-		UIControlPanel* m_controlPanel;
+
 		UITabWidget* m_leftPanel;
+		UIControlPanel* m_controlPanel;
 		UIUnitSelector* m_unitSelector;
+
+		UIControlPanel* m_floatingPanel;
 
 		syn::VoiceManager* m_vm;
 		syn::UnitFactory* m_unitFactory;

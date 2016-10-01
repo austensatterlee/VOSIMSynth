@@ -44,7 +44,7 @@ namespace synui
 		typedef function<UIUnitContainer*(MainWindow*, UICircuitPanel*, syn::VoiceManager*, UIUnitControl*)> UnitContainerConstructor;
 		typedef function<UIUnitControl*(MainWindow*, syn::VoiceManager*, int)> UnitControllerConstructor;
 	public:
-		UICircuitPanel(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_unitFactory, UIUnitSelector* a_unitSelector, UIControlPanel* a_controlPanel);
+		UICircuitPanel(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_unitFactory, UIUnitSelector* a_unitSelector);
 		UIUnitContainer* findUnitContainer(const UICoord& a_pt) const;
 		UIUnitContainer* findUnitContainer(int a_unitId) const;
 		void requestAddConnection(int a_fromUnit, int a_fromPort, int a_toUnit, int a_toPort);
@@ -71,6 +71,10 @@ namespace synui
 		template <typename UnitType>
 		void registerUnitContainer(UnitContainerConstructor a_unitContainerConstructor);
 
+	public:
+
+		std::function<void(UIUnitContainer*)> m_onSelectUnit;
+
 	protected:
 		void draw(NVGcontext* a_nvg) override;
 		void setChildrenStyles(NVGcontext* a_nvg) override;
@@ -88,7 +92,6 @@ namespace synui
 		syn::VoiceManager* m_vm;
 		syn::UnitFactory* m_unitFactory;
 		UIUnitSelector* m_unitSelector;
-		UIControlPanel* m_unitControlPanel;
 		UIUnitContainer* m_inputs;
 		UIUnitContainer* m_outputs;
 

@@ -123,7 +123,7 @@ namespace syn
 
 	void MemoryUnit::process_()
 	{
-		setOutputChannel_(0, m_delay.process(getInputValue(0)));
+		setOutputChannel_(0, m_delay.process(readInput(0)));
 	}
 
 	//---------------------
@@ -158,10 +158,10 @@ namespace syn
 		int newtype;
 		switch (a_paramId) {
 		case pBufType:
-			newtype = getParameter(pBufType).getInt();
-			getParameter(pBufDelay).setVisible(newtype == 0);
-			getParameter(pBufFreq).setVisible(newtype == 1);
-			getParameter(pBufBPMFreq).setVisible(newtype == 2);
+			newtype = param(pBufType).getInt();
+			param(pBufDelay).setVisible(newtype == 0);
+			param(pBufFreq).setVisible(newtype == 1);
+			param(pBufBPMFreq).setVisible(newtype == 2);
 			break;
 		default:
 			break;
@@ -170,24 +170,24 @@ namespace syn
 
 	void VariableMemoryUnit::process_()
 	{
-		int bufType = getParameter(pBufType).getEnum();
+		int bufType = param(pBufType).getEnum();
 		switch (bufType) {
 		case pBufDelay:
-			m_delaySamples = periodToSamples(getParameter(pBufDelay).getDouble() + getInputValue(iSizeMod), fs());
+			m_delaySamples = periodToSamples(param(pBufDelay).getDouble() + readInput(iSizeMod), fs());
 			break;
 		case pBufFreq:
-			m_delaySamples = freqToSamples(getParameter(pBufFreq).getDouble() + getInputValue(iSizeMod), fs());
+			m_delaySamples = freqToSamples(param(pBufFreq).getDouble() + readInput(iSizeMod), fs());
 			break;
 		case pBufBPMFreq:
-			m_delaySamples = freqToSamples(bpmToFreq(getParameter(pBufBPMFreq).getEnum(getParameter(pBufBPMFreq).getInt() + getInputValue(iSizeMod)), tempo()), fs());
+			m_delaySamples = freqToSamples(bpmToFreq(param(pBufBPMFreq).getEnum(param(pBufBPMFreq).getInt() + readInput(iSizeMod)), tempo()), fs());
 			break;
 		default:
 			break;
 		}
 		m_delay.resizeBuffer(m_delaySamples);
-		double input = getInputValue(iIn);
-		double receive = getInputValue(iReceive);
-		double dryMix = input * getParameter(pDryGain).getDouble();
+		double input = readInput(iIn);
+		double receive = readInput(iReceive);
+		double dryMix = input * param(pDryGain).getDouble();
 		double output = m_delay.process(input + receive);
 		setOutputChannel_(oOut, output + dryMix);
 		setOutputChannel_(oSend, output);
