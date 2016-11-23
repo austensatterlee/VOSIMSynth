@@ -76,8 +76,7 @@ namespace syn
 
 	void ResampledLookupTable::resample_tables() {
 		/* Construct resampled tables at ratios of powers of K */
-		double K = 1.5;
-		m_num_resampled_tables = MAX<double>(2, log(1.0*m_size)/log(K))-1;
+		m_num_resampled_tables = MAX<double>(1, log2(1.0*m_size)-2);
 		m_resampled_sizes.resize(m_num_resampled_tables);
 		m_resampled_tables.resize(m_num_resampled_tables);
 		double currsize = m_size;
@@ -85,13 +84,13 @@ namespace syn
 			m_resampled_sizes[i] = currsize;
 			m_resampled_tables[i].resize(currsize);
 			resample_table(m_table, m_size, &m_resampled_tables[i][0], m_resampled_sizes[i], m_blimp_table_offline);
-			currsize *= 1./K;
+			currsize *= 0.5;
 		}
 	}
 
 	double ResampledLookupTable::getresampled(double phase, double period) const {
 		int min_size_diff = -1;
-		int min_size_diff_index = 0;
+		int table_index = 0;
 		for (int i = 0; i < m_num_resampled_tables; i++) {
 			int curr_size_diff = m_resampled_sizes[i] - static_cast<int>(period);
 			if (curr_size_diff < 0) {
@@ -99,10 +98,11 @@ namespace syn
 			}
 			if (curr_size_diff < min_size_diff || min_size_diff == -1) {
 				min_size_diff = curr_size_diff;
-				min_size_diff_index = i;
+				table_index = i;
 			}
 		}
-		return getresampled_single(&m_resampled_tables[min_size_diff_index][0], m_resampled_sizes[min_size_diff_index], phase, period, m_blimp_table_online);
+//		int table_index = CLAMP<int>(log2(period) - log2(m_size), 0, m_num_resampled_tables-1);
+		return getresampled_single(&m_resampled_tables[table_index][0], m_resampled_sizes[table_index], phase, period, m_blimp_table_online);
 	}
 
 	void resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table, bool normalize) {

@@ -385,7 +385,7 @@ namespace synui
 		if (m_minSize[0] >= 0)
 			m_minSize[0] = syn::MIN(m_minSize[0], a_maxSize[0]);
 		if (m_minSize[1] >= 0)
-			m_minSize[1] = syn::MIN(m_minSize[1], a_maxSize[1]);
+		 	m_minSize[1] = syn::MIN(m_minSize[1], a_maxSize[1]);
 		setSize(m_size);
 	}
 
