@@ -179,6 +179,7 @@ namespace syn
 	private:
 		int m_pMinInput, m_pMaxInput;
 		int m_pMinOutput, m_pMaxOutput;
+		int m_pClip;
 	};
 
 	/**

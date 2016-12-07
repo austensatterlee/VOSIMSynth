@@ -43,35 +43,35 @@ namespace syn
 	NSampleDelay::NSampleDelay() :
 		m_buffer(1),
 		m_arraySize(1),
-		m_nBufSamples(1.0),
-		m_curReadPhase(0.0),
-		m_curWritePhase(0.0),
-		m_currOutput(0.0)
+		m_delaySamples(1.0),
+		m_curWritePhase(0),
+		m_lastOutput(0.0)
 	{
 		resizeBuffer(1);
 	}
 
-	double NSampleDelay::getCurrOutput() const
+	double NSampleDelay::getLastOutput() const
 	{
-		return m_currOutput;
+		return m_lastOutput;
 	};
 
-	double NSampleDelay::getPastSample(double a_offset)
+	double NSampleDelay::readTap(double a_offset)
 	{
-		int bufferReadPhase = WRAP(m_curReadPhase - a_offset, m_nBufSamples);
-		return getresampled_single(&m_buffer[0], ceil(m_nBufSamples), bufferReadPhase, m_nBufSamples, lut_blimp_table_online());
+		double readPhase = WRAP<double>(m_curWritePhase - a_offset, m_arraySize);
+		int rInd1 = static_cast<int>(readPhase);
+		int rInd2 = WRAP<int>(rInd1 + 1, m_arraySize);
+		return LERP<double>(m_buffer[rInd1], m_buffer[rInd2], readPhase - rInd1);
 	}
 
-	void NSampleDelay::resizeBuffer(double a_nBufSamples)
+	void NSampleDelay::resizeBuffer(double a_delaySamples)
 	{
-		if (m_nBufSamples == a_nBufSamples || a_nBufSamples <= 0)
+		if (m_delaySamples == a_delaySamples || a_delaySamples <= 0)
 			return;
-		int requiredBufSize = ceil(a_nBufSamples);
+		int requiredBufSize = ceil(a_delaySamples);
 		if (requiredBufSize > m_buffer.size())
 			m_buffer.resize(requiredBufSize);
 		m_arraySize = static_cast<int>(m_buffer.size());
-		m_nBufSamples = a_nBufSamples;
-		m_curReadPhase = WRAP<double>(m_curWritePhase - m_nBufSamples, m_arraySize);
+		m_delaySamples = a_delaySamples;
 	}
 
 	void NSampleDelay::clearBuffer()
@@ -87,15 +87,16 @@ namespace syn
 	double NSampleDelay::process(double a_input)
 	{
 		// Read
-		int rInd1 = static_cast<int>(m_curReadPhase);
-		int rInd2 = WRAP<int>(rInd1 + 1, m_arraySize);
-		m_currOutput = LERP(m_buffer[rInd1], m_buffer[rInd2], m_curReadPhase - rInd1);
-		m_curReadPhase = WRAP<double>(m_curReadPhase + 1.0, m_arraySize);
+		m_lastOutput = readTap(m_delaySamples);
 
 		// Write
+		silentProcess(a_input);
+		return m_lastOutput;
+	}
+
+	void NSampleDelay::silentProcess(double a_input) {
 		m_buffer[static_cast<int>(m_curWritePhase)] = a_input;
 		m_curWritePhase = WRAP<double>(m_curWritePhase + 1.0, m_arraySize);
-		return m_currOutput;
 	}
 
 	//---------------------
@@ -143,6 +144,7 @@ namespace syn
 		addParameter_(pBufBPMFreq, UnitParameter("rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM).setVisible(false));
 		addParameter_(pBufType, UnitParameter("units", { "sec","Hz","BPM" }, { pBufDelay, pBufFreq, pBufBPMFreq }));
 		addParameter_(pDryGain, UnitParameter("dry", 0.0, 1.0, 0.0));
+		addParameter_(pUseAP, UnitParameter("use ap", false));
 		m_delay.resizeBuffer(48000);
 	}
 
@@ -151,7 +153,7 @@ namespace syn
 	{
 	}
 
-	void VariableMemoryUnit::reset() { m_delay.clearBuffer(); }
+	void VariableMemoryUnit::reset() { m_delay.clearBuffer(); m_lastOutput = 0.0; }
 
 	void VariableMemoryUnit::onParamChange_(int a_paramId)
 	{
@@ -162,7 +164,10 @@ namespace syn
 			param(pBufDelay).setVisible(newtype == 0);
 			param(pBufFreq).setVisible(newtype == 1);
 			param(pBufBPMFreq).setVisible(newtype == 2);
+			m_lastOutput = 0.0;
 			break;
+		case pUseAP:
+			m_lastOutput = 0.0;
 		default:
 			break;
 		}
@@ -188,7 +193,19 @@ namespace syn
 		double input = readInput(iIn);
 		double receive = readInput(iReceive);
 		double dryMix = input * param(pDryGain).getDouble();
-		double output = m_delay.process(input + receive);
+		double output;
+		if (param(pUseAP).getBool()) 
+		{
+			double lastInput = m_delay.readTap(0.0); // x[n-1]
+			double lastOutput = m_lastOutput; // y[n-1]
+			double a = (1 - m_delaySamples) / (1 + m_delaySamples);
+			output = (input - lastOutput) * a + lastInput;
+		}
+		else 
+		{
+			output = m_delay.process(input + receive);
+		}
+		m_lastOutput = output;
 		setOutputChannel_(oOut, output + dryMix);
 		setOutputChannel_(oSend, output);
 	}

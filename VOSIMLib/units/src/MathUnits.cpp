@@ -37,7 +37,7 @@ double syn::MovingAverage::process(double a_input) {
 }
 
 double syn::MovingAverage::getPastInputSample(int a_offset) {
-	return m_delay.getPastSample(a_offset);
+	return m_delay.readTap(a_offset);
 }
 
 syn::DCRemoverUnit::DCRemoverUnit(const string& a_name) :
@@ -172,6 +172,7 @@ syn::LerpUnit::LerpUnit(const string& a_name) :
 	m_pMaxInput = addParameter_(UnitParameter("max in", -1E6, 1E6, 1.0).setControlType(UnitParameter::Unbounded));
 	m_pMinOutput = addParameter_(UnitParameter("min out", -1E6, 1E6, 0.0).setControlType(UnitParameter::Unbounded));
 	m_pMaxOutput = addParameter_(UnitParameter("max out", -1E6, 1E6, 1.0).setControlType(UnitParameter::Unbounded));
+	m_pClip = addParameter_(UnitParameter("clip", false));
 	addInput_("in");
 	addOutput_("out");
 }
@@ -186,6 +187,8 @@ void syn::LerpUnit::process_() {
 	double aOut = param(m_pMinOutput).getDouble();
 	double bOut = param(m_pMaxOutput).getDouble();
 	double inputNorm = INVLERP(aIn, bIn, input);
-	double output = LERP(aOut, bOut, inputNorm);	
+	double output = LERP(aOut, bOut, inputNorm);
+	if (param(m_pClip).getBool())
+		output = CLAMP(output, aOut, bOut);
 	setOutputChannel_(0, output);
 }

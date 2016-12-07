@@ -40,19 +40,38 @@ namespace syn
 	{
 	public:
 		NSampleDelay();
-		double getCurrOutput() const;
+
+		/**
+		 * \brief Return the most recent output calculated by process().
+		 * \return 
+		 */
+		double getLastOutput() const;
+		/**
+		 * \brief Record a sample to the buffer and return the delay output.
+		 * \param a_input 
+		 * \return 
+		 */
 		double process(double a_input);
-		double getPastSample(double a_offset);
+		/**
+		 * \brief Record a sample to the buffer and increments the write location.
+		 * \param a_input 
+		 */
+		void silentProcess(double a_input);
+		/**
+		 * \brief Read from the buffer at an arbitray delay time
+		 * \param a_offset delay time (in samples)
+		 * \return 
+		 */
+		double readTap(double a_offset);
 		void resizeBuffer(double a_newBufSize);
 		void clearBuffer();
 		int size() const;
 	private:
 		vector<double> m_buffer;
 		int m_arraySize;
-		double m_nBufSamples;
-		double m_curReadPhase;
-		double m_curWritePhase;
-		double m_currOutput;
+		double m_delaySamples;
+		int m_curWritePhase;
+		double m_lastOutput;
 	};
 
 	class MemoryUnit : public Unit
@@ -82,7 +101,8 @@ namespace syn
 			pBufFreq,
 			pBufBPMFreq,
 			pBufType,
-			pDryGain
+			pDryGain,
+			pUseAP
 		};
 
 		enum Output
@@ -109,6 +129,7 @@ namespace syn
 	private:
 		NSampleDelay m_delay;
 		double m_delaySamples;
+		double m_lastOutput;
 	};
 }
 #endif
