@@ -34,7 +34,7 @@ namespace syn
 	/**
 	* Envelope follower
 	*/
-	class FollowerUnit : public Unit
+	class VOSIMLIB_API FollowerUnit : public Unit
 	{
 		DERIVE_UNIT(FollowerUnit)
 	public:

@@ -17,6 +17,14 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
+/**
+ *  \file Circuit.h
+ *  \brief 
+ *  \details
+ *  \author Austen Satterlee
+ *  \date 02/2016
+ */
+
 #ifndef __Circuit__
 #define __Circuit__
 
@@ -32,7 +40,7 @@ using std::list;
 
 namespace syn
 {
-	struct ConnectionRecord
+	struct VOSIMLIB_API ConnectionRecord
 	{
 		int from_id;
 		int from_port;
@@ -53,7 +61,7 @@ namespace syn
 		}
 	};
 
-	class PassthroughUnit : public Unit
+	class VOSIMLIB_API PassthroughUnit : public Unit
 	{
 	public:
 		explicit PassthroughUnit(const string& a_name) :
@@ -70,7 +78,7 @@ namespace syn
 		}
 	};
 
-	class InputUnit : public PassthroughUnit
+	class VOSIMLIB_API InputUnit : public PassthroughUnit
 	{
 		DERIVE_UNIT(InputUnit)
 	public:
@@ -78,7 +86,7 @@ namespace syn
 		InputUnit(const InputUnit& a_other) : InputUnit(a_other.name()) {}
 	};
 
-	class OutputUnit : public PassthroughUnit
+	class VOSIMLIB_API OutputUnit : public PassthroughUnit
 	{
 		DERIVE_UNIT(OutputUnit)
 	public:
@@ -94,7 +102,7 @@ namespace syn
 	* A Circuit is a Unit that contains other Units.
 	*
 	*/
-	class Circuit : public Unit
+	class VOSIMLIB_API Circuit : public Unit
 	{
 		DERIVE_UNIT(Circuit)
 	public:

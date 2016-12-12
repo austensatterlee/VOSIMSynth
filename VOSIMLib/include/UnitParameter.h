@@ -20,6 +20,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __UNITPARAMETER__
 #define __UNITPARAMETER__
 
+#include "common.h"
 #include <vector>
 #include <map>
 #include <cereal/types/vector.hpp>
@@ -34,7 +35,7 @@ namespace syn
 {
 	class Unit;
 
-	class UnitParameter
+	class VOSIMLIB_API UnitParameter
 	{
 	public:
 		enum EParamType

@@ -18,27 +18,21 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
-* \file DSPMath.h
-* \brief
-* \details
-* \author Austen Satterlee
-* \date March 6, 2016
-*/
+ * \file DSPMath.h
+ * \brief
+ * \details
+ * \author Austen Satterlee
+ * \date March 6, 2016
+ */
 
 #ifndef __DSPMATH__
 #define __DSPMATH__
 
-#if defined(_MSC_VER)
-#define MSFASTCALL __fastcall
-#define GCCFASTCALL 
-#elif defined(__GNUC__)
-#define MSFASTCALL
-#define GCCFASTCALL __attribute__((fastcall))
-#endif
-
-#define DSP_PI 3.14159265358979323846264338327950288
+#include "common.h"
 #include <regex>
 #include <cereal/cereal.hpp>
+
+#define DSP_PI 3.14159265358979323846264338327950288
 
 namespace syn
 {

@@ -19,7 +19,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __UNITFACTORY__
 #define __UNITFACTORY__
-
+#include "common.h"
 #include <vector>
 #include <set>
 #include <unordered_map>
@@ -36,7 +36,7 @@ namespace syn
 {
 	class Unit;
 
-	class UnitFactory
+	class VOSIMLIB_API UnitFactory
 	{
 		UnitFactory() {} 
 

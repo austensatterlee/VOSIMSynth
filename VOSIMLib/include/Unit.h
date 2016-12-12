@@ -17,8 +17,19 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
+/**
+ *  \file Unit.h
+ *  \brief 
+ *  \details
+ *  \author Austen Satterlee
+ *  \date 02/2016
+ */
+
 #ifndef __UNIT__
 #define __UNIT__
+
+#include "common_serial.h"
+#include "common.h"
 #include "NamedContainer.h"
 #include "UnitParameter.h"
 #include "UnitFactory.h"
@@ -40,20 +51,20 @@ namespace syn
 {
 	class Circuit;
 
-	struct AudioConfig
+	struct VOSIMLIB_API AudioConfig
 	{
 		double fs;
 		double tempo;
 	};
 
-	struct MidiData
+	struct VOSIMLIB_API MidiData
 	{
 		int note;
 		int velocity;
 		bool isNoteOn;
 	};
 
-	struct UnitPort
+	struct VOSIMLIB_API UnitPort
 	{
 		UnitPort() : UnitPort(0.0) {}
 		UnitPort(double a_defVal) : defVal(a_defVal), src(nullptr) {}
@@ -103,7 +114,7 @@ namespace syn
 	 * Unit::_getClassName should simply return a string form of the class name. This is used for factory construction.
 	 *
 	 */
-	class Unit
+	class VOSIMLIB_API Unit
 	{
 	public:
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW

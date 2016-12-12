@@ -38,19 +38,21 @@ using boost::lockfree::capacity;
 
 namespace syn
 {
+	 
 	/**
-	 * Used to pass messages to a voice manager via VoiceManager::queueAction
+	 * \brief Used to pass messages to a voice manager via VoiceManager::queueAction.
+	 * 
 	 * The action function pointer will be called once for each voice (with the corresponding circuit passed as the first parameter).
 	 * On the last voice, the second parameter will be true.
 	 * The third parameter is a pointer to the ByteChunk stored in this structure, which is useful for passing arguments.
 	 */
-	struct RTMessage
+	struct VOSIMLIB_API RTMessage
 	{
 		void(*action)(Circuit*, bool, ByteChunk*);
 		ByteChunk data;
 	};
 
-	class VoiceManager
+	class VOSIMLIB_API VoiceManager
 	{
 	public:
 		enum VoiceSelectionPolicy

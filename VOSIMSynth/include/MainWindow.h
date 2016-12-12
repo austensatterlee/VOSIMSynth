@@ -28,37 +28,22 @@ Copyright 2016, Austen Satterlee
 #ifndef __MAINWINDOW__
 #define __MAINWINDOW__
 
-#include <SFML/Graphics.hpp>
-#include <SFML/Window.hpp>
+#include <SFML/Graphics/RenderWindow.hpp>
 #include <sftools/Chronometer.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/lockfree/policies.hpp>
-#include <list>
 
 #include "UI.h"
-#include "perf.h"
 
 #define MAX_GUI_MSG_QUEUE_SIZE 64
 
-using sf::Event;
 using boost::lockfree::spsc_queue;
 using boost::lockfree::capacity;
-namespace syn
-{
-	class VoiceManager;
-	class UnitFactory;
-}
 
 namespace synui
 {
-	template <typename T>
-	struct Timestamped
-	{
-		T data;
-		sf::Time time;
-	};
-
 	class MainWindow;
+	class MainGUI;
 
 	struct GUIMessage
 	{
@@ -71,41 +56,21 @@ namespace synui
 	public:
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		MainWindow(int a_width, int a_height, std::function<UIComponent*(MainWindow*)> a_rootComponentConstructor);
+		typedef std::function<MainGUI*(MainWindow&)> GUIConstructor; 
+
+	public:
+
+		MainWindow(int a_width, int a_height, GUIConstructor a_guiConstructor);
 		virtual ~MainWindow();
 
-		sf::RenderWindow* GetWindow() const { return m_sfmlWindow; }
+		std::shared_ptr<sf::RenderWindow> getWindow() const { return m_window; }
 
 		bool isOpen() const { return m_isOpen; }
 
-		Vector2i getSize() const { return m_size; }
-
-		Vector2i cursorPos() const;
-
-		Vector2i diffCursorPos() const;
-
-		Vector2i size() const;
-
-		const Timestamped<Event::MouseButtonEvent>& lastClickEvent() const { return m_lastClick; }
-
-		const Timestamped<Event::MouseWheelScrollEvent>& lastScrollEvent() const { return m_lastScroll; }
-
-		shared_ptr<Theme> theme() const { return m_theme; }
+		Vector2u getSize() const { return m_size; }
 
 		double fps() const { return m_fps; }
 		
-		UIComponent* getRoot() const { return m_root; }
-
-		NVGcontext* getContext() const { return m_vg; }
-
-		void setFocus(UIComponent* a_comp);
-
-		UIComponent* getFocused() const { return m_focusPath.empty() ? nullptr : m_focusPath.front(); }
-
-		void clearFocus() { setFocus(nullptr); }
-
-		void forfeitFocus(UIComponent* a_comp);
-
 		bool OpenWindow(sf::WindowHandle a_system_window);
 
 		void CloseWindow();
@@ -123,11 +88,9 @@ namespace synui
 		 */
 		void _OpenWindowImplem(sf::WindowHandle a_system_window);
 		void _CloseWindowImplem();
-		void _initialize();
+		
 		void _runLoop();
 		void _handleEvents();
-
-		void _updateCursorPos(const Vector2i& newPos);
 
 		void _queueInternalMessage(GUIMessage* a_msg);
 		void _flushMessageQueues();
@@ -137,27 +100,12 @@ namespace synui
 		HINSTANCE m_HInstance;
 #endif
 		sf::WindowHandle m_timerWindow;
-		sf::RenderWindow* m_sfmlWindow;
+		std::shared_ptr<sf::RenderWindow> m_window;
+		std::shared_ptr<MainGUI> m_mainGUI;
 		bool m_isOpen;
 
-		NVGcontext* m_vg;
+		Vector2u m_size;
 
-		Vector2i m_size;
-		Vector2i m_cursor;
-		Vector2i m_dCursor;
-		Timestamped<Event::MouseButtonEvent> m_lastClick;
-		Timestamped<Event::MouseWheelScrollEvent> m_lastScroll;
-
-		UIComponent* m_draggingComponent;
-		list<UIComponent*> m_focusPath;
-		syn::VoiceManager* m_vm;
-		syn::UnitFactory* m_unitFactory;
-
-		UIComponent* m_root;
-		std::function<UIComponent*(MainWindow*)> m_rootConstructor;
-		shared_ptr<Theme> m_theme;
-
-		PerfGraph m_fpsGraph;
 		sftools::Chronometer m_timer;
 		unsigned m_frameCount;
 		double m_fps;

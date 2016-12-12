@@ -27,9 +27,11 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __MEMORYPOOL__
 #define __MEMORYPOOL__
+
+#include "common.h"
 #include <vector>
 
-class MemoryPool
+class VOSIMLIB_API MemoryPool
 {
 	struct Chunk
 	{

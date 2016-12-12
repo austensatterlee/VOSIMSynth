@@ -1,12 +1,11 @@
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
-#include "catch.hpp"
+#include "Tests.h"
 
-#include "common.h"
-#include "Unit.h"
-#include "StateVariableFilter.h"
-#include "Oscillator.h"
-#include "Circuit.h"
-#include "MemoryUnit.h"
+#include <common_serial.h>
+#include <Unit.h>
+#include <StateVariableFilter.h>
+#include <Oscillator.h>
+#include <Circuit.h>
+#include <MemoryUnit.h>
 
 #include <iostream>
 #include <sstream>

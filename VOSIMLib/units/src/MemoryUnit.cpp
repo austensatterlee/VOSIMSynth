@@ -33,8 +33,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 CEREAL_REGISTER_TYPE(syn::MemoryUnit);
 CEREAL_REGISTER_TYPE(syn::VariableMemoryUnit);
 
-using namespace std;
-
 namespace syn
 {
 	//---------------------
@@ -76,7 +74,7 @@ namespace syn
 
 	void NSampleDelay::clearBuffer()
 	{
-		fill(&m_buffer.front(), &m_buffer.back(), 0.0);
+		std::fill(&m_buffer.front(), &m_buffer.back(), 0.0);
 	}
 
 	int NSampleDelay::size() const

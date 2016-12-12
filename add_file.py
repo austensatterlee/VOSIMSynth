@@ -18,53 +18,76 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
- *  \file {filename:}.h
+ *  \file {filename}.h
  *  \brief
  *  \details
  *  \author Austen Satterlee
- *  \date {date:}
+ *  \date {date}
  */
+{guard}
+"""
 
-#ifndef __{guardname:}__
-#define __{guardname:}__
-
+IFNDEF_TEMPLATE = r"""
+#ifndef __{guardname}__
+#define __{guardname}__
 
 #endif
 """
 
+PRAGMA_ONCE_TEMPLATE = r"""
+#pragma once
+"""
+
 SOURCE_TEMPLATE="#include \"{filename:}.h\""
 
-INCLUDE_DIRNAME = "include"
-SOURCES_DIRNAME = "src"
+def find_valid_directories(source_dir, include_dir):
+    def _walker(ret_list, dirname, fnames):
+        if (source_dir in fnames) and (include_dir in fnames):
+            ret_list.append(dirname)
+    valid_directories = []
+    os.path.walk(".", _walker, valid_directories)
+    return valid_directories
 
-def find_valid_directories(valid_dirs, dirname, fnames):
-    if (SOURCES_DIRNAME in fnames) and (INCLUDE_DIRNAME in fnames):
-        valid_dirs.append(dirname)
 
 if __name__=="__main__":
     import argparse as ap
     import os,sys,datetime
     parser = ap.ArgumentParser()
-    valid_directories = []
-    os.path.walk(".",find_valid_directories,valid_directories)
-    parser.add_argument("directory",type=str,help="Detected valid directories: {}".format(' '.join(valid_directories)))
-    parser.add_argument("filename",type=str)
-    parser.add_argument("-f","--force",action="store_true",default=False)
+    subparsers = parser.add_subparsers()
+
+    parser_add = subparsers.add_parser("add", help="add source and include files to their respective directories")
+    parser_add.add_argument("directory",type=str)
+    parser_add.add_argument("filename",type=str)
+    parser_add.add_argument("-f","--force",action="store_true",default=False,help="Overwrite when adding")
+    parser_add.add_argument("--guard",choices=["pragma","ifndef"],default="pragma",help="Use either #ifndef\
+            guards or #pragma once (default: pragma).")
+    parser_add.set_defaults(command="add")
+
+    parser_list = subparsers.add_parser("list", help="List valid directories and exit")
+    parser_list.set_defaults(command="list")
+
+    parser.add_argument("-S","--source-dir",type=str,default="src",help="Name of source directory")
+    parser.add_argument("-I","--include-dir",type=str,default="include",help="Name of include directory")
     parsed = parser.parse_args()
 
-    dir_contents = os.listdir(parsed.directory)
-    if (SOURCES_DIRNAME not in dir_contents) or (INCLUDE_DIRNAME not in dir_contents):
-        raise RuntimeError("\"%s\" and \"%s\" directories not found"%(SOURCES_DIRNAME,INCLUDE_DIRNAME))
+    if parsed.command=="list":
+        print '\n'.join( find_valid_directories(parsed.source_dir, parsed.include_dir) )
+        sys.exit()
 
-    include_fname = os.path.join(parsed.directory,INCLUDE_DIRNAME,parsed.filename+".h")
-    src_fname = os.path.join(parsed.directory,SOURCES_DIRNAME,parsed.filename+".cpp")
+    dir_contents = os.listdir(parsed.directory)
+    if (parsed.source_dir not in dir_contents) or (parsed.include_dir not in dir_contents):
+        raise RuntimeError("\"%s\" and \"%s\" directories not found"%(parsed.source_dir,parsed.include_dir))
+
+    include_fname = os.path.join(parsed.directory,parsed.include_dir,parsed.filename+".h")
+    src_fname = os.path.join(parsed.directory,parsed.source_dir,parsed.filename+".cpp")
 
     if not parsed.force and (os.path.exists(include_fname) or os.path.exists(src_fname)):
         raise RuntimeError("\"%s\" or \"%s\" already exists!"%(include_fname,src_fname))
 
+    guard_str = PRAGMA_ONCE_TEMPLATE if parsed.guard=="pragma" else IFNDEF_TEMPLATE.format(guardname=parsed.filename.toupper())
     include_contents = HEADER_TEMPLATE.format(
         filename=parsed.filename,
-        guardname=parsed.filename.upper(),
+        guard=guard_str,
         date=datetime.date.today().strftime("%m/%Y")
         )
 

@@ -19,16 +19,9 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __NAMEDCONTAINER__
 #define __NAMEDCONTAINER__
-#include <array>
-#include <cereal/cereal.hpp>
 
-#if defined(_MSC_VER)
-#define MSFASTCALL __fastcall
-#define GCCFASTCALL
-#elif defined(__GNUC__)
-#define MSFASTCALL
-#define GCCFASTCALL __attribute__((fastcall))
-#endif
+#include "common.h"
+#include <array>
 
 using std::array;
 using std::string;
@@ -36,7 +29,7 @@ using std::string;
 namespace syn
 {
 	template <typename T, int MAXSIZE>
-	class NamedContainer
+	class VOSIMLIB_API NamedContainer
 	{
 	public:
 		const size_t max_size = MAXSIZE;

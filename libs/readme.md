@@ -6,12 +6,16 @@ Additional required libraries (not in this directory):
 - **SFML**
   - *https://github.com/SFML/SFML.git*
   - Build and install with CMake
+- **TGUI**
+  - https://github.com/texus/TGUI
+  - Build and install with CMake
 - **GLEW**
   - *https://github.com/Perlmint/glew-cmake.git*
   - Build and install with CMake
-- **Boost.Lockfree**
+- **Boost Headers**
   - *http://www.boost.org/users/download/*
   - If CMake can't locate it, add the install directory to an environment variable called BOOST_ROOT.
+  - No compiled Boost libraries have yet been used.
 - **FFTS**
   - Original repo: *https://github.com/anthonix/ffts*
   - Windows compatible: *https://github.com/linkotec/ffts*

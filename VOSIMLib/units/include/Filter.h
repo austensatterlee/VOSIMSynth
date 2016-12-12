@@ -28,12 +28,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __FILTER__
 #include "Unit.h"
 
-using namespace std;
-
 namespace syn
 {
 	template <size_t nX, size_t nY>
-	class Filter : public Unit
+	class VOSIMLIB_API Filter : public Unit
 	{
 	protected:
 		double XCoefs[nX];

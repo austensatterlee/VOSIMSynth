@@ -22,8 +22,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "IPlug_include_in_plug_hdr.h"
 
-using namespace std;
-
 namespace synui {
 	class VOSIMComponent;
 }
@@ -64,15 +62,11 @@ public:
 
 	void OnActivate(bool active) override;
 
-	int getTickCount() const {
-		return m_tickCount;
-	}
+	int getTickCount() const { return m_tickCount; }
 
 	void OnGUIOpen() override;
 
 	void OnGUIClose() override;
-
-	synui::VOSIMComponent* getVOSIMComponent() const;
 
 private:
 	syn::MIDIReceiver* m_MIDIReceiver;

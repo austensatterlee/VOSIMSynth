@@ -22,11 +22,9 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "Oscillator.h"
 
-using namespace std;
-
 namespace syn
 {
-	class VosimOscillator : public TunedOscillator
+	class VOSIMLIB_API VosimOscillator : public TunedOscillator
 	{
 		DERIVE_UNIT(VosimOscillator)
 	public:
@@ -59,7 +57,7 @@ namespace syn
 		int m_num_pulses;
 	};
 
-	class FormantOscillator : public TunedOscillator
+	class VOSIMLIB_API FormantOscillator : public TunedOscillator
 	{
 		DERIVE_UNIT(FormantOscillator)
 	public:

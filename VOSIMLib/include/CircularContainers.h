@@ -20,6 +20,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __ATOMICCONTAINERS__
 #define __ATOMICCONTAINERS__
 
+#include "common.h"
+
 namespace syn
 {
 	/**
@@ -45,7 +47,7 @@ namespace syn
 	 * Sizes are limited to powers of two, up to 128.
 	 */
 	template <typename T>
-	class CircularQueue
+	class VOSIMLIB_API CircularQueue
 	{
 	public:
 		CircularQueue();

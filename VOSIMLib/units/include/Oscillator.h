@@ -22,8 +22,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "Unit.h"
 
-using namespace std;
-
 namespace syn
 {
 	enum WAVE_SHAPE
@@ -36,7 +34,7 @@ namespace syn
 
 	const vector<string> WAVE_SHAPE_NAMES{ "Saw", "Sine", "Tri", "Square" };
 
-	class Oscillator : public Unit
+	class VOSIMLIB_API Oscillator : public Unit
 	{
 	public:
 		enum Param
@@ -80,7 +78,7 @@ namespace syn
 		double m_bias;
 	};
 
-	class TunedOscillator : public Oscillator
+	class VOSIMLIB_API TunedOscillator : public Oscillator
 	{
 	public:
 		enum Param
@@ -108,7 +106,7 @@ namespace syn
 		double m_pitch;
 	};
 
-	class BasicOscillator : public TunedOscillator
+	class VOSIMLIB_API BasicOscillator : public TunedOscillator
 	{
 		DERIVE_UNIT(BasicOscillator)
 	public:
@@ -124,7 +122,7 @@ namespace syn
 		void MSFASTCALL process_() GCCFASTCALL override;
 	};
 
-	class LFOOscillator : public Oscillator
+	class VOSIMLIB_API LFOOscillator : public Oscillator
 	{
 		DERIVE_UNIT(LFOOscillator)
 	public:

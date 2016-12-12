@@ -1,5 +1,5 @@
 # Standalone app
-SET(APP_NAME "${PLUGIN_NAME}-app")
+PROJECT(VOSIMSynth_standalone)
 
 SET(ASIO_DIR ${LIBS_DIR}/ASIO_SDK)
 SET(RTMIDI_DIR ${WDL_ROOT}/RtAudioMidi)
@@ -28,8 +28,6 @@ SET(ASIO_FILES ${ASIO_HDRS};${ASIO_SRCS})
 
 source_group(ASIO FILES ${ASIO_FILES})
 source_group(RtAudio FILES ${RTMIDI_FILES})
-source_group(VOSIMLib FILES ${VOSIMLIB_HDRS} ${VOSIMLIB_SRCS})
-source_group(VOSIMLib-Units FILES ${VOSIMLIB_UNIT_HDRS} ${VOSIMLIB_UNIT_SRCS})
 source_group(VOSIMSynth FILES ${PROJECT_FILES} ${STANDALONE_FILES})
 source_group(Resources FILES ${RESOURCE_FILES})
 source_group(WDL FILES ${WDL_FILES})
@@ -42,7 +40,7 @@ IF(WIN32)
 ENDIF()
 
 
-ADD_EXECUTABLE (${APP_NAME} WIN32
+ADD_EXECUTABLE (${PROJECT_NAME} WIN32
   ${PROJECT_FILES}
   ${STANDALONE_FILES}
   ${RESOURCE_FILES}
@@ -55,12 +53,12 @@ ADD_EXECUTABLE (${APP_NAME} WIN32
   ${SFTOOLS_FILES}
   )
 
-target_link_libraries(${APP_NAME} ${ADDITIONAL_LIBRARIES}
+target_link_libraries(${PROJECT_NAME} ${ADDITIONAL_LIBRARIES}
   "$<$<CONFIG:Release>:${REL_LIBS}>"
   "$<$<NOT:$<CONFIG:Release>>:${DBG_LIBS}>"
   VOSIMLib
   )
 
 IF(WIN32)
-  target_link_libraries(${APP_NAME} dsound winmm comctl32 wininet)
+  target_link_libraries(${PROJECT_NAME} dsound winmm comctl32 wininet)
 ENDIF()

@@ -1,6 +1,16 @@
 cmake_minimum_required(VERSION 3.3)
 project(VOSIMLib)
 
+set_option(VOSIMLIB_SHARED FALSE BOOL "Build as a shared library?")
+
+if(BUILD_SHARED_LIBS)
+  set(VOSIMLIB_SHARED TRUE)
+endif()
+
+if(VOSIMLIB_SHARED)
+  list(APPEND VOSIMLIB_DEFS -DVOSIMLIB_SHARED)
+endif()
+
 ##
 # VOSIMLib source files
 ##
@@ -18,8 +28,18 @@ source_group(VOSIMLib-units FILES ${VOSIMLIB_UNIT_SRCS})
 source_group(VOSIMLib-units/include FILES ${VOSIMLIB_UNIT_HDRS})
 
 include_directories(${VOSIMLIB_ROOT}/include ${VOSIMLIB_ROOT}/units/include)
+add_definitions(${VOSIMLIB_DEFS})
 
-add_library(VOSIMLib STATIC ${VOSIMLIB_FILES})
+if(VOSIMLIB_SHARED)
+  add_library(VOSIMLib SHARED ${VOSIMLIB_FILES})
+  set_target_properties(VOSIMLib PROPERTIES DEBUG_POSTFIX -d)
+else()
+  add_library(VOSIMLib STATIC ${VOSIMLIB_FILES})
+  set_target_properties(VOSIMLib PROPERTIES DEBUG_POSTFIX -s-d)
+  set_target_properties(VOSIMLib PROPERTIES RELEASE_POSTFIX -s)
+  set_target_properties(VOSIMLib PROPERTIES MINSIZEREL_POSTFIX -s)
+  set_target_properties(VOSIMLib PROPERTIES RELWITHDEBINFO_POSTFIX -s)
+endif()
 
 add_subdirectory(tests tests)
 

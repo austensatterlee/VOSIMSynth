@@ -1,23 +1,23 @@
 cmake_minimum_required(VERSION 3.3)
-project(VOSIMLib-tests)
+project(VOSIMLib_tests)
 
 set(NONIUS_ROOT ${LIBS_DIR}/nonius CACHE PATH "")
 
 ##
 # Unit test sources
 ##
-add_executable(tests ${VOSIMLIB_ROOT}/tests/tests.cpp)
-target_link_libraries(tests VOSIMLib)
-target_include_directories(tests PRIVATE ${VOSIMLIB_ROOT}/tests/include)
+file(GLOB TEST_FILES *.cpp)
+include_directories(${NONIUS_ROOT})
+add_executable(vosimlib_tests ${TEST_FILES})
+target_link_libraries(vosimlib_tests VOSIMLib)
 
 ##
 # Benchmark sources
 ##
-add_executable(bench ${VOSIMLIB_ROOT}/tests/bench.cpp)
-target_link_libraries(bench VOSIMLib)
-target_include_directories(bench PRIVATE ${NONIUS_ROOT})
+add_executable(vosimlib_bench bench/bench.cpp)
+target_link_libraries(vosimlib_bench VOSIMLib)
+target_include_directories(vosimlib_bench PRIVATE ${NONIUS_ROOT})
 
 if(WIN32)
-  target_compile_definitions(tests PRIVATE -DWIN32_LEAN_AND_MEAN)
-  target_compile_definitions(bench PRIVATE -DWIN32_LEAN_AND_MEAN)
+  target_compile_definitions(vosimlib_bench PRIVATE -DWIN32_LEAN_AND_MEAN)
 endif()

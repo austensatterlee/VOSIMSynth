@@ -20,7 +20,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "VOSIMSynth.h"
 #include "IPlug_include_in_plug_src.h"
 
-#include "common.h"
 #include "Oscillator.h"
 #include "VosimOscillator.h"
 #include "ADSREnvelope.h"
@@ -29,19 +28,14 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "MemoryUnit.h"
 #include "MidiUnits.h"
 #include "StateVariableFilter.h"
-#include "include/OscilloscopeUnit.h"
-#include "include/SpectroscopeUnit.h"
 #include "WaveShapers.h" 
 #include "MainWindow.h"
 #include "MIDIReceiver.h"
 #include "VoiceManager.h"
 #include "UnitFactory.h"
-#include "include/UICircuitPanel.h"
-#include "include/VOSIMComponent.h"
 
 #include <tables.h>
-
-using namespace std;
+#include "MainGUI.h"
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 	:
@@ -57,18 +51,9 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 void VOSIMSynth::makeGraphics() {
 	syn::VoiceManager* vm = m_voiceManager;
 	syn::UnitFactory* uf = m_unitFactory;
-	synui::MainWindow* vosimWindow = new synui::MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm, uf](synui::MainWindow* a_win)-> synui::UIComponent* {
-		return new synui::VOSIMComponent(a_win, vm, uf);
-	});
+	synui::MainWindow* vosimWindow = new synui::MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm,uf](synui::MainWindow& a_win){ return new synui::MainGUI(a_win, vm, uf); });
 	vosimWindow->setHInstance(gHInstance);
 	AttachAppWindow(vosimWindow);
-
-	getVOSIMComponent()->circuitPanel()->registerUnitControl<synui::OscilloscopeUnit>([](synui::MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId)-> synui::UIUnitControl* {
-		return new synui::OscilloscopeUnitControl(a_window, a_vm, a_unitId);
-	});
-	getVOSIMComponent()->circuitPanel()->registerUnitControl<synui::SpectroscopeUnit>([](synui::MainWindow* a_window, syn::VoiceManager* a_vm, int a_unitId)-> synui::UIUnitControl* {
-		return new synui::SpectroscopeUnitControl(a_window, a_vm, a_unitId);
-	});
 }
 
 void VOSIMSynth::makeInstrument() {
@@ -106,9 +91,6 @@ void VOSIMSynth::makeInstrument() {
 	m_unitFactory->addUnitPrototype<syn::MidiNoteUnit>("MIDI", "pitch");
 	m_unitFactory->addUnitPrototype<syn::VelocityUnit>("MIDI", "vel");
 	m_unitFactory->addUnitPrototype<syn::MidiCCUnit>("MIDI", "CC");
-
-	m_unitFactory->addUnitPrototype<synui::OscilloscopeUnit>("Visualizer", "oscilloscope");
-	m_unitFactory->addUnitPrototype<synui::SpectroscopeUnit>("Visualizer", "spectroscope");
 
 	m_unitFactory->addUnitPrototype<syn::InputUnit>("", "in");
 	m_unitFactory->addUnitPrototype<syn::OutputUnit>("", "out");
@@ -148,14 +130,14 @@ void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg) {
 }
 
 bool VOSIMSynth::SerializeState(ByteChunk* pChunk) {
-	shared_ptr<syn::Unit> circuit(m_voiceManager->getPrototypeCircuit()->clone());
-	stringstream ss; {
+	std::shared_ptr<syn::Unit> circuit(m_voiceManager->getPrototypeCircuit()->clone());
+	std::stringstream ss; {
 		cereal::XMLOutputArchive ar(ss);
 		ar(cereal::make_nvp("circuit", circuit));
 	}
 	pChunk->PutStr(ss.str().c_str());
 
-	getVOSIMComponent()->save(pChunk);
+	// <store gui circuit here>
 	return true;
 }
 
@@ -164,16 +146,16 @@ int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
 
 	string input;
 	startPos = pChunk->Get(&input, startPos);
-	stringstream ss{ input };
-	shared_ptr<syn::Unit> circuit;
+	std::stringstream ss{ input };
+	std::shared_ptr<syn::Unit> circuit;
 	{
 		cereal::XMLInputArchive ar(ss);
 		ar(cereal::make_nvp("circuit", circuit));
 	}
-	getVOSIMComponent()->circuitPanel()->reset();
+	// <reset gui circuit here>
 	m_voiceManager->setPrototypeCircuit(*static_cast<const syn::Circuit*>(circuit.get()));
 	Reset();
-	startPos = getVOSIMComponent()->load(pChunk, startPos);
+	// <load new gui circuit here>
 	return startPos;
 }
 
@@ -188,10 +170,6 @@ void VOSIMSynth::OnActivate(bool active) {}
 void VOSIMSynth::OnGUIOpen() {}
 
 void VOSIMSynth::OnGUIClose() {}
-
-synui::VOSIMComponent* VOSIMSynth::getVOSIMComponent() const {
-	return static_cast<synui::VOSIMComponent*>(GetAppWindow()->getRoot());
-}
 
 void VOSIMSynth::Reset() {
 	m_MIDIReceiver->Resize(GetBlockSize());

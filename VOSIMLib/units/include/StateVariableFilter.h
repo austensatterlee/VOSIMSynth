@@ -31,7 +31,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn
 {
-	class StateVariableFilter : public Unit
+	class VOSIMLIB_API StateVariableFilter : public Unit
 	{
 		DERIVE_UNIT(StateVariableFilter)
 	public:
@@ -61,7 +61,7 @@ namespace syn
 		const double c_maxRes = 10.0;
 	};
 
-	class TrapStateVariableFilter : public StateVariableFilter
+	class VOSIMLIB_API TrapStateVariableFilter : public StateVariableFilter
 	{
 		DERIVE_UNIT(TrapStateVariableFilter)
 	public:
@@ -100,7 +100,7 @@ namespace syn
 	/**
 	 * 1 Pole "TPT" unit wrapper
 	 */
-	class OnePoleLP : public Unit
+	class VOSIMLIB_API OnePoleLP : public Unit
 	{
 		DERIVE_UNIT(OnePoleLP)
 	public:
@@ -159,7 +159,7 @@ namespace syn
       };
 	};
 
-	class LadderFilter : public LadderFilterBase
+	class VOSIMLIB_API LadderFilter : public LadderFilterBase
 	{
 		DERIVE_UNIT(LadderFilter)
 	public:
@@ -174,7 +174,7 @@ namespace syn
 		array<double, 4> m_tV;
 	};
 
-	class LadderFilterTwo : public LadderFilterBase
+	class VOSIMLIB_API LadderFilterTwo : public LadderFilterBase
 	{
 		DERIVE_UNIT(LadderFilterTwo)
 	public:

@@ -17,16 +17,26 @@
  along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * \file tables.h
+ * \brief
+ * \details
+ * \author Austen Satterlee
+ * \date 02/2016
+ */
+
 #ifndef __TABLES__
 #define __TABLES__
 
 //#define DO_LERP_FOR_SINC
-#include <vector>
+
+#include "common.h"
 #include "lut_tables.h"
+#include <vector>
 
 namespace syn
 {
-	class LookupTable
+	class VOSIMLIB_API LookupTable
 	{
 	public:
 		LookupTable(const double* table, int size, double input_min = 0, double input_max = 1, bool isPeriodic = true);
@@ -60,7 +70,7 @@ namespace syn
 	/**
 	 *
 	 */
-	class BlimpTable : public LookupTable
+	class VOSIMLIB_API BlimpTable : public LookupTable
 	{
 	public:
 		BlimpTable(const double* a_table, int a_size, int a_num_intervals, int a_resolution)
@@ -86,7 +96,7 @@ namespace syn
 	 * so log2(N) tables are created, where N is the size of the initial
 	 * table.
 	 */
-	class ResampledLookupTable : public LookupTable
+	class VOSIMLIB_API ResampledLookupTable : public LookupTable
 	{
 	public:
 		ResampledLookupTable(const double* a_table, int a_size, const BlimpTable& a_blimp_table_online, const BlimpTable& a_blimp_table_offline);
@@ -119,7 +129,7 @@ namespace syn
 	 * \param phase the desired phase to sample at, in the range [0,1).
 	 * \param period the desired period to resample at (in fractional number of samples)
 	 */
-	double getresampled_single(const double* table, int size, double phase, double period, const BlimpTable& blimp_table);
+	double VOSIMLIB_API getresampled_single(const double* table, int size, double phase, double period, const BlimpTable& blimp_table);
 	/**
 	 * Resample an entire table to have the specified period and store the
 	 * result in resampled_table (which should already be allocated), using
@@ -131,7 +141,7 @@ namespace syn
 	 *        of samples). The allocated size of the output table should be
 	 *        ceil(period).
 	 */
-	void resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table, bool normalize = true);
+	void VOSIMLIB_API resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table, bool normalize = true);
 
 	/**
 	 * \todo

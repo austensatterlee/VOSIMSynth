@@ -31,7 +31,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn
 {
-	class ADSREnvelope : public Unit
+	class VOSIMLIB_API ADSREnvelope : public Unit
 	{
 		DERIVE_UNIT(ADSREnvelope)
 	public:

@@ -2,6 +2,14 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
 project(VOSIMProject)
 enable_language(C CXX RC)
 
+# Define a macro that helps defining an option
+macro(set_option var default type docstring)
+    if(NOT DEFINED ${var})
+        set(${var} ${default})
+    endif()
+    set(${var} ${${var}} CACHE ${type} ${docstring} FORCE)
+endmacro()
+
 set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 

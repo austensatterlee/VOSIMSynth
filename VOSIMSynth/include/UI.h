@@ -29,58 +29,15 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __UI__
 #include <eigen/Core>
 #include <functional>
-#include <nanovg.h>
 #include <vector>
 #include <memory>
 #include "DSPMath.h"
 #include "Containers.h"
-#include "UICoord.h"
 #include "entypo.h"
-
-using namespace std;
 
 namespace synui
 {
-	class UIComponent;
-	class UILayout;
-	struct Theme;
-
-	// Generic UI components:
-	class UIButton;
-	class UICell;
-	class UICol;
-	class UIRow;
-	class UILabel;
-	class UITextBox;
-	class UIColorWheel;
-	class UIWindow;
-	class UIPlot;
-	class UIScrollPanel;
-	class UIStackedComponent;
-	class UITabHeader;
-	class UITabWidget;
-
-	// UI Layouts
-	class BoxLayout;
-	class GroupLayout;
-	class GridLayout;
-	class AdvancedGridLayout;
-
-	// VOSIMSynth specific:
-	class UICircuitPanel;
-	class UIControlPanel;
-	class UIUnitSelector;
-	class UIWire;
-	class UIUnitControl;
-	class UIDefaultUnitControl;
-	class UIUnitContainer;
-	class UIDefaultUnitContainer;
-	class UIUnitPort;
-	class UIParamControl;
-	class UITextSlider;
-	class UIDigitControl;
-
-	using Eigen::Vector2f;
+	using Eigen::Vector2f;	
 	using Eigen::Vector3f;
 	using Eigen::Vector4f;
 	using Eigen::Vector2i;
@@ -91,112 +48,8 @@ namespace synui
 	using Eigen::VectorXf;
 	using Eigen::MatrixXf;
 
+	typedef Eigen::Matrix<uint32_t, 2, 1> Vector2u;
 	typedef Eigen::Matrix<uint32_t, Eigen::Dynamic, Eigen::Dynamic> MatrixXu;
-
-	/// Stores an RGBA color value
-	class Color : public Eigen::Matrix<float, 4, 1, Eigen::DontAlign>
-	{
-		typedef Matrix<float, 4, 1, Eigen::DontAlign> Base;
-	public:
-		Color() : Color(0, 0, 0, 0) {}
-
-		Color(const Vector4f& color) : Base(color) { }
-
-		Color(const Vector3f& color, float alpha)
-			: Color(color(0), color(1), color(2), alpha) { }
-
-		Color(const Vector3i& color, int alpha)
-			: Color(color.cast<float>() / 255.f, alpha / 255.f) { }
-
-		Color(const Vector3f& color) : Color(color, 1.0f) {}
-
-		Color(const Vector3i& color)
-			: Color(static_cast<Vector3f>(color.cast<float>() / 255.f)) { }
-
-		Color(const Vector4i& color)
-			: Color(static_cast<Vector4f>(color.cast<float>() / 255.f)) { }
-
-		Color(float intensity, float alpha)
-			: Color(Vector3f::Constant(intensity), alpha) { }
-
-		Color(int intensity, int alpha)
-			: Color(Vector3i::Constant(intensity), alpha) { }
-
-		Color(float r, float g, float b, float a) : Color(Vector4f(r, g, b, a)) { }
-
-		Color(int r, int g, int b, int a) : Color(Vector4i(r, g, b, a)) { }
-
-		/// Construct a color vector from MatrixBase (needed to play nice with Eigen)
-		template <typename Derived>
-		Color(const MatrixBase<Derived>& p)
-			: Base(p) { }
-
-		/// Assign a color vector from MatrixBase (needed to play nice with Eigen)
-		template <typename Derived>
-		Color& operator=(const MatrixBase<Derived>& p) {
-			this->Base::operator=(p);
-			return *this;
-		}
-
-		/// Return a reference to the red channel
-		float& r() {
-			return x();
-		}
-
-		/// Return a reference to the red channel (const version)
-		const float& r() const {
-			return x();
-		}
-
-		/// Return a reference to the green channel
-		float& g() {
-			return y();
-		}
-
-		/// Return a reference to the green channel (const version)
-		const float& g() const {
-			return y();
-		}
-
-		/// Return a reference to the blue channel
-		float& b() {
-			return z();
-		}
-
-		/// Return a reference to the blue channel (const version)
-		const float& b() const {
-			return z();
-		}
-
-		/// Return a reference to the alpha channel
-		float& a() {
-			return w();
-		}
-
-		/// Return a reference to the alpha channel (const version)
-		const float& a() const {
-			return w();
-		}
-
-		Color contrastingColor() const {
-			float luminance = cwiseProduct(Color(0.299f, 0.587f, 0.144f, 0.f)).sum();
-			return Color(luminance < 0.5f ? 1.f : 0.f, 1.f);
-		}
-
-		inline operator const NVGcolor &() const;
-	};
-
-	inline Color::operator const struct NVGcolor&() const {
-		return reinterpret_cast<const NVGcolor &>(*this->data());
-	}
-
-	/**
-	 * Converts an HSL value to an RGB color
-	 * \param H A hue value in the range (0,1)
-	 * \param S A saturation value in the range (0,1)
-	 * \param L A lightness value in the range (0,1)
-	 */
-	Color colorFromHSL(float H, float S, float L);
 
 	/**
 	 * Finds the point closest to the given 'pt' which lies on the line defined by points 'a' and 'b'.
@@ -232,7 +85,7 @@ namespace synui
 	 *     Pairs of permissible formats with descriptions like
 	 *     <tt>("png", "Portable Network Graphics")</tt>
 	 */
-	extern string file_dialog(const vector<pair<string, string>>& filetypes, bool save);
+	extern std::string file_dialog(const std::vector<std::pair<std::string, std::string>>& filetypes, bool save);
 
 	/**
 	* \brief Convert a single UTF32 character code to UTF8
@@ -240,27 +93,7 @@ namespace synui
 	* NanoGUI uses this to convert the icon character codes
 	* defined in entypo.h
 	*/
-	extern array<char, 8> utf8(int c);
-
-	/// Load a directory of PNG images and upload them to the GPU (suitable for use with ImagePanel)
-	extern vector<pair<int, string>> loadImageDirectory(NVGcontext* ctx, const string& path);
-
-	/// Convenience function for instanting a PNG icon from the application's data segment (via bin2c)
-#define nvgImageIcon(ctx, name) __nanogui_get_image(ctx, #name, name##_png, name##_png_size)
-/// Helper function used by nvgImageIcon
-	int __nanogui_get_image(NVGcontext* ctx, const string& name, uint8_t* data, uint32_t size);
-
-	/* Cursor shapes */
-	enum class Cursor
-	{
-		Arrow = 0,
-		IBeam,
-		Crosshair,
-		Hand,
-		HResize,
-		VResize,
-		CursorCount
-	};
+	extern std::array<char, 8> utf8(int c);
 
 	template <typename StoreType>
 	class CachedComputation
@@ -273,7 +106,7 @@ namespace synui
 		 * If they have, use the provided callable to refresh the cache.
 		 */
 		template <typename... Args>
-		bool operator()(const function<StoreType(Args...)>& a_func, Args... args) {
+		bool operator()(const std::function<StoreType(Args...)>& a_func, Args... args) {
 			bool refresh_cond = isDirty();
 			if (refresh_cond) {
 				a_func(args...);
@@ -337,7 +170,7 @@ namespace synui
 		};
 
 		StoreType cached;
-		vector<unique_ptr<UpdateCondition>> m_conds;
+		std::vector<std::unique_ptr<UpdateCondition>> m_conds;
 		bool m_isFirstUpdate = true;
 	};
 

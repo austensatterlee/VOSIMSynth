@@ -25,14 +25,12 @@ CEREAL_REGISTER_TYPE(syn::Unit);
 
 using std::hash;
 
-using namespace std;
-
 namespace syn
 {
 	Unit::Unit() : Unit("")
 	{}
 
-	Unit::Unit(const string& a_name) :
+	Unit::Unit(const std::string& a_name) :
 		m_name{ a_name },
 		m_parent{ nullptr },
 		m_audioConfig{44.1e3, 120},

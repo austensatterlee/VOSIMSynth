@@ -18,12 +18,12 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
-* \file DSPMath.cpp
-* \brief
-* \details
-* \author Austen Satterlee
-* \date March 6, 2016
-*/
+ * \file DSPMath.cpp
+ * \brief
+ * \details
+ * \author Austen Satterlee
+ * \date March 6, 2016
+ */
 
 #include "DSPMath.h"
 #include "tables.h"

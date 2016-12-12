@@ -10,14 +10,12 @@
 
 #include "Unit.h"
 
-using namespace std;
-
 namespace syn
 {
 	/**
 	 * Outputs the current midi note
 	 */
-	class MidiNoteUnit : public Unit
+	class VOSIMLIB_API MidiNoteUnit : public Unit
 	{
 		DERIVE_UNIT(MidiNoteUnit)
 	public:
@@ -37,7 +35,7 @@ namespace syn
 	/**
 	 * Outputs the current velocity
 	 */
-	class VelocityUnit : public Unit
+	class VOSIMLIB_API VelocityUnit : public Unit
 	{
 		DERIVE_UNIT(VelocityUnit)
 	public:
@@ -58,7 +56,7 @@ namespace syn
 	/**
 	* Outputs a 1 when a key is pressed, and 0 otherwise
 	*/
-	class GateUnit : public Unit
+	class VOSIMLIB_API GateUnit : public Unit
 	{
 		DERIVE_UNIT(GateUnit)
 	public:
@@ -79,7 +77,7 @@ namespace syn
 	/**
 	 * Outputs the value of the selected Midi CC
 	 */
-	class MidiCCUnit : public Unit
+	class VOSIMLIB_API MidiCCUnit : public Unit
 	{
 		DERIVE_UNIT(MidiCCUnit)
 	public:

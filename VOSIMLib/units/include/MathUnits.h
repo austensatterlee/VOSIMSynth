@@ -32,14 +32,12 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "MemoryUnit.h"
 #include "DSPMath.h"
 
-using namespace std;
-
 namespace syn
 {
 	const vector<string> scale_selections = { "1","10","1E2","1E3","1E4" };
 	const vector<double> scale_values = { 1.,10.,100.,1000.,10000. };
 
-	class MovingAverage
+	class VOSIMLIB_API MovingAverage
 	{
 	public:
 		MovingAverage();
@@ -61,7 +59,7 @@ namespace syn
 	/**
 	 * DC-remover
 	 */
-	class DCRemoverUnit : public Unit
+	class VOSIMLIB_API DCRemoverUnit : public Unit
 	{
 		DERIVE_UNIT(DCRemoverUnit)
 	public:
@@ -81,7 +79,7 @@ namespace syn
 	/**
 	 * Full-wave rectifier
 	 */
-	class RectifierUnit : public Unit
+	class VOSIMLIB_API RectifierUnit : public Unit
 	{
 		DERIVE_UNIT(RectifierUnit)
 	public:
@@ -99,7 +97,7 @@ namespace syn
 	/**
 	 * Multiplies two signals together
 	 */
-	class GainUnit : public Unit
+	class VOSIMLIB_API GainUnit : public Unit
 	{
 		DERIVE_UNIT(GainUnit)
 	public:
@@ -117,7 +115,7 @@ namespace syn
 	/**
 	* Sums incomming signals
 	*/
-	class SummerUnit : public Unit
+	class VOSIMLIB_API SummerUnit : public Unit
 	{
 		DERIVE_UNIT(SummerUnit)
 	public:
@@ -132,7 +130,7 @@ namespace syn
 	/**
 	 * Outputs a constant
 	 */
-	class ConstantUnit : public Unit
+	class VOSIMLIB_API ConstantUnit : public Unit
 	{
 		DERIVE_UNIT(ConstantUnit)
 	public:
@@ -147,7 +145,7 @@ namespace syn
 	/**
 	* Balances incoming signals between two outputs
 	*/
-	class PanningUnit : public Unit
+	class VOSIMLIB_API PanningUnit : public Unit
 	{
 		DERIVE_UNIT(PanningUnit)
 	public:
@@ -165,7 +163,7 @@ namespace syn
 	/**
 	* Affine transform
 	*/
-	class LerpUnit : public Unit
+	class VOSIMLIB_API LerpUnit : public Unit
 	{
 		DERIVE_UNIT(LerpUnit)
 	public:
@@ -185,7 +183,7 @@ namespace syn
 	/**
 	* Pitch (normalized midi note) to frequency conversion
 	*/
-	class PitchToFreqUnit : public Unit
+	class VOSIMLIB_API PitchToFreqUnit : public Unit
 	{
 		DERIVE_UNIT(PitchToFreqUnit)
 	public:
@@ -210,7 +208,7 @@ namespace syn
 	/**
 	* Frequency to pitch conversion
 	*/
-	class FreqToPitchUnit : public Unit
+	class VOSIMLIB_API FreqToPitchUnit : public Unit
 	{
 		DERIVE_UNIT(FreqToPitchUnit)
 	public:
@@ -236,7 +234,7 @@ namespace syn
 	 * 
 	 * Output `a` if `ctrl` is larger than `comp`, otherwise output `b`.
 	 */
-	class SwitchUnit : public Unit
+	class VOSIMLIB_API SwitchUnit : public Unit
 	{
 		DERIVE_UNIT(SwitchUnit)
 	public:

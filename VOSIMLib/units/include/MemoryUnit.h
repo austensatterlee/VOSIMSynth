@@ -29,14 +29,12 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "Unit.h"
 
-using namespace std;
-
 namespace syn
 {
 	/**
 	* General N-Sample delay
 	*/
-	class NSampleDelay
+	class VOSIMLIB_API NSampleDelay
 	{
 	public:
 		NSampleDelay();
@@ -74,7 +72,7 @@ namespace syn
 		double m_lastOutput;
 	};
 
-	class MemoryUnit : public Unit
+	class VOSIMLIB_API MemoryUnit : public Unit
 	{
 		DERIVE_UNIT(MemoryUnit)
 	public:
@@ -91,7 +89,7 @@ namespace syn
 		NSampleDelay m_delay;
 	};
 
-	class VariableMemoryUnit : public Unit
+	class VOSIMLIB_API VariableMemoryUnit : public Unit
 	{
 		DERIVE_UNIT(VariableMemoryUnit)
 	public:
