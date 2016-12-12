@@ -28,8 +28,24 @@ Copyright 2016, Austen Satterlee
 #ifndef __MAINWINDOW__
 #define __MAINWINDOW__
 
-#include <SFML/Graphics/RenderWindow.hpp>
-#include <sftools/Chronometer.hpp>
+#if defined(NANOGUI_GLAD)
+    #if defined(NANOGUI_SHARED) && !defined(GLAD_GLAPI_EXPORT)
+        #define GLAD_GLAPI_EXPORT
+    #endif
+
+    #include <glad/glad.h>
+#else
+    #if defined(__APPLE__)
+        #define GLFW_INCLUDE_GLCOREARB
+    #else
+        #define GL_GLEXT_PROTOTYPES
+    #endif
+#endif
+
+#include <GLFW/glfw3.h>
+
+#include <nanogui/nanogui.h>
+
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/lockfree/policies.hpp>
 
@@ -43,7 +59,6 @@ using boost::lockfree::capacity;
 namespace synui
 {
 	class MainWindow;
-	class MainGUI;
 
 	struct GUIMessage
 	{
@@ -56,14 +71,13 @@ namespace synui
 	public:
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		typedef std::function<MainGUI*(MainWindow&)> GUIConstructor; 
+		typedef std::function<void(MainWindow&)> GUIConstructor; 
 
 	public:
-
 		MainWindow(int a_width, int a_height, GUIConstructor a_guiConstructor);
 		virtual ~MainWindow();
 
-		std::shared_ptr<sf::RenderWindow> getWindow() const { return m_window; }
+		GLFWwindow *getWindow() const { return m_window; }
 
 		bool isOpen() const { return m_isOpen; }
 
@@ -71,7 +85,7 @@ namespace synui
 
 		double fps() const { return m_fps; }
 		
-		bool OpenWindow(sf::WindowHandle a_system_window);
+		bool OpenWindow(HWND a_system_window);
 
 		void CloseWindow();
 
@@ -86,11 +100,10 @@ namespace synui
 		/**
 		 * Attach the sfml window to the given parent window.
 		 */
-		void _OpenWindowImplem(sf::WindowHandle a_system_window);
+		void _OpenWindowImplem(HWND a_system_window);
 		void _CloseWindowImplem();
 		
 		void _runLoop();
-		void _handleEvents();
 
 		void _queueInternalMessage(GUIMessage* a_msg);
 		void _flushMessageQueues();
@@ -98,15 +111,14 @@ namespace synui
 	private:
 #ifdef _WIN32
 		HINSTANCE m_HInstance;
+		HWND m_timerWindow;
 #endif
-		sf::WindowHandle m_timerWindow;
-		std::shared_ptr<sf::RenderWindow> m_window;
-		std::shared_ptr<MainGUI> m_mainGUI;
+		nanogui::Screen *m_screen;
+		GLFWwindow *m_window;
 		bool m_isOpen;
 
 		Vector2u m_size;
 
-		sftools::Chronometer m_timer;
 		unsigned m_frameCount;
 		double m_fps;
 

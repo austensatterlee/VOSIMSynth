@@ -12,6 +12,11 @@ if(VOSIMLIB_SHARED)
 endif()
 
 ##
+# Eigen
+##
+include_directories(${LIBS_DIR}/eigen)
+
+##
 # VOSIMLib source files
 ##
 file(GLOB VOSIMLIB_HDRS include/*.h)
@@ -27,9 +32,12 @@ source_group(VOSIMLib/include FILES ${VOSIMLIB_HDRS})
 source_group(VOSIMLib-units FILES ${VOSIMLIB_UNIT_SRCS})
 source_group(VOSIMLib-units/include FILES ${VOSIMLIB_UNIT_HDRS})
 
-include_directories(${VOSIMLIB_ROOT}/include ${VOSIMLIB_ROOT}/units/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/units/include)
 add_definitions(${VOSIMLIB_DEFS})
 
+##
+# Add VOSIMLib target
+##
 if(VOSIMLIB_SHARED)
   add_library(VOSIMLib SHARED ${VOSIMLIB_FILES})
   set_target_properties(VOSIMLib PROPERTIES DEBUG_POSTFIX -d)
@@ -41,8 +49,14 @@ else()
   set_target_properties(VOSIMLib PROPERTIES RELWITHDEBINFO_POSTFIX -s)
 endif()
 
+##
+# Add tests target
+##
 add_subdirectory(tests tests)
 
+##
+# Add pybind11 target
+##
 pybind11_add_module(pyVOSIMLib ${VOSIMLIB_PYTHON_SRCS})
 target_link_libraries(pyVOSIMLib PRIVATE VOSIMLib)
 

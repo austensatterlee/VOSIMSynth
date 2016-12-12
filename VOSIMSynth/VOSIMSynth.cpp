@@ -35,7 +35,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "UnitFactory.h"
 
 #include <tables.h>
-#include "MainGUI.h"
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 	:
@@ -51,7 +50,7 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 void VOSIMSynth::makeGraphics() {
 	syn::VoiceManager* vm = m_voiceManager;
 	syn::UnitFactory* uf = m_unitFactory;
-	synui::MainWindow* vosimWindow = new synui::MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm,uf](synui::MainWindow& a_win){ return new synui::MainGUI(a_win, vm, uf); });
+	synui::MainWindow* vosimWindow = new synui::MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm,uf](synui::MainWindow& a_win){ return; });
 	vosimWindow->setHInstance(gHInstance);
 	AttachAppWindow(vosimWindow);
 }

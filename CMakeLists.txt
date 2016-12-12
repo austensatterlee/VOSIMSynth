@@ -26,18 +26,11 @@ endif()
 # define source directories
 set(LIBS_DIR ${CMAKE_SOURCE_DIR}/libs CACHE PATH "")
 
-set(WDL_ROOT ${LIBS_DIR}/wdl CACHE PATH "")
-set(IPLUG_ROOT ${WDL_ROOT}/iplug CACHE PATH "")
-set(EIGEN_ROOT ${LIBS_DIR}/eigen CACHE PATH "")
-set(CEREAL_ROOT ${LIBS_DIR}/cereal CACHE PATH "")
-set(PYBIND11_ROOT ${LIBS_DIR}/pybind11 CACHE PATH "")
-set(ETL_ROOT ${LIBS_DIR}/etl CACHE PATH "")
-
 set(FFTS_ROOT "${LIBS_DIR_SYS}/ffts" CACHE PATH "")
 set(FFTS_INCLUDE_DIR ${FFTS_ROOT}/include CACHE PATH "")
 
-set(VOSIMLIB_ROOT ${CMAKE_SOURCE_DIR}/vosimlib CACHE PATH "")
-set(VOSIMSYNTH_ROOT ${CMAKE_SOURCE_DIR}/vosimsynth CACHE PATH "")
+set(VOSIMLIB_DIR ${CMAKE_SOURCE_DIR}/vosimlib)
+set(VOSIMSYNTH_DIR ${CMAKE_SOURCE_DIR}/vosimsynth)
 
 message (STATUS "Build tool is ${CMAKE_BUILD_TOOL}")
 message (STATUS "System is ${CMAKE_SYSTEM_NAME}")
@@ -102,58 +95,15 @@ endif()
 # configurations for all compilers
 add_compile_options("$<$<NOT:$<CONFIG:Release>>:-D_DEBUG>")
 
-#################################
-# Configure include directories #
-#################################
-
 ##
-# WDL
+# Configure compiled dependencies 
 ##
-include_directories(${WDL_ROOT})
-
-##
-# IPlug
-##
-set(IPLUG_FILES
-  ${IPLUG_ROOT}/Containers.h ${IPLUG_ROOT}/Hosts.cpp ${IPLUG_ROOT}/Hosts.h
-  ${IPLUG_ROOT}/IPlugBase.cpp ${IPLUG_ROOT}/IPlugBase.h
-  ${IPLUG_ROOT}/IPlugOSDetect.h ${IPLUG_ROOT}/IPlugStructs.cpp
-  ${IPLUG_ROOT}/IPlugStructs.h ${IPLUG_ROOT}/IPlugVST.cpp
-  ${IPLUG_ROOT}/IPlugVST.h ${IPLUG_ROOT}/IPlug_Prefix.pch
-  ${IPLUG_ROOT}/IPlug_include_in_plug_hdr.h
-  ${IPLUG_ROOT}/IPlug_include_in_plug_src.h ${IPLUG_ROOT}/Log.cpp
-  ${IPLUG_ROOT}/Log.h
-)
-include_directories(${IPLUG_ROOT})
-
-
-##
-# Eigen
-##
-include_directories(${EIGEN_ROOT})
-
-##
-# Cereal
-##
-include_directories(${CEREAL_ROOT}/include)
-
-##
-# pybind11
-##
-add_subdirectory(${PYBIND11_ROOT})
-
-##
-# ETL
-##
-include_directories(${ETL_ROOT}/include)
-
-######################################
-# Configure precompiled dependencies #
-######################################
 
 set(BUILD_SHARED_LIBS False)
 
 # Add boost
+message(STATUS "Boost root: ${BOOST_ROOT}")
+message(STATUS "Boost root (env): $ENV{BOOST_ROOT}")
 set(Boost_NO_BOOST_CMAKE True)
 set(Boost_DETAILED_FAILURE_MSG True)
 find_package(Boost REQUIRED)
@@ -166,9 +116,69 @@ include_directories(${FFTS_INCLUDE_DIR})
 list(APPEND DBG_LIBS ${FFTS_DEBUG_LIBRARY})
 list(APPEND REL_LIBS ${FFTS_RELEASE_LIBRARY})
 
-# Add VOSIMLib
-add_subdirectory(${VOSIMLIB_ROOT} VOSIMLib)
-include_directories(${VOSIMLIB_ROOT}/include)
-include_directories(${VOSIMLIB_ROOT}/units/include)
+##
+# pybind11
+##
+add_subdirectory(${LIBS_DIR}/pybind11)
 
-add_subdirectory(${VOSIMSYNTH_ROOT} VOSIMSynth)
+##
+# nanogui
+##
+# Disable building extras we won't need (pure C++ project)
+set(NANOGUI_BUILD_EXAMPLE OFF CACHE BOOL " " FORCE)
+set(NANOGUI_BUILD_PYTHON  OFF CACHE BOOL " " FORCE)
+set(NANOGUI_INSTALL       OFF CACHE BOOL " " FORCE)
+set(NANOGUI_BUILD_SHARED  OFF CACHE BOOL " " FORCE)
+set(NANOGUI_BUILD_SHARED  OFF CACHE BOOL " " FORCE)
+
+# Add the configurations from nanogui
+add_subdirectory(${LIBS_DIR}/nanogui)
+
+# For reliability of parallel build, make the NanoGUI targets dependencies
+set_property(TARGET glfw bin2c nanogui PROPERTY FOLDER "dependencies")
+
+#################################
+# Configure include directories #
+#################################
+
+##
+# WDL
+##
+include_directories(${LIBS_DIR}/wdl)
+
+##
+# IPlug
+##
+set(IPLUG_FILES
+  ${LIBS_DIR}/wdl/iplug/Containers.h ${LIBS_DIR}/wdl/iplug/Hosts.cpp ${LIBS_DIR}/wdl/iplug/Hosts.h
+  ${LIBS_DIR}/wdl/iplug/IPlugBase.cpp ${LIBS_DIR}/wdl/iplug/IPlugBase.h
+  ${LIBS_DIR}/wdl/iplug/IPlugOSDetect.h ${LIBS_DIR}/wdl/iplug/IPlugStructs.cpp
+  ${LIBS_DIR}/wdl/iplug/IPlugStructs.h ${LIBS_DIR}/wdl/iplug/IPlugVST.cpp
+  ${LIBS_DIR}/wdl/iplug/IPlugVST.h ${LIBS_DIR}/wdl/iplug/IPlug_Prefix.pch
+  ${LIBS_DIR}/wdl/iplug/IPlug_include_in_plug_hdr.h
+  ${LIBS_DIR}/wdl/iplug/IPlug_include_in_plug_src.h ${LIBS_DIR}/wdl/iplug/Log.cpp
+  ${LIBS_DIR}/wdl/iplug/Log.h
+)
+include_directories(${LIBS_DIR}/wdl/iplug)
+
+
+##
+# Cereal
+##
+include_directories(${LIBS_DIR}/cereal/include)
+
+
+##
+# ETL
+##
+include_directories(${LIBS_DIR}/etl/include)
+
+##
+# Add VOSIMLib
+##
+add_subdirectory(${VOSIMLIB_DIR} VOSIMLib)
+
+##
+# Add VOSIMSynth
+##
+add_subdirectory(${VOSIMSYNTH_DIR} VOSIMSynth)
