@@ -42,10 +42,6 @@ Copyright 2016, Austen Satterlee
     #endif
 #endif
 
-#include <GLFW/glfw3.h>
-
-#include <nanogui/nanogui.h>
-
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/lockfree/policies.hpp>
 
@@ -56,9 +52,12 @@ Copyright 2016, Austen Satterlee
 using boost::lockfree::spsc_queue;
 using boost::lockfree::capacity;
 
+struct GLFWwindow;
+
 namespace synui
 {
 	class MainWindow;
+	class MainGUI;
 
 	struct GUIMessage
 	{
@@ -71,7 +70,7 @@ namespace synui
 	public:
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		typedef std::function<void(MainWindow&)> GUIConstructor; 
+		typedef std::function<MainGUI*(GLFWwindow*)> GUIConstructor; 
 
 	public:
 		MainWindow(int a_width, int a_height, GUIConstructor a_guiConstructor);
@@ -113,9 +112,10 @@ namespace synui
 		HINSTANCE m_HInstance;
 		HWND m_timerWindow;
 #endif
-		nanogui::Screen *m_screen;
 		GLFWwindow *m_window;
 		bool m_isOpen;
+
+		MainGUI *m_gui;
 
 		Vector2u m_size;
 

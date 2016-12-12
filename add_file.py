@@ -52,7 +52,7 @@ def find_valid_directories(source_dir, include_dir):
 if __name__=="__main__":
     import argparse as ap
     import os,sys,datetime
-    parser = ap.ArgumentParser()
+    parser = ap.ArgumentParser(formatter_class=ap.ArgumentDefaultsHelpFormatter)
     subparsers = parser.add_subparsers()
 
     parser_add = subparsers.add_parser("add", help="add source and include files to their respective directories")

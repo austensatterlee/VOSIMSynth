@@ -1,4 +1,6 @@
 #include "MainWindow.h"
+#include "MainGUI.h"
+#include <GLFW/glfw3.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -71,7 +73,6 @@ LRESULT CALLBACK synui::MainWindow::drawFunc(HWND Handle, UINT Message, WPARAM W
 synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiConstructor) :
     m_HInstance(nullptr),
     m_timerWindow(nullptr), 
-    m_screen(nullptr),
     m_window(nullptr),
     m_isOpen(false),
     m_size(a_width, a_height), 
@@ -80,6 +81,7 @@ synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiCon
     m_guiInternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE),
     m_guiExternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE)
 {
+	// Create GLFW window
     if (!glfwInit()) {
         throw "Failed to init GLFW.";
     }
@@ -101,106 +103,27 @@ synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiCon
     glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
-
     m_window = glfwCreateWindow(m_size.x(), m_size.y(), "VOSIMSynth", nullptr, nullptr);
     if (m_window == nullptr) {
         glfwTerminate();
         throw "Failed to create GLFW window";
     }
-    glfwSetWindowUserPointer(m_window, this);
     glfwMakeContextCurrent(m_window);
 
-    m_screen = new nanogui::Screen();
-    m_screen->initialize(m_window, true); 
+	// Construct GUI object
+	m_gui = a_guiConstructor(m_window);
 
-    glViewport(0, 0, m_size.x(), m_size.y());
-    glfwSwapInterval(0);
-    glfwSwapBuffers(m_window);
-
-    nanogui::Window *window = new nanogui::Window(m_screen, "Grid of small widgets");
-    window->setPosition(Vector2i(425, 300));
-	window->setFixedSize(Vector2i(0,0));
-    nanogui::GridLayout *layout =
-        new nanogui::GridLayout(nanogui::Orientation::Horizontal, 2,
-                nanogui::Alignment::Middle, 15, 5);
-    layout->setColAlignment(
-            {nanogui::Alignment::Maximum, nanogui::Alignment::Fill });
-    layout->setSpacing(0, 10);
-    window->setLayout(layout);
-
-    {
-        nanogui::Label *lbl = new nanogui::Label(window, "Floating point :", "sans-bold");
-		lbl->setFixedSize({0,0});
-        nanogui::TextBox *textBox = new nanogui::TextBox(window);
-		textBox->setFixedSize(Vector2i(0,0));
-        textBox->setEditable(true);
-        textBox->setFixedSize(Vector2i(100, 20));
-        textBox->setValue("50");
-        textBox->setUnits("GiB");
-        textBox->setDefaultValue("0.0");
-        textBox->setFontSize(16);
-        textBox->setFormat("[-]?[0-9]*\\.?[0-9]+");
-    }  
-    {
-        nanogui::Label *lbl = new nanogui::Label(window, "Checkbox :", "sans-bold");
-		lbl->setFixedSize({0,0});
-        nanogui::CheckBox *cb = new nanogui::CheckBox(window, "Check me");
-        cb->setFontSize(16);
-        cb->setChecked(true);
-    }
-
-    m_screen->setVisible(true);
-    m_screen->performLayout();
-	m_screen->setPosition({0,0});
-
-    glfwSetCursorPosCallback(m_window,
-            [](GLFWwindow *w, double x, double y) {
-            static_cast<MainWindow*>(glfwGetWindowUserPointer(w))->m_screen->cursorPosCallbackEvent(x, y);
-            }
-            );
-
-    glfwSetMouseButtonCallback(m_window,
-            [](GLFWwindow *w, int button, int action, int modifiers) {
-            static_cast<MainWindow*>(glfwGetWindowUserPointer(w))->m_screen->mouseButtonCallbackEvent(button, action, modifiers);
-            }
-            );
-
-    glfwSetKeyCallback(m_window,
-            [](GLFWwindow *w, int key, int scancode, int action, int mods) {
-            static_cast<MainWindow*>(glfwGetWindowUserPointer(w))->m_screen->keyCallbackEvent(key, scancode, action, mods);
-            }
-            );
-
-    glfwSetCharCallback(m_window,
-            [](GLFWwindow *w, unsigned int codepoint) {
-            static_cast<MainWindow*>(glfwGetWindowUserPointer(w))->m_screen->charCallbackEvent(codepoint);
-            }
-            );
-
-    glfwSetDropCallback(m_window,
-            [](GLFWwindow *w, int count, const char **filenames) {
-            static_cast<MainWindow*>(glfwGetWindowUserPointer(w))->m_screen->dropCallbackEvent(count, filenames);
-            }
-            );
-
-    glfwSetScrollCallback(m_window,
-            [](GLFWwindow *w, double x, double y) {
-            static_cast<MainWindow*>(glfwGetWindowUserPointer(w))->m_screen->scrollCallbackEvent(x, y);
-            }
-            );
-
-    glfwSetFramebufferSizeCallback(m_window,
-            [](GLFWwindow *w, int width, int height) {
-            static_cast<MainWindow*>(glfwGetWindowUserPointer(w))->m_screen->resizeCallbackEvent(width, height);
-            }
-            );
-
-    glfwMakeContextCurrent(nullptr);
+//    glViewport(0, 0, m_size.x(), m_size.y());
+//    glfwSwapInterval(0);
+//    glfwSwapBuffers(m_window);
+//
+//    glfwMakeContextCurrent(nullptr);
 }
 
 synui::MainWindow::~MainWindow()
 {
     CloseWindow();
+	delete m_gui; m_gui=nullptr;
 }
 
 void synui::MainWindow::_runLoop()
@@ -213,8 +136,7 @@ void synui::MainWindow::_runLoop()
     glfwMakeContextCurrent(m_window);   
     glClearColor(0.2f, 0.25f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-    m_screen->drawContents();
-    m_screen->drawWidgets();
+	m_gui->draw();
     glfwSwapBuffers(m_window);
     glfwMakeContextCurrent(nullptr);
     m_frameCount++;
