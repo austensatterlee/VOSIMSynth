@@ -135,7 +135,7 @@ set(NANOGUI_BUILD_SHARED  OFF CACHE BOOL " " FORCE)
 add_subdirectory(${LIBS_DIR}/nanogui)
 
 # For reliability of parallel build, make the NanoGUI targets dependencies
-set_property(TARGET glfw bin2c nanogui PROPERTY FOLDER "dependencies")
+set_property(TARGET glfw nanogui PROPERTY FOLDER "dependencies")
 
 #################################
 # Configure include directories #
