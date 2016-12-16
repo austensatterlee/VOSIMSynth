@@ -78,23 +78,6 @@ namespace synui
 		return value >= 1024;
 	}
 
-	/**
-	 * \brief Open a native file open/save dialog.
-	 *
-	 * \param filetypes
-	 *     Pairs of permissible formats with descriptions like
-	 *     <tt>("png", "Portable Network Graphics")</tt>
-	 */
-	extern std::string file_dialog(const std::vector<std::pair<std::string, std::string>>& filetypes, bool save);
-
-	/**
-	* \brief Convert a single UTF32 character code to UTF8
-	*
-	* NanoGUI uses this to convert the icon character codes
-	* defined in entypo.h
-	*/
-	extern std::array<char, 8> utf8(int c);
-
 	template <typename StoreType>
 	class CachedComputation
 	{

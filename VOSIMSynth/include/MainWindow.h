@@ -70,7 +70,7 @@ namespace synui
 	public:
 		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		typedef std::function<MainGUI*(GLFWwindow*)> GUIConstructor; 
+		typedef std::function<MainGUI*(MainWindow*)> GUIConstructor; 
 
 	public:
 		MainWindow(int a_width, int a_height, GUIConstructor a_guiConstructor);
@@ -83,6 +83,8 @@ namespace synui
 		Vector2u getSize() const { return m_size; }
 
 		double fps() const { return m_fps; }
+
+		MainGUI *gui() const { return m_gui; }
 		
 		bool OpenWindow(HWND a_system_window);
 

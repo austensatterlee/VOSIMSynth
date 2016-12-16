@@ -100,24 +100,23 @@ synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiCon
 
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-    glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    //glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
-    m_window = glfwCreateWindow(m_size.x(), m_size.y(), "VOSIMSynth", nullptr, nullptr);
+    m_window = glfwCreateWindow(800, 600, "VOSIMSynth", nullptr, nullptr);
     if (m_window == nullptr) {
         glfwTerminate();
         throw "Failed to create GLFW window";
     }
     glfwMakeContextCurrent(m_window);
+    glfwSwapInterval(1);
+    glfwSwapBuffers(m_window);
 
 	// Construct GUI object
-	m_gui = a_guiConstructor(m_window);
+	m_gui = a_guiConstructor(this);
+	glfwSetWindowSize(m_window, m_size.x(), m_size.y());
 
-//    glViewport(0, 0, m_size.x(), m_size.y());
-//    glfwSwapInterval(0);
-//    glfwSwapBuffers(m_window);
-//
-//    glfwMakeContextCurrent(nullptr);
+    glfwMakeContextCurrent(nullptr);
 }
 
 synui::MainWindow::~MainWindow()
@@ -128,17 +127,12 @@ synui::MainWindow::~MainWindow()
 
 void synui::MainWindow::_runLoop()
 {
-    glfwSetTime(0);
     double cpuStartTime = glfwGetTime();
 
     _flushMessageQueues();
 
-    glfwMakeContextCurrent(m_window);   
-    glClearColor(0.2f, 0.25f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
 	m_gui->draw();
-    glfwSwapBuffers(m_window);
-    glfwMakeContextCurrent(nullptr);
+
     m_frameCount++;
 
     double dCpuTime = glfwGetTime() - cpuStartTime;
@@ -166,7 +160,7 @@ void synui::MainWindow::queueExternalMessage(GUIMessage* a_msg) { m_guiExternalM
 bool synui::MainWindow::OpenWindow(HWND a_system_window)
 {
     if (!m_isOpen) {
-        glfwShowWindow(m_window);
+        m_gui->show();
         _OpenWindowImplem(a_system_window);
         m_isOpen = true;
     }
@@ -177,7 +171,7 @@ void synui::MainWindow::CloseWindow()
 {
     if (m_isOpen) {
         _CloseWindowImplem();
-        glfwHideWindow(m_window);
+        m_gui->hide();
         m_isOpen = false;
     }
 }

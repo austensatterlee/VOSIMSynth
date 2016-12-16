@@ -18,7 +18,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
- *  \file MainGUI.h
+ *  \file UnitWidget.h
  *  \brief
  *  \details
  *  \author Austen Satterlee
@@ -26,12 +26,11 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
+#include <nanogui/nanogui.h>
 
-namespace nanogui
+namespace synui
 {
-	class Window;
-	class Widget;
-	class Screen;
+	class CircuitWidget;
 }
 
 namespace syn
@@ -40,39 +39,26 @@ namespace syn
 	class UnitFactory;
 }
 
-struct GLFWwindow;
-
 namespace synui
 {
-	class MainWindow;
-	class CircuitWidget;
-
-	class MainGUI
+	class UnitWidget : public nanogui::Widget
 	{
 	public:
-		MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf);
+		UnitWidget(CircuitWidget* a_parent, int a_unitId);
 
-		void show() const;
-		void hide() const;
-		void draw();
+		void draw(NVGcontext* ctx) override;
+		bool mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
+		bool mouseDragEvent(const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override;
 
-		nanogui::Screen *screen() const { return m_screen; }
-
-		virtual ~MainGUI();
-
-	protected:
-		nanogui::Widget *_createUnitSelector(nanogui::Window* a_parent) const;
-
+		Eigen::Vector2i getInputPortPosition(int a_portId);
+		Eigen::Vector2i getOutputPortPosition(int a_portId);
 	private:
-		MainWindow* m_window;
-		nanogui::Screen *m_screen;
-		syn::VoiceManager *m_vm;
-		syn::UnitFactory *m_uf;
+		CircuitWidget* m_parentCircuit;
+		Widget* m_titleLabel;
+		std::unordered_map<int, Widget*> m_inputLabels;
+		std::unordered_map<int, Widget*> m_outputLabels;
 
-
-		// Widgets
-		nanogui::Widget *m_unitSelector;
-		nanogui::Window *m_sidePanelL, *m_sidePanelR;
-		CircuitWidget *m_circuit;
+		bool m_drag;
+		int m_unitId;
 	};
 }

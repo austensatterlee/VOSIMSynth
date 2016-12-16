@@ -3,4 +3,4 @@
 	url = https://github.com/pybind/pybind11.git
 [submodule "libs/nanogui"]
 	path = libs/nanogui
-	url = https://github.com/wjakob/nanogui.git
+  url = https://github.com/austensatterlee/nanogui.git
