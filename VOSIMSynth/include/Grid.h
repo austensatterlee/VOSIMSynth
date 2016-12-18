@@ -183,7 +183,7 @@ namespace synui
             int b = std::max(a_topLeft[0], a_bottomRight[0]);
             int l = std::min(a_topLeft[1], a_bottomRight[1]);
             int r = std::max(a_topLeft[1], a_bottomRight[1]);
-            return >= 0 && t <= m_shape[0] && l >= 0 && l <= m_shape[1] && b >= 0 && b <= m_shape[0] && r >= 0 && r <= m_shape[1];
+            return t >= 0 && t <= m_shape[0] && l >= 0 && l <= m_shape[1] && b >= 0 && b <= m_shape[0] && r >= 0 && r <= m_shape[1];
         }
 
         /**
