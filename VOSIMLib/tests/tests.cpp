@@ -7,7 +7,6 @@
 #include <Circuit.h>
 #include <MemoryUnit.h>
 
-#include <iostream>
 #include <sstream>
 #include <memory>
 #include <random>
@@ -37,14 +36,14 @@ TEST_CASE("Serialization example.", "[serialization]") {
 	std::stringstream ss;
 	{
 		cereal::XMLOutputArchive oarchive(ss);
-		shared_ptr<syn::Unit> tmpUnit(circ->clone());
+	    std::shared_ptr<syn::Unit> tmpUnit(circ->clone());
 		oarchive(tmpUnit);
 	}
 	string circuit_str1 = ss.str();
 	syn::Circuit* readUnit;
 	{
 		cereal::XMLInputArchive iarchive(ss);
-		shared_ptr<syn::Unit> tmpUnit;
+	    std::shared_ptr<syn::Unit> tmpUnit;
 		iarchive(tmpUnit);
 		readUnit = dynamic_cast<syn::Circuit*>(tmpUnit->clone());
 	}
@@ -52,7 +51,7 @@ TEST_CASE("Serialization example.", "[serialization]") {
 	std::stringstream ss2;
 	{
 		cereal::XMLOutputArchive oarchive(ss2);
-		shared_ptr<syn::Unit> tmpUnit(readUnit->clone());
+	    std::shared_ptr<syn::Unit> tmpUnit(readUnit->clone());
 		oarchive(tmpUnit);
 	}
 	string circuit_str2 = ss2.str();

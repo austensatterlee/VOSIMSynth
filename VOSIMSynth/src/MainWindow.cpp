@@ -140,13 +140,19 @@ void synui::MainWindow::_runLoop()
     m_fps = m_fps + 0.0175 * (fps - m_fps);
 }
 
-void synui::MainWindow::_queueInternalMessage(GUIMessage* a_msg) { m_guiInternalMsgQueue.push(a_msg); }
+void synui::MainWindow::queueInternalMessage(GUIMessage* a_msg) { m_guiInternalMsgQueue.push(a_msg); }
 
 void synui::MainWindow::_flushMessageQueues()
 {
     GUIMessage* msg;
-    while (m_guiInternalMsgQueue.pop(msg)) { _processMessage(msg); }
-    while (m_guiExternalMsgQueue.pop(msg)) { _processMessage(msg); }
+    while (m_guiInternalMsgQueue.pop(msg))
+    {
+        _processMessage(msg);
+    }
+    while (m_guiExternalMsgQueue.pop(msg))
+    {
+        _processMessage(msg);
+    }
 }
 
 void synui::MainWindow::_processMessage(GUIMessage* a_msg)

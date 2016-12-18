@@ -91,6 +91,7 @@ namespace synui
 		void CloseWindow();
 
 		void queueExternalMessage(GUIMessage* a_msg);
+		void queueInternalMessage(GUIMessage* a_msg);
 
 #ifdef _WIN32
 		void setHInstance(HINSTANCE a_newHInstance) { m_HInstance = a_newHInstance; }
@@ -98,15 +99,12 @@ namespace synui
 		static LRESULT CALLBACK drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam);
 #endif
 	private:
-		/**
-		 * Attach the sfml window to the given parent window.
-		 */
+
 		void _OpenWindowImplem(HWND a_system_window);
 		void _CloseWindowImplem();
 		
 		void _runLoop();
 
-		void _queueInternalMessage(GUIMessage* a_msg);
 		void _flushMessageQueues();
 		void _processMessage(GUIMessage* a_msg);
 	private:

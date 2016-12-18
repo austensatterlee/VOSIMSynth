@@ -121,7 +121,7 @@ namespace syn
 		return m_parent;
 	}
 
-	string Unit::paramName(int a_index) const {
+	const string& Unit::paramName(int a_index) const {
 		return m_parameters.name(a_index);
 	}
 
@@ -258,7 +258,7 @@ namespace syn
 		return m_inputPorts.contains(a_inputPort);
 	}
 
-	string Unit::inputName(int a_index) const {
+	const string& Unit::inputName(int a_index) const {
 		return m_inputPorts.name(a_index);
 	}
 }

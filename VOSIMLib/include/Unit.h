@@ -198,7 +198,7 @@ namespace syn
 		template <typename ID>
 		const UnitParameter& param(const ID& a_identifier) const;
 
-		string paramName(int a_index) const;
+		const string& paramName(int a_index) const;
 
 		const NamedContainer<UnitParameter, MAX_PARAMS>& parameters() const;
 
@@ -211,7 +211,7 @@ namespace syn
 
 		bool hasInput(int a_inputPort) const;
 
-		string inputName(int a_index) const;
+		const string& inputName(int a_index) const;
 
 		const double& readInput(int a_index) const;
 
