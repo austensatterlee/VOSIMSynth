@@ -26,6 +26,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
+#include "nanogui/formhelper.h"
 
 namespace nanogui
 {
@@ -50,28 +51,28 @@ namespace synui
 	class MainGUI
 	{
 	public:
-		MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf);
+		MainGUI(MainWindow *a_window, syn::VoiceManager *a_vm, syn::UnitFactory *a_uf);
 
 		void show() const;
 		void hide() const;
 		void draw();
 
-		nanogui::Screen *screen() const { return m_screen; }
+		nanogui::Screen *getScreen() const { return m_screen; }
 
 		virtual ~MainGUI();
 
 	protected:
-		nanogui::Widget *_createUnitSelector(nanogui::Window* a_parent) const;
+		nanogui::Widget *_createUnitSelector(nanogui::Widget *a_widget) const;
 
 	private:
-		MainWindow* m_window;
+		MainWindow *m_window;
 		nanogui::Screen *m_screen;
 		syn::VoiceManager *m_vm;
 		syn::UnitFactory *m_uf;
 
-
 		// Widgets
-		nanogui::Widget *m_unitSelector;
+        nanogui::TabWidget *m_tabWidget;
+		nanogui::Widget *m_unitSelector, *m_unitEditorHost;
 		nanogui::Window *m_sidePanelL, *m_sidePanelR;
 		CircuitWidget *m_circuit;
 	};

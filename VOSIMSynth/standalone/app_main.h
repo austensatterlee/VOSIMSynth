@@ -100,10 +100,10 @@ extern WDL_DLGRET PreferencesDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
 extern HINSTANCE gHINST;
 extern HWND gHWND;
 extern UINT gScrollMessage;
-extern IPlug* gPluginInstance; // The iplug plugin instance
+extern IPlug *gPluginInstance; // The iplug plugin instance
 
 extern std::string GetAudioDeviceName(int idx);
-extern int GetAudioDeviceID(char* deviceNameToTest);
+extern int GetAudioDeviceID(char *deviceNameToTest);
 
 extern void ProbeAudioIO();
 extern bool InitialiseAudio(unsigned int inId,
@@ -115,17 +115,17 @@ extern bool InitialiseAudio(unsigned int inId,
                             unsigned int outChanL
                            );
 
-extern bool AudioSettingsInStateAreEqual(AppState* os, AppState* ns);
-extern bool MIDISettingsInStateAreEqual(AppState* os, AppState* ns);
+extern bool AudioSettingsInStateAreEqual(AppState *os, AppState *ns);
+extern bool MIDISettingsInStateAreEqual(AppState *os, AppState *ns);
 
 extern bool TryToChangeAudioDriverType();
 extern bool TryToChangeAudio();
-extern bool ChooseMidiInput(const char* pPortName);
-extern bool ChooseMidiOutput(const char* pPortName);
+extern bool ChooseMidiInput(const char *pPortName);
+extern bool ChooseMidiOutput(const char *pPortName);
 
 extern bool AttachGUI();
 
-extern RtAudio* gDAC;
+extern RtAudio *gDAC;
 extern RtMidiIn *gMidiIn;
 extern RtMidiOut *gMidiOut;
 

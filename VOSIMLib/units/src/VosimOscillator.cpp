@@ -41,7 +41,7 @@ namespace syn
 		addInput_(iDecayMul, "dec[x]", 1.0);
 	}
 
-	VosimOscillator::VosimOscillator(const VosimOscillator& a_rhs) :
+	VosimOscillator::VosimOscillator(const VosimOscillator &a_rhs) :
 		VosimOscillator(a_rhs.name()) { }
 
 	void VosimOscillator::process_() {
@@ -96,7 +96,7 @@ namespace syn
 		addInput_(iFmtMul, "fmt[x]", 1.0);
 	}
 
-	FormantOscillator::FormantOscillator(const FormantOscillator& a_rhs) :
+	FormantOscillator::FormantOscillator(const FormantOscillator &a_rhs) :
 		FormantOscillator(a_rhs.name()) { }
 
 	void FormantOscillator::process_() {

@@ -19,13 +19,13 @@ namespace syn
 	{
 		DERIVE_UNIT(MidiNoteUnit)
 	public:
-		explicit MidiNoteUnit(const string& a_name) :
+		explicit MidiNoteUnit(const string &a_name) :
 			Unit(a_name) {
 			addOutput_("pitch");
 			addOutput_("freq");
 		}
 
-		MidiNoteUnit(const MidiNoteUnit& a_rhs) :
+		MidiNoteUnit(const MidiNoteUnit &a_rhs) :
 			MidiNoteUnit(a_rhs.name()) { }
 
 	protected:
@@ -39,12 +39,12 @@ namespace syn
 	{
 		DERIVE_UNIT(VelocityUnit)
 	public:
-		explicit VelocityUnit(const string& a_name) :
+		explicit VelocityUnit(const string &a_name) :
 			Unit(a_name) {
 			addOutput_("out");
 		}
 
-		VelocityUnit(const VelocityUnit& a_rhs) :
+		VelocityUnit(const VelocityUnit &a_rhs) :
 			VelocityUnit(a_rhs.name()) { }
 
 	protected:
@@ -60,12 +60,12 @@ namespace syn
 	{
 		DERIVE_UNIT(GateUnit)
 	public:
-		explicit GateUnit(const string& a_name) :
+		explicit GateUnit(const string &a_name) :
 			Unit(a_name) {
 			addOutput_("out");
 		}
 
-		GateUnit(const GateUnit& a_rhs) :
+		GateUnit(const GateUnit &a_rhs) :
 			GateUnit(a_rhs.name()) { }
 
 	protected:
@@ -81,7 +81,7 @@ namespace syn
 	{
 		DERIVE_UNIT(MidiCCUnit)
 	public:
-		explicit MidiCCUnit(const string& a_name) :
+		explicit MidiCCUnit(const string &a_name) :
 			Unit(a_name),
 			m_pCC(addParameter_(UnitParameter("CC", 0, 128, 0))),
 			m_pLearn(addParameter_(UnitParameter("learn", false))),
@@ -89,7 +89,7 @@ namespace syn
 			addOutput_("out");
 		}
 
-		MidiCCUnit(const MidiCCUnit& a_rhs) :
+		MidiCCUnit(const MidiCCUnit &a_rhs) :
 			MidiCCUnit(a_rhs.name()) { }
 
 	protected:

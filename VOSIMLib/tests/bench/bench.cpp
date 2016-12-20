@@ -25,44 +25,44 @@
 std::random_device RandomDevice;
 
 #if trig_benches
-NONIUS_BENCHMARK("syn::lut_sin.getraw", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("syn::lut_sin.getraw", [](nonius::chronometer &meter) {
 	const int runs = meter.runs();
 	std::vector<int> phases(runs);
-	const syn::LookupTable& lut_sin_table = syn::lut_sin_table();
-	auto _phaseGenerator = [&runs, &lut_sin_table](int& n)->int { return n*1.0 / runs*lut_sin_table.size(); };
+	const syn::LookupTable &lut_sin_table = syn::lut_sin_table();
+	auto _phaseGenerator = [&runs, &lut_sin_table](int &n)->int { return n*1.0 / runs*lut_sin_table.size(); };
 	std::transform(phases.begin(), phases.end(), phases.begin(), _phaseGenerator);
 	double x;
 	meter.measure([&x, &phases, &lut_sin_table](int i) { x = lut_sin_table.getraw(phases[i]); });
 })
 
-NONIUS_BENCHMARK("syn::lut_sin.getlinear", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("syn::lut_sin.getlinear", [](nonius::chronometer &meter) {
 	const int runs = meter.runs();
 	std::vector<double> phases(runs);
-	const syn::LookupTable& lut_sin_table = syn::lut_sin_table();
+	const syn::LookupTable &lut_sin_table = syn::lut_sin_table();
 	for(int i=0;i<runs;i++) phases[i]=i*1.0/runs;
 	double x;
 	meter.measure([&x, &phases, &lut_sin_table](int i) { x = lut_sin_table.getlinear(phases[i]); });
 })
 
-NONIUS_BENCHMARK("syn::lut_sin.getlinear_periodic", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("syn::lut_sin.getlinear_periodic", [](nonius::chronometer &meter) {
 	const int runs = meter.runs();
 	std::vector<double> phases(runs);
-	const syn::LookupTable& lut_sin_table = syn::lut_sin_table();
+	const syn::LookupTable &lut_sin_table = syn::lut_sin_table();
 	for (int i = 0; i<runs; i++) phases[i] = i*1.0 / runs;
 	double x;
 	meter.measure([&x, &phases, &lut_sin_table](int i) { x = lut_sin_table.getlinear_periodic(phases[i]); });
 })
 
-NONIUS_BENCHMARK("std::sin", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("std::sin", [](nonius::chronometer &meter) {
 	const int runs = meter.runs();
 	std::vector<double> phases(runs);
-	const syn::LookupTable& lut_sin_table = syn::lut_sin_table();
+	const syn::LookupTable &lut_sin_table = syn::lut_sin_table();
 	for (int i = 0; i<runs; i++) phases[i] = DSP_PI * i * 1.0 / runs;
 	double x;
 	meter.measure([&x, &phases](int i) { x = std::sin(phases[i]); });
 })
 
-NONIUS_BENCHMARK("std::tanh", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("std::tanh", [](nonius::chronometer &meter) {
 	const int runs = meter.runs();
 	std::vector<double> phases(runs);
 	for (int i = 0; i<runs; i++) phases[i] = i * 20.0 / runs - 10.;
@@ -70,7 +70,7 @@ NONIUS_BENCHMARK("std::tanh", [](nonius::chronometer& meter) {
 	meter.measure([&x, &phases](int i) { x = std::tanh(phases[i]); });
 })
 
-NONIUS_BENCHMARK("syn::fast_tanh_rat", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("syn::fast_tanh_rat", [](nonius::chronometer &meter) {
 	const int runs = meter.runs();
 	std::vector<double> phases(runs);
 	for (int i = 0; i<runs; i++) phases[i] = i * 6. / runs - 3.;
@@ -78,7 +78,7 @@ NONIUS_BENCHMARK("syn::fast_tanh_rat", [](nonius::chronometer& meter) {
 	meter.measure([&x, &phases](int i) { x = syn::fast_tanh_rat<double>(phases[i]); });
 })
 
-NONIUS_BENCHMARK("syn::fast_tanh_rat_2", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("syn::fast_tanh_rat_2", [](nonius::chronometer &meter) {
 	const int runs = meter.runs();
 	std::vector<double> phases(runs);
 	for (int i = 0; i<runs; i++) phases[i] = i * 6. / runs - 3.;
@@ -88,7 +88,7 @@ NONIUS_BENCHMARK("syn::fast_tanh_rat_2", [](nonius::chronometer& meter) {
 #endif
 
 #if ladder_benches
-NONIUS_BENCHMARK("ladder", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("ladder", [](nonius::chronometer &meter) {
 	const int runs = meter.runs();
 	syn::LadderFilter ladder("ladder");
 	double input = 1.0;
@@ -107,7 +107,7 @@ NONIUS_BENCHMARK("ladder", [](nonius::chronometer& meter) {
 	});
 })
 
-NONIUS_BENCHMARK("ladder_B", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("ladder_B", [](nonius::chronometer &meter) {
 	const int runs = meter.runs();
 	syn::LadderFilterTwo ladder("ladder");
 	double input = 1.0;
@@ -126,7 +126,7 @@ NONIUS_BENCHMARK("ladder_B", [](nonius::chronometer& meter) {
 	});
 })
 
-NONIUS_BENCHMARK("svf", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("svf", [](nonius::chronometer &meter) {
 	const int runs = meter.runs();
 	syn::StateVariableFilter svf("ladder");
 	double input = 1.0;
@@ -144,7 +144,7 @@ NONIUS_BENCHMARK("svf", [](nonius::chronometer& meter) {
 	});
 })
 
-NONIUS_BENCHMARK("trapezoidal svf", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("trapezoidal svf", [](nonius::chronometer &meter) {
 	const int runs = meter.runs();
 	syn::TrapStateVariableFilter tsvf("ladder");
 	double input = 1.0;
@@ -164,7 +164,7 @@ NONIUS_BENCHMARK("trapezoidal svf", [](nonius::chronometer& meter) {
 #endif
 
 #ifdef circuit_benches
-NONIUS_BENCHMARK("memory circuit", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("memory circuit", [](nonius::chronometer &meter) {
 	const int runs = meter.runs();
 	const int nUnits = 60;
 	syn::Circuit mycircuit("main");
@@ -173,7 +173,7 @@ NONIUS_BENCHMARK("memory circuit", [](nonius::chronometer& meter) {
 	units[0] = new syn::MemoryUnit("u0");
 	mycircuit.addUnit(units[0], 2);
 	for (int i = 1; i < nUnits; i++) {
-		units[i] = new syn::MemoryUnit("u" + to_string(i));
+		units[i] = new syn::MemoryUnit("u" + std::to_string(i));
 		mycircuit.addUnit(units[i], i+2);
 		mycircuit.connectInternal(i+2 - 1, 0, i+2, 0);
 	}
@@ -190,7 +190,7 @@ NONIUS_BENCHMARK("memory circuit", [](nonius::chronometer& meter) {
 #endif
 
 #if modulus_benches
-NONIUS_BENCHMARK("std::mod", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("std::mod", [](nonius::chronometer &meter) {
 	const int runs = meter.runs();
 	std::vector<double> phases(runs);
 	for (int i = 0; i<runs; i++) phases[i] = i * 20.0 / runs - 10.;
@@ -198,7 +198,7 @@ NONIUS_BENCHMARK("std::mod", [](nonius::chronometer& meter) {
 	meter.measure([&x, &phases](int i) { x = std::fmod(phases[i], 1); });
 })
 
-NONIUS_BENCHMARK("syn::WRAP", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("syn::WRAP", [](nonius::chronometer &meter) {
 	const int runs = meter.runs();
 	std::vector<double> phases(runs);
 	for (int i = 0; i<runs; i++) phases[i] = i * 20.0 / runs - 10.;
@@ -208,13 +208,13 @@ NONIUS_BENCHMARK("syn::WRAP", [](nonius::chronometer& meter) {
 #endif
 
 #if lut_saw_benches
-NONIUS_BENCHMARK("lut saw", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("lut saw", [](nonius::chronometer &meter) {
 	std::vector<double> periods(meter.runs());
 	std::vector<double> phases(meter.runs());
 	std::uniform_int_distribution<> _periodGenerator(2, syn::lut_bl_saw_table().size() - 1);
 	std::uniform_real_distribution<> _phaseGenerator(0.0,1.0);
-	std::transform(periods.begin(), periods.end(), periods.begin(), [&_periodGenerator](double& x) {return _periodGenerator(RandomDevice); });
-	std::transform(phases.begin(), phases.end(), phases.begin(), [&_phaseGenerator](double& x) {return _phaseGenerator(RandomDevice); });
+	std::transform(periods.begin(), periods.end(), periods.begin(), [&_periodGenerator](double &x) {return _periodGenerator(RandomDevice); });
+	std::transform(phases.begin(), phases.end(), phases.begin(), [&_phaseGenerator](double &x) {return _phaseGenerator(RandomDevice); });
 	double x;
 	meter.measure([&x,&periods,&phases](int i)
 	{
@@ -222,10 +222,10 @@ NONIUS_BENCHMARK("lut saw", [](nonius::chronometer& meter) {
 	});
 })
 
-NONIUS_BENCHMARK("naive saw", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("naive saw", [](nonius::chronometer &meter) {
 	std::vector<double> phases(meter.runs());
 	std::uniform_real_distribution<> _phaseGenerator(0.0, 1.0);
-	std::transform(phases.begin(), phases.end(), phases.begin(), [&_phaseGenerator](double& x) {return _phaseGenerator(RandomDevice); });
+	std::transform(phases.begin(), phases.end(), phases.begin(), [&_phaseGenerator](double &x) {return _phaseGenerator(RandomDevice); });
 	double x;
 	meter.measure([&x, &phases](int i)
 	{
@@ -235,10 +235,10 @@ NONIUS_BENCHMARK("naive saw", [](nonius::chronometer& meter) {
 #endif
 
 #if lut_pitch_benches
-NONIUS_BENCHMARK("lut pitch2freq", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("lut pitch2freq", [](nonius::chronometer &meter) {
 	std::vector<double> pitches(meter.runs());
 	std::uniform_int_distribution<> _pitchGenerator(-128, 128);
-	std::transform(pitches.begin(), pitches.end(), pitches.begin(), [&_pitchGenerator](double& x) {return _pitchGenerator(RandomDevice); });
+	std::transform(pitches.begin(), pitches.end(), pitches.begin(), [&_pitchGenerator](double &x) {return _pitchGenerator(RandomDevice); });
 	double x;
 	meter.measure([&x, &pitches](int i)
 	{
@@ -246,10 +246,10 @@ NONIUS_BENCHMARK("lut pitch2freq", [](nonius::chronometer& meter) {
 	});
 })
 
-NONIUS_BENCHMARK("naive pitch2freq", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("naive pitch2freq", [](nonius::chronometer &meter) {
 	std::vector<double> pitches(meter.runs());
 	std::uniform_int_distribution<> _pitchGenerator(-128, 128);
-	std::transform(pitches.begin(), pitches.end(), pitches.begin(), [&_pitchGenerator](double& x) {return _pitchGenerator(RandomDevice); });
+	std::transform(pitches.begin(), pitches.end(), pitches.begin(), [&_pitchGenerator](double &x) {return _pitchGenerator(RandomDevice); });
 	double x;
 	meter.measure([&x, &pitches](int i)
 	{
@@ -260,13 +260,13 @@ NONIUS_BENCHMARK("naive pitch2freq", [](nonius::chronometer& meter) {
 
 #if container_benches
 #define container_size 64
-NONIUS_BENCHMARK("NamedContainer []", [](nonius::chronometer& meter)
+NONIUS_BENCHMARK("NamedContainer []", [](nonius::chronometer &meter)
 {
 	std::uniform_int_distribution<> _accessGenerator(0, container_size-1);
 	std::vector<int> loads(meter.runs());
 	std::vector<int> stores(meter.runs());
-	std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
-	std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
+	std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int &x) {return _accessGenerator(RandomDevice); });
+	std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int &x) {return _accessGenerator(RandomDevice); });
 
 	syn::NamedContainer<syn::UnitPort, container_size> myContainer;
 	for (int i = 0; i < container_size; i++) myContainer.add(std::to_string(i), syn::UnitPort(i));
@@ -277,13 +277,13 @@ NONIUS_BENCHMARK("NamedContainer []", [](nonius::chronometer& meter)
 	});
 })
 
-NONIUS_BENCHMARK("Array []", [](nonius::chronometer& meter)
+NONIUS_BENCHMARK("Array []", [](nonius::chronometer &meter)
 {
 	std::uniform_int_distribution<> _accessGenerator(0, container_size-1);
 	std::vector<int> loads(meter.runs());
 	std::vector<int> stores(meter.runs());
-	std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
-	std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
+	std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int &x) {return _accessGenerator(RandomDevice); });
+	std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int &x) {return _accessGenerator(RandomDevice); });
 
 	std::array<syn::UnitPort, container_size> myContainer;
 	for (int i = 0; i < container_size; i++) myContainer[i]=syn::UnitPort(i);
@@ -294,13 +294,13 @@ NONIUS_BENCHMARK("Array []", [](nonius::chronometer& meter)
 	});
 })
 
-NONIUS_BENCHMARK("Vector []", [](nonius::chronometer& meter)
+NONIUS_BENCHMARK("Vector []", [](nonius::chronometer &meter)
 {
 	std::uniform_int_distribution<> _accessGenerator(0, container_size - 1);
 	std::vector<int> loads(meter.runs());
 	std::vector<int> stores(meter.runs());
-	std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
-	std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
+	std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int &x) {return _accessGenerator(RandomDevice); });
+	std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int &x) {return _accessGenerator(RandomDevice); });
 
 	std::vector<syn::UnitPort> myContainer(container_size);
 	for (int i = 0; i < container_size; i++) myContainer[i] = syn::UnitPort(i);
@@ -311,13 +311,13 @@ NONIUS_BENCHMARK("Vector []", [](nonius::chronometer& meter)
 	});
 })
 
-NONIUS_BENCHMARK("Map [int]", [](nonius::chronometer& meter)
+NONIUS_BENCHMARK("Map [int]", [](nonius::chronometer &meter)
 {
 	std::uniform_int_distribution<> _accessGenerator(0, container_size - 1);
 	std::vector<int> loads(meter.runs());
 	std::vector<int> stores(meter.runs());
-	std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
-	std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
+	std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int &x) {return _accessGenerator(RandomDevice); });
+	std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int &x) {return _accessGenerator(RandomDevice); });
 
 	std::map<int, syn::UnitPort> myContainer;
 	for (int i = 0; i < container_size; i++) myContainer[i] = syn::UnitPort(i);

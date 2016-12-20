@@ -40,8 +40,8 @@ namespace syn {
 			pSat = 0
 		};
 
-		explicit TanhUnit(const string& a_name);
-		TanhUnit(const TanhUnit& a_rhs);
+		explicit TanhUnit(const string &a_name);
+		TanhUnit(const TanhUnit &a_rhs);
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
 	};

@@ -22,13 +22,13 @@ namespace syn {
 	class BlimpTable;
 
 	/*::lut_decl::*/
-	BlimpTable& VOSIMLIB_API lut_blimp_table_offline();
-	BlimpTable& VOSIMLIB_API lut_blimp_table_online();
-	LookupTable& VOSIMLIB_API lut_pitch_table();
-	ResampledLookupTable& VOSIMLIB_API lut_bl_saw_table();
-	ResampledLookupTable& VOSIMLIB_API lut_bl_square_table();
-	ResampledLookupTable& VOSIMLIB_API lut_bl_tri_table();
-	LookupTable& VOSIMLIB_API lut_sin_table();
+	BlimpTable &VOSIMLIB_API lut_blimp_table_offline();
+	BlimpTable &VOSIMLIB_API lut_blimp_table_online();
+	LookupTable &VOSIMLIB_API lut_pitch_table();
+	ResampledLookupTable &VOSIMLIB_API lut_bl_saw_table();
+	ResampledLookupTable &VOSIMLIB_API lut_bl_square_table();
+	ResampledLookupTable &VOSIMLIB_API lut_bl_tri_table();
+	LookupTable &VOSIMLIB_API lut_sin_table();
 	/*::/lut_decl::*/
 }
 #endif

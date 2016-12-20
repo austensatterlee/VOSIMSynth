@@ -35,9 +35,9 @@ namespace syn
 	{
 		DERIVE_UNIT(ADSREnvelope)
 	public:
-		explicit ADSREnvelope(const string& name);
+		explicit ADSREnvelope(const string &name);
 
-		ADSREnvelope(const ADSREnvelope& a_rhs);
+		ADSREnvelope(const ADSREnvelope &a_rhs);
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;

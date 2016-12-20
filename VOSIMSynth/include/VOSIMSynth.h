@@ -50,11 +50,11 @@ public:
 
 	void ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) override;
 
-	void ProcessMidiMsg(IMidiMsg* pMsg) override;
+	void ProcessMidiMsg(IMidiMsg *pMsg) override;
 
-	bool SerializeState(ByteChunk* pChunk) override;
+	bool SerializeState(ByteChunk *pChunk) override;
 
-	int UnserializeState(ByteChunk* pChunk, int startPos) override;
+	int UnserializeState(ByteChunk *pChunk, int startPos) override;
 
 	void PresetsChangedByHost() override;
 
@@ -69,9 +69,9 @@ public:
 	void OnGUIClose() override;
 
 private:
-	syn::MIDIReceiver* m_MIDIReceiver;
-	syn::VoiceManager* m_voiceManager;
-	syn::UnitFactory* m_unitFactory;
+	syn::MIDIReceiver *m_MIDIReceiver;
+	syn::VoiceManager *m_voiceManager;
+	syn::UnitFactory *m_unitFactory;
 
 	int m_tempo;
 	unsigned m_tickCount;

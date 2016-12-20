@@ -37,12 +37,12 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 namespace syn
 {
 	template <typename T>
-	T LERP(const T& pt1, const T& pt2, const T& frac) {
+	T LERP(const T &pt1, const T &pt2, const T &frac) {
 		return (pt2 - pt1)*frac + pt1;
 	}
 
 	template <typename T>
-	T INVLERP(const T& pt1, const T& pt2, const T& lerped_pt) {
+	T INVLERP(const T &pt1, const T &pt2, const T &lerped_pt) {
 		return (lerped_pt - pt1) / (pt2 - pt1);
 	}
 
@@ -50,17 +50,17 @@ namespace syn
 	 * Clamps val to be in the range [min_val, max_val].
 	 */
 	template <typename T>
-	constexpr const T& CLAMP(const T& val, const T& min_val, const T& max_val) {
+	constexpr const T &CLAMP(const T &val, const T &min_val, const T &max_val) {
 		return val < min_val ? min_val : (val > max_val ? max_val : val);
 	}
 
 	template <typename T>
-	constexpr const T& MAX(const T& val1, const T& val2) {
+	constexpr const T &MAX(const T &val1, const T &val2) {
 		return val1 < val2 ? val2 : val1;
 	}
 
 	template <typename T>
-	constexpr const T& MIN(const T& val1, const T& val2) {
+	constexpr const T &MIN(const T &val1, const T &val2) {
 		return val1 > val2 ? val2 : val1;
 	}
 
@@ -68,7 +68,7 @@ namespace syn
 	 * Computes x modulo m 
 	 */
 	template <typename T>
-	T WRAP(const T& x, const T& m) {
+	T WRAP(const T &x, const T &m) {
 		if (!m)
 			return x;
 		T newx = x;
@@ -86,7 +86,7 @@ namespace syn
 	 * \param right_m the right (maximum) boundary
 	 */
 	template <typename T>
-	T WRAP2(const T& x, const T& left_m, const T& right_m) {
+	T WRAP2(const T &x, const T &left_m, const T &right_m) {
 		const T m = right_m - left_m;
 		if (!m)
 			return x;
@@ -99,7 +99,7 @@ namespace syn
 	}
 
 	template <typename T>
-	T sgn(const T& val) {
+	T sgn(const T &val) {
 		return (T(0) < val) - (val < T(0));
 	}
 
@@ -149,13 +149,13 @@ namespace syn
 
 	/// Best if |x|<3.1
 	template<typename T>
-	T fast_tanh_rat(const T& x_) {
+	T fast_tanh_rat(const T &x_) {
 		T x = abs(x_);
 		return sgn(x_)*(-.67436811832e-5 + (.2468149110712040 + (.583691066395175e-1 + .3357335044280075e-1*x)*x)*x) / (.2464845986383725 + (.609347197060491e-1 + (.1086202599228572 + .2874707922475963e-1*x)*x)*x);
 	}
 
 	template<typename T>
-	T fast_tanh_rat2(const T& x) {
+	T fast_tanh_rat2(const T &x) {
 		const double ax = abs(x);
 		const double x2 = x * x;
 		const double z = x * (0.773062670268356 + ax + (0.757118539838817 + 0.0139332362248817 * x2 * x2) * x2 * ax);
@@ -170,10 +170,10 @@ namespace syn
 	 * If a_str ends with a number, this function creates a new string with that number incremented by one.
 	 * If a_str does not end with a number, this function returns a new string with "_0" concatenated at the end.
 	 */
-	std::string incrementSuffix(const std::string& a_str);
+	std::string incrementSuffix(const std::string &a_str);
 
 	template<typename Archive, typename T>
-	void load_cereal_nvp(Archive& ar, const std::string& a_name, T& a_ref, const T& a_default) {
+	void load_cereal_nvp(Archive &ar, const std::string &a_name, T &a_ref, const T &a_default) {
 		try {
 			ar(cereal::make_nvp(a_name, a_ref));
 		}catch(cereal::Exception) {

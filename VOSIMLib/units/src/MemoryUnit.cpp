@@ -100,7 +100,7 @@ namespace syn
 	//---------------------
 	// MemoryUnit
 	//---------------------
-	MemoryUnit::MemoryUnit(const string& a_name) :
+	MemoryUnit::MemoryUnit(const string &a_name) :
 		Unit(a_name)
 	{
 		addInput_("in");
@@ -109,7 +109,7 @@ namespace syn
 		MemoryUnit::reset();
 	}
 
-	MemoryUnit::MemoryUnit(const MemoryUnit& a_rhs) :
+	MemoryUnit::MemoryUnit(const MemoryUnit &a_rhs) :
 		MemoryUnit(a_rhs.name())
 	{
 	}
@@ -128,7 +128,7 @@ namespace syn
 	//---------------------
 	// ResampleUnit
 	//---------------------
-	VariableMemoryUnit::VariableMemoryUnit(const string& a_name) :
+	VariableMemoryUnit::VariableMemoryUnit(const string &a_name) :
 		Unit(a_name),
 		m_delaySamples(0)
 	{
@@ -146,7 +146,7 @@ namespace syn
 		m_delay.resizeBuffer(48000);
 	}
 
-	VariableMemoryUnit::VariableMemoryUnit(const VariableMemoryUnit& a_rhs) :
+	VariableMemoryUnit::VariableMemoryUnit(const VariableMemoryUnit &a_rhs) :
 		VariableMemoryUnit(a_rhs.name())
 	{
 	}

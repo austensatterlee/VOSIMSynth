@@ -22,7 +22,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "common.h"
 CEREAL_REGISTER_TYPE(syn::FollowerUnit);
 
-syn::FollowerUnit::FollowerUnit(const string& a_name) :
+syn::FollowerUnit::FollowerUnit(const string &a_name) :
 	Unit(a_name),
 	m_w(0.0),
 	m_output(0.0),
@@ -32,7 +32,7 @@ syn::FollowerUnit::FollowerUnit(const string& a_name) :
 	addOutput_("out");
 }
 
-syn::FollowerUnit::FollowerUnit(const FollowerUnit& a_rhs) :
+syn::FollowerUnit::FollowerUnit(const FollowerUnit &a_rhs) :
 	FollowerUnit(a_rhs.name()) {}
 
 void syn::FollowerUnit::reset() {

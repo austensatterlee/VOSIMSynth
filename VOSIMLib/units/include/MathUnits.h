@@ -63,9 +63,9 @@ namespace syn
 	{
 		DERIVE_UNIT(DCRemoverUnit)
 	public:
-		explicit DCRemoverUnit(const string& a_name);
+		explicit DCRemoverUnit(const string &a_name);
 
-		DCRemoverUnit(const DCRemoverUnit& a_rhs);
+		DCRemoverUnit(const DCRemoverUnit &a_rhs);
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
@@ -83,9 +83,9 @@ namespace syn
 	{
 		DERIVE_UNIT(RectifierUnit)
 	public:
-		explicit RectifierUnit(const string& a_name);
+		explicit RectifierUnit(const string &a_name);
 
-		RectifierUnit(const RectifierUnit& a_rhs);
+		RectifierUnit(const RectifierUnit &a_rhs);
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
@@ -101,9 +101,9 @@ namespace syn
 	{
 		DERIVE_UNIT(GainUnit)
 	public:
-		explicit GainUnit(const string& a_name);
+		explicit GainUnit(const string &a_name);
 
-		GainUnit(const GainUnit& a_rhs);
+		GainUnit(const GainUnit &a_rhs);
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
@@ -119,9 +119,9 @@ namespace syn
 	{
 		DERIVE_UNIT(SummerUnit)
 	public:
-		explicit SummerUnit(const string& a_name);
+		explicit SummerUnit(const string &a_name);
 
-		SummerUnit(const SummerUnit& a_rhs);
+		SummerUnit(const SummerUnit &a_rhs);
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
@@ -134,9 +134,9 @@ namespace syn
 	{
 		DERIVE_UNIT(ConstantUnit)
 	public:
-		explicit ConstantUnit(const string& a_name);
+		explicit ConstantUnit(const string &a_name);
 
-		ConstantUnit(const ConstantUnit& a_rhs);
+		ConstantUnit(const ConstantUnit &a_rhs);
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
@@ -149,9 +149,9 @@ namespace syn
 	{
 		DERIVE_UNIT(PanningUnit)
 	public:
-		explicit PanningUnit(const string& a_name);
+		explicit PanningUnit(const string &a_name);
 
-		PanningUnit(const PanningUnit& a_rhs);
+		PanningUnit(const PanningUnit &a_rhs);
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
@@ -167,9 +167,9 @@ namespace syn
 	{
 		DERIVE_UNIT(LerpUnit)
 	public:
-		explicit LerpUnit(const string& a_name);
+		explicit LerpUnit(const string &a_name);
 
-		LerpUnit(const LerpUnit& a_rhs);
+		LerpUnit(const LerpUnit &a_rhs);
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
@@ -187,13 +187,13 @@ namespace syn
 	{
 		DERIVE_UNIT(PitchToFreqUnit)
 	public:
-		explicit PitchToFreqUnit(const string& a_name) : Unit(a_name) 
+		explicit PitchToFreqUnit(const string &a_name) : Unit(a_name) 
 		{
 			addInput_("in");
 			addOutput_("out");
 		}
 
-		PitchToFreqUnit(const PitchToFreqUnit& a_rhs) : 
+		PitchToFreqUnit(const PitchToFreqUnit &a_rhs) : 
 			PitchToFreqUnit(a_rhs.name())
 		{
 		}
@@ -212,13 +212,13 @@ namespace syn
 	{
 		DERIVE_UNIT(FreqToPitchUnit)
 	public:
-		explicit FreqToPitchUnit(const string& a_name) : Unit(a_name)
+		explicit FreqToPitchUnit(const string &a_name) : Unit(a_name)
 		{
 			addInput_("in");
 			addOutput_("out");
 		}
 
-		FreqToPitchUnit(const FreqToPitchUnit& a_rhs) :
+		FreqToPitchUnit(const FreqToPitchUnit &a_rhs) :
 			FreqToPitchUnit(a_rhs.name())
 		{
 		}
@@ -238,7 +238,7 @@ namespace syn
 	{
 		DERIVE_UNIT(SwitchUnit)
 	public:
-		explicit SwitchUnit(const string& a_name) : Unit(a_name)
+		explicit SwitchUnit(const string &a_name) : Unit(a_name)
 		{
 			addInput_("a");
 			addInput_("b");
@@ -247,7 +247,7 @@ namespace syn
 			addOutput_("out");
 		}
 
-		SwitchUnit(const SwitchUnit& a_rhs) :
+		SwitchUnit(const SwitchUnit &a_rhs) :
 			SwitchUnit(a_rhs.name())
 		{
 		}

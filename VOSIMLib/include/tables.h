@@ -39,9 +39,9 @@ namespace syn
 	class VOSIMLIB_API LookupTable
 	{
 	public:
-		LookupTable(const double* table, int size, double input_min = 0, double input_max = 1, bool isPeriodic = true);
+		LookupTable(const double *table, int size, double input_min = 0, double input_max = 1, bool isPeriodic = true);
 
-		LookupTable(const LookupTable& a_o) : 
+		LookupTable(const LookupTable &a_o) : 
 			LookupTable(a_o.m_table, a_o.m_size, a_o.m_input_min, a_o.m_input_max, a_o.m_isperiodic) 
 		{}
 
@@ -63,7 +63,7 @@ namespace syn
 		bool m_isperiodic;
 		double m_norm_bias;
 		double m_norm_scale;
-		const double* m_table;
+		const double *m_table;
 		std::vector<double> m_diff_table;
 	};
 
@@ -73,7 +73,7 @@ namespace syn
 	class VOSIMLIB_API BlimpTable : public LookupTable
 	{
 	public:
-		BlimpTable(const double* a_table, int a_size, int a_num_intervals, int a_resolution)
+		BlimpTable(const double *a_table, int a_size, int a_num_intervals, int a_resolution)
 			: LookupTable(a_table, a_size, 0.0, 1.0, false),
 			  m_num_intervals(a_num_intervals),
 			  m_resolution(a_resolution) {}
@@ -82,7 +82,7 @@ namespace syn
 			
 		}
 
-		BlimpTable(const BlimpTable& a_other)
+		BlimpTable(const BlimpTable &a_other)
 			: BlimpTable(a_other.m_table, a_other.m_size, a_other.m_num_intervals, a_other.m_resolution) {}
 
 		const int m_num_intervals;
@@ -99,9 +99,9 @@ namespace syn
 	class VOSIMLIB_API ResampledLookupTable : public LookupTable
 	{
 	public:
-		ResampledLookupTable(const double* a_table, int a_size, const BlimpTable& a_blimp_table_online, const BlimpTable& a_blimp_table_offline);
+		ResampledLookupTable(const double *a_table, int a_size, const BlimpTable &a_blimp_table_online, const BlimpTable &a_blimp_table_offline);
 
-		ResampledLookupTable(const ResampledLookupTable& a_o) : 
+		ResampledLookupTable(const ResampledLookupTable &a_o) : 
 			ResampledLookupTable(a_o.m_table, a_o.m_size, a_o.m_blimp_table_online, a_o.m_blimp_table_offline) 
 		{}
 
@@ -117,8 +117,8 @@ namespace syn
 		int m_num_resampled_tables;
 		std::vector<int> m_resampled_sizes;
 		std::vector<std::vector<double>> m_resampled_tables;
-		const BlimpTable& m_blimp_table_online;
-		const BlimpTable& m_blimp_table_offline;
+		const BlimpTable &m_blimp_table_online;
+		const BlimpTable &m_blimp_table_offline;
 	};
 
 	/**
@@ -129,7 +129,7 @@ namespace syn
 	 * \param phase the desired phase to sample at, in the range [0,1).
 	 * \param period the desired period to resample at (in fractional number of samples)
 	 */
-	double VOSIMLIB_API getresampled_single(const double* table, int size, double phase, double period, const BlimpTable& blimp_table);
+	double VOSIMLIB_API getresampled_single(const double *table, int size, double phase, double period, const BlimpTable &blimp_table);
 	/**
 	 * Resample an entire table to have the specified period and store the
 	 * result in resampled_table (which should already be allocated), using
@@ -141,11 +141,11 @@ namespace syn
 	 *        of samples). The allocated size of the output table should be
 	 *        ceil(period).
 	 */
-	void VOSIMLIB_API resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table, bool normalize = true);
+	void VOSIMLIB_API resample_table(const double *table, int size, double *resampled_table, double period, const BlimpTable &blimp_table, bool normalize = true);
 
 	/**
 	 * \todo
 	 */
-	void fft_resample_table(const double* table, int size, double* resampled_table, double period);
+	void fft_resample_table(const double *table, int size, double *resampled_table, double period);
 }
 #endif

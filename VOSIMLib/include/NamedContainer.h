@@ -34,10 +34,10 @@ namespace syn
 	public:
 		const size_t max_size = MAXSIZE;
 		typedef T					item_type;
-		typedef item_type&			reference;
-		typedef const item_type&    const_reference;
-		typedef item_type*          pointer;
-		typedef const item_type*    const_pointer;
+		typedef item_type &reference;
+		typedef const item_type &const_reference;
+		typedef item_type *pointer;
+		typedef const item_type *const_pointer;
 
 	private:
 		array<T, MAXSIZE> m_data;
@@ -52,7 +52,7 @@ namespace syn
 			string name;
 			T item;
 			template <class Archive>
-			void serialize(Archive& ar) {
+			void serialize(Archive &ar) {
 				ar(cereal::make_nvp("index", index),
 				   cereal::make_nvp("name", name),
 				   cereal::make_nvp("item", item));
@@ -66,7 +66,7 @@ namespace syn
 			typedef _T second_argument_type;
 			typedef bool result_type;
 
-			constexpr bool operator()(const _T& _Left, const _T& _Right) const
+			constexpr bool operator()(const _T &_Left, const _T &_Right) const
 			{	// apply operator< to operands
 				return (_Left >= 0) && (_Left > _Right);
 			}
@@ -91,19 +91,19 @@ namespace syn
 			{
 			}
 
-			iterator(NamedContainer& nc)
+			iterator(NamedContainer &nc)
 				: m_nc(&nc)
 				, m_item_num(0)
 			{
 			}
 
-			iterator(NamedContainer& nc, int offset)
+			iterator(NamedContainer &nc, int offset)
 				:m_nc(&nc)
 				, m_item_num(offset)
 			{
 			}
 
-			iterator(const iterator& other)
+			iterator(const iterator &other)
 				: m_nc(other.m_nc),
 				  m_item_num(other.m_item_num)
 			{
@@ -113,7 +113,7 @@ namespace syn
 			{
 			}
 
-			iterator& operator ++()
+			iterator &operator ++()
 			{
 				m_item_num = m_nc->next_offset(m_item_num);
 				return *this;
@@ -126,7 +126,7 @@ namespace syn
 				return temp;
 			}
 
-			iterator& operator --()
+			iterator &operator --()
 			{
 				m_item_num = m_nc->prev_offset(m_item_num);
 				return *this;
@@ -139,7 +139,7 @@ namespace syn
 				return temp;
 			}
 
-			iterator operator =(const iterator& other)
+			iterator operator =(const iterator &other)
 			{
 				m_nc = other.m_nc;
 				m_item_num = other.m_item_num;
@@ -176,18 +176,18 @@ namespace syn
 				return &(m_nc->getByIndex(m_item_num));
 			}
 
-			friend bool operator == (const iterator& lhs, const iterator& rhs)
+			friend bool operator == (const iterator &lhs, const iterator &rhs)
 			{
 				return lhs.m_nc == rhs.m_nc && lhs.m_item_num == rhs.m_item_num;
 			}
 
-			friend bool operator != (const iterator& lhs, const iterator& rhs)
+			friend bool operator != (const iterator &lhs, const iterator &rhs)
 			{
 				return !(lhs == rhs);
 			}
 
 		private:
-			NamedContainer* m_nc;
+			NamedContainer *m_nc;
 			int m_item_num;
 		}; 
 		
@@ -244,15 +244,15 @@ namespace syn
 		 * Add a named item to the container.
 		 * \returns The items index in the container, or -1 if the item or name already exists, or if the container is full.
 		 */
-		int add(const string& a_name, const T& a_item);
+		int add(const string &a_name, const T &a_item);
 
 		/**
 		* Add a named item to the container using the requested index.
 		* \returns True upon success, or false if the item or name already exists or the index is already in use, or if the container is full.
 		*/
-		bool add(const string& a_name, int a_index, const T& a_item);
+		bool add(const string &a_name, int a_index, const T &a_item);
 
-		const T* data() const {
+		const T *data() const {
 			return m_data.data();
 		}
 
@@ -261,46 +261,46 @@ namespace syn
 		 * \returns True upon successful removal, false if item does not exist.
 		 */
 		template <typename IDType>
-		bool remove(const IDType& a_itemId);
+		bool remove(const IDType &a_itemId);
 
 		/**
 		 * Retrieves an item from the container by name.
 		 * \returns A reference to the item
 		 */
-		T& MSFASTCALL operator[](const string& a_itemName) GCCFASTCALL;
-		const T& MSFASTCALL operator[](const string& a_itemName) GCCFASTCALL const;
+		T &MSFASTCALL operator[](const string &a_itemName) GCCFASTCALL;
+		const T &MSFASTCALL operator[](const string &a_itemName) GCCFASTCALL const;
 
 		/**
 		* Retrieves an item from the container by index.
 		* \returns A reference to the item
 		*/
-		T& MSFASTCALL operator[](int a_itemIndex) GCCFASTCALL;
-		const T& MSFASTCALL operator[](int a_itemIndex) GCCFASTCALL const;
+		T &MSFASTCALL operator[](int a_itemIndex) GCCFASTCALL;
+		const T &MSFASTCALL operator[](int a_itemIndex) GCCFASTCALL const;
 
-		T& MSFASTCALL getByIndex(int a_itemIndex) GCCFASTCALL;
-		const T& MSFASTCALL getByIndex(int a_itemIndex) GCCFASTCALL const;
+		T &MSFASTCALL getByIndex(int a_itemIndex) GCCFASTCALL;
+		const T &MSFASTCALL getByIndex(int a_itemIndex) GCCFASTCALL const;
 
 		/**
 		 * Verifies if an item is in the container, either by its name, index, or a reference to the item itself.
 		 * \returns True if the item exists, false otherwise.
 		 */
 		template <typename IDType>
-		bool contains(const IDType& a_itemId) const;
+		bool contains(const IDType &a_itemId) const;
 
 		template <typename IDType>
-		int find(const IDType& a_itemId) const;
+		int find(const IDType &a_itemId) const;
 
 		template <typename IDType>
-		const string& name(const IDType& a_itemId) const;
+		const string &name(const IDType &a_itemId) const;
 
 		int size() const;
 
-		const int* indices() const;
+		const int *indices() const;
 
-		const string* names() const;
+		const string *names() const;
 
 		template<typename Archive>
-		void save(Archive& ar) const {
+		void save(Archive &ar) const {
 			cereal::size_type size = m_size;
 			ar(cereal::make_size_tag(size));
 			for(int i=0;i<m_size;i++) {
@@ -310,7 +310,7 @@ namespace syn
 		}
 
 		template<typename Archive>
-		void load(Archive& ar) {
+		void load(Archive &ar) {
 			cereal::size_type size;
 			ar(cereal::make_size_tag(size));
 			for(int i=0;i<size;i++) {
@@ -323,15 +323,15 @@ namespace syn
 	private:
 		int getItemIndex(int a_itemId) const;
 
-		int getItemIndex(const string& a_name) const;
+		int getItemIndex(const string &a_name) const;
 
-		int getItemIndex(const T& a_item) const;
+		int getItemIndex(const T &a_item) const;
 
 		int _getNextId();
 	};
 
 	template <typename T, int MAXSIZE>
-	int NamedContainer<T, MAXSIZE>::add(const string& a_name, const T& a_item) {
+	int NamedContainer<T, MAXSIZE>::add(const string &a_name, const T &a_item) {
 		int item_id = _getNextId();
 		if (!add(a_name, item_id, a_item))
 			return -1;
@@ -339,7 +339,7 @@ namespace syn
 	}
 
 	template <typename T, int MAXSIZE>
-	bool NamedContainer<T, MAXSIZE>::add(const string& a_name, int a_index, const T& a_item) {
+	bool NamedContainer<T, MAXSIZE>::add(const string &a_name, int a_index, const T &a_item) {
 		if (a_index >= MAXSIZE)
 			return false;
 		if (contains(a_name))
@@ -360,7 +360,7 @@ namespace syn
 
 	template <typename T, int MAXSIZE>
 	template <typename IDType>
-	bool NamedContainer<T, MAXSIZE>::remove(const IDType& a_itemID) {
+	bool NamedContainer<T, MAXSIZE>::remove(const IDType &a_itemID) {
 		int index = getItemIndex(a_itemID);
 		if (index == -1)
 			return false;
@@ -384,48 +384,48 @@ namespace syn
 	}
 
 	template <typename T, int MAXSIZE>
-	T& NamedContainer<T, MAXSIZE>::operator[](const string& a_itemName) {
+	T &NamedContainer<T, MAXSIZE>::operator[](const string &a_itemName) {
 		int itemidx = getItemIndex(a_itemName);
 		return m_data[itemidx];
 	}
 
 	template <typename T, int MAXSIZE>
-	const T& NamedContainer<T, MAXSIZE>::operator[](const string& a_itemName) const {
+	const T &NamedContainer<T, MAXSIZE>::operator[](const string &a_itemName) const {
 		int itemidx = getItemIndex(a_itemName);
 		return m_data[itemidx];
 	}
 
 	template <typename T, int MAXSIZE>
-	T& NamedContainer<T, MAXSIZE>::operator[](int a_itemId) {
+	T &NamedContainer<T, MAXSIZE>::operator[](int a_itemId) {
 		return m_data[a_itemId];
 	}
 	
 	template <typename T, int MAXSIZE>
-	const T& NamedContainer<T, MAXSIZE>::operator[](int a_itemId) const {
+	const T &NamedContainer<T, MAXSIZE>::operator[](int a_itemId) const {
 		return m_data[a_itemId];
 	}
 
 
 
 	template <typename T, int MAXSIZE>
-	T& NamedContainer<T, MAXSIZE>::getByIndex(int a_itemIndex) {
+	T &NamedContainer<T, MAXSIZE>::getByIndex(int a_itemIndex) {
 		return m_data[m_indices[m_size-1 - a_itemIndex]];
 	}
 
 	template <typename T, int MAXSIZE>
-	const T& NamedContainer<T, MAXSIZE>::getByIndex(int a_itemIndex) const {
+	const T &NamedContainer<T, MAXSIZE>::getByIndex(int a_itemIndex) const {
 		return m_data[m_indices[m_size-1 - a_itemIndex]];
 	}
 
 	template <typename T, int MAXSIZE>
 	template <typename IDType>
-	bool NamedContainer<T, MAXSIZE>::contains(const IDType& a_itemID) const {
+	bool NamedContainer<T, MAXSIZE>::contains(const IDType &a_itemID) const {
 		return (getItemIndex(a_itemID) >= 0);
 	}
 
 	template <typename T, int MAXSIZE>
 	template <typename IDType>
-	int NamedContainer<T, MAXSIZE>::find(const IDType& a_itemId) const {
+	int NamedContainer<T, MAXSIZE>::find(const IDType &a_itemId) const {
 		return getItemIndex(a_itemId);
 	}
 
@@ -435,13 +435,13 @@ namespace syn
 	}
 
 	template <typename T, int MAXSIZE>
-	const int* NamedContainer<T, MAXSIZE>::indices() const {
+	const int *NamedContainer<T, MAXSIZE>::indices() const {
 		return m_indices.data();
 	}
 
 	template <typename T, int MAXSIZE>
 	template <typename IDType>
-	const string& NamedContainer<T, MAXSIZE>::name(const IDType& a_itemID) const {
+	const string &NamedContainer<T, MAXSIZE>::name(const IDType &a_itemID) const {
 		int itemidx = getItemIndex(a_itemID);
 		return m_names[itemidx];
 	}
@@ -452,7 +452,7 @@ namespace syn
 	}
 
 	template <typename T, int MAXSIZE>
-	int NamedContainer<T, MAXSIZE>::getItemIndex(const string& a_name) const {
+	int NamedContainer<T, MAXSIZE>::getItemIndex(const string &a_name) const {
 		for (int i = 0; i < m_size; i++) {
 			if (m_names[m_indices[i]] == a_name)
 				return m_indices[i];			
@@ -461,7 +461,7 @@ namespace syn
 	}
 
 	template <typename T, int MAXSIZE>
-	int NamedContainer<T, MAXSIZE>::getItemIndex(const T& a_item) const {
+	int NamedContainer<T, MAXSIZE>::getItemIndex(const T &a_item) const {
 		for (int i = 0; i < m_size; i++) {
 			if (m_data[m_indices[i]] == a_item)
 				return m_indices[i];
@@ -470,7 +470,7 @@ namespace syn
 	}
 
 	template <typename T, int MAXSIZE>
-	string const* NamedContainer<T, MAXSIZE>::names() const {
+	string const *NamedContainer<T, MAXSIZE>::names() const {
 		return m_names.data();
 	}
 

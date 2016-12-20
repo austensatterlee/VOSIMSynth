@@ -10,7 +10,7 @@
 #include <GLFW/glfw3native.h>
 
 static int nWndClassReg = 0;
-static const char* wndClassName = "VOSIMWndClass";
+static const char *wndClassName = "VOSIMWndClass";
 
 void synui::MainWindow::_OpenWindowImplem(HWND a_system_window)
 {
@@ -53,7 +53,7 @@ LRESULT CALLBACK synui::MainWindow::drawFunc(HWND Handle, UINT Message, WPARAM W
         return 0;
     }
 
-    MainWindow* _this = reinterpret_cast<MainWindow*>(GetWindowLongPtr(Handle, GWLP_USERDATA));
+    MainWindow *_this = reinterpret_cast<MainWindow*>(GetWindowLongPtr(Handle, GWLP_USERDATA));
     if (!_this || !_this->isOpen())
         return DefWindowProc(Handle, Message, WParam, LParam);
 
@@ -140,11 +140,11 @@ void synui::MainWindow::_runLoop()
     m_fps = m_fps + 0.0175 * (fps - m_fps);
 }
 
-void synui::MainWindow::queueInternalMessage(GUIMessage* a_msg) { m_guiInternalMsgQueue.push(a_msg); }
+void synui::MainWindow::queueInternalMessage(GUIMessage *a_msg) { m_guiInternalMsgQueue.push(a_msg); }
 
 void synui::MainWindow::_flushMessageQueues()
 {
-    GUIMessage* msg;
+    GUIMessage *msg;
     while (m_guiInternalMsgQueue.pop(msg))
     {
         _processMessage(msg);
@@ -155,13 +155,13 @@ void synui::MainWindow::_flushMessageQueues()
     }
 }
 
-void synui::MainWindow::_processMessage(GUIMessage* a_msg)
+void synui::MainWindow::_processMessage(GUIMessage *a_msg)
 {
     a_msg->action(this, &a_msg->data);
     delete a_msg;
 }
 
-void synui::MainWindow::queueExternalMessage(GUIMessage* a_msg) { m_guiExternalMsgQueue.push(a_msg); }
+void synui::MainWindow::queueExternalMessage(GUIMessage *a_msg) { m_guiExternalMsgQueue.push(a_msg); }
 
 bool synui::MainWindow::OpenWindow(HWND a_system_window)
 {

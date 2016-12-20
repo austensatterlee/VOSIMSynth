@@ -104,7 +104,7 @@ double syn::naive_square(double a_phase) {
 	return a_phase <= 0.5 ? 1 : -1;
 }
 
-std::string syn::incrementSuffix(const std::string& a_str) {
+std::string syn::incrementSuffix(const std::string &a_str) {
 	std::regex rexp("^(.*?[^\\d])(\\d+)$");
 	std::smatch match;
 	regex_match(a_str, match, rexp);

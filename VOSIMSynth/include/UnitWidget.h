@@ -28,27 +28,23 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 #include <nanogui/nanogui.h>
 
-namespace synui
-{
-	class CircuitWidget;
-}
-
 namespace syn
 {
-	class VoiceManager;
-	class UnitFactory;
+    class VoiceManager;
 }
 
 namespace synui
-{
+{  
+
+	class CircuitWidget;
 	class UnitWidget : public nanogui::Widget
 	{
 	public:
-		UnitWidget(CircuitWidget* a_parent, int a_unitId);
+		UnitWidget(CircuitWidget *a_parent, syn::VoiceManager *a_vm, int a_unitId);
 
-		void draw(NVGcontext* ctx) override;
-		bool mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
-		bool mouseDragEvent(const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override;
+		void draw(NVGcontext *ctx) override;
+		bool mouseButtonEvent(const Eigen::Vector2i &p, int button, bool down, int modifiers) override;
+		bool mouseDragEvent(const Eigen::Vector2i &p, const Eigen::Vector2i &rel, int button, int modifiers) override;
 
 		/**
 		 * \brief Compute the coordinates of the input port with the given id.
@@ -64,17 +60,40 @@ namespace synui
 		 */
 		Eigen::Vector2i getOutputPortPosition(int a_portId);
 
-	    Eigen::Vector2i preferredSize(NVGcontext* ctx) const override;
+	    /**
+         * \brief Set the function that will be called when the unit's editor interface has been requested by the user.
+         * The callback receives the unit's editor interface as an argument. It may then attach the interface somewhere that will be displayed on-screen.
+         */
+        void setCallback(std::function<void(Widget*)> callback){ m_callback = callback; }
+
+	    Eigen::Vector2i preferredSize(NVGcontext *ctx) const override;
+
+	    void setParamValue(int a_paramId, double a_val) const;
+	    void setParamNorm(int a_paramId, double a_normval) const;
+	    void nudgeParam(int a_paramId, double a_logScale, double a_linScale) const;
+	    void setParamFromString(int a_paramId, const std::string &a_str) const;
+
+	protected:
+        virtual nanogui::Widget *createEditor_(nanogui::Widget *a_parent);  
+
 	protected:	
-		CircuitWidget* m_parentCircuit;
-		Widget* m_titleLabel;
+        std::function<void(Widget*)> m_callback; // editor callback
+        Widget *m_editorWidget;
+		CircuitWidget *m_parentCircuit;
+	    syn::VoiceManager *m_vm;
+		Widget *m_titleLabel;
 		std::map<int, Widget*> m_inputLabels;
 		std::map<int, Widget*> m_outputLabels;
         std::map<int, Widget*> m_emptyInputLabels;
         std::map<int, Widget*> m_emptyOutputLabels;
 
 		Eigen::Vector2i m_oldPos;
-		bool m_drag;
+		enum
+		{
+		    Uninitialized,
+            Idle,
+            Dragging
+		} m_state;
 
 		int m_unitId;
 	};
@@ -82,8 +101,8 @@ namespace synui
     class InputUnitWidget : public UnitWidget
     {
     public:
-        InputUnitWidget(CircuitWidget* a_parent, int a_unitId)
-            : UnitWidget(a_parent, a_unitId)
+        InputUnitWidget(CircuitWidget *a_parent, syn::VoiceManager *a_vm, int a_unitId)
+            : UnitWidget(a_parent, a_vm, a_unitId)
         {
             for(auto lbl : m_inputLabels)
             {
@@ -98,8 +117,8 @@ namespace synui
     class OutputUnitWidget : public UnitWidget
     {
     public:
-        OutputUnitWidget(CircuitWidget* a_parent, int a_unitId)
-            : UnitWidget(a_parent, a_unitId)
+        OutputUnitWidget(CircuitWidget *a_parent, syn::VoiceManager *a_vm, int a_unitId)
+            : UnitWidget(a_parent, a_vm, a_unitId)
         {
             for(auto lbl : m_outputLabels)
             {

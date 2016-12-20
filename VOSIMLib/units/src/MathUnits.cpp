@@ -40,7 +40,7 @@ double syn::MovingAverage::getPastInputSample(int a_offset) {
 	return m_delay.readTap(a_offset);
 }
 
-syn::DCRemoverUnit::DCRemoverUnit(const string& a_name) :
+syn::DCRemoverUnit::DCRemoverUnit(const string &a_name) :
 	Unit(a_name),
 	m_pAlpha(addParameter_(UnitParameter("hp", 0.0, 1.0, 0.995))),
 	m_lastOutput(0.0),
@@ -49,7 +49,7 @@ syn::DCRemoverUnit::DCRemoverUnit(const string& a_name) :
 	addOutput_("out");
 }
 
-syn::DCRemoverUnit::DCRemoverUnit(const DCRemoverUnit& a_rhs) :
+syn::DCRemoverUnit::DCRemoverUnit(const DCRemoverUnit &a_rhs) :
 	DCRemoverUnit(a_rhs.name()) {}
 
 void syn::DCRemoverUnit::process_() {
@@ -64,7 +64,7 @@ void syn::DCRemoverUnit::process_() {
 	setOutputChannel_(0, output);
 }
 
-syn::RectifierUnit::RectifierUnit(const string& a_name) :
+syn::RectifierUnit::RectifierUnit(const string &a_name) :
 	Unit(a_name),
 	m_pRectType(addParameter_(UnitParameter{ "type",{"full","half"} }))
 {
@@ -72,7 +72,7 @@ syn::RectifierUnit::RectifierUnit(const string& a_name) :
 	addOutput_("out");
 }
 
-syn::RectifierUnit::RectifierUnit(const RectifierUnit& a_rhs) :
+syn::RectifierUnit::RectifierUnit(const RectifierUnit &a_rhs) :
 	RectifierUnit(a_rhs.name()) { }
 
 void syn::RectifierUnit::process_() {
@@ -89,7 +89,7 @@ void syn::RectifierUnit::process_() {
 	setOutputChannel_(0, output);
 }
 
-syn::GainUnit::GainUnit(const string& a_name) :
+syn::GainUnit::GainUnit(const string &a_name) :
 	Unit(a_name),
 	m_pGain(addParameter_(UnitParameter("gain", -1E4, 1E4, 1.0, UnitParameter::None, 2).setControlType(UnitParameter::Unbounded)))
 {
@@ -98,7 +98,7 @@ syn::GainUnit::GainUnit(const string& a_name) :
 	addOutput_("out");
 }
 
-syn::GainUnit::GainUnit(const GainUnit& a_rhs) :
+syn::GainUnit::GainUnit(const GainUnit &a_rhs) :
 	GainUnit(a_rhs.name()) { }
 
 void syn::GainUnit::process_() {
@@ -108,7 +108,7 @@ void syn::GainUnit::process_() {
 	setOutputChannel_(0, input * gain);
 }
 
-syn::SummerUnit::SummerUnit(const string& a_name) :
+syn::SummerUnit::SummerUnit(const string &a_name) :
 	Unit(a_name)
 {
 	addInput_("1");
@@ -116,7 +116,7 @@ syn::SummerUnit::SummerUnit(const string& a_name) :
 	addOutput_("out");
 }
 
-syn::SummerUnit::SummerUnit(const SummerUnit& a_rhs) :
+syn::SummerUnit::SummerUnit(const SummerUnit &a_rhs) :
 	SummerUnit(a_rhs.name()) { }
 
 void syn::SummerUnit::process_() {
@@ -124,7 +124,7 @@ void syn::SummerUnit::process_() {
 	setOutputChannel_(0, output);
 }
 
-syn::ConstantUnit::ConstantUnit(const string& a_name) :
+syn::ConstantUnit::ConstantUnit(const string &a_name) :
 	Unit(a_name) 
 {
 	addParameter_(UnitParameter{ "out",-1E6,1E6,0.0,UnitParameter::None,2 });
@@ -132,7 +132,7 @@ syn::ConstantUnit::ConstantUnit(const string& a_name) :
 	addOutput_("out");
 }
 
-syn::ConstantUnit::ConstantUnit(const ConstantUnit& a_rhs) :
+syn::ConstantUnit::ConstantUnit(const ConstantUnit &a_rhs) :
 	ConstantUnit(a_rhs.name()) { }
 
 void syn::ConstantUnit::process_() {
@@ -140,7 +140,7 @@ void syn::ConstantUnit::process_() {
 	setOutputChannel_(0, output);
 }
 
-syn::PanningUnit::PanningUnit(const string& a_name) :
+syn::PanningUnit::PanningUnit(const string &a_name) :
 	Unit(a_name) {
 	addInput_("in1");
 	addInput_("in2");
@@ -152,7 +152,7 @@ syn::PanningUnit::PanningUnit(const string& a_name) :
 	m_pBalance2 = addParameter_({ "bal2",-1.0,1.0,0.0 });
 }
 
-syn::PanningUnit::PanningUnit(const PanningUnit& a_rhs) :
+syn::PanningUnit::PanningUnit(const PanningUnit &a_rhs) :
 	PanningUnit(a_rhs.name()) { }
 
 void syn::PanningUnit::process_() {
@@ -166,7 +166,7 @@ void syn::PanningUnit::process_() {
 	setOutputChannel_(1, bal1 * in1 + bal2 * in2);
 }
 
-syn::LerpUnit::LerpUnit(const string& a_name) :
+syn::LerpUnit::LerpUnit(const string &a_name) :
 	Unit(a_name) {
 	m_pMinInput = addParameter_(UnitParameter("min in", -1E6, 1E6, 0.0).setControlType(UnitParameter::Unbounded));
 	m_pMaxInput = addParameter_(UnitParameter("max in", -1E6, 1E6, 1.0).setControlType(UnitParameter::Unbounded));
@@ -177,7 +177,7 @@ syn::LerpUnit::LerpUnit(const string& a_name) :
 	addOutput_("out");
 }
 
-syn::LerpUnit::LerpUnit(const LerpUnit& a_rhs) :
+syn::LerpUnit::LerpUnit(const LerpUnit &a_rhs) :
 	LerpUnit(a_rhs.name()) { }
 
 void syn::LerpUnit::process_() {

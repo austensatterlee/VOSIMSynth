@@ -50,9 +50,9 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 }
 
 void VOSIMSynth::makeGraphics() {
-	syn::VoiceManager* vm = m_voiceManager;
-	syn::UnitFactory* uf = m_unitFactory;
-	synui::MainWindow* vosimWindow = new synui::MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm,uf](synui::MainWindow *a_win){ return new synui::MainGUI(a_win, vm, uf); });
+	syn::VoiceManager *vm = m_voiceManager;
+	syn::UnitFactory *uf = m_unitFactory;
+	synui::MainWindow *vosimWindow = new synui::MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm,uf](synui::MainWindow *a_win){ return new synui::MainGUI(a_win, vm, uf); });
 	vosimWindow->setHInstance(gHInstance);
 	AttachAppWindow(vosimWindow);
 }
@@ -126,11 +126,11 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
 	m_tickCount++;
 }
 
-void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg) {
+void VOSIMSynth::ProcessMidiMsg(IMidiMsg *pMsg) {
 	m_MIDIReceiver->onMessageReceived(pMsg);
 }
 
-bool VOSIMSynth::SerializeState(ByteChunk* pChunk) {
+bool VOSIMSynth::SerializeState(ByteChunk *pChunk) {
 	std::shared_ptr<syn::Unit> circuit(m_voiceManager->getPrototypeCircuit()->clone());
 	std::stringstream ss; {
 		cereal::XMLOutputArchive ar(ss);
@@ -142,7 +142,7 @@ bool VOSIMSynth::SerializeState(ByteChunk* pChunk) {
 	return true;
 }
 
-int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
+int VOSIMSynth::UnserializeState(ByteChunk *pChunk, int startPos) {
 	m_unitFactory->resetBuildCounts();
 
 	string input;

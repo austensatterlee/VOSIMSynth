@@ -12,7 +12,7 @@ const std::string kIOVSOptions[kNumIOVSOptions] = {"32", "64", "128", "256", "51
 const std::string kSIGVSOptions[kNumSIGVSOptions] = {"16", "32", "64", "128", "256", "512", "1024" };
 
 // check the input and output devices, find matching srs
-void PopulateSampleRateList(HWND hwndDlg, RtAudio::DeviceInfo* inputDevInfo, RtAudio::DeviceInfo* outputDevInfo)
+void PopulateSampleRateList(HWND hwndDlg, RtAudio::DeviceInfo *inputDevInfo, RtAudio::DeviceInfo *outputDevInfo)
 {
   char buf[20];
 
@@ -42,7 +42,7 @@ void PopulateSampleRateList(HWND hwndDlg, RtAudio::DeviceInfo* inputDevInfo, RtA
   SendDlgItemMessage(hwndDlg,IDC_COMBO_AUDIO_SR,CB_SETCURSEL, sridx, 0);
 }
 
-void PopulateAudioInputList(HWND hwndDlg, RtAudio::DeviceInfo* info)
+void PopulateAudioInputList(HWND hwndDlg, RtAudio::DeviceInfo *info)
 {
   char buf[20];
 
@@ -70,7 +70,7 @@ void PopulateAudioInputList(HWND hwndDlg, RtAudio::DeviceInfo* info)
   SendDlgItemMessage(hwndDlg,IDC_COMBO_AUDIO_IN_R,CB_SETCURSEL, gState->mAudioInChanR - 1, 0);
 }
 
-void PopulateAudioOutputList(HWND hwndDlg, RtAudio::DeviceInfo* info)
+void PopulateAudioOutputList(HWND hwndDlg, RtAudio::DeviceInfo *info)
 {
   char buf[20];
 

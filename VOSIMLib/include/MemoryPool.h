@@ -36,22 +36,22 @@ class VOSIMLIB_API MemoryPool
 	struct Chunk
 	{
 		size_t size;
-		uint8_t* addr;
+		uint8_t *addr;
 		bool isFree;
-		Chunk* next;
-		Chunk* prev;
+		Chunk *next;
+		Chunk *prev;
 
 		~Chunk();
 	};
 
 	struct ChunkSortBySize
 	{
-		bool operator ()(const Chunk& a_lhs, const Chunk& a_rhs) const;
+		bool operator ()(const Chunk &a_lhs, const Chunk &a_rhs) const;
 	};
 
 	struct ChunkSortByAddr
 	{
-		bool operator ()(const Chunk& a_lhs, const Chunk& a_rhs) const;
+		bool operator ()(const Chunk &a_lhs, const Chunk &a_rhs) const;
 	};
 
 	std::vector<uint8_t> m_bytes;
@@ -64,11 +64,11 @@ public:
 
 	virtual ~MemoryPool();
 
-	void* allocate(size_t a_numBytes);
+	void *allocate(size_t a_numBytes);
 
-	void free(void* a_ptr);
+	void free(void *a_ptr);
 private:
-	void _joinFreeChunks(Chunk* a_chunk);
+	void _joinFreeChunks(Chunk *a_chunk);
 };
 
 #endif

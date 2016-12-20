@@ -105,13 +105,13 @@ namespace synui
 		}
 
 		template <typename First, typename... Rest>
-		void addConds(const First* first, const Rest*... rest) {
+		void addConds(const First *first, const Rest*... rest) {
 			m_conds.push_back(make_unique<UpdateConditionImplem<First>>(first));
 			addConds(rest...);
 		}
 
 		template <typename Only>
-		void addConds(const Only* only) {
+		void addConds(const Only *only) {
 			m_conds.push_back(make_unique<UpdateConditionImplem<Only>>(only));
 		}
 
@@ -140,9 +140,9 @@ namespace synui
 		class UpdateConditionImplem : public UpdateCondition
 		{
 			T lastval;
-			const T* currval;
+			const T *currval;
 		public:
-			explicit UpdateConditionImplem(const T* a_addr)
+			explicit UpdateConditionImplem(const T *a_addr)
 				: currval(a_addr) {}
 
 			bool update() override {
@@ -162,13 +162,13 @@ namespace synui
 	 * \returns The total number of bytes used to store the arguments.
 	 */
 	template<typename First, typename... Rest>
-	int PutArgs(ByteChunk* a_chunk, const First& a_first, const Rest&... a_rest) {
+	int PutArgs(ByteChunk *a_chunk, const First &a_first, const Rest&... a_rest) {
 		a_chunk->Put<First>(&a_first);
 		return PutArgs(a_chunk, a_rest...);
 	}
 
 	template<typename Only>
-	int PutArgs(ByteChunk* a_chunk, const Only& a_only) {
+	int PutArgs(ByteChunk *a_chunk, const Only &a_only) {
 		return a_chunk->Put<Only>(&a_only);
 	}
 
@@ -177,13 +177,13 @@ namespace synui
 	 * \returns The next offset of the byte array to be read.
 	 */
 	template<typename First, typename... Rest>
-	int GetArgs(ByteChunk* a_chunk, int a_startPos, First& a_first, Rest&... a_rest) {
+	int GetArgs(ByteChunk *a_chunk, int a_startPos, First &a_first, Rest&... a_rest) {
 		a_startPos = a_chunk->Get<First>(&a_first, a_startPos);
 		return GetArgs(a_chunk, a_startPos, a_rest...);
 	}
 
 	template<typename Only>
-	int GetArgs(ByteChunk* a_chunk, int a_startPos, Only& a_only) {
+	int GetArgs(ByteChunk *a_chunk, int a_startPos, Only &a_only) {
 		return a_chunk->Get<Only>(&a_only, a_startPos);
 	}
 }

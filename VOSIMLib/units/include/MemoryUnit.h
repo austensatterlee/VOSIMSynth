@@ -76,8 +76,8 @@ namespace syn
 	{
 		DERIVE_UNIT(MemoryUnit)
 	public:
-		explicit MemoryUnit(const string& a_name);
-		MemoryUnit(const MemoryUnit& a_rhs);
+		explicit MemoryUnit(const string &a_name);
+		MemoryUnit(const MemoryUnit &a_rhs);
 
 		virtual void reset() override;
 
@@ -116,8 +116,8 @@ namespace syn
 			iSizeMod
 		};
 
-		explicit VariableMemoryUnit(const string& a_name);
-		VariableMemoryUnit(const VariableMemoryUnit& a_rhs);
+		explicit VariableMemoryUnit(const string &a_name);
+		VariableMemoryUnit(const VariableMemoryUnit &a_rhs);
 
 		void reset() override;
 

@@ -57,27 +57,27 @@ namespace synui
          * \param a_size Shape of the grid.
          * \param a_unoccupiedValue Value used to initialize new cells and mark unoccupied cells.
          */
-        Grid2D<T>(const Eigen::Vector2i& a_size, const T& a_unoccupiedValue) :
+        Grid2D<T>(const Eigen::Vector2i &a_size, const T &a_unoccupiedValue) :
             m_shape{ a_size },
             m_grid{ a_size[0], a_size[1] },
             m_unoccupiedValue{ a_unoccupiedValue } {
             m_grid.fill(a_unoccupiedValue);
         }
 
-        const T& getEmptyValue() const { return m_unoccupiedValue; }
+        const T &getEmptyValue() const { return m_unoccupiedValue; }
 
         Eigen::Vector2i getShape() const { return m_shape; }
         int getSize() const { return m_shape[0] * m_shape[1]; }
 
-        T& get(const Grid2DPoint& a_pt) { return m_grid(a_pt[0], a_pt[1]); }
+        T &get(const Grid2DPoint &a_pt) { return m_grid(a_pt[0], a_pt[1]); }
 
-        const T& get(const Grid2DPoint& a_pt) const { return m_grid(a_pt[0], a_pt[1]); }
+        const T &get(const Grid2DPoint &a_pt) const { return m_grid(a_pt[0], a_pt[1]); }
 
-        T& get(const Grid2DIndex& a_ind) { return m_grid(a_ind); }
+        T &get(const Grid2DIndex &a_ind) { return m_grid(a_ind); }
 
-        const T& get(const Grid2DIndex& a_ind) const { return m_grid(a_ind); }
+        const T &get(const Grid2DIndex &a_ind) const { return m_grid(a_ind); }
 
-        MatrixXt& get() { return m_grid; }
+        MatrixXt &get() { return m_grid; }
 
         /**
          * \brief Save the current state of the grid so that it can later be restored. Any previous backup is
@@ -110,7 +110,7 @@ namespace synui
          * outside the grid.
          * \returns False if no assignments occured.
          */
-        bool setBlock(const Grid2DPoint& a_topLeft, const Grid2DPoint& a_bottomRight, const T& a_value, bool a_force = false)
+        bool setBlock(const Grid2DPoint &a_topLeft, const Grid2DPoint &a_bottomRight, const T &a_value, bool a_force = false)
         {
             int t = std::min(a_topLeft[0], a_bottomRight[0]);
             int b = std::max(a_topLeft[0], a_bottomRight[0]);
@@ -148,7 +148,7 @@ namespace synui
          * \param a_topLeft Top left point of the block
          * \param a_bottomRight Bottom right point of the block
          */
-        Eigen::Block<MatrixXt, -1, -1> getBlock(const Grid2DPoint& a_topLeft, const Grid2DPoint& a_bottomRight)
+        Eigen::Block<MatrixXt, -1, -1> getBlock(const Grid2DPoint &a_topLeft, const Grid2DPoint &a_bottomRight)
         {
             int t = std::min(a_topLeft[0], a_bottomRight[0]);
             int b = std::max(a_topLeft[0], a_bottomRight[0]);
@@ -162,22 +162,22 @@ namespace synui
          * \param a_value Old value.
          * \param a_newValue New value.
          */
-        void replaceValue(const T& a_value, const T& a_newValue) { m_grid = (m_grid.array() == a_value).select(a_newValue, m_grid); }
+        void replaceValue(const T &a_value, const T &a_newValue) { m_grid = (m_grid.array() == a_value).select(a_newValue, m_grid); }
 
-        bool isOccupied(const Grid2DPoint& a_pt) const { return m_grid(a_pt[0], a_pt[1]) != m_unoccupiedValue; }
+        bool isOccupied(const Grid2DPoint &a_pt) const { return m_grid(a_pt[0], a_pt[1]) != m_unoccupiedValue; }
         bool isOccupied(Grid2DIndex a_ind) const { return m_grid(a_ind) != m_unoccupiedValue; }
 
         /**
          * \brief Compute whether or not the given point lies within the bounds of the grid.
          */
-        bool contains(const Grid2DPoint& a_pt) const { return a_pt[0] >= 0 && a_pt[1] >= 0 && a_pt[0] < m_shape[0] && a_pt[1] < m_shape[1]; }        
+        bool contains(const Grid2DPoint &a_pt) const { return a_pt[0] >= 0 && a_pt[1] >= 0 && a_pt[0] < m_shape[0] && a_pt[1] < m_shape[1]; }        
 
         /**
          * \brief Compute whether or not all points within the given block lie within the bounds of the grid.
          * \param a_topLeft Top left corner of the block.
          * \param a_bottomRight Bottom right corner of the block.
          */
-        bool contains(const Grid2DPoint& a_topLeft, const Grid2DPoint& a_bottomRight)
+        bool contains(const Grid2DPoint &a_topLeft, const Grid2DPoint &a_bottomRight)
         { 
             int t = std::min(a_topLeft[0], a_bottomRight[0]);
             int b = std::max(a_topLeft[0], a_bottomRight[0]);
@@ -189,12 +189,12 @@ namespace synui
         /**
          * \brief Convert a multi-dimensional index into a flat index.
          */
-        Grid2DIndex ravel_index(const Grid2DPoint& a_pt) const { return a_pt[0] * m_shape[1] + a_pt[1]; }
+        Grid2DIndex ravel_index(const Grid2DPoint &a_pt) const { return a_pt[0] * m_shape[1] + a_pt[1]; }
 
         /**
          * \brief Convert a flat index into a multi-dimensional index.
          */
-        Grid2DPoint unravel_index(const Grid2DIndex& a_index) const
+        Grid2DPoint unravel_index(const Grid2DIndex &a_index) const
         {
             int row = a_index / m_shape[1];
             int col = a_index % m_shape[1];
@@ -204,22 +204,22 @@ namespace synui
         /**
          * \brief Converts a pixel coordinate (x,y) into a grid coordinate (row,col).
          */
-        Grid2DPoint fromPixel(const Eigen::Vector2i& a_pixel, int pixelsPerCell) const
+        Grid2DPoint fromPixel(const Eigen::Vector2i &a_pixel, int pixelsPerCell) const
         {
-            Eigen::Vector2f point{ std::round(a_pixel[1] * 1.0 / pixelsPerCell),std::round(a_pixel[0] * 1.0 / pixelsPerCell) };
+            Eigen::Vector2f point{ std::round(a_pixel[1] * 1.0f / pixelsPerCell),std::round(a_pixel[0] * 1.0f / pixelsPerCell) };
             return point.cast<int>();
         }
 
         /**
          * \brief Converts a grid coordinate (row, col) into a pixel coordinate (x,y).
          */
-        Eigen::Vector2i toPixel(const Grid2DPoint& a_pt, int pixelsPerCell) const { return a_pt.reverse() * pixelsPerCell; }
+        Eigen::Vector2i toPixel(const Grid2DPoint &a_pt, int pixelsPerCell) const { return a_pt.reverse() * pixelsPerCell; }
 
         /**
          * \brief Return points that are adjacent to the one provided.
          * \param a_omitOccupied If set to true, only neighbors which are unoccupied will be returned.
          */
-        std::vector<Grid2DPoint> getNeighbors(const Grid2DPoint& a_pt, bool a_omitOccupied = false) const
+        std::vector<Grid2DPoint> getNeighbors(const Grid2DPoint &a_pt, bool a_omitOccupied = false) const
         {
             std::vector<Grid2DPoint> result;
             std::array<Grid2DPoint, 4> directions;
@@ -227,7 +227,7 @@ namespace synui
             directions[2] = -Eigen::Vector2i::Unit(0);
             directions[1] = Eigen::Vector2i::Unit(1);
             directions[3] = -Eigen::Vector2i::Unit(1);
-            for (const Grid2DPoint& dir : directions)
+            for (const Grid2DPoint &dir : directions)
             {
                 Grid2DPoint neighbor = a_pt + dir;
                 if (contains(neighbor) && !(a_omitOccupied && isOccupied(neighbor)))
@@ -236,11 +236,11 @@ namespace synui
             return result;
         }
 
-        std::vector<Grid2DIndex> getNeighbors(const Grid2DIndex& a_index, bool a_omitOccupied = false) const
+        std::vector<Grid2DIndex> getNeighbors(const Grid2DIndex &a_index, bool a_omitOccupied = false) const
         {
             std::vector<Grid2DPoint> pointNeighbors = getNeighbors(unravel_index(a_index), a_omitOccupied);
             std::vector<Grid2DIndex> vertexNeighbors(pointNeighbors.size());
-            std::transform(pointNeighbors.begin(), pointNeighbors.end(), vertexNeighbors.begin(), [this](const Grid2DPoint& pt) { return ravel_index(pt); });
+            std::transform(pointNeighbors.begin(), pointNeighbors.end(), vertexNeighbors.begin(), [this](const Grid2DPoint &pt) { return ravel_index(pt); });
             return vertexNeighbors;
         }
 
@@ -264,7 +264,7 @@ namespace synui
          *
          * If new cells are added, they will be initialized with the grid's default value.
          */
-        void resize(const Eigen::Vector2i& a_newSize)
+        void resize(const Eigen::Vector2i &a_newSize)
         {
             int commonRows = std::min(m_shape[0], a_newSize[0]);
             int commonCols = std::min(m_shape[1], a_newSize[1]);
@@ -277,12 +277,12 @@ namespace synui
 
         struct manhattan_distance
         {
-            int operator()(const Grid2DPoint& a, const Grid2DPoint& b) const { return std::abs(a[0] - b[0]) + std::abs(a[1] - b[1]); }
+            int operator()(const Grid2DPoint &a, const Grid2DPoint &b) const { return std::abs(a[0] - b[0]) + std::abs(a[1] - b[1]); }
         };
 
         struct default_weight_func
         {
-            int operator()(const Grid2DEdge& edge, const T& fromValue, const T& toValue) {
+            int operator()(const Grid2DEdge &edge, const T &fromValue, const T &toValue) {
                 if (toValue == getEmptyValue())
                     return 1;
                 else
@@ -291,7 +291,7 @@ namespace synui
         };
 
         template <typename Heuristic = manhattan_distance, typename WeightFunc = default_weight_func>
-        std::list<Grid2DPoint> findPath(const Grid2DPoint& a_start, const Grid2DPoint& a_end) const
+        std::list<Grid2DPoint> findPath(const Grid2DPoint &a_start, const Grid2DPoint &a_end) const
         {
             using Vertex = Grid2DIndex;
             struct ScoredVertex
@@ -302,7 +302,7 @@ namespace synui
 
             struct ScoredVertexComparator
             {
-                bool operator()(const ScoredVertex& a, const ScoredVertex& b) const { return a.fscore >= b.fscore; }
+                bool operator()(const ScoredVertex &a, const ScoredVertex &b) const { return a.fscore >= b.fscore; }
             };
             Heuristic h;
             WeightFunc w;

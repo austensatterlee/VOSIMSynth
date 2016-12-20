@@ -54,23 +54,23 @@ namespace syn
 		explicit CircularQueue(unsigned a_maxsize);
 		virtual ~CircularQueue();
 
-		bool push_left(const T& a_item);
-		bool push_right(const T& a_item);
+		bool push_left(const T &a_item);
+		bool push_right(const T &a_item);
 
-		bool pop_left(T& a_item);
-		bool pop_right(T& a_item);
-		bool pop(T& a_item, unsigned a_offset);
+		bool pop_left(T &a_item);
+		bool pop_right(T &a_item);
+		bool pop(T &a_item, unsigned a_offset);
 
-		bool peek_left(T& a_item) const;
-		bool peek_right(T& a_item) const;
-		bool peek(T& a_item, unsigned a_offset = 0) const;
+		bool peek_left(T &a_item) const;
+		bool peek_right(T &a_item) const;
+		bool peek(T &a_item, unsigned a_offset = 0) const;
 
-		int find(const T& a_item) const;
-		bool remove(const T& a_item);
+		int find(const T &a_item) const;
+		bool remove(const T &a_item);
 
 		bool empty() const;
 
-		const T* getData() const {
+		const T *getData() const {
 			return m_data;
 		}
 
@@ -88,7 +88,7 @@ namespace syn
 		qsize_t m_maxsize;
 		qindex_t m_left_index;
 		qindex_t m_right_index;
-		T* m_data;
+		T *m_data;
 	};
 
 	template <typename T>
@@ -111,7 +111,7 @@ namespace syn
 	}
 
 	template <typename T>
-	bool CircularQueue<T>::push_left(const T& a_item) {
+	bool CircularQueue<T>::push_left(const T &a_item) {
 		// check if adding a new a_item will cause the right and exit to meet.
 		// we can wrap around m_maxsize like this because we are guaranteed it is one less than a power of 2 (e.g. 0xFF=0x100-0x01).
 		unsigned newleft = (m_left_index - 1) & m_maxsize;
@@ -126,7 +126,7 @@ namespace syn
 	}
 
 	template <typename T>
-	bool CircularQueue<T>::push_right(const T& a_item) {
+	bool CircularQueue<T>::push_right(const T &a_item) {
 		// check if adding a new a_item will cause the right and exit to meet.
 		unsigned newright = (m_right_index + 1) & m_maxsize;
 		// do nothing if full
@@ -140,7 +140,7 @@ namespace syn
 	}
 
 	template <typename T>
-	bool CircularQueue<T>::pop_left(T& a_item) {
+	bool CircularQueue<T>::pop_left(T &a_item) {
 		// do nothing if empty
 		if (m_left_index == m_right_index)
 			return false;
@@ -152,7 +152,7 @@ namespace syn
 	}
 
 	template <typename T>
-	bool CircularQueue<T>::pop_right(T& a_item) {
+	bool CircularQueue<T>::pop_right(T &a_item) {
 		// do nothing if empty
 		if (m_left_index == m_right_index)
 			return false;
@@ -165,7 +165,7 @@ namespace syn
 	}
 
 	template <typename T>
-	bool CircularQueue<T>::pop(T& a_item, unsigned a_offset) {
+	bool CircularQueue<T>::pop(T &a_item, unsigned a_offset) {
 		CircularQueue<T> tmpq(a_offset);
 		T tmpblock;
 		bool success = true;
@@ -186,13 +186,13 @@ namespace syn
 	}
 
 	template <typename T>
-	bool CircularQueue<T>::peek_left(T& a_item) const {
+	bool CircularQueue<T>::peek_left(T &a_item) const {
 		return peek(a_item, 0);
 	}
 
 
 	template <typename T>
-	bool CircularQueue<T>::peek_right(T& a_item) const {
+	bool CircularQueue<T>::peek_right(T &a_item) const {
 		unsigned right = m_right_index;
 		unsigned left = m_left_index;
 		unsigned offset;
@@ -208,7 +208,7 @@ namespace syn
 	}
 
 	template <typename T>
-	bool CircularQueue<T>::peek(T& a_item, unsigned a_offset) const {
+	bool CircularQueue<T>::peek(T &a_item, unsigned a_offset) const {
 		unsigned right = m_right_index;
 		unsigned left = m_left_index;
 		a_offset = (a_offset + left) & m_maxsize;
@@ -232,7 +232,7 @@ namespace syn
 	}
 
 	template <typename T>
-	int CircularQueue<T>::find(const T& a_item) const {
+	int CircularQueue<T>::find(const T &a_item) const {
 		T tmp;
 		unsigned i = 0;
 		while (peek(tmp, i)) {
@@ -243,7 +243,7 @@ namespace syn
 	}
 
 	template <typename T>
-	bool CircularQueue<T>::remove(const T& a_item) {
+	bool CircularQueue<T>::remove(const T &a_item) {
 		CircularQueue<T> tmpq(m_maxsize);
 		T tmpblock;
 		bool success = false;

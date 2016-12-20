@@ -38,9 +38,9 @@ namespace syn
 
 		const int c_oversamplingFactor = 8;
 
-		explicit StateVariableFilter(const string& a_name);
+		explicit StateVariableFilter(const string &a_name);
 
-		StateVariableFilter(const StateVariableFilter& a_rhs) :
+		StateVariableFilter(const StateVariableFilter &a_rhs) :
 			StateVariableFilter(a_rhs.name()) {}
 
 		virtual void reset() override;
@@ -65,9 +65,9 @@ namespace syn
 	{
 		DERIVE_UNIT(TrapStateVariableFilter)
 	public:
-		explicit TrapStateVariableFilter(const string& a_name);
+		explicit TrapStateVariableFilter(const string &a_name);
 
-		TrapStateVariableFilter(const TrapStateVariableFilter& a_rhs) :
+		TrapStateVariableFilter(const TrapStateVariableFilter &a_rhs) :
 			TrapStateVariableFilter(a_rhs.name()) {}
 
 		virtual void reset() override;
@@ -122,9 +122,9 @@ namespace syn
 			oHP = 1
 		};
 
-		explicit OnePoleLP(const string& a_name);
+		explicit OnePoleLP(const string &a_name);
 
-		OnePoleLP(const OnePoleLP& a_rhs) : OnePoleLP(a_rhs.name()) {};
+		OnePoleLP(const OnePoleLP &a_rhs) : OnePoleLP(a_rhs.name()) {};
 
 		double getState() const;
 
@@ -139,7 +139,7 @@ namespace syn
 	struct LadderFilterBase : public Unit
 	{
     public:
-      explicit LadderFilterBase(const string& a_name);
+      explicit LadderFilterBase(const string &a_name);
 
       const int c_oversamplingFactor = 8;
       const double VT = 0.312;
@@ -163,8 +163,8 @@ namespace syn
 	{
 		DERIVE_UNIT(LadderFilter)
 	public:
-		explicit LadderFilter(const string& a_name);
-		LadderFilter(const LadderFilter& a_rhs) : LadderFilter(a_rhs.name()) {};
+		explicit LadderFilter(const string &a_name);
+		LadderFilter(const LadderFilter &a_rhs) : LadderFilter(a_rhs.name()) {};
 		void reset() override;
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
@@ -178,8 +178,8 @@ namespace syn
 	{
 		DERIVE_UNIT(LadderFilterTwo)
 	public:
-		explicit LadderFilterTwo(const string& a_name);
-		LadderFilterTwo(const LadderFilterTwo& a_rhs) : LadderFilterTwo(a_rhs.name()) {};
+		explicit LadderFilterTwo(const string &a_name);
+		LadderFilterTwo(const LadderFilterTwo &a_rhs) : LadderFilterTwo(a_rhs.name()) {};
 		void reset() override;
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;

@@ -38,9 +38,9 @@ namespace syn
 	{
 		DERIVE_UNIT(FollowerUnit)
 	public:
-		explicit FollowerUnit(const string& a_name);
+		explicit FollowerUnit(const string &a_name);
 
-		FollowerUnit(const FollowerUnit& a_rhs);
+		FollowerUnit(const FollowerUnit &a_rhs);
 		void reset() override;
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;

@@ -2,13 +2,13 @@
 #include "common.h"
 CEREAL_REGISTER_TYPE(syn::TanhUnit);
 
-syn::TanhUnit::TanhUnit(const string& a_name): Unit(a_name) {
+syn::TanhUnit::TanhUnit(const string &a_name): Unit(a_name) {
 	addParameter_(pSat, UnitParameter("sat", 1.0, 10.0, 1.0));
 	addInput_("in");
 	addOutput_("out");
 }
 
-syn::TanhUnit::TanhUnit(const TanhUnit& a_rhs): TanhUnit(a_rhs.name()) {}
+syn::TanhUnit::TanhUnit(const TanhUnit &a_rhs): TanhUnit(a_rhs.name()) {}
 
 void syn::TanhUnit::process_() {
 	double input = readInput(0);

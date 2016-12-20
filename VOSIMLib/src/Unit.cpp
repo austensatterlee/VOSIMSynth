@@ -30,7 +30,7 @@ namespace syn
 	Unit::Unit() : Unit("")
 	{}
 
-	Unit::Unit(const std::string& a_name) :
+	Unit::Unit(const std::string &a_name) :
 		m_name{ a_name },
 		m_parent{ nullptr },
 		m_audioConfig{44.1e3, 120},
@@ -105,11 +105,11 @@ namespace syn
 		return static_cast<int>(m_outputSignals.size());
 	}
 
-	const string& Unit::name() const {
+	const string &Unit::name() const {
 		return m_name;
 	}
 
-	void Unit::_setName(const string& a_name) {
+	void Unit::_setName(const string &a_name) {
 		m_name = a_name;
 	}
 
@@ -117,11 +117,11 @@ namespace syn
 		return m_midiData.isNoteOn;
 	}
 
-	const Circuit* Unit::parent() const {
+	const Circuit *Unit::parent() const {
 		return m_parent;
 	}
 
-	const string& Unit::paramName(int a_index) const {
+	const string &Unit::paramName(int a_index) const {
 		return m_parameters.name(a_index);
 	}
 
@@ -134,7 +134,7 @@ namespace syn
 	}
 
 	void Unit::tick(const Eigen::Array<double,-1,-1, Eigen::RowMajor>& a_inputs, Eigen::Array<double, -1, -1, Eigen::RowMajor>& a_outputs) {
-		const double* oldSources[MAX_INPUTS];
+		const double *oldSources[MAX_INPUTS];
 		int nSamples = a_inputs.cols();
 		int nInputs = MIN<int>(a_inputs.rows(),static_cast<int>(m_inputPorts.size()));
 		// record original input sources
@@ -159,19 +159,19 @@ namespace syn
 		}
 	}
 
-	int Unit::addInput_(const string& a_name, double a_default) {
+	int Unit::addInput_(const string &a_name, double a_default) {
 		return m_inputPorts.add(a_name, { a_default });
 	}
 
-	bool Unit::addInput_(int a_id, const string& a_name, double a_default) {
+	bool Unit::addInput_(int a_id, const string &a_name, double a_default) {
 		return m_inputPorts.add(a_name, a_id, { a_default });
 	}
 
-	bool Unit::addOutput_(int a_id, const string& a_name) {
+	bool Unit::addOutput_(int a_id, const string &a_name) {
 		return m_outputSignals.add(a_name, a_id, 0.0);
 	}
 
-	bool Unit::addParameter_(int a_id, const UnitParameter& a_param) {
+	bool Unit::addParameter_(int a_id, const UnitParameter &a_param) {
 		bool retval = m_parameters.add(a_param.getName(), a_id, a_param);
 		if (retval) {
 			m_parameters[a_id].setParent(this);
@@ -180,11 +180,11 @@ namespace syn
 		return retval;
 	}
 
-	int Unit::addOutput_(const string& a_name) {
+	int Unit::addOutput_(const string &a_name) {
 		return m_outputSignals.add(a_name, 0.0);
 	}
 
-	int Unit::addParameter_(const UnitParameter& a_param) {
+	int Unit::addParameter_(const UnitParameter &a_param) {
 		int id = m_parameters.add(a_param.getName(), a_param);
 		if (id >= 0) {
 			m_parameters[id].setParent(this);
@@ -193,11 +193,11 @@ namespace syn
 		return id;
 	}
 
-	void Unit::_setParent(Circuit* a_new_parent) {
+	void Unit::_setParent(Circuit *a_new_parent) {
 		m_parent = a_new_parent;
 	}
 
-	void Unit::connectInput(int a_inputPort, const double* a_src)
+	void Unit::connectInput(int a_inputPort, const double *a_src)
 	{
 		m_inputPorts[a_inputPort].src = a_src;
 		onInputConnection_(a_inputPort);
@@ -215,7 +215,7 @@ namespace syn
 		return retval;
 	}
 
-	void Unit::copyFrom_(const Unit& a_other) {
+	void Unit::copyFrom_(const Unit &a_other) {
 		// Copy name
 		m_name = a_other.m_name;
 		// Copy midi status
@@ -224,25 +224,25 @@ namespace syn
 		setFs(a_other.m_audioConfig.fs);
 		setTempo(a_other.m_audioConfig.tempo);
 		// Copy parameter values
-		const string* paramNames = m_parameters.names();
+		const string *paramNames = m_parameters.names();
 		for (int i = 0; i < m_parameters.size(); i++) {
-			const string& paramName = paramNames[i];
+			const string &paramName = paramNames[i];
 			if (a_other.hasParam(paramName))
 				m_parameters[paramName].setFromString(a_other.m_parameters[paramName].getValueString());
 		}
 	}
 
-	Unit* Unit::clone() const {
-		Unit* unit = _clone();
+	Unit *Unit::clone() const {
+		Unit *unit = _clone();
 		unit->copyFrom_(*this);
 		return unit;
 	}
 
-	const double& Unit::readInput(int a_index) const {
+	const double &Unit::readInput(int a_index) const {
 		return m_inputPorts[a_index].src ? *m_inputPorts[a_index].src : m_inputPorts[a_index].defVal;
 	}
 
-	const double* Unit::inputSource(int a_index) const {
+	const double *Unit::inputSource(int a_index) const {
 		return m_inputPorts[a_index].src;
 	}
 
@@ -258,7 +258,7 @@ namespace syn
 		return m_inputPorts.contains(a_inputPort);
 	}
 
-	const string& Unit::inputName(int a_index) const {
+	const string &Unit::inputName(int a_index) const {
 		return m_inputPorts.name(a_index);
 	}
 }

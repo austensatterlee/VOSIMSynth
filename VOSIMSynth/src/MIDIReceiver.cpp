@@ -22,7 +22,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "VoiceManager.h"
 
 namespace syn {
-	void MIDIReceiver::onMessageReceived(IMidiMsg* midiMessage) {
+	void MIDIReceiver::onMessageReceived(IMidiMsg *midiMessage) {
 		IMidiMsg::EStatusMsg status = midiMessage->StatusMsg();
 		// We're only interested in Note On/Off messages (not CC, pitch, etc.)
 		if (status == IMidiMsg::kControlChange || status == IMidiMsg::kNoteOn || status == IMidiMsg::kNoteOff)
@@ -40,7 +40,7 @@ namespace syn {
 
 	void MIDIReceiver::advance() {
 		while (!m_midiQueue.Empty()) {
-			IMidiMsg* midiMessage = m_midiQueue.Peek();
+			IMidiMsg *midiMessage = m_midiQueue.Peek();
 			if (midiMessage->mOffset > m_offset)
 				break;
 

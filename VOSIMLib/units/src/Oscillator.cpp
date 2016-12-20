@@ -28,7 +28,7 @@ CEREAL_REGISTER_TYPE(syn::LFOOscillator);
 namespace syn
 {
 
-	Oscillator::Oscillator(const string& a_name) :
+	Oscillator::Oscillator(const string &a_name) :
 		Unit(a_name),
 		m_basePhase(0),
 		m_phase(0),
@@ -104,7 +104,7 @@ namespace syn
 		Oscillator::updatePhaseStep_();
 	}
 
-	TunedOscillator::TunedOscillator(const string& a_name) :
+	TunedOscillator::TunedOscillator(const string &a_name) :
 		Oscillator(a_name),
 		m_pitch(0)
 	{
@@ -113,7 +113,7 @@ namespace syn
 		addInput_(iNote, "pitch");
 	}
 
-	TunedOscillator::TunedOscillator(const TunedOscillator& a_rhs) :
+	TunedOscillator::TunedOscillator(const TunedOscillator &a_rhs) :
 		TunedOscillator(a_rhs.name()) {}
 
 	void TunedOscillator::process_() {
@@ -123,13 +123,13 @@ namespace syn
 		Oscillator::process_();
 	}
 
-	BasicOscillator::BasicOscillator(const string& a_name) :
+	BasicOscillator::BasicOscillator(const string &a_name) :
 		TunedOscillator(a_name)
 	{
 		addParameter_(pWaveform, UnitParameter("waveform", WAVE_SHAPE_NAMES));
 	}
 
-	BasicOscillator::BasicOscillator(const BasicOscillator& a_rhs) : BasicOscillator(a_rhs.name()) {}
+	BasicOscillator::BasicOscillator(const BasicOscillator &a_rhs) : BasicOscillator(a_rhs.name()) {}
 
 	void BasicOscillator::process_() {
 		TunedOscillator::process_();
@@ -153,7 +153,7 @@ namespace syn
 		setOutputChannel_(oOut, m_gain * output + m_bias);
 	}
 
-	LFOOscillator::LFOOscillator(const string& a_name) :
+	LFOOscillator::LFOOscillator(const string &a_name) :
 		Oscillator(a_name),
 		m_lastSync(0.0)
 	{
@@ -167,7 +167,7 @@ namespace syn
 		addParameter_(pTempoSync, UnitParameter("tempo sync", false));
 	}
 
-	LFOOscillator::LFOOscillator(const LFOOscillator& a_rhs) :
+	LFOOscillator::LFOOscillator(const LFOOscillator &a_rhs) :
 		LFOOscillator(a_rhs.name())
 	{
 	}

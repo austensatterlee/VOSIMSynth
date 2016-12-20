@@ -63,7 +63,7 @@ namespace syn
 		};
 
 	public:
-		VoiceManager(UnitFactory* a_factory) :
+		VoiceManager(UnitFactory *a_factory) :
 			m_queuedActions{ MAX_VOICEMANAGER_MSG_QUEUE_SIZE },
 			m_numActiveVoices(0),
 			m_maxVoices(0),
@@ -79,12 +79,12 @@ namespace syn
 		virtual ~VoiceManager() {
 		}
 
-		void MSFASTCALL tick(const double* a_left_input, const double* a_right_input, double* a_left_output, double* a_right_output) GCCFASTCALL;
+		void MSFASTCALL tick(const double *a_left_input, const double *a_right_input, double *a_left_output, double *a_right_output) GCCFASTCALL;
 
 		/**
 		 * Safely queue a function to be called on the real-time thread in between samples.
 		 */
-		unsigned queueAction(RTMessage* a_action);
+		unsigned queueAction(RTMessage *a_action);
 
 		unsigned getTickCount() const;
 
@@ -125,16 +125,16 @@ namespace syn
 		 * Retrieves a unit from a specific voice circuit.
 		 * If the given voice id is negative, the unit is retrieved from the prototype circuit.
 		 */
-		Unit& getUnit(int a_id, int a_voiceId = -1);
-		const Unit& getUnit(int a_id, int a_voiceId = -1) const;
+		Unit &getUnit(int a_id, int a_voiceId = -1);
+		const Unit &getUnit(int a_id, int a_voiceId = -1) const;
 
-		Circuit* getPrototypeCircuit();
-		const Circuit* getPrototypeCircuit() const;
+		Circuit *getPrototypeCircuit();
+		const Circuit *getPrototypeCircuit() const;
 
-		Circuit* getVoiceCircuit(int a_voiceId);
-		const Circuit* getVoiceCircuit(int a_voiceId) const;
+		Circuit *getVoiceCircuit(int a_voiceId);
+		const Circuit *getVoiceCircuit(int a_voiceId) const;
 
-		void setPrototypeCircuit(const Circuit& a_circ);
+		void setPrototypeCircuit(const Circuit &a_circ);
 
 	private:
 		/**
@@ -145,7 +145,7 @@ namespace syn
 		/**
 		 * Processes the next action from the action queue
 		 */
-		void _processAction(RTMessage* a_msg);
+		void _processAction(RTMessage *a_msg);
 
 		int _createVoice(int a_note, int a_velocity);
 
@@ -170,7 +170,7 @@ namespace syn
 		VoiceIndexList m_garbageList; /// pre-allocated storage for collecting idle voices during audio processing
 		vector<Circuit> m_allVoices;
 		Circuit m_instrument;
-		UnitFactory* m_factory;
+		UnitFactory *m_factory;
 	};
 }
 #endif

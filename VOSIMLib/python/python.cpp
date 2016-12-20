@@ -65,7 +65,7 @@ public:
 		PYBIND11_OVERLOAD_PURE(std::string, Base, _getClassName, );
 	}
 
-	syn::Unit* _clone() const override {
+	syn::Unit *_clone() const override {
 		PYBIND11_OVERLOAD_PURE(syn::Unit*, Base, _clone, );
 	}
 };
@@ -76,7 +76,7 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
 	py::class_<syn::Unit, std::unique_ptr<syn::Unit>,
 	           PyUnit_tpl<syn::Unit>>(m, "Unit")
 			.def(py::init<const std::string &>())
-			.def("tick", [](syn::Unit& self, const Eigen::Array<double, -1, -1, Eigen::RowMajor>& a_inputs) {
+			.def("tick", [](syn::Unit &self, const Eigen::Array<double, -1, -1, Eigen::RowMajor>& a_inputs) {
 				     if (a_inputs.rows() > self.numInputs())
 					     throw std::runtime_error("Incompatible buffer format!");
 				     Eigen::Array<double, -1, -1, Eigen::RowMajor> outputs(self.numOutputs(), a_inputs.cols());
@@ -99,7 +99,7 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
 			.def("velocity", &syn::Unit::velocity)
 
 			.def("setParam", &syn::Unit::setParam<string,double>)
-			.def_property_readonly("parameters", [](const syn::Unit& self) {
+			.def_property_readonly("parameters", [](const syn::Unit &self) {
 				                       std::map<string, double> parameters;
 				                       auto nc_parameters = self.parameters();
 				                       for (int i = 0; i < self.numParams(); i++) {
@@ -110,7 +110,7 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
 			                       })
 
 
-			.def_property_readonly("input_names", [] (const syn::Unit& self) {
+			.def_property_readonly("input_names", [] (const syn::Unit &self) {
 				                       std::vector<string> input_names;
 				                       auto nc_inputs = self.inputs();
 				                       for (int i = 0; i < self.numInputs(); i++) {
@@ -121,8 +121,8 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
 			                       })
 
 			.def("output", &syn::Unit::readOutput<string>)
-			.def("output", [](const syn::Unit& self, int a_index) { return self.outputs().getByIndex(a_index); })
-			.def_property_readonly("output_names", [](const syn::Unit& self) {
+			.def("output", [](const syn::Unit &self, int a_index) { return self.outputs().getByIndex(a_index); })
+			.def_property_readonly("output_names", [](const syn::Unit &self) {
 				                       std::vector<string> output_names;
 				                       auto nc_outputs = self.outputs();
 				                       for (int i = 0; i < nc_outputs.size(); i++) {
@@ -131,7 +131,7 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
 				                       }
 				                       return output_names;
 			                       })
-			.def_property_readonly("outputs", [](const syn::Unit& self) {
+			.def_property_readonly("outputs", [](const syn::Unit &self) {
 				                       std::vector<double> outputs;
 				                       auto nc_outputs = self.outputs();
 				                       for (int i = 0; i < nc_outputs.size(); i++) {
@@ -145,11 +145,11 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
 			.def(py::init<const std::string&>())
 			.def("getUnit", static_cast<syn::Unit&(syn::Circuit::*)(int)>(&syn::Circuit::getUnit))
 			.def("getConnections", &syn::Circuit::getConnections)
-			.def("addUnit", [](syn::Circuit& self, syn::Unit& a_unit) { return self.addUnit(&a_unit); })
-			.def("addUnit", [](syn::Circuit& self, syn::Unit& a_unit, int a_id) { return self.addUnit(&a_unit, a_id); })
+			.def("addUnit", [](syn::Circuit &self, syn::Unit &a_unit) { return self.addUnit(&a_unit); })
+			.def("addUnit", [](syn::Circuit &self, syn::Unit &a_unit, int a_id) { return self.addUnit(&a_unit, a_id); })
 			.def("removeUnit", &syn::Circuit::removeUnit<int>)
 			.def("removeUnit", &syn::Circuit::removeUnit<const std::string&>)
-			.def("removeUnit", [](syn::Circuit& self, syn::Unit& a_unit) { return self.removeUnit(&a_unit); })
+			.def("removeUnit", [](syn::Circuit &self, syn::Unit &a_unit) { return self.removeUnit(&a_unit); })
 			.def("connectInternal", &syn::Circuit::connectInternal<string>)
 			.def("connectInternal", &syn::Circuit::connectInternal<int>)
 			.def("disconnectInternal", &syn::Circuit::disconnectInternal<string>)

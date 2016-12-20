@@ -46,7 +46,7 @@ namespace syn
 
 		explicit VosimOscillator(string name);
 
-		VosimOscillator(const VosimOscillator& a_rhs);
+		VosimOscillator(const VosimOscillator &a_rhs);
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
@@ -80,7 +80,7 @@ namespace syn
 
 		explicit FormantOscillator(string name);
 
-		FormantOscillator(const FormantOscillator& a_rhs);
+		FormantOscillator(const FormantOscillator &a_rhs);
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;

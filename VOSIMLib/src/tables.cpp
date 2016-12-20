@@ -23,7 +23,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn
 {
-	LookupTable::LookupTable(const double* a_tableptr, int a_size, double a_input_min, double a_input_max, bool a_isPeriodic) :
+	LookupTable::LookupTable(const double *a_tableptr, int a_size, double a_input_min, double a_input_max, bool a_isPeriodic) :
 		m_size(a_size),
 		m_input_min(a_input_min),
 		m_input_max(a_input_max),
@@ -63,7 +63,7 @@ namespace syn
 		return m_table[index];
 	}
 
-	ResampledLookupTable::ResampledLookupTable(const double* a_table, int a_size, const BlimpTable& a_blimp_table_online, const BlimpTable& a_blimp_table_offline) :
+	ResampledLookupTable::ResampledLookupTable(const double *a_table, int a_size, const BlimpTable &a_blimp_table_online, const BlimpTable &a_blimp_table_offline) :
 		LookupTable(a_table, a_size, 0, 1, true),
 		m_blimp_table_online(a_blimp_table_online),
 		m_blimp_table_offline(a_blimp_table_offline),
@@ -105,7 +105,7 @@ namespace syn
 		return getresampled_single(&m_resampled_tables[table_index][0], m_resampled_sizes[table_index], phase, period, m_blimp_table_online);
 	}
 
-	void resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table, bool normalize) {
+	void resample_table(const double *table, int size, double *resampled_table, double period, const BlimpTable &blimp_table, bool normalize) {
 		double phase = 0;
 		double phase_step = 1. / period;
 		double input_energy = 0.0;
@@ -130,11 +130,11 @@ namespace syn
 		}
 	}
 
-	void fft_resample_table(const double* table, int size, double* resampled_table, double period)
+	void fft_resample_table(const double *table, int size, double *resampled_table, double period)
 	{
 	}
 
-	double getresampled_single(const double* table, int size, double phase, double period, const BlimpTable& blimp_table) {
+	double getresampled_single(const double *table, int size, double phase, double period, const BlimpTable &blimp_table) {
 		double ratio = period * (1.0 / size);
 		phase = WRAP(phase, 1.0)*size;
 		double blimp_step;

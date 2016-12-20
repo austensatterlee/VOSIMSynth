@@ -25,7 +25,7 @@ CEREAL_REGISTER_TYPE(syn::ADSREnvelope);
 
 namespace syn
 {
-	ADSREnvelope::ADSREnvelope(const string& name) :
+	ADSREnvelope::ADSREnvelope(const string &name) :
 		Unit(name),
 		m_phase(0),
 		m_currStage(Attack),
@@ -42,7 +42,7 @@ namespace syn
 		addOutput_("out");
 	}
 
-	ADSREnvelope::ADSREnvelope(const ADSREnvelope& a_rhs) :
+	ADSREnvelope::ADSREnvelope(const ADSREnvelope &a_rhs) :
 		ADSREnvelope(a_rhs.name()) {}
 
 	void ADSREnvelope::process_() {

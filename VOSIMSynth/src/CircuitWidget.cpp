@@ -11,7 +11,7 @@ namespace synui
     {
     public:
 
-        explicit CircuitWire(CircuitWidget* a_parentCircuit)
+        explicit CircuitWire(CircuitWidget *a_parentCircuit)
             : highlight(false),
             m_parentCircuit(a_parentCircuit),
             m_inputPort({ -1,-1 }),
@@ -20,7 +20,7 @@ namespace synui
 
         virtual ~CircuitWire() { m_parentCircuit->m_grid.replaceValue({ CircuitWidget::GridCell::Wire, this }, m_parentCircuit->m_grid.getEmptyValue()); }
 
-        void draw(NVGcontext* ctx)
+        void draw(NVGcontext *ctx)
         {
             nvgSave(ctx);
             nvgBeginPath(ctx);
@@ -57,7 +57,7 @@ namespace synui
          * point, and the `a_endPt` argument is used to set the end point.
          * \param a_endPt End point to use in the case that one of the ports has not been set.
          */
-        void updateStartAndEndPositions(const Eigen::Vector2i& a_endPt = { -1,-1 })
+        void updateStartAndEndPositions(const Eigen::Vector2i &a_endPt = { -1,-1 })
         {
             // Determine start/end points
             Eigen::Vector2i startPos;
@@ -95,7 +95,7 @@ namespace synui
         {
             struct weight_func
             {
-                int operator()(const Grid2DEdge& edge, const CircuitWidget::GridCell& fromValue, const CircuitWidget::GridCell& toValue) const
+                int operator()(const Grid2DEdge &edge, const CircuitWidget::GridCell &fromValue, const CircuitWidget::GridCell &toValue) const
                 {
                     switch (toValue.state)
                     {
@@ -124,16 +124,20 @@ namespace synui
 
             // Update grid to reflect new location
             m_parentCircuit->m_grid.replaceValue({ CircuitWidget::GridCell::Wire, this }, m_parentCircuit->m_grid.getEmptyValue());
-            for (auto cell : m_path) { m_parentCircuit->m_grid.get(cell) = { CircuitWidget::GridCell::Wire, this }; }
+            for (auto cell : m_path)
+            {
+                if(!m_parentCircuit->m_grid.isOccupied(cell))
+                    m_parentCircuit->m_grid.get(cell) = { CircuitWidget::GridCell::Wire, this };
+            }
         }
 
-        void setInputPort(const CircuitWidget::Port& a_port)
+        void setInputPort(const CircuitWidget::Port &a_port)
         {
             m_inputPort = a_port;
             updateStartAndEndPositions();
         }
 
-        void setOutputPort(const CircuitWidget::Port& a_port)
+        void setOutputPort(const CircuitWidget::Port &a_port)
         {
             m_outputPort = a_port;
             updateStartAndEndPositions();
@@ -144,7 +148,7 @@ namespace synui
 
         bool highlight;
     private:
-        CircuitWidget* m_parentCircuit;
+        CircuitWidget *m_parentCircuit;
         CircuitWidget::Port m_inputPort;
         CircuitWidget::Port m_outputPort;
         Eigen::Vector2i m_start;
@@ -153,7 +157,7 @@ namespace synui
     };
 }
 
-synui::CircuitWidget::CircuitWidget(nanogui::Widget* a_parent, synui::MainWindow* a_mainWindow, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf) :
+synui::CircuitWidget::CircuitWidget(nanogui::Widget *a_parent, synui::MainWindow *a_mainWindow, nanogui::Widget *a_unitEditorHost, syn::VoiceManager *a_vm, syn::UnitFactory *a_uf) :
     Widget(a_parent),
     m_window(a_mainWindow),
     m_uf(a_uf),
@@ -163,13 +167,14 @@ synui::CircuitWidget::CircuitWidget(nanogui::Widget* a_parent, synui::MainWindow
     m_state(State::Uninitialized),
     m_placingUnitState({ 0,nullptr }),
     m_drawingWireState{ false,nullptr },
-    m_highlightedWire{ nullptr }
+    m_highlightedWire{ nullptr },
+    m_unitEditorHost(a_unitEditorHost)
 {
-    registerUnitWidget<syn::InputUnit>([](CircuitWidget* parent, int unitId) { return new InputUnitWidget(parent, unitId); });
-    registerUnitWidget<syn::OutputUnit>([](CircuitWidget* parent, int unitId) { return new OutputUnitWidget(parent, unitId); });
+    registerUnitWidget<syn::InputUnit>([](CircuitWidget *parent, syn::VoiceManager *a_vm, int unitId) { return new InputUnitWidget(parent, a_vm, unitId); });
+    registerUnitWidget<syn::OutputUnit>([](CircuitWidget *parent, syn::VoiceManager *a_vm, int unitId) { return new OutputUnitWidget(parent, a_vm, unitId); });
 }
 
-bool synui::CircuitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers)
+bool synui::CircuitWidget::mouseButtonEvent(const Eigen::Vector2i &p, int button, bool down, int modifiers)
 {
     if (Widget::mouseButtonEvent(p, button, down, modifiers))
         return true;
@@ -216,12 +221,14 @@ bool synui::CircuitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button
     return false;
 }
 
-bool synui::CircuitWidget::mouseMotionEvent(const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers)
+bool synui::CircuitWidget::mouseMotionEvent(const Eigen::Vector2i &p, const Eigen::Vector2i &rel, int button, int modifiers)
 {
     if (Widget::mouseMotionEvent(p, rel, button, modifiers))
         return true;
-    if (m_highlightedWire)
+    if (m_highlightedWire){
         m_highlightedWire->highlight = false;
+        m_highlightedWire = nullptr;
+    }
     Grid2DPoint cell = m_grid.fromPixel(p, m_gridSpacing);
     if (m_grid.contains(cell) && m_grid.get(cell).state == GridCell::Wire)
     {
@@ -232,7 +239,7 @@ bool synui::CircuitWidget::mouseMotionEvent(const Eigen::Vector2i& p, const Eige
     return false;
 }
 
-void synui::CircuitWidget::draw(NVGcontext* ctx)
+void synui::CircuitWidget::draw(NVGcontext *ctx)
 {
     // Perform first draw init
     if (m_state == State::Uninitialized)
@@ -261,11 +268,11 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
 
     if (mMouseFocus)
     {
-        Vector2i mousePos = m_window->gui()->screen()->mousePos() - absolutePosition();
+        Vector2i mousePos = m_window->getGUI()->getScreen()->mousePos() - absolutePosition();
         // Draw unit widget ghost if one is being placed
         if (m_state == State::PlacingUnit)
         {
-            UnitWidget* w = m_placingUnitState.widget;
+            UnitWidget *w = m_placingUnitState.widget;
             //m_placingUnitState.widget->setPosition(fixToGrid(mousePos));
             nvgBeginPath(ctx);
             nvgStrokeColor(ctx, nanogui::Color(0.7f, 0.7f, 0.7f, 0.75f));
@@ -287,11 +294,11 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
     Widget::draw(ctx);
 }
 
-void synui::CircuitWidget::loadPrototype(const std::string& a_unitPrototype) { createUnit_(a_unitPrototype); }
+void synui::CircuitWidget::loadPrototype(const std::string &a_unitPrototype) { createUnit_(a_unitPrototype); }
 
-Eigen::Vector2i synui::CircuitWidget::fixToGrid(const Eigen::Vector2i& a_pixelLocation) const { return m_grid.toPixel(m_grid.fromPixel(a_pixelLocation, m_gridSpacing), m_gridSpacing); }
+Eigen::Vector2i synui::CircuitWidget::fixToGrid(const Eigen::Vector2i &a_pixelLocation) const { return m_grid.toPixel(m_grid.fromPixel(a_pixelLocation, m_gridSpacing), m_gridSpacing); }
 
-void synui::CircuitWidget::performLayout(NVGcontext* ctx)
+void synui::CircuitWidget::performLayout(NVGcontext *ctx)
 {
     Widget::performLayout(ctx);
     m_grid.resize(m_grid.fromPixel(size(), m_gridSpacing)); // TODO: Ensure resize occurs if size is changed outside of performLayout.
@@ -299,7 +306,7 @@ void synui::CircuitWidget::performLayout(NVGcontext* ctx)
 
 void synui::CircuitWidget::createInputOutputUnits_()
 {
-    const syn::Circuit* circ = m_vm->getPrototypeCircuit();
+    const syn::Circuit *circ = m_vm->getPrototypeCircuit();
     int inputUnitId = circ->getInputUnitId();
     unsigned inputClassId = circ->getUnit(inputUnitId).getClassIdentifier();
     int outputUnitId = circ->getOutputUnitId();
@@ -311,24 +318,24 @@ void synui::CircuitWidget::createInputOutputUnits_()
     endPlaceUnit_({ width() - 1.5 * m_placingUnitState.widget->width(),height() * 0.5 - m_placingUnitState.widget->height() * 0.5 });
 }
 
-void synui::CircuitWidget::createUnit_(const std::string& a_unitPrototypeName)
+void synui::CircuitWidget::createUnit_(const std::string &a_unitPrototypeName)
 {
-    syn::RTMessage* msg = new syn::RTMessage();
-    msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
+    syn::RTMessage *msg = new syn::RTMessage();
+    msg->action = [](syn::Circuit *a_circuit, bool a_isLast, ByteChunk *a_data)
     {
-        CircuitWidget* self;
-        syn::UnitFactory* unitFactory;
-        syn::Unit* unit;
+        CircuitWidget *self;
+        syn::UnitFactory *unitFactory;
+        syn::Unit *unit;
         GetArgs(a_data, 0, self, unitFactory, unit);
         int unitId = a_circuit->addUnit(unit->clone());
         unsigned classId = unit->getClassIdentifier();
         // Queue return message
         if (a_isLast)
         {
-            GUIMessage* msg = new GUIMessage;
-            msg->action = [](MainWindow* a_win, ByteChunk* a_data)
+            GUIMessage *msg = new GUIMessage;
+            msg->action = [](MainWindow *a_win, ByteChunk *a_data)
             {
-                CircuitWidget* self;
+                CircuitWidget *self;
                 unsigned classId;
                 int unitId;
                 GetArgs(a_data, 0, self, classId, unitId);
@@ -351,16 +358,24 @@ void synui::CircuitWidget::onUnitCreated_(unsigned a_classId, int a_unitId)
     m_state = State::PlacingUnit;
     m_placingUnitState.unitId = a_unitId;
     if (m_registeredUnitWidgets.find(a_classId) == m_registeredUnitWidgets.end())
-        m_placingUnitState.widget = new UnitWidget(this, a_unitId);
+        m_placingUnitState.widget = new UnitWidget(this, m_vm, a_unitId);
     else
-        m_placingUnitState.widget = m_registeredUnitWidgets[a_classId](this, a_unitId);
+        m_placingUnitState.widget = m_registeredUnitWidgets[a_classId](this, m_vm, a_unitId);
+    m_placingUnitState.widget->setCallback([this](Widget *w)
+    {
+        for(int i=0;i<m_unitEditorHost->childCount();i++)
+            m_unitEditorHost->removeChild(i);
+        m_unitEditorHost->addChild(w);
+        w->setVisible(true);
+        m_window->getGUI()->getScreen()->performLayout();
+    });
     m_placingUnitState.widget->setVisible(false);
     m_placingUnitState.widget->setEnabled(false);
     m_unitWidgets[a_unitId] = m_placingUnitState.widget;
-    m_window->gui()->screen()->performLayout();
+    m_window->getGUI()->getScreen()->performLayout();
 }
 
-void synui::CircuitWidget::endPlaceUnit_(const Eigen::Vector2i& a_pos)
+void synui::CircuitWidget::endPlaceUnit_(const Eigen::Vector2i &a_pos)
 {
     if (m_state != State::PlacingUnit)
         return;
@@ -399,8 +414,8 @@ void synui::CircuitWidget::deleteUnit_(int a_unitId)
     m_unitWidgets.erase(a_unitId);
 
     // Delete the unit from the circuit
-    syn::RTMessage* msg = new syn::RTMessage();
-    msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
+    syn::RTMessage *msg = new syn::RTMessage();
+    msg->action = [](syn::Circuit *a_circuit, bool a_isLast, ByteChunk *a_data)
     {
         int unitId;
         GetArgs(a_data, 0, unitId);
@@ -411,7 +426,7 @@ void synui::CircuitWidget::deleteUnit_(int a_unitId)
     m_vm->queueAction(msg);
 }
 
-void synui::CircuitWidget::deleteConnection_(const Port& a_inputPort, const Port& a_outputPort)
+void synui::CircuitWidget::deleteConnection_(const Port &a_inputPort, const Port &a_outputPort)
 {
     // Delete the wire widget
     bool foundWire = false;
@@ -431,13 +446,13 @@ void synui::CircuitWidget::deleteConnection_(const Port& a_inputPort, const Port
         return;
 
     // Send message to RT thread to delete the connection
-    syn::RTMessage* msg = new syn::RTMessage();
-    CircuitWidget* self = this;
+    syn::RTMessage *msg = new syn::RTMessage();
+    CircuitWidget *self = this;
     PutArgs(&msg->data, self, a_outputPort.first, a_outputPort.second, a_inputPort.first, a_inputPort.second);
 
-    msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
+    msg->action = [](syn::Circuit *a_circuit, bool a_isLast, ByteChunk *a_data)
     {
-        CircuitWidget* self;
+        CircuitWidget *self;
         int fromUnit, fromPort, toUnit, toPort;
         GetArgs(a_data, 0, self, fromUnit, fromPort, toUnit, toPort);
         a_circuit->disconnectInternal(fromUnit, fromPort, toUnit, toPort);
@@ -446,13 +461,13 @@ void synui::CircuitWidget::deleteConnection_(const Port& a_inputPort, const Port
     m_vm->queueAction(msg);
 }
 
-void synui::CircuitWidget::createConnection_(const Port& a_inputPort, const Port& a_outputPort)
+void synui::CircuitWidget::createConnection_(const Port &a_inputPort, const Port &a_outputPort)
 {
     // send the new connection request to the real-time thread
-    syn::RTMessage* msg = new syn::RTMessage();
-    msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
+    syn::RTMessage *msg = new syn::RTMessage();
+    msg->action = [](syn::Circuit *a_circuit, bool a_isLast, ByteChunk *a_data)
     {
-        CircuitWidget* self;
+        CircuitWidget *self;
         int fromUnit, fromPort, toUnit, toPort;
         GetArgs(a_data, 0, self, fromUnit, fromPort, toUnit, toPort);
         a_circuit->connectInternal(fromUnit, fromPort, toUnit, toPort);
@@ -460,10 +475,10 @@ void synui::CircuitWidget::createConnection_(const Port& a_inputPort, const Port
         // Queue return message
         if (a_isLast)
         {
-            GUIMessage* msg = new GUIMessage;
-            msg->action = [](MainWindow* a_win, ByteChunk* a_data)
+            GUIMessage *msg = new GUIMessage;
+            msg->action = [](MainWindow *a_win, ByteChunk *a_data)
             {
-                CircuitWidget* self;
+                CircuitWidget *self;
                 int fromUnit, fromPort, toUnit, toPort;
                 GetArgs(a_data, 0, self, fromUnit, fromPort, toUnit, toPort);
                 self->onConnectionCreated_({ toUnit, toPort }, { fromUnit, fromPort });
@@ -473,12 +488,12 @@ void synui::CircuitWidget::createConnection_(const Port& a_inputPort, const Port
         }
     };
 
-    CircuitWidget* self = this;
+    CircuitWidget *self = this;
     PutArgs(&msg->data, self, a_outputPort.first, a_outputPort.second, a_inputPort.first, a_inputPort.second);
     m_vm->queueAction(msg);
 }
 
-void synui::CircuitWidget::onConnectionCreated_(const Port& a_inputPort, const Port& a_outputPort)
+void synui::CircuitWidget::onConnectionCreated_(const Port &a_inputPort, const Port &a_outputPort)
 {
     // Remove any wire widgets that already point to that unit input
     for (int i = 0; i < m_wires.size(); i++)
@@ -515,7 +530,7 @@ void synui::CircuitWidget::endWireDraw_(int a_unitId, int a_portId, bool a_isOut
 {
     if (m_state != State::DrawingWire)
         return;
-    CircuitWire* wire = m_drawingWireState.wire;
+    CircuitWire *wire = m_drawingWireState.wire;
     // If connection is invalid, delete the wire and reset state.
     if (a_isOutput == m_drawingWireState.startedFromOutput ||
         wire->getInputPort().first == a_unitId || wire->getOutputPort().first == a_unitId)
@@ -534,30 +549,30 @@ void synui::CircuitWidget::endWireDraw_(int a_unitId, int a_portId, bool a_isOut
     }
 }
 
-bool synui::CircuitWidget::updateUnitPos_(int a_unitId, const Eigen::Vector2i& a_newPos)
+bool synui::CircuitWidget::updateUnitPos_(int a_unitId, const Eigen::Vector2i &a_newPos)
 {
-    UnitWidget* unitWidget = m_unitWidgets[a_unitId];
+    UnitWidget *unitWidget = m_unitWidgets[a_unitId];
     // save current grid in case operation fails
     m_grid.save();
     // erase unit from grid
     m_grid.replaceValue({ GridCell::Unit, unitWidget }, m_grid.getEmptyValue());
     // compute the grid cells of the unit's boundaries 
-    auto topLeftCell = m_grid.fromPixel(a_newPos, m_gridSpacing);
-    auto bottomRightCell = m_grid.fromPixel(a_newPos + unitWidget->size(), m_gridSpacing) + Vector2i::Ones();
+    Grid2DPoint topLeftCell = m_grid.fromPixel(a_newPos, m_gridSpacing);
+    Grid2DPoint bottomRightCell = m_grid.fromPixel(a_newPos + unitWidget->size(), m_gridSpacing) + Vector2i::Ones();
 
     // Check that the unit's boundaries don't extend off the grid
     if (m_grid.contains(topLeftCell, bottomRightCell)) {
         // If there are only wires in the way, place the unit and reroute the wires
         auto blk = m_grid.getBlock(topLeftCell, bottomRightCell);
-        if (!blk.unaryExpr([](const GridCell& x) { return x.state != GridCell::Unit ? GridCell{ GridCell::Empty, nullptr } : x; }).array().any())
+        if (!blk.unaryExpr([](const GridCell &x) { return x.state != GridCell::Unit ? GridCell{ GridCell::Empty, nullptr } : x; }).array().any())
         {
-            std::unordered_set<CircuitWire*> wires;
+            std::set<CircuitWire*> wires;
             // Record any wires we may be overwriting
             for (int r = 0; r < blk.rows(); r++)
             {
                 for (int c = 0; c < blk.cols(); c++)
                 {
-                    const GridCell& cellContents = blk(r, c);
+                    const GridCell &cellContents = blk(r, c);
                     if (cellContents.state == GridCell::Wire)
                         wires.insert(static_cast<CircuitWire*>(cellContents.ptr));
                 }
@@ -582,7 +597,7 @@ bool synui::CircuitWidget::updateUnitPos_(int a_unitId, const Eigen::Vector2i& a
     return false;
 }
 
-void synui::CircuitWidget::deleteWire_(CircuitWire* wire)
+void synui::CircuitWidget::deleteWire_(CircuitWire *wire)
 {
     if (!wire)
         return;

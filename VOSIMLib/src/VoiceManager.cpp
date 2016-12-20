@@ -36,7 +36,7 @@ namespace syn
 
 	void VoiceManager::_makeIdle(int a_voiceIndex) {
 		if (m_numActiveVoices > 0) {
-			Circuit& voice = m_allVoices[a_voiceIndex];
+			Circuit &voice = m_allVoices[a_voiceIndex];
 			int note = voice.note();
 			int vel = voice.velocity();
 			if (m_voiceMap.find(note) != m_voiceMap.end()) {
@@ -123,14 +123,14 @@ namespace syn
 		m_numActiveVoices = 0;
 	}
 
-	void VoiceManager::tick(const double* a_left_input, const double* a_right_input, double* a_left_output, double* a_right_output) {
+	void VoiceManager::tick(const double *a_left_input, const double *a_right_input, double *a_left_output, double *a_right_output) {
 		_flushActionQueue();
 
 		int nVoices = m_numActiveVoices;
 		int voiceInd;
 		for (int i = 0; i < nVoices; i++) {
 			m_voiceStack.peek(voiceInd, i);
-			Circuit& voice = m_allVoices[voiceInd];
+			Circuit &voice = m_allVoices[voiceInd];
 			if (!voice.isActive()) {
 				m_garbageList.push_right(voiceInd);
 			}
@@ -150,7 +150,7 @@ namespace syn
 
 		for (int i = 0; i < nVoices; i++) {
 			m_voiceStack.peek(voiceInd, i);
-			Circuit& voice = m_allVoices[voiceInd];
+			Circuit &voice = m_allVoices[voiceInd];
 			for (int j = 0; j < bufsize; j++) {
 				voice.connectInput(0, a_left_input + j);
 				voice.connectInput(1, a_right_input + j);
@@ -214,7 +214,7 @@ namespace syn
 	vector<int> VoiceManager::getNoteVoices(int a_note) {
 		vector<int> voices;
 		if (m_voiceMap.find(a_note) != m_voiceMap.end()) {
-			const VoiceIndexList& vlist = m_voiceMap[a_note];
+			const VoiceIndexList &vlist = m_voiceMap[a_note];
 			unsigned off = 0;
 			int vnum;
 			while (vlist.peek(vnum, off++)) {
@@ -233,7 +233,7 @@ namespace syn
 		return m_numActiveVoices;
 	}
 
-	unsigned VoiceManager::queueAction(RTMessage* a_msg) {
+	unsigned VoiceManager::queueAction(RTMessage *a_msg) {
 		m_queuedActions.push(a_msg);
 		return m_tickCount;
 	}
@@ -243,14 +243,14 @@ namespace syn
 	}
 
 	void VoiceManager::_flushActionQueue() {
-		RTMessage* msg;
+		RTMessage *msg;
 		while (m_queuedActions.pop(msg)) {
 			_processAction(msg);
 			delete msg;
 		}
 	}
 
-	void VoiceManager::_processAction(RTMessage* a_msg) {
+	void VoiceManager::_processAction(RTMessage *a_msg) {
 		// Apply action to all voices
 		for (int i = 0; i < m_maxVoices; i++) {
 			a_msg->action(&m_allVoices[i], false, &a_msg->data);
@@ -258,37 +258,37 @@ namespace syn
 		a_msg->action(&m_instrument, true, &a_msg->data);
 	}
 
-	Circuit* VoiceManager::getPrototypeCircuit() {
+	Circuit *VoiceManager::getPrototypeCircuit() {
 		return &m_instrument;
 	}
 
-	const Circuit* VoiceManager::getPrototypeCircuit() const {
+	const Circuit *VoiceManager::getPrototypeCircuit() const {
 		return &m_instrument;
 	}
 
-	Circuit* VoiceManager::getVoiceCircuit(int a_voiceId)
+	Circuit *VoiceManager::getVoiceCircuit(int a_voiceId)
 	{
 		return &m_allVoices[a_voiceId];
 	}
 
-	const Circuit* VoiceManager::getVoiceCircuit(int a_voiceId) const
+	const Circuit *VoiceManager::getVoiceCircuit(int a_voiceId) const
 	{
 		return &m_allVoices[a_voiceId];
 	}
 
-	void VoiceManager::setPrototypeCircuit(const Circuit& a_circ) {
+	void VoiceManager::setPrototypeCircuit(const Circuit &a_circ) {
 		m_instrument = Circuit{ a_circ };
 		setMaxVoices(getMaxVoices());
 	}
 
-	Unit& VoiceManager::getUnit(int a_id, int a_voiceInd) {
+	Unit &VoiceManager::getUnit(int a_id, int a_voiceInd) {
 		if (a_voiceInd >= 0) {
 			return m_allVoices[a_voiceInd].getUnit(a_id);
 		}
 		return m_instrument.getUnit(a_id);
 	}
 
-	const Unit& VoiceManager::getUnit(int a_id, int a_voiceInd) const {
+	const Unit &VoiceManager::getUnit(int a_id, int a_voiceInd) const {
 		if (a_voiceInd >= 0) {
 			return m_allVoices[a_voiceInd].getUnit(a_id);
 		}

@@ -38,6 +38,18 @@ namespace syn
 	class VOSIMLIB_API UnitParameter
 	{
 	public:
+		struct DisplayText
+		{
+			double m_value;
+			string m_text;
+
+			template<typename Archive>
+			void serialize(Archive &ar) {
+				ar(cereal::make_nvp("text", m_text),
+					cereal::make_nvp("value", m_value));
+			}
+		};
+
 		enum EParamType
 		{
 			Null,
@@ -68,30 +80,30 @@ namespace syn
 		/**
 		 * Creates a boolean parameter
 		 */
-		UnitParameter(const string& a_name, bool a_defaultValue);
+		UnitParameter(const string &a_name, bool a_defaultValue);
 		/**
 		 * Creates an integer parameter
 		 */
-		UnitParameter(const string& a_name, int a_min, int a_max, int a_defaultValue, EUnitsType a_unitsType = None);
+		UnitParameter(const string &a_name, int a_min, int a_max, int a_defaultValue, EUnitsType a_unitsType = None);
 		/**
 		 * Creates an enumerated parameter
 		 */
-		UnitParameter(const string& a_name, const vector<string>& a_optionNames, const vector<double>& a_optionValues = {}, int a_defaultOption = 0, EUnitsType a_unitsType = None);
+		UnitParameter(const string &a_name, const vector<string>& a_optionNames, const vector<double>& a_optionValues = {}, int a_defaultOption = 0, EUnitsType a_unitsType = None);
 		/**
 		 * Creates a real-number parameter
 		 */
-		UnitParameter(const string& a_name, double a_min, double a_max, double a_defaultValue, EUnitsType m_unitsType = None, int a_displayPrecision = 2);
+		UnitParameter(const string &a_name, double a_min, double a_max, double a_defaultValue, EUnitsType m_unitsType = None, int a_displayPrecision = 2);
 
 		/**
 		 * Reset the parameter to its default value
 		 */
 		void reset();
 
-		const string& getName() const;
+		const string &getName() const;
 		int getId() const;
 		void setId(int a_id);
-		Unit* getParent() const;
-		void setParent(Unit* a_newParent);
+		Unit *getParent() const;
+		void setParent(Unit *a_newParent);
 
 		EParamType getType() const;
 
@@ -109,11 +121,11 @@ namespace syn
 		bool setPrecision(int a_precision);
 
 		EControlType getControlType() const;
-		UnitParameter& setControlType(EControlType a_newControlType);
+		UnitParameter &setControlType(EControlType a_newControlType);
 
-		UnitParameter& setUnitsType(EUnitsType a_newUnitsType);
+		UnitParameter &setUnitsType(EUnitsType a_newUnitsType);
 
-		UnitParameter& setVisible(bool a_visible);
+		UnitParameter &setVisible(bool a_visible);
 
 		bool isVisible() const;
 
@@ -123,7 +135,7 @@ namespace syn
 		 * \return true if the parameter value was changed
 		 */
 		bool setNorm(double a_norm_value);
-		bool setFromString(const string& a_str);
+		bool setFromString(const string &a_str);
 		bool nudge(double a_logAmt, double a_linAmt);
 
 		/**
@@ -144,28 +156,10 @@ namespace syn
 		double getNorm() const;
 		string getValueString() const;
 		string getUnitsString() const;
-
-		//		    template<typename Archive>
-		//		    void archive(Archive& ar) {
-		//		      ar( cereal::make_nvp("name", m_name),
-		//		        cereal::make_nvp("id", m_id),
-		//		        cereal::make_nvp("value", m_value),
-		//		        cereal::make_nvp("default-value", m_defaultValue),
-		//		        cereal::make_nvp("min-value", m_min),
-		//		        cereal::make_nvp("max-value", m_max),
-		//		        cereal::make_nvp("log-min-value", m_logMin),
-		//		        cereal::make_nvp("log-range-value", m_logRange),
-		//		        cereal::make_nvp("visible", m_isVisible),
-		//		        cereal::make_nvp("data-type", m_type),
-		//		        cereal::make_nvp("units-type", m_unitsType),
-		//		        cereal::make_nvp("control-type", m_controlType),
-		//		        cereal::make_nvp("precision", m_displayPrecision),
-		//		        cereal::make_nvp("display-texts", m_displayTexts)
-		//		      );
-		//		    }
+	    const vector<DisplayText>& getDisplayTexts() const;
 
 		template<typename Archive>
-		void save(Archive& ar) const {
+		void save(Archive &ar) const {
 			string value_str = getValueString();
 			ar(cereal::make_nvp("value-str", value_str));
 			ar(cereal::make_nvp("data-type", m_type));
@@ -175,7 +169,7 @@ namespace syn
 		}
 
 		template<typename Archive>
-		void load(Archive& ar) {
+		void load(Archive &ar) {
 			string value_str;
 			ar(cereal::make_nvp("value-str", value_str));
 			ar(cereal::make_nvp("data-type", m_type));
@@ -196,19 +190,7 @@ namespace syn
 		EUnitsType m_unitsType;
 		EControlType m_controlType;
 		int m_displayPrecision;
-		Unit* m_parent;
-
-		struct DisplayText
-		{
-			double m_value;
-			string m_text;
-
-			template<typename Archive>
-			void serialize(Archive& ar) {
-				ar(cereal::make_nvp("text", m_text),
-					cereal::make_nvp("value", m_value));
-			}
-		};
+		Unit *m_parent;
 
 		vector<DisplayText> m_displayTexts;
 	};

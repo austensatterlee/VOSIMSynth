@@ -51,7 +51,7 @@ namespace syn
 			reset_();
 		};
 
-		Filter(const Filter& a_rhs) :
+		Filter(const Filter &a_rhs) :
 			Filter(a_rhs.name(), XCoefs, YCoefs) { }
 
 		virtual ~Filter() { };
@@ -76,7 +76,7 @@ namespace syn
 	void Filter<nX, nY>::process_() {
 		XBuf[xBufInd] = readInput(0);
 		YBuf[yBufInd] = 0.0;
-		double* output = &YBuf[yBufInd];
+		double *output = &YBuf[yBufInd];
 		int i, j;
 		for (i = 0, j = xBufInd; i < nX; i++, j--) {
 			if (j < 0)

@@ -47,13 +47,13 @@ namespace syn
 		int to_id;
 		int to_port;
 
-		bool operator==(const ConnectionRecord& a_other) const {
+		bool operator==(const ConnectionRecord &a_other) const {
 			bool res = (from_id == a_other.from_id && from_port == a_other.from_port && to_id == a_other.to_id && to_port == a_other.to_port);
 			return res;
 		}
 
 		template<typename Archive>
-		void serialize(Archive& ar) {
+		void serialize(Archive &ar) {
 			ar(CEREAL_NVP(from_id),
 			   CEREAL_NVP(from_port),
 			   CEREAL_NVP(to_id),
@@ -64,10 +64,10 @@ namespace syn
 	class VOSIMLIB_API PassthroughUnit : public Unit
 	{
 	public:
-		explicit PassthroughUnit(const string& a_name) :
+		explicit PassthroughUnit(const string &a_name) :
 			Unit(a_name) { }
 
-		PassthroughUnit(const PassthroughUnit& a_other) :
+		PassthroughUnit(const PassthroughUnit &a_other) :
 			PassthroughUnit(a_other.name()) { };
 
 	protected:
@@ -82,16 +82,16 @@ namespace syn
 	{
 		DERIVE_UNIT(InputUnit)
 	public:
-		explicit InputUnit(const string& a_name) : PassthroughUnit(a_name) {}
-		InputUnit(const InputUnit& a_other) : InputUnit(a_other.name()) {}
+		explicit InputUnit(const string &a_name) : PassthroughUnit(a_name) {}
+		InputUnit(const InputUnit &a_other) : InputUnit(a_other.name()) {}
 	};
 
 	class VOSIMLIB_API OutputUnit : public PassthroughUnit
 	{
 		DERIVE_UNIT(OutputUnit)
 	public:
-		explicit OutputUnit(const string& a_name) : PassthroughUnit(a_name) {}
-		OutputUnit(const OutputUnit& a_other) : OutputUnit(a_other.name()) {}
+		explicit OutputUnit(const string &a_name) : PassthroughUnit(a_name) {}
+		OutputUnit(const OutputUnit &a_other) : OutputUnit(a_other.name()) {}
 	};
 
 	/**
@@ -106,11 +106,11 @@ namespace syn
 	{
 		DERIVE_UNIT(Circuit)
 	public:
-		explicit Circuit(const string& a_name);
+		explicit Circuit(const string &a_name);
 
-		Circuit(const Circuit& a_other);
+		Circuit(const Circuit &a_other);
 
-		Circuit& operator=(const Circuit& a_other);
+		Circuit &operator=(const Circuit &a_other);
 
 		virtual ~Circuit();
 
@@ -119,20 +119,20 @@ namespace syn
 		 */
 		bool isActive() const override;
 
-		Unit& getUnit(int a_unitId);
-		const Unit& getUnit(int a_unitId) const;
+		Unit &getUnit(int a_unitId);
+		const Unit &getUnit(int a_unitId) const;
 
 		int getInputUnitId() const;
 		int getOutputUnitId() const;
 
 		template <typename UID>
-		bool hasUnit(const UID& a_unitIdentifier) const;
+		bool hasUnit(const UID &a_unitIdentifier) const;
 		template <typename UID>
-		int getUnitId(const UID& a_unitIdentifier) const;
+		int getUnitId(const UID &a_unitIdentifier) const;
 
 		int getNumUnits() const;
 
-		Unit* const* getProcGraph() const;
+		Unit *const *getProcGraph() const;
 
 		void notifyMidiControlChange(int a_cc, double a_value);
 
@@ -150,26 +150,26 @@ namespace syn
 		/**
 		 * \returns The id assigned to the newly added unit, or -1 on failure
 		 */
-		int addUnit(Unit* a_unit);
+		int addUnit(Unit *a_unit);
 
 		/**
 		 * \returns True if the unit was added to the circuit (i.e. the provided id was not already taken).
 		 */
-		bool addUnit(Unit* a_unit, int a_unitId);
+		bool addUnit(Unit *a_unit, int a_unitId);
 
 		template <typename ID>
-		bool removeUnit(const ID& a_identifier);
+		bool removeUnit(const ID &a_identifier);
 
 		template <typename ID>
-		bool connectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier, int
+		bool connectInternal(const ID &a_fromIdentifier, int a_fromOutputPort, const ID &a_toIdentifier, int
 			a_toInputPort);
 
 		template <typename ID>
-		bool disconnectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier, int
+		bool disconnectInternal(const ID &a_fromIdentifier, int a_fromOutputPort, const ID &a_toIdentifier, int
 			a_toInputPort);
 
 		template<typename Archive>
-		void save(Archive& ar) const {
+		void save(Archive &ar) const {
 			ar(cereal::base_class<Unit>(this));
 
 			size_t nUnits = getNumUnits(), nConnections = m_connectionRecords.size();
@@ -186,7 +186,7 @@ namespace syn
 		}
 
 		template<class Archive>
-		void load(Archive& ar) {
+		void load(Archive &ar) {
 			ar(cereal::base_class<Unit>(this));
 
 			// load data
@@ -208,7 +208,7 @@ namespace syn
 				addUnit(tmpunits[index]->clone(), index);
 			}
 			// connect units
-			for (const ConnectionRecord& cr : tmprecords) {
+			for (const ConnectionRecord &cr : tmprecords) {
 				connectInternal(cr.from_id, cr.from_port, cr.to_id, cr.to_port);
 			}
 		}
@@ -230,9 +230,9 @@ namespace syn
 
 		void onInputDisconnection_(int a_inputPort) override;
 
-		int addExternalInput_(const string& a_name);
+		int addExternalInput_(const string &a_name);
 
-		int addExternalOutput_(const string& a_name);
+		int addExternalOutput_(const string &a_name);
 
 	private:
 		void _recomputeGraph();
@@ -242,28 +242,28 @@ namespace syn
 
 		NamedContainer<Unit*, MAX_UNITS> m_units;
 		vector<ConnectionRecord> m_connectionRecords;
-		InputUnit* m_inputUnit;
-		OutputUnit* m_outputUnit;
+		InputUnit *m_inputUnit;
+		OutputUnit *m_outputUnit;
 
 		array<Unit*, MAX_UNITS> m_procGraph;
 	};
 
 	template <typename UID>
-	bool Circuit::hasUnit(const UID& a_unitIdentifier) const {
+	bool Circuit::hasUnit(const UID &a_unitIdentifier) const {
 		return getUnitId(a_unitIdentifier) >= 0;
 	}
 
 	template <typename UID>
-	int Circuit::getUnitId(const UID& a_unitIdentifier) const {
+	int Circuit::getUnitId(const UID &a_unitIdentifier) const {
 		return m_units.find(a_unitIdentifier);
 	}
 
 	template <typename ID>
-	bool Circuit::removeUnit(const ID& a_unitIdentifier) {
+	bool Circuit::removeUnit(const ID &a_unitIdentifier) {
 		int unitId = m_units.find(a_unitIdentifier);
 		if (unitId < 0)
 			return false;
-		Unit* unit = m_units[unitId];
+		Unit *unit = m_units[unitId];
 		// Don't allow deletion of input or output unit
 		if (unit == m_inputUnit || unit == m_outputUnit)
 			return false;
@@ -271,13 +271,13 @@ namespace syn
 		vector<ConnectionRecord> garbageList;
 		const size_t nRecords = m_connectionRecords.size();
 		for (int i = 0; i < nRecords; i++) {
-			const ConnectionRecord& rec = m_connectionRecords[i];
+			const ConnectionRecord &rec = m_connectionRecords[i];
 			if (unitId == rec.to_id || unitId == rec.from_id) {
 				garbageList.push_back(rec);
 			}
 		}
 		for (int i = 0; i < garbageList.size(); i++) {
-			const ConnectionRecord& rec = garbageList[i];
+			const ConnectionRecord &rec = garbageList[i];
 			disconnectInternal(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
 		}
 		m_units.remove(unitId);
@@ -287,13 +287,13 @@ namespace syn
 	}
 
 	template <typename ID>
-	bool Circuit::connectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier,
+	bool Circuit::connectInternal(const ID &a_fromIdentifier, int a_fromOutputPort, const ID &a_toIdentifier,
 		int a_toInputPort) {
 		int fromUnitId = m_units.find(a_fromIdentifier);
 		int toUnitId = m_units.find(a_toIdentifier);
 
-		Unit* fromUnit = m_units[fromUnitId];
-		Unit* toUnit = m_units[toUnitId];
+		Unit *fromUnit = m_units[fromUnitId];
+		Unit *toUnit = m_units[toUnitId];
 
 		if (!fromUnit->hasOutput(a_fromOutputPort))
 			return false;
@@ -304,7 +304,7 @@ namespace syn
 		if(toUnit->isConnected(a_toInputPort)) {
 			const size_t nRecords = m_connectionRecords.size();
 			for(int i=0;i<nRecords;i++) {
-				const ConnectionRecord& rec = m_connectionRecords[i];
+				const ConnectionRecord &rec = m_connectionRecords[i];
 				if(rec.to_id == toUnitId && rec.to_port == a_toInputPort) {
 					m_connectionRecords.erase(m_connectionRecords.begin() + i);
 					break;
@@ -322,13 +322,13 @@ namespace syn
 	}
 
 	template <typename ID>
-	bool Circuit::disconnectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier,
+	bool Circuit::disconnectInternal(const ID &a_fromIdentifier, int a_fromOutputPort, const ID &a_toIdentifier,
 		int a_toInputPort) {
 		int fromId = m_units.find(a_fromIdentifier);
 		int toId = m_units.find(a_toIdentifier);
 
-		Unit* toUnit = m_units[toId];
-		Unit* fromUnit = m_units[fromId];
+		Unit *toUnit = m_units[toId];
+		Unit *fromUnit = m_units[fromId];
 		_ASSERT(toUnit->inputSource(a_toInputPort) == &fromUnit->readOutput(a_fromOutputPort));
 
 		bool result = toUnit->disconnectInput(a_toInputPort);

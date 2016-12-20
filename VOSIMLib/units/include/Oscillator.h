@@ -59,7 +59,7 @@ namespace syn
 			NumInputs
 		};
 
-		explicit Oscillator(const string& a_name);
+		explicit Oscillator(const string &a_name);
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
@@ -94,9 +94,9 @@ namespace syn
 			NumInputs
 		};
 
-		explicit TunedOscillator(const string& a_name);
+		explicit TunedOscillator(const string &a_name);
 
-		explicit TunedOscillator(const TunedOscillator& a_rhs);
+		explicit TunedOscillator(const TunedOscillator &a_rhs);
 
 	protected:
 		void MSFASTCALL process_() override GCCFASTCALL;
@@ -114,9 +114,9 @@ namespace syn
 		{
 			pWaveform = TunedOscillator::NumParams
 		};
-		explicit BasicOscillator(const string& a_name);
+		explicit BasicOscillator(const string &a_name);
 
-		explicit BasicOscillator(const BasicOscillator& a_rhs);
+		explicit BasicOscillator(const BasicOscillator &a_rhs);
 
 	protected:
 		void MSFASTCALL process_() GCCFASTCALL override;
@@ -147,11 +147,11 @@ namespace syn
 			oQuadOut = Oscillator::NumOutputs
 		};
 
-		explicit LFOOscillator(const string& a_name);
+		explicit LFOOscillator(const string &a_name);
 
-		explicit LFOOscillator(const LFOOscillator& a_rhs);
+		explicit LFOOscillator(const LFOOscillator &a_rhs);
 
-		explicit LFOOscillator(const BasicOscillator& a_rhs) : LFOOscillator(a_rhs.name()) {}
+		explicit LFOOscillator(const BasicOscillator &a_rhs) : LFOOscillator(a_rhs.name()) {}
 
 	protected:
 

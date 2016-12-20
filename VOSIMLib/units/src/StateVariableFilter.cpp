@@ -28,7 +28,7 @@ CEREAL_REGISTER_TYPE(syn::OnePoleLP);
 CEREAL_REGISTER_TYPE(syn::LadderFilter);
 CEREAL_REGISTER_TYPE(syn::LadderFilterTwo);
 
-syn::StateVariableFilter::StateVariableFilter(const string& a_name) :
+syn::StateVariableFilter::StateVariableFilter(const string &a_name) :
   Unit(a_name),
   m_pFc(addParameter_(UnitParameter("fc", 0.01, 20000.0, 10000.0, UnitParameter::Freq))),
   m_pRes(addParameter_(UnitParameter("res", 0.0, 1.0, 0.0))),
@@ -79,7 +79,7 @@ void syn::StateVariableFilter::process_() {
   setOutputChannel_(m_oN, NOut);
 }
 
-syn::TrapStateVariableFilter::TrapStateVariableFilter(const string& a_name) : StateVariableFilter(a_name),
+syn::TrapStateVariableFilter::TrapStateVariableFilter(const string &a_name) : StateVariableFilter(a_name),
   m_prevInput(0.0) 
 {}
 
@@ -134,7 +134,7 @@ void syn::_OnePoleLP::reset() {
   m_state = 0.0;
 }
 
-syn::OnePoleLP::OnePoleLP(const string& a_name) :
+syn::OnePoleLP::OnePoleLP(const string &a_name) :
   Unit(a_name)
 {
   addParameter_(pFc, UnitParameter("fc", 0.01, 20000.0, 1.0, UnitParameter::Freq));
@@ -165,7 +165,7 @@ void syn::OnePoleLP::process_() {
   setOutputChannel_(oHP, input - output);
 }
 
-syn::LadderFilterBase::LadderFilterBase(const string& a_name) : Unit(a_name)
+syn::LadderFilterBase::LadderFilterBase(const string &a_name) : Unit(a_name)
 {
 	addParameter_(pFc, UnitParameter("fc", 0.01, 20000.0, 10000.0, UnitParameter::Freq));
 	addParameter_(pFb, UnitParameter("res", 0.0, 1.0, 0.0));
@@ -177,7 +177,7 @@ syn::LadderFilterBase::LadderFilterBase(const string& a_name) : Unit(a_name)
 }
 
 
-syn::LadderFilter::LadderFilter(const string& a_name) :
+syn::LadderFilter::LadderFilter(const string &a_name) :
 	LadderFilterBase(a_name)
 {}
 
@@ -229,7 +229,7 @@ void syn::LadderFilter::process_() {
   setOutputChannel_(0, m_V[3]);
 }
 
-syn::LadderFilterTwo::LadderFilterTwo(const string& a_name) : LadderFilterBase(a_name),
+syn::LadderFilterTwo::LadderFilterTwo(const string &a_name) : LadderFilterBase(a_name),
 	m_ffGains(Eigen::Matrix<double, 5, 1>::Unit(4))
 {}
 

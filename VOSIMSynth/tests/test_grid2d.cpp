@@ -102,6 +102,7 @@ TEST_CASE("Set block", "[assign]")
     REQUIRE(grid.get({1,0}) == 3);
     REQUIRE(grid.get({1,1}) == 3);
 
-    REQUIRE(grid.setBlock({0,0},{2,2},-1,true));
-    REQUIRE_FALSE(grid.setBlock({0,0},{2,2},3));
+    REQUIRE(grid.setBlock({0,0},{2,2}, -1, true));
+    REQUIRE(grid.setBlock({0,0},{2,2},3));
+    REQUIRE_FALSE(grid.setBlock({0,0},{2,2}, -1));
 }

@@ -42,19 +42,19 @@ namespace syn
 
 		struct FactoryPrototype
 		{
-			FactoryPrototype(std::string a_group_name, Unit* a_unit, size_t a_class_size);
+			FactoryPrototype(std::string a_group_name, Unit *a_unit, size_t a_class_size);
 
 			unsigned int classIdentifier;
 			std::string group_name;
 			std::string name;
-			Unit* prototype;
+			Unit *prototype;
 			int build_count;
 			size_t size;
 		};
 
 	public:
 
-		static UnitFactory& instance() {
+		static UnitFactory &instance() {
 			static UnitFactory singleton;
 			return singleton;
 		}
@@ -68,20 +68,20 @@ namespace syn
 		 * \brief Register a prototype unit with the factory. Prototype deletion will be taken care of upon factory destruction.
 		 */
 		template <typename T, typename = std::enable_if_t<std::is_base_of<Unit, T>::value>>
-		void addUnitPrototype(const std::string& a_group_name, const std::string& a_unit_name);
+		void addUnitPrototype(const std::string &a_group_name, const std::string &a_unit_name);
 
 		set<std::string> getGroupNames() const;
 
-		vector<std::string> getPrototypeNames(const std::string& group) const;
+		vector<std::string> getPrototypeNames(const std::string &group) const;
 		vector<std::string> getPrototypeNames() const;
 
-		const FactoryPrototype* getFactoryPrototype(const std::string& a_prototypeName) const;
+		const FactoryPrototype *getFactoryPrototype(const std::string &a_prototypeName) const;
 
-		Unit* createUnit(int a_protoNum, const std::string& a_name = "");
+		Unit *createUnit(int a_protoNum, const std::string &a_name = "");
 
-		Unit* createUnit(unsigned a_classIdentifier, const std::string& a_name = "");
+		Unit *createUnit(unsigned a_classIdentifier, const std::string &a_name = "");
 
-		Unit* createUnit(std::string a_prototypeName, const std::string& a_name = "");
+		Unit *createUnit(std::string a_prototypeName, const std::string &a_name = "");
 
 		bool hasClassId(unsigned a_classIdentifier) const;
 
@@ -96,7 +96,7 @@ namespace syn
 		void resetBuildCounts();
 
 	protected:
-		int getPrototypeIdx_(const std::string& a_name) const;
+		int getPrototypeIdx_(const std::string &a_name) const;
 
 
 		int getPrototypeIdx_(unsigned a_classId) const;
@@ -109,7 +109,7 @@ namespace syn
 	};
 
 	template <typename T, typename>
-	void UnitFactory::addUnitPrototype(const std::string& a_group_name, const std::string& a_unit_name) {
+	void UnitFactory::addUnitPrototype(const std::string &a_group_name, const std::string &a_unit_name) {
 		FactoryPrototype prototype{a_group_name, new T(a_unit_name), sizeof(T)};
 		if (m_class_identifiers.find(prototype.classIdentifier) != m_class_identifiers.end())
 			return;

@@ -19,7 +19,7 @@ template <typename T>
 T detect_denormals(const std::vector<T>& a_data) {
 	const double epsilon = std::numeric_limits<double>::min();
 	int ndenormals = 0;
-	for (const T& x : a_data) {
+	for (const T &x : a_data) {
 		if (std::abs(x) < epsilon)
 			ndenormals++;
 	}
@@ -27,9 +27,9 @@ T detect_denormals(const std::vector<T>& a_data) {
 }
 
 TEST_CASE("Serialization example.", "[serialization]") {
-	syn::Circuit* circ = new syn::Circuit("main");
-	syn::Unit* svfUnit = new syn::StateVariableFilter("svfUnit");
-	syn::Unit* oscUnit = new syn::BasicOscillator("oscUnit");
+	syn::Circuit *circ = new syn::Circuit("main");
+	syn::Unit *svfUnit = new syn::StateVariableFilter("svfUnit");
+	syn::Unit *oscUnit = new syn::BasicOscillator("oscUnit");
 	circ->addUnit(svfUnit);
 	circ->addUnit(oscUnit);
 	circ->connectInternal("oscUnit", 0, "svfUnit", 0);
@@ -40,7 +40,7 @@ TEST_CASE("Serialization example.", "[serialization]") {
 		oarchive(tmpUnit);
 	}
 	string circuit_str1 = ss.str();
-	syn::Circuit* readUnit;
+	syn::Circuit *readUnit;
 	{
 		cereal::XMLInputArchive iarchive(ss);
 	    std::shared_ptr<syn::Unit> tmpUnit;

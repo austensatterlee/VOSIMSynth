@@ -42,7 +42,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #define DERIVE_UNIT(TYPE) \
 	string _getClassName() const override {return #TYPE;}\
-	Unit* _clone() const override {return new TYPE(*this);}\
+	Unit *_clone() const override {return new TYPE(*this);}\
 public:\
 	TYPE() : TYPE("") {}\
 private:
@@ -70,7 +70,7 @@ namespace syn
 		UnitPort(double a_defVal) : defVal(a_defVal), src(nullptr) {}
 
 		double defVal;
-		const double* src;
+		const double *src;
 	};
 
 	const vector<string> g_bpmStrs = { "4", "7/2", "3", "5/2", "2", "3/2", "1", "3/4", "1/2", "3/8", "1/4", "3/16", "1/8", "3/32", "1/16", "3/64", "1/32", "1/64" };
@@ -95,7 +95,7 @@ namespace syn
 	 *		class DerivedUnit : public Unit {
 	 *			DERIVE_UNIT(DerivedUnit)
 	 *		public:
-	 *			DerivedUnit(const string& a_name) : Unit(a_name)
+	 *			DerivedUnit(const string &a_name) : Unit(a_name)
 	 *			{
 	 *			...set up class internals...
 	 *			}
@@ -108,7 +108,7 @@ namespace syn
 	 * To allow the unit to be cloned, it is necessary to implement a copy constructor, Unit::_clone, and Unit::_getClassName. Unit::_clone should simply return a
 	 * new copy of the derived class, for example:
 	 * \code{.cpp}
-	 *		Unit* DerivedUnit::_clone(){ return new DerivedUnit(*this); }
+	 *		Unit *DerivedUnit::_clone(){ return new DerivedUnit(*this); }
 	 * \endcode
 	 *
 	 * Unit::_getClassName should simply return a string form of the class name. This is used for factory construction.
@@ -121,7 +121,7 @@ namespace syn
 
 		Unit();
 
-		explicit Unit(const string& a_name);
+		explicit Unit(const string &a_name);
 
 		virtual ~Unit() { }
 
@@ -181,24 +181,24 @@ namespace syn
 		/**
 		 * Returns a pointer to the unit's parent Circuit, or nullptr if there is none.
 		 */
-		const Circuit* parent() const;
+		const Circuit *parent() const;
 
 		/**
 		 * Determines whether or not the unit contains a specific parameter.
 		 */
 		template <typename ID>
-		bool hasParam(const ID& a_paramId) const;
+		bool hasParam(const ID &a_paramId) const;
 
 		/**
 		 * Returns a reference to the requested parameter.
 		 */
 		template <typename ID>
-		UnitParameter& param(const ID& a_identifier);
+		UnitParameter &param(const ID &a_identifier);
 
 		template <typename ID>
-		const UnitParameter& param(const ID& a_identifier) const;
+		const UnitParameter &param(const ID &a_identifier) const;
 
-		const string& paramName(int a_index) const;
+		const string &paramName(int a_index) const;
 
 		const NamedContainer<UnitParameter, MAX_PARAMS>& parameters() const;
 
@@ -207,25 +207,25 @@ namespace syn
 		 * \see UnitParameter::set
 		 */
 		template <typename ID, typename T>
-		bool setParam(const ID& a_identifier, const T& a_value);
+		bool setParam(const ID &a_identifier, const T &a_value);
 
 		bool hasInput(int a_inputPort) const;
 
-		const string& inputName(int a_index) const;
+		const string &inputName(int a_index) const;
 
-		const double& readInput(int a_index) const;
+		const double &readInput(int a_index) const;
 
-		const double* inputSource(int a_index) const;
+		const double *inputSource(int a_index) const;
 
 		const NamedContainer<UnitPort, MAX_INPUTS>& inputs() const;
 
 		bool hasOutput(int a_outputPort) const;
 
 		template <typename ID>
-		string outputName(const ID& a_identifier) const;
+		string outputName(const ID &a_identifier) const;
 
 		template <typename ID>
-		const double& readOutput(const ID& a_identifier) const;
+		const double &readOutput(const ID &a_identifier) const;
 
 		const NamedContainer<double, MAX_OUTPUTS>& outputs() const;
 
@@ -240,7 +240,7 @@ namespace syn
 		* \param a_inputPort The desired input port of this unit
 		* \param a_src A pointer to the memory to read the input from
 		*/
-		void connectInput(int a_inputPort, const double* a_src);
+		void connectInput(int a_inputPort, const double *a_src);
 
 		/**
 		 * \returns True if the input port points to a non-null location in memory.
@@ -253,7 +253,7 @@ namespace syn
 		*/
 		bool disconnectInput(int a_toInputPort);
 
-		const string& name() const;
+		const string &name() const;
 
 		unsigned int getClassIdentifier() const;
 
@@ -261,10 +261,10 @@ namespace syn
 		 * Copies this unit into newly allocated memory (the caller is responsible for releasing the memory).
 		 * Connections to other units are not preserved in the clone.
 		 */
-		Unit* clone() const;
+		Unit *clone() const;
 
 		template<class Archive>
-		void save(Archive& archive) const {
+		void save(Archive &archive) const {
 			unsigned int classId = getClassIdentifier();
 			archive(
 				cereal::make_nvp("class-id", classId),
@@ -274,7 +274,7 @@ namespace syn
 		}
 
 		template<class Archive>
-		void load(Archive& archive) {
+		void load(Archive &archive) {
 			NamedContainer<UnitParameter, MAX_PARAMS> tmpparams;
 			archive(
 				cereal::make_nvp("name", m_name),
@@ -309,29 +309,29 @@ namespace syn
 		virtual void onInputDisconnection_(int a_inputPort) { };
 
 		template <typename ID>
-		void setOutputChannel_(const ID& a_id, const double& a_val);
+		void setOutputChannel_(const ID &a_id, const double &a_val);
 
 		virtual void MSFASTCALL process_() GCCFASTCALL = 0;
 
-		int addInput_(const string& a_name, double a_default = 0.0);
-		bool addInput_(int a_id, const string& a_name, double a_default = 0.0);
+		int addInput_(const string &a_name, double a_default = 0.0);
+		bool addInput_(int a_id, const string &a_name, double a_default = 0.0);
 
-		int addOutput_(const string& a_name);
-		bool addOutput_(int a_id, const string& a_name);
+		int addOutput_(const string &a_name);
+		bool addOutput_(int a_id, const string &a_name);
 
-		int addParameter_(const UnitParameter& a_param);
-		bool addParameter_(int a_id, const UnitParameter& a_param);
+		int addParameter_(const UnitParameter &a_param);
+		bool addParameter_(int a_id, const UnitParameter &a_param);
 
-		void copyFrom_(const Unit& a_other);
+		void copyFrom_(const Unit &a_other);
 
 	private:
 		virtual inline string _getClassName() const = 0;
 
-		void _setParent(Circuit* a_new_parent);
+		void _setParent(Circuit *a_new_parent);
 
-		void _setName(const string& a_name);
+		void _setName(const string &a_name);
 
-		virtual Unit* _clone() const = 0;
+		virtual Unit *_clone() const = 0;
 
 	private:
 		friend class UnitFactory;
@@ -339,52 +339,52 @@ namespace syn
 	public:
 		typedef ::Eigen::Array<double, -1, -1, Eigen::RowMajor> dynamic_buffer_t;
 
-		void MSFASTCALL tick(const dynamic_buffer_t& a_inputs, dynamic_buffer_t& a_outputs) GCCFASTCALL;
+		void MSFASTCALL tick(const dynamic_buffer_t &a_inputs, dynamic_buffer_t &a_outputs) GCCFASTCALL;
 
 	private:
 		string m_name;
 		NamedContainer<UnitParameter, MAX_PARAMS> m_parameters;
 		NamedContainer<double, MAX_OUTPUTS> m_outputSignals;
 		NamedContainer<UnitPort, MAX_INPUTS> m_inputPorts;
-		Circuit* m_parent;
+		Circuit *m_parent;
 		AudioConfig m_audioConfig;
 		MidiData m_midiData;
 	};
 
 	template <typename ID>
-	const double& Unit::readOutput(const ID& a_identifier) const {
+	const double &Unit::readOutput(const ID &a_identifier) const {
 		return m_outputSignals[a_identifier];
 	}
 
 	template <typename ID>
-	UnitParameter& Unit::param(const ID& a_identifier) {
+	UnitParameter &Unit::param(const ID &a_identifier) {
 		return m_parameters[a_identifier];
 	}
 
 	template <typename ID>
-	const UnitParameter& Unit::param(const ID& a_identifier) const {
+	const UnitParameter &Unit::param(const ID &a_identifier) const {
 		return m_parameters[a_identifier];
 	}
 
 	template <typename ID>
-	void Unit::setOutputChannel_(const ID& a_id, const double& a_val)
+	void Unit::setOutputChannel_(const ID &a_id, const double &a_val)
 	{
 		m_outputSignals[a_id] = a_val;
 	}
 
 	template <typename ID>
-	bool Unit::hasParam(const ID& a_paramId) const
+	bool Unit::hasParam(const ID &a_paramId) const
 	{
 		return m_parameters.contains(a_paramId);
 	}
 
 	template <typename ID, typename T>
-	bool Unit::setParam(const ID& a_identifier, const T& a_value) {
+	bool Unit::setParam(const ID &a_identifier, const T &a_value) {
 		return m_parameters[a_identifier].set(a_value);
 	};
 
 	template <typename ID>
-	string Unit::outputName(const ID& a_identifier) const {
+	string Unit::outputName(const ID &a_identifier) const {
 		return m_outputSignals.name<ID>(a_identifier);
 	};
 }

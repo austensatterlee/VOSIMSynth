@@ -82,16 +82,16 @@ namespace synui
 
 		Vector2u getSize() const { return m_size; }
 
-		double fps() const { return m_fps; }
+		double getFps() const { return m_fps; }
 
-		MainGUI *gui() const { return m_gui; }
+		MainGUI *getGUI() const { return m_gui; }
 		
 		bool OpenWindow(HWND a_system_window);
 
 		void CloseWindow();
 
-		void queueExternalMessage(GUIMessage* a_msg);
-		void queueInternalMessage(GUIMessage* a_msg);
+		void queueExternalMessage(GUIMessage *a_msg);
+		void queueInternalMessage(GUIMessage *a_msg);
 
 #ifdef _WIN32
 		void setHInstance(HINSTANCE a_newHInstance) { m_HInstance = a_newHInstance; }
@@ -106,7 +106,7 @@ namespace synui
 		void _runLoop();
 
 		void _flushMessageQueues();
-		void _processMessage(GUIMessage* a_msg);
+		void _processMessage(GUIMessage *a_msg);
 	private:
 #ifdef _WIN32
 		HINSTANCE m_HInstance;
