@@ -27,35 +27,51 @@ T detect_denormals(const std::vector<T>& a_data) {
 }
 
 TEST_CASE("Serialization example.", "[serialization]") {
-	syn::Circuit *circ = new syn::Circuit("main");
-	syn::Unit *svfUnit = new syn::StateVariableFilter("svfUnit");
-	syn::Unit *oscUnit = new syn::BasicOscillator("oscUnit");
-	circ->addUnit(svfUnit);
-	circ->addUnit(oscUnit);
-	circ->connectInternal("oscUnit", 0, "svfUnit", 0);
-	std::stringstream ss;
-	{
-		cereal::XMLOutputArchive oarchive(ss);
-	    std::shared_ptr<syn::Unit> tmpUnit(circ->clone());
-		oarchive(tmpUnit);
+	syn::UnitFactory& uf = syn::UnitFactory::instance();
+	uf.addUnitPrototype<syn::StateVariableFilter>("Filters", "svf");
+	uf.addUnitPrototype<syn::TrapStateVariableFilter>("Filters", "tsvf");
+	uf.addUnitPrototype<syn::OnePoleLP>("Filters", "lag");
+	uf.addUnitPrototype<syn::LadderFilter>("Filters", "ladderA");
+	uf.addUnitPrototype<syn::LadderFilterTwo>("Filters", "ladderB");
+
+	uf.addUnitPrototype<syn::BasicOscillator>("Oscillators", "basic");
+	uf.addUnitPrototype<syn::LFOOscillator>("Modulators", "LFO");
+
+	uf.addUnitPrototype<syn::MemoryUnit>("DSP", "unit delay");
+	uf.addUnitPrototype<syn::VariableMemoryUnit>("DSP", "var delay");
+
+	uf.addUnitPrototype<syn::Circuit>("", "circuit");
+	uf.addUnitPrototype<syn::InputUnit>("", "in");
+	uf.addUnitPrototype<syn::OutputUnit>("", "out");
+
+	SECTION("Serialize") {
+		syn::Circuit *circ = new syn::Circuit("main");
+		syn::Unit *svfUnit = new syn::StateVariableFilter("svfUnit");
+		syn::Unit *oscUnit = new syn::BasicOscillator("oscUnit");
+		circ->addUnit(svfUnit);
+		circ->addUnit(oscUnit);
+		circ->connectInternal("oscUnit", 0, "svfUnit", 0);
+		std::stringstream ss;
+		{
+			json j = circ->operator json();
+			ss << j;
+		}
+		string circuit_str1 = ss.str();
+		syn::Circuit *readUnit;
+		{
+			json j; ss >> j;
+			syn::Unit *tmpUnit = syn::Unit::fromJSON(j);
+			readUnit = dynamic_cast<syn::Circuit*>(tmpUnit);
+		}
+		REQUIRE(readUnit != nullptr);
+		std::stringstream ss2;
+		{
+			json j = readUnit->operator json();
+			ss2 << j;
+		}
+		string circuit_str2 = ss2.str();
+		REQUIRE(circuit_str1 == circuit_str2);
 	}
-	string circuit_str1 = ss.str();
-	syn::Circuit *readUnit;
-	{
-		cereal::XMLInputArchive iarchive(ss);
-	    std::shared_ptr<syn::Unit> tmpUnit;
-		iarchive(tmpUnit);
-		readUnit = dynamic_cast<syn::Circuit*>(tmpUnit->clone());
-	}
-	REQUIRE(readUnit != nullptr);
-	std::stringstream ss2;
-	{
-		cereal::XMLOutputArchive oarchive(ss2);
-	    std::shared_ptr<syn::Unit> tmpUnit(readUnit->clone());
-		oarchive(tmpUnit);
-	}
-	string circuit_str2 = ss2.str();
-	REQUIRE(circuit_str1 == circuit_str2);
 }
 
 template<typename Out, typename In>

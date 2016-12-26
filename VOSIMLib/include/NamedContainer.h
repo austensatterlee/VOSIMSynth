@@ -46,19 +46,6 @@ namespace syn
 		array<string, MAXSIZE> m_names;
 		int m_size;
 
-		struct SerializableItem
-		{
-			int index;
-			string name;
-			T item;
-			template <class Archive>
-			void serialize(Archive &ar) {
-				ar(cereal::make_nvp("index", index),
-				   cereal::make_nvp("name", name),
-				   cereal::make_nvp("item", item));
-			}
-		};
-
 		template<typename _T>
 		struct id_comparator
 		{
@@ -298,27 +285,6 @@ namespace syn
 		const int *indices() const;
 
 		const string *names() const;
-
-		template<typename Archive>
-		void save(Archive &ar) const {
-			cereal::size_type size = m_size;
-			ar(cereal::make_size_tag(size));
-			for(int i=0;i<m_size;i++) {
-				SerializableItem item{ m_indices[i], m_names[m_indices[i]], m_data[m_indices[i]] };
-				ar(item);
-			}
-		}
-
-		template<typename Archive>
-		void load(Archive &ar) {
-			cereal::size_type size;
-			ar(cereal::make_size_tag(size));
-			for(int i=0;i<size;i++) {
-				SerializableItem item;
-				ar(item);
-				add(item.name, item.index, item.item);
-			}
-		}
 
 	private:
 		int getItemIndex(int a_itemId) const;

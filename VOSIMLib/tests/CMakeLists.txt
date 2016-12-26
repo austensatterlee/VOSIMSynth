@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.3)
 project(VOSIMLib_tests)
 
-set(NONIUS_ROOT ${LIBS_DIR}/nonius CACHE PATH "")
+set(NONIUS_ROOT ${LIBS_DIR}/nonius)
 
 ##
 # Unit test sources

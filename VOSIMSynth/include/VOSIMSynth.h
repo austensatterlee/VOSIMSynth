@@ -68,6 +68,8 @@ public:
 
 	void OnGUIClose() override;
 
+	static void registerUnits(syn::UnitFactory& a_uf);
+
 private:
 	syn::MIDIReceiver *m_MIDIReceiver;
 	syn::VoiceManager *m_voiceManager;

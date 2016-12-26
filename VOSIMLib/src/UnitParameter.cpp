@@ -344,4 +344,26 @@ namespace syn
     }
 
     const vector<UnitParameter::DisplayText>& UnitParameter::getDisplayTexts() const { return m_displayTexts; }
+
+    UnitParameter& UnitParameter::load(const json& j)
+    {
+        setFromString(j["value"].get<string>());
+        m_type = static_cast<EParamType>(j["data_type"].get<int>());
+        m_displayTexts.clear();
+        for (const json &k : j["display_texts"]) { m_displayTexts.push_back(DisplayText{k}); }
+        m_min = j["min"];
+        m_max = j["max"];
+        return *this;
+    }
+
+    UnitParameter::operator json() const
+    {
+        json j;
+        j["value"] = getValueString();
+        j["data_type"] = m_type;
+        j["display_texts"] = m_displayTexts;
+        j["min"] = m_min;
+        j["max"] = m_max;
+        return j;
+    }
 }

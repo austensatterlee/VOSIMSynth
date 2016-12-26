@@ -15,10 +15,10 @@
 #include "MemoryUnit.h"
 
 #define trig_benches 1
-#define ladder_benches 1
-#define circuit_benches 0
+#define ladder_benches 0
+#define circuit_benches 1
 #define modulus_benches 0
-#define lut_saw_benches 0
+#define lut_saw_benches 1
 #define lut_pitch_benches 1
 #define container_benches 1
 
@@ -270,6 +270,23 @@ NONIUS_BENCHMARK("NamedContainer []", [](nonius::chronometer &meter)
 
 	syn::NamedContainer<syn::UnitPort, container_size> myContainer;
 	for (int i = 0; i < container_size; i++) myContainer.add(std::to_string(i), syn::UnitPort(i));
+
+	meter.measure([&myContainer,&stores,&loads](int i)
+	{
+		myContainer[stores[i]] = myContainer[loads[i]];
+	});
+})
+
+NONIUS_BENCHMARK("unordered_map []", [](nonius::chronometer &meter)
+{
+	std::uniform_int_distribution<> _accessGenerator(0, container_size-1);
+	std::vector<int> loads(meter.runs());
+	std::vector<int> stores(meter.runs());
+	std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int &x) {return _accessGenerator(RandomDevice); });
+	std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int &x) {return _accessGenerator(RandomDevice); });
+
+	std::unordered_map<int, syn::UnitPort> myContainer;
+	for (int i = 0; i < container_size; i++) myContainer[i]=syn::UnitPort(i);
 
 	meter.measure([&myContainer,&stores,&loads](int i)
 	{

@@ -30,7 +30,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "common.h"
 #include <regex>
-#include <cereal/cereal.hpp>
 
 #define DSP_PI 3.14159265358979323846264338327950288
 
@@ -167,18 +166,10 @@ namespace syn
 	//////////////////
 
 	/**
-	 * If a_str ends with a number, this function creates a new string with that number incremented by one.
-	 * If a_str does not end with a number, this function returns a new string with "_0" concatenated at the end.
+	 * \brief Add or increment a number at the end of a string.
+	 * If the string ends with a number, this function creates a new string with that number incremented by one.
+	 * If the string does not end with a number, this function returns a new string with "_0" concatenated at the end.
 	 */
-	std::string incrementSuffix(const std::string &a_str);
-
-	template<typename Archive, typename T>
-	void load_cereal_nvp(Archive &ar, const std::string &a_name, T &a_ref, const T &a_default) {
-		try {
-			ar(cereal::make_nvp(a_name, a_ref));
-		}catch(cereal::Exception) {
-			a_ref = a_default;
-		}
-	}
+	std::string incrementSuffix(const std::string &a_str);	
 }
 #endif

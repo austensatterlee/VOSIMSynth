@@ -26,5 +26,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
-#include <cereal/types/polymorphic.hpp>
-#include <cereal/archives/xml.hpp>
+#include <json/json.hpp>
+
+using nlohmann::json;

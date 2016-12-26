@@ -27,84 +27,92 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 #include <nanogui/nanogui.h>
+#include <common_serial.h>
 
 namespace syn
 {
     class VoiceManager;
+    class Unit;
 }
 
 namespace synui
-{  
+{
+    class CircuitWidget;
 
-	class CircuitWidget;
-	class UnitWidget : public nanogui::Widget
-	{
-	public:
-		UnitWidget(CircuitWidget *a_parent, syn::VoiceManager *a_vm, int a_unitId);
+    class UnitWidget : public nanogui::Widget
+    {
+        friend class CircuitWidget;
+    public:
+        UnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId);
 
-		void draw(NVGcontext *ctx) override;
-		bool mouseButtonEvent(const Eigen::Vector2i &p, int button, bool down, int modifiers) override;
-		bool mouseDragEvent(const Eigen::Vector2i &p, const Eigen::Vector2i &rel, int button, int modifiers) override;
+        void draw(NVGcontext* ctx) override;
+        bool mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
+        bool mouseDragEvent(const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override;
 
-		/**
-		 * \brief Compute the coordinates of the input port with the given id.
-		 * \param a_portId The id of the requested input port, corresponding with the id of an input port on the associated syn::Unit.
-		 * \return Coordinates of the requested input port.
-		 */
-		Eigen::Vector2i getInputPortPosition(int a_portId);
+        const std::string& getName() const;
+        int getUnitId() const { return m_unitId; }
 
-		/**
-		 * \brief Compute the coordinates of the output port with the given id.
-		 * \param a_portId The id of the requested output port, corresponding with the id of an output port on the associated syn::Unit.
-		 * \return Coordinates of the requested output port.
-		 */
-		Eigen::Vector2i getOutputPortPosition(int a_portId);
-
-	    /**
-         * \brief Set the function that will be called when the unit's editor interface has been requested by the user.
-         * The callback receives the unit's editor interface as an argument. It may then attach the interface somewhere that will be displayed on-screen.
+        /**
+         * \brief Compute the coordinates of the input port with the given id.
+         * \param a_portId The id of the requested input port, corresponding with the id of an input port on the associated syn::Unit.
+         * \return Coordinates of the requested input port.
          */
-        void setCallback(std::function<void(Widget*)> callback){ m_callback = callback; }
+        Eigen::Vector2i getInputPortAbsPosition(int a_portId);
 
-	    Eigen::Vector2i preferredSize(NVGcontext *ctx) const override;
+        /**
+         * \brief Compute the coordinates of the output port with the given id.
+         * \param a_portId The id of the requested output port, corresponding with the id of an output port on the associated syn::Unit.
+         * \return Coordinates of the requested output port.
+         */
+        Eigen::Vector2i getOutputPortAbsPosition(int a_portId);
 
-	    void setParamValue(int a_paramId, double a_val) const;
-	    void setParamNorm(int a_paramId, double a_normval) const;
-	    void nudgeParam(int a_paramId, double a_logScale, double a_linScale) const;
-	    void setParamFromString(int a_paramId, const std::string &a_str) const;
+        Eigen::Vector2i preferredSize(NVGcontext* ctx) const override;
 
-	protected:
-        virtual nanogui::Widget *createEditor_(nanogui::Widget *a_parent);  
+        void setEditorCallback(std::function<void(unsigned, int)> a_callback) { m_editorCallback = a_callback; }
 
-	protected:	
-        std::function<void(Widget*)> m_callback; // editor callback
-        Widget *m_editorWidget;
-		CircuitWidget *m_parentCircuit;
-	    syn::VoiceManager *m_vm;
-		Widget *m_titleLabel;
-		std::map<int, Widget*> m_inputLabels;
-		std::map<int, Widget*> m_outputLabels;
+        operator json() const;
+        UnitWidget* load(const json& j);
+
+    protected:
+        /// Update layout configuration based on parent circuit's grid spacing.
+        void updateRowSizes_();
+        const syn::Unit& getUnit_() const;
+        void setName_(const std::string& a_name);
+
+    protected:
+        CircuitWidget* m_parentCircuit;
+        syn::VoiceManager* m_vm;
+
+        std::function<void(unsigned, int)> m_editorCallback;
+
+        Widget* m_titleLabel;
+        std::map<int, Widget*> m_inputLabels;
+        std::map<int, Widget*> m_outputLabels;
         std::map<int, Widget*> m_emptyInputLabels;
         std::map<int, Widget*> m_emptyOutputLabels;
 
-		Eigen::Vector2i m_oldPos;
-		enum
-		{
-		    Uninitialized,
-            Idle,
-            Dragging
-		} m_state;
+        Eigen::Vector2i m_oldPos;
+        Eigen::Vector2i m_clickPos;
 
-		int m_unitId;
-	};
+        enum
+        {
+            Uninitialized,
+            Idle,
+            TitleClicked,
+            TitleDragging
+        } m_state;
+
+        int m_unitId;
+        unsigned m_classIdentifier;
+    };
 
     class InputUnitWidget : public UnitWidget
     {
     public:
-        InputUnitWidget(CircuitWidget *a_parent, syn::VoiceManager *a_vm, int a_unitId)
+        InputUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId)
             : UnitWidget(a_parent, a_vm, a_unitId)
         {
-            for(auto lbl : m_inputLabels)
+            for (auto lbl : m_inputLabels)
             {
                 auto l = static_cast<nanogui::AdvancedGridLayout*>(layout());
                 l->removeAnchor(lbl.second);
@@ -113,14 +121,14 @@ namespace synui
             m_inputLabels.clear();
         }
     };
-    
+
     class OutputUnitWidget : public UnitWidget
     {
     public:
-        OutputUnitWidget(CircuitWidget *a_parent, syn::VoiceManager *a_vm, int a_unitId)
+        OutputUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId)
             : UnitWidget(a_parent, a_vm, a_unitId)
         {
-            for(auto lbl : m_outputLabels)
+            for (auto lbl : m_outputLabels)
             {
                 auto l = static_cast<nanogui::AdvancedGridLayout*>(layout());
                 l->removeAnchor(lbl.second);

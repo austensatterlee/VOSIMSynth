@@ -1,18 +1,6 @@
 #include "MathUnits.h"
 #include "DSPMath.h"
 
-#include "common.h"
-CEREAL_REGISTER_TYPE(syn::DCRemoverUnit);
-CEREAL_REGISTER_TYPE(syn::RectifierUnit);
-CEREAL_REGISTER_TYPE(syn::GainUnit);
-CEREAL_REGISTER_TYPE(syn::SummerUnit);
-CEREAL_REGISTER_TYPE(syn::ConstantUnit);
-CEREAL_REGISTER_TYPE(syn::PanningUnit);
-CEREAL_REGISTER_TYPE(syn::LerpUnit);
-CEREAL_REGISTER_TYPE(syn::PitchToFreqUnit);
-CEREAL_REGISTER_TYPE(syn::FreqToPitchUnit);
-CEREAL_REGISTER_TYPE(syn::SwitchUnit);
-
 syn::MovingAverage::MovingAverage() :
 	m_windowSize(1),
 	m_lastOutput(0.0) {

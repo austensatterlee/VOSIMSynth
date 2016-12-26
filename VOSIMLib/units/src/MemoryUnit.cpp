@@ -30,8 +30,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <tables.h>
 
 #include "common.h"
-CEREAL_REGISTER_TYPE(syn::MemoryUnit);
-CEREAL_REGISTER_TYPE(syn::VariableMemoryUnit);
+
+
 
 namespace syn
 {

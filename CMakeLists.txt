@@ -163,9 +163,9 @@ include_directories(${LIBS_DIR}/wdl/iplug)
 
 
 ##
-# Cereal
+# JSON for Modern C++
 ##
-include_directories(${LIBS_DIR}/cereal/include)
+include_directories(${LIBS_DIR}/json)
 
 
 ##

@@ -39,7 +39,7 @@ namespace syn
 	class VOSIMLIB_API UnitFactory
 	{
 		UnitFactory() {} 
-
+		
 		struct FactoryPrototype
 		{
 			FactoryPrototype(std::string a_group_name, Unit *a_unit, size_t a_class_size);
@@ -53,6 +53,9 @@ namespace syn
 		};
 
 	public:
+
+		UnitFactory(const UnitFactory&) = delete;
+		void operator=(const UnitFactory&) = delete;
 
 		static UnitFactory &instance() {
 			static UnitFactory singleton;
@@ -73,7 +76,10 @@ namespace syn
 		set<std::string> getGroupNames() const;
 
 		vector<std::string> getPrototypeNames(const std::string &group) const;
+
 		vector<std::string> getPrototypeNames() const;
+
+        const std::string &getPrototypeName(unsigned a_classIdentifier);
 
 		const FactoryPrototype *getFactoryPrototype(const std::string &a_prototypeName) const;
 
@@ -97,7 +103,6 @@ namespace syn
 
 	protected:
 		int getPrototypeIdx_(const std::string &a_name) const;
-
 
 		int getPrototypeIdx_(unsigned a_classId) const;
 

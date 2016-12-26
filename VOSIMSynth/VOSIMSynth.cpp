@@ -52,49 +52,14 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 void VOSIMSynth::makeGraphics() {
 	syn::VoiceManager *vm = m_voiceManager;
 	syn::UnitFactory *uf = m_unitFactory;
-	synui::MainWindow *vosimWindow = new synui::MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm,uf](synui::MainWindow *a_win){ return new synui::MainGUI(a_win, vm, uf); });
-	vosimWindow->setHInstance(gHInstance);
-	AttachAppWindow(vosimWindow);
+	synui::MainWindow *mainWindow = new synui::MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm,uf](synui::MainWindow *a_win){ return new synui::MainGUI(a_win, vm, uf); });
+	mainWindow->setHInstance(gHInstance);
+	AttachAppWindow(mainWindow);
 }
 
 void VOSIMSynth::makeInstrument() {
 	m_unitFactory = &syn::UnitFactory::instance();
-	m_unitFactory->addUnitPrototype<syn::StateVariableFilter>("Filters", "svf");
-	m_unitFactory->addUnitPrototype<syn::TrapStateVariableFilter>("Filters", "tsvf");
-	m_unitFactory->addUnitPrototype<syn::OnePoleLP>("Filters", "lag");
-	m_unitFactory->addUnitPrototype<syn::LadderFilter>("Filters", "ladderA");
-	m_unitFactory->addUnitPrototype<syn::LadderFilterTwo>("Filters", "ladderB");
-
-	m_unitFactory->addUnitPrototype<syn::BasicOscillator>("Oscillators", "basic");
-	m_unitFactory->addUnitPrototype<syn::VosimOscillator>("Oscillators", "vosim");
-	m_unitFactory->addUnitPrototype<syn::FormantOscillator>("Oscillators", "formant");
-
-	m_unitFactory->addUnitPrototype<syn::ADSREnvelope>("Modulators", "ADSR");
-	m_unitFactory->addUnitPrototype<syn::LFOOscillator>("Modulators", "LFO");
-
-	m_unitFactory->addUnitPrototype<syn::MemoryUnit>("DSP", "unit delay");
-	m_unitFactory->addUnitPrototype<syn::VariableMemoryUnit>("DSP", "var delay");
-	m_unitFactory->addUnitPrototype<syn::PanningUnit>("DSP", "pan");
-	m_unitFactory->addUnitPrototype<syn::FollowerUnit>("DSP", "follow");
-	m_unitFactory->addUnitPrototype<syn::DCRemoverUnit>("DSP", "dc trap");
-
-	m_unitFactory->addUnitPrototype<syn::ConstantUnit>("Math", "const");
-	m_unitFactory->addUnitPrototype<syn::SummerUnit>("Math", "sum");
-	m_unitFactory->addUnitPrototype<syn::GainUnit>("Math", "gain");
-	m_unitFactory->addUnitPrototype<syn::LerpUnit>("Math", "affine");
-	m_unitFactory->addUnitPrototype<syn::RectifierUnit>("Math", "rect");
-	m_unitFactory->addUnitPrototype<syn::PitchToFreqUnit>("Math", "p2f");
-	m_unitFactory->addUnitPrototype<syn::FreqToPitchUnit>("Math", "f2p");
-	m_unitFactory->addUnitPrototype<syn::TanhUnit>("Math", "tanh");
-	m_unitFactory->addUnitPrototype<syn::SwitchUnit>("Math", "switch");
-
-	m_unitFactory->addUnitPrototype<syn::GateUnit>("MIDI", "gate");
-	m_unitFactory->addUnitPrototype<syn::MidiNoteUnit>("MIDI", "pitch");
-	m_unitFactory->addUnitPrototype<syn::VelocityUnit>("MIDI", "vel");
-	m_unitFactory->addUnitPrototype<syn::MidiCCUnit>("MIDI", "CC");
-
-	m_unitFactory->addUnitPrototype<syn::InputUnit>("", "in");
-	m_unitFactory->addUnitPrototype<syn::OutputUnit>("", "out");
+	VOSIMSynth::registerUnits(*m_unitFactory);
 
 	m_voiceManager = new syn::VoiceManager(m_unitFactory);
 	m_voiceManager->setMaxVoices(8);
@@ -131,14 +96,18 @@ void VOSIMSynth::ProcessMidiMsg(IMidiMsg *pMsg) {
 }
 
 bool VOSIMSynth::SerializeState(ByteChunk *pChunk) {
-	std::shared_ptr<syn::Unit> circuit(m_voiceManager->getPrototypeCircuit()->clone());
-	std::stringstream ss; {
-		cereal::XMLOutputArchive ar(ss);
-		ar(cereal::make_nvp("circuit", circuit));
-	}
-	pChunk->PutStr(ss.str().c_str());
+	syn::Circuit *circuit = m_voiceManager->getPrototypeCircuit();
+    std::stringstream ss;
+	json j;
+    // Store synthesizer data
+    json &synth = j["synth"] = json();
+    synth["circuit"] = circuit->operator json();
 
-	// <store gui circuit here>
+	// Store gui data
+    json &gui = j["gui"] = GetAppWindow()->getGUI()->operator json();
+
+	ss << j;		
+	pChunk->PutStr(ss.str().c_str());
 	return true;
 }
 
@@ -148,15 +117,22 @@ int VOSIMSynth::UnserializeState(ByteChunk *pChunk, int startPos) {
 	string input;
 	startPos = pChunk->Get(&input, startPos);
 	std::stringstream ss{ input };
-	std::shared_ptr<syn::Unit> circuit;
-	{
-		cereal::XMLInputArchive ar(ss);
-		ar(cereal::make_nvp("circuit", circuit));
-	}
+    json j; ss >> j;
+
+    // Main JSON components
+    const json &synth = j["synth"];
+    const json &gui = j["gui"];
+
+    syn::Unit *circuit = syn::Unit::fromJSON(synth["circuit"]);
+	
 	// <reset gui circuit here>
-	m_voiceManager->setPrototypeCircuit(*static_cast<const syn::Circuit*>(circuit.get()));
+    GetAppWindow()->getGUI()->reset();
+	m_voiceManager->setPrototypeCircuit(*static_cast<const syn::Circuit*>(circuit));
 	Reset();
 	// <load new gui circuit here>
+    GetAppWindow()->getGUI()->load(gui);
+
+    startPos += ss.gcount();
 	return startPos;
 }
 
@@ -171,6 +147,47 @@ void VOSIMSynth::OnActivate(bool active) {}
 void VOSIMSynth::OnGUIOpen() {}
 
 void VOSIMSynth::OnGUIClose() {}
+
+void VOSIMSynth::registerUnits(syn::UnitFactory& a_uf)
+{
+	a_uf.addUnitPrototype<syn::StateVariableFilter>("Filters", "svf");
+	a_uf.addUnitPrototype<syn::TrapStateVariableFilter>("Filters", "tsvf");
+	a_uf.addUnitPrototype<syn::OnePoleLP>("Filters", "lag");
+	a_uf.addUnitPrototype<syn::LadderFilter>("Filters", "ladderA");
+	a_uf.addUnitPrototype<syn::LadderFilterTwo>("Filters", "ladderB");
+
+	a_uf.addUnitPrototype<syn::BasicOscillator>("Oscillators", "basic");
+	a_uf.addUnitPrototype<syn::VosimOscillator>("Oscillators", "vosim");
+	a_uf.addUnitPrototype<syn::FormantOscillator>("Oscillators", "formant");
+
+	a_uf.addUnitPrototype<syn::ADSREnvelope>("Modulators", "ADSR");
+	a_uf.addUnitPrototype<syn::LFOOscillator>("Modulators", "LFO");
+
+	a_uf.addUnitPrototype<syn::MemoryUnit>("DSP", "unit delay");
+	a_uf.addUnitPrototype<syn::VariableMemoryUnit>("DSP", "var delay");
+	a_uf.addUnitPrototype<syn::PanningUnit>("DSP", "pan");
+	a_uf.addUnitPrototype<syn::FollowerUnit>("DSP", "follow");
+	a_uf.addUnitPrototype<syn::DCRemoverUnit>("DSP", "dc trap");
+
+	a_uf.addUnitPrototype<syn::ConstantUnit>("Math", "const");
+	a_uf.addUnitPrototype<syn::SummerUnit>("Math", "sum");
+	a_uf.addUnitPrototype<syn::GainUnit>("Math", "gain");
+	a_uf.addUnitPrototype<syn::LerpUnit>("Math", "affine");
+	a_uf.addUnitPrototype<syn::RectifierUnit>("Math", "rect");
+	a_uf.addUnitPrototype<syn::PitchToFreqUnit>("Math", "p2f");
+	a_uf.addUnitPrototype<syn::FreqToPitchUnit>("Math", "f2p");
+	a_uf.addUnitPrototype<syn::TanhUnit>("Math", "tanh");
+	a_uf.addUnitPrototype<syn::SwitchUnit>("Math", "switch");
+
+	a_uf.addUnitPrototype<syn::GateUnit>("MIDI", "gate");
+	a_uf.addUnitPrototype<syn::MidiNoteUnit>("MIDI", "pitch");
+	a_uf.addUnitPrototype<syn::VelocityUnit>("MIDI", "vel");
+	a_uf.addUnitPrototype<syn::MidiCCUnit>("MIDI", "CC");
+
+	a_uf.addUnitPrototype<syn::Circuit>("", "circuit");
+	a_uf.addUnitPrototype<syn::InputUnit>("", "in");
+	a_uf.addUnitPrototype<syn::OutputUnit>("", "out");
+}
 
 void VOSIMSynth::Reset() {
 	m_MIDIReceiver->Resize(GetBlockSize());

@@ -22,11 +22,11 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "tables.h"
 
 #include "common.h"
-CEREAL_REGISTER_TYPE(syn::StateVariableFilter);
-CEREAL_REGISTER_TYPE(syn::TrapStateVariableFilter);
-CEREAL_REGISTER_TYPE(syn::OnePoleLP);
-CEREAL_REGISTER_TYPE(syn::LadderFilter);
-CEREAL_REGISTER_TYPE(syn::LadderFilterTwo);
+
+
+
+
+
 
 syn::StateVariableFilter::StateVariableFilter(const string &a_name) :
   Unit(a_name),

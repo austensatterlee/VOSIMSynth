@@ -1,6 +1,6 @@
 #include "WaveShapers.h"
 #include "common.h"
-CEREAL_REGISTER_TYPE(syn::TanhUnit);
+
 
 syn::TanhUnit::TanhUnit(const string &a_name): Unit(a_name) {
 	addParameter_(pSat, UnitParameter("sat", 1.0, 10.0, 1.0));

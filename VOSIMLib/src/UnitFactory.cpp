@@ -36,6 +36,14 @@ vector<string> syn::UnitFactory::getPrototypeNames() const {
 	return names;
 }
 
+const std::string& syn::UnitFactory::getPrototypeName(unsigned a_classIdentifier)
+{
+    int protonum = getPrototypeIdx_(a_classIdentifier);
+	if (protonum < 0)
+		return "";
+    return m_prototypes[protonum].name;
+}
+
 const syn::UnitFactory::FactoryPrototype *syn::UnitFactory::getFactoryPrototype(const string &a_prototypeName) const {
 	for (const FactoryPrototype &prototype : m_prototypes) {
 		if (prototype.name == a_prototypeName)
@@ -47,7 +55,10 @@ const syn::UnitFactory::FactoryPrototype *syn::UnitFactory::getFactoryPrototype(
 syn::Unit *syn::UnitFactory::createUnit(int a_protoNum, const string &a_name) {
 	Unit *unit = m_prototypes[a_protoNum].prototype->clone();
 	// Generate default name
-	unit->_setName(m_prototypes[a_protoNum].name);
+    if(a_name.empty())
+	    unit->_setName(m_prototypes[a_protoNum].name);
+    else
+        unit->_setName(a_name);
 	return unit;
 }
 

@@ -21,7 +21,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "DSPMath.h"
 
 #include "common.h"
-CEREAL_REGISTER_TYPE(syn::ADSREnvelope);
+
 
 namespace syn
 {
