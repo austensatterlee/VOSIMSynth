@@ -8,6 +8,6 @@
 
 
 void syn::MidiNoteUnit::process_() {
-	setOutputChannel_(0, note());
-	setOutputChannel_(1, pitchToFreq(note()));
+    setOutputChannel_(0, note());
+    setOutputChannel_(1, pitchToFreq(note()));
 }

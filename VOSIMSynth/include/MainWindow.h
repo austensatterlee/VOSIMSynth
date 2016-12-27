@@ -56,74 +56,74 @@ struct GLFWwindow;
 
 namespace synui
 {
-	class MainWindow;
-	class MainGUI;
+    class MainWindow;
+    class MainGUI;
 
-	struct GUIMessage
-	{
-		void(*action)(MainWindow*, ByteChunk*);
-		ByteChunk data;
-	};
+    struct GUIMessage
+    {
+        void(*action)(MainWindow*, ByteChunk*);
+        ByteChunk data;
+    };
 
-	class MainWindow
-	{
-	public:
-		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    class MainWindow
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-		typedef std::function<MainGUI*(MainWindow*)> GUIConstructor; 
+        typedef std::function<MainGUI*(MainWindow*)> GUIConstructor; 
 
-	public:
-		MainWindow(int a_width, int a_height, GUIConstructor a_guiConstructor);
-		virtual ~MainWindow();
+    public:
+        MainWindow(int a_width, int a_height, GUIConstructor a_guiConstructor);
+        virtual ~MainWindow();
 
-		GLFWwindow *getWindow() const { return m_window; }
+        GLFWwindow* getWindow() const { return m_window; }
 
-		bool isOpen() const { return m_isOpen; }
+        bool isOpen() const { return m_isOpen; }
 
-		Vector2u getSize() const { return m_size; }
+        Vector2u getSize() const { return m_size; }
 
-		double getFps() const { return m_fps; }
+        double getFps() const { return m_fps; }
 
-		MainGUI *getGUI() const { return m_gui; }
-		
-		bool OpenWindow(HWND a_system_window);
+        MainGUI* getGUI() const { return m_gui; }
+        
+        bool OpenWindow(HWND a_system_window);
 
-		void CloseWindow();
+        void CloseWindow();
 
-		void queueExternalMessage(GUIMessage *a_msg);
-		void queueInternalMessage(GUIMessage *a_msg);
+        void queueExternalMessage(GUIMessage* a_msg);
+        void queueInternalMessage(GUIMessage* a_msg);
 
 #ifdef _WIN32
-		void setHInstance(HINSTANCE a_newHInstance) { m_HInstance = a_newHInstance; }
-		HINSTANCE getHInstance() const { return m_HInstance; }
-		static LRESULT CALLBACK drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam);
+        void setHInstance(HINSTANCE a_newHInstance) { m_HInstance = a_newHInstance; }
+        HINSTANCE getHInstance() const { return m_HInstance; }
+        static LRESULT CALLBACK drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam);
 #endif
-	private:
+    private:
 
-		void _OpenWindowImplem(HWND a_system_window);
-		void _CloseWindowImplem();
-		
-		void _runLoop();
+        void _OpenWindowImplem(HWND a_system_window);
+        void _CloseWindowImplem();
+        
+        void _runLoop();
 
-		void _flushMessageQueues();
-		void _processMessage(GUIMessage *a_msg);
-	private:
+        void _flushMessageQueues();
+        void _processMessage(GUIMessage* a_msg);
+    private:
 #ifdef _WIN32
-		HINSTANCE m_HInstance;
-		HWND m_timerWindow;
+        HINSTANCE m_HInstance;
+        HWND m_timerWindow;
 #endif
-		GLFWwindow *m_window;
-		bool m_isOpen;
+        GLFWwindow* m_window;
+        bool m_isOpen;
 
-		MainGUI *m_gui;
+        MainGUI* m_gui;
 
-		Vector2u m_size;
+        Vector2u m_size;
 
-		unsigned m_frameCount;
-		double m_fps;
+        unsigned m_frameCount;
+        double m_fps;
 
-		spsc_queue<GUIMessage*> m_guiInternalMsgQueue;
-		spsc_queue<GUIMessage*> m_guiExternalMsgQueue;
-	};
+        spsc_queue<GUIMessage*> m_guiInternalMsgQueue;
+        spsc_queue<GUIMessage*> m_guiExternalMsgQueue;
+    };
 }
 #endif

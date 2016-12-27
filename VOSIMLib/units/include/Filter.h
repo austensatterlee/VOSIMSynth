@@ -30,71 +30,71 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn
 {
-	template <size_t nX, size_t nY>
-	class VOSIMLIB_API Filter : public Unit
-	{
-	protected:
-		double XCoefs[nX];
-		double YCoefs[nY];
-		double XBuf[nX];
-		double YBuf[nY];
-		int xBufInd, yBufInd;
-	public:
-		Filter(string a_name, const double a_X[nX], const double a_Y[nY]) :
-			Unit(a_name),
-			xBufInd(0),
-			yBufInd(0) {
-			addInput_("in");
-			addOutput_("out");
-			memcpy(XCoefs, a_X, sizeof(double) * nX);
-			memcpy(YCoefs, a_Y, sizeof(double) * nY);
-			reset_();
-		};
+    template <size_t nX, size_t nY>
+    class VOSIMLIB_API Filter : public Unit
+    {
+    protected:
+        double XCoefs[nX];
+        double YCoefs[nY];
+        double XBuf[nX];
+        double YBuf[nY];
+        int xBufInd, yBufInd;
+    public:
+        Filter(string a_name, const double a_X[nX], const double a_Y[nY]) :
+            Unit(a_name),
+            xBufInd(0),
+            yBufInd(0) {
+            addInput_("in");
+            addOutput_("out");
+            memcpy(XCoefs, a_X, sizeof(double) * nX);
+            memcpy(YCoefs, a_Y, sizeof(double) * nY);
+            reset_();
+        };
 
-		Filter(const Filter &a_rhs) :
-			Filter(a_rhs.name(), XCoefs, YCoefs) { }
+        Filter(const Filter& a_rhs) :
+            Filter(a_rhs.name(), XCoefs, YCoefs) { }
 
-		virtual ~Filter() { };
+        virtual ~Filter() { };
 
-	protected:
-		void MSFASTCALL process_() GCCFASTCALL override;
+    protected:
+        void MSFASTCALL process_() GCCFASTCALL override;
 
-		void reset_() {
-			memset(YBuf, 0, nY * sizeof(double));
-			memset(XBuf, 0, nX * sizeof(double));
-			xBufInd = 0;
-			yBufInd = 0;
-		};
+        void reset_() {
+            memset(YBuf, 0, nY * sizeof(double));
+            memset(XBuf, 0, nX * sizeof(double));
+            xBufInd = 0;
+            yBufInd = 0;
+        };
 
-	private:
-		string _getClassName() const override {
-			return "Filter";
-		};
-	};
+    private:
+        string _getClassName() const override {
+            return "Filter";
+        };
+    };
 
-	template <size_t nX, size_t nY>
-	void Filter<nX, nY>::process_() {
-		XBuf[xBufInd] = readInput(0);
-		YBuf[yBufInd] = 0.0;
-		double *output = &YBuf[yBufInd];
-		int i, j;
-		for (i = 0, j = xBufInd; i < nX; i++, j--) {
-			if (j < 0)
-				j = nX - 1;
-			YBuf[yBufInd] += XBuf[j] * XCoefs[i];
-		}
-		for (i = 1, j = yBufInd - 1; i < nY; i++, j--) {
-			if (j < 0)
-				j = nY - 1;
-			YBuf[yBufInd] -= YBuf[j] * YCoefs[i];
-		}
-		xBufInd++;
-		if (xBufInd == nX)
-			xBufInd = 0;
-		yBufInd++;
-		if (yBufInd == nY)
-			yBufInd = 0;
-		setOutputChannel_(0, *output);
-	}
+    template <size_t nX, size_t nY>
+    void Filter<nX, nY>::process_() {
+        XBuf[xBufInd] = readInput(0);
+        YBuf[yBufInd] = 0.0;
+        double* output = &YBuf[yBufInd];
+        int i, j;
+        for (i = 0, j = xBufInd; i < nX; i++, j--) {
+            if (j < 0)
+                j = nX - 1;
+            YBuf[yBufInd] += XBuf[j] * XCoefs[i];
+        }
+        for (i = 1, j = yBufInd - 1; i < nY; i++, j--) {
+            if (j < 0)
+                j = nY - 1;
+            YBuf[yBufInd] -= YBuf[j] * YCoefs[i];
+        }
+        xBufInd++;
+        if (xBufInd == nX)
+            xBufInd = 0;
+        yBufInd++;
+        if (yBufInd == nY)
+            yBufInd = 0;
+        setOutputChannel_(0, *output);
+    }
 }
 #endif

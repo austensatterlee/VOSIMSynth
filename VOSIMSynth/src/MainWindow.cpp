@@ -10,7 +10,7 @@
 #include <GLFW/glfw3native.h>
 
 static int nWndClassReg = 0;
-static const char *wndClassName = "VOSIMWndClass";
+static const char* wndClassName = "VOSIMWndClass";
 
 void synui::MainWindow::_OpenWindowImplem(HWND a_system_window)
 {
@@ -81,7 +81,7 @@ synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiCon
     m_guiInternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE),
     m_guiExternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE)
 {
-	// Create GLFW window
+    // Create GLFW window
     if (!glfwInit()) {
         throw "Failed to init GLFW.";
     }
@@ -112,9 +112,9 @@ synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiCon
     glfwSwapInterval(1);
     glfwSwapBuffers(m_window);
 
-	// Construct GUI object
-	m_gui = a_guiConstructor(this);
-	glfwSetWindowSize(m_window, m_size.x(), m_size.y());
+    // Construct GUI object
+    m_gui = a_guiConstructor(this);
+    glfwSetWindowSize(m_window, m_size.x(), m_size.y());
 
     glfwMakeContextCurrent(nullptr);
 }
@@ -122,7 +122,7 @@ synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiCon
 synui::MainWindow::~MainWindow()
 {
     CloseWindow();
-	delete m_gui; m_gui=nullptr;
+    delete m_gui; m_gui=nullptr;
 }
 
 void synui::MainWindow::_runLoop()
@@ -131,7 +131,7 @@ void synui::MainWindow::_runLoop()
 
     _flushMessageQueues();
 
-	m_gui->draw();
+    m_gui->draw();
 
     m_frameCount++;
 
@@ -140,11 +140,11 @@ void synui::MainWindow::_runLoop()
     m_fps = m_fps + 0.0175 * (fps - m_fps);
 }
 
-void synui::MainWindow::queueInternalMessage(GUIMessage *a_msg) { m_guiInternalMsgQueue.push(a_msg); }
+void synui::MainWindow::queueInternalMessage(GUIMessage* a_msg) { m_guiInternalMsgQueue.push(a_msg); }
 
 void synui::MainWindow::_flushMessageQueues()
 {
-    GUIMessage *msg;
+    GUIMessage* msg;
     while (m_guiInternalMsgQueue.pop(msg))
     {
         _processMessage(msg);
@@ -155,13 +155,13 @@ void synui::MainWindow::_flushMessageQueues()
     }
 }
 
-void synui::MainWindow::_processMessage(GUIMessage *a_msg)
+void synui::MainWindow::_processMessage(GUIMessage* a_msg)
 {
     a_msg->action(this, &a_msg->data);
     delete a_msg;
 }
 
-void synui::MainWindow::queueExternalMessage(GUIMessage *a_msg) { m_guiExternalMsgQueue.push(a_msg); }
+void synui::MainWindow::queueExternalMessage(GUIMessage* a_msg) { m_guiExternalMsgQueue.push(a_msg); }
 
 bool synui::MainWindow::OpenWindow(HWND a_system_window)
 {

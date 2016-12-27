@@ -61,12 +61,12 @@ namespace synui
     public:
         struct GridCell
         {
-            friend bool operator==(const GridCell &a_lhs, const GridCell &a_rhs)
+            friend bool operator==(const GridCell& a_lhs, const GridCell& a_rhs)
             {
                 return a_lhs.state==a_rhs.state && (a_lhs.state==Empty || a_lhs.ptr==a_rhs.ptr);
             }
 
-            friend bool operator!=(const GridCell &a_lhs, const GridCell &a_rhs) { return !(a_lhs == a_rhs); }
+            friend bool operator!=(const GridCell& a_lhs, const GridCell& a_rhs) { return !(a_lhs == a_rhs); }
 
             operator bool() const
             {
@@ -79,7 +79,7 @@ namespace synui
                 Wire,
                 Unit
             } state;
-            void *ptr;
+            void* ptr;
         };
 
         /**
@@ -90,12 +90,12 @@ namespace synui
          * \param a_vm
          * \param a_uf 
          */
-        CircuitWidget(nanogui::Widget *a_parent, synui::MainWindow *a_mainWindow, synui::UnitEditorHost *a_unitEditorHost, syn::VoiceManager *a_vm, syn::UnitFactory *a_uf);
+        CircuitWidget(nanogui::Widget* a_parent, synui::MainWindow* a_mainWindow, synui::UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf);
 
-        bool mouseButtonEvent(const Eigen::Vector2i &p, int button, bool down, int modifiers) override;
-        bool mouseMotionEvent(const Eigen::Vector2i &p, const Eigen::Vector2i &rel, int button, int modifiers) override;
+        bool mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
+        bool mouseMotionEvent(const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override;
 
-        void draw(NVGcontext *ctx) override;
+        void draw(NVGcontext* ctx) override;
 
         /**
          * \brief Construct a new syn::Unit and its corresponding synui::UnitWidget, and prepare to place the
@@ -103,21 +103,21 @@ namespace synui
          * click on a valid location.
          * \param a_unitPrototype The prototype name of the unit to create. Corresponds to a name registered with the syn::UnitFactory.
          */
-        void loadPrototype(const std::string &a_unitPrototype);
+        void loadPrototype(const std::string& a_unitPrototype);
 
         /**
          * \brief Snaps the pixel coordinate to one that lies on the grid.
          */
-        Eigen::Vector2i fixToGrid(const Eigen::Vector2i &a_pixelLocation) const;
+        Eigen::Vector2i fixToGrid(const Eigen::Vector2i& a_pixelLocation) const;
 
-        syn::VoiceManager *voiceManager() const { return m_vm; }
+        syn::VoiceManager* voiceManager() const { return m_vm; }
 
         int gridSpacing() const { return m_gridSpacing; }
 
         template<typename UnitType>
         void registerUnitWidget(UnitWidgetConstructor a_func) { m_registeredUnitWidgets[UnitType("").getClassIdentifier()] = a_func; }
 
-        void performLayout(NVGcontext *ctx) override;
+        void performLayout(NVGcontext* ctx) override;
         void resizeGrid(int a_newGridSpacing);
 
         operator json() const;
@@ -129,7 +129,7 @@ namespace synui
          */
         void performScreenLayout_()
         {
-            Widget *screen = this;
+            Widget* screen = this;
             while(screen->parent()) screen = screen->parent();
             static_cast<nanogui::Screen *>(screen)->performLayout();
         }
@@ -144,7 +144,7 @@ namespace synui
          * \param a_unitPrototypeName Prototype name of the unit to create. Corresponds to a prototype name in
          * the unit factory.
          */
-        void createUnit_(const std::string &a_unitPrototypeName);
+        void createUnit_(const std::string& a_unitPrototypeName);
 
         /**
          * \brief Called upon successful creation of a unit on the real-time thread. Creates the associated
@@ -156,7 +156,7 @@ namespace synui
         /**
          * \brief Creates a unit widget of the specified classId and associate it with the given unitId.
          */
-        UnitWidget *createUnitWidget_(unsigned a_classId, int a_unitId);
+        UnitWidget* createUnitWidget_(unsigned a_classId, int a_unitId);
 
         /**
          * \brief Try to end the `PlacingUnit` state by setting the position of the widget being placed.
@@ -166,17 +166,17 @@ namespace synui
 
         void deleteUnit_(int a_unitId);
 
-        void deleteConnection_(const Port &a_inputPort, const Port &a_outputPort);
+        void deleteConnection_(const Port& a_inputPort, const Port& a_outputPort);
 
         /**
          * \brief Sends a message to the real-time thread to create a new connection between two units.
          */
-        void createConnection_(const Port &a_inputPort, const Port &a_outputPort);
+        void createConnection_(const Port& a_inputPort, const Port& a_outputPort);
 
         /**
          * \brief End the `DrawingWire` state.
          */
-        void onConnectionCreated_(const Port &a_inputPort, const Port &a_outputPort);
+        void onConnectionCreated_(const Port& a_inputPort, const Port& a_outputPort);
 
         /**
          * \brief Place the CircuitWidget in the `DrawingWire` state.
@@ -198,12 +198,12 @@ namespace synui
          * \param a_force Perform the update even if the unit already occupies that position.
          * \return true if the move succeeded and false otherwise.
          */
-        void updateUnitPos_(UnitWidget* a_unitWidget, const Eigen::Vector2i &a_newPos, bool a_force = false);
+        void updateUnitPos_(UnitWidget* a_unitWidget, const Eigen::Vector2i& a_newPos, bool a_force = false);
 
         /**
          * \brief Checks if a unit would intersect another unit if placed at the specified position.
          */
-        bool checkUnitPos_(UnitWidget* a_unitWidget, const Eigen::Vector2i &a_newPos);
+        bool checkUnitPos_(UnitWidget* a_unitWidget, const Eigen::Vector2i& a_newPos);
 
 
     private:
@@ -211,17 +211,17 @@ namespace synui
          * \brief Delete the given wire widget.
          * Note that this method only affects the GUI. The actual connection on the real-time thread is not affected.
          */
-        void deleteWireWidget_(CircuitWire *wire);
+        void deleteWireWidget_(CircuitWire* wire);
         /**
          * \brief Delete the given unit widget.
          * Note that this method only affects the GUI. The actual connection on the real-time thread is not affected.         
          */
-        void deleteUnitWidget_(UnitWidget *widget);
+        void deleteUnitWidget_(UnitWidget* widget);
     private:
-        synui::MainWindow *m_window;
-        synui::UnitEditorHost *m_unitEditorHost;
-        syn::UnitFactory *m_uf;
-        syn::VoiceManager *m_vm;
+        synui::MainWindow* m_window;
+        synui::UnitEditorHost* m_unitEditorHost;
+        syn::UnitFactory* m_uf;
+        syn::VoiceManager* m_vm;
         std::unordered_map<unsigned, UnitWidgetConstructor > m_registeredUnitWidgets;
         synui::Grid2D<GridCell> m_grid;
         int m_gridSpacing;
@@ -238,7 +238,7 @@ namespace synui
         {
             int unitId;
             bool isValid;
-            synui::UnitWidget *widget;
+            synui::UnitWidget* widget;
         } m_placingUnitState;
 
         std::unordered_map<int, UnitWidget*> m_unitWidgets;
@@ -246,10 +246,10 @@ namespace synui
         struct DrawingWireState
         {
             bool startedFromOutput;
-            CircuitWire *wire;
+            CircuitWire* wire;
         } m_drawingWireState;        
         double m_wireHighlightTime;
-        CircuitWire *m_highlightedWire;
+        CircuitWire* m_highlightedWire;
         std::vector<CircuitWire*> m_wires;
     };
 }

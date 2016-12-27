@@ -90,7 +90,7 @@ namespace syn
             }
             copyFrom_(a_other);
         }
-        return *this;
+        return* this;
     }
 
     Circuit::~Circuit() { for (int i = 0; i < m_units.size(); i++) { delete m_units[m_units.indices()[i]]; } }
@@ -282,9 +282,9 @@ namespace syn
 
     void Circuit::onInputDisconnection_(int a_inputPort) { m_inputUnit->disconnectInput(a_inputPort); }
 
-    Unit& Circuit::getUnit(int a_unitId) { return *m_units[a_unitId]; }
+    Unit& Circuit::getUnit(int a_unitId) { return* m_units[a_unitId]; }
 
-    const Unit& Circuit::getUnit(int a_unitId) const { return *m_units[a_unitId]; }
+    const Unit& Circuit::getUnit(int a_unitId) const { return* m_units[a_unitId]; }
 
     int Circuit::addExternalInput_(const string& a_name)
     {

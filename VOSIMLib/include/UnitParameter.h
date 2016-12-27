@@ -43,8 +43,8 @@ namespace syn
             double m_value;
             string m_text;
             
-            DisplayText(double value, const string &text) : m_value(value), m_text(text) { }
-            DisplayText(const json &j) : m_value(j["value"]), m_text(j["text"].get<string>()) { }
+            DisplayText(double value, const string& text) : m_value(value), m_text(text) { }
+            DisplayText(const json& j) : m_value(j["value"]), m_text(j["text"].get<string>()) { }
 
             operator json() const
             {

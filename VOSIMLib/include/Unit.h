@@ -101,7 +101,7 @@ namespace syn
      *  class DerivedUnit : public Unit {
      *        DERIVE_UNIT(DerivedUnit)
      *  public:
-     *        DerivedUnit(const string &a_name) : Unit(a_name)
+     *        DerivedUnit(const string& a_name) : Unit(a_name)
      *        {
      *        ...set up class internals...
      *        }
@@ -113,7 +113,7 @@ namespace syn
      *          return j;
      *        }
      *        
-     *        Unit *load(const json& j) override {
+     *        Unit* load(const json& j) override {
      *          ...deserialize class internals...
      *          return this;
      *        }
@@ -125,7 +125,7 @@ namespace syn
      * To allow the unit to be cloned, it is necessary to implement a copy constructor, Unit::_clone, and
      * Unit::_getClassName. Unit::_clone should simply return a new copy of the derived class, for example:
      * \code{.cpp}
-     *        Unit *DerivedUnit::_clone(){ return new DerivedUnit(*this); }
+     *        Unit* DerivedUnit::_clone(){ return new DerivedUnit(*this); }
      * \endcode
      *
      * Unit::_getClassName should simply return a string form of the class name. This is used for factory

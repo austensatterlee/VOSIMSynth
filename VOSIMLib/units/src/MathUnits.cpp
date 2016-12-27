@@ -2,181 +2,181 @@
 #include "DSPMath.h"
 
 syn::MovingAverage::MovingAverage() :
-	m_windowSize(1),
-	m_lastOutput(0.0) {
-	m_delay.resizeBuffer(m_windowSize);
+    m_windowSize(1),
+    m_lastOutput(0.0) {
+    m_delay.resizeBuffer(m_windowSize);
 }
 
 void syn::MovingAverage::setWindowSize(int a_newWindowSize) {
-	m_windowSize = a_newWindowSize;
-	m_delay.resizeBuffer(m_windowSize);
-	m_delay.clearBuffer();
-	m_lastOutput = 0.0;
+    m_windowSize = a_newWindowSize;
+    m_delay.resizeBuffer(m_windowSize);
+    m_delay.clearBuffer();
+    m_lastOutput = 0.0;
 }
 
 double syn::MovingAverage::getWindowSize() const {
-	return m_windowSize;
+    return m_windowSize;
 }
 
 double syn::MovingAverage::process(double a_input) {
-	double output = (1.0 / m_windowSize) * (a_input - m_delay.process(a_input)) + m_lastOutput;
-	m_lastOutput = output;
-	return output;
+    double output = (1.0 / m_windowSize) * (a_input - m_delay.process(a_input)) + m_lastOutput;
+    m_lastOutput = output;
+    return output;
 }
 
 double syn::MovingAverage::getPastInputSample(int a_offset) {
-	return m_delay.readTap(a_offset);
+    return m_delay.readTap(a_offset);
 }
 
-syn::DCRemoverUnit::DCRemoverUnit(const string &a_name) :
-	Unit(a_name),
-	m_pAlpha(addParameter_(UnitParameter("hp", 0.0, 1.0, 0.995))),
-	m_lastOutput(0.0),
-	m_lastInput(0.0) {
-	addInput_("in");
-	addOutput_("out");
+syn::DCRemoverUnit::DCRemoverUnit(const string& a_name) :
+    Unit(a_name),
+    m_pAlpha(addParameter_(UnitParameter("hp", 0.0, 1.0, 0.995))),
+    m_lastOutput(0.0),
+    m_lastInput(0.0) {
+    addInput_("in");
+    addOutput_("out");
 }
 
-syn::DCRemoverUnit::DCRemoverUnit(const DCRemoverUnit &a_rhs) :
-	DCRemoverUnit(a_rhs.name()) {}
+syn::DCRemoverUnit::DCRemoverUnit(const DCRemoverUnit& a_rhs) :
+    DCRemoverUnit(a_rhs.name()) {}
 
 void syn::DCRemoverUnit::process_() {
-	double input = readInput(0);
-	double alpha = param(m_pAlpha).getDouble();
-	double gain = 0.5 * (1 + alpha);
-	// dc removal
-	input = input * gain;
-	double output = input - m_lastInput + alpha * m_lastOutput;
-	m_lastInput = input;
-	m_lastOutput = output;
-	setOutputChannel_(0, output);
+    double input = readInput(0);
+    double alpha = param(m_pAlpha).getDouble();
+    double gain = 0.5 * (1 + alpha);
+    // dc removal
+    input = input * gain;
+    double output = input - m_lastInput + alpha * m_lastOutput;
+    m_lastInput = input;
+    m_lastOutput = output;
+    setOutputChannel_(0, output);
 }
 
-syn::RectifierUnit::RectifierUnit(const string &a_name) :
-	Unit(a_name),
-	m_pRectType(addParameter_(UnitParameter{ "type",{"full","half"} }))
+syn::RectifierUnit::RectifierUnit(const string& a_name) :
+    Unit(a_name),
+    m_pRectType(addParameter_(UnitParameter{ "type",{"full","half"} }))
 {
-	addInput_("in");
-	addOutput_("out");
+    addInput_("in");
+    addOutput_("out");
 }
 
-syn::RectifierUnit::RectifierUnit(const RectifierUnit &a_rhs) :
-	RectifierUnit(a_rhs.name()) { }
+syn::RectifierUnit::RectifierUnit(const RectifierUnit& a_rhs) :
+    RectifierUnit(a_rhs.name()) { }
 
 void syn::RectifierUnit::process_() {
-	double input = readInput(0);
-	double output;
-	switch (param(m_pRectType).getInt()) {
-	case 0: // full
-		output = abs(input);
-		break;
-	case 1: // half
-		output = input > 0 ? input : 0;
-		break;
-	}
-	setOutputChannel_(0, output);
+    double input = readInput(0);
+    double output;
+    switch (param(m_pRectType).getInt()) {
+    case 0: // full
+        output = abs(input);
+        break;
+    case 1: // half
+        output = input > 0 ? input : 0;
+        break;
+    }
+    setOutputChannel_(0, output);
 }
 
-syn::GainUnit::GainUnit(const string &a_name) :
-	Unit(a_name),
-	m_pGain(addParameter_(UnitParameter("gain", -1E4, 1E4, 1.0, UnitParameter::None, 2).setControlType(UnitParameter::Unbounded)))
+syn::GainUnit::GainUnit(const string& a_name) :
+    Unit(a_name),
+    m_pGain(addParameter_(UnitParameter("gain", -1E4, 1E4, 1.0, UnitParameter::None, 2).setControlType(UnitParameter::Unbounded)))
 {
-	m_iInput = addInput_("in");
-	m_iGain = addInput_("g[x]", 1.0);
-	addOutput_("out");
+    m_iInput = addInput_("in");
+    m_iGain = addInput_("g[x]", 1.0);
+    addOutput_("out");
 }
 
-syn::GainUnit::GainUnit(const GainUnit &a_rhs) :
-	GainUnit(a_rhs.name()) { }
+syn::GainUnit::GainUnit(const GainUnit& a_rhs) :
+    GainUnit(a_rhs.name()) { }
 
 void syn::GainUnit::process_() {
-	double input = readInput(m_iInput);
-	double gain = param(m_pGain).getDouble();
-	gain *= readInput(m_iGain);
-	setOutputChannel_(0, input * gain);
+    double input = readInput(m_iInput);
+    double gain = param(m_pGain).getDouble();
+    gain *= readInput(m_iGain);
+    setOutputChannel_(0, input * gain);
 }
 
-syn::SummerUnit::SummerUnit(const string &a_name) :
-	Unit(a_name)
+syn::SummerUnit::SummerUnit(const string& a_name) :
+    Unit(a_name)
 {
-	addInput_("1");
-	addInput_("2");
-	addOutput_("out");
+    addInput_("1");
+    addInput_("2");
+    addOutput_("out");
 }
 
-syn::SummerUnit::SummerUnit(const SummerUnit &a_rhs) :
-	SummerUnit(a_rhs.name()) { }
+syn::SummerUnit::SummerUnit(const SummerUnit& a_rhs) :
+    SummerUnit(a_rhs.name()) { }
 
 void syn::SummerUnit::process_() {
-	double output = readInput(0) + readInput(1);
-	setOutputChannel_(0, output);
+    double output = readInput(0) + readInput(1);
+    setOutputChannel_(0, output);
 }
 
-syn::ConstantUnit::ConstantUnit(const string &a_name) :
-	Unit(a_name) 
+syn::ConstantUnit::ConstantUnit(const string& a_name) :
+    Unit(a_name) 
 {
-	addParameter_(UnitParameter{ "out",-1E6,1E6,0.0,UnitParameter::None,2 });
-	param("out").setControlType(UnitParameter::EControlType::Unbounded);
-	addOutput_("out");
+    addParameter_(UnitParameter{ "out",-1E6,1E6,0.0,UnitParameter::None,2 });
+    param("out").setControlType(UnitParameter::EControlType::Unbounded);
+    addOutput_("out");
 }
 
-syn::ConstantUnit::ConstantUnit(const ConstantUnit &a_rhs) :
-	ConstantUnit(a_rhs.name()) { }
+syn::ConstantUnit::ConstantUnit(const ConstantUnit& a_rhs) :
+    ConstantUnit(a_rhs.name()) { }
 
 void syn::ConstantUnit::process_() {
-	double output = param(0).getDouble();
-	setOutputChannel_(0, output);
+    double output = param(0).getDouble();
+    setOutputChannel_(0, output);
 }
 
-syn::PanningUnit::PanningUnit(const string &a_name) :
-	Unit(a_name) {
-	addInput_("in1");
-	addInput_("in2");
-	addInput_("bal1");
-	addInput_("bal2");
-	addOutput_("out1");
-	addOutput_("out2");
-	m_pBalance1 = addParameter_({ "bal1",-1.0,1.0,0.0 });
-	m_pBalance2 = addParameter_({ "bal2",-1.0,1.0,0.0 });
+syn::PanningUnit::PanningUnit(const string& a_name) :
+    Unit(a_name) {
+    addInput_("in1");
+    addInput_("in2");
+    addInput_("bal1");
+    addInput_("bal2");
+    addOutput_("out1");
+    addOutput_("out2");
+    m_pBalance1 = addParameter_({ "bal1",-1.0,1.0,0.0 });
+    m_pBalance2 = addParameter_({ "bal2",-1.0,1.0,0.0 });
 }
 
-syn::PanningUnit::PanningUnit(const PanningUnit &a_rhs) :
-	PanningUnit(a_rhs.name()) { }
+syn::PanningUnit::PanningUnit(const PanningUnit& a_rhs) :
+    PanningUnit(a_rhs.name()) { }
 
 void syn::PanningUnit::process_() {
-	double in1 = readInput(0);
-	double in2 = readInput(1);
-	double bal1 = param(m_pBalance1).getDouble() + readInput(2);
-	double bal2 = param(m_pBalance2).getDouble() + readInput(3);
-	bal1 = 0.5*(1+CLAMP(bal1, -1.0, 1.0));
-	bal2 = 0.5*(1+CLAMP(bal2, -1.0, 1.0));
-	setOutputChannel_(0, (1 - bal1) * in1 + (1 - bal2) * in2);
-	setOutputChannel_(1, bal1 * in1 + bal2 * in2);
+    double in1 = readInput(0);
+    double in2 = readInput(1);
+    double bal1 = param(m_pBalance1).getDouble() + readInput(2);
+    double bal2 = param(m_pBalance2).getDouble() + readInput(3);
+    bal1 = 0.5*(1+CLAMP(bal1, -1.0, 1.0));
+    bal2 = 0.5*(1+CLAMP(bal2, -1.0, 1.0));
+    setOutputChannel_(0, (1 - bal1) * in1 + (1 - bal2) * in2);
+    setOutputChannel_(1, bal1 * in1 + bal2 * in2);
 }
 
-syn::LerpUnit::LerpUnit(const string &a_name) :
-	Unit(a_name) {
-	m_pMinInput = addParameter_(UnitParameter("min in", -1E6, 1E6, 0.0).setControlType(UnitParameter::Unbounded));
-	m_pMaxInput = addParameter_(UnitParameter("max in", -1E6, 1E6, 1.0).setControlType(UnitParameter::Unbounded));
-	m_pMinOutput = addParameter_(UnitParameter("min out", -1E6, 1E6, 0.0).setControlType(UnitParameter::Unbounded));
-	m_pMaxOutput = addParameter_(UnitParameter("max out", -1E6, 1E6, 1.0).setControlType(UnitParameter::Unbounded));
-	m_pClip = addParameter_(UnitParameter("clip", false));
-	addInput_("in");
-	addOutput_("out");
+syn::LerpUnit::LerpUnit(const string& a_name) :
+    Unit(a_name) {
+    m_pMinInput = addParameter_(UnitParameter("min in", -1E6, 1E6, 0.0).setControlType(UnitParameter::Unbounded));
+    m_pMaxInput = addParameter_(UnitParameter("max in", -1E6, 1E6, 1.0).setControlType(UnitParameter::Unbounded));
+    m_pMinOutput = addParameter_(UnitParameter("min out", -1E6, 1E6, 0.0).setControlType(UnitParameter::Unbounded));
+    m_pMaxOutput = addParameter_(UnitParameter("max out", -1E6, 1E6, 1.0).setControlType(UnitParameter::Unbounded));
+    m_pClip = addParameter_(UnitParameter("clip", false));
+    addInput_("in");
+    addOutput_("out");
 }
 
-syn::LerpUnit::LerpUnit(const LerpUnit &a_rhs) :
-	LerpUnit(a_rhs.name()) { }
+syn::LerpUnit::LerpUnit(const LerpUnit& a_rhs) :
+    LerpUnit(a_rhs.name()) { }
 
 void syn::LerpUnit::process_() {
-	double input = readInput(0);
-	double aIn = param(m_pMinInput).getDouble();
-	double bIn = param(m_pMaxInput).getDouble();
-	double aOut = param(m_pMinOutput).getDouble();
-	double bOut = param(m_pMaxOutput).getDouble();
-	double inputNorm = INVLERP(aIn, bIn, input);
-	double output = LERP(aOut, bOut, inputNorm);
-	if (param(m_pClip).getBool())
-		output = CLAMP(output, aOut, bOut);
-	setOutputChannel_(0, output);
+    double input = readInput(0);
+    double aIn = param(m_pMinInput).getDouble();
+    double bIn = param(m_pMaxInput).getDouble();
+    double aOut = param(m_pMinOutput).getDouble();
+    double bOut = param(m_pMaxOutput).getDouble();
+    double inputNorm = INVLERP(aIn, bIn, input);
+    double output = LERP(aOut, bOut, inputNorm);
+    if (param(m_pClip).getBool())
+        output = CLAMP(output, aOut, bOut);
+    setOutputChannel_(0, output);
 }

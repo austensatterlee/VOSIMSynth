@@ -130,7 +130,7 @@ namespace syn
 
         int getNumUnits() const;
 
-        Unit* const *getProcGraph() const;
+        Unit* const* getProcGraph() const;
 
         void notifyMidiControlChange(int a_cc, double a_value);
 
@@ -148,12 +148,12 @@ namespace syn
         /**
          * \returns The id assigned to the newly added unit, or -1 on failure
          */
-        int addUnit(Unit *a_unit);
+        int addUnit(Unit* a_unit);
 
         /**
          * \returns True if the unit was added to the circuit (i.e. the provided id was not already taken).
          */
-        bool addUnit(Unit *a_unit, int a_unitId);
+        bool addUnit(Unit* a_unit, int a_unitId);
 
         template <typename ID>
         bool removeUnit(const ID& a_identifier);

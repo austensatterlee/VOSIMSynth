@@ -268,16 +268,16 @@ void synui::UnitEditor::draw(NVGcontext* ctx)
 }
 
 
-synui::UnitEditorHost::UnitEditorHost(Widget* parent, syn::VoiceManager *a_vm) : StackedWidget(parent), m_vm(a_vm) {}
+synui::UnitEditorHost::UnitEditorHost(Widget* parent, syn::VoiceManager* a_vm) : StackedWidget(parent), m_vm(a_vm) {}
 
 void synui::UnitEditorHost::addEditor(unsigned a_classId, int a_unitId)
 {
     if (m_editorMap.find(a_unitId) != m_editorMap.end())
         removeChild(m_editorMap[a_unitId]);
-    UnitEditorConstructor constructor = [](Widget *p, syn::VoiceManager *vm, int unitId){ return new UnitEditor(p, vm, unitId); };
+    UnitEditorConstructor constructor = [](Widget* p, syn::VoiceManager* vm, int unitId){ return new UnitEditor(p, vm, unitId); };
     if(m_registeredUnitEditors.find(a_classId)!=m_registeredUnitEditors.end())
         constructor = m_registeredUnitEditors[a_classId];
-    UnitEditor *editor = constructor(this, m_vm, a_unitId);
+    UnitEditor* editor = constructor(this, m_vm, a_unitId);
     addChild(childCount(), editor);
     m_editorMap[a_unitId] = editor;
     editor->setVisible(false);

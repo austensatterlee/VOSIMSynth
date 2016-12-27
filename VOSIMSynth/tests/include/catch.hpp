@@ -356,7 +356,7 @@ namespace Catch {
         typename ContainerT::const_iterator it = container.begin();
         typename ContainerT::const_iterator itEnd = container.end();
         for(; it != itEnd; ++it )
-            delete *it;
+            delete* it;
     }
     template<typename AssociativeContainerT>
     inline void deleteAllValues( AssociativeContainerT& container ) {
@@ -519,16 +519,16 @@ namespace Catch {
         Ptr& operator = ( T* p ){
             Ptr temp( p );
             swap( temp );
-            return *this;
+            return* this;
         }
         Ptr& operator = ( Ptr const& other ){
             Ptr temp( other );
             swap( temp );
-            return *this;
+            return* this;
         }
         void swap( Ptr& other ) { std::swap( m_p, other.m_p ); }
         T* get() const{ return m_p; }
-        T& operator*() const { return *m_p; }
+        T& operator*() const { return* m_p; }
         T* operator->() const { return m_p; }
         bool operator !() const { return m_p == CATCH_NULL; }
         operator SafeBool::type() const { return SafeBool::makeSafe( m_p != CATCH_NULL ); }
@@ -950,7 +950,7 @@ namespace Matchers {
 
             AllOf& add( Matcher<ExpressionT> const& matcher ) {
                 m_matchers.push_back( matcher.clone() );
-                return *this;
+                return* this;
             }
             virtual bool match( ExpressionT const& expr ) const
             {
@@ -990,7 +990,7 @@ namespace Matchers {
 
             AnyOf& add( Matcher<ExpressionT> const& matcher ) {
                 m_matchers.push_back( matcher.clone() );
-                return *this;
+                return* this;
             }
             virtual bool match( ExpressionT const& expr ) const
             {
@@ -1220,7 +1220,7 @@ namespace Catch {
         CopyableStream& operator=( CopyableStream const& other ) {
             oss.str("");
             oss << other.oss.str();
-            return *this;
+            return* this;
         }
         std::ostringstream oss;
     };
@@ -1240,7 +1240,7 @@ namespace Catch {
         template<typename T>
         ResultBuilder& operator << ( T const& value ) {
             m_stream.oss << value;
-            return *this;
+            return* this;
         }
 
         template<typename RhsT> STATIC_ASSERT_Expression_Too_Complex_Please_Rewrite_As_Binary_Comparison& operator && ( RhsT const& );
@@ -1616,7 +1616,7 @@ namespace Detail {
 
     template<typename T>
     struct IsStreamInsertable {
-        static std::ostream &s;
+        static std::ostream& s;
         static T  const&t;
         enum { value = sizeof( testStreamable(s << t) ) == sizeof( TrueType ) };
     };
@@ -1665,7 +1665,7 @@ namespace Detail {
         }
     };
 
-    std::string rawMemoryToString( const void *object, std::size_t size );
+    std::string rawMemoryToString( const void* object, std::size_t size );
 
     template<typename T>
     inline std::string rawMemoryToString( const T& object ) {
@@ -1936,7 +1936,7 @@ namespace Catch {
         template<typename T>
         MessageBuilder& operator << ( T const& value ) {
             m_stream << value;
-            return *this;
+            return* this;
         }
 
         MessageInfo m_info;
@@ -2204,7 +2204,7 @@ namespace Catch {
             passed += other.passed;
             failed += other.failed;
             failedButOk += other.failedButOk;
-            return *this;
+            return* this;
         }
 
         std::size_t total() const {
@@ -2245,7 +2245,7 @@ namespace Catch {
         Totals& operator += ( Totals const& other ) {
             assertions += other.assertions;
             testCases += other.testCases;
-            return *this;
+            return* this;
         }
 
         Counts assertions;
@@ -2406,7 +2406,7 @@ public:
 
     CompositeGenerator& setFileInfo( const char* fileInfo ) {
         m_fileInfo = fileInfo;
-        return *this;
+        return* this;
     }
 
     ~CompositeGenerator() {
@@ -2438,14 +2438,14 @@ public:
 
     CompositeGenerator& then( CompositeGenerator& other ) {
         move( other );
-        return *this;
+        return* this;
     }
 
     CompositeGenerator& then( T value ) {
         ValuesGenerator<T>* valuesGen = new ValuesGenerator<T>();
         valuesGen->add( value );
         add( valuesGen );
-        return *this;
+        return* this;
     }
 
 private:
@@ -2670,12 +2670,12 @@ namespace Detail {
 
         Approx& epsilon( double newEpsilon ) {
             m_epsilon = newEpsilon;
-            return *this;
+            return* this;
         }
 
         Approx& scale( double newScale ) {
             m_scale = newScale;
-            return *this;
+            return* this;
         }
 
         std::string toString() const {
@@ -2749,12 +2749,12 @@ namespace Catch {
                 if( _other )
                     nullableValue = new( storage ) T( *_other );
             }
-            return *this;
+            return* this;
         }
         Option& operator = ( T const& _value ) {
             reset();
             nullableValue = new( storage ) T( _value );
-            return *this;
+            return* this;
         }
 
         void reset() {
@@ -2763,8 +2763,8 @@ namespace Catch {
             nullableValue = CATCH_NULL;
         }
 
-        T& operator*() { return *nullableValue; }
-        T const& operator*() const { return *nullableValue; }
+        T& operator*() { return* nullableValue; }
+        T const& operator*() const { return* nullableValue; }
         T* operator->() { return nullableValue; }
         const T* operator->() const { return nullableValue; }
 
@@ -3277,7 +3277,7 @@ namespace Catch {
                 visitChar( m_arg[m_pos] );
             if( m_mode == Name )
                 addPattern<TestSpec::NamePattern>();
-            return *this;
+            return* this;
         }
         TestSpec testSpec() {
             addFilter();
@@ -3675,10 +3675,10 @@ namespace Tbc {
             tabChar( '\t' )
         {}
 
-        TextAttributes& setInitialIndent( std::size_t _value )  { initialIndent = _value; return *this; }
-        TextAttributes& setIndent( std::size_t _value )         { indent = _value; return *this; }
-        TextAttributes& setWidth( std::size_t _value )          { width = _value; return *this; }
-        TextAttributes& setTabChar( char _value )               { tabChar = _value; return *this; }
+        TextAttributes& setInitialIndent( std::size_t _value )  { initialIndent = _value; return* this; }
+        TextAttributes& setIndent( std::size_t _value )         { indent = _value; return* this; }
+        TextAttributes& setWidth( std::size_t _value )          { width = _value; return* this; }
+        TextAttributes& setTabChar( char _value )               { tabChar = _value; return* this; }
 
         std::size_t initialIndent;  // indent of first line, or npos
         std::size_t indent;         // indent of subsequent lines, or all if initialIndent is npos
@@ -4027,7 +4027,7 @@ namespace Clara {
                 IArgFunction<ConfigT>* newFunctionObj = other.functionObj ? other.functionObj->clone() : CLARA_NULL;
                 delete functionObj;
                 functionObj = newFunctionObj;
-                return *this;
+                return* this;
             }
             ~BoundArgFunction() { delete functionObj; }
 
@@ -4358,11 +4358,11 @@ namespace Clara {
 
             ArgBuilder& describe( std::string const& description ) {
                 m_arg->description = description;
-                return *this;
+                return* this;
             }
             ArgBuilder& detail( std::string const& detail ) {
                 m_arg->detail = detail;
-                return *this;
+                return* this;
             }
 
         protected:
@@ -4376,7 +4376,7 @@ namespace Clara {
 
             OptBuilder& operator[]( std::string const& optName ) {
                 addOptName( *ArgBuilder::m_arg, optName );
-                return *this;
+                return* this;
             }
         };
 
@@ -4400,7 +4400,7 @@ namespace Clara {
 
         CommandLine& setThrowOnUnrecognisedTokens( bool shouldThrow = true ) {
             m_throwOnUnrecognisedTokens = shouldThrow;
-            return *this;
+            return* this;
         }
 
         OptBuilder operator[]( std::string const& optName ) {
@@ -4883,10 +4883,10 @@ namespace Tbc {
             tabChar( '\t' )
         {}
 
-        TextAttributes& setInitialIndent( std::size_t _value )  { initialIndent = _value; return *this; }
-        TextAttributes& setIndent( std::size_t _value )         { indent = _value; return *this; }
-        TextAttributes& setWidth( std::size_t _value )          { width = _value; return *this; }
-        TextAttributes& setTabChar( char _value )               { tabChar = _value; return *this; }
+        TextAttributes& setInitialIndent( std::size_t _value )  { initialIndent = _value; return* this; }
+        TextAttributes& setIndent( std::size_t _value )         { indent = _value; return* this; }
+        TextAttributes& setWidth( std::size_t _value )          { width = _value; return* this; }
+        TextAttributes& setTabChar( char _value )               { tabChar = _value; return* this; }
 
         std::size_t initialIndent;  // indent of first line, or npos
         std::size_t indent;         // indent of subsequent lines, or all if initialIndent is npos
@@ -5074,7 +5074,7 @@ namespace Catch
         ReporterConfig( Ptr<IConfig const> const& _fullConfig, std::ostream& _stream )
         :   m_stream( &_stream ), m_fullConfig( _fullConfig ) {}
 
-        std::ostream& stream() const    { return *m_stream; }
+        std::ostream& stream() const    { return* m_stream; }
         Ptr<IConfig const> fullConfig() const { return m_fullConfig; }
 
     private:
@@ -5096,7 +5096,7 @@ namespace Catch
         LazyStat& operator=( T const& _value ) {
             Option<T>::operator=( _value );
             used = false;
-            return *this;
+            return* this;
         }
         void reset() {
             Option<T>::reset();
@@ -5559,7 +5559,7 @@ namespace TestCaseTracking {
             return m_runState == CompletedCycle;
         }
         ITracker& currentTracker() {
-            return *m_currentTracker;
+            return* m_currentTracker;
         }
         void setCurrentTracker( ITracker* tracker ) {
             m_currentTracker = tracker;
@@ -5627,7 +5627,7 @@ namespace TestCaseTracking {
         }
         virtual ITracker& parent() CATCH_OVERRIDE {
             assert( m_parent ); // Should always be non-null except for root
-            return *m_parent;
+            return* m_parent;
         }
 
         virtual void openChild() CATCH_OVERRIDE {
@@ -5723,7 +5723,7 @@ namespace TestCaseTracking {
 
                 section->open();
             }
-            return *section;
+            return* section;
         }
     };
 
@@ -5760,7 +5760,7 @@ namespace TestCaseTracking {
                 tracker->open();
             }
 
-            return *tracker;
+            return* tracker;
         }
 
         int index() const { return m_index; }
@@ -5781,7 +5781,7 @@ namespace TestCaseTracking {
         m_rootTracker = new SectionTracker( "{root}", *this, CATCH_NULL );
         m_currentTracker = CATCH_NULL;
         m_runState = Executing;
-        return *m_rootTracker;
+        return* m_rootTracker;
     }
 
 } // namespace TestCaseTracking
@@ -5804,7 +5804,7 @@ namespace Catch {
         IResultCapture* resultCapture = context.getResultCapture();
         resultCapture->handleFatalErrorCondition( message );
 
-		if( Catch::alwaysTrue() ) // avoids "no return" warnings
+        if( Catch::alwaysTrue() ) // avoids "no return" warnings
             exit( exitCode );
     }
 
@@ -5815,8 +5815,8 @@ namespace Catch {
 namespace Catch {
 
     struct FatalConditionHandler {
-		void reset() {}
-	};
+        void reset() {}
+    };
 
 } // namespace Catch
 
@@ -6065,7 +6065,7 @@ namespace Catch {
         }
 
         virtual const AssertionResult* getLastResult() const {
-            return &m_lastResult;
+            return& m_lastResult;
         }
 
         virtual void handleFatalErrorCondition( std::string const& message ) {
@@ -6198,7 +6198,7 @@ namespace Catch {
 
     IResultCapture& getResultCapture() {
         if( IResultCapture* capture = getCurrentContext().getResultCapture() )
-            return *capture;
+            return* capture;
         else
             throw std::logic_error( "No result capture instance" );
     }
@@ -6422,7 +6422,7 @@ namespace Catch {
         Config& config() {
             if( !m_config )
                 m_config = new Config( m_configData );
-            return *m_config;
+            return* m_config;
         }
     private:
         Clara::CommandLine<ConfigData> m_cli;
@@ -6701,7 +6701,7 @@ namespace Catch {
                 @try {
                     return tryTranslators();
                 }
-                @catch (NSException *exception) {
+                @catch (NSException* exception) {
                     return Catch::toString( [exception description] );
                 }
 #else
@@ -6789,10 +6789,10 @@ namespace Catch {
     }
 
     IRegistryHub& getRegistryHub() {
-        return *getTheRegistryHub();
+        return* getTheRegistryHub();
     }
     IMutableRegistryHub& getMutableRegistryHub() {
-        return *getTheRegistryHub();
+        return* getTheRegistryHub();
     }
     void cleanUp() {
         delete getTheRegistryHub();
@@ -6985,7 +6985,7 @@ namespace Catch {
                 generators = createGeneratorsForTest();
                 m_generatorsByTestName.insert( std::make_pair( testName, generators ) );
             }
-            return *generators;
+            return* generators;
         }
 
     private:
@@ -7001,7 +7001,7 @@ namespace Catch {
     IMutableContext& getCurrentMutableContext() {
         if( !currentContext )
             currentContext = new Context();
-        return *currentContext;
+        return* currentContext;
     }
     IContext& getCurrentContext() {
         return getCurrentMutableContext();
@@ -7029,7 +7029,7 @@ namespace Catch {
 
             static IColourImpl* instance() {
                 static NoColourImpl s_instance;
-                return &s_instance;
+                return& s_instance;
             }
         };
 
@@ -7151,7 +7151,7 @@ namespace {
         }
         static IColourImpl* instance() {
             static PosixColourImpl s_instance;
-            return &s_instance;
+            return& s_instance;
         }
 
     private:
@@ -7247,9 +7247,9 @@ namespace Catch {
                 IGeneratorInfo* info = new GeneratorInfo( size );
                 m_generatorsByName.insert( std::make_pair( fileInfo, info ) );
                 m_generatorsInOrder.push_back( info );
-                return *info;
+                return* info;
             }
-            return *it->second;
+            return* it->second;
         }
 
         bool moveNext() {
@@ -7531,12 +7531,12 @@ namespace Catch {
     TestCase& TestCase::operator = ( TestCase const& other ) {
         TestCase temp( other );
         swap( temp );
-        return *this;
+        return* this;
     }
 
     TestCaseInfo const& TestCase::getTestCaseInfo() const
     {
-        return *this;
+        return* this;
     }
 
 } // end namespace Catch
@@ -8042,7 +8042,7 @@ namespace Detail {
         };
     }
 
-    std::string rawMemoryToString( const void *object, std::size_t size )
+    std::string rawMemoryToString( const void* object, std::size_t size )
     {
         // Reverse order for little endian architectures
         int i = 0, end = static_cast<int>( size ), inc = 1;
@@ -8051,7 +8051,7 @@ namespace Detail {
             end = inc = -1;
         }
 
-        unsigned char const *bytes = static_cast<unsigned char const *>(object);
+        unsigned char const* bytes = static_cast<unsigned char const *>(object);
         std::ostringstream os;
         os << "0x" << std::setfill('0') << std::hex;
         for( ; i != end; i += inc )
@@ -8097,12 +8097,12 @@ std::string toString( char* const value ) {
 
 std::string toString( const wchar_t* const value )
 {
-	return value ? Catch::toString( std::wstring(value) ) : std::string( "{null string}" );
+    return value ? Catch::toString( std::wstring(value) ) : std::string( "{null string}" );
 }
 
 std::string toString( wchar_t* const value )
 {
-	return Catch::toString( static_cast<const wchar_t*>( value ) );
+    return Catch::toString( static_cast<const wchar_t*>( value ) );
 }
 
 std::string toString( int value ) {
@@ -8229,23 +8229,23 @@ namespace Catch {
 
     ResultBuilder& ResultBuilder::setResultType( ResultWas::OfType result ) {
         m_data.resultType = result;
-        return *this;
+        return* this;
     }
     ResultBuilder& ResultBuilder::setResultType( bool result ) {
         m_data.resultType = result ? ResultWas::Ok : ResultWas::ExpressionFailed;
-        return *this;
+        return* this;
     }
     ResultBuilder& ResultBuilder::setLhs( std::string const& lhs ) {
         m_exprComponents.lhs = lhs;
-        return *this;
+        return* this;
     }
     ResultBuilder& ResultBuilder::setRhs( std::string const& rhs ) {
         m_exprComponents.rhs = rhs;
-        return *this;
+        return* this;
     }
     ResultBuilder& ResultBuilder::setOp( std::string const& op ) {
         m_exprComponents.op = op;
-        return *this;
+        return* this;
     }
 
     void ResultBuilder::endExpression() {
@@ -8684,12 +8684,12 @@ namespace Catch {
 
         struct BySectionInfo {
             BySectionInfo( SectionInfo const& other ) : m_other( other ) {}
-			BySectionInfo( BySectionInfo const& other ) : m_other( other.m_other ) {}
+            BySectionInfo( BySectionInfo const& other ) : m_other( other.m_other ) {}
             bool operator() ( Ptr<SectionNode> const& node ) const {
                 return node->stats.sectionInfo.lineInfo == m_other.lineInfo;
             }
         private:
-			void operator=( BySectionInfo const& );
+            void operator=( BySectionInfo const& );
             SectionInfo const& m_other;
         };
 
@@ -8991,13 +8991,13 @@ namespace Catch {
 
             ScopedElement& writeText( std::string const& text, bool indent = true ) {
                 m_writer->writeText( text, indent );
-                return *this;
+                return* this;
             }
 
             template<typename T>
             ScopedElement& writeAttribute( std::string const& name, T const& attribute ) {
                 m_writer->writeAttribute( name, attribute );
-                return *this;
+                return* this;
             }
 
         private:
@@ -9028,7 +9028,7 @@ namespace Catch {
             m_tags.push_back( name );
             m_indent += "  ";
             m_tagIsOpen = true;
-            return *this;
+            return* this;
         }
 
         ScopedElement scopedElement( std::string const& name ) {
@@ -9048,18 +9048,18 @@ namespace Catch {
                 stream() << m_indent << "</" << m_tags.back() << ">\n";
             }
             m_tags.pop_back();
-            return *this;
+            return* this;
         }
 
         XmlWriter& writeAttribute( std::string const& name, std::string const& attribute ) {
             if( !name.empty() && !attribute.empty() )
                 stream() << " " << name << "=\"" << XmlEncode( attribute, XmlEncode::ForAttributes ) << "\"";
-            return *this;
+            return* this;
         }
 
         XmlWriter& writeAttribute( std::string const& name, bool attribute ) {
             stream() << " " << name << "=\"" << ( attribute ? "true" : "false" ) << "\"";
-            return *this;
+            return* this;
         }
 
         template<typename T>
@@ -9078,20 +9078,20 @@ namespace Catch {
                 stream() << XmlEncode( text );
                 m_needsNewline = true;
             }
-            return *this;
+            return* this;
         }
 
         XmlWriter& writeComment( std::string const& text ) {
             ensureTagClosed();
             stream() << m_indent << "<!--" << text << "-->";
             m_needsNewline = true;
-            return *this;
+            return* this;
         }
 
         XmlWriter& writeBlankLine() {
             ensureTagClosed();
             stream() << "\n";
-            return *this;
+            return* this;
         }
 
         void setStream( std::ostream& os ) {
@@ -9103,7 +9103,7 @@ namespace Catch {
         void operator=( XmlWriter const& );
 
         std::ostream& stream() {
-            return *m_os;
+            return* m_os;
         }
 
         void ensureTagClosed() {
@@ -9224,7 +9224,7 @@ namespace Catch {
             if( assertionResult.hasExpression() ) {
                 m_xml.startElement( "Expression" )
                     .writeAttribute( "success", assertionResult.succeeded() )
-					.writeAttribute( "type", assertionResult.getTestMacroName() )
+                    .writeAttribute( "type", assertionResult.getTestMacroName() )
                     .writeAttribute( "filename", assertionResult.getSourceInfo().file )
                     .writeAttribute( "line", assertionResult.getSourceInfo().line );
 
@@ -9859,7 +9859,7 @@ namespace Catch {
                         row = " " + row;
                 }
                 rows.push_back( row );
-                return *this;
+                return* this;
             }
 
             std::string label;

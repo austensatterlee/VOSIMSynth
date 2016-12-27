@@ -11,16 +11,16 @@ HWND gHWND;
 
 HINSTANCE gHINST;
 UINT gScrollMessage;
-IPlug *gPluginInstance;
-RtAudio *gDAC = 0;
-RtMidiIn *gMidiIn = 0;
-RtMidiOut *gMidiOut = 0;
+IPlug* gPluginInstance;
+RtAudio* gDAC = 0;
+RtMidiIn* gMidiIn = 0;
+RtMidiOut* gMidiOut = 0;
 
-AppState *gState;
-AppState *gTempState;
-AppState *gActiveState;
+AppState* gState;
+AppState* gTempState;
+AppState* gActiveState;
 
-char *gINIPath = new char[200]; // path of ini file
+char* gINIPath = new char[200]; // path of ini file
 
 unsigned int gIOVS = 512;
 unsigned int gSigVS = 32;
@@ -76,7 +76,7 @@ std::string GetAudioDeviceName(int idx)
 }
 
 // returns the rtaudio device ID, based on the (truncated) device name
-int GetAudioDeviceID(char *deviceNameToTest)
+int GetAudioDeviceID(char* deviceNameToTest)
 {
   TRACE;
 
@@ -89,7 +89,7 @@ int GetAudioDeviceID(char *deviceNameToTest)
   return -1;
 }
 
-unsigned int GetMIDIInPortNumber(const char *nameToTest)
+unsigned int GetMIDIInPortNumber(const char* nameToTest)
 {
   int start = 1;
 
@@ -109,7 +109,7 @@ unsigned int GetMIDIInPortNumber(const char *nameToTest)
   return -1;
 }
 
-unsigned int GetMIDIOutPortNumber(const char *nameToTest)
+unsigned int GetMIDIOutPortNumber(const char* nameToTest)
 {
   int start = 1;
 
@@ -207,7 +207,7 @@ void ProbeMidiIO()
   }
 }
 
-bool AudioSettingsInStateAreEqual(AppState *os, AppState *ns)
+bool AudioSettingsInStateAreEqual(AppState* os, AppState* ns)
 {
   if (os->mAudioDriverType != ns->mAudioDriverType) return false;
   if (strcmp(os->mAudioInDev, ns->mAudioInDev)) return false;
@@ -224,7 +224,7 @@ bool AudioSettingsInStateAreEqual(AppState *os, AppState *ns)
   return true;
 }
 
-bool MIDISettingsInStateAreEqual(AppState *os, AppState *ns)
+bool MIDISettingsInStateAreEqual(AppState* os, AppState* ns)
 {
   if (strcmp(os->mMidiInDev, ns->mMidiInDev)) return false;
   if (strcmp(os->mMidiOutDev, ns->mMidiOutDev)) return false;
@@ -234,11 +234,11 @@ bool MIDISettingsInStateAreEqual(AppState *os, AppState *ns)
   return true;
 }
 
-void MIDICallback( double deltatime, std::vector< unsigned char > *message, void *userData )
+void MIDICallback( double deltatime, std::vector< unsigned char > *message, void* userData )
 {
   if ( message->size() )
   {
-    IMidiMsg *myMsg;
+    IMidiMsg* myMsg;
 
     switch (message->size())
     {
@@ -273,18 +273,18 @@ void MIDICallback( double deltatime, std::vector< unsigned char > *message, void
   }
 }
 
-int AudioCallback(void *outputBuffer,
-                  void *inputBuffer,
+int AudioCallback(void* outputBuffer,
+                  void* inputBuffer,
                   unsigned int nFrames,
                   double streamTime,
                   RtAudioStreamStatus status,
-                  void *userData )
+                  void* userData )
 {
   if ( status )
     std::cout << "Stream underflow detected!" << std::endl;
 
-  double *inputBufferD = (double*)inputBuffer;
-  double *outputBufferD = (double*)outputBuffer;
+  double* inputBufferD = (double*)inputBuffer;
+  double* outputBufferD = (double*)outputBuffer;
 
   int inRightOffset = 0;
 
@@ -299,8 +299,8 @@ int AudioCallback(void *outputBuffer,
 
       if (gBufIndex == 0)
       {
-        double *inputs[2] = {inputBufferD + i, inputBufferD + inRightOffset + i};
-        double *outputs[2] = {outputBufferD + i, outputBufferD + nFrames + i};
+        double* inputs[2] = {inputBufferD + i, inputBufferD + inRightOffset + i};
+        double* outputs[2] = {outputBufferD + i, outputBufferD + nFrames + i};
 
         gPluginInstance->LockMutexAndProcessDoubleReplacing(inputs, outputs, gSigVS);
       }
@@ -410,7 +410,7 @@ bool InitialiseAudio(unsigned int inId,
       {
         gDAC->abortStream();
       }
-      catch (RtError &e)
+      catch (RtError& e)
       {
         e.printMessage();
       }
@@ -453,7 +453,7 @@ bool InitialiseAudio(unsigned int inId,
 
     memcpy(gActiveState, gState, sizeof(AppState)); // copy state to active state
   }
-  catch ( RtError &e )
+  catch ( RtError& e )
   {
     e.printMessage();
     return false;
@@ -468,7 +468,7 @@ bool InitialiseMidi()
   {
     gMidiIn = new RtMidiIn();
   }
-  catch ( RtError &error )
+  catch ( RtError& error )
   {
     FREE_NULL(gMidiIn);
     error.printMessage();
@@ -479,7 +479,7 @@ bool InitialiseMidi()
   {
     gMidiOut = new RtMidiOut();
   }
-  catch ( RtError &error )
+  catch ( RtError& error )
   {
     FREE_NULL(gMidiOut);
     error.printMessage();
@@ -492,7 +492,7 @@ bool InitialiseMidi()
   return true;
 }
 
-bool ChooseMidiInput(const char *pPortName)
+bool ChooseMidiInput(const char* pPortName)
 {
   unsigned int port = GetMIDIInPortNumber(pPortName);
 
@@ -546,7 +546,7 @@ bool ChooseMidiInput(const char *pPortName)
   return false;
 }
 
-bool ChooseMidiOutput(const char *pPortName)
+bool ChooseMidiOutput(const char* pPortName)
 {
   unsigned int port = GetMIDIOutPortNumber(pPortName);
 
@@ -603,7 +603,7 @@ bool ChooseMidiOutput(const char *pPortName)
 
 extern bool AttachGUI()
 {
-  synui::MainWindow *pGraphics = gPluginInstance->GetAppWindow();
+  synui::MainWindow* pGraphics = gPluginInstance->GetAppWindow();
 
   if (pGraphics)
   {
@@ -648,7 +648,7 @@ void Cleanup()
     // Stop the stream
     gDAC->stopStream();
   }
-  catch (RtError &e)
+  catch (RtError& e)
   {
     e.printMessage();
   }
@@ -817,7 +817,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 #else
 
 extern HMENU SWELL_app_stocksysmenu;
-const char *homeDir;
+const char* homeDir;
 
 INT_PTR SWELLAppMain(int msg, INT_PTR parm1, INT_PTR parm2)
 {

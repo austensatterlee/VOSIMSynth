@@ -37,8 +37,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
         #endif
     #elif defined(VOSIMSynth_EXPORTS) // Linux, FreeBSD, Mac OS X
         #define VOSIMSYNTH_API __attribute__ ((__visibility__ ("default")))
-	#else
-		#define VOSIMSYNTH_API
+    #else
+        #define VOSIMSYNTH_API
     #endif
 #else
     // Static build doesn't need import/export macros

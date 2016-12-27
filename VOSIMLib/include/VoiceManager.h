@@ -38,139 +38,139 @@ using boost::lockfree::capacity;
 
 namespace syn
 {
-	 
-	/**
-	 * \brief Used to pass messages to a voice manager via VoiceManager::queueAction.
-	 * 
-	 * The action function pointer will be called once for each voice (with the corresponding circuit passed as the first parameter).
-	 * On the last voice, the second parameter will be true.
-	 * The third parameter is a pointer to the ByteChunk stored in this structure, which is useful for passing arguments.
-	 */
-	struct VOSIMLIB_API RTMessage
-	{
-		void(*action)(Circuit*, bool, ByteChunk*);
-		ByteChunk data;
-	};
+     
+    /**
+     * \brief Used to pass messages to a voice manager via VoiceManager::queueAction.
+     * 
+     * The action function pointer will be called once for each voice (with the corresponding circuit passed as the first parameter).
+     * On the last voice, the second parameter will be true.
+     * The third parameter is a pointer to the ByteChunk stored in this structure, which is useful for passing arguments.
+     */
+    struct VOSIMLIB_API RTMessage
+    {
+        void(*action)(Circuit*, bool, ByteChunk*);
+        ByteChunk data;
+    };
 
-	class VOSIMLIB_API VoiceManager
-	{
-	public:
-		enum VoiceSelectionPolicy
-		{
-			LOW = 0,
-			HIGH,
-			OLD
-		};
+    class VOSIMLIB_API VoiceManager
+    {
+    public:
+        enum VoiceSelectionPolicy
+        {
+            LOW = 0,
+            HIGH,
+            OLD
+        };
 
-	public:
-		VoiceManager(UnitFactory *a_factory) :
-			m_queuedActions{ MAX_VOICEMANAGER_MSG_QUEUE_SIZE },
-			m_numActiveVoices(0),
-			m_maxVoices(0),
-			m_bufferSize(1),
-			m_tickCount(0),
-			m_voiceStack(0),
-			m_idleVoiceStack(0),
-			m_garbageList(0),
-			m_instrument{ "main" },
-			m_factory(a_factory)
-		{ };
+    public:
+        VoiceManager(UnitFactory* a_factory) :
+            m_queuedActions{ MAX_VOICEMANAGER_MSG_QUEUE_SIZE },
+            m_numActiveVoices(0),
+            m_maxVoices(0),
+            m_bufferSize(1),
+            m_tickCount(0),
+            m_voiceStack(0),
+            m_idleVoiceStack(0),
+            m_garbageList(0),
+            m_instrument{ "main" },
+            m_factory(a_factory)
+        { };
 
-		virtual ~VoiceManager() {
-		}
+        virtual ~VoiceManager() {
+        }
 
-		void MSFASTCALL tick(const double *a_left_input, const double *a_right_input, double *a_left_output, double *a_right_output) GCCFASTCALL;
+        void MSFASTCALL tick(const double* a_left_input, const double* a_right_input, double* a_left_output, double* a_right_output) GCCFASTCALL;
 
-		/**
-		 * Safely queue a function to be called on the real-time thread in between samples.
-		 */
-		unsigned queueAction(RTMessage *a_action);
+        /**
+         * Safely queue a function to be called on the real-time thread in between samples.
+         */
+        unsigned queueAction(RTMessage* a_action);
 
-		unsigned getTickCount() const;
+        unsigned getTickCount() const;
 
-		void setFs(double a_newFs);
+        void setFs(double a_newFs);
 
-		void setBufferSize(int a_blockSize);
+        void setBufferSize(int a_blockSize);
 
-		void setTempo(double a_newTempo);
+        void setTempo(double a_newTempo);
 
-		void noteOn(int a_noteNumber, int a_velocity);
+        void noteOn(int a_noteNumber, int a_velocity);
 
-		void noteOff(int a_noteNumber, int a_velocity);
+        void noteOff(int a_noteNumber, int a_velocity);
 
-		void sendControlChange(int a_cc, double a_newvalue);
+        void sendControlChange(int a_cc, double a_newvalue);
 
-		void setMaxVoices(unsigned a_newMax);
+        void setMaxVoices(unsigned a_newMax);
 
-		int getNumVoices() const;
+        int getNumVoices() const;
 
-		int getMaxVoices() const;
+        int getMaxVoices() const;
 
-		int getLowestVoiceIndex() const;
+        int getLowestVoiceIndex() const;
 
-		int getNewestVoiceIndex() const;
+        int getNewestVoiceIndex() const;
 
-		int getOldestVoiceIndex() const;
+        int getOldestVoiceIndex() const;
 
-		int getHighestVoiceIndex() const;
+        int getHighestVoiceIndex() const;
 
-		/**
-		 * Get the voice numbers that are currently playing the given note
-		 */
-		vector<int> getNoteVoices(int a_note);
+        /**
+         * Get the voice numbers that are currently playing the given note
+         */
+        vector<int> getNoteVoices(int a_note);
 
-		void onIdle();
+        void onIdle();
 
-		/**
-		 * Retrieves a unit from a specific voice circuit.
-		 * If the given voice id is negative, the unit is retrieved from the prototype circuit.
-		 */
-		Unit &getUnit(int a_id, int a_voiceId = -1);
-		const Unit &getUnit(int a_id, int a_voiceId = -1) const;
+        /**
+         * Retrieves a unit from a specific voice circuit.
+         * If the given voice id is negative, the unit is retrieved from the prototype circuit.
+         */
+        Unit& getUnit(int a_id, int a_voiceId = -1);
+        const Unit& getUnit(int a_id, int a_voiceId = -1) const;
 
-		Circuit *getPrototypeCircuit();
-		const Circuit *getPrototypeCircuit() const;
+        Circuit* getPrototypeCircuit();
+        const Circuit* getPrototypeCircuit() const;
 
-		Circuit *getVoiceCircuit(int a_voiceId);
-		const Circuit *getVoiceCircuit(int a_voiceId) const;
+        Circuit* getVoiceCircuit(int a_voiceId);
+        const Circuit* getVoiceCircuit(int a_voiceId) const;
 
-		void setPrototypeCircuit(const Circuit &a_circ);
+        void setPrototypeCircuit(const Circuit& a_circ);
 
-	private:
-		/**
-		 * Processes all actions from the action queue
-		 */
-		void _flushActionQueue();
+    private:
+        /**
+         * Processes all actions from the action queue
+         */
+        void _flushActionQueue();
 
-		/**
-		 * Processes the next action from the action queue
-		 */
-		void _processAction(RTMessage *a_msg);
+        /**
+         * Processes the next action from the action queue
+         */
+        void _processAction(RTMessage* a_msg);
 
-		int _createVoice(int a_note, int a_velocity);
+        int _createVoice(int a_note, int a_velocity);
 
-		void _makeIdle(int a_voiceIndex);
+        void _makeIdle(int a_voiceIndex);
 
-		int _findIdleVoice();
+        int _findIdleVoice();
 
-	private:
-		typedef CircularQueue<int> VoiceIndexList;
-		typedef map<int, CircularQueue<int>> VoiceMap;
+    private:
+        typedef CircularQueue<int> VoiceIndexList;
+        typedef map<int, CircularQueue<int>> VoiceMap;
 
-		spsc_queue<RTMessage*> m_queuedActions;
+        spsc_queue<RTMessage*> m_queuedActions;
 
-		unsigned m_numActiveVoices; /// Number of active voices
-		unsigned m_maxVoices; /// Total number of voices (idle voices + active voices)
-		unsigned m_bufferSize;
-		unsigned m_tickCount;
+        unsigned m_numActiveVoices; /// Number of active voices
+        unsigned m_maxVoices; /// Total number of voices (idle voices + active voices)
+        unsigned m_bufferSize;
+        unsigned m_tickCount;
 
-		VoiceMap m_voiceMap;
-		VoiceIndexList m_voiceStack;
-		VoiceIndexList m_idleVoiceStack;
-		VoiceIndexList m_garbageList; /// pre-allocated storage for collecting idle voices during audio processing
-		vector<Circuit> m_allVoices;
-		Circuit m_instrument;
-		UnitFactory *m_factory;
-	};
+        VoiceMap m_voiceMap;
+        VoiceIndexList m_voiceStack;
+        VoiceIndexList m_idleVoiceStack;
+        VoiceIndexList m_garbageList; /// pre-allocated storage for collecting idle voices during audio processing
+        vector<Circuit> m_allVoices;
+        Circuit m_instrument;
+        UnitFactory* m_factory;
+    };
 }
 #endif

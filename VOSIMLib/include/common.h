@@ -37,8 +37,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
         #endif
     #elif defined(VOSIMLib_EXPORTS) // Linux, FreeBSD, Mac OS X
         #define VOSIMLIB_API __attribute__ ((__visibility__ ("default")))
-	#else
-		#define VOSIMLIB_API
+    #else
+        #define VOSIMLIB_API
     #endif
 #else
     // Static build doesn't need import/export macros

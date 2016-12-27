@@ -28,7 +28,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 
 
-syn::StateVariableFilter::StateVariableFilter(const string &a_name) :
+syn::StateVariableFilter::StateVariableFilter(const string& a_name) :
   Unit(a_name),
   m_pFc(addParameter_(UnitParameter("fc", 0.01, 20000.0, 10000.0, UnitParameter::Freq))),
   m_pRes(addParameter_(UnitParameter("res", 0.0, 1.0, 0.0))),
@@ -46,8 +46,8 @@ syn::StateVariableFilter::StateVariableFilter(const string &a_name) :
 }
 
 void syn::StateVariableFilter::reset() {
-	m_prevBPOut = 0.0;
-	m_prevLPOut = 0.0;
+    m_prevBPOut = 0.0;
+    m_prevLPOut = 0.0;
 }
 
 void syn::StateVariableFilter::process_() {
@@ -79,13 +79,13 @@ void syn::StateVariableFilter::process_() {
   setOutputChannel_(m_oN, NOut);
 }
 
-syn::TrapStateVariableFilter::TrapStateVariableFilter(const string &a_name) : StateVariableFilter(a_name),
+syn::TrapStateVariableFilter::TrapStateVariableFilter(const string& a_name) : StateVariableFilter(a_name),
   m_prevInput(0.0) 
 {}
 
 void syn::TrapStateVariableFilter::reset() {
-	StateVariableFilter::reset();
-	m_prevInput = 0.0;
+    StateVariableFilter::reset();
+    m_prevInput = 0.0;
 }
 
 void syn::TrapStateVariableFilter::process_() {
@@ -134,7 +134,7 @@ void syn::_OnePoleLP::reset() {
   m_state = 0.0;
 }
 
-syn::OnePoleLP::OnePoleLP(const string &a_name) :
+syn::OnePoleLP::OnePoleLP(const string& a_name) :
   Unit(a_name)
 {
   addParameter_(pFc, UnitParameter("fc", 0.01, 20000.0, 1.0, UnitParameter::Freq));
@@ -150,7 +150,7 @@ double syn::OnePoleLP::getState() const {
 }
 
 void syn::OnePoleLP::reset() {
-	implem.reset();
+    implem.reset();
 }
 
 void syn::OnePoleLP::process_() {
@@ -165,26 +165,26 @@ void syn::OnePoleLP::process_() {
   setOutputChannel_(oHP, input - output);
 }
 
-syn::LadderFilterBase::LadderFilterBase(const string &a_name) : Unit(a_name)
+syn::LadderFilterBase::LadderFilterBase(const string& a_name) : Unit(a_name)
 {
-	addParameter_(pFc, UnitParameter("fc", 0.01, 20000.0, 10000.0, UnitParameter::Freq));
-	addParameter_(pFb, UnitParameter("res", 0.0, 1.0, 0.0));
-	addParameter_(pDrv, UnitParameter("drv", 0.0, 1.0, 0.0));
-	addInput_(iAudioIn, "in");
-	addInput_(iFcAdd, "fc");
-	addInput_(iFcMul, "fc[x]", 1.0);
-	addOutput_("out");
+    addParameter_(pFc, UnitParameter("fc", 0.01, 20000.0, 10000.0, UnitParameter::Freq));
+    addParameter_(pFb, UnitParameter("res", 0.0, 1.0, 0.0));
+    addParameter_(pDrv, UnitParameter("drv", 0.0, 1.0, 0.0));
+    addInput_(iAudioIn, "in");
+    addInput_(iFcAdd, "fc");
+    addInput_(iFcMul, "fc[x]", 1.0);
+    addOutput_("out");
 }
 
 
-syn::LadderFilter::LadderFilter(const string &a_name) :
-	LadderFilterBase(a_name)
+syn::LadderFilter::LadderFilter(const string& a_name) :
+    LadderFilterBase(a_name)
 {}
 
 void syn::LadderFilter::reset() {
-	m_V.fill(0.0);
-	m_dV.fill(0.0);
-	m_tV.fill(0.0);
+    m_V.fill(0.0);
+    m_dV.fill(0.0);
+    m_tV.fill(0.0);
 }
 
 void syn::LadderFilter::process_() {
@@ -229,54 +229,54 @@ void syn::LadderFilter::process_() {
   setOutputChannel_(0, m_V[3]);
 }
 
-syn::LadderFilterTwo::LadderFilterTwo(const string &a_name) : LadderFilterBase(a_name),
-	m_ffGains(Eigen::Matrix<double, 5, 1>::Unit(4))
+syn::LadderFilterTwo::LadderFilterTwo(const string& a_name) : LadderFilterBase(a_name),
+    m_ffGains(Eigen::Matrix<double, 5, 1>::Unit(4))
 {}
 
 void syn::LadderFilterTwo::reset() {
-	m_LP[0].reset();
-	m_LP[1].reset();
-	m_LP[2].reset();
-	m_LP[3].reset();
+    m_LP[0].reset();
+    m_LP[1].reset();
+    m_LP[2].reset();
+    m_LP[3].reset();
 }
 
 void syn::LadderFilterTwo::process_() {
-	double input = readInput(iAudioIn);
-	// Calculate gain for specified cutoff
-	double fs = LadderFilterTwo::fs() * c_oversamplingFactor;
+    double input = readInput(iAudioIn);
+    // Calculate gain for specified cutoff
+    double fs = LadderFilterTwo::fs() * c_oversamplingFactor;
 
-	double fc, drive, res;
-	fc = (param(pFc).getDouble() + readInput(iFcAdd)) * readInput(iFcMul); // freq cutoff
-	fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());
-	drive = 1.0 + 3.0 * param(pDrv).getDouble();
-	res = 3.9*param(pFb).getDouble();
+    double fc, drive, res;
+    fc = (param(pFc).getDouble() + readInput(iFcAdd)) * readInput(iFcMul); // freq cutoff
+    fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());
+    drive = 1.0 + 3.0 * param(pDrv).getDouble();
+    res = 3.9*param(pFb).getDouble();
 
-	m_LP[0].setFc(fc, fs);
-	m_LP[1].m_G = m_LP[0].m_G;
-	m_LP[2].m_G = m_LP[0].m_G;
-	m_LP[3].m_G = m_LP[0].m_G;
+    m_LP[0].setFc(fc, fs);
+    m_LP[1].m_G = m_LP[0].m_G;
+    m_LP[2].m_G = m_LP[0].m_G;
+    m_LP[3].m_G = m_LP[0].m_G;
 
-	double g = m_LP[0].m_G / (1 - m_LP[0].m_G);
-	double lp3_fb_gain = 1.0 / (1.0 + g);
-	double lp2_fb_gain = m_LP[0].m_G * lp3_fb_gain;
-	double lp1_fb_gain = m_LP[0].m_G * lp2_fb_gain;
-	double lp0_fb_gain = m_LP[0].m_G * lp1_fb_gain;
+    double g = m_LP[0].m_G / (1 - m_LP[0].m_G);
+    double lp3_fb_gain = 1.0 / (1.0 + g);
+    double lp2_fb_gain = m_LP[0].m_G * lp3_fb_gain;
+    double lp1_fb_gain = m_LP[0].m_G * lp2_fb_gain;
+    double lp0_fb_gain = m_LP[0].m_G * lp1_fb_gain;
 
-	double G4 = m_LP[0].m_G*m_LP[0].m_G*m_LP[0].m_G*m_LP[0].m_G;
-	double out_fb_gain = 1.0 / (1.0 + res*G4);
+    double G4 = m_LP[0].m_G*m_LP[0].m_G*m_LP[0].m_G*m_LP[0].m_G;
+    double out_fb_gain = 1.0 / (1.0 + res*G4);
 
-	int i = c_oversamplingFactor;
-	Vector5d out_states;
-	input *= drive;
-	while (i--) {
-		double out_fb = lp0_fb_gain*m_LP[0].m_state + lp1_fb_gain*m_LP[1].m_state + lp2_fb_gain*m_LP[2].m_state + lp3_fb_gain*m_LP[3].m_state;
+    int i = c_oversamplingFactor;
+    Vector5d out_states;
+    input *= drive;
+    while (i--) {
+        double out_fb = lp0_fb_gain*m_LP[0].m_state + lp1_fb_gain*m_LP[1].m_state + lp2_fb_gain*m_LP[2].m_state + lp3_fb_gain*m_LP[3].m_state;
 
-		out_states[0] = fast_tanh_rat((input - res*(out_fb - input)) * out_fb_gain);
-		out_states[1] = m_LP[0].process(out_states[0]);
-		out_states[2] = m_LP[1].process(out_states[1]);
-		out_states[3] = m_LP[2].process(out_states[2]);
-		out_states[4] = m_LP[3].process(out_states[3]);
-	}
-	double out = m_ffGains.dot(out_states);
-	setOutputChannel_(0, out);
-}	
+        out_states[0] = fast_tanh_rat((input - res*(out_fb - input)) * out_fb_gain);
+        out_states[1] = m_LP[0].process(out_states[0]);
+        out_states[2] = m_LP[1].process(out_states[1]);
+        out_states[3] = m_LP[2].process(out_states[2]);
+        out_states[4] = m_LP[3].process(out_states[3]);
+    }
+    double out = m_ffGains.dot(out_states);
+    setOutputChannel_(0, out);
+}    

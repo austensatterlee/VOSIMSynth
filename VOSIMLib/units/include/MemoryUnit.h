@@ -31,103 +31,103 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn
 {
-	/**
-	* General N-Sample delay
-	*/
-	class VOSIMLIB_API NSampleDelay
-	{
-	public:
-		NSampleDelay();
+    /**
+    * General N-Sample delay
+    */
+    class VOSIMLIB_API NSampleDelay
+    {
+    public:
+        NSampleDelay();
 
-		/**
-		 * \brief Return the most recent output calculated by process().
-		 * \return 
-		 */
-		double getLastOutput() const;
-		/**
-		 * \brief Record a sample to the buffer and return the delay output.
-		 * \param a_input 
-		 * \return 
-		 */
-		double process(double a_input);
-		/**
-		 * \brief Record a sample to the buffer and increments the write location.
-		 * \param a_input 
-		 */
-		void silentProcess(double a_input);
-		/**
-		 * \brief Read from the buffer at an arbitray delay time
-		 * \param a_offset delay time (in samples)
-		 * \return 
-		 */
-		double readTap(double a_offset);
-		void resizeBuffer(double a_newBufSize);
-		void clearBuffer();
-		int size() const;
-	private:
-		vector<double> m_buffer;
-		int m_arraySize;
-		double m_delaySamples;
-		int m_curWritePhase;
-		double m_lastOutput;
-	};
+        /**
+         * \brief Return the most recent output calculated by process().
+         * \return 
+         */
+        double getLastOutput() const;
+        /**
+         * \brief Record a sample to the buffer and return the delay output.
+         * \param a_input 
+         * \return 
+         */
+        double process(double a_input);
+        /**
+         * \brief Record a sample to the buffer and increments the write location.
+         * \param a_input 
+         */
+        void silentProcess(double a_input);
+        /**
+         * \brief Read from the buffer at an arbitray delay time
+         * \param a_offset delay time (in samples)
+         * \return 
+         */
+        double readTap(double a_offset);
+        void resizeBuffer(double a_newBufSize);
+        void clearBuffer();
+        int size() const;
+    private:
+        vector<double> m_buffer;
+        int m_arraySize;
+        double m_delaySamples;
+        int m_curWritePhase;
+        double m_lastOutput;
+    };
 
-	class VOSIMLIB_API MemoryUnit : public Unit
-	{
-		DERIVE_UNIT(MemoryUnit)
-	public:
-		explicit MemoryUnit(const string &a_name);
-		MemoryUnit(const MemoryUnit &a_rhs);
+    class VOSIMLIB_API MemoryUnit : public Unit
+    {
+        DERIVE_UNIT(MemoryUnit)
+    public:
+        explicit MemoryUnit(const string& a_name);
+        MemoryUnit(const MemoryUnit& a_rhs);
 
-		virtual void reset() override;
+        virtual void reset() override;
 
-	protected:
-		void onParamChange_(int a_paramId) override;
-		void MSFASTCALL process_() GCCFASTCALL override;
+    protected:
+        void onParamChange_(int a_paramId) override;
+        void MSFASTCALL process_() GCCFASTCALL override;
 
-	private:
-		NSampleDelay m_delay;
-	};
+    private:
+        NSampleDelay m_delay;
+    };
 
-	class VOSIMLIB_API VariableMemoryUnit : public Unit
-	{
-		DERIVE_UNIT(VariableMemoryUnit)
-	public:
-		enum Param
-		{
-			pBufDelay = 0,
-			pBufFreq,
-			pBufBPMFreq,
-			pBufType,
-			pDryGain,
-			pUseAP
-		};
+    class VOSIMLIB_API VariableMemoryUnit : public Unit
+    {
+        DERIVE_UNIT(VariableMemoryUnit)
+    public:
+        enum Param
+        {
+            pBufDelay = 0,
+            pBufFreq,
+            pBufBPMFreq,
+            pBufType,
+            pDryGain,
+            pUseAP
+        };
 
-		enum Output
-		{
-			oOut = 0,
-			oSend
-		};
+        enum Output
+        {
+            oOut = 0,
+            oSend
+        };
 
-		enum Input
-		{
-			iIn = 0,
-			iReceive,
-			iSizeMod
-		};
+        enum Input
+        {
+            iIn = 0,
+            iReceive,
+            iSizeMod
+        };
 
-		explicit VariableMemoryUnit(const string &a_name);
-		VariableMemoryUnit(const VariableMemoryUnit &a_rhs);
+        explicit VariableMemoryUnit(const string& a_name);
+        VariableMemoryUnit(const VariableMemoryUnit& a_rhs);
 
-		void reset() override;
+        void reset() override;
 
-	protected:
-		void onParamChange_(int a_paramId) override;
-		void MSFASTCALL process_() GCCFASTCALL override;
-	private:
-		NSampleDelay m_delay;
-		double m_delaySamples;
-		double m_lastOutput;
-	};
+    protected:
+        void onParamChange_(int a_paramId) override;
+        void MSFASTCALL process_() GCCFASTCALL override;
+    private:
+        NSampleDelay m_delay;
+        double m_delaySamples;
+        double m_lastOutput;
+    };
 }
 #endif

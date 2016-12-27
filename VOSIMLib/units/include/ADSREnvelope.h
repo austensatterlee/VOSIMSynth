@@ -31,40 +31,40 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn
 {
-	class VOSIMLIB_API ADSREnvelope : public Unit
-	{
-		DERIVE_UNIT(ADSREnvelope)
-	public:
-		explicit ADSREnvelope(const string &name);
+    class VOSIMLIB_API ADSREnvelope : public Unit
+    {
+        DERIVE_UNIT(ADSREnvelope)
+    public:
+        explicit ADSREnvelope(const string& name);
 
-		ADSREnvelope(const ADSREnvelope &a_rhs);
+        ADSREnvelope(const ADSREnvelope& a_rhs);
 
-	protected:
-		void MSFASTCALL process_() GCCFASTCALL override;
+    protected:
+        void MSFASTCALL process_() GCCFASTCALL override;
 
-	public:
-		virtual bool isActive() const override;
+    public:
+        virtual bool isActive() const override;
 
-		void trigger();
-		void release();
-	private:
-		enum EADSRStage
-		{
-			Attack = 0,
-			Decay,
-			Sustain,
-			Release
-		};
+        void trigger();
+        void release();
+    private:
+        enum EADSRStage
+        {
+            Attack = 0,
+            Decay,
+            Sustain,
+            Release
+        };
 
-		double m_phase;
-		EADSRStage m_currStage;
-		double m_initial;
-		double m_target;
-		bool m_isActive;
-		int m_pAttack, m_pDecay, m_pSustain, m_pRelease, m_pTimeScale;
-		int m_iAttack, m_iDecay, m_iRelease;
-		int m_iAttackMul, m_iDecayMul, m_iReleaseMul;
-		int m_iGate;
-	};
+        double m_phase;
+        EADSRStage m_currStage;
+        double m_initial;
+        double m_target;
+        bool m_isActive;
+        int m_pAttack, m_pDecay, m_pSustain, m_pRelease, m_pTimeScale;
+        int m_iAttack, m_iDecay, m_iRelease;
+        int m_iAttackMul, m_iDecayMul, m_iReleaseMul;
+        int m_iGate;
+    };
 }
 #endif

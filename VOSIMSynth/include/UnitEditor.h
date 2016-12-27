@@ -86,14 +86,14 @@ namespace synui
     class UnitEditorHost : public nanogui::StackedWidget
     {
     public:
-        UnitEditorHost(Widget* parent, syn::VoiceManager *a_vm);
+        UnitEditorHost(Widget* parent, syn::VoiceManager* a_vm);
         void activateEditor(unsigned a_classId, int a_unitId);
         void addEditor(unsigned a_classId, int a_unitId);
         void removeEditor(int a_unitId);
         template<typename UnitType>
         void registerUnitEditor(UnitEditorConstructor a_func) { m_registeredUnitEditors[UnitType("").getClassIdentifier()] = a_func; }
     protected:
-        syn::VoiceManager *m_vm;
+        syn::VoiceManager* m_vm;
         /// maps syn::unit class identifiers to widget indexes.
         std::unordered_map<int, UnitEditor*> m_editorMap;
         std::unordered_map<unsigned, UnitEditorConstructor> m_registeredUnitEditors;

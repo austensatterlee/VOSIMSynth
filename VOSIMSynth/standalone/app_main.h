@@ -80,7 +80,7 @@ struct AppState
     mAudioInChanR(2),
     mAudioOutChanL(1),
     mAudioOutChanR(2),
-	mAudioInIsMono(0),
+    mAudioInIsMono(0),
     mMidiInChan(0),
     mMidiOutChan(0)
   {
@@ -100,10 +100,10 @@ extern WDL_DLGRET PreferencesDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
 extern HINSTANCE gHINST;
 extern HWND gHWND;
 extern UINT gScrollMessage;
-extern IPlug *gPluginInstance; // The iplug plugin instance
+extern IPlug* gPluginInstance; // The iplug plugin instance
 
 extern std::string GetAudioDeviceName(int idx);
-extern int GetAudioDeviceID(char *deviceNameToTest);
+extern int GetAudioDeviceID(char* deviceNameToTest);
 
 extern void ProbeAudioIO();
 extern bool InitialiseAudio(unsigned int inId,
@@ -115,28 +115,28 @@ extern bool InitialiseAudio(unsigned int inId,
                             unsigned int outChanL
                            );
 
-extern bool AudioSettingsInStateAreEqual(AppState *os, AppState *ns);
-extern bool MIDISettingsInStateAreEqual(AppState *os, AppState *ns);
+extern bool AudioSettingsInStateAreEqual(AppState* os, AppState* ns);
+extern bool MIDISettingsInStateAreEqual(AppState* os, AppState* ns);
 
 extern bool TryToChangeAudioDriverType();
 extern bool TryToChangeAudio();
-extern bool ChooseMidiInput(const char *pPortName);
-extern bool ChooseMidiOutput(const char *pPortName);
+extern bool ChooseMidiInput(const char* pPortName);
+extern bool ChooseMidiOutput(const char* pPortName);
 
 extern bool AttachGUI();
 
-extern RtAudio *gDAC;
-extern RtMidiIn *gMidiIn;
-extern RtMidiOut *gMidiOut;
+extern RtAudio* gDAC;
+extern RtMidiIn* gMidiIn;
+extern RtMidiOut* gMidiOut;
 
-extern AppState *gState;
-extern AppState *gTempState; // The state is copied here when the pref dialog is opened, and restored if cancel is pressed
-extern AppState *gActiveState; // When the audio driver is started the current state is copied here so that if OK is pressed after APPLY nothing is changed
+extern AppState* gState;
+extern AppState* gTempState; // The state is copied here when the pref dialog is opened, and restored if cancel is pressed
+extern AppState* gActiveState; // When the audio driver is started the current state is copied here so that if OK is pressed after APPLY nothing is changed
 
 extern unsigned int gSigVS;
 extern unsigned int gBufIndex; // index for signal vector, loops from 0 to gSigVS
 
-extern char *gINIPath; // path of ini file
+extern char* gINIPath; // path of ini file
 extern void UpdateINI();
 
 extern std::vector<unsigned int> gAudioInputDevs;

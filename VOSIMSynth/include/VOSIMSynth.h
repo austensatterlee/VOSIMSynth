@@ -23,61 +23,61 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "IPlug_include_in_plug_hdr.h"
 
 namespace synui {
-	class VOSIMComponent;
+    class VOSIMComponent;
 }
 
 namespace syn {
-	class VoiceManager;
-	class MIDIReceiver;
-	class UnitFactory;
+    class VoiceManager;
+    class MIDIReceiver;
+    class UnitFactory;
 }
 
 
 class VOSIMSynth : public IPlug
 {
 public:
-	explicit VOSIMSynth(IPlugInstanceInfo instanceInfo);
+    explicit VOSIMSynth(IPlugInstanceInfo instanceInfo);
 
-	void makeGraphics();
+    void makeGraphics();
 
-	void makeInstrument();
+    void makeInstrument();
 
-	virtual ~VOSIMSynth();
+    virtual ~VOSIMSynth();
 
-	void Reset() override;
+    void Reset() override;
 
-	void OnParamChange(int paramIdx) override;
+    void OnParamChange(int paramIdx) override;
 
-	void ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) override;
+    void ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) override;
 
-	void ProcessMidiMsg(IMidiMsg *pMsg) override;
+    void ProcessMidiMsg(IMidiMsg* pMsg) override;
 
-	bool SerializeState(ByteChunk *pChunk) override;
+    bool SerializeState(ByteChunk* pChunk) override;
 
-	int UnserializeState(ByteChunk *pChunk, int startPos) override;
+    int UnserializeState(ByteChunk* pChunk, int startPos) override;
 
-	void PresetsChangedByHost() override;
+    void PresetsChangedByHost() override;
 
-	void OnIdle() override;
+    void OnIdle() override;
 
-	void OnActivate(bool active) override;
+    void OnActivate(bool active) override;
 
-	int getTickCount() const { return m_tickCount; }
+    int getTickCount() const { return m_tickCount; }
 
-	void OnGUIOpen() override;
+    void OnGUIOpen() override;
 
-	void OnGUIClose() override;
+    void OnGUIClose() override;
 
-	static void registerUnits(syn::UnitFactory& a_uf);
+    static void registerUnits(syn::UnitFactory& a_uf);
 
 private:
-	syn::MIDIReceiver *m_MIDIReceiver;
-	syn::VoiceManager *m_voiceManager;
-	syn::UnitFactory *m_unitFactory;
+    syn::MIDIReceiver* m_MIDIReceiver;
+    syn::VoiceManager* m_voiceManager;
+    syn::UnitFactory* m_unitFactory;
 
-	int m_tempo;
-	unsigned m_tickCount;
-	ITimeInfo m_timeInfo;
+    int m_tempo;
+    unsigned m_tickCount;
+    ITimeInfo m_timeInfo;
 };
 
 #endif

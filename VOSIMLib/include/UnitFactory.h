@@ -34,94 +34,94 @@ using std::unordered_map;
 
 namespace syn
 {
-	class Unit;
+    class Unit;
 
-	class VOSIMLIB_API UnitFactory
-	{
-		UnitFactory() {} 
-		
-		struct FactoryPrototype
-		{
-			FactoryPrototype(std::string a_group_name, Unit *a_unit, size_t a_class_size);
+    class VOSIMLIB_API UnitFactory
+    {
+        UnitFactory() {} 
+        
+        struct FactoryPrototype
+        {
+            FactoryPrototype(std::string a_group_name, Unit* a_unit, size_t a_class_size);
 
-			unsigned int classIdentifier;
-			std::string group_name;
-			std::string name;
-			Unit *prototype;
-			int build_count;
-			size_t size;
-		};
+            unsigned int classIdentifier;
+            std::string group_name;
+            std::string name;
+            Unit* prototype;
+            int build_count;
+            size_t size;
+        };
 
-	public:
+    public:
 
-		UnitFactory(const UnitFactory&) = delete;
-		void operator=(const UnitFactory&) = delete;
+        UnitFactory(const UnitFactory&) = delete;
+        void operator=(const UnitFactory&) = delete;
 
-		static UnitFactory &instance() {
-			static UnitFactory singleton;
-			return singleton;
-		}
+        static UnitFactory& instance() {
+            static UnitFactory singleton;
+            return singleton;
+        }
 
-		virtual ~UnitFactory() {
-			m_prototypes.clear();
-			m_group_names.clear();
-		}
+        virtual ~UnitFactory() {
+            m_prototypes.clear();
+            m_group_names.clear();
+        }
 
-		/**
-		 * \brief Register a prototype unit with the factory. Prototype deletion will be taken care of upon factory destruction.
-		 */
-		template <typename T, typename = std::enable_if_t<std::is_base_of<Unit, T>::value>>
-		void addUnitPrototype(const std::string &a_group_name, const std::string &a_unit_name);
+        /**
+         * \brief Register a prototype unit with the factory. Prototype deletion will be taken care of upon factory destruction.
+         */
+        template <typename T, typename = std::enable_if_t<std::is_base_of<Unit, T>::value>>
+        void addUnitPrototype(const std::string& a_group_name, const std::string& a_unit_name);
 
-		set<std::string> getGroupNames() const;
+        set<std::string> getGroupNames() const;
 
-		vector<std::string> getPrototypeNames(const std::string &group) const;
+        vector<std::string> getPrototypeNames(const std::string& group) const;
 
-		vector<std::string> getPrototypeNames() const;
+        vector<std::string> getPrototypeNames() const;
 
-        const std::string &getPrototypeName(unsigned a_classIdentifier);
+        const std::string& getPrototypeName(unsigned a_classIdentifier);
 
-		const FactoryPrototype *getFactoryPrototype(const std::string &a_prototypeName) const;
+        const FactoryPrototype* getFactoryPrototype(const std::string& a_prototypeName) const;
 
-		Unit *createUnit(int a_protoNum, const std::string &a_name = "");
+        Unit* createUnit(int a_protoNum, const std::string& a_name = "");
 
-		Unit *createUnit(unsigned a_classIdentifier, const std::string &a_name = "");
+        Unit* createUnit(unsigned a_classIdentifier, const std::string& a_name = "");
 
-		Unit *createUnit(std::string a_prototypeName, const std::string &a_name = "");
+        Unit* createUnit(std::string a_prototypeName, const std::string& a_name = "");
 
-		bool hasClassId(unsigned a_classIdentifier) const;
+        bool hasClassId(unsigned a_classIdentifier) const;
 
-		bool hasClassId(std::string a_protoName) const;
+        bool hasClassId(std::string a_protoName) const;
 
-		unsigned getClassId(std::string a_protoName) const;
+        unsigned getClassId(std::string a_protoName) const;
 
-		unsigned getClassId(int a_protoNum) const;
+        unsigned getClassId(int a_protoNum) const;
 
-		static unsigned getClassId(unsigned a_protoNum);
+        static unsigned getClassId(unsigned a_protoNum);
 
-		void resetBuildCounts();
+        void resetBuildCounts();
 
-	protected:
-		int getPrototypeIdx_(const std::string &a_name) const;
+    protected:
+        int getPrototypeIdx_(const std::string& a_name) const;
 
-		int getPrototypeIdx_(unsigned a_classId) const;
+        int getPrototypeIdx_(unsigned a_classId) const;
 
-	private:
-		vector<FactoryPrototype> m_prototypes;
-		set<std::string> m_group_names;
+    private:
+        vector<FactoryPrototype> m_prototypes;
+        set<std::string> m_group_names;
 
-		unordered_map<unsigned int, int> m_class_identifiers; //<! mapping from unique class IDs to prototype numbers
-	};
+        unordered_map<unsigned int, int> m_class_identifiers; //<! mapping from unique class IDs to prototype numbers
+    };
 
-	template <typename T, typename>
-	void UnitFactory::addUnitPrototype(const std::string &a_group_name, const std::string &a_unit_name) {
-		FactoryPrototype prototype{a_group_name, new T(a_unit_name), sizeof(T)};
-		if (m_class_identifiers.find(prototype.classIdentifier) != m_class_identifiers.end())
-			return;
-		m_prototypes.push_back(prototype);
-		m_group_names.insert(prototype.group_name);
-		m_class_identifiers[prototype.classIdentifier] = m_prototypes.size() - 1;
-	}
+    template <typename T, typename>
+    void UnitFactory::addUnitPrototype(const std::string& a_group_name, const std::string& a_unit_name) {
+        FactoryPrototype prototype{a_group_name, new T(a_unit_name), sizeof(T)};
+        if (m_class_identifiers.find(prototype.classIdentifier) != m_class_identifiers.end())
+            return;
+        m_prototypes.push_back(prototype);
+        m_group_names.insert(prototype.group_name);
+        m_class_identifiers[prototype.classIdentifier] = m_prototypes.size() - 1;
+    }
 }
 
 #endif

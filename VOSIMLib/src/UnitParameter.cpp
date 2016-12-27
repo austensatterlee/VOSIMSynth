@@ -40,10 +40,10 @@ namespace syn
         m_displayPrecision(0),
         m_parent(nullptr) { }
 
-    UnitParameter::UnitParameter(const string &a_name, bool a_defaultValue) :
+    UnitParameter::UnitParameter(const string& a_name, bool a_defaultValue) :
         UnitParameter(a_name, {"Off","On"}, {0,1}, 0) { m_type = Bool; }
 
-    UnitParameter::UnitParameter(const string &a_name, int a_min, int a_max,
+    UnitParameter::UnitParameter(const string& a_name, int a_min, int a_max,
                                  int a_defaultValue, EUnitsType a_unitsType) :
         m_name(a_name),
         m_id(-1),
@@ -60,7 +60,7 @@ namespace syn
         m_displayPrecision(0),
         m_parent(nullptr) { }
 
-    UnitParameter::UnitParameter(const string &a_name,
+    UnitParameter::UnitParameter(const string& a_name,
                                  const vector<string>& a_optionNames,
                                  const vector<double>& a_optionValues,
                                  int a_defaultOption, EUnitsType a_unitsType) :
@@ -88,7 +88,7 @@ namespace syn
         }
     }
 
-    UnitParameter::UnitParameter(const string &a_name, double a_min, double a_max,
+    UnitParameter::UnitParameter(const string& a_name, double a_min, double a_max,
                                  double a_defaultValue, EUnitsType a_unitsType, int a_displayPrecision) :
         m_name(a_name),
         m_id(-1),
@@ -107,15 +107,15 @@ namespace syn
 
     void UnitParameter::reset() { m_value = m_defaultValue; }
 
-    const string &UnitParameter::getName() const { return m_name; }
+    const string& UnitParameter::getName() const { return m_name; }
 
     int UnitParameter::getId() const { return m_id; }
 
     void UnitParameter::setId(int a_id) { m_id = a_id; }
 
-    Unit *UnitParameter::getParent() const { return m_parent; }
+    Unit* UnitParameter::getParent() const { return m_parent; }
 
-    void UnitParameter::setParent(Unit *a_newParent) { m_parent = a_newParent; }
+    void UnitParameter::setParent(Unit* a_newParent) { m_parent = a_newParent; }
 
     UnitParameter::EParamType UnitParameter::getType() const { return m_type; }
 
@@ -152,24 +152,24 @@ namespace syn
 
     UnitParameter::EControlType UnitParameter::getControlType() const { return m_controlType; }
 
-    UnitParameter &UnitParameter::setControlType(EControlType a_newControlType)
+    UnitParameter& UnitParameter::setControlType(EControlType a_newControlType)
     {
         m_controlType = a_newControlType;
-        return *this;
+        return* this;
     }
 
-    UnitParameter &UnitParameter::setUnitsType(EUnitsType a_newUnitsType)
+    UnitParameter& UnitParameter::setUnitsType(EUnitsType a_newUnitsType)
     {
         m_unitsType = a_newUnitsType;
-        return *this;
+        return* this;
     }
 
     bool UnitParameter::isVisible() const { return m_isVisible; }
 
-    UnitParameter &UnitParameter::setVisible(bool a_visible)
+    UnitParameter& UnitParameter::setVisible(bool a_visible)
     {
         m_isVisible = a_visible;
-        return *this;
+        return* this;
     }
 
     bool UnitParameter::getBool() const { return m_value > 0.5; }
@@ -241,7 +241,7 @@ namespace syn
         return set(value);
     }
 
-    bool UnitParameter::setFromString(const string &a_str)
+    bool UnitParameter::setFromString(const string& a_str)
     {
         if (getType() != Enum)
         {
@@ -264,7 +264,7 @@ namespace syn
             {
                 // Try to match string to an enum option
                 int i = 0;
-                for (const DisplayText &disp : m_displayTexts)
+                for (const DisplayText& disp : m_displayTexts)
                 {
                     if (disp.m_text == a_str) { return set(i); }
                     i++;
@@ -275,7 +275,7 @@ namespace syn
         {
             // Try to match string to an enum option
             int i = 0;
-            for (const DisplayText &disp : m_displayTexts)
+            for (const DisplayText& disp : m_displayTexts)
             {
                 if (disp.m_text == a_str) { return set(i); }
                 i++;
@@ -350,10 +350,10 @@ namespace syn
         setFromString(j["value"].get<string>());
         m_type = static_cast<EParamType>(j["data_type"].get<int>());
         m_displayTexts.clear();
-        for (const json &k : j["display_texts"]) { m_displayTexts.push_back(DisplayText{k}); }
+        for (const json& k : j["display_texts"]) { m_displayTexts.push_back(DisplayText{k}); }
         m_min = j["min"];
         m_max = j["max"];
-        return *this;
+        return* this;
     }
 
     UnitParameter::operator json() const

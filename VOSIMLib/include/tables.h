@@ -36,116 +36,116 @@
 
 namespace syn
 {
-	class VOSIMLIB_API LookupTable
-	{
-	public:
-		LookupTable(const double *table, int size, double input_min = 0, double input_max = 1, bool isPeriodic = true);
+    class VOSIMLIB_API LookupTable
+    {
+    public:
+        LookupTable(const double* table, int size, double input_min = 0, double input_max = 1, bool isPeriodic = true);
 
-		LookupTable(const LookupTable &a_o) : 
-			LookupTable(a_o.m_table, a_o.m_size, a_o.m_input_min, a_o.m_input_max, a_o.m_isperiodic) 
-		{}
+        LookupTable(const LookupTable& a_o) : 
+            LookupTable(a_o.m_table, a_o.m_size, a_o.m_input_min, a_o.m_input_max, a_o.m_isperiodic) 
+        {}
 
-		virtual ~LookupTable() {
-			
-		};
+        virtual ~LookupTable() {
+            
+        };
 
-		double getlinear(double phase) const;
-		double getlinear_periodic(double phase) const;
-		double getraw(int index) const;
+        double getlinear(double phase) const;
+        double getlinear_periodic(double phase) const;
+        double getraw(int index) const;
 
-		int size() const {
-			return m_size;
-		}
+        int size() const {
+            return m_size;
+        }
 
-	protected:
-		int m_size;
-		double m_input_min, m_input_max;
-		bool m_isperiodic;
-		double m_norm_bias;
-		double m_norm_scale;
-		const double *m_table;
-		std::vector<double> m_diff_table;
-	};
+    protected:
+        int m_size;
+        double m_input_min, m_input_max;
+        bool m_isperiodic;
+        double m_norm_bias;
+        double m_norm_scale;
+        const double* m_table;
+        std::vector<double> m_diff_table;
+    };
 
-	/**
-	 *
-	 */
-	class VOSIMLIB_API BlimpTable : public LookupTable
-	{
-	public:
-		BlimpTable(const double *a_table, int a_size, int a_num_intervals, int a_resolution)
-			: LookupTable(a_table, a_size, 0.0, 1.0, false),
-			  m_num_intervals(a_num_intervals),
-			  m_resolution(a_resolution) {}
+    /**
+     *
+     */
+    class VOSIMLIB_API BlimpTable : public LookupTable
+    {
+    public:
+        BlimpTable(const double* a_table, int a_size, int a_num_intervals, int a_resolution)
+            : LookupTable(a_table, a_size, 0.0, 1.0, false),
+              m_num_intervals(a_num_intervals),
+              m_resolution(a_resolution) {}
 
-		virtual ~BlimpTable() {
-			
-		}
+        virtual ~BlimpTable() {
+            
+        }
 
-		BlimpTable(const BlimpTable &a_other)
-			: BlimpTable(a_other.m_table, a_other.m_size, a_other.m_num_intervals, a_other.m_resolution) {}
+        BlimpTable(const BlimpTable& a_other)
+            : BlimpTable(a_other.m_table, a_other.m_size, a_other.m_num_intervals, a_other.m_resolution) {}
 
-		const int m_num_intervals;
-		const int m_resolution;
-	};
+        const int m_num_intervals;
+        const int m_resolution;
+    };
 
-	/**
-	 * Lookup table that can resample itself with sinc interpolation.
-	 * Upon construction, the table computes and caches downsampled versions
-	 * of itself. Each downsampled table is half the size of the previous,
-	 * so log2(N) tables are created, where N is the size of the initial
-	 * table.
-	 */
-	class VOSIMLIB_API ResampledLookupTable : public LookupTable
-	{
-	public:
-		ResampledLookupTable(const double *a_table, int a_size, const BlimpTable &a_blimp_table_online, const BlimpTable &a_blimp_table_offline);
+    /**
+     * Lookup table that can resample itself with sinc interpolation.
+     * Upon construction, the table computes and caches downsampled versions
+     * of itself. Each downsampled table is half the size of the previous,
+     * so log2(N) tables are created, where N is the size of the initial
+     * table.
+     */
+    class VOSIMLIB_API ResampledLookupTable : public LookupTable
+    {
+    public:
+        ResampledLookupTable(const double* a_table, int a_size, const BlimpTable& a_blimp_table_online, const BlimpTable& a_blimp_table_offline);
 
-		ResampledLookupTable(const ResampledLookupTable &a_o) : 
-			ResampledLookupTable(a_o.m_table, a_o.m_size, a_o.m_blimp_table_online, a_o.m_blimp_table_offline) 
-		{}
+        ResampledLookupTable(const ResampledLookupTable& a_o) : 
+            ResampledLookupTable(a_o.m_table, a_o.m_size, a_o.m_blimp_table_online, a_o.m_blimp_table_offline) 
+        {}
 
-		void resample_tables();
+        void resample_tables();
 
-		virtual ~ResampledLookupTable() {
-			
-		}
+        virtual ~ResampledLookupTable() {
+            
+        }
 
-		/// Retrieve a single sample from the table at the specified phase, as if the table were resampled to have the given period.
-		double getresampled(double phase, double period) const;
-	protected:
-		int m_num_resampled_tables;
-		std::vector<int> m_resampled_sizes;
-		std::vector<std::vector<double>> m_resampled_tables;
-		const BlimpTable &m_blimp_table_online;
-		const BlimpTable &m_blimp_table_offline;
-	};
+        /// Retrieve a single sample from the table at the specified phase, as if the table were resampled to have the given period.
+        double getresampled(double phase, double period) const;
+    protected:
+        int m_num_resampled_tables;
+        std::vector<int> m_resampled_sizes;
+        std::vector<std::vector<double>> m_resampled_tables;
+        const BlimpTable& m_blimp_table_online;
+        const BlimpTable& m_blimp_table_offline;
+    };
 
-	/**
-	 * Retrieve a single sample from table as if it were resampled to have
-	 * the specified period, using fractional sinc interpolation/decimation.
-	 *
-	 * \param size the size of the input table
-	 * \param phase the desired phase to sample at, in the range [0,1).
-	 * \param period the desired period to resample at (in fractional number of samples)
-	 */
-	double VOSIMLIB_API getresampled_single(const double *table, int size, double phase, double period, const BlimpTable &blimp_table);
-	/**
-	 * Resample an entire table to have the specified period and store the
-	 * result in resampled_table (which should already be allocated), using
-	 * fractional sinc interpolation/decimation.
-	 *
-	 * \param size the size of the input table
-	 * \param resampled_table a pointer to the output table
-	 * \param period the desired period to resample at (in fractional number
-	 *        of samples). The allocated size of the output table should be
-	 *        ceil(period).
-	 */
-	void VOSIMLIB_API resample_table(const double *table, int size, double *resampled_table, double period, const BlimpTable &blimp_table, bool normalize = true);
+    /**
+     * Retrieve a single sample from table as if it were resampled to have
+     * the specified period, using fractional sinc interpolation/decimation.
+     *
+     * \param size the size of the input table
+     * \param phase the desired phase to sample at, in the range [0,1).
+     * \param period the desired period to resample at (in fractional number of samples)
+     */
+    double VOSIMLIB_API getresampled_single(const double* table, int size, double phase, double period, const BlimpTable& blimp_table);
+    /**
+     * Resample an entire table to have the specified period and store the
+     * result in resampled_table (which should already be allocated), using
+     * fractional sinc interpolation/decimation.
+     *
+     * \param size the size of the input table
+     * \param resampled_table a pointer to the output table
+     * \param period the desired period to resample at (in fractional number
+     *        of samples). The allocated size of the output table should be
+     *        ceil(period).
+     */
+    void VOSIMLIB_API resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table, bool normalize = true);
 
-	/**
-	 * \todo
-	 */
-	void fft_resample_table(const double *table, int size, double *resampled_table, double period);
+    /**
+     * \todo
+     */
+    void fft_resample_table(const double* table, int size, double* resampled_table, double period);
 }
 #endif

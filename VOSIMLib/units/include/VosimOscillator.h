@@ -24,66 +24,66 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn
 {
-	class VOSIMLIB_API VosimOscillator : public TunedOscillator
-	{
-		DERIVE_UNIT(VosimOscillator)
-	public:
-		enum Param
-		{
-			pPulseTune = TunedOscillator::NumParams,
-			pNumPulses,
-			pPulseDecay,
-			NumParams
-		};
+    class VOSIMLIB_API VosimOscillator : public TunedOscillator
+    {
+        DERIVE_UNIT(VosimOscillator)
+    public:
+        enum Param
+        {
+            pPulseTune = TunedOscillator::NumParams,
+            pNumPulses,
+            pPulseDecay,
+            NumParams
+        };
 
-		enum Input
-		{
-			iPulseTuneAdd = TunedOscillator::NumInputs,
-			iPulseTuneMul,
-			iDecayMul,
-			NumInputs
-		};
+        enum Input
+        {
+            iPulseTuneAdd = TunedOscillator::NumInputs,
+            iPulseTuneMul,
+            iDecayMul,
+            NumInputs
+        };
 
-		explicit VosimOscillator(string name);
+        explicit VosimOscillator(string name);
 
-		VosimOscillator(const VosimOscillator &a_rhs);
+        VosimOscillator(const VosimOscillator& a_rhs);
 
-	protected:
-		void MSFASTCALL process_() GCCFASTCALL override;
-		void MSFASTCALL updatePhaseStep_() GCCFASTCALL override;
+    protected:
+        void MSFASTCALL process_() GCCFASTCALL override;
+        void MSFASTCALL updatePhaseStep_() GCCFASTCALL override;
 
-	private:
-		double m_pulse_step, m_pulse_tune;
-		int m_num_pulses;
-	};
+    private:
+        double m_pulse_step, m_pulse_tune;
+        int m_num_pulses;
+    };
 
-	class VOSIMLIB_API FormantOscillator : public TunedOscillator
-	{
-		DERIVE_UNIT(FormantOscillator)
-	public:
-		
-		enum Param
-		{
-			pWidth = TunedOscillator::NumParams,
-			pFmt,
-			NumParams
-		};
+    class VOSIMLIB_API FormantOscillator : public TunedOscillator
+    {
+        DERIVE_UNIT(FormantOscillator)
+    public:
+        
+        enum Param
+        {
+            pWidth = TunedOscillator::NumParams,
+            pFmt,
+            NumParams
+        };
 
-		enum Input
-		{
-			iWidthAdd = TunedOscillator::NumInputs,
-			iFmtAdd,
-			iWidthMul,
-			iFmtMul,
-			NumInputs
-		};
+        enum Input
+        {
+            iWidthAdd = TunedOscillator::NumInputs,
+            iFmtAdd,
+            iWidthMul,
+            iFmtMul,
+            NumInputs
+        };
 
-		explicit FormantOscillator(string name);
+        explicit FormantOscillator(string name);
 
-		FormantOscillator(const FormantOscillator &a_rhs);
+        FormantOscillator(const FormantOscillator& a_rhs);
 
-	protected:
-		void MSFASTCALL process_() GCCFASTCALL override;
-	};
+    protected:
+        void MSFASTCALL process_() GCCFASTCALL override;
+    };
 }
 #endif

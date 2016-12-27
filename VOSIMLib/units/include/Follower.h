@@ -31,25 +31,25 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn
 {
-	/**
-	* Envelope follower
-	*/
-	class VOSIMLIB_API FollowerUnit : public Unit
-	{
-		DERIVE_UNIT(FollowerUnit)
-	public:
-		explicit FollowerUnit(const string &a_name);
+    /**
+    * Envelope follower
+    */
+    class VOSIMLIB_API FollowerUnit : public Unit
+    {
+        DERIVE_UNIT(FollowerUnit)
+    public:
+        explicit FollowerUnit(const string& a_name);
 
-		FollowerUnit(const FollowerUnit &a_rhs);
-		void reset() override;
-	protected:
-		void MSFASTCALL process_() GCCFASTCALL override;
-	private:
-		double m_w;
-		double m_output;
+        FollowerUnit(const FollowerUnit& a_rhs);
+        void reset() override;
+    protected:
+        void MSFASTCALL process_() GCCFASTCALL override;
+    private:
+        double m_w;
+        double m_output;
 
-		int m_pAlpha;
-		int m_pBeta;
-	};
+        int m_pAlpha;
+        int m_pBeta;
+    };
 };
 #endif

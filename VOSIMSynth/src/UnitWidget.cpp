@@ -34,7 +34,7 @@ synui::UnitWidget::UnitWidget(synui::CircuitWidget* a_parent, syn::VoiceManager*
     m_titleLabel->setCursor(nanogui::Cursor::Hand);
     layout->setAnchor(m_titleLabel, Anchor{ 0,0,3,1,nanogui::Alignment::Middle });
 
-    // Create port labels	
+    // Create port labels    
     for (int i = 0; i < inputs.size(); i++)
     {
         int inputId = inputs.indices()[i];
@@ -272,7 +272,7 @@ synui::UnitWidget::operator json() const
     j["y"] = position().y();
     return j;
 }
-synui::UnitWidget *synui::UnitWidget::load(const json& j)
+synui::UnitWidget* synui::UnitWidget::load(const json& j)
 {
     return this;
 }

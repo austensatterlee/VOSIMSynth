@@ -31,20 +31,20 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <DSPMath.h>
 
 namespace syn {
-	class VOSIMLIB_API TanhUnit : public Unit
-	{
-		DERIVE_UNIT(TanhUnit)
-	public:
-		enum Param
-		{
-			pSat = 0
-		};
+    class VOSIMLIB_API TanhUnit : public Unit
+    {
+        DERIVE_UNIT(TanhUnit)
+    public:
+        enum Param
+        {
+            pSat = 0
+        };
 
-		explicit TanhUnit(const string &a_name);
-		TanhUnit(const TanhUnit &a_rhs);
-	protected:
-		void MSFASTCALL process_() GCCFASTCALL override;
-	};
+        explicit TanhUnit(const string& a_name);
+        TanhUnit(const TanhUnit& a_rhs);
+    protected:
+        void MSFASTCALL process_() GCCFASTCALL override;
+    };
 }
 
 #endif
