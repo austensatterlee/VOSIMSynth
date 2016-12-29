@@ -56,6 +56,10 @@ namespace syn
 
         virtual ~Filter() { };
 
+        string getClassName() const override {
+            return "Filter";
+        };
+
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
 
@@ -64,11 +68,6 @@ namespace syn
             memset(XBuf, 0, nX * sizeof(double));
             xBufInd = 0;
             yBufInd = 0;
-        };
-
-    private:
-        string _getClassName() const override {
-            return "Filter";
         };
     };
 

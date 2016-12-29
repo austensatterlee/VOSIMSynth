@@ -382,7 +382,10 @@ void synui::CircuitWidget::loadPrototype(const std::string& a_unitPrototype) { c
 
 Eigen::Vector2i synui::CircuitWidget::fixToGrid(const Eigen::Vector2i& a_pixelLocation) const { return m_grid.toPixel(m_grid.fromPixel(a_pixelLocation, m_gridSpacing), m_gridSpacing); }
 
-void synui::CircuitWidget::performLayout(NVGcontext* ctx) { Widget::performLayout(ctx); }
+void synui::CircuitWidget::performLayout(NVGcontext* ctx)
+{
+    Widget::performLayout(ctx);
+}
 
 void synui::CircuitWidget::resizeGrid(int a_newGridSpacing)
 {
@@ -703,23 +706,29 @@ void synui::CircuitWidget::endWireDraw_(int a_unitId, int a_portId, bool a_isOut
 
 void synui::CircuitWidget::updateUnitPos_(UnitWidget* a_unitWidget, const Eigen::Vector2i& a_newPos, bool a_force)
 {
-    std::ostringstream os;
-    os << "Updating unit position: " << a_unitWidget->getName() << " (" << a_newPos.x() << ", " << a_newPos.y() << ") " << (a_force ? "(forcing)" : "");
-    Logger::instance().log("info", os.str());
-
     /* Compute the grid cells of the unit's boundaries  */
     Grid2DPoint topLeftCell = m_grid.fromPixel(a_newPos, m_gridSpacing);
     Grid2DPoint bottomRightCell = m_grid.fromPixel(a_newPos + a_unitWidget->size(), m_gridSpacing) + Vector2i::Ones();
 
     /* Abort if unit widget already exists at the requested position */
-    if (!a_force && (m_grid.toPixel(topLeftCell, m_gridSpacing).array() == a_unitWidget->position().array()).all())
+    bool positionMatch = (m_grid.toPixel(topLeftCell, m_gridSpacing).array() == a_unitWidget->position().array()).all();
+    if (!a_force && positionMatch)
         return;
+
+    auto blk = m_grid.forceGetBlock(topLeftCell, bottomRightCell);
+    /* Abort if grid contents already match the specified the unit */
+    bool gridMatch = blk.unaryExpr([a_unitWidget](const GridCell& x) { return x.state == GridCell::Unit && x.ptr == a_unitWidget ? x : GridCell{ GridCell::Empty, nullptr }; }).array().all();
+    if (!a_force && gridMatch)
+        return;
+
+    std::ostringstream os;
+    os << "Updating unit position: " << a_unitWidget->getName() << " (" << a_newPos.x() << ", " << a_newPos.y() << ") " << (a_force ? "(forcing)" : "");
+    Logger::instance().log("info", os.str());
 
     /* Erase unit from grid */
     m_grid.replaceValue({ GridCell::Unit, a_unitWidget }, m_grid.getEmptyValue());
 
     /* Place the unit and reroute the wires */
-    auto blk = m_grid.forceGetBlock(topLeftCell, bottomRightCell);
     std::set<CircuitWire*> wires;
     // Record any wires we may be overwriting
     for (int r = 0; r < blk.rows(); r++)

@@ -63,14 +63,14 @@ namespace synui
         {
             friend bool operator==(const GridCell& a_lhs, const GridCell& a_rhs)
             {
-                return a_lhs.state==a_rhs.state && (a_lhs.state==Empty || a_lhs.ptr==a_rhs.ptr);
+                return a_lhs.state == a_rhs.state && (a_lhs.state == Empty || a_lhs.ptr == a_rhs.ptr);
             }
 
             friend bool operator!=(const GridCell& a_lhs, const GridCell& a_rhs) { return !(a_lhs == a_rhs); }
 
             operator bool() const
             {
-                return state!=Empty;
+                return state != Empty;
             }
 
             enum
@@ -88,7 +88,7 @@ namespace synui
          * \param a_mainWindow Serves as an interface for queueing messages to the real-time thread.
          * \param a_unitEditorHost The widget that will host unit editor interfaces.
          * \param a_vm
-         * \param a_uf 
+         * \param a_uf
          */
         CircuitWidget(nanogui::Widget* a_parent, synui::MainWindow* a_mainWindow, synui::UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf);
 
@@ -130,7 +130,7 @@ namespace synui
         void performScreenLayout_()
         {
             Widget* screen = this;
-            while(screen->parent()) screen = screen->parent();
+            while (screen->parent()) screen = screen->parent();
             static_cast<nanogui::Screen *>(screen)->performLayout();
         }
 
@@ -152,7 +152,7 @@ namespace synui
          * \param a_unitId Id of the newly created unit.
          */
         void onUnitCreated_(unsigned a_classId, int a_unitId);
-        
+
         /**
          * \brief Creates a unit widget of the specified classId and associate it with the given unitId.
          */
@@ -205,7 +205,6 @@ namespace synui
          */
         bool checkUnitPos_(UnitWidget* a_unitWidget, const Eigen::Vector2i& a_newPos);
 
-
     private:
         /**
          * \brief Delete the given wire widget.
@@ -214,7 +213,7 @@ namespace synui
         void deleteWireWidget_(CircuitWire* wire);
         /**
          * \brief Delete the given unit widget.
-         * Note that this method only affects the GUI. The actual connection on the real-time thread is not affected.         
+         * Note that this method only affects the GUI. The actual connection on the real-time thread is not affected.
          */
         void deleteUnitWidget_(UnitWidget* widget);
     private:
@@ -231,7 +230,7 @@ namespace synui
             Uninitialized,
             Idle,
             PlacingUnit,
-            DrawingWire
+            DrawingWire,
         } m_state;
 
         struct PlacingUnitState
@@ -247,7 +246,7 @@ namespace synui
         {
             bool startedFromOutput;
             CircuitWire* wire;
-        } m_drawingWireState;        
+        } m_drawingWireState;
         double m_wireHighlightTime;
         CircuitWire* m_highlightedWire;
         std::vector<CircuitWire*> m_wires;

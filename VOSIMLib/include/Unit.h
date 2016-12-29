@@ -41,9 +41,9 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define MAX_OUTPUTS 8
 
 #define DERIVE_UNIT(TYPE) \
-    string _getClassName() const override {return #TYPE;}\
     Unit *_clone() const override {return new TYPE(*this);}\
 public:\
+    string getClassName() const override {return #TYPE;}\
     TYPE() : TYPE("") {}\
 private:
 
@@ -89,13 +89,13 @@ namespace syn
      * and using Unit::addInput_, Unit::addOutput_, and Unit::addParameter_ to configure the unit in its
      * constructor.  A constructor taking a single string argument should be supplied. The default constructor
      * is generated automatically.
-     * 
+     *
      * Serialization is done via a conversion operator to the nlohmann::json type. This can be overriden to
      * specialize serialization, but make sure to call the base class version first since this takes care of
      * serializing things like the unit's name and parameters.  Deserialization happens via the static
      * function Unit::fromJSON, which creates a new Unit object using the UnitFactory singleton. However, the
      * virtual function Unit::load can be overridden to provide any specialized deserialization.
-     * 
+     *
      * For example:
      * \code{.cpp}
      *  class DerivedUnit : public Unit {
@@ -105,30 +105,30 @@ namespace syn
      *        {
      *        ...set up class internals...
      *        }
-     *        
-     *        /// OPTIONAL:        
+     *
+     *        /// OPTIONAL:
      *        operator json() const override {
      *          json j = Unit::operator json();
      *          ...serialize class internals...
      *          return j;
      *        }
-     *        
+     *
      *        Unit* load(const json& j) override {
      *          ...deserialize class internals...
      *          return this;
      *        }
-     *        
+     *
      *    };
      * \endcode
      *
      * The macros ensure that the code needed to enable serialization and cloning of your class are included:
      * To allow the unit to be cloned, it is necessary to implement a copy constructor, Unit::_clone, and
-     * Unit::_getClassName. Unit::_clone should simply return a new copy of the derived class, for example:
+     * Unit::getClassName. Unit::_clone should simply return a new copy of the derived class, for example:
      * \code{.cpp}
      *        Unit* DerivedUnit::_clone(){ return new DerivedUnit(*this); }
      * \endcode
      *
-     * Unit::_getClassName should simply return a string form of the class name. This is used for factory
+     * Unit::getClassName should simply return a string form of the class name. This is used for factory
      * construction.
      *
      */
@@ -291,6 +291,9 @@ namespace syn
         /// Optional method that can be overriden to load extra information.
         virtual Unit* load(const json& j) { return this; }
 
+        /// Returns a unique string to identify the class
+        virtual inline string getClassName() const = 0;
+
     protected:
         /**
          * Called when a parameter has been modified. This function should be overridden
@@ -330,8 +333,6 @@ namespace syn
         void copyFrom_(const Unit& a_other);
 
     private:
-        virtual inline string _getClassName() const = 0;
-
         void _setParent(Circuit* a_new_parent);
 
         void _setName(const string& a_name);

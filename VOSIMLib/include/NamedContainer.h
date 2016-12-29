@@ -33,7 +33,7 @@ namespace syn
     {
     public:
         const size_t max_size = MAXSIZE;
-        typedef T                    item_type;
+        typedef T item_type;
         typedef item_type& reference;
         typedef const item_type& const_reference;
         typedef item_type* pointer;
@@ -46,15 +46,15 @@ namespace syn
         array<string, MAXSIZE> m_names;
         int m_size;
 
-        template<typename _T>
+        template <typename _T>
         struct id_comparator
         {
             typedef _T first_argument_type;
             typedef _T second_argument_type;
             typedef bool result_type;
 
-            constexpr bool operator()(const _T &_Left, const _T &_Right) const
-            {    // apply operator< to operands
+            constexpr bool operator()(const _T& _Left, const _T& _Right) const
+            { // apply operator< to operands
                 return (_Left >= 0) && (_Left > _Right);
             }
         };
@@ -85,14 +85,14 @@ namespace syn
             }
 
             iterator(NamedContainer& nc, int offset)
-                :m_nc(&nc)
+                : m_nc(&nc)
                 , m_item_num(offset)
             {
             }
 
             iterator(const iterator& other)
                 : m_nc(other.m_nc),
-                  m_item_num(other.m_item_num)
+                m_item_num(other.m_item_num)
             {
             }
 
@@ -103,7 +103,7 @@ namespace syn
             iterator& operator ++()
             {
                 m_item_num = m_nc->next_offset(m_item_num);
-                return* this;
+                return *this;
             }
 
             iterator operator ++(int)
@@ -116,7 +116,7 @@ namespace syn
             iterator& operator --()
             {
                 m_item_num = m_nc->prev_offset(m_item_num);
-                return* this;
+                return *this;
             }
 
             iterator operator --(int)
@@ -130,7 +130,7 @@ namespace syn
             {
                 m_nc = other.m_nc;
                 m_item_num = other.m_item_num;
-                return* this;
+                return *this;
             }
 
             reference operator *()
@@ -163,12 +163,12 @@ namespace syn
                 return &(m_nc->getByIndex(m_item_num));
             }
 
-            friend bool operator == (const iterator& lhs, const iterator& rhs)
+            friend bool operator ==(const iterator& lhs, const iterator& rhs)
             {
                 return lhs.m_nc == rhs.m_nc && lhs.m_item_num == rhs.m_item_num;
             }
 
-            friend bool operator != (const iterator& lhs, const iterator& rhs)
+            friend bool operator !=(const iterator& lhs, const iterator& rhs)
             {
                 return !(lhs == rhs);
             }
@@ -176,34 +176,40 @@ namespace syn
         private:
             NamedContainer* m_nc;
             int m_item_num;
-        }; 
-        
+        };
+
         typedef typename std::iterator_traits<iterator>::difference_type difference_type;
         typedef std::reverse_iterator<iterator> reverse_iterator;
 
-        int next_offset(int a_offset) const {
+        int next_offset(int a_offset) const
+        {
             a_offset++;
             return a_offset >= MAXSIZE ? -1 : a_offset;
         }
 
-        int prev_offset(int a_offset) const {
+        int prev_offset(int a_offset) const
+        {
             a_offset--;
             return a_offset < 0 ? -1 : a_offset;
         }
 
-        iterator begin() {
+        iterator begin()
+        {
             return iterator(*this, 0);
         }
 
-        iterator cbegin() const {
+        iterator cbegin() const
+        {
             return iterator(*this, 0);
         }
 
-        iterator end() {
+        iterator end()
+        {
             return iterator(*this, m_size);
         }
 
-        iterator cend() const {
+        iterator cend() const
+        {
             return iterator(*this, m_size);
         }
 
@@ -239,7 +245,8 @@ namespace syn
         */
         bool add(const string& a_name, int a_index, const T& a_item);
 
-        const T* data() const {
+        const T* data() const
+        {
             return m_data.data();
         }
 
@@ -297,7 +304,8 @@ namespace syn
     };
 
     template <typename T, int MAXSIZE>
-    int NamedContainer<T, MAXSIZE>::add(const string& a_name, const T& a_item) {
+    int NamedContainer<T, MAXSIZE>::add(const string& a_name, const T& a_item)
+    {
         int item_id = _getNextId();
         if (!add(a_name, item_id, a_item))
             return -1;
@@ -305,7 +313,8 @@ namespace syn
     }
 
     template <typename T, int MAXSIZE>
-    bool NamedContainer<T, MAXSIZE>::add(const string& a_name, int a_index, const T& a_item) {
+    bool NamedContainer<T, MAXSIZE>::add(const string& a_name, int a_index, const T& a_item)
+    {
         if (a_index >= MAXSIZE)
             return false;
         if (contains(a_name))
@@ -326,7 +335,8 @@ namespace syn
 
     template <typename T, int MAXSIZE>
     template <typename IDType>
-    bool NamedContainer<T, MAXSIZE>::remove(const IDType& a_itemID) {
+    bool NamedContainer<T, MAXSIZE>::remove(const IDType& a_itemID)
+    {
         int index = getItemIndex(a_itemID);
         if (index == -1)
             return false;
@@ -334,10 +344,13 @@ namespace syn
         m_names[index] = "";
 
         // update index list
-        for(int i=0;i<m_size;i++) {
-            if (m_indices[i] == index) {
-                for(int j=i;j<m_size-1;j++) {
-                    m_indices[j] = m_indices[j+1];
+        for (int i = 0; i < m_size; i++)
+        {
+            if (m_indices[i] == index)
+            {
+                for (int j = i; j < m_size - 1; j++)
+                {
+                    m_indices[j] = m_indices[j + 1];
                 }
                 m_indices[m_size - 1] = -1;
                 break;
@@ -350,85 +363,99 @@ namespace syn
     }
 
     template <typename T, int MAXSIZE>
-    T& NamedContainer<T, MAXSIZE>::operator[](const string& a_itemName) {
+    T& NamedContainer<T, MAXSIZE>::operator[](const string& a_itemName)
+    {
         int itemidx = getItemIndex(a_itemName);
         return m_data[itemidx];
     }
 
     template <typename T, int MAXSIZE>
-    const T& NamedContainer<T, MAXSIZE>::operator[](const string& a_itemName) const {
+    const T& NamedContainer<T, MAXSIZE>::operator[](const string& a_itemName) const
+    {
         int itemidx = getItemIndex(a_itemName);
         return m_data[itemidx];
     }
 
     template <typename T, int MAXSIZE>
-    T& NamedContainer<T, MAXSIZE>::operator[](int a_itemId) {
-        return m_data[a_itemId];
-    }
-    
-    template <typename T, int MAXSIZE>
-    const T& NamedContainer<T, MAXSIZE>::operator[](int a_itemId) const {
+    T& NamedContainer<T, MAXSIZE>::operator[](int a_itemId)
+    {
         return m_data[a_itemId];
     }
 
-
-
     template <typename T, int MAXSIZE>
-    T& NamedContainer<T, MAXSIZE>::getByIndex(int a_itemIndex) {
-        return m_data[m_indices[m_size-1 - a_itemIndex]];
+    const T& NamedContainer<T, MAXSIZE>::operator[](int a_itemId) const
+    {
+        return m_data[a_itemId];
     }
 
     template <typename T, int MAXSIZE>
-    const T& NamedContainer<T, MAXSIZE>::getByIndex(int a_itemIndex) const {
-        return m_data[m_indices[m_size-1 - a_itemIndex]];
+    T& NamedContainer<T, MAXSIZE>::getByIndex(int a_itemIndex)
+    {
+        return m_data[m_indices[m_size - 1 - a_itemIndex]];
+    }
+
+    template <typename T, int MAXSIZE>
+    const T& NamedContainer<T, MAXSIZE>::getByIndex(int a_itemIndex) const
+    {
+        return m_data[m_indices[m_size - 1 - a_itemIndex]];
     }
 
     template <typename T, int MAXSIZE>
     template <typename IDType>
-    bool NamedContainer<T, MAXSIZE>::contains(const IDType& a_itemID) const {
+    bool NamedContainer<T, MAXSIZE>::contains(const IDType& a_itemID) const
+    {
         return (getItemIndex(a_itemID) >= 0);
     }
 
     template <typename T, int MAXSIZE>
     template <typename IDType>
-    int NamedContainer<T, MAXSIZE>::find(const IDType& a_itemId) const {
+    int NamedContainer<T, MAXSIZE>::find(const IDType& a_itemId) const
+    {
         return getItemIndex(a_itemId);
     }
 
     template <typename T, int MAXSIZE>
-    int NamedContainer<T, MAXSIZE>::size() const {
+    int NamedContainer<T, MAXSIZE>::size() const
+    {
         return m_size;
     }
 
     template <typename T, int MAXSIZE>
-    const int* NamedContainer<T, MAXSIZE>::indices() const {
+    const int* NamedContainer<T, MAXSIZE>::indices() const
+    {
         return m_indices.data();
     }
 
     template <typename T, int MAXSIZE>
     template <typename IDType>
-    const string& NamedContainer<T, MAXSIZE>::name(const IDType& a_itemID) const {
+    const string& NamedContainer<T, MAXSIZE>::name(const IDType& a_itemID) const
+    {
         int itemidx = getItemIndex(a_itemID);
         return m_names[itemidx];
     }
 
     template <typename T, int MAXSIZE>
-    int NamedContainer<T, MAXSIZE>::getItemIndex(int a_itemId) const {
+    int NamedContainer<T, MAXSIZE>::getItemIndex(int a_itemId) const
+    {
         return m_existances[a_itemId] ? a_itemId : -1;
     }
 
     template <typename T, int MAXSIZE>
-    int NamedContainer<T, MAXSIZE>::getItemIndex(const string& a_name) const {
-        for (int i = 0; i < m_size; i++) {
+    int NamedContainer<T, MAXSIZE>::getItemIndex(const string& a_name) const
+    {
+        for (int i = 0; i < m_size; i++)
+        {
             if (m_names[m_indices[i]] == a_name)
-                return m_indices[i];            
+                return m_indices[i];
         }
         return -1;
     }
 
     template <typename T, int MAXSIZE>
-    int NamedContainer<T, MAXSIZE>::getItemIndex(const T& a_item) const {
-        for (int i = 0; i < m_size; i++) {
+    int NamedContainer<T, MAXSIZE>::getItemIndex(const T& a_item) const
+    {
+        for (int i = 0; i < m_size; i++)
+        {
             if (m_data[m_indices[i]] == a_item)
                 return m_indices[i];
         }
@@ -436,14 +463,16 @@ namespace syn
     }
 
     template <typename T, int MAXSIZE>
-    string const* NamedContainer<T, MAXSIZE>::names() const {
+    string const* NamedContainer<T, MAXSIZE>::names() const
+    {
         return m_names.data();
     }
 
     template <typename T, int MAXSIZE>
-    int NamedContainer<T, MAXSIZE>::_getNextId() {
+    int NamedContainer<T, MAXSIZE>::_getNextId()
+    {
         int nextId = 0;
-        while (m_existances[nextId]) 
+        while (m_existances[nextId])
             nextId++;
         return nextId;
     }

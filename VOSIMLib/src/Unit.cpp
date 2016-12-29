@@ -27,17 +27,17 @@ namespace syn
     Unit::Unit() : Unit("") {}
 
     Unit::Unit(const std::string& a_name) :
-        m_name{a_name},
-        m_parent{nullptr},
-        m_audioConfig{44.1e3, 120},
+        m_name{ a_name },
+        m_parent{ nullptr },
+        m_audioConfig{ 44.1e3, 120 },
         m_midiData{} { }
 
-    void Unit::setName(const string& a_name){ m_name = a_name; }
+    void Unit::setName(const string& a_name) { m_name = a_name; }
 
     unsigned int Unit::getClassIdentifier() const
     {
         hash<string> hash_fn;
-        return static_cast<unsigned int>(hash_fn(_getClassName()));
+        return static_cast<unsigned int>(hash_fn(getClassName()));
     }
 
     void Unit::setFs(double a_newFs)
@@ -124,9 +124,9 @@ namespace syn
         for (int i = 0; i < nInputs; i++) { m_inputPorts.getByIndex(i).src = oldSources[i]; }
     }
 
-    int Unit::addInput_(const string& a_name, double a_default) { return m_inputPorts.add(a_name, {a_default}); }
+    int Unit::addInput_(const string& a_name, double a_default) { return m_inputPorts.add(a_name, { a_default }); }
 
-    bool Unit::addInput_(int a_id, const string& a_name, double a_default) { return m_inputPorts.add(a_name, a_id, {a_default}); }
+    bool Unit::addInput_(int a_id, const string& a_name, double a_default) { return m_inputPorts.add(a_name, a_id, { a_default }); }
 
     bool Unit::addOutput_(int a_id, const string& a_name) { return m_outputSignals.add(a_name, a_id, 0.0); }
 

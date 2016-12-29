@@ -14,6 +14,7 @@ synui::UnitWidget::UnitWidget(synui::CircuitWidget* a_parent, syn::VoiceManager*
 {
     const syn::Unit& unit = getUnit_();
     m_classIdentifier = unit.getClassIdentifier();
+    setTooltip(unit.getClassName());
 
     const syn::NamedContainer<syn::UnitPort, 8>& inputs = unit.inputs();
     const syn::NamedContainer<double, 8>& outputs = unit.outputs();
@@ -30,6 +31,7 @@ synui::UnitWidget::UnitWidget(synui::CircuitWidget* a_parent, syn::VoiceManager*
 
     // Create title
     m_titleLabel = new nanogui::Label(this, unit.name(), "sans-bold", 0);
+    m_titleLabel->setTooltip("Ctrl+click to edit");
     m_titleLabel->setEnabled(false);
     m_titleLabel->setCursor(nanogui::Cursor::Hand);
     layout->setAnchor(m_titleLabel, Anchor{ 0,0,3,1,nanogui::Alignment::Middle });
@@ -42,7 +44,9 @@ synui::UnitWidget::UnitWidget(synui::CircuitWidget* a_parent, syn::VoiceManager*
         setName_(a_str);
         m_titleLabel->setVisible(true);
         m_titleTextBox->setVisible(false);
+        setSize({ 0,0 });
         screen()->performLayout();
+        m_parentCircuit->updateUnitPos_(this, position());
         return true;
     });
 
@@ -148,9 +152,10 @@ bool synui::UnitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, b
 
     Eigen::Vector2i mousePos = p - position();
     // Check if left mouse button was released while dragging
-    if (button == GLFW_MOUSE_BUTTON_LEFT && !down)
+
+    if (m_state == TitleDragging)
     {
-        if (m_state == TitleDragging)
+        if (button == GLFW_MOUSE_BUTTON_LEFT && !down)
         {
             m_state = Idle;
             // Finalize position by notifying parent circuit
@@ -161,22 +166,29 @@ bool synui::UnitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, b
             m_state = Idle;
             return true;
         }
-        else if (m_state == TitleClicked && modifiers & GLFW_MOD_CONTROL)
+    }
+    if (m_state == TitleClicked)
+    {
+        if (button == GLFW_MOUSE_BUTTON_LEFT)
         {
-            m_titleTextBox->setValue(m_titleLabel->caption());
-            m_titleTextBox->setPosition(m_titleLabel->position());
-            m_titleTextBox->setSize(m_titleLabel->size());
-            m_titleTextBox->setFontSize(m_titleLabel->fontSize());
-            m_titleTextBox->setVisible(true);
-            m_titleTextBox->setEditable(true);
-            m_titleLabel->setVisible(false);
-            return true;
-        }
-        else if (m_state == TitleClicked && m_editorCallback)
-        {
-            m_state = Idle;
-            m_editorCallback(m_classIdentifier, m_unitId);
-            return true;
+            if (!down) {
+                if (modifiers & GLFW_MOD_CONTROL) {
+                    m_titleTextBox->setValue(m_titleLabel->caption());
+                    m_titleTextBox->setPosition({ 0,0 });
+                    m_titleTextBox->setSize({ width(), m_titleLabel->height() });
+                    m_titleTextBox->setFontSize(m_titleLabel->fontSize());
+                    m_titleTextBox->setVisible(true);
+                    m_titleTextBox->setEditable(true);
+                    m_titleLabel->setVisible(false);
+                    return true;
+                }
+                else if (m_editorCallback)
+                {
+                    m_state = Idle;
+                    m_editorCallback(m_classIdentifier, m_unitId);
+                    return true;
+                }
+            }
         }
     }
 
