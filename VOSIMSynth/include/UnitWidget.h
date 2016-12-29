@@ -85,7 +85,8 @@ namespace synui
 
         std::function<void(unsigned, int)> m_editorCallback;
 
-        Widget* m_titleLabel;
+        nanogui::Label* m_titleLabel;
+        nanogui::TextBox* m_titleTextBox;
         std::map<int, Widget*> m_inputLabels;
         std::map<int, Widget*> m_outputLabels;
         std::map<int, Widget*> m_emptyInputLabels;

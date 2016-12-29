@@ -33,8 +33,20 @@ synui::UnitWidget::UnitWidget(synui::CircuitWidget* a_parent, syn::VoiceManager*
     m_titleLabel->setEnabled(false);
     m_titleLabel->setCursor(nanogui::Cursor::Hand);
     layout->setAnchor(m_titleLabel, Anchor{ 0,0,3,1,nanogui::Alignment::Middle });
+    m_titleTextBox = new nanogui::TextBox(this, unit.name());
+    m_titleTextBox->setEditable(true);
+    m_titleTextBox->setVisible(false);
+    m_titleTextBox->setCallback([this](const std::string& a_str)
+    {
+        if (a_str.empty()) return false;
+        setName_(a_str);
+        m_titleLabel->setVisible(true);
+        m_titleTextBox->setVisible(false);
+        screen()->performLayout();
+        return true;
+    });
 
-    // Create port labels    
+    // Create port labels
     for (int i = 0; i < inputs.size(); i++)
     {
         int inputId = inputs.indices()[i];
@@ -132,25 +144,38 @@ void synui::UnitWidget::draw(NVGcontext* ctx)
 
 bool synui::UnitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers)
 {
+    Widget::mouseButtonEvent(p, button, down, modifiers);
+
     Eigen::Vector2i mousePos = p - position();
     // Check if left mouse button was released while dragging
     if (button == GLFW_MOUSE_BUTTON_LEFT && !down)
     {
-        if (m_state == TitleClicked && m_editorCallback)
-        {
-            m_state = Idle;
-            m_editorCallback(m_classIdentifier, m_unitId);
-            return true;
-        }
         if (m_state == TitleDragging)
         {
             m_state = Idle;
             // Finalize position by notifying parent circuit
-            if(m_parentCircuit->checkUnitPos_(this, position()))
+            if (m_parentCircuit->checkUnitPos_(this, position()))
                 m_parentCircuit->updateUnitPos_(this, position());
             else
                 setPosition(m_oldPos);
             m_state = Idle;
+            return true;
+        }
+        else if (m_state == TitleClicked && modifiers & GLFW_MOD_CONTROL)
+        {
+            m_titleTextBox->setValue(m_titleLabel->caption());
+            m_titleTextBox->setPosition(m_titleLabel->position());
+            m_titleTextBox->setSize(m_titleLabel->size());
+            m_titleTextBox->setFontSize(m_titleLabel->fontSize());
+            m_titleTextBox->setVisible(true);
+            m_titleTextBox->setEditable(true);
+            m_titleLabel->setVisible(false);
+            return true;
+        }
+        else if (m_state == TitleClicked && m_editorCallback)
+        {
+            m_state = Idle;
+            m_editorCallback(m_classIdentifier, m_unitId);
             return true;
         }
     }
@@ -240,8 +265,8 @@ bool synui::UnitWidget::mouseDragEvent(const Eigen::Vector2i& p, const Eigen::Ve
     return false;
 }
 
-const std::string& synui::UnitWidget::getName() const { 
-    return getUnit_().name(); 
+const std::string& synui::UnitWidget::getName() const {
+    return getUnit_().name();
 }
 
 Eigen::Vector2i synui::UnitWidget::getInputPortAbsPosition(int a_portId)
@@ -307,4 +332,8 @@ void synui::UnitWidget::updateRowSizes_()
 
 const syn::Unit& synui::UnitWidget::getUnit_() const { return m_vm->getUnit(m_unitId); }
 
-void synui::UnitWidget::setName_(const std::string& a_name) { return m_vm->getUnit(m_unitId).setName(a_name); }
+void synui::UnitWidget::setName_(const std::string& a_name)
+{
+    m_titleLabel->setCaption(a_name);
+    m_vm->getUnit(m_unitId).setName(a_name);
+}
