@@ -90,11 +90,11 @@ namespace syn
             }
             copyFrom_(a_other);
         }
-        return* this;
+        return *this;
     }
 
     Circuit::~Circuit() { for (int i = 0; i < m_units.size(); i++) { delete m_units[m_units.indices()[i]]; } }
-
+    
     Circuit::operator json() const
     {
         json j = Unit::operator json();
@@ -156,25 +156,28 @@ namespace syn
     void Circuit::process_()
     {
         // tick units in processing graph
-        for (Unit** unit = m_procGraph.data(); *unit != nullptr; unit++) { (*unit)->tick(); }
+        for (Unit** unit = m_procGraph.data(); *unit != nullptr; unit++)
+        {
+            Unit& u = **unit;
+            for(u.m_currentBufferOffset=0;u.m_currentBufferOffset<u.getBufferSize();u.m_currentBufferOffset++)
+                (*unit)->tick();
+        }
 
         /* Push internally connected output signals to circuit output ports */
-        for (int i = 0; i < m_outputSignals.size(); i++) { setOutputChannel_(i, m_outputUnit->readOutput(i)); }
+        for (int i = 0; i < m_outputPorts.size(); i++)
+        {
+            for (int j = 0; j < getBufferSize(); j++)
+            {
+                writeOutput_(i, j, m_outputUnit->readOutput(i, j));
+            }
+        }
     }
 
     int Circuit::addUnit(Unit* a_unit)
     {
-        // increment name until there is no collision
-        while (m_units.contains(a_unit->name())) { a_unit->_setName(incrementSuffix(a_unit->name())); }
-        int retval = m_units.add(a_unit->name(), a_unit);
-        if (retval < 0)
-            return retval;
-        a_unit->_setParent(this);
-        a_unit->setFs(fs());
-        a_unit->setTempo(tempo());
-        a_unit->m_midiData = m_midiData;
-        _recomputeGraph();
-        return retval;
+        int id = m_units.getUnusedId();
+        addUnit(a_unit, id);
+        return id;
     }
 
     bool Circuit::addUnit(Unit* a_unit, int a_unitId)
@@ -187,6 +190,7 @@ namespace syn
         a_unit->_setParent(this);
         a_unit->setFs(fs());
         a_unit->setTempo(tempo());
+        a_unit->setBufferSize(getBufferSize());
         a_unit->m_midiData = m_midiData;
         _recomputeGraph();
         return true;
@@ -278,13 +282,13 @@ namespace syn
         for (int i = 0; i < m_units.size(); i++) { m_units[unitIndices[i]]->onMidiControlChange_(a_cc, a_value); }
     }
 
-    void Circuit::onInputConnection_(int a_inputPort) { m_inputUnit->connectInput(a_inputPort, &readInput(a_inputPort)); }
+    void Circuit::onInputConnection_(int a_inputPort) { m_inputUnit->connectInput(a_inputPort, &readInput(a_inputPort, 0)); }
 
     void Circuit::onInputDisconnection_(int a_inputPort) { m_inputUnit->disconnectInput(a_inputPort); }
 
-    Unit& Circuit::getUnit(int a_unitId) { return* m_units[a_unitId]; }
+    Unit& Circuit::getUnit(int a_unitId) { return *m_units[a_unitId]; }
 
-    const Unit& Circuit::getUnit(int a_unitId) const { return* m_units[a_unitId]; }
+    const Unit& Circuit::getUnit(int a_unitId) const { return *m_units[a_unitId]; }
 
     int Circuit::addExternalInput_(const string& a_name)
     {
@@ -308,9 +312,29 @@ namespace syn
 
     int Circuit::getNumUnits() const { return static_cast<int>(m_units.size()); }
 
-    Unit*const * Circuit::getProcGraph() const { return m_procGraph.data(); }
+    Unit* const* Circuit::getProcGraph() const { return m_procGraph.data(); }
 
     void Circuit::notifyMidiControlChange(int a_cc, double a_value) { onMidiControlChange_(a_cc, a_value); }
+
+    void Circuit::setBufferSize(int a_bufferSize)
+    {
+        Unit::setBufferSize(a_bufferSize);
+
+        /* Update buffer sizes of internal units */
+        const int* unitIndices = m_units.indices();
+        for (int i = 0; i < m_units.size(); i++)
+        {
+            m_units[unitIndices[i]]->setBufferSize(a_bufferSize);
+        }
+
+        /* Update internal connections, since the location of the unit output buffers may have changed */
+        for (const auto& cr : m_connectionRecords)
+        {
+            Unit* fromUnit = m_units[cr.from_id];
+            Unit* toUnit = m_units[cr.to_id];
+            toUnit->connectInput(cr.to_port, &fromUnit->readOutput(cr.from_port, 0));
+        }
+    }
 
     vector<std::pair<int, int>> Circuit::getConnectionsToInternalInput(int a_unitId, int a_portid) const
     {

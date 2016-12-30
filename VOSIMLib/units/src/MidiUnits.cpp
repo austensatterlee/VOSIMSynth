@@ -3,11 +3,10 @@
 
 #include "common.h"
 
-
-
-
-
-void syn::MidiNoteUnit::process_() {
-    setOutputChannel_(0, note());
-    setOutputChannel_(1, pitchToFreq(note()));
+void syn::MidiNoteUnit::process_()
+{
+    BEGIN_PROC_FUNC
+        WRITE_OUTPUT(0, note());
+        WRITE_OUTPUT(1, pitchToFreq(note()));
+    END_PROC_FUNC
 }

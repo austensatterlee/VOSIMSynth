@@ -19,11 +19,11 @@
 
 #define trig_benches 0
 #define ladder_benches 0
-#define circuit_benches 0
+#define circuit_benches 1
 #define modulus_benches 0
 #define lut_saw_benches 0
 #define lut_pitch_benches 0
-#define container_benches 1
+#define container_benches 0
 
 std::random_device RandomDevice;
 
@@ -271,8 +271,8 @@ NONIUS_BENCHMARK("syn::NamedContainer []", [](nonius::chronometer& meter)
     std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
     std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
 
-    syn::NamedContainer<syn::UnitPort, container_size> myContainer;
-    for (int i = 0; i < container_size; i++) myContainer.add(std::to_string(i), syn::UnitPort(i));
+    syn::NamedContainer<syn::InputPort, container_size> myContainer;
+    for (int i = 0; i < container_size; i++) myContainer.add(std::to_string(i), syn::InputPort(i));
 
     meter.measure([&myContainer, &stores, &loads](int i)
     {
@@ -288,8 +288,8 @@ NONIUS_BENCHMARK("std::unordered_map []", [](nonius::chronometer& meter)
     std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
     std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
 
-    std::unordered_map<int, syn::UnitPort> myContainer;
-    for (int i = 0; i < container_size; i++) myContainer[i] = syn::UnitPort(i);
+    std::unordered_map<int, syn::InputPort> myContainer;
+    for (int i = 0; i < container_size; i++) myContainer[i] = syn::InputPort(i);
 
     meter.measure([&myContainer, &stores, &loads](int i)
     {
@@ -305,8 +305,8 @@ NONIUS_BENCHMARK("std::array []", [](nonius::chronometer& meter)
     std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
     std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
 
-    std::array<syn::UnitPort, container_size> myContainer;
-    for (int i = 0; i < container_size; i++) myContainer[i] = syn::UnitPort(i);
+    std::array<syn::InputPort, container_size> myContainer;
+    for (int i = 0; i < container_size; i++) myContainer[i] = syn::InputPort(i);
 
     meter.measure([&myContainer, &stores, &loads](int i)
     {
@@ -322,8 +322,8 @@ NONIUS_BENCHMARK("std::vector []", [](nonius::chronometer& meter)
     std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
     std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
 
-    std::vector<syn::UnitPort> myContainer(container_size);
-    for (int i = 0; i < container_size; i++) myContainer[i] = syn::UnitPort(i);
+    std::vector<syn::InputPort> myContainer(container_size);
+    for (int i = 0; i < container_size; i++) myContainer[i] = syn::InputPort(i);
 
     meter.measure([&myContainer, &stores, &loads](int i)
     {
@@ -339,8 +339,8 @@ NONIUS_BENCHMARK("std::map [int]", [](nonius::chronometer& meter)
     std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
     std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
 
-    std::map<int, syn::UnitPort> myContainer;
-    for (int i = 0; i < container_size; i++) myContainer[i] = syn::UnitPort(i);
+    std::map<int, syn::InputPort> myContainer;
+    for (int i = 0; i < container_size; i++) myContainer[i] = syn::InputPort(i);
 
     meter.measure([&myContainer, &stores, &loads](int i)
     {
@@ -356,8 +356,8 @@ NONIUS_BENCHMARK("etl::map [int]", [](nonius::chronometer& meter)
     std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
     std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
 
-    etl::map<int, syn::UnitPort, container_size> myContainer;
-    for (int i = 0; i < container_size; i++) myContainer[i] = syn::UnitPort(i);
+    etl::map<int, syn::InputPort, container_size> myContainer;
+    for (int i = 0; i < container_size; i++) myContainer[i] = syn::InputPort(i);
 
     meter.measure([&myContainer, &stores, &loads](int i)
     {
@@ -373,8 +373,8 @@ NONIUS_BENCHMARK("etl::flat_map [int]", [](nonius::chronometer& meter)
     std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
     std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
 
-    etl::flat_map<int, syn::UnitPort, container_size> myContainer;
-    for (int i = 0; i < container_size; i++) myContainer[i] = syn::UnitPort(i);
+    etl::flat_map<int, syn::InputPort, container_size> myContainer;
+    for (int i = 0; i < container_size; i++) myContainer[i] = syn::InputPort(i);
 
     meter.measure([&myContainer, &stores, &loads](int i)
     {
@@ -390,8 +390,8 @@ NONIUS_BENCHMARK("etl::unordered_map [int]", [](nonius::chronometer& meter)
     std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
     std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
 
-    etl::unordered_map<int, syn::UnitPort, container_size> myContainer;
-    for (int i = 0; i < container_size; i++) myContainer[i] = syn::UnitPort(i);
+    etl::unordered_map<int, syn::InputPort, container_size> myContainer;
+    for (int i = 0; i < container_size; i++) myContainer[i] = syn::InputPort(i);
 
     meter.measure([&myContainer, &stores, &loads](int i)
     {

@@ -46,7 +46,7 @@ namespace syn
         virtual bool isActive() const override;
 
         void trigger();
-        void release();
+        void release(double a_releaseValue);
     private:
         enum EADSRStage
         {

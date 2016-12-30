@@ -77,7 +77,6 @@ private:
 
     int m_tempo;
     unsigned m_tickCount;
-    ITimeInfo m_timeInfo;
 };
 
 #endif

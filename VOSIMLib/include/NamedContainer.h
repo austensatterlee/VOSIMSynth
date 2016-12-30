@@ -74,31 +74,21 @@ namespace syn
 
             iterator()
                 : m_nc(nullptr)
-                , m_item_num(0)
-            {
-            }
+                  , m_item_num(0) { }
 
             iterator(NamedContainer& nc)
                 : m_nc(&nc)
-                , m_item_num(0)
-            {
-            }
+                  , m_item_num(0) { }
 
             iterator(NamedContainer& nc, int offset)
                 : m_nc(&nc)
-                , m_item_num(offset)
-            {
-            }
+                  , m_item_num(offset) { }
 
             iterator(const iterator& other)
                 : m_nc(other.m_nc),
-                m_item_num(other.m_item_num)
-            {
-            }
+                  m_item_num(other.m_item_num) { }
 
-            ~iterator()
-            {
-            }
+            ~iterator() { }
 
             iterator& operator ++()
             {
@@ -293,20 +283,20 @@ namespace syn
 
         const string* names() const;
 
+        int getUnusedId();
+
     private:
         int getItemIndex(int a_itemId) const;
 
         int getItemIndex(const string& a_name) const;
 
         int getItemIndex(const T& a_item) const;
-
-        int _getNextId();
     };
 
     template <typename T, int MAXSIZE>
     int NamedContainer<T, MAXSIZE>::add(const string& a_name, const T& a_item)
     {
-        int item_id = _getNextId();
+        int item_id = getUnusedId();
         if (!add(a_name, item_id, a_item))
             return -1;
         return item_id;
@@ -469,11 +459,16 @@ namespace syn
     }
 
     template <typename T, int MAXSIZE>
-    int NamedContainer<T, MAXSIZE>::_getNextId()
+    int NamedContainer<T, MAXSIZE>::getUnusedId()
     {
         int nextId = 0;
         while (m_existances[nextId])
+        {
             nextId++;
+            // container is full
+            if (nextId >= MAXSIZE)
+                return -1;
+        }
         return nextId;
     }
 }

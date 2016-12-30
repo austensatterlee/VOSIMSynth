@@ -31,8 +31,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "common.h"
 
-
-
 namespace syn
 {
     //---------------------
@@ -92,7 +90,8 @@ namespace syn
         return m_lastOutput;
     }
 
-    void NSampleDelay::silentProcess(double a_input) {
+    void NSampleDelay::silentProcess(double a_input)
+    {
         m_buffer[static_cast<int>(m_curWritePhase)] = a_input;
         m_curWritePhase = WRAP<double>(m_curWritePhase + 1.0, m_arraySize);
     }
@@ -110,19 +109,17 @@ namespace syn
     }
 
     MemoryUnit::MemoryUnit(const MemoryUnit& a_rhs) :
-        MemoryUnit(a_rhs.name())
-    {
-    }
+        MemoryUnit(a_rhs.name()) { }
 
     void MemoryUnit::reset() { m_delay.clearBuffer(); }
 
-    void MemoryUnit::onParamChange_(int a_paramId)
-    {
-    }
+    void MemoryUnit::onParamChange_(int a_paramId) { }
 
     void MemoryUnit::process_()
     {
-        setOutputChannel_(0, m_delay.process(readInput(0)));
+        BEGIN_PROC_FUNC
+            WRITE_OUTPUT(0, m_delay.process(READ_INPUT(0)));
+        END_PROC_FUNC
     }
 
     //---------------------
@@ -140,23 +137,26 @@ namespace syn
         addParameter_(pBufDelay, UnitParameter("time", 0.0001, 1.0, 0.0001, UnitParameter::EUnitsType::Seconds, 4));
         addParameter_(pBufFreq, UnitParameter("freq", 1.0, 10000.0, 10000.0, UnitParameter::EUnitsType::Freq).setVisible(false));
         addParameter_(pBufBPMFreq, UnitParameter("rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM).setVisible(false));
-        addParameter_(pBufType, UnitParameter("units", { "sec","Hz","BPM" }, { pBufDelay, pBufFreq, pBufBPMFreq }));
+        addParameter_(pBufType, UnitParameter("units", {"sec","Hz","BPM"}, {pBufDelay, pBufFreq, pBufBPMFreq}));
         addParameter_(pDryGain, UnitParameter("dry", 0.0, 1.0, 0.0));
         addParameter_(pUseAP, UnitParameter("use ap", false));
         m_delay.resizeBuffer(48000);
     }
 
     VariableMemoryUnit::VariableMemoryUnit(const VariableMemoryUnit& a_rhs) :
-        VariableMemoryUnit(a_rhs.name())
-    {
-    }
+        VariableMemoryUnit(a_rhs.name()) { }
 
-    void VariableMemoryUnit::reset() { m_delay.clearBuffer(); m_lastOutput = 0.0; }
+    void VariableMemoryUnit::reset()
+    {
+        m_delay.clearBuffer();
+        m_lastOutput = 0.0;
+    }
 
     void VariableMemoryUnit::onParamChange_(int a_paramId)
     {
         int newtype;
-        switch (a_paramId) {
+        switch (a_paramId)
+        {
         case pBufType:
             newtype = param(pBufType).getInt();
             param(pBufDelay).setVisible(newtype == 0);
@@ -173,38 +173,41 @@ namespace syn
 
     void VariableMemoryUnit::process_()
     {
-        int bufType = param(pBufType).getEnum();
-        switch (bufType) {
-        case pBufDelay:
-            m_delaySamples = periodToSamples(param(pBufDelay).getDouble() + readInput(iSizeMod), fs());
-            break;
-        case pBufFreq:
-            m_delaySamples = freqToSamples(param(pBufFreq).getDouble() + readInput(iSizeMod), fs());
-            break;
-        case pBufBPMFreq:
-            m_delaySamples = freqToSamples(bpmToFreq(param(pBufBPMFreq).getEnum(param(pBufBPMFreq).getInt() + readInput(iSizeMod)), tempo()), fs());
-            break;
-        default:
-            break;
-        }
-        m_delay.resizeBuffer(m_delaySamples);
-        double input = readInput(iIn);
-        double receive = readInput(iReceive);
-        double dryMix = input * param(pDryGain).getDouble();
-        double output;
-        if (param(pUseAP).getBool()) 
-        {
-            double lastInput = m_delay.readTap(0.0); // x[n-1]
-            double lastOutput = m_lastOutput; // y[n-1]
-            double a = (1 - m_delaySamples) / (1 + m_delaySamples);
-            output = (input - lastOutput) * a + lastInput;
-        }
-        else 
-        {
-            output = m_delay.process(input + receive);
-        }
-        m_lastOutput = output;
-        setOutputChannel_(oOut, output + dryMix);
-        setOutputChannel_(oSend, output);
+        BEGIN_PROC_FUNC
+            int bufType = param(pBufType).getEnum();
+            switch (bufType)
+            {
+            case pBufDelay:
+                m_delaySamples = periodToSamples(param(pBufDelay).getDouble() + READ_INPUT(iSizeMod), fs());
+                break;
+            case pBufFreq:
+                m_delaySamples = freqToSamples(param(pBufFreq).getDouble() + READ_INPUT(iSizeMod), fs());
+                break;
+            case pBufBPMFreq:
+                m_delaySamples = freqToSamples(bpmToFreq(param(pBufBPMFreq).getEnum(param(pBufBPMFreq).getInt() + READ_INPUT(iSizeMod)), tempo()), fs());
+                break;
+            default:
+                break;
+            }
+            m_delay.resizeBuffer(m_delaySamples);
+            double input = READ_INPUT(iIn);
+            double receive = READ_INPUT(iReceive);
+            double dryMix = input * param(pDryGain).getDouble();
+            double output;
+            if (param(pUseAP).getBool())
+            {
+                double lastInput = m_delay.readTap(0.0); // x[n-1]
+                double lastOutput = m_lastOutput; // y[n-1]
+                double a = (1 - m_delaySamples) / (1 + m_delaySamples);
+                output = (input - lastOutput) * a + lastInput;
+            }
+            else
+            {
+                output = m_delay.process(input + receive);
+            }
+            m_lastOutput = output;
+            WRITE_OUTPUT(oOut, output + dryMix);
+            WRITE_OUTPUT(oSend, output);
+        END_PROC_FUNC
     }
 }

@@ -187,23 +187,24 @@ namespace syn
     {
         DERIVE_UNIT(PitchToFreqUnit)
     public:
-        explicit PitchToFreqUnit(const string& a_name) : Unit(a_name) 
+        explicit PitchToFreqUnit(const string& a_name) : Unit(a_name)
         {
             addInput_("in");
             addOutput_("out");
         }
 
-        PitchToFreqUnit(const PitchToFreqUnit& a_rhs) : 
+        PitchToFreqUnit(const PitchToFreqUnit& a_rhs) :
             PitchToFreqUnit(a_rhs.name())
         {
         }
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override {
-            setOutputChannel_(0,pitchToFreq(readInput(0)));
+        BEGIN_PROC_FUNC
+            WRITE_OUTPUT(0, pitchToFreq(READ_INPUT(0)));
+        END_PROC_FUNC
         }
     };
-
 
     /**
     * Frequency to pitch conversion
@@ -225,13 +226,15 @@ namespace syn
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override {
-            setOutputChannel_(0, samplesToPitch(freqToSamples(readInput(0),fs()),fs()));
+            BEGIN_PROC_FUNC
+            WRITE_OUTPUT(0, samplesToPitch(freqToSamples(READ_INPUT(0), fs()), fs()));
+            END_PROC_FUNC
         }
     };
 
     /**
      * Signal switch
-     * 
+     *
      * Output `a` if `ctrl` is larger than `comp`, otherwise output `b`.
      */
     class VOSIMLIB_API SwitchUnit : public Unit
@@ -254,9 +257,11 @@ namespace syn
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override {
-            double comp = readInput(2);
-            double ctrl = readInput(3);
-            setOutputChannel_(0, ctrl>comp ? readInput(0) : readInput(1));
+            BEGIN_PROC_FUNC
+            double comp = READ_INPUT(2);
+            double ctrl = READ_INPUT(3);
+            WRITE_OUTPUT(0, ctrl > comp ? READ_INPUT(0) : READ_INPUT(1));
+            END_PROC_FUNC
         }
     };
 }

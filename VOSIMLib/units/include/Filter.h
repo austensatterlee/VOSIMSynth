@@ -73,7 +73,7 @@ namespace syn
 
     template <size_t nX, size_t nY>
     void Filter<nX, nY>::process_() {
-        XBuf[xBufInd] = readInput(0);
+        XBuf[xBufInd] = READ_INPUT(0);
         YBuf[yBufInd] = 0.0;
         double* output = &YBuf[yBufInd];
         int i, j;
@@ -93,7 +93,7 @@ namespace syn
         yBufInd++;
         if (yBufInd == nY)
             yBufInd = 0;
-        setOutputChannel_(0, *output);
+        WRITE_OUTPUT(0, *output);
     }
 }
 #endif

@@ -28,7 +28,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "MemoryUnit.h"
 #include "MidiUnits.h"
 #include "StateVariableFilter.h"
-#include "WaveShapers.h" 
+#include "WaveShapers.h"
 #include "MainWindow.h"
 #include "MIDIReceiver.h"
 #include "VoiceManager.h"
@@ -37,10 +37,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "MainGUI.h"
 
-
-VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
-    :
-    IPLUG_CTOR(0, 1, instanceInfo), m_tempo(0) {
+VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo) : IPLUG_CTOR(0, 1, instanceInfo), m_tempo(0), m_tickCount(0) {
     TRACE;
     makeInstrument();
     makeGraphics();
@@ -52,7 +49,7 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 void VOSIMSynth::makeGraphics() {
     syn::VoiceManager* vm = m_voiceManager;
     syn::UnitFactory* uf = m_unitFactory;
-    synui::MainWindow* mainWindow = new synui::MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm,uf](synui::MainWindow* a_win){ return new synui::MainGUI(a_win, vm, uf); });
+    synui::MainWindow* mainWindow = new synui::MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm, uf](synui::MainWindow* a_win) { return new synui::MainGUI(a_win, vm, uf); });
     mainWindow->setHInstance(gHInstance);
     AttachAppWindow(mainWindow);
 }
@@ -61,7 +58,7 @@ void VOSIMSynth::makeInstrument() {
     m_unitFactory = &syn::UnitFactory::instance();
     VOSIMSynth::registerUnits(*m_unitFactory);
 
-    m_voiceManager = new syn::VoiceManager(m_unitFactory);
+    m_voiceManager = new syn::VoiceManager();
     m_voiceManager->setMaxVoices(8);
 
     m_MIDIReceiver = new syn::MIDIReceiver(m_voiceManager);
@@ -106,7 +103,7 @@ bool VOSIMSynth::SerializeState(ByteChunk* pChunk) {
     // Store gui data
     json& gui = j["gui"] = GetAppWindow()->getGUI()->operator json();
 
-    ss << j;        
+    ss << j;
     pChunk->PutStr(ss.str().c_str());
     return true;
 }
@@ -124,7 +121,7 @@ int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
     const json& gui = j["gui"];
 
     syn::Unit* circuit = syn::Unit::fromJSON(synth["circuit"]);
-    
+
     // <reset gui circuit here>
     GetAppWindow()->getGUI()->reset();
     m_voiceManager->setPrototypeCircuit(*static_cast<const syn::Circuit*>(circuit));

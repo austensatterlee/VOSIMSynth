@@ -28,7 +28,7 @@ namespace synui
             if (!m_isFinal)
                 return "";
             const syn::Unit& unit = m_parentCircuit->m_vm->getUnit(m_outputPort.first, m_parentCircuit->m_vm->getNewestVoiceIndex());
-            double value = unit.readOutput(m_outputPort.second);
+            double value = unit.readOutput(m_outputPort.second,0);
             std::ostringstream os;
             os << std::setprecision(4) << value;
             return os.str();

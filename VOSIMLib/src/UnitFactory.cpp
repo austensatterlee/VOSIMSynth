@@ -39,8 +39,6 @@ vector<string> syn::UnitFactory::getPrototypeNames() const {
 const std::string& syn::UnitFactory::getPrototypeName(unsigned a_classIdentifier)
 {
     int protonum = getPrototypeIdx_(a_classIdentifier);
-    if (protonum < 0)
-        return "";
     return m_prototypes[protonum].name;
 }
 

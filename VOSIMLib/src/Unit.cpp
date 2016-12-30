@@ -27,10 +27,11 @@ namespace syn
     Unit::Unit() : Unit("") {}
 
     Unit::Unit(const std::string& a_name) :
-        m_name{ a_name },
-        m_parent{ nullptr },
-        m_audioConfig{ 44.1e3, 120 },
-        m_midiData{} { }
+        m_name{a_name},
+        m_parent{nullptr},
+        m_audioConfig{44.1e3, 120, 1},
+        m_midiData{},
+        m_currentBufferOffset(0) {}
 
     void Unit::setName(const string& a_name) { m_name = a_name; }
 
@@ -68,6 +69,17 @@ namespace syn
         onNoteOff_();
     }
 
+    void Unit::setBufferSize(int a_bufferSize)
+    {
+        m_audioConfig.bufferSize = a_bufferSize;
+        for (auto& output : m_outputPorts)
+        {
+            output.resize(a_bufferSize, 0.0);
+        }
+    }
+
+    int Unit::getBufferSize() const { return m_audioConfig.bufferSize; }
+
     void Unit::notifyParameterChanged(int a_id) { onParamChange_(a_id); }
 
     double Unit::fs() const { return m_audioConfig.fs; }
@@ -80,13 +92,13 @@ namespace syn
 
     int Unit::velocity() const { return m_midiData.velocity; }
 
-    const NamedContainer<double, 8>& Unit::outputs() const { return m_outputSignals; }
+    const NamedContainer<OutputPort, 8>& Unit::outputs() const { return m_outputPorts; }
 
     int Unit::numParams() const { return static_cast<int>(m_parameters.size()); }
 
     int Unit::numInputs() const { return static_cast<int>(m_inputPorts.size()); }
 
-    int Unit::numOutputs() const { return static_cast<int>(m_outputSignals.size()); }
+    int Unit::numOutputs() const { return static_cast<int>(m_outputPorts.size()); }
 
     const string& Unit::name() const { return m_name; }
 
@@ -100,35 +112,48 @@ namespace syn
 
     const NamedContainer<UnitParameter, MAX_PARAMS>& Unit::parameters() const { return m_parameters; }
 
-    void Unit::tick() { process_(); }
+    void Unit::tick()
+    {
+        process_();
+    }
 
     void Unit::tick(const Eigen::Array<double, -1, -1, Eigen::RowMajor>& a_inputs, Eigen::Array<double, -1, -1, Eigen::RowMajor>& a_outputs)
     {
         const double* oldSources[MAX_INPUTS];
         int nSamples = a_inputs.cols();
         int nInputs = MIN<int>(a_inputs.rows(), static_cast<int>(m_inputPorts.size()));
+        // set new buffer size
+        int oldBufferSize = m_audioConfig.bufferSize;
+        setBufferSize(nSamples);
         // record original input sources
         for (int i = 0; i < nInputs; i++) { oldSources[i] = m_inputPorts.getByIndex(i).src; }
-        for (int i = 0; i < nSamples; i++)
+
+        // set new input sources
+        for (int i = 0; i < nInputs; i++) { m_inputPorts.getByIndex(i).src = &a_inputs(i, 0); }
+
+        tick();
+
+        // record outputs
+        for (int i = 0; i < m_outputPorts.size(); i++)
         {
-            // nudge input sources by one sample
-            for (int j = 0; j < nInputs; j++) { m_inputPorts.getByIndex(j).src = &a_inputs(j, i); }
-
-            tick();
-
-            // record outputs
-            for (int j = 0; j < m_outputSignals.size(); j++)
-                a_outputs(j, i) = m_outputSignals.getByIndex(j);
+            for (int j = 0; j < nSamples; j++)
+            {
+                a_outputs(i, j) = m_outputPorts.getByIndex(i)[j];
+            }
         }
+
+        // restore original buffer size
+        setBufferSize(oldBufferSize);
+
         // restore original input sources
         for (int i = 0; i < nInputs; i++) { m_inputPorts.getByIndex(i).src = oldSources[i]; }
     }
 
-    int Unit::addInput_(const string& a_name, double a_default) { return m_inputPorts.add(a_name, { a_default }); }
+    int Unit::addInput_(const string& a_name, double a_default) { return m_inputPorts.add(a_name, {a_default}); }
 
-    bool Unit::addInput_(int a_id, const string& a_name, double a_default) { return m_inputPorts.add(a_name, a_id, { a_default }); }
+    bool Unit::addInput_(int a_id, const string& a_name, double a_default) { return m_inputPorts.add(a_name, a_id, {a_default}); }
 
-    bool Unit::addOutput_(int a_id, const string& a_name) { return m_outputSignals.add(a_name, a_id, 0.0); }
+    bool Unit::addOutput_(int a_id, const string& a_name) { return m_outputPorts.add(a_name, a_id, OutputPort(getBufferSize(), 0.0)); }
 
     bool Unit::addParameter_(int a_id, const UnitParameter& a_param)
     {
@@ -141,7 +166,7 @@ namespace syn
         return retval;
     }
 
-    int Unit::addOutput_(const string& a_name) { return m_outputSignals.add(a_name, 0.0); }
+    int Unit::addOutput_(const string& a_name) { return m_outputPorts.add(a_name, OutputPort(getBufferSize(), 0.0)); }
 
     int Unit::addParameter_(const UnitParameter& a_param)
     {
@@ -182,6 +207,7 @@ namespace syn
         // Copy audio config data
         setFs(a_other.m_audioConfig.fs);
         setTempo(a_other.m_audioConfig.tempo);
+        setBufferSize(a_other.m_audioConfig.bufferSize);
         // Copy parameter values
         const string* paramNames = m_parameters.names();
         for (int i = 0; i < m_parameters.size(); i++)
@@ -218,7 +244,7 @@ namespace syn
     {
         // Construct new Unit
         unsigned class_id = j["class_id"].get<unsigned>();
-        std::string name = j["name"];
+        std::string name = j["name"].get<std::string>();
         Unit* unit = UnitFactory::instance().createUnit(class_id, name);
 
         // Load saved parameters into the new unit
@@ -233,13 +259,13 @@ namespace syn
         return unit;
     }
 
-    const double& Unit::readInput(int a_index) const { return m_inputPorts[a_index].src ? *m_inputPorts[a_index].src : m_inputPorts[a_index].defVal; }
+    const double& Unit::readInput(int a_index, int a_offset) const { return m_inputPorts[a_index].src ? *(m_inputPorts[a_index].src + a_offset) : m_inputPorts[a_index].defVal; }
 
     const double* Unit::inputSource(int a_index) const { return m_inputPorts[a_index].src; }
 
-    const NamedContainer<UnitPort, MAX_INPUTS>& Unit::inputs() const { return m_inputPorts; }
+    const NamedContainer<InputPort, MAX_INPUTS>& Unit::inputs() const { return m_inputPorts; }
 
-    bool Unit::hasOutput(int a_outputPort) const { return m_outputSignals.contains(a_outputPort); }
+    bool Unit::hasOutput(int a_outputPort) const { return m_outputPorts.contains(a_outputPort); }
 
     bool Unit::hasInput(int a_inputPort) const { return m_inputPorts.contains(a_inputPort); }
 

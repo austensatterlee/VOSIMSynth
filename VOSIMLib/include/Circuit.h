@@ -46,15 +46,15 @@ namespace syn
         int from_port;
         int to_id;
         int to_port;
-        
+
         ConnectionRecord(int a_fromId, int a_fromPort, int a_toId, int a_toPort)
             : from_id(a_fromId),
               from_port(a_fromPort),
               to_id(a_toId),
               to_port(a_toPort) {}
-        
-        ConnectionRecord() 
-            : ConnectionRecord(-1,-1,-1,-1) {}
+
+        ConnectionRecord()
+            : ConnectionRecord(-1, -1, -1, -1) {}
 
         bool operator==(const ConnectionRecord& a_other) const
         {
@@ -73,7 +73,15 @@ namespace syn
             PassthroughUnit(a_other.name()) { };
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override { for (int i = 0; i < numInputs(); i++) { setOutputChannel_(i, readInput(i)); } }
+        void MSFASTCALL process_() GCCFASTCALL override
+        {
+            BEGIN_PROC_FUNC
+            for (int i = 0; i < numInputs(); i++)
+            {
+                WRITE_OUTPUT(i, READ_INPUT(i));
+            }
+            END_PROC_FUNC
+        }
     };
 
     class VOSIMLIB_API InputUnit : public PassthroughUnit
@@ -133,6 +141,8 @@ namespace syn
         Unit* const* getProcGraph() const;
 
         void notifyMidiControlChange(int a_cc, double a_value);
+
+        void setBufferSize(int a_bufferSize) override;
 
         /**
          * Retrieves a list of output ports connected to an input port.
@@ -271,7 +281,7 @@ namespace syn
         }
 
         // make new connection
-        toUnit->connectInput(a_toInputPort, &fromUnit->readOutput(a_fromOutputPort));
+        toUnit->connectInput(a_toInputPort, &fromUnit->readOutput(a_fromOutputPort, 0));
 
         // record the connection upon success
         m_connectionRecords.push_back({fromUnitId, a_fromOutputPort, toUnitId,a_toInputPort});
@@ -288,7 +298,7 @@ namespace syn
 
         Unit* toUnit = m_units[toId];
         Unit* fromUnit = m_units[fromId];
-        _ASSERT(toUnit->inputSource(a_toInputPort) == &fromUnit->readOutput(a_fromOutputPort));
+        _ASSERT(toUnit->inputSource(a_toInputPort) == &fromUnit->readOutput(a_fromOutputPort, 0));
 
         bool result = toUnit->disconnectInput(a_toInputPort);
 

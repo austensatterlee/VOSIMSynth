@@ -38,10 +38,9 @@ using boost::lockfree::capacity;
 
 namespace syn
 {
-     
     /**
      * \brief Used to pass messages to a voice manager via VoiceManager::queueAction.
-     * 
+     *
      * The action function pointer will be called once for each voice (with the corresponding circuit passed as the first parameter).
      * On the last voice, the second parameter will be true.
      * The third parameter is a pointer to the ByteChunk stored in this structure, which is useful for passing arguments.
@@ -63,17 +62,16 @@ namespace syn
         };
 
     public:
-        VoiceManager(UnitFactory* a_factory) :
+        VoiceManager() :
             m_queuedActions{ MAX_VOICEMANAGER_MSG_QUEUE_SIZE },
             m_numActiveVoices(0),
             m_maxVoices(0),
             m_bufferSize(1),
             m_tickCount(0),
-            m_voiceStack(0),
-            m_idleVoiceStack(0),
+            m_activeVoices(0),
+            m_idleVoices(0),
             m_garbageList(0),
-            m_instrument{ "main" },
-            m_factory(a_factory)
+            m_instrument{ "main" }
         { };
 
         virtual ~VoiceManager() {
@@ -90,7 +88,7 @@ namespace syn
 
         void setFs(double a_newFs);
 
-        void setBufferSize(int a_blockSize);
+        void setBufferSize(int a_bufferSize);
 
         void setTempo(double a_newTempo);
 
@@ -164,13 +162,12 @@ namespace syn
         unsigned m_bufferSize;
         unsigned m_tickCount;
 
-        VoiceMap m_voiceMap;
-        VoiceIndexList m_voiceStack;
-        VoiceIndexList m_idleVoiceStack;
+        VoiceMap m_voiceMap; /// maps midi notes to voice indices
+        VoiceIndexList m_activeVoices; /// list of active voice indices
+        VoiceIndexList m_idleVoices; /// list of idle voice indices
         VoiceIndexList m_garbageList; /// pre-allocated storage for collecting idle voices during audio processing
-        vector<Circuit> m_allVoices;
+        vector<Circuit> m_voices;
         Circuit m_instrument;
-        UnitFactory* m_factory;
     };
 }
 #endif

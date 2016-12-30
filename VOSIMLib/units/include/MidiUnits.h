@@ -29,7 +29,7 @@ namespace syn
             MidiNoteUnit(a_rhs.name()) { }
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;;
+        void MSFASTCALL process_() GCCFASTCALL override;
     };
 
     /**
@@ -49,7 +49,9 @@ namespace syn
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override {
-            setOutputChannel_(0, velocity() * 0.0078125);
+        BEGIN_PROC_FUNC
+            WRITE_OUTPUT(0, velocity() * 0.0078125);
+        END_PROC_FUNC
         };
     };
 
@@ -70,7 +72,9 @@ namespace syn
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override {
-            setOutputChannel_(0, static_cast<double>(isNoteOn()));
+        BEGIN_PROC_FUNC
+            WRITE_OUTPUT(0, static_cast<double>(isNoteOn()));
+        END_PROC_FUNC
         };
     };
 
@@ -94,7 +98,9 @@ namespace syn
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override {
-            setOutputChannel_(0, m_value); // divide by 128
+        BEGIN_PROC_FUNC
+            WRITE_OUTPUT(0, m_value); // divide by 128
+        END_PROC_FUNC
         };
 
         void onParamChange_(int a_paramId) override {

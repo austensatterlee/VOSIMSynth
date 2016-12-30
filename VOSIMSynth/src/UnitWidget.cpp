@@ -16,8 +16,8 @@ synui::UnitWidget::UnitWidget(synui::CircuitWidget* a_parent, syn::VoiceManager*
     m_classIdentifier = unit.getClassIdentifier();
     setTooltip(unit.getClassName());
 
-    const syn::NamedContainer<syn::UnitPort, 8>& inputs = unit.inputs();
-    const syn::NamedContainer<double, 8>& outputs = unit.outputs();
+    const auto& inputs = unit.inputs();
+    const auto& outputs = unit.outputs();
 
     ////
     // Setup grid layout
@@ -151,7 +151,6 @@ bool synui::UnitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, b
     Widget::mouseButtonEvent(p, button, down, modifiers);
 
     Eigen::Vector2i mousePos = p - position();
-    // Check if left mouse button was released while dragging
 
     if (m_state == TitleDragging)
     {

@@ -47,6 +47,15 @@ public:\
     TYPE() : TYPE("") {}\
 private:
 
+#define BEGIN_PROC_FUNC
+#define END_PROC_FUNC
+#define READ_OUTPUT(OUTPUT) \
+    readOutput(OUTPUT, getCurrentBufferOffset_())
+#define READ_INPUT(INPUT) \
+    readInput(INPUT, getCurrentBufferOffset_())
+#define WRITE_OUTPUT(OUTPUT, VALUE) \
+    writeOutput_(OUTPUT, getCurrentBufferOffset_(), VALUE)
+
 namespace syn
 {
     class Circuit;
@@ -55,6 +64,7 @@ namespace syn
     {
         double fs;
         double tempo;
+        int bufferSize;
     };
 
     struct VOSIMLIB_API MidiData
@@ -64,17 +74,20 @@ namespace syn
         bool isNoteOn;
     };
 
-    struct VOSIMLIB_API UnitPort
+    struct VOSIMLIB_API InputPort
     {
-        UnitPort() : UnitPort(0.0) {}
-        UnitPort(double a_defVal) : defVal(a_defVal), src(nullptr) {}
+        InputPort() : InputPort(0.0) {}
+
+        InputPort(double a_defVal) : defVal(a_defVal), src(nullptr) {}
 
         double defVal;
         const double* src;
     };
 
-    const vector<string> g_bpmStrs = { "4", "7/2", "3", "5/2", "2", "3/2", "1", "3/4", "1/2", "3/8", "1/4", "3/16", "1/8", "3/32", "1/16", "3/64", "1/32", "1/64" };
-    const vector<double> g_bpmVals = { 4.0, 7.0 / 2.0, 3.0, 5.0 / 2.0, 2.0, 3.0 / 2.0, 1.0, 3.0 / 4.0, 1.0 / 2.0, 3.0 / 8.0, 1.0 / 4.0, 3.0 / 16.0, 1.0 / 8.0, 3.0 / 32.0, 1.0 / 16.0, 3.0 / 64.0, 1.0 / 32.0, 1.0 / 64.0 };
+    typedef std::vector<double> OutputPort;
+
+    const vector<string> g_bpmStrs = {"4", "7/2", "3", "5/2", "2", "3/2", "1", "3/4", "1/2", "3/8", "1/4", "3/16", "1/8", "3/32", "1/16", "3/64", "1/32", "1/64"};
+    const vector<double> g_bpmVals = {4.0, 7.0 / 2.0, 3.0, 5.0 / 2.0, 2.0, 3.0 / 2.0, 1.0, 3.0 / 4.0, 1.0 / 2.0, 3.0 / 8.0, 1.0 / 4.0, 3.0 / 16.0, 1.0 / 8.0, 3.0 / 32.0, 1.0 / 16.0, 3.0 / 64.0, 1.0 / 32.0, 1.0 / 64.0};
 
     /**
      * \class Unit
@@ -87,14 +100,16 @@ namespace syn
      *
      * New units should be derived by adding the DERIVE_UNIT macro immediately after the class declaration,
      * and using Unit::addInput_, Unit::addOutput_, and Unit::addParameter_ to configure the unit in its
-     * constructor.  A constructor taking a single string argument should be supplied. The default constructor
-     * is generated automatically.
+     * constructor. A constructor taking a single string argument as the unit's name should be supplied. The
+     * default constructor is generated automatically. A copy constructor must also be provided. See the
+     * example below for a minimum working copy constructor.
      *
      * Serialization is done via a conversion operator to the nlohmann::json type. This can be overriden to
      * specialize serialization, but make sure to call the base class version first since this takes care of
-     * serializing things like the unit's name and parameters.  Deserialization happens via the static
+     * serializing information such as the unit's name and parameters. Deserialization happens via the static
      * function Unit::fromJSON, which creates a new Unit object using the UnitFactory singleton. However, the
-     * virtual function Unit::load can be overridden to provide any specialized deserialization.
+     * virtual function Unit::load is called at the end of Unit::fromJSON, so it can be overridden to provide
+     * any specialized deserialization.
      *
      * For example:
      * \code{.cpp}
@@ -103,10 +118,14 @@ namespace syn
      *  public:
      *        DerivedUnit(const string& a_name) : Unit(a_name)
      *        {
-     *        ...set up class internals...
+     *          // ...set up class internals... 
      *        }
      *
-     *        /// OPTIONAL:
+     *        // Bare minimum copy constructor needed for cloning to work correctly.
+     *        DerivedUnit(const DerivedUnit& a_other) : DerivedUnit(a_other.name()) 
+     *        {}
+     *
+     *        // Optional methods (can be used to implement special behavior)
      *        operator json() const override {
      *          json j = Unit::operator json();
      *          ...serialize class internals...
@@ -121,32 +140,37 @@ namespace syn
      *    };
      * \endcode
      *
-     * The macros ensure that the code needed to enable serialization and cloning of your class are included:
-     * To allow the unit to be cloned, it is necessary to implement a copy constructor, Unit::_clone, and
-     * Unit::getClassName. Unit::_clone should simply return a new copy of the derived class, for example:
+     * The macros will generate the code needed to enable serialization and cloning of your class. To do so
+     * manually, it is necessary to implement the Unit::_clone and Unit::getClassName methods.
+     *
+     * Unit::_clone should simply return a new copy of the derived class:
      * \code{.cpp}
      *        Unit* DerivedUnit::_clone(){ return new DerivedUnit(*this); }
      * \endcode
      *
-     * Unit::getClassName should simply return a string form of the class name. This is used for factory
-     * construction.
+     * Unit::getClassName should return a string form of the class name. This value is used for factory
+     * construction. The class name must be unique (i.e.  not used by any other Unit derived classes).
      *
      */
     class VOSIMLIB_API Unit
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    public:
+        typedef Eigen::Array<double, -1, -1, Eigen::RowMajor> dynamic_buffer_t;
 
-            Unit();
+        Unit();
 
         explicit Unit(const string& a_name);
 
-        virtual ~Unit() { }
+        virtual ~Unit() {}
 
         /**
          * Clears the unit outputs and calls the unit's process_ method.
          */
-        void MSFASTCALL tick() GCCFASTCALL;
+        inline void MSFASTCALL tick() GCCFASTCALL;
+
+        void MSFASTCALL tick(const dynamic_buffer_t& a_inputs, dynamic_buffer_t& a_outputs) GCCFASTCALL;
 
         /**
          * Notify the unit of a sample rate change
@@ -172,6 +196,10 @@ namespace syn
          * Reset the units internal state (if any)
          */
         virtual void reset() {};
+
+        virtual void setBufferSize(int a_bufferSize);
+
+        int getBufferSize() const;
 
         /**
          * Notify the unit that one of its internal parameters changed.
@@ -231,11 +259,11 @@ namespace syn
 
         const string& inputName(int a_index) const;
 
-        const double& readInput(int a_index) const;
+        const double& readInput(int a_index, int a_offset) const;
 
         const double* inputSource(int a_index) const;
 
-        const NamedContainer<UnitPort, MAX_INPUTS>& inputs() const;
+        const NamedContainer<InputPort, MAX_INPUTS>& inputs() const;
 
         bool hasOutput(int a_outputPort) const;
 
@@ -243,9 +271,9 @@ namespace syn
         string outputName(const ID& a_identifier) const;
 
         template <typename ID>
-        const double& readOutput(const ID& a_identifier) const;
+        const double& readOutput(const ID& a_identifier, int a_offset) const;
 
-        const NamedContainer<double, MAX_OUTPUTS>& outputs() const;
+        const NamedContainer<OutputPort, MAX_OUTPUTS>& outputs() const;
 
         int numParams() const;
 
@@ -289,35 +317,35 @@ namespace syn
         virtual operator json() const;
 
         /// Optional method that can be overriden to load extra information.
-        virtual Unit* load(const json& j) { return this; }
+        virtual Unit* load(const json& j)
+        {
+            return this;
+        }
 
-        /// Returns a unique string to identify the class
+        /// \returns A unique string that identifies the derived class.
         virtual inline string getClassName() const = 0;
 
     protected:
-        /**
-         * Called when a parameter has been modified. This function should be overridden
-         * to update the internal state and verify that the change is valid. If the change is not valid,
-         * the function should return false.
-         */
-        virtual void onParamChange_(int a_paramId) { };
+        virtual void onParamChange_(int a_paramId) {};
 
-        virtual void onFsChange_() { };
+        virtual void onFsChange_() {};
 
-        virtual void onTempoChange_() { };
+        virtual void onTempoChange_() {};
 
-        virtual void onNoteOn_() { };
+        virtual void onNoteOn_() {};
 
-        virtual void onNoteOff_() { };
+        virtual void onNoteOff_() {};
 
-        virtual void onMidiControlChange_(int a_cc, double a_value) { };
+        virtual void onMidiControlChange_(int a_cc, double a_value) {};
 
-        virtual void onInputConnection_(int a_inputPort) { };
+        virtual void onInputConnection_(int a_inputPort) {};
 
-        virtual void onInputDisconnection_(int a_inputPort) { };
+        virtual void onInputDisconnection_(int a_inputPort) {};
+
+        int getCurrentBufferOffset_() const { return m_currentBufferOffset; }
 
         template <typename ID>
-        void setOutputChannel_(const ID& a_id, const double& a_val);
+        void writeOutput_(const ID& a_id, int a_offset, const double& a_val);
 
         virtual void MSFASTCALL process_() GCCFASTCALL = 0;
 
@@ -342,40 +370,58 @@ namespace syn
     private:
         friend class UnitFactory;
         friend class Circuit;
-    public:
-        typedef ::Eigen::Array<double, -1, -1, Eigen::RowMajor> dynamic_buffer_t;
-
-        void MSFASTCALL tick(const dynamic_buffer_t& a_inputs, dynamic_buffer_t& a_outputs) GCCFASTCALL;
 
     private:
         string m_name;
         NamedContainer<UnitParameter, MAX_PARAMS> m_parameters;
-        NamedContainer<double, MAX_OUTPUTS> m_outputSignals;
-        NamedContainer<UnitPort, MAX_INPUTS> m_inputPorts;
+        NamedContainer<OutputPort, MAX_OUTPUTS> m_outputPorts;
+        NamedContainer<InputPort, MAX_INPUTS> m_inputPorts;
         Circuit* m_parent;
         AudioConfig m_audioConfig;
         MidiData m_midiData;
+        int m_currentBufferOffset;
     };
 
     template <typename ID>
-    const double& Unit::readOutput(const ID& a_identifier) const { return m_outputSignals[a_identifier]; }
+    const double& Unit::readOutput(const ID& a_identifier, int a_offset) const
+    {
+        return m_outputPorts[a_identifier][a_offset];
+    }
 
     template <typename ID>
-    UnitParameter& Unit::param(const ID& a_identifier) { return m_parameters[a_identifier]; }
+    UnitParameter& Unit::param(const ID& a_identifier)
+    {
+        return m_parameters[a_identifier];
+    }
 
     template <typename ID>
-    const UnitParameter& Unit::param(const ID& a_identifier) const { return m_parameters[a_identifier]; }
+    const UnitParameter& Unit::param(const ID& a_identifier) const
+    {
+        return m_parameters[a_identifier];
+    }
 
     template <typename ID>
-    void Unit::setOutputChannel_(const ID& a_id, const double& a_val) { m_outputSignals[a_id] = a_val; }
+    void Unit::writeOutput_(const ID& a_id, int a_offset, const double& a_val)
+    {
+        m_outputPorts[a_id][a_offset] = a_val;
+    }
 
     template <typename ID>
-    bool Unit::hasParam(const ID& a_paramId) const { return m_parameters.contains(a_paramId); }
+    bool Unit::hasParam(const ID& a_paramId) const
+    {
+        return m_parameters.contains(a_paramId);
+    }
 
     template <typename ID, typename T>
-    bool Unit::setParam(const ID& a_identifier, const T& a_value) { return m_parameters[a_identifier].set(a_value); };
+    bool Unit::setParam(const ID& a_identifier, const T& a_value)
+    {
+        return m_parameters[a_identifier].set(a_value);
+    };
 
     template <typename ID>
-    string Unit::outputName(const ID& a_identifier) const { return m_outputSignals.name<ID>(a_identifier); };
+    string Unit::outputName(const ID& a_identifier) const
+    {
+        return m_outputPorts.name<ID>(a_identifier);
+    };
 }
 #endif

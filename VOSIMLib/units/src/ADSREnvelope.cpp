@@ -22,7 +22,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "common.h"
 
-
 namespace syn
 {
     ADSREnvelope::ADSREnvelope(const string& name) :
@@ -45,90 +44,106 @@ namespace syn
     ADSREnvelope::ADSREnvelope(const ADSREnvelope& a_rhs) :
         ADSREnvelope(a_rhs.name()) {}
 
-    void ADSREnvelope::process_() {
-        /* Determine phase increment based on current segment */
-        double segment_time;
-        switch (m_currStage) {
-        case Attack:
-            segment_time = param(m_pAttack).getDouble();
-            m_initial = 0;
-            // skip decay segment if its length is zero
-            m_target = param(m_pDecay).getDouble() != 0 ? 1.0 : param(m_pSustain).getDouble();
-            break;
-        case Decay:
-            segment_time = param(m_pDecay).getDouble();
-            m_target = param(m_pSustain).getDouble();
-            break;
-        case Sustain:
-            segment_time = 0;
-            m_initial = param(m_pSustain).getDouble();
-            m_target = param(m_pSustain).getDouble();
-            break;
-        case Release:
-            segment_time = param(m_pRelease).getDouble();
-            break;
-        default:
-            throw std::logic_error("Invalid envelope stage");
-        }
-        segment_time = segment_time * param(m_pTimeScale).getInt();
-        if (!segment_time) { // for zero second segment time, advance phase pointer to next segment
-            m_phase += 1;
-        }
-        else {
-            m_phase += 1.0 / (fs() * segment_time);
-        }
+    void ADSREnvelope::process_()
+    {
+        BEGIN_PROC_FUNC
+            /* Determine phase increment based on current segment */
+            double segment_time;
+            switch (m_currStage)
+            {
+            case Attack:
+                segment_time = param(m_pAttack).getDouble();
+                m_initial = 0;
+                // skip decay segment if its length is zero
+                m_target = param(m_pDecay).getDouble() != 0 ? 1.0 : param(m_pSustain).getDouble();
+                break;
+            case Decay:
+                segment_time = param(m_pDecay).getDouble();
+                m_target = param(m_pSustain).getDouble();
+                break;
+            case Sustain:
+                segment_time = 0;
+                m_initial = param(m_pSustain).getDouble();
+                m_target = param(m_pSustain).getDouble();
+                break;
+            case Release:
+                segment_time = param(m_pRelease).getDouble();
+                break;
+            default:
+                throw std::logic_error("Invalid envelope stage");
+            }
+            segment_time = segment_time * param(m_pTimeScale).getInt();
+            if (!segment_time)
+            { // for zero second segment time, advance phase pointer to next segment
+                m_phase += 1;
+            }
+            else
+            {
+                m_phase += 1.0 / (fs() * segment_time);
+            }
 
-        /* Handle segment change */
-        
-        if (m_phase >= 1.0) {
-            if (m_currStage == Attack) {
-                m_currStage = Decay;
-                m_initial = m_target;
-                m_phase = 0.0;
-            }
-            else if (m_currStage == Decay) {
-                m_currStage = Sustain;
-                m_phase = 1.0;
-            }
-            else if (m_currStage == Sustain) {
-                m_currStage = Sustain;
-                m_phase = 0.0;
-            }
-            else if (m_currStage == Release) {
-                m_isActive = false;
-                m_phase = 1.0;
-            }
-        }
+            /* Handle segment change */
 
-        //double output = LERP(m_initial, m_target, m_phase);
-        //@todo: this is just a test. it should be done more cleanly, possible in a new nonlinear unit 
-        //double tau = -segment_time / -13.8;
-        double shape = 0.3; // std::exp(-1.0 / (tau*getFs()));
-        double output = LERP<double>(m_initial,m_target,INVLERP<double>(1,shape,pow(shape, m_phase)));
-        setOutputChannel_(0, output);
+            if (m_phase >= 1.0)
+            {
+                if (m_currStage == Attack)
+                {
+                    m_currStage = Decay;
+                    m_initial = m_target;
+                    m_phase = 0.0;
+                }
+                else if (m_currStage == Decay)
+                {
+                    m_currStage = Sustain;
+                    m_phase = 1.0;
+                }
+                else if (m_currStage == Sustain)
+                {
+                    m_currStage = Sustain;
+                    m_phase = 0.0;
+                }
+                else if (m_currStage == Release)
+                {
+                    m_isActive = false;
+                    m_phase = 1.0;
+                }
+            }
 
-        if ((!m_isActive || m_currStage == Release) && readInput(m_iGate) > 0.5) {
-            trigger();
-        }
-        else if (m_currStage != Release && readInput(m_iGate) <= 0.5) {
-            release();
-        }
+            //double output = LERP(m_initial, m_target, m_phase);
+            //@todo: this is just a test. it should be done more cleanly, possible in a new nonlinear unit
+            //double tau = -segment_time / -13.8;
+            double shape = 0.3; // std::exp(-1.0 / (tau*getFs()));
+            double output = LERP<double>(m_initial, m_target, INVLERP<double>(1, shape, pow(shape, m_phase)));
+            WRITE_OUTPUT(0, output);
+
+            if ((!m_isActive || m_currStage == Release) && READ_INPUT(m_iGate) > 0.5)
+            {
+                trigger();
+            }
+            else if (m_currStage != Release && READ_INPUT(m_iGate) <= 0.5)
+            {
+                release(READ_OUTPUT(0));
+            }
+        END_PROC_FUNC
     }
 
-    void ADSREnvelope::trigger() {
+    void ADSREnvelope::trigger()
+    {
         m_currStage = Attack;
         m_phase = 0;
         m_isActive = true;
     }
 
-    void ADSREnvelope::release() {
+    void ADSREnvelope::release(double a_releaseValue)
+    {
         m_currStage = Release;
-        m_initial = readOutput(0);
+        m_initial = a_releaseValue;
         m_target = 0;
         m_phase = 0;
     }
 
-    bool ADSREnvelope::isActive() const {
+    bool ADSREnvelope::isActive() const
+    {
         return m_isActive;
     }
 }
