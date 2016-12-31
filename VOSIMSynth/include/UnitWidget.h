@@ -67,11 +67,15 @@ namespace synui
         Eigen::Vector2i getOutputPortAbsPosition(int a_portId);
 
         Eigen::Vector2i preferredSize(NVGcontext* ctx) const override;
+        void performLayout(NVGcontext* ctx) override;
 
         void setEditorCallback(std::function<void(unsigned, int)> a_callback) { m_editorCallback = a_callback; }
 
         operator json() const;
         UnitWidget* load(const json& j);
+
+        bool highlighted() const { return m_highlighted; }
+        void setHighlighted(bool highlighted) { m_highlighted = highlighted; }
 
     protected:
         /// Update layout configuration based on parent circuit's grid spacing.
@@ -99,12 +103,14 @@ namespace synui
         {
             Uninitialized,
             Idle,
-            TitleClicked,
-            TitleDragging
+            BodyClicked,
+            BodyDragging
         } m_state;
 
         int m_unitId;
         unsigned m_classIdentifier;
+
+        bool m_highlighted;
     };
 
     class InputUnitWidget : public UnitWidget

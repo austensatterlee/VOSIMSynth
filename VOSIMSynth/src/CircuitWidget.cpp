@@ -38,29 +38,58 @@ namespace synui
         {
             nvgSave(ctx);
             nvgBeginPath(ctx);
+            nanogui::Color wireColor;
             // If wire is incomplete (still being drawn), draw a "ghost"
             if (m_inputPort.first < 0 || m_outputPort.first < 0)
             {
                 nvgStrokeWidth(ctx, 2.0f);
-                nvgStrokeColor(ctx, nanogui::Color(1.0f, 0.0f, 0.0f, 0.3f));
+                wireColor = nanogui::Color(1.0f, 0.0f, 0.0f, 0.3f);
             }
             else
             {
                 nvgStrokeWidth(ctx, 2.0f);
                 if (highlight)
-                    nvgStrokeColor(ctx, nanogui::Color(1.0f, 1.0f, 1.0f, 0.55f));
+                    wireColor = nanogui::Color(1.0f, 1.0f, 1.0f, 0.55f);
                 else
-                    nvgStrokeColor(ctx, nanogui::Color(1.0f, 0.0f, 0.0f, 0.55f));
+                    wireColor = nanogui::Color(1.0f, 0.0f, 0.0f, 0.55f);
             }
+            nvgStrokeColor(ctx, wireColor);
+            nvgFillColor(ctx, wireColor);
+            nvgLineJoin(ctx, NVG_ROUND);
+
             nvgMoveTo(ctx, m_start.x(), m_start.y());
             for (auto pt : m_path)
             {
-                pt = m_parentCircuit->m_grid.toPixel(pt, m_parentCircuit->gridSpacing());
+                pt = m_parentCircuit->m_grid.toPixel(pt, m_parentCircuit->getGridSpacing());
                 nvgLineTo(ctx, pt.x(), pt.y());
             }
             nvgLineTo(ctx, m_end.x(), m_end.y());
             nvgStroke(ctx);
 
+            /* Draw arrow */
+            if (m_path.size() > 1) {
+                float noseSize = m_parentCircuit->getGridSpacing()*0.5;
+                float noseAngle = 45.0;
+                nvgBeginPath(ctx);
+                Eigen::Vector2i pt = m_parentCircuit->m_grid.toPixel(m_path[m_path.size() - 1], m_parentCircuit->getGridSpacing());
+                Eigen::Vector2i prevPt = m_parentCircuit->m_grid.toPixel(m_path[m_path.size() - 2], m_parentCircuit->getGridSpacing());
+                Eigen::Vector2f dir = (pt - prevPt).cast<float>();
+                dir.normalize();
+                float dangle = asin(dir[1]);
+
+                Eigen::Rotation2D<float> rot(dangle);
+                Eigen::Vector2f headOffset = rot * (Vector2f{ 0, 1 } *noseSize);
+                Eigen::Vector2f noseOffset = rot * (Vector2f{ sin(2 * PI / 180.0*noseAngle), cos(2 * PI / 180.0*noseAngle) } * noseSize);
+
+                Eigen::Vector2f p0 = m_parentCircuit->m_grid.toPixel(m_path[m_path.size() - 1], m_parentCircuit->getGridSpacing()).cast<float>() - dir*noseSize;
+                nvgBeginPath(ctx);
+                nvgMoveTo(ctx, p0.x(), p0.y());
+                nvgLineTo(ctx, p0.x() + headOffset.x(), p0.y() + headOffset.y());
+                nvgLineTo(ctx, p0.x() + noseOffset.x(), p0.y() + noseOffset.y());
+                nvgLineTo(ctx, p0.x() - headOffset.x(), p0.y() - headOffset.y());
+                nvgClosePath(ctx);
+                nvgFill(ctx);
+            }
             nvgRestore(ctx);
         }
 
@@ -131,7 +160,7 @@ namespace synui
                     score += 5;
                     break;
                 case CircuitWidget::GridCell::Unit:
-                    score += 55;
+                    score += 25;
                     break;
                 default:
                     score += 1;
@@ -148,10 +177,12 @@ namespace synui
         {
             updateStartAndEndPositions(m_end);
 
-            auto startCell = m_parentCircuit->m_grid.fromPixel(m_start, m_parentCircuit->gridSpacing());
-            auto endCell = m_parentCircuit->m_grid.fromPixel(m_end, m_parentCircuit->gridSpacing());
+            auto startCell = m_parentCircuit->m_grid.fromPixel(m_start, m_parentCircuit->getGridSpacing());
+            auto endCell = m_parentCircuit->m_grid.fromPixel(m_end, m_parentCircuit->getGridSpacing());
 
-            m_path = m_parentCircuit->m_grid.findPath<manhattan_distance, weight_func>(startCell, endCell);
+            auto path = m_parentCircuit->m_grid.findPath<manhattan_distance, weight_func>(startCell, endCell);
+            m_path.resize(path.size());
+            std::copy(path.begin(), path.end(), m_path.begin());
 
             // Update grid to reflect new location
             m_parentCircuit->m_grid.replaceValue({ CircuitWidget::GridCell::Wire, this }, m_parentCircuit->m_grid.getEmptyValue());
@@ -200,7 +231,7 @@ namespace synui
         CircuitWidget::Port m_outputPort;
         Eigen::Vector2i m_start;
         Eigen::Vector2i m_end;
-        std::list<Grid2DPoint> m_path;
+        std::vector<Grid2DPoint> m_path;
         bool m_isFinal;
     };
 }
@@ -211,9 +242,9 @@ synui::CircuitWidget::CircuitWidget(nanogui::Widget* a_parent, synui::MainWindow
     m_uf(a_uf),
     m_vm(a_vm),
     m_grid{ {0,0}, GridCell{GridCell::Empty, nullptr} },
-    m_gridSpacing(10),
+    m_gridSpacing(12),
     m_state(State::Uninitialized),
-    m_placingUnitState{ 0,nullptr },
+    m_placingUnitState{ 0, false, nullptr },
     m_drawingWireState{ false,nullptr },
     m_highlightedWire{ nullptr },
     m_unitEditorHost(a_unitEditorHost)
@@ -389,18 +420,18 @@ void synui::CircuitWidget::performLayout(NVGcontext* ctx)
 
 void synui::CircuitWidget::resizeGrid(int a_newGridSpacing)
 {
-    Vector2i newGridShape = m_grid.fromPixel(size(), a_newGridSpacing);
+    Vector2i newGridShape = m_grid.fromPixel(size(), a_newGridSpacing) - Vector2i::Ones();
+    newGridShape = newGridShape.cwiseMax(0);
     if (m_gridSpacing == a_newGridSpacing && (newGridShape.array() == m_grid.getShape().array()).all())
         return;
     m_gridSpacing = a_newGridSpacing;
-    m_grid.resize(m_grid.fromPixel(size(), m_gridSpacing));
+    m_grid.resize(newGridShape);
 
-    for (auto unit : m_unitWidgets)
+    for(auto unit : m_unitWidgets)
         unit.second->updateRowSizes_();
 
-    performScreenLayout_();
+    screen()->performLayout();
 
-    m_grid.reset();
     for (auto unit : m_unitWidgets)
         updateUnitPos_(unit.second, unit.second->position(), true);
 }
@@ -446,10 +477,6 @@ synui::CircuitWidget* synui::CircuitWidget::load(const json& j)
         m_wires.push_back(newWire->load(w));
     }
 
-    performScreenLayout_();
-
-    for (CircuitWire* cw : m_wires) { cw->updatePath(); }
-
     return this;
 }
 
@@ -472,11 +499,12 @@ void synui::CircuitWidget::createInputOutputUnits_()
     unsigned inputClassId = circ->getUnit(inputUnitId).getClassIdentifier();
     int outputUnitId = circ->getOutputUnitId();
     unsigned outputClassId = circ->getUnit(outputUnitId).getClassIdentifier();
-    onUnitCreated_(inputClassId, inputUnitId);
-    endPlaceUnit_({ 0,height() * 0.5 - m_placingUnitState.widget->height() * 0.5 });
 
-    onUnitCreated_(outputClassId, outputUnitId);
-    endPlaceUnit_({ width() - 1.5 * m_placingUnitState.widget->width(),height() * 0.5 - m_placingUnitState.widget->height() * 0.5 });
+    UnitWidget* inWidget = createUnitWidget_(inputClassId, inputUnitId);
+    UnitWidget* outWidget = createUnitWidget_(outputClassId, outputUnitId);
+    screen()->performLayout();
+    updateUnitPos_(inWidget, { 0, height() * 0.5 - inWidget->height() * 0.5 });
+    updateUnitPos_(outWidget, { width() - 1.5 * outWidget->width(), height() * 0.5 - outWidget->height() * 0.5 });    
 }
 
 void synui::CircuitWidget::createUnit_(const std::string& a_unitPrototypeName)
@@ -530,11 +558,17 @@ synui::UnitWidget* synui::CircuitWidget::createUnitWidget_(unsigned a_classId, i
         widget = new UnitWidget(this, m_vm, a_unitId);
     else
         widget = m_registeredUnitWidgets[a_classId](this, m_vm, a_unitId);
-
-    widget->setEditorCallback([&](unsigned classId, int unitId) { m_unitEditorHost->activateEditor(classId, unitId); });
-    // Performing the layout is necesarry so we know what size the widget will be.
-    performScreenLayout_();
+    
+    widget->setEditorCallback([&](unsigned classId, int unitId)
+    {
+        if (m_unitEditorHost->selectedIndex() >= 0)
+            m_unitWidgets[m_unitEditorHost->getActiveUnitId()]->setHighlighted(false);
+        m_unitEditorHost->activateEditor(classId, unitId);
+        m_unitWidgets[unitId]->setHighlighted(true);
+    });
     m_unitWidgets[a_unitId] = widget;
+    // Performing the layout is necesarry so we know what size the widget will be.
+    screen()->performLayout();
     return widget;
 }
 
@@ -716,10 +750,6 @@ void synui::CircuitWidget::updateUnitPos_(UnitWidget* a_unitWidget, const Eigen:
         return;
 
     auto blk = m_grid.forceGetBlock(topLeftCell, bottomRightCell);
-    /* Abort if grid contents already match the specified the unit */
-    bool gridMatch = blk.unaryExpr([a_unitWidget](const GridCell& x) { return x.state == GridCell::Unit && x.ptr == a_unitWidget ? x : GridCell{ GridCell::Empty, nullptr }; }).array().all();
-    if (!a_force && gridMatch)
-        return;
 
     std::ostringstream os;
     os << "Updating unit position: " << a_unitWidget->getName() << " (" << a_newPos.x() << ", " << a_newPos.y() << ") " << (a_force ? "(forcing)" : "");

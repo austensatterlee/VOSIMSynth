@@ -28,6 +28,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __UI__
 #define __UI__
 #include <eigen/Core>
+#include <nanogui/nanogui.h>
 #include <functional>
 #include <vector>
 #include <memory>
@@ -211,5 +212,18 @@ namespace synui
     int GetArgs(ByteChunk* a_chunk, int a_startPos, Only& a_only) {
         return a_chunk->Get<Only>(&a_only, a_startPos);
     }
+
+    /* Draw functions */
+    
+    /**
+     * \brief Draw a shadow around a rectangular area.
+     * \param r corner radius
+     * \param s shadow size
+     * \param a_shadowColor shadow (inner) color
+     * \param a_transparentColor transparent (outer) color
+     */
+    void drawShadow(NVGcontext* ctx, float x, float y, float w, float h, float r = 1.0f, float s = 5.0f, const nanogui::Color& a_shadowColor = {0.0f, 0.5f}, const nanogui::Color& a_transparentColor = {0.0f, 1.0f});
+
+    void drawTooltip(NVGcontext* a_ctx, const Eigen::Vector2i& a_pos, const std::string& a_str, double elapsed);
 }
 #endif

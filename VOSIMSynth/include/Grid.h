@@ -34,7 +34,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <unordered_set>
 #include <unordered_map>
 #include <boost/heap/binomial_heap.hpp>
-#include <DSPMath.h>
 
 namespace synui
 {
@@ -159,10 +158,26 @@ namespace synui
             int r = std::max(a_topLeft[1], a_bottomRight[1]);
 
             // Fix bounds to be within grid
-            t = syn::CLAMP(t, 0, m_shape[0]);
-            b = syn::CLAMP(b, 0, m_shape[0]);
-            l = syn::CLAMP(l, 0, m_shape[1]);
-            r = syn::CLAMP(r, 0, m_shape[1]);
+            if(t<0)
+            {
+                t -= t;
+                b -= t;
+            }
+            if(b>m_shape[0])
+            {
+                t -= (b - m_shape[0]);
+                b -= (b - m_shape[0]);
+            }
+            if(l<0)
+            {
+                l -= l;
+                r -= l;
+            }
+            if(r>m_shape[1])
+            {
+                l -= (r - m_shape[1]);
+                r -= (r - m_shape[1]);
+            }
             auto blk = m_grid.block(t, l, b - t, r - l);
             if (!requireUnoccupied || (blk.array() == m_unoccupiedValue).all())
             {
@@ -197,11 +212,29 @@ namespace synui
             int b = std::max(a_topLeft[0], a_bottomRight[0]);
             int l = std::min(a_topLeft[1], a_bottomRight[1]);
             int r = std::max(a_topLeft[1], a_bottomRight[1]);
+
             // Fix bounds to be within grid
-            t = syn::CLAMP(t, 0, m_shape[0]);
-            b = syn::CLAMP(b, 0, m_shape[0]);
-            l = syn::CLAMP(l, 0, m_shape[1]);
-            r = syn::CLAMP(r, 0, m_shape[1]);
+            if (t<0)
+            {
+                t -= t;
+                b -= t;
+            }
+            if (b>m_shape[0])
+            {
+                t -= (b - m_shape[0]);
+                b -= (b - m_shape[0]);
+            }
+            if (l<0)
+            {
+                l -= l;
+                r -= l;
+            }
+            if (r>m_shape[1])
+            {
+                l -= (r - m_shape[1]);
+                r -= (r - m_shape[1]);
+            }
+
             a_topLeft = { t,l };
             a_bottomRight = { b,r };
             return m_grid.block(t, l, b - t, r - l);
@@ -387,7 +420,7 @@ namespace synui
                     const Grid2DPoint& prev = cameFrom.find(current) != cameFrom.end() ? unravel_index(cameFrom[current]) : Grid2DPoint{ -1,-1 };
                     const Grid2DPoint& curr = unravel_index(current);
                     const Grid2DPoint& next = unravel_index(neighbor);
-                    int tentative_gScore = gScore[current] + w(*this, prev, curr, next);
+                    int tentative_gScore = neighbor==end ? gScore[current] : gScore[current] + w(*this, prev, curr, next);
 
                     if (openSet.find(neighbor) == openSet.end()) { openSet[neighbor] = open.push({ neighbor,std::numeric_limits<int>::infinity() }); }
                     else if (gScore.find(neighbor) != gScore.end() && tentative_gScore >= gScore[neighbor])

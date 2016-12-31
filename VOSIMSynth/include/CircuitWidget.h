@@ -112,7 +112,7 @@ namespace synui
 
         syn::VoiceManager* voiceManager() const { return m_vm; }
 
-        int gridSpacing() const { return m_gridSpacing; }
+        int getGridSpacing() const { return m_gridSpacing; }
 
         template<typename UnitType>
         void registerUnitWidget(UnitWidgetConstructor a_func) { m_registeredUnitWidgets[UnitType("").getClassIdentifier()] = a_func; }
@@ -124,15 +124,6 @@ namespace synui
         CircuitWidget* load(const json& j);
         void reset();
     protected:
-        /**
-         * \brief Schedule a call to performLayout for the next call to draw().
-         */
-        void performScreenLayout_()
-        {
-            Widget* screen = this;
-            while (screen->parent()) screen = screen->parent();
-            static_cast<nanogui::Screen *>(screen)->performLayout();
-        }
 
         /**
          * \brief Create widgets for input/output units.
@@ -231,6 +222,7 @@ namespace synui
             Idle,
             PlacingUnit,
             DrawingWire,
+            DrawingSelection
         } m_state;
 
         struct PlacingUnitState
@@ -250,5 +242,10 @@ namespace synui
         double m_wireHighlightTime;
         CircuitWire* m_highlightedWire;
         std::vector<CircuitWire*> m_wires;
+
+        struct DrawingSelection
+        {
+            Eigen::Vector2i startPos;
+        } m_drawingSelectionState;
     };
 }

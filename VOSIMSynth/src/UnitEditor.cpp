@@ -268,7 +268,7 @@ void synui::UnitEditor::draw(NVGcontext* ctx)
 }
 
 
-synui::UnitEditorHost::UnitEditorHost(Widget* parent, syn::VoiceManager* a_vm) : StackedWidget(parent), m_vm(a_vm) {}
+synui::UnitEditorHost::UnitEditorHost(Widget* parent, syn::VoiceManager* a_vm) : StackedWidget(parent), m_vm(a_vm), m_activeUnitId(-1) {}
 
 void synui::UnitEditorHost::addEditor(unsigned a_classId, int a_unitId)
 {
@@ -300,6 +300,7 @@ void synui::UnitEditorHost::activateEditor(unsigned a_classId, int a_unitId)
         addEditor(a_classId, a_unitId);
     UnitEditor* editor = m_editorMap[a_unitId];
     setSelectedIndex(childIndex(editor));
+    m_activeUnitId = a_unitId;
 
     Widget* screen = this;
     while(screen->parent()) screen = screen->parent();

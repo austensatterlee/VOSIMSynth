@@ -128,9 +128,7 @@ namespace synui
         nanogui::Widget* m_unitSelector;
         UnitEditorHost* m_unitEditorHost;
 
-        nanogui::Widget* m_sidePanelR;
+        synui::EnhancedWindow* m_sidePanelR;
         CircuitWidget* m_circuit;
     };
-
-    void drawTooltip(NVGcontext* a_ctx, const Eigen::Vector2i& a_pos, const std::string& a_str, double elapsed);
 }

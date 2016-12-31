@@ -90,8 +90,13 @@ namespace synui
 
         void CloseWindow();
 
+        void resize(int w, int h);
+
         void queueExternalMessage(GUIMessage* a_msg);
         void queueInternalMessage(GUIMessage* a_msg);
+
+        /// Assign a function to be called when the user requests a resize
+        void setResizeFunc(std::function<void(int w,int h)> a_func);
 
 #ifdef _WIN32
         void setHInstance(HINSTANCE a_newHInstance) { m_HInstance = a_newHInstance; }
@@ -99,7 +104,6 @@ namespace synui
         static LRESULT CALLBACK drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam);
 #endif
     private:
-
         void _OpenWindowImplem(HWND a_system_window);
         void _CloseWindowImplem();
         
@@ -107,6 +111,7 @@ namespace synui
 
         void _flushMessageQueues();
         void _processMessage(GUIMessage* a_msg);
+
     private:
 #ifdef _WIN32
         HINSTANCE m_HInstance;
@@ -124,6 +129,8 @@ namespace synui
 
         spsc_queue<GUIMessage*> m_guiInternalMsgQueue;
         spsc_queue<GUIMessage*> m_guiExternalMsgQueue;
+
+        std::function<void(int, int)> m_resizeFunc;
     };
 }
 #endif

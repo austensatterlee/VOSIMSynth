@@ -88,14 +88,27 @@ namespace synui
     public:
         UnitEditorHost(Widget* parent, syn::VoiceManager* a_vm);
         void activateEditor(unsigned a_classId, int a_unitId);
+        int getActiveUnitId() const { return m_activeUnitId; }
         void addEditor(unsigned a_classId, int a_unitId);
         void removeEditor(int a_unitId);
         template<typename UnitType>
         void registerUnitEditor(UnitEditorConstructor a_func) { m_registeredUnitEditors[UnitType("").getClassIdentifier()] = a_func; }
+
+        void reset()
+        {
+            setSelectedIndex(-1);
+            m_editorMap.clear();
+            m_activeUnitId = -1;
+            while (childCount())
+                removeChild(0);
+        };
+
     protected:
         syn::VoiceManager* m_vm;
-        /// maps syn::unit class identifiers to widget indexes.
-        std::unordered_map<int, UnitEditor*> m_editorMap;
+        
+        std::unordered_map<int, UnitEditor*> m_editorMap; /// maps unit IDs to unit editors
         std::unordered_map<unsigned, UnitEditorConstructor> m_registeredUnitEditors;
+
+        int m_activeUnitId;
     };
 }

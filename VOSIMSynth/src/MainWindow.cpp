@@ -47,7 +47,7 @@ LRESULT CALLBACK synui::MainWindow::drawFunc(HWND Handle, UINT Message, WPARAM W
         LPCREATESTRUCT lpcs = (LPCREATESTRUCT)LParam;
         SetWindowLongPtr(Handle, GWLP_USERDATA, (LPARAM)(lpcs->lpCreateParams));
 
-        int mSec = int(1000.0 / 120.0);
+        int mSec = int(1000.0 / 60.0);
         SetTimer(Handle, NULL, mSec, NULL);
 
         return 0;
@@ -142,6 +142,11 @@ void synui::MainWindow::_runLoop()
 
 void synui::MainWindow::queueInternalMessage(GUIMessage* a_msg) { m_guiInternalMsgQueue.push(a_msg); }
 
+void synui::MainWindow::setResizeFunc(std::function<void(int w, int h)> a_func)
+{
+    m_resizeFunc = a_func;
+}
+
 void synui::MainWindow::_flushMessageQueues()
 {
     GUIMessage* msg;
@@ -180,4 +185,12 @@ void synui::MainWindow::CloseWindow()
         m_gui->hide();
         m_isOpen = false;
     }
+}
+
+void synui::MainWindow::resize(int w, int h)
+{
+    glfwSetWindowSize(m_window, w, h);
+    m_size = { w,h };
+    if (m_resizeFunc)
+        m_resizeFunc(w, h);
 }

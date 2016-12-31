@@ -58,19 +58,20 @@ namespace synui
         nanogui::Button* createOpenButton(Widget* a_parent, const string& text = "", int icon = 0, std::function<void()> a_callback = nullptr)
         {
             auto settings_button = new nanogui::Button(a_parent, text, icon);
-            settings_button->setFixedSize({ 20,20 });
+            settings_button->setFixedSize({20,20});
             settings_button->setCallback([this, a_callback]()
-            {
-                setVisible(true);
-                screen()->moveWindowToFront(this);
-                if (a_callback)
-                    a_callback();
-            });
+                {
+                    setVisible(true);
+                    screen()->moveWindowToFront(this);
+                    if (a_callback)
+                        a_callback();
+                });
             return settings_button;
         }
 
         void setDrawCallback(DrawFunc f) { m_drawCallback = f; }
         DrawFunc getDrawCallback() const { return m_drawCallback; }
+
     private:
         DrawFunc m_drawCallback;
     };
@@ -93,6 +94,7 @@ synui::MainGUI* synui::MainGUI::load(const json& j)
 
 void synui::MainGUI::reset()
 {
+    m_unitEditorHost->reset();
     m_circuit->reset();
 }
 
@@ -118,18 +120,18 @@ void synui::MainGUI::_createUnitSelector(nanogui::Widget* a_widget)
             subbtn->setFontSize(14);
             // Close popup
             subbtn->setCallback([this, button, subbtn]()
-            {
-                this->m_circuit->loadPrototype(subbtn->id());
-                button->setPushed(false);
-                m_screen->updateFocus(nullptr);
-            });
+                {
+                    this->m_circuit->loadPrototype(subbtn->id());
+                    button->setPushed(false);
+                    m_screen->updateFocus(nullptr);
+                });
         }
     }
 }
 
 void synui::MainGUI::_createSettingsEditor(nanogui::Widget* a_widget, nanogui::FormHelper* a_fh)
 {
-    auto layout = new nanogui::AdvancedGridLayout({ 10, 0, 10, 0 }, {});
+    auto layout = new nanogui::AdvancedGridLayout({10, 0, 10, 0}, {});
     layout->setMargin(10);
     layout->setColStretch(2, 1);
     a_widget->setLayout(layout);
@@ -137,13 +139,29 @@ void synui::MainGUI::_createSettingsEditor(nanogui::Widget* a_widget, nanogui::F
     helper->setWidget(a_widget);
 
     helper->addVariable<int>("Grid Spacing", [this](const int& s)
+                             {
+                                 m_circuit->resizeGrid(s);
+                                 m_screen->performLayout();
+                             }, [this]()
+                             {
+                                 int gs = m_circuit->getGridSpacing();
+                                 return gs;
+                             });
+
+    helper->addVariable<int>("Window width", [this](const int& w)
     {
-        m_circuit->resizeGrid(s);
-        m_screen->performLayout();
+        m_window->resize(w, m_screen->height());
     }, [this]()
     {
-        int gs = m_circuit->gridSpacing();
-        return gs;
+        return m_screen->width();
+    });
+
+    helper->addVariable<int>("Window height", [this](const int& h)
+    {
+        m_window->resize(m_screen->width(), h);
+    }, [this]()
+    {
+        return m_screen->height();
     });
 
     nanogui::Theme* theme = m_screen->theme();
@@ -200,19 +218,19 @@ void synui::MainGUI::_createLogViewer(nanogui::Widget* a_widget)
     a_widget->setLayout(layout);
 
     Logger::instance().addListener([a_widget]()
-    {
-        const auto& log = Logger::instance().getLogs().back();
-        std::ostringstream value;
-        value << "[ " << log.first << "] " << log.second;
-        auto txt = new nanogui::Label(a_widget, value.str(), "sans", 10);
-        a_widget->screen()->performLayout();
-    });
+        {
+            const auto& log = Logger::instance().getLogs().back();
+            std::ostringstream value;
+            value << "[ " << log.first << "] " << log.second;
+            auto txt = new nanogui::Label(a_widget, value.str(), "sans", 10);
+            a_widget->screen()->performLayout();
+        });
 }
 
 synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf) : m_window(a_window),
-m_screen(nullptr),
-m_vm(a_vm),
-m_uf(a_uf)
+                                                                                                        m_screen(nullptr),
+                                                                                                        m_vm(a_vm),
+                                                                                                        m_uf(a_uf)
 {
     m_screen = new nanogui::Screen();
     m_screen->initialize(m_window->getWindow(), true);
@@ -221,12 +239,14 @@ m_uf(a_uf)
 
     /* Divide window into panes */
     m_sidePanelL = new synui::EnhancedWindow(m_screen, "");
+    m_sidePanelL->setIsBackgroundWindow(true);
     m_sidePanelL->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 5, 1));
     m_sidePanelL->setFixedHeight(m_screen->height());
     m_sidePanelL->setFixedWidth(200);
     m_screen->performLayout();
 
     m_sidePanelR = new synui::EnhancedWindow(m_screen, "");
+    m_sidePanelR->setIsBackgroundWindow(true);
     m_sidePanelR->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 0));
     m_screen->performLayout();
 
@@ -245,16 +265,17 @@ m_uf(a_uf)
 
     /* Create button panel */
     m_buttonPanel = new EnhancedWindow(m_screen, "");
+    m_buttonPanel->setIsBackgroundWindow(true);
     m_buttonPanel->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx)
-    {
-        nvgBeginPath(ctx);
-        nvgRect(ctx, self->position().x(), self->position().y(), self->width(), self->height());
+        {
+            nvgBeginPath(ctx);
+            nvgRect(ctx, self->position().x(), self->position().y(), self->width(), self->height());
 
-        nanogui::Color fillColor = self->theme()->mWindowFillUnfocused*0.5f;
-        nvgFillColor(ctx, fillColor);
-        nvgFill(ctx);
-    });
-    auto buttonPanelLayout = new nanogui::AdvancedGridLayout({}, { 0 }, 5);
+            nanogui::Color fillColor = self->theme()->mWindowFillUnfocused * 0.5f;
+            nvgFillColor(ctx, fillColor);
+            nvgFill(ctx);
+        });
+    auto buttonPanelLayout = new nanogui::AdvancedGridLayout({}, {0}, 5);
     m_buttonPanel->setLayout(buttonPanelLayout);
     buttonPanelLayout->appendCol(0, 1.0);
 
@@ -268,8 +289,13 @@ m_uf(a_uf)
 
     /* Add a button for openning the log viewer window. */
     buttonPanelLayout->appendCol(0, 0);
-    auto logviewer_button = m_logViewer->createOpenButton(m_buttonPanel, "", ENTYPO_TRAFFIC_CONE);
-    buttonPanelLayout->setAnchor(logviewer_button, nanogui::AdvancedGridLayout::Anchor{ buttonPanelLayout->colCount() - 1,0 });
+    
+    auto log_callback = [this]()
+    {
+        m_screen->centerWindow(m_logViewer);
+    };
+    auto logviewer_button = m_logViewer->createOpenButton(m_buttonPanel, "", ENTYPO_TRAFFIC_CONE, log_callback);
+    buttonPanelLayout->setAnchor(logviewer_button, nanogui::AdvancedGridLayout::Anchor{buttonPanelLayout->colCount() - 1,0});
 
     /* Create the settings editor window. */
     m_settingsEditor = new EnhancedWindow(m_screen, "Settings");
@@ -283,12 +309,12 @@ m_uf(a_uf)
     /* Add a button for openning the settings editor window. */
     buttonPanelLayout->appendCol(0, 0);
     auto settings_callback = [this]()
-    {
-        m_settingsFormHelper->refresh();
-        m_settingsEditor->center();
-    };
+            {
+                m_settingsFormHelper->refresh();
+                m_screen->centerWindow(m_settingsEditor);
+            };
     auto settings_button = m_settingsEditor->createOpenButton(m_buttonPanel, "", ENTYPO_COG, settings_callback);
-    buttonPanelLayout->setAnchor(settings_button, nanogui::AdvancedGridLayout::Anchor{ buttonPanelLayout->colCount() - 1,0 });
+    buttonPanelLayout->setAnchor(settings_button, nanogui::AdvancedGridLayout::Anchor{buttonPanelLayout->colCount() - 1,0});
 
     m_tabWidget->setActiveTab(0);
 
@@ -297,41 +323,42 @@ m_uf(a_uf)
     glfwSetWindowUserPointer(m_window->getWindow(), this);// Set user pointer so we can access ourselves inside the event handlers
 
     glfwSetCursorPosCallback(m_window->getWindow(),
-        [](GLFWwindow* w, double x, double y) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->cursorPosCallbackEvent(x, y); }
+                             [](GLFWwindow* w, double x, double y) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->cursorPosCallbackEvent(x, y); }
     );
 
     glfwSetMouseButtonCallback(m_window->getWindow(),
-        [](GLFWwindow* w, int button, int action, int modifiers) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->mouseButtonCallbackEvent(button, action, modifiers); }
+                               [](GLFWwindow* w, int button, int action, int modifiers) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->mouseButtonCallbackEvent(button, action, modifiers); }
     );
 
     glfwSetKeyCallback(m_window->getWindow(),
-        [](GLFWwindow* w, int key, int scancode, int action, int mods) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->keyCallbackEvent(key, scancode, action, mods); }
+                       [](GLFWwindow* w, int key, int scancode, int action, int mods) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->keyCallbackEvent(key, scancode, action, mods); }
     );
 
     glfwSetCharCallback(m_window->getWindow(),
-        [](GLFWwindow* w, unsigned int codepoint) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->charCallbackEvent(codepoint); }
+                        [](GLFWwindow* w, unsigned int codepoint) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->charCallbackEvent(codepoint); }
     );
 
     glfwSetDropCallback(m_window->getWindow(),
-        [](GLFWwindow* w, int count, const char** filenames) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->dropCallbackEvent(count, filenames); }
+                        [](GLFWwindow* w, int count, const char** filenames) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->dropCallbackEvent(count, filenames); }
     );
 
     glfwSetScrollCallback(m_window->getWindow(),
-        [](GLFWwindow* w, double x, double y) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->scrollCallbackEvent(x, y); }
+                          [](GLFWwindow* w, double x, double y) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->scrollCallbackEvent(x, y); }
     );
 
     auto resizeCallback = [](GLFWwindow* w, int width, int height)
-    {
-        auto mainGui = static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w));
-        mainGui->m_screen->resizeCallbackEvent(width, height);
-        mainGui->m_sidePanelL->setFixedHeight(mainGui->m_screen->height());
-        mainGui->m_circuit->setFixedHeight(mainGui->m_screen->height());
-        mainGui->m_circuit->setFixedWidth(mainGui->m_screen->width() - mainGui->m_sidePanelL->width());
-        mainGui->m_sidePanelR->setPosition({ mainGui->m_sidePanelL->width(), mainGui->m_buttonPanel->height() });
-        mainGui->m_buttonPanel->setPosition({ mainGui->m_sidePanelL->width(), 0 });
-        mainGui->m_buttonPanel->setFixedWidth(mainGui->m_sidePanelR->width());
-        mainGui->m_screen->performLayout();
-    };
+            {
+                auto mainGui = static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w));
+                mainGui->m_screen->resizeCallbackEvent(width, height);
+                mainGui->m_sidePanelL->setFixedHeight(mainGui->m_screen->height());
+                mainGui->m_circuit->setFixedHeight(mainGui->m_screen->height());
+                mainGui->m_circuit->setFixedWidth(mainGui->m_screen->width() - mainGui->m_sidePanelL->width());
+                mainGui->m_circuit->resizeGrid(mainGui->m_circuit->getGridSpacing());
+                mainGui->m_sidePanelR->setPosition({mainGui->m_sidePanelL->width(), mainGui->m_buttonPanel->height()});
+                mainGui->m_buttonPanel->setPosition({mainGui->m_sidePanelL->width(), 0});
+                mainGui->m_buttonPanel->setFixedWidth(mainGui->m_sidePanelR->width());
+                mainGui->m_screen->performLayout();
+            };
     glfwSetFramebufferSizeCallback(m_window->getWindow(), resizeCallback);
     glfwSetWindowSizeCallback(m_window->getWindow(), resizeCallback);
 }
@@ -346,43 +373,4 @@ void synui::MainGUI::hide() { m_screen->setVisible(false); }
 
 void synui::MainGUI::draw() { m_screen->drawAll(); }
 
-synui::MainGUI::~MainGUI()
-{
-}
-
-void synui::drawTooltip(NVGcontext* a_ctx, const Eigen::Vector2i& a_pos, const std::string& a_str, double elapsed)
-{
-    int tooltipWidth = 150;
-
-    float bounds[4];
-    nvgFontFace(a_ctx, "sans");
-    nvgFontSize(a_ctx, 15.0f);
-    nvgTextAlign(a_ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-    nvgTextLineHeight(a_ctx, 1.1f);
-    Eigen::Vector2i pos = a_pos;
-
-    nvgTextBounds(a_ctx, pos.x(), pos.y(), a_str.c_str(), nullptr, bounds);
-    int h = (bounds[2] - bounds[0]) / 2;
-    if (h > tooltipWidth / 2)
-    {
-        nvgTextAlign(a_ctx, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
-        nvgTextBoxBounds(a_ctx, pos.x(), pos.y(), tooltipWidth, a_str.c_str(), nullptr, bounds);
-
-        h = (bounds[2] - bounds[0]) / 2;
-    }
-    nvgGlobalAlpha(a_ctx, std::min<float>(1.0f, 2 * (elapsed - 0.5f)) * 0.8f);
-
-    nvgBeginPath(a_ctx);
-    nvgFillColor(a_ctx, nanogui::Color(0, 255));
-    nvgRoundedRect(a_ctx, bounds[0] - 4 - h, bounds[1] - 4, (int)(bounds[2] - bounds[0]) + 8, (int)(bounds[3] - bounds[1]) + 8, 3);
-
-    int px = (int)((bounds[2] + bounds[0]) / 2) - h;
-    nvgMoveTo(a_ctx, px, bounds[1] - 10);
-    nvgLineTo(a_ctx, px + 7, bounds[1] + 1);
-    nvgLineTo(a_ctx, px - 7, bounds[1] + 1);
-    nvgFill(a_ctx);
-
-    nvgFillColor(a_ctx, nanogui::Color(255, 255));
-    nvgFontBlur(a_ctx, 0.0f);
-    nvgTextBox(a_ctx, pos.x() - h, pos.y(), tooltipWidth, a_str.c_str(), nullptr);
-}
+synui::MainGUI::~MainGUI() {}
