@@ -58,6 +58,7 @@ void synui::UnitEditor::_build()
                             bool visible = param.isVisible();
                             if (cb->checked() != value || cb->visible() != visible)
                             {
+                                m_isDirty = true;
                                 cb->setChecked(value);
                                 cb->setVisible(visible);
                             }
@@ -86,6 +87,7 @@ void synui::UnitEditor::_build()
                             bool visible = param.isVisible();
                             if (cb->selectedIndex() != value || cb->visible() != visible)
                             {
+                                m_isDirty = true;
                                 cb->setSelectedIndex(value);
                                 cb->setVisible(visible);
                             }
@@ -116,6 +118,7 @@ void synui::UnitEditor::_build()
                             bool visible = param.isVisible();
                             if (ib->value() != value || ib->visible() != visible)
                             {
+                                m_isDirty = true;
                                 ib->setValue(value);
                                 ib->setVisible(visible);
                             }
@@ -127,47 +130,81 @@ void synui::UnitEditor::_build()
             }
             case syn::UnitParameter::Double:
             {
-                nanogui::FloatBox<double>* fb = new nanogui::FloatBox<double>(this, 0.0);
-                fb->setMinValue(param.getMin());
-                fb->setMaxValue(param.getMax());
-                fb->setUnits(param.getUnitsString());
-                fb->setValueIncrement(std::pow(10.0, -param.getPrecision()));
-                fb->setSpinnable(true);
-                fb->setEditable(true);
-                fb->setAlignment(nanogui::TextBox::Alignment::Right);
+                if (param.getControlType() == syn::UnitParameter::Unbounded) {
+                    nanogui::FloatBox<double>* fb = new nanogui::FloatBox<double>(this, 0.0);
+                    fb->setMinValue(param.getMin());
+                    fb->setMaxValue(param.getMax());
+                    fb->setUnits(param.getUnitsString());
+                    fb->setValueIncrement(std::pow(10.0, -param.getPrecision()));
+                    fb->setSpinnable(true);
+                    fb->setEditable(true);
+                    fb->setAlignment(nanogui::TextBox::Alignment::Right);
 
-                auto setter = [this, paramId](const string& val)
+                    auto setter = [this, paramId](const string& val)
+                    {
+                        setParamFromString(paramId, val);
+                        return true;
+                    };
+                    static_cast<nanogui::TextBox*>(fb)->setCallback(setter);
+
+                    auto getter = [this, fb, paramId]()
+                    {
+                        auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(paramId);
+                        string text = param.getValueString();
+                        bool visible = param.isVisible();
+
+                        int sig = param.getPrecision();
+                        double valueIncr = std::pow(10, -sig);
+
+                        if (static_cast<nanogui::TextBox*>(fb)->value() != text || fb->visible() != visible || fb->getValueIncrement() != valueIncr)
                         {
-                            setParamFromString(paramId, val);
-                            return true;
-                        };
-                static_cast<nanogui::TextBox*>(fb)->setCallback(setter);
+                            m_isDirty = true;
+                            static_cast<nanogui::TextBox*>(fb)->setValue(text);
+                            fb->setVisible(visible);
 
-                auto getter = [this, fb, paramId]()
+                            if (sig <= 0)
+                                fb->numberFormat("%.0f");
+                            else
+                                fb->numberFormat("%." + std::to_string(sig) + "f");
+
+                            fb->setValueIncrement(valueIncr);
+                        }
+                    };
+
+                    m_controls[paramId] = fb;
+                    m_refreshFuncs[paramId] = getter;
+                }
+                else
+                {
+                    nanogui::Slider* s = new nanogui::Slider(this);
+                    s->setRange({ 0.0,1.0 });
+
+                    auto setter = [this, paramId](float f)
+                    {
+                        setParamNorm(paramId, f);
+                    };
+                    s->setCallback(setter);
+
+                    auto getter = [this, s, paramId]()
+                    {
+                        auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(paramId);
+                        float norm = static_cast<float>(param.getNorm());
+                        int sig = param.getPrecision();
+                        double valueIncr = std::pow(10, -sig);
+                        bool visible = param.isVisible();
+
+                        if(s->value()!=norm || s->visible() != visible)
                         {
-                            auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(paramId);
-                            string text = param.getValueString();
-                            bool visible = param.isVisible();
+                            m_isDirty = true;
+                            s->setValue(norm);
+                            s->setVisible(visible);
+                            s->setTooltip(param.getValueString() + " " + param.getUnitsString());
+                        }
+                    };
 
-                            int sig = param.getPrecision();
-                            double valueIncr = std::pow(10, -sig);
-
-                            if (static_cast<nanogui::TextBox*>(fb)->value() != text || fb->visible() != visible || fb->getValueIncrement() != valueIncr)
-                            {
-                                static_cast<nanogui::TextBox*>(fb)->setValue(text);
-                                fb->setVisible(visible);
-
-                                if (sig <= 0)
-                                    fb->numberFormat("%.0f");
-                                else
-                                    fb->numberFormat("%." + std::to_string(sig) + "f");
-
-                                fb->setValueIncrement(valueIncr);
-                            }
-                        };
-
-                m_controls[paramId] = fb;
-                m_refreshFuncs[paramId] = getter;
+                    m_controls[paramId] = s;
+                    m_refreshFuncs[paramId] = getter;
+                }
                 break;
             }
             default:
@@ -253,13 +290,12 @@ void synui::UnitEditor::setParamFromString(int a_paramId, const string& a_str) c
 
 void synui::UnitEditor::draw(NVGcontext* ctx)
 {
-    if (m_isDirty)
+    for (auto x : m_refreshFuncs)
     {
-        for (auto x : m_refreshFuncs)
-        {
-            x.second();
-            m_controlLabels[x.first]->setVisible(m_controls[x.first]->visible());
-        }
+        x.second();
+        m_controlLabels[x.first]->setVisible(m_controls[x.first]->visible());
+    }
+    if (m_isDirty) {
         parent()->performLayout(ctx);
         m_isDirty = false;
     }

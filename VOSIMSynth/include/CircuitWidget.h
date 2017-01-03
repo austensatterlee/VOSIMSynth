@@ -29,7 +29,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "Grid.h"
 #include <nanogui/nanogui.h>
 #include <common_serial.h>
-#include "../../libs/eigen/eigen/src/Core/util/ForwardDeclarations.h"
 
 namespace syn
 {

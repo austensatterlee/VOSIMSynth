@@ -365,9 +365,9 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
     }
 
     /* Handle mouse hover */
-    if (mMouseFocus)
+    if (contains(screen()->mousePos() - parent()->absolutePosition()));
     {
-        Vector2i mousePos = m_window->getGUI()->getScreen()->mousePos() - absolutePosition();
+        Vector2i mousePos = screen()->mousePos() - absolutePosition();
         // Draw unit widget ghost if one is being placed
         if (m_state == State::PlacingUnit)
         {
@@ -694,7 +694,10 @@ void synui::CircuitWidget::onConnectionCreated_(const Port& a_inputPort, const P
         }
     }
 
-    m_state = State::Idle;
+    if (!m_drawingWireState.wire)
+        throw "No wire being drawn";
+    m_drawingWireState.wire->setInputPort(a_inputPort);
+    m_drawingWireState.wire->setOutputPort(a_outputPort);
     m_drawingWireState.wire->updatePath();
     m_wires.push_back(m_drawingWireState.wire);
     m_drawingWireState.wire = nullptr;
@@ -708,6 +711,9 @@ void synui::CircuitWidget::startWireDraw_(int a_unitId, int a_portId, bool a_isO
     m_drawingWireState.startedFromOutput = a_isOutput;
     m_drawingWireState.wire = new CircuitWire(this);
 
+    Vector2i mousePos = screen()->mousePos() - absolutePosition();
+    m_drawingWireState.wire->updateStartAndEndPositions(mousePos);
+
     if (a_isOutput)
         m_drawingWireState.wire->setOutputPort({ a_unitId, a_portId });
     else
@@ -719,12 +725,12 @@ void synui::CircuitWidget::endWireDraw_(int a_unitId, int a_portId, bool a_isOut
     if (m_state != State::DrawingWire)
         return;
     CircuitWire* wire = m_drawingWireState.wire;
+    m_state = State::Idle;
 
     // If connection is invalid, delete the wire and reset state.
     if (a_isOutput == m_drawingWireState.startedFromOutput ||
         wire->getInputPort().first == a_unitId || wire->getOutputPort().first == a_unitId)
     {
-        m_state = State::Idle;
         delete wire;
         m_drawingWireState.wire = nullptr;
     }
@@ -749,11 +755,7 @@ void synui::CircuitWidget::updateUnitPos_(UnitWidget* a_unitWidget, const Eigen:
     if (!a_force && positionMatch)
         return;
 
-    auto blk = m_grid.forceGetBlock(topLeftCell, bottomRightCell);
-
-    std::ostringstream os;
-    os << "Updating unit position: " << a_unitWidget->getName() << " (" << a_newPos.x() << ", " << a_newPos.y() << ") " << (a_force ? "(forcing)" : "");
-    Logger::instance().log("info", os.str());
+    auto blk = m_grid.forceGetBlock(topLeftCell, bottomRightCell);;
 
     /* Erase unit from grid */
     m_grid.replaceValue({ GridCell::Unit, a_unitWidget }, m_grid.getEmptyValue());

@@ -4,6 +4,7 @@
 #include <VoiceManager.h>
 #include <DSPMath.h>
 #include "MainWindow.h"
+#include "MainGUI.h"
 
 synui::UnitWidget::UnitWidget(synui::CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId) :
     Widget(a_parent),
@@ -32,7 +33,7 @@ synui::UnitWidget::UnitWidget(synui::CircuitWidget* a_parent, syn::VoiceManager*
 
     // Create title
     m_titleLabel = new nanogui::Label(this, unit.name(), "sans-bold", 0);
-    m_titleLabel->setTooltip("Ctrl+click to edit");
+    m_titleLabel->setTooltip("Ctrl+click to edit\nRight click to delete");
     m_titleLabel->setDraggable(false);
     layout->setAnchor(m_titleLabel, Anchor{ 0,0,3,1,nanogui::Alignment::Middle });
     m_titleTextBox = new nanogui::TextBox(m_parentCircuit, unit.name());
@@ -59,6 +60,7 @@ synui::UnitWidget::UnitWidget(synui::CircuitWidget* a_parent, syn::VoiceManager*
         layout->setAnchor(lbl, Anchor{ 0, inputs.size() - i });
         lbl->setId(std::to_string(inputId));
         lbl->setTooltip(inputName);
+        lbl->setDraggable(false);
         m_inputLabels[inputId] = lbl;
     }
     // Create output port labels
@@ -71,6 +73,7 @@ synui::UnitWidget::UnitWidget(synui::CircuitWidget* a_parent, syn::VoiceManager*
         layout->setAnchor(lbl, Anchor{ 2, outputs.size() - i });
         lbl->setId(std::to_string(outputId));
         lbl->setTooltip(outputName);
+        lbl->setDraggable(false);
         m_outputLabels[outputId] = lbl;
     }
     // Fill empty rows with empty labels (for aesthetics)
@@ -133,29 +136,57 @@ void synui::UnitWidget::draw(NVGcontext* ctx)
     drawDivisions(m_outputLabels, oColor, oColor2);
     //drawDivisions(m_emptyOutputLabels, oColor, oColor2);
 
-    // Handle mouse movements
+    /* Handle mouse movements */
     Vector2i mousePos = screen()->mousePos() - absolutePosition();
-    if (m_state == BodyClicked)
+    if (contains(mousePos + position()))
     {
-        double distanceCovered = (mousePos - m_clickPos).squaredNorm();
-        if (distanceCovered > 1.0) { m_state = BodyDragging; }
-    }
-
-    if (m_titleLabel->contains(mousePos))
-    {
-        nvgBeginPath(ctx);
-        nvgRoundedRect(ctx, 0, 0, width(), m_titleLabel->height(), 2.0f);
-        nvgFillColor(ctx, nanogui::Color(1.0f, 0.125f));
-        nvgFill(ctx);
-    }
-    if (contains(mousePos+position()))
-    {
+        // Highlight on mouse over
         drawShadow(ctx, 0, 0, width(), height(), 2.0f, 5.0f, { 0.8f, 0.5f }, { 0.0f, 0.0f });
+
+        if (mousePos.y() < m_titleLabel->height())
+        {
+            // Highlight title
+            nvgBeginPath(ctx);
+            nvgRoundedRect(ctx, 0, 0, width(), m_titleLabel->height(), 2.0f);
+            nvgFillColor(ctx, nanogui::Color(1.0f, 0.125f));
+            nvgFill(ctx);
+        }else
+        {
+            // Highlight ports
+            for(auto& p : m_inputLabels)
+            {
+                if(p.second->contains(mousePos))
+                {
+                    const Vector2i& pos = p.second->position();
+                    const Vector2i& size = p.second->size();
+                    nvgBeginPath(ctx);
+                    nvgRoundedRect(ctx, pos.x(), pos.y(), size.x(), size.y(), 2.0f);
+                    nvgFillColor(ctx, nanogui::Color(1.0f, 0.125f));
+                    nvgFill(ctx);
+                    break;
+                }
+            }
+
+            for (auto& p : m_outputLabels)
+            {
+                if (p.second->contains(mousePos))
+                {
+                    const Vector2i& pos = p.second->position();
+                    const Vector2i& size = p.second->size();
+                    nvgBeginPath(ctx);
+                    nvgRoundedRect(ctx, pos.x(), pos.y(), size.x(), size.y(), 2.0f);
+                    nvgFillColor(ctx, nanogui::Color(1.0f, 0.125f));
+                    nvgFill(ctx);
+                    break;
+                }
+            }
+            
+        }
     }
 
     if (highlighted())
     {
-        drawShadow(ctx, 0, 0, width(), height(), 1.0f, 6.0f, { 1.0f, 0.5f }, { 0.0f, 0.0f });
+        drawShadow(ctx, 0, 0, width(), height(), 1.0f, 6.0f, { 0.9f, 0.9f, 1.0f, 0.5f }, { 0.0f, 0.0f });
     }
     nvgRestore(ctx);
 
@@ -165,6 +196,10 @@ void synui::UnitWidget::draw(NVGcontext* ctx)
 bool synui::UnitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers)
 {
     Widget::mouseButtonEvent(p, button, down, modifiers);
+
+    std::ostringstream oss;
+    oss << "Widget " << getName() << " received mouse " << (down ? "down" : "up") << " event. State: " << (m_state == Idle ? "Idle" : m_state == BodyDragging ? "BodyDragging" : m_state == BodyClicked ? "BodyClicked" : std::to_string(m_state));
+    Logger::instance().log("unitwidget", oss.str());
 
     Eigen::Vector2i mousePos = p - position();
 
@@ -178,7 +213,6 @@ bool synui::UnitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, b
                 m_parentCircuit->updateUnitPos_(this, position());
             else
                 setPosition(m_oldPos);
-            m_state = Idle;
             return true;
         }
     }
@@ -200,16 +234,27 @@ bool synui::UnitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, b
                 return true;
             }
         }
-        else if (button == GLFW_MOUSE_BUTTON_RIGHT)
+        if (button == GLFW_MOUSE_BUTTON_RIGHT)
         {
             // Delete unit on right click
-            if (!down)
+            if (down && m_state == Idle)
             {
-                m_parentCircuit->deleteUnit_(m_unitId);
-                m_state = Idle;
-                return true;
+                if (getUnitId() != m_vm->getPrototypeCircuit()->getInputUnitId() && getUnitId() != m_vm->getPrototypeCircuit()->getOutputUnitId())
+                {
+                    auto dlg = new nanogui::MessageDialog(screen(), nanogui::MessageDialog::Type::Question, "Confirm deleteion", "Delete " + getName() + "?", "Delete", "Cancel", true);
+                    dlg->setCallback([this](int x) {
+                        if (x == 0) {
+                            m_parentCircuit->deleteUnit_(m_unitId);
+                        }
+                    });
+                    return true;
+                }
             }
         }
+    }
+    else if (m_titleTextBox->visible())
+    {
+        m_titleTextBox->callback()(m_titleTextBox->value());
     }
 
     // Check if an input port was clicked
@@ -223,13 +268,13 @@ bool synui::UnitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, b
                 {
                     m_parentCircuit->startWireDraw_(m_unitId, inputLabel.first, false);
                     m_state = Idle;
-                    return true;
+                    return false;
                 }
                 else
                 {
                     m_parentCircuit->endWireDraw_(m_unitId, inputLabel.first, false);
                     m_state = Idle;
-                    return true;
+                    return false;
                 }
             }
         }
@@ -246,13 +291,13 @@ bool synui::UnitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, b
                 {
                     m_parentCircuit->startWireDraw_(m_unitId, outputLabel.first, true);
                     m_state = Idle;
-                    return true;
+                    return false;
                 }
                 else
                 {
                     m_parentCircuit->endWireDraw_(m_unitId, outputLabel.first, true);
                     m_state = Idle;
-                    return true;
+                    return false;
                 }
             }
         }
@@ -274,15 +319,22 @@ bool synui::UnitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, b
         }
     }
 
-    if (button == GLFW_MOUSE_BUTTON_LEFT && !down) {
-      
-    }
-
     return false;
 }
 
 bool synui::UnitWidget::mouseDragEvent(const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers)
 {
+    Vector2i mousePos = screen()->mousePos() - absolutePosition();
+    if (m_state == BodyClicked)
+    {
+        double distanceCovered = (mousePos - m_clickPos).squaredNorm();
+        if (distanceCovered > 1.0)
+        {
+            m_state = BodyDragging;
+        }
+        return true;
+    }
+
     if (m_state == BodyDragging)
     {
         Eigen::Vector2i newPos = p - m_clickPos;
