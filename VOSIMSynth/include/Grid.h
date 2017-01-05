@@ -160,8 +160,8 @@ namespace synui
             // Fix bounds to be within grid
             if(t<0)
             {
-                t -= t;
                 b -= t;
+                t -= t;
             }
             if(b>m_shape[0])
             {
@@ -170,8 +170,8 @@ namespace synui
             }
             if(l<0)
             {
-                l -= l;
                 r -= l;
+                l -= l;
             }
             if(r>m_shape[1])
             {
@@ -216,8 +216,8 @@ namespace synui
             // Fix bounds to be within grid
             if (t<0)
             {
-                t -= t;
                 b -= t;
+                t -= t;
             }
             if (b>m_shape[0])
             {
@@ -226,8 +226,8 @@ namespace synui
             }
             if (l<0)
             {
-                l -= l;
                 r -= l;
+                l -= l;
             }
             if (r>m_shape[1])
             {

@@ -111,8 +111,12 @@ void synui::MainGUI::_createUnitSelector(nanogui::Widget* a_widget)
         nanogui::PopupButton* button = new nanogui::PopupButton(a_widget, gname);
         button->setDisposable(true);
         button->setFontSize(15);
-        nanogui::Popup* popup = button->popup();
-        popup->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 0));
+        nanogui::Popup* popup = button->popup();   
+        popup->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 0));     
+        button->setCallback([this, popup]()
+        {
+            m_screen->moveWindowToFront(popup);
+        });
         for (auto uname : m_uf->getPrototypeNames(gname))
         {
             nanogui::Button* subbtn = new nanogui::Button(popup, uname);
@@ -237,19 +241,23 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
 
     m_screen->theme()->mWindowDropShadowSize = 2;
 
-    /* Divide window into panes */
+    /* Create left pane. */
     m_sidePanelL = new synui::EnhancedWindow(m_screen, "");
     m_sidePanelL->setIsBackgroundWindow(true);
-    m_sidePanelL->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 5, 1));
+    m_sidePanelL->setLayout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Fill, 5, 0));
     m_sidePanelL->setFixedHeight(m_screen->height());
     m_sidePanelL->setFixedWidth(200);
-    m_screen->performLayout();
+    m_sidePanelL->setDrawCallback( [](EnhancedWindow* self, NVGcontext* ctx)
+        {
+            nvgBeginPath(ctx);
+            nvgRect(ctx, self->position().x(), self->position().y(), self->width(), self->height());
 
-    m_sidePanelR = new synui::EnhancedWindow(m_screen, "");
-    m_sidePanelR->setIsBackgroundWindow(true);
-    m_sidePanelR->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 0));
-    m_screen->performLayout();
+            nanogui::Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(nanogui::Color(0.9f,1.0f));
+            nvgFillColor(ctx, fillColor);
+            nvgFill(ctx);
+        });
 
+    /* Create tab widget in left pane. */
     m_tabWidget = new nanogui::TabWidget(m_sidePanelL);
 
     /* Create unit selector tab. */
@@ -261,6 +269,14 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
     m_tabWidget->addTab("Editor", m_unitEditorHost);
     m_unitEditorHost->setLayout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Fill, 1));
 
+    m_tabWidget->setActiveTab(0);
+
+    /* Create right pane. */
+    m_sidePanelR = new synui::EnhancedWindow(m_screen, "");
+    m_sidePanelR->setIsBackgroundWindow(true);
+    m_sidePanelR->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 0));
+
+    /* Create circuit widget in right pane. */
     m_circuit = new CircuitWidget(m_sidePanelR, m_window, m_unitEditorHost, a_vm, a_uf);
 
     /* Create button panel */
@@ -271,7 +287,7 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
             nvgBeginPath(ctx);
             nvgRect(ctx, self->position().x(), self->position().y(), self->width(), self->height());
 
-            nanogui::Color fillColor = self->theme()->mWindowFillUnfocused * 0.5f;
+            nanogui::Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(nanogui::Color(0.9f,1.0f));
             nvgFillColor(ctx, fillColor);
             nvgFill(ctx);
         });
@@ -316,7 +332,7 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
     auto settings_button = m_settingsEditor->createOpenButton(m_buttonPanel, "", ENTYPO_COG, settings_callback);
     buttonPanelLayout->setAnchor(settings_button, nanogui::AdvancedGridLayout::Anchor{buttonPanelLayout->colCount() - 1,0});
 
-    m_tabWidget->setActiveTab(0);
+    m_screen->performLayout();
 
     /* Setup event handlers. */
 
@@ -351,8 +367,8 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
                 auto mainGui = static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w));
                 mainGui->m_screen->resizeCallbackEvent(width, height);
                 mainGui->m_sidePanelL->setFixedHeight(mainGui->m_screen->height());
-                mainGui->m_circuit->setFixedHeight(mainGui->m_screen->height());
-                mainGui->m_circuit->setFixedWidth(mainGui->m_screen->width() - mainGui->m_sidePanelL->width());
+                mainGui->m_circuit->setFixedHeight(mainGui->m_screen->height() - mainGui->m_sidePanelR->position().y());
+                mainGui->m_circuit->setFixedWidth(mainGui->m_screen->width() - mainGui->m_sidePanelR->position().x());
                 mainGui->m_circuit->resizeGrid(mainGui->m_circuit->getGridSpacing());
                 mainGui->m_sidePanelR->setPosition({mainGui->m_sidePanelL->width(), mainGui->m_buttonPanel->height()});
                 mainGui->m_buttonPanel->setPosition({mainGui->m_sidePanelL->width(), 0});
@@ -373,4 +389,6 @@ void synui::MainGUI::hide() { m_screen->setVisible(false); }
 
 void synui::MainGUI::draw() { m_screen->drawAll(); }
 
-synui::MainGUI::~MainGUI() {}
+synui::MainGUI::~MainGUI()
+{
+}

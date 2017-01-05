@@ -44,6 +44,7 @@ namespace synui
         friend class CircuitWidget;
     public:
         UnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId);
+        virtual ~UnitWidget();
 
         void draw(NVGcontext* ctx) override;
         bool mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) override;

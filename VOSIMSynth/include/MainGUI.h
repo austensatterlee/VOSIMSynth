@@ -100,7 +100,7 @@ namespace synui
         void hide();
         void draw();
 
-        const nanogui::Screen*  getScreen() const { return m_screen.get(); }
+        nanogui::Screen*  getScreen() { return m_screen.get(); }
 
         operator json() const;
         MainGUI* load(const json& j);

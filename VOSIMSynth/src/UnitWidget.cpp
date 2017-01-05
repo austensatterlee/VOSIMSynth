@@ -93,6 +93,10 @@ synui::UnitWidget::UnitWidget(synui::CircuitWidget* a_parent, syn::VoiceManager*
     updateRowSizes_();
 }
 
+synui::UnitWidget::~UnitWidget()
+{
+}
+
 void synui::UnitWidget::draw(NVGcontext* ctx)
 {
     // Perform initialization that cannot be done in the constructor
@@ -160,8 +164,8 @@ void synui::UnitWidget::draw(NVGcontext* ctx)
                     const Vector2i& pos = p.second->position();
                     const Vector2i& size = p.second->size();
                     nvgBeginPath(ctx);
-                    nvgRoundedRect(ctx, pos.x(), pos.y(), size.x(), size.y(), 2.0f);
-                    nvgFillColor(ctx, nanogui::Color(1.0f, 0.125f));
+                    nvgRect(ctx, pos.x(), pos.y(), size.x(), size.y());
+                    nvgFillColor(ctx, nanogui::Color(1.0f, 0.1f));
                     nvgFill(ctx);
                     break;
                 }
@@ -174,8 +178,8 @@ void synui::UnitWidget::draw(NVGcontext* ctx)
                     const Vector2i& pos = p.second->position();
                     const Vector2i& size = p.second->size();
                     nvgBeginPath(ctx);
-                    nvgRoundedRect(ctx, pos.x(), pos.y(), size.x(), size.y(), 2.0f);
-                    nvgFillColor(ctx, nanogui::Color(1.0f, 0.125f));
+                    nvgRect(ctx, pos.x(), pos.y(), size.x(), size.y());
+                    nvgFillColor(ctx, nanogui::Color(1.0f, 0.1f));
                     nvgFill(ctx);
                     break;
                 }
@@ -220,13 +224,13 @@ bool synui::UnitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, b
     // Check if title was clicked
     if (m_titleLabel->contains(mousePos))
     {
-        if (button == GLFW_MOUSE_BUTTON_LEFT)
+        if (button == GLFW_MOUSE_BUTTON_LEFT && down)
         {
             // Open textbox on ctrl+click
             if (modifiers & GLFW_MOD_CONTROL) {
                 m_titleTextBox->setValue(m_titleLabel->caption());
                 m_titleTextBox->setPosition(position());
-                m_titleTextBox->setSize({ width(), m_titleLabel->height() });
+                m_titleTextBox->setFixedSize({ width(), m_titleLabel->height() });
                 m_titleTextBox->setFontSize(m_titleLabel->fontSize());
                 m_titleTextBox->setVisible(true);
                 m_titleTextBox->setEditable(true);
@@ -234,10 +238,10 @@ bool synui::UnitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, b
                 return true;
             }
         }
-        if (button == GLFW_MOUSE_BUTTON_RIGHT)
+        if (button == GLFW_MOUSE_BUTTON_RIGHT && down)
         {
             // Delete unit on right click
-            if (down && m_state == Idle)
+            if (m_state == Idle)
             {
                 if (getUnitId() != m_vm->getPrototypeCircuit()->getInputUnitId() && getUnitId() != m_vm->getPrototypeCircuit()->getOutputUnitId())
                 {
@@ -255,6 +259,7 @@ bool synui::UnitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, b
     else if (m_titleTextBox->visible())
     {
         m_titleTextBox->callback()(m_titleTextBox->value());
+        return true;
     }
 
     // Check if an input port was clicked
@@ -309,12 +314,10 @@ bool synui::UnitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, b
             m_state = BodyClicked;
             m_oldPos = position();
             m_clickPos = mousePos;
-            return true;
-        }
-        else
-        {
+
             // Open unit editor if mouse click is not captured above.
             m_editorCallback(m_classIdentifier, m_unitId);
+            m_state = Idle;
             return true;
         }
     }

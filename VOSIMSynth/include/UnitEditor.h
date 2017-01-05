@@ -74,7 +74,7 @@ namespace synui
     protected:
         std::unordered_map<int, nanogui::Widget*> m_controls;
         std::unordered_map<int, nanogui::Label*> m_controlLabels;
-        std::unordered_map<int, std::function<void()>> m_refreshFuncs;
+        std::unordered_map<int, std::function<void()> > m_refreshFuncs;
         syn::VoiceManager* m_vm;
         int m_unitId;
 

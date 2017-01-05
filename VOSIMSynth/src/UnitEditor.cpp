@@ -11,7 +11,7 @@ void synui::UnitEditor::_build()
 
     for (int i = 0; i < childCount(); i++) { removeChild(i); }
 
-    auto newLayout = new nanogui::AdvancedGridLayout({10, 0, 10, 0}, {});
+    auto newLayout = new nanogui::AdvancedGridLayout({ 10, 0, 10, 0 }, {});
     newLayout->setMargin(5);
     newLayout->setColStretch(2, 1);
     setLayout(newLayout);
@@ -40,184 +40,176 @@ void synui::UnitEditor::_build()
         const string& paramUnits = param.getUnitsString();
         switch (paramType)
         {
-            case syn::UnitParameter::Null:
-                continue;
-                break;
-            case syn::UnitParameter::Bool:
+        case syn::UnitParameter::Null:
+            continue;
+            break;
+        case syn::UnitParameter::Bool:
+        {
+            auto setter = [this, paramId](bool val) { setParamValue(paramId, val); };
+
+            nanogui::CheckBox* cb = new nanogui::CheckBox(this, "", setter);
+
+            cb->setFontSize(controlFontSize);
+
+            auto getter = [this, cb, paramId]()
             {
-                auto setter = [this, paramId](bool val) { setParamValue(paramId, val); };
-
-                nanogui::CheckBox* cb = new nanogui::CheckBox(this, "", setter);
-
-                cb->setFontSize(controlFontSize);
-
-                auto getter = [this, cb, paramId]()
-                        {
-                            auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(paramId);
-                            bool value = param.getBool();
-                            bool visible = param.isVisible();
-                            if (cb->checked() != value || cb->visible() != visible)
-                            {
-                                m_isDirty = true;
-                                cb->setChecked(value);
-                                cb->setVisible(visible);
-                            }
-                        };
-
-                m_controls[paramId] = cb;
-                m_refreshFuncs[paramId] = getter;
-                break;
-            }
-            case syn::UnitParameter::Enum:
-            {
-                // Build item list
-                const std::vector<syn::UnitParameter::DisplayText>& options = param.getDisplayTexts();
-                std::vector<string> items{options.size()};
-                std::transform(options.begin(), options.end(), items.begin(), [](const syn::UnitParameter::DisplayText& dt) { return dt.m_text; });
-
-                nanogui::ComboBox* cb = new nanogui::ComboBox(this, items);
-
-                cb->setFontSize(controlFontSize);
-
-                auto setter = [this, cb, paramId](int val) { setParamFromString(paramId, cb->items()[val]); };
-                auto getter = [this, cb, paramId]()
-                        {
-                            auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(paramId);
-                            int value = param.getInt();
-                            bool visible = param.isVisible();
-                            if (cb->selectedIndex() != value || cb->visible() != visible)
-                            {
-                                m_isDirty = true;
-                                cb->setSelectedIndex(value);
-                                cb->setVisible(visible);
-                            }
-                        };
-
-                cb->setCallback(setter);
-                m_controls[paramId] = cb;
-                m_refreshFuncs[paramId] = getter;
-                break;
-            }
-            case syn::UnitParameter::Int:
-            {
-                auto setter = [this, paramId](const int& val) { setParamValue(paramId, val); };
-
-                nanogui::IntBox<int>* ib = new nanogui::IntBox<int>(this, 0);
-                ib->setMinValue(param.getMin());
-                ib->setMaxValue(param.getMax());
-                ib->setUnits(param.getUnitsString());
-                ib->setSpinnable(true);
-                ib->setEditable(true);
-                ib->setCallback(setter);
-                ib->setAlignment(nanogui::TextBox::Alignment::Right);
-
-                auto getter = [this, ib, paramId]()
-                        {
-                            auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(paramId);
-                            int value = param.getInt();
-                            bool visible = param.isVisible();
-                            if (ib->value() != value || ib->visible() != visible)
-                            {
-                                m_isDirty = true;
-                                ib->setValue(value);
-                                ib->setVisible(visible);
-                            }
-                        };
-
-                m_controls[paramId] = ib;
-                m_refreshFuncs[paramId] = getter;
-                break;
-            }
-            case syn::UnitParameter::Double:
-            {
-                if (param.getControlType() == syn::UnitParameter::Unbounded) {
-                    nanogui::FloatBox<double>* fb = new nanogui::FloatBox<double>(this, 0.0);
-                    fb->setMinValue(param.getMin());
-                    fb->setMaxValue(param.getMax());
-                    fb->setUnits(param.getUnitsString());
-                    fb->setValueIncrement(std::pow(10.0, -param.getPrecision()));
-                    fb->setSpinnable(true);
-                    fb->setEditable(true);
-                    fb->setAlignment(nanogui::TextBox::Alignment::Right);
-
-                    auto setter = [this, paramId](const string& val)
-                    {
-                        setParamFromString(paramId, val);
-                        return true;
-                    };
-                    static_cast<nanogui::TextBox*>(fb)->setCallback(setter);
-
-                    auto getter = [this, fb, paramId]()
-                    {
-                        auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(paramId);
-                        string text = param.getValueString();
-                        bool visible = param.isVisible();
-
-                        int sig = param.getPrecision();
-                        double valueIncr = std::pow(10, -sig);
-
-                        if (static_cast<nanogui::TextBox*>(fb)->value() != text || fb->visible() != visible || fb->getValueIncrement() != valueIncr)
-                        {
-                            m_isDirty = true;
-                            static_cast<nanogui::TextBox*>(fb)->setValue(text);
-                            fb->setVisible(visible);
-
-                            if (sig <= 0)
-                                fb->numberFormat("%.0f");
-                            else
-                                fb->numberFormat("%." + std::to_string(sig) + "f");
-
-                            fb->setValueIncrement(valueIncr);
-                        }
-                    };
-
-                    m_controls[paramId] = fb;
-                    m_refreshFuncs[paramId] = getter;
-                }
-                else
+                auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(paramId);
+                bool value = param.getBool();
+                bool visible = param.isVisible();
+                if (cb->checked() != value || cb->visible() != visible)
                 {
-                    nanogui::Slider* s = new nanogui::Slider(this);
-                    s->setRange({ 0.0,1.0 });
-
-                    auto setter = [this, paramId](float f)
-                    {
-                        setParamNorm(paramId, f);
-                    };
-                    s->setCallback(setter);
-
-                    auto getter = [this, s, paramId]()
-                    {
-                        auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(paramId);
-                        float norm = static_cast<float>(param.getNorm());
-                        int sig = param.getPrecision();
-                        double valueIncr = std::pow(10, -sig);
-                        bool visible = param.isVisible();
-
-                        if(s->value()!=norm || s->visible() != visible)
-                        {
-                            m_isDirty = true;
-                            s->setValue(norm);
-                            s->setVisible(visible);
-                            s->setTooltip(param.getValueString() + " " + param.getUnitsString());
-                        }
-                    };
-
-                    m_controls[paramId] = s;
-                    m_refreshFuncs[paramId] = getter;
+                    m_isDirty = true;
+                    cb->setChecked(value);
+                    cb->setVisible(visible);
                 }
-                break;
+            };
+
+            m_controls[paramId] = cb;
+            m_refreshFuncs[paramId] = getter;
+            break;
+        }
+        case syn::UnitParameter::Enum:
+        {
+            // Build item list
+            const std::vector<syn::UnitParameter::DisplayText>& options = param.getDisplayTexts();
+            std::vector<string> items{ options.size() };
+            std::transform(options.begin(), options.end(), items.begin(), [](const syn::UnitParameter::DisplayText& dt) { return dt.m_text; });
+
+            nanogui::ComboBox* cb = new nanogui::ComboBox(this, items);
+
+            cb->setFontSize(controlFontSize);
+
+            auto setter = [this, cb, paramId](int val) { setParamFromString(paramId, cb->items()[val]); };
+            auto getter = [this, cb, paramId]()
+            {
+                auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(paramId);
+                int value = param.getInt();
+                bool visible = param.isVisible();
+                if (cb->selectedIndex() != value || cb->visible() != visible)
+                {
+                    m_isDirty = true;
+                    cb->setSelectedIndex(value);
+                    cb->setVisible(visible);
+                }
+            };
+
+            cb->setCallback(setter);
+            m_controls[paramId] = cb;
+            m_refreshFuncs[paramId] = getter;
+            break;
+        }
+        case syn::UnitParameter::Int:
+        {
+            auto setter = [this, paramId](const int& val) { setParamValue(paramId, val); };
+
+            nanogui::IntBox<int>* ib = new nanogui::IntBox<int>(this, 0);
+            ib->setMinValue(param.getMin());
+            ib->setMaxValue(param.getMax());
+            ib->setUnits(param.getUnitsString());
+            ib->setSpinnable(true);
+            ib->setEditable(true);
+            ib->setCallback(setter);
+            ib->setAlignment(nanogui::TextBox::Alignment::Right);
+
+            auto getter = [this, ib, paramId]()
+            {
+                auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(paramId);
+                int value = param.getInt();
+                bool visible = param.isVisible();
+                if (ib->value() != value || ib->visible() != visible)
+                {
+                    m_isDirty = true;
+                    ib->setValue(value);
+                    ib->setVisible(visible);
+                }
+            };
+
+            m_controls[paramId] = ib;
+            m_refreshFuncs[paramId] = getter;
+            break;
+        }
+        case syn::UnitParameter::Double:
+        {
+            Widget* control = new Widget(this);
+            control->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 5));
+
+            /* Build float box */
+            nanogui::FloatBox<double>* fb = new nanogui::FloatBox<double>(control, 0.0);
+            fb->setMinValue(param.getMin());
+            fb->setMaxValue(param.getMax());
+            fb->setUnits(param.getUnitsString());
+            fb->setValueIncrement(std::pow(10.0, -param.getPrecision()));
+            fb->setSpinnable(true);
+            fb->setEditable(true);
+            fb->setAlignment(nanogui::TextBox::Alignment::Right);
+
+            auto fb_setter = [this, paramId](const string& val)
+            {
+                setParamFromString(paramId, val);
+                return true;
+            };
+            static_cast<nanogui::TextBox*>(fb)->setCallback(fb_setter);
+
+            /* Build slider for "Bounded" parameters */
+            nanogui::Slider* s = param.getControlType() == syn::UnitParameter::Bounded ? new nanogui::Slider(control) : nullptr;
+            
+            if (s) {
+                s->setRange({ 0.0,1.0 });
+
+                auto s_setter = [this, paramId](float f)
+                {
+                    setParamNorm(paramId, f);
+                };
+                s->setCallback(s_setter);
             }
-            default:
-                continue;
-                break;
+
+            /* Create getter function */
+            auto getter = [this, s, fb, paramId]()
+            {
+                auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(paramId);
+                string text = param.getValueString();
+                double norm = param.getNorm();
+                bool visible = param.isVisible();
+
+                int sig = param.getPrecision();
+                double valueIncr = std::pow(10, -sig);
+
+                if (static_cast<nanogui::TextBox*>(fb)->value() != text || norm != s->value() || fb->visible() != visible || fb->getValueIncrement() != valueIncr)
+                {
+                    m_isDirty = true;
+                    static_cast<nanogui::TextBox*>(fb)->setValue(text);
+                    fb->setVisible(visible);
+
+                    if (sig <= 0)
+                        fb->numberFormat("%.0f");
+                    else
+                        fb->numberFormat("%." + std::to_string(sig) + "f");
+
+                    fb->setValueIncrement(valueIncr);
+
+                    if (s) {
+                        s->setValue(norm);
+                        s->setVisible(visible);
+                        s->setTooltip(param.getValueString() + " " + param.getUnitsString());
+                    }
+                }
+            };
+
+            m_controls[paramId] = control;
+            m_refreshFuncs[paramId] = getter;
+            break;
+        }
+        default:
+            continue;
+            break;
         }
 
         auto lbl = new nanogui::Label(this, paramName);
         m_controlLabels[paramId] = lbl;
         newLayout->appendRow(0);
-        newLayout->setAnchor(lbl, Anchor{0,newLayout->rowCount() - 1,4,1});
+        newLayout->setAnchor(lbl, Anchor{ 0,newLayout->rowCount() - 1,4,1 });
         newLayout->appendRow(0);
-        newLayout->setAnchor(m_controls[paramId], Anchor{1,newLayout->rowCount() - 1,3,1});
+        newLayout->setAnchor(m_controls[paramId], Anchor{ 1,newLayout->rowCount() - 1,3,1 });
     }
 }
 
@@ -225,15 +217,15 @@ void synui::UnitEditor::setParamValue(int a_paramId, double a_val) const
 {
     syn::RTMessage* msg = new syn::RTMessage();
     msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
-            {
-                UnitEditor* self;
-                double val;
-                int unitId, paramId;
-                GetArgs(a_data, 0, self, unitId, paramId, val);
-                a_circuit->getUnit(unitId).param(paramId).set(val);
-                if (a_isLast)
-                    self->m_isDirty = true;
-            };
+    {
+        UnitEditor* self;
+        double val;
+        int unitId, paramId;
+        GetArgs(a_data, 0, self, unitId, paramId, val);
+        a_circuit->getUnit(unitId).param(paramId).set(val);
+        if (a_isLast)
+            self->m_isDirty = true;
+    };
     PutArgs(&msg->data, this, m_unitId, a_paramId, a_val);
     m_vm->queueAction(msg);
 }
@@ -242,15 +234,15 @@ void synui::UnitEditor::setParamNorm(int a_paramId, double a_normval) const
 {
     syn::RTMessage* msg = new syn::RTMessage();
     msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
-            {
-                double val;
-                int unitId, paramId;
-                int pos = 0;
-                pos = a_data->Get<int>(&unitId, pos);
-                pos = a_data->Get<int>(&paramId, pos);
-                pos = a_data->Get<double>(&val, pos);
-                a_circuit->getUnit(unitId).param(paramId).setNorm(val);
-            };
+    {
+        double val;
+        int unitId, paramId;
+        int pos = 0;
+        pos = a_data->Get<int>(&unitId, pos);
+        pos = a_data->Get<int>(&paramId, pos);
+        pos = a_data->Get<double>(&val, pos);
+        a_circuit->getUnit(unitId).param(paramId).setNorm(val);
+    };
     msg->data.Put<int>(&m_unitId);
     msg->data.Put<int>(&a_paramId);
     msg->data.Put<double>(&a_normval);
@@ -262,12 +254,12 @@ void synui::UnitEditor::nudgeParam(int a_paramId, double a_logScale, double a_li
     syn::RTMessage* msg = new syn::RTMessage();
     PutArgs(&msg->data, m_unitId, a_paramId, a_logScale, a_linScale);
     msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
-            {
-                double logScale, linScale;
-                int unitId, paramId;
-                GetArgs(a_data, 0, unitId, paramId, logScale, linScale);
-                a_circuit->getUnit(unitId).param(paramId).nudge(logScale, linScale);
-            };
+    {
+        double logScale, linScale;
+        int unitId, paramId;
+        GetArgs(a_data, 0, unitId, paramId, logScale, linScale);
+        a_circuit->getUnit(unitId).param(paramId).nudge(logScale, linScale);
+    };
     m_vm->queueAction(msg);
 }
 
@@ -276,15 +268,15 @@ void synui::UnitEditor::setParamFromString(int a_paramId, const string& a_str) c
     syn::RTMessage* msg = new syn::RTMessage();
     PutArgs(&msg->data, this, a_str, m_unitId, a_paramId);
     msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
-            {
-                UnitEditor* self;
-                string valStr;
-                int unitId, paramId;
-                GetArgs(a_data, 0, self, valStr, unitId, paramId);
-                a_circuit->getUnit(unitId).param(paramId).setFromString(valStr);
-                if (a_isLast)
-                    self->m_isDirty = true;
-            };
+    {
+        UnitEditor* self;
+        string valStr;
+        int unitId, paramId;
+        GetArgs(a_data, 0, self, valStr, unitId, paramId);
+        a_circuit->getUnit(unitId).param(paramId).setFromString(valStr);
+        if (a_isLast)
+            self->m_isDirty = true;
+    };
     m_vm->queueAction(msg);
 }
 
@@ -310,8 +302,8 @@ void synui::UnitEditorHost::addEditor(unsigned a_classId, int a_unitId)
 {
     if (m_editorMap.find(a_unitId) != m_editorMap.end())
         removeChild(m_editorMap[a_unitId]);
-    UnitEditorConstructor constructor = [](Widget* p, syn::VoiceManager* vm, int unitId){ return new UnitEditor(p, vm, unitId); };
-    if(m_registeredUnitEditors.find(a_classId)!=m_registeredUnitEditors.end())
+    UnitEditorConstructor constructor = [](Widget* p, syn::VoiceManager* vm, int unitId) { return new UnitEditor(p, vm, unitId); };
+    if (m_registeredUnitEditors.find(a_classId) != m_registeredUnitEditors.end())
         constructor = m_registeredUnitEditors[a_classId];
     UnitEditor* editor = constructor(this, m_vm, a_unitId);
     addChild(childCount(), editor);
@@ -327,19 +319,19 @@ void synui::UnitEditorHost::removeEditor(int a_unitId)
     m_editorMap.erase(a_unitId);
     if (selectedIndex() == childIndex(editor))
         setSelectedIndex(-1);
-    removeChild(editor);    
+    removeChild(editor);
 }
 
 void synui::UnitEditorHost::activateEditor(unsigned a_classId, int a_unitId)
 {
-    if(m_editorMap.find(a_unitId)==m_editorMap.end())
+    if (m_editorMap.find(a_unitId) == m_editorMap.end())
         addEditor(a_classId, a_unitId);
     UnitEditor* editor = m_editorMap[a_unitId];
     setSelectedIndex(childIndex(editor));
     m_activeUnitId = a_unitId;
 
     Widget* screen = this;
-    while(screen->parent()) screen = screen->parent();
+    while (screen->parent()) screen = screen->parent();
     static_cast<nanogui::Screen*>(screen)->performLayout();
 
     // If the editor host is in a tab widget, set the active tab to show the editor.

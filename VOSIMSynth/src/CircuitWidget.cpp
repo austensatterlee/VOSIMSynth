@@ -5,7 +5,6 @@
 #include "UnitWidget.h"
 #include "MainGUI.h"
 #include "UnitEditor.h"
-#include "CircuitWidget.h"
 
 namespace synui
 {
@@ -239,6 +238,7 @@ namespace synui
 synui::CircuitWidget::CircuitWidget(nanogui::Widget* a_parent, synui::MainWindow* a_mainWindow, synui::UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf) :
     Widget(a_parent),
     m_window(a_mainWindow),
+    m_unitEditorHost(a_unitEditorHost),
     m_uf(a_uf),
     m_vm(a_vm),
     m_grid{ {0,0}, GridCell{GridCell::Empty, nullptr} },
@@ -246,8 +246,7 @@ synui::CircuitWidget::CircuitWidget(nanogui::Widget* a_parent, synui::MainWindow
     m_state(State::Uninitialized),
     m_placingUnitState{ 0, false, nullptr },
     m_drawingWireState{ false,nullptr },
-    m_highlightedWire{ nullptr },
-    m_unitEditorHost(a_unitEditorHost)
+    m_highlightedWire{ nullptr }
 {
     registerUnitWidget<syn::InputUnit>([](CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new InputUnitWidget(parent, a_vm, unitId); });
     registerUnitWidget<syn::OutputUnit>([](CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new OutputUnitWidget(parent, a_vm, unitId); });
@@ -344,7 +343,7 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
     /* Draw background */
     nvgBeginPath(ctx);
     nvgRect(ctx, 0, 0, mSize.x(), mSize.y());
-    nvgFillColor(ctx, mTheme->mWindowFillUnfocused);
+    nvgFillColor(ctx, mTheme->mWindowFillFocused);
     nvgFill(ctx);
 
     /* Draw grid */
@@ -415,12 +414,16 @@ Eigen::Vector2i synui::CircuitWidget::fixToGrid(const Eigen::Vector2i& a_pixelLo
 
 void synui::CircuitWidget::performLayout(NVGcontext* ctx)
 {
+    for(auto w : m_unitWidgets)
+    {
+        w.second->setSize({0,0});
+    }
     Widget::performLayout(ctx);
 }
 
 void synui::CircuitWidget::resizeGrid(int a_newGridSpacing)
 {
-    Vector2i newGridShape = m_grid.fromPixel(size(), a_newGridSpacing) - Vector2i::Ones();
+    Vector2i newGridShape = m_grid.fromPixel(size(), a_newGridSpacing);
     newGridShape = newGridShape.cwiseMax(0);
     if (m_gridSpacing == a_newGridSpacing && (newGridShape.array() == m_grid.getShape().array()).all())
         return;
@@ -831,6 +834,7 @@ void synui::CircuitWidget::deleteUnitWidget_(UnitWidget* widget)
 
     // Delete the unit widget
     m_grid.replaceValue({ GridCell::Unit, m_unitWidgets[unitId] }, m_grid.getEmptyValue());
+    removeChild(m_unitWidgets[unitId]->m_titleTextBox);
     removeChild(m_unitWidgets[unitId]);
     m_unitWidgets.erase(unitId);
 }
