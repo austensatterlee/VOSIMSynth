@@ -56,8 +56,8 @@ endif (MINGW)
 if(MSVC)
   # Runtime library, exceptions, parallel compilation
   set(MSVC_REL /EHsc /MT /MP)
-  set(MSVC_RDEB /EHsc /MTd /MP)
-  set(MSVC_DEB /EHsc /MTd /MP)
+  set(MSVC_RDEB /EHsc /MTd /Gm)
+  set(MSVC_DEB /EHsc /MTd /Gm)
 
   # Disable some warnings
   set(MSVC_DISABLED_WARNINGS /wd4996 /wd4224 /wd4244 /wd4091 /wd4018 /wd4503 /wd4390)
@@ -93,7 +93,7 @@ if(MSVC)
 endif()
 
 # configurations for all compilers
-add_compile_options("$<$<NOT:$<CONFIG:Release>>:-D_DEBUG>")
+add_compile_options("$<$<CONFIG:RelWithDebInfo>:-D_RELWITHDEBINFO>")
 
 ##
 # Configure compiled dependencies 

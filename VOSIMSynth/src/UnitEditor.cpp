@@ -174,7 +174,8 @@ void synui::UnitEditor::_build()
                 int sig = param.getPrecision();
                 double valueIncr = std::pow(10, -sig);
 
-                if (static_cast<nanogui::TextBox*>(fb)->value() != text || norm != s->value() || fb->visible() != visible || fb->getValueIncrement() != valueIncr)
+                bool isDirty = static_cast<nanogui::TextBox*>(fb)->value() != text || fb->visible() != visible || fb->getValueIncrement() != valueIncr || (s && norm != s->value());               
+                if (isDirty)
                 {
                     m_isDirty = true;
                     static_cast<nanogui::TextBox*>(fb)->setValue(text);
@@ -301,14 +302,15 @@ synui::UnitEditorHost::UnitEditorHost(Widget* parent, syn::VoiceManager* a_vm) :
 void synui::UnitEditorHost::addEditor(unsigned a_classId, int a_unitId)
 {
     if (m_editorMap.find(a_unitId) != m_editorMap.end())
-        removeChild(m_editorMap[a_unitId]);
+        removeEditor(a_unitId);
     UnitEditorConstructor constructor = [](Widget* p, syn::VoiceManager* vm, int unitId) { return new UnitEditor(p, vm, unitId); };
     if (m_registeredUnitEditors.find(a_classId) != m_registeredUnitEditors.end())
         constructor = m_registeredUnitEditors[a_classId];
     UnitEditor* editor = constructor(this, m_vm, a_unitId);
+    int oldSelectedIndex = selectedIndex();
     addChild(childCount(), editor);
+    setSelectedIndex(oldSelectedIndex);
     m_editorMap[a_unitId] = editor;
-    editor->setVisible(false);
 }
 
 void synui::UnitEditorHost::removeEditor(int a_unitId)

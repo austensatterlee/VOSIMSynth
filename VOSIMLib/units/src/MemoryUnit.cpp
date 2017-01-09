@@ -54,7 +54,7 @@ namespace syn
     double NSampleDelay::readTap(double a_offset)
     {
         double readPhase = WRAP<double>(m_curWritePhase - a_offset, m_arraySize);
-        int rInd1 = static_cast<int>(readPhase);
+        int rInd1 = WRAP<int>(readPhase, m_arraySize);
         int rInd2 = WRAP<int>(rInd1 + 1, m_arraySize);
         return LERP<double>(m_buffer[rInd1], m_buffer[rInd2], readPhase - rInd1);
     }

@@ -46,6 +46,7 @@ Copyright 2016, Austen Satterlee
 #include <boost/lockfree/policies.hpp>
 
 #include "UI.h"
+#include <json/json.hpp>
 
 #define MAX_GUI_MSG_QUEUE_SIZE 64
 
@@ -76,11 +77,13 @@ namespace synui
         MainWindow(int a_width, int a_height, GUIConstructor a_guiConstructor);
         virtual ~MainWindow();
 
+        void initialize();
+
         GLFWwindow* getWindow() const { return m_window; }
 
         bool isOpen() const { return m_isOpen; }
 
-        Vector2u getSize() const { return m_size; }
+        Vector2i getSize() const { return m_size; }
 
         double getFps() const { return m_fps; }
 
@@ -97,6 +100,11 @@ namespace synui
 
         /// Assign a function to be called when the user requests a resize
         void setResizeFunc(std::function<void(int w,int h)> a_func);
+
+        operator nlohmann::json();
+        void load(const nlohmann::json& j);
+
+        void reset();;
 
 #ifdef _WIN32
         void setHInstance(HINSTANCE a_newHInstance) { m_HInstance = a_newHInstance; }
@@ -120,9 +128,11 @@ namespace synui
         GLFWwindow* m_window;
         bool m_isOpen;
 
+        GUIConstructor m_guiConstructor;
         MainGUI* m_gui;
+        nlohmann::json m_guiState;
 
-        Vector2u m_size;
+        Vector2i m_size;
 
         unsigned m_frameCount;
         double m_fps;

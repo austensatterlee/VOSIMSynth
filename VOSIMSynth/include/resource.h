@@ -1,5 +1,9 @@
+#pragma once
+
 #define PLUG_MFR "Austen"
-#ifdef _DEBUG
+#if defined(_RELWITHDEBINFO)
+#define PLUG_NAME "VOSIMProject-rdb"
+#elif defined(_DEBUG)
 #define PLUG_NAME "VOSIMProject-debug"
 #else
 #define PLUG_NAME "VOSIMProject"

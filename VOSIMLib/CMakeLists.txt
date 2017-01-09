@@ -17,6 +17,13 @@ endif()
 include_directories(${LIBS_DIR}/eigen)
 
 ##
+# Generate wavetables
+##
+set(GENTABLES_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/lut_tables.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/lut_tables.h ${CMAKE_CURRENT_SOURCE_DIR}/src/table_data.cpp)
+set(GENTABLES_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/lut_tables.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/lut_tables.h)
+add_custom_command(OUTPUT ${GENTABLES_OUTPUT} COMMAND python ARGS ${CMAKE_CURRENT_SOURCE_DIR}/genTables.py --verbose COMMENT "Generating wavetables ${CMAKE_CURRENT_SOURCE_DIR}" PRE_BUILD VERBATIM WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+##
 # VOSIMLib source files
 ##
 file(GLOB VOSIMLIB_HDRS include/*.h)

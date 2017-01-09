@@ -131,14 +131,13 @@ namespace synui
 
         /**
          * \brief Sends a request to the real-time thread to create a new unit.
-         * \param a_unitPrototypeName Prototype name of the unit to create. Corresponds to a prototype name in
-         * the unit factory.
+         * \param a_unitPrototypeName Prototype name of the unit to create. Corresponds to a prototype name in the unit factory.
          */
         void createUnit_(const std::string& a_unitPrototypeName);
 
         /**
          * \brief Called upon successful creation of a unit on the real-time thread. Creates the associated
-         * unit widget and places the CircuitWidget in the `PlacingUnit` state.
+         * unit widget and places the CircuitWidget in the `CreatingUnit` state.
          * \param a_unitId Id of the newly created unit.
          */
         void onUnitCreated_(unsigned a_classId, int a_unitId);
@@ -149,10 +148,10 @@ namespace synui
         UnitWidget* createUnitWidget_(unsigned a_classId, int a_unitId);
 
         /**
-         * \brief Try to end the `PlacingUnit` state by setting the position of the widget being placed.
+         * \brief Try to end the `CreatingUnit` state by setting the position of the widget being placed.
          * \returns true if unit was placed, false if the position was not valid.
          */
-        bool endPlaceUnit_(const Eigen::Vector2i& a_pos);
+        bool endCreateUnit_(const Eigen::Vector2i& a_pos);
 
         void deleteUnit_(int a_unitId);
 
@@ -181,6 +180,27 @@ namespace synui
         void endWireDraw_(int a_unitId, int a_portId, bool a_isOutput);
 
         /**
+         * \brief Place the CircuitWidget in the `MovingUnit` state. 
+         * During this state, all unit widgets in the selection set are moved.
+         * \param a_start The location of the mouse; used as a reference point for determining movement amounts.
+         */
+        void startUnitMove_(const Eigen::Vector2i& a_start);
+
+        /**
+         * \brief Tentatively update the positions of the units being moved for visual feedback.
+         * Should only be called while in the `MovingUnit` state.
+         * \param a_current The current location of the mouse.
+         */
+        void updateUnitMove_(const Eigen::Vector2i& a_current);
+
+        /**
+         * \brief Try to commit the unit widgets to their new positions. Ends the `MovingUnit` state.
+         * Should only be called while in the `MovingUnit` state.
+         * \param a_end The current location of the mouse.
+         */
+        void endUnitMove_(const Eigen::Vector2i& a_end);
+
+        /**
          * \brief Attempt to update the position of an existing unit and record the change if successful.
          * This method should be used to move units instead of interacting with the unit widget directly.
          * This method sets the position of the unit widget and updates the internal
@@ -200,12 +220,12 @@ namespace synui
          * \brief Delete the given wire widget.
          * Note that this method only affects the GUI. The actual connection on the real-time thread is not affected.
          */
-        void deleteWireWidget_(CircuitWire* wire);
+        void _deleteWireWidget(CircuitWire* wire);
         /**
          * \brief Delete the given unit widget.
          * Note that this method only affects the GUI. The actual connection on the real-time thread is not affected.
          */
-        void deleteUnitWidget_(UnitWidget* widget);
+        void _deleteUnitWidget(UnitWidget* widget);
     private:
         synui::MainWindow* m_window;
         synui::UnitEditorHost* m_unitEditorHost;
@@ -219,19 +239,25 @@ namespace synui
         {
             Uninitialized,
             Idle,
-            PlacingUnit,
+            CreatingUnit,
+            MovingUnit,
             DrawingWire,
             DrawingSelection
         } m_state;
 
-        struct PlacingUnitState
+        struct CreatingUnitState
         {
             int unitId;
             bool isValid;
             synui::UnitWidget* widget;
-        } m_placingUnitState;
-
+        } m_creatingUnitState;
         std::unordered_map<int, UnitWidget*> m_unitWidgets;
+
+        struct MovingUnitState
+        {
+            std::unordered_map<int, Eigen::Vector2i> originalPositions;
+            Eigen::Vector2i start;
+        } m_movingUnitState;
 
         struct DrawingWireState
         {
@@ -242,9 +268,11 @@ namespace synui
         CircuitWire* m_highlightedWire;
         std::vector<CircuitWire*> m_wires;
 
-        struct DrawingSelection
+        struct DrawingSelectionState
         {
             Eigen::Vector2i startPos;
+            Eigen::Vector2i endPos;
         } m_drawingSelectionState;
+        std::unordered_set<UnitWidget*> m_selection;
     };
 }

@@ -100,6 +100,23 @@ namespace synui
         MatrixXt& get() { return m_grid; }
 
         /**
+         * \brief Get the unique values stored inside the specified block.
+         */
+        std::unordered_set<CellType> getUnique(const Grid2DPoint& a_topLeft, const Grid2DPoint& a_bottomRight) const
+        {
+            auto blk = getBlock(a_topLeft, a_bottomRight);
+            std::unordered_set<CellType> uniqueSet;
+            for (int r = 0; r < blk.rows(); r++)
+            {
+                for (int c = 0; c < blk.cols(); c++)
+                {
+                    uniqueSet.insert(blk(r,c));
+                }
+            }
+            return uniqueSet;
+        }
+
+        /**
          * \brief Save the current state of the grid so that it can later be restored. Any previous backup is
          * destroyed.
          */
@@ -111,6 +128,9 @@ namespace synui
          */
         void restore() { m_grid = m_gridBackup; }
 
+        /**
+         * \brief Reset the entire grid to the empty value.
+         */
         void reset()
         {
             setBlock({ 0, 0 }, m_shape, getEmptyValue());

@@ -48,7 +48,9 @@ foreach(file ${resources})
   list(APPEND bin2c_cmdline ${file})
 endforeach()
 
+##
 # Run bin2c on resource files
+##
 add_custom_command(OUTPUT ${RES_BIN} COMMAND vosimsynth_bin2c ARGS ${bin2c_cmdline} DEPENDS vosimsynth_bin2c ${resources} COMMENT "Running vosimsynth_bin2c" PRE_BUILD VERBATIM)
 list(APPEND RESOURCE_FILES ${CMAKE_CURRENT_BINARY_DIR}/vosimsynth_resources.cpp ${CMAKE_CURRENT_BINARY_DIR}/vosimsynth_resources.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

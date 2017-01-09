@@ -48,7 +48,6 @@ namespace synui
 
         void draw(NVGcontext* ctx) override;
         bool mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
-        bool mouseDragEvent(const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override;
 
         const std::string& getName() const;
         int getUnitId() const { return m_unitId; }
@@ -97,15 +96,12 @@ namespace synui
         std::map<int, Widget*> m_emptyInputLabels;
         std::map<int, Widget*> m_emptyOutputLabels;
 
-        Eigen::Vector2i m_oldPos;
-        Eigen::Vector2i m_clickPos;
+        double m_lastClickTime;
 
-        enum
+        enum State
         {
             Uninitialized,
-            Idle,
-            BodyClicked,
-            BodyDragging
+            Idle
         } m_state;
 
         int m_unitId;

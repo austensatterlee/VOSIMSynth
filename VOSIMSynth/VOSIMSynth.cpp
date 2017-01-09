@@ -102,7 +102,7 @@ bool VOSIMSynth::SerializeState(ByteChunk* pChunk) {
     synth["circuit"] = circuit->operator json();
 
     // Store gui data
-    json& gui = j["gui"] = GetAppWindow()->getGUI()->operator json();
+    json& gui = j["gui"] = GetAppWindow()->operator json();
 
     ss << j;
     pChunk->PutStr(ss.str().c_str());
@@ -123,12 +123,14 @@ int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
 
     syn::Unit* circuit = syn::Unit::fromJSON(synth["circuit"]);
 
-    // <reset gui circuit here>
-    GetAppWindow()->getGUI()->reset();
+    // Reset gui
+    GetAppWindow()->reset();
+    // Load new circuit into voice manager
     m_voiceManager->setPrototypeCircuit(*static_cast<const syn::Circuit*>(circuit));
+    // Inform new circuit of buffer size, sampling rate, etc...
     Reset();
-    // <load new gui circuit here>
-    GetAppWindow()->getGUI()->load(gui);
+    // Load gui
+    GetAppWindow()->load(gui);
 
     startPos += ss.gcount();
     return startPos;

@@ -10,12 +10,13 @@
 #include <GLFW/glfw3native.h>
 
 static int nWndClassReg = 0;
+static int nGlfwClassReg = 0;
 static const char* wndClassName = "VOSIMWndClass";
 
 void synui::MainWindow::_OpenWindowImplem(HWND a_system_window)
 {
     if (nWndClassReg++ == 0) {
-        WNDCLASS wndClass = {NULL, drawFunc, 0, 0, m_HInstance, 0, NULL, 0, 0, wndClassName};
+        WNDCLASS wndClass = { NULL, drawFunc, 0, 0, m_HInstance, 0, NULL, 0, 0, wndClassName };
         RegisterClass(&wndClass);
     }
 
@@ -47,7 +48,7 @@ LRESULT CALLBACK synui::MainWindow::drawFunc(HWND Handle, UINT Message, WPARAM W
         LPCREATESTRUCT lpcs = (LPCREATESTRUCT)LParam;
         SetWindowLongPtr(Handle, GWLP_USERDATA, (LPARAM)(lpcs->lpCreateParams));
 
-        int mSec = int(1000.0 / 60.0);
+        int mSec = int(1000.0 / 120.0);
         SetTimer(Handle, NULL, mSec, NULL);
 
         return 0;
@@ -58,13 +59,13 @@ LRESULT CALLBACK synui::MainWindow::drawFunc(HWND Handle, UINT Message, WPARAM W
         return DefWindowProc(Handle, Message, WParam, LParam);
 
     switch (Message) {
-        case WM_TIMER:
-            {
-                _this->_runLoop();
-            }
-            break;
-        default:
-            return DefWindowProc(Handle, Message, WParam, LParam);
+    case WM_TIMER:
+    {
+        _this->_runLoop();
+    }
+    break;
+    default:
+        return DefWindowProc(Handle, Message, WParam, LParam);
     } // windows message handler
     return NULL;
 }
@@ -72,19 +73,45 @@ LRESULT CALLBACK synui::MainWindow::drawFunc(HWND Handle, UINT Message, WPARAM W
 
 synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiConstructor) :
     m_HInstance(nullptr),
-    m_timerWindow(nullptr), 
+    m_timerWindow(nullptr),
     m_window(nullptr),
-    m_isOpen(false),
-    m_size(a_width, a_height), 
+    m_isOpen(false), 
+    m_guiConstructor(a_guiConstructor),
+    m_gui(nullptr),
+    m_size(a_width, a_height),
     m_frameCount(0),
     m_fps(1.0),
     m_guiInternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE),
     m_guiExternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE)
 {
+    auto error_callback = [](int error, const char* description)
+            {
+                puts(description);
+            };
+    glfwSetErrorCallback(error_callback);
     // Create GLFW window
-    if (!glfwInit()) {
+    if (!(nGlfwClassReg++) && !glfwInit())
+    {
         throw "Failed to init GLFW.";
     }
+    initialize();
+}
+
+synui::MainWindow::~MainWindow()
+{
+    if(m_gui)
+    {
+        delete m_gui; m_gui = nullptr;
+    }
+    CloseWindow();
+    if(!--nGlfwClassReg)
+        glfwTerminate();
+}
+
+void synui::MainWindow::initialize()
+{
+    if(m_gui)
+        return;
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -101,9 +128,8 @@ synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiCon
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    //glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
-    m_window = glfwCreateWindow(800, 600, "VOSIMSynth", nullptr, nullptr);
+    m_window = glfwCreateWindow(m_size.x(), m_size.y(), "VOSIMSynth", nullptr, nullptr);
     if (m_window == nullptr) {
         glfwTerminate();
         throw "Failed to create GLFW window";
@@ -113,16 +139,12 @@ synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiCon
     glfwSwapBuffers(m_window);
 
     // Construct GUI object
-    m_gui = a_guiConstructor(this);
-    glfwSetWindowSize(m_window, m_size.x(), m_size.y());
+    m_gui = m_guiConstructor(this);
+    resize(m_size.x(), m_size.y());
+    if(!m_guiState.empty())
+        m_gui->load(m_guiState);
 
     glfwMakeContextCurrent(nullptr);
-}
-
-synui::MainWindow::~MainWindow()
-{
-    CloseWindow();
-    delete m_gui; m_gui=nullptr;
 }
 
 void synui::MainWindow::_runLoop()
@@ -145,6 +167,28 @@ void synui::MainWindow::queueInternalMessage(GUIMessage* a_msg) { m_guiInternalM
 void synui::MainWindow::setResizeFunc(std::function<void(int w, int h)> a_func)
 {
     m_resizeFunc = a_func;
+}
+
+synui::MainWindow::operator json()
+{
+    if (m_gui)
+    {
+        m_guiState = m_gui->operator json();
+    }
+    return m_guiState;
+}
+
+void synui::MainWindow::load(const json& j)
+{
+    m_guiState = j;
+    if (m_gui)
+        m_gui->load(j);
+}
+
+void synui::MainWindow::reset()
+{
+    if (m_gui)
+        m_gui->reset();
 }
 
 void synui::MainWindow::_flushMessageQueues()
@@ -171,6 +215,7 @@ void synui::MainWindow::queueExternalMessage(GUIMessage* a_msg) { m_guiExternalM
 bool synui::MainWindow::OpenWindow(HWND a_system_window)
 {
     if (!m_isOpen) {
+        initialize();
         m_gui->show();
         _OpenWindowImplem(a_system_window);
         m_isOpen = true;
@@ -182,7 +227,8 @@ void synui::MainWindow::CloseWindow()
 {
     if (m_isOpen) {
         _CloseWindowImplem();
-        m_gui->hide();
+        m_guiState = m_gui->operator json();
+        delete m_gui; m_gui=nullptr;
         m_isOpen = false;
     }
 }
@@ -190,6 +236,7 @@ void synui::MainWindow::CloseWindow()
 void synui::MainWindow::resize(int w, int h)
 {
     glfwSetWindowSize(m_window, w, h);
+    m_gui->resize(w,h);
     m_size = { w,h };
     if (m_resizeFunc)
         m_resizeFunc(w, h);

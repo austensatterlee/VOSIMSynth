@@ -2,10 +2,10 @@
 
 namespace synui
 {
-    void drawShadow(NVGcontext* ctx, float x, float y, float w, float h, float r, float s, const nanogui::Color& a_shadowColor, const nanogui::Color& a_transparentColor)
+    void drawShadow(NVGcontext* ctx, float x, float y, float w, float h, float r, float s, float f, const nanogui::Color& a_shadowColor, const nanogui::Color& a_transparentColor)
     {
         NVGpaint shadowPaint = nvgBoxGradient(
-            ctx, x, y, w, h, r * 2, s * 2,
+            ctx, x, y, w, h, r * 2, f * 2 * s,
             a_shadowColor, a_transparentColor);
 
         nvgSave(ctx);

@@ -67,10 +67,13 @@ namespace synui
 
         void log(const std::string& a_channel, const std::string& a_msg)
         {
-            m_logs.push_back({ a_channel, a_msg });
-            if (m_channelMap.find(a_channel) == m_channelMap.end())
-                m_channelMap[a_channel] = {};
-            m_channelMap[a_channel].push_back(m_logs.size() - 1);
+            if(m_logs.size()<m_maxLogs-1){
+                m_logs.push_back({ a_channel, a_msg });
+                m_nextIndex++;
+            }else{
+                m_logs[m_nextIndex] = {a_channel, a_msg};
+                m_nextIndex = m_nextIndex % m_maxLogs;
+            }
 
             for (auto& listener : m_listeners)
                 listener();
@@ -83,11 +86,19 @@ namespace synui
             m_listeners.push_back(a_listener);
         }
 
+        void reset()
+        {
+            m_listeners.clear();
+            m_logs.clear();
+            m_nextIndex = 0;
+        }
+
     private:
-        Logger() {}
+        Logger() : m_maxLogs(1000), m_nextIndex(0) {}
         std::vector<std::pair<std::string, std::string> > m_logs;
-        std::unordered_map<std::string, std::vector<int> > m_channelMap;
         std::vector<Listener> m_listeners;
+        int m_maxLogs;
+        int m_nextIndex;
     };
 
     class MainGUI
@@ -106,11 +117,12 @@ namespace synui
         MainGUI* load(const json& j);
 
         void reset();
-
+        void resize(int a_w, int a_h);
     protected:
-        void _createUnitSelector(nanogui::Widget* a_widget);
-        void _createSettingsEditor(nanogui::Widget* a_widget, nanogui::FormHelper* a_fh);
-        void _createLogViewer(nanogui::Widget * a_widget);
+        void createUnitSelector_(nanogui::Widget* a_widget);
+        void createSettingsEditor_(nanogui::Widget* a_widget, nanogui::FormHelper* a_fh);
+        void createLogViewer_(nanogui::Widget * a_widget);
+        void initialize_(GLFWwindow* a_window);
 
     private:
         MainWindow* m_window;

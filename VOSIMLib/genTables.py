@@ -87,12 +87,11 @@ def GenerateBlit(pts,nharmonics=None):
     Generate a band-limited impulse train using the FFT
 
     """
-    pts = (pts*2)/2+1
-    nharmonics = nharmonics or pts/2
-    blit_spectrum = zeros(pts,dtype=complex128)
-    blit_spectrum[:nharmonics] = 1.0
+    nharmonics = nharmonics or (pts/2 if pts%2!=0 else pts/2-1)
+    fftpts = pts/2+1
+    blit_spectrum = zeros(fftpts)
+    blit_spectrum[:nharmonics+1] = 1.0
     blit = fft.fftshift(fft.irfft(blit_spectrum))
-    blit = blit/blit.max()
     return blit
 
 def bl_prefilter():
@@ -103,21 +102,22 @@ def bl_prefilter():
 def GenerateBLSaw(nharmonics,npoints=None):
     """ Generate band limited sawtooth wave """
     npoints = npoints or nharmonics*2+1
-    maxharmonic = npoints/2-1 if npoints%2 else npoints/2
+    nharmonics = min(nharmonics, npoints/2-1 if npoints%2 else npoints/2)
 
-    harmonics = [x for x in xrange(1,npoints) if x<=maxharmonic]
+    harmonics = [x for x in xrange(1,nharmonics+1)]
 
     gains = [1./x for x in harmonics]
 
     sample_pts = arange(npoints)*2.0*pi/npoints
     blsaw = sum([g*sin(h*sample_pts) for g,h in zip(gains,harmonics)],axis=0)
+    blsaw = -fft.fftshift(blsaw)
     return blsaw/blsaw.max()
 
 def GenerateBLSquare(nharmonics,npoints=None):
     npoints = npoints or nharmonics*2+1
-    maxharmonic = npoints/2-1 if npoints%2 else npoints/2
+    nharmonics = min(nharmonics, npoints/2-1 if npoints%2 else npoints/2)
 
-    harmonics = [x for x in xrange(1,npoints) if x<=maxharmonic and x%2]
+    harmonics = [x for x in xrange(1,nharmonics+1) if x%2]
 
     gains = [1./x for x in harmonics]
 
@@ -127,9 +127,9 @@ def GenerateBLSquare(nharmonics,npoints=None):
 
 def GenerateBLTriangle(nharmonics,npoints=None):
     npoints = npoints or nharmonics*2+1
-    maxharmonic = npoints/2-1 if npoints%2 else npoints/2
+    nharmonics = min(nharmonics, npoints/2-1 if npoints%2 else npoints/2)
 
-    harmonics = [x for x in xrange(1,npoints) if x<=maxharmonic and x%2]
+    harmonics = [x for x in xrange(1,nharmonics+1) if x%2]
 
     gains = [1./x**2 if not i%2 else -1./x**2 for i,x in enumerate(harmonics)]
 
@@ -549,8 +549,8 @@ def main(pargs):
                 val = "true" if val else "false"
             currargs.append("{}".format(val))
         tableargs = "{}, ".format(name)+", ".join(currargs)
-        tableobjfunc_currdecl = """{0:}& lut_{1:}();\n""".format(classname,name.lower())
-        tableobjfunc_currdef = """{0:}& lut_{1:}(){{ static {0:} table({2:}); return table; }}\n""".format(classname,name.lower(),tableargs)
+        tableobjfunc_currdecl = """{0:}& VOSIMLIB_API lut_{1:}();\n""".format(classname,name.lower())
+        tableobjfunc_currdef = """{0:}& lut_{1:}() {{ static {0:} table({2:}); return table; }}\n""".format(classname,name.lower(),tableargs)
         tableobjfuncs_decl += tableobjfunc_currdecl
         tableobjfuncs_def += tableobjfunc_currdef
 
@@ -605,6 +605,7 @@ def main(pargs):
 if __name__=="__main__":
     import argparse as ap
     psr = ap.ArgumentParser()
+    psr.epilog = "Output files: {}".format(", ".join([LUT_TABLESRC_FILE, LUT_TABLEHDR_FILE, LUT_TABLEDATA_FILE]))
     psr.add_argument("-v","--verbose",action="store_true")
     pargs = psr.parse_args()
 
