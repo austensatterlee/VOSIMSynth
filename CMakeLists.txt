@@ -59,7 +59,7 @@ endif (MINGW)
 if(MSVC)
   # Runtime library, exceptions, parallel compilation
   set(MSVC_REL /EHsc /MT /MP)
-  set(MSVC_RDEB /EHsc /MTd /Gm)
+  set(MSVC_RDEB /EHsc /MT /Gm)
   set(MSVC_DEB /EHsc /MTd /Gm)
 
   # Disable some warnings
@@ -74,13 +74,8 @@ if(MSVC)
   list(APPEND MSVC_REL /Ox /GL /Ob2 /Oi /Ot /Oy /fp:fast /fp:except- /Qpar /GT /GL)
   list(APPEND MSVC_RDEB /Ox /Ob2 /Oi /Ot /Oy /fp:fast /Qpar /GT /GL)
 
-  if(ARCH EQUAL 32)
-    list(APPEND MSVC_REL /arch:SSE2)
-    list(APPEND MSVC_RDEB /arch:SSE2)
-  elseif(ARCH EQUAL 64)
-    list(APPEND MSVC_REL /arch:AVX2)
-    list(APPEND MSVC_RDEB /arch:AVX2)
-  endif()
+  list(APPEND MSVC_REL /arch:AVX2)
+  list(APPEND MSVC_RDEB /arch:AVX2)
     
   add_compile_options("$<$<CONFIG:Release>:${MSVC_REL}>")
   add_compile_options("$<$<CONFIG:RelWithDebInfo>:${MSVC_RDEB}>")
@@ -103,19 +98,6 @@ add_compile_options("$<$<CONFIG:RelWithDebInfo>:-D_RELWITHDEBINFO>")
 ##
 
 set(BUILD_SHARED_LIBS False)
-
-# Add boost
-message(STATUS "Boost root: ${BOOST_ROOT}")
-message(STATUS "Boost root (env): $ENV{BOOST_ROOT}")
-message(STATUS "Boost include dir: ${Boost_INCLUDE_DIR}")
-message(STATUS "Boost libs dir: ${Boost_LIBRARY_DIR}")
-set(Boost_NO_BOOST_CMAKE True)
-set(Boost_DETAILED_FAILURE_MSG True)
-set(Boost_USE_STATIC_LIBS   ON)
-set(Boost_USE_MULTITHREADED ON)
-set(Boost_USE_STATIC_RUNTIME ON)
-find_package(Boost COMPONENTS thread REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
 
 # FFTS
 find_library(FFTS_RELEASE_LIBRARY ffts ffts_static PATHS ${FFTS_ROOT} PATH_SUFFIXES lib)
@@ -174,12 +156,6 @@ include_directories(${LIBS_DIR}/wdl/iplug)
 # JSON for Modern C++
 ##
 include_directories(${LIBS_DIR}/json)
-
-
-##
-# ETL
-##
-include_directories(${LIBS_DIR}/etl/include)
 
 ##
 # Add VOSIMLib

@@ -22,14 +22,14 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "Circuit.h"
 #include "Unit.h"
-#include "UnitFactory.h"
 #include "CircularContainers.h"
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/lockfree/policies.hpp>
-#include <map>
 #include <Containers.h>
+#include <map>
 
 #define MAX_VOICEMANAGER_MSG_QUEUE_SIZE 1024
+#define MAX_VOICES 16
 
 using std::map;
 using std::string;
@@ -47,7 +47,7 @@ namespace syn
      */
     struct VOSIMLIB_API RTMessage
     {
-        void(*action)(Circuit*, bool, ByteChunk*);
+        void (*action)(Circuit*, bool, ByteChunk*);
         ByteChunk data;
     };
 
@@ -63,19 +63,22 @@ namespace syn
 
     public:
         VoiceManager() :
-            m_queuedActions{ MAX_VOICEMANAGER_MSG_QUEUE_SIZE },
+            m_queuedActions{MAX_VOICEMANAGER_MSG_QUEUE_SIZE},
             m_numActiveVoices(0),
             m_maxVoices(0),
             m_bufferSize(1),
+            m_internalBufferSize(1),
             m_tickCount(0),
             m_activeVoices(0),
             m_idleVoices(0),
             m_garbageList(0),
-            m_instrument{ "main" }
-        { };
+            m_instrument{"main"}
+        {
+            setBufferSize(m_bufferSize);
+            setInternalBufferSize(m_internalBufferSize);
+        };
 
-        virtual ~VoiceManager() {
-        }
+        virtual ~VoiceManager() { }
 
         void MSFASTCALL tick(const double* a_left_input, const double* a_right_input, double* a_left_output, double* a_right_output) GCCFASTCALL;
 
@@ -88,7 +91,16 @@ namespace syn
 
         void setFs(double a_newFs);
 
+        /**
+         * \brief The number of samples read and produced by the tick() method of the VoiceManager.
+         */
         void setBufferSize(int a_bufferSize);
+
+        /**
+         * \brief Set the number of samples read and produced by the tick() method of the internal circuits.
+         */
+        void setInternalBufferSize(int a_internalBufferSize);
+        int getInternalBufferSize() const { return m_internalBufferSize; }
 
         void setTempo(double a_newTempo);
 
@@ -105,17 +117,9 @@ namespace syn
         int getMaxVoices() const;
 
         int getLowestVoiceIndex() const;
-
         int getNewestVoiceIndex() const;
-
         int getOldestVoiceIndex() const;
-
         int getHighestVoiceIndex() const;
-
-        /**
-         * Get the voice numbers that are currently playing the given note
-         */
-        vector<int> getNoteVoices(int a_note);
 
         void onIdle();
 
@@ -149,7 +153,7 @@ namespace syn
 
         void _makeIdle(int a_voiceIndex);
 
-        int _findIdleVoice();
+        int _stealIdleVoice();
 
     private:
         typedef CircularQueue<int> VoiceIndexList;
@@ -157,16 +161,17 @@ namespace syn
 
         spsc_queue<RTMessage*> m_queuedActions;
 
-        unsigned m_numActiveVoices; /// Number of active voices
-        unsigned m_maxVoices; /// Total number of voices (idle voices + active voices)
-        unsigned m_bufferSize;
-        unsigned m_tickCount;
+        vector<Circuit> m_circuits;
+        int m_numActiveVoices; /// Number of active voices
+        int m_maxVoices; /// Total number of usable voices (idle voices + active voices)
+        int m_bufferSize;
+        int m_internalBufferSize;
+        int m_tickCount;
 
         VoiceMap m_voiceMap; /// maps midi notes to voice indices
         VoiceIndexList m_activeVoices; /// list of active voice indices
         VoiceIndexList m_idleVoices; /// list of idle voice indices
         VoiceIndexList m_garbageList; /// pre-allocated storage for collecting idle voices during audio processing
-        vector<Circuit> m_voices;
         Circuit m_instrument;
     };
 }

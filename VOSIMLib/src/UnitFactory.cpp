@@ -1,5 +1,6 @@
 #include "UnitFactory.h"
 #include "Unit.h"
+#include "DSPMath.h"
 
 syn::UnitFactory::FactoryPrototype::FactoryPrototype(std::string a_group_name, syn::Unit* a_unit, size_t a_class_size)
     : classIdentifier(a_unit->getClassIdentifier()),
@@ -54,7 +55,7 @@ syn::Unit* syn::UnitFactory::createUnit(int a_protoNum, const string& a_name) {
     Unit* unit = m_prototypes[a_protoNum].prototype->clone();
     // Generate default name
     if(a_name.empty())
-        unit->_setName(m_prototypes[a_protoNum].name);
+        unit->_setName(incrementSuffix(m_prototypes[a_protoNum].name));
     else
         unit->_setName(a_name);
     return unit;

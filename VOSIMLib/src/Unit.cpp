@@ -35,7 +35,7 @@ namespace syn
 
     void Unit::setName(const string& a_name) { m_name = a_name; }
 
-    unsigned int Unit::getClassIdentifier() const
+    uint64_t Unit::getClassIdentifier() const
     {
         hash<string> hash_fn;
         return static_cast<unsigned int>(hash_fn(getClassName()));
@@ -130,7 +130,7 @@ namespace syn
 
         // set new input sources
         for (int i = 0; i < nInputs; i++) { m_inputPorts.getByIndex(i).src = &a_inputs(i, 0); }
-
+       
         tick();
 
         // record outputs

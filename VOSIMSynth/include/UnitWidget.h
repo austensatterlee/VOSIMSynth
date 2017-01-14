@@ -70,6 +70,7 @@ namespace synui
         void performLayout(NVGcontext* ctx) override;
 
         void setEditorCallback(std::function<void(unsigned, int)> a_callback) { m_editorCallback = a_callback; }
+        void triggerEditorCallback() const { m_editorCallback(m_classIdentifier, m_unitId); }
 
         operator json() const;
         UnitWidget* load(const json& j);

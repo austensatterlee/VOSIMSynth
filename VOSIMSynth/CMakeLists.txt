@@ -19,11 +19,17 @@ set(ADDITIONAL_LIBRARIES "")
 set(VOSIMSYNTH_RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources)
 set(VOSIMSYNTH_STANDALONE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/standalone)
 
+
 ##
-# VOSIMLib
+# Boost
 ##
-include_directories(${VOSIMLIB_DIR}/include)
-include_directories(${VOSIMLIB_DIR}/units/include)
+set(Boost_NO_BOOST_CMAKE True)
+set(Boost_DETAILED_FAILURE_MSG True)
+set(Boost_USE_STATIC_LIBS   ON)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME ON)
+find_package(Boost REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
 
 ##
 # nanogui
@@ -35,6 +41,11 @@ add_definitions(${NANOGUI_EXTRA_DEFS})
 include_directories(${NANOGUI_EXTRA_INCS})
 include_directories(${LIBS_DIR}/nanogui/include)
 
+##
+# VOSIMLib
+##
+include_directories(${VOSIMLIB_DIR}/include)
+include_directories(${VOSIMLIB_DIR}/units/include)
 
 ##
 # Compile resources into C code to be compiled into the exe

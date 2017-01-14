@@ -26,7 +26,7 @@ namespace synui
         {
             if (!m_isFinal)
                 return "";
-            const syn::Unit& unit = m_parentCircuit->m_vm->getUnit(m_outputPort.first, m_parentCircuit->m_vm->getNewestVoiceIndex());
+            const syn::Unit& unit = m_parentCircuit->m_vm->getUnit(m_outputPort.first, m_parentCircuit->m_vm->getOldestVoiceIndex());
             double value = unit.readOutput(m_outputPort.second, 0);
             std::ostringstream os;
             os << std::setprecision(4) << value;
@@ -264,6 +264,8 @@ bool synui::CircuitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button
         if (!down)
         {
             m_state = State::Idle;
+            if(m_selection.size()==1)
+                (*m_selection.begin())->triggerEditorCallback();
             return true;
         }
     }

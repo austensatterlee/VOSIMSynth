@@ -35,6 +35,24 @@ namespace syn
     {
         DERIVE_UNIT(ADSREnvelope)
     public:
+        enum Param
+        {
+            pAttack = 0,
+            pDecay,
+            pSustain,
+            pRelease,
+            pTimescale
+        };
+
+        enum Input
+        {
+            iGate = 0,
+            iAttack,
+            iDecay,
+            iSustain,
+            iRelease
+        };
+
         explicit ADSREnvelope(const string& name);
 
         ADSREnvelope(const ADSREnvelope& a_rhs);
@@ -61,10 +79,6 @@ namespace syn
         double m_initial;
         double m_target;
         bool m_isActive;
-        int m_pAttack, m_pDecay, m_pSustain, m_pRelease, m_pTimeScale;
-        int m_iAttack, m_iDecay, m_iRelease;
-        int m_iAttackMul, m_iDecayMul, m_iReleaseMul;
-        int m_iGate;
     };
 }
 #endif

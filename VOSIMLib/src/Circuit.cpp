@@ -159,8 +159,12 @@ namespace syn
         for (Unit** unit = m_procGraph.data(); *unit != nullptr; unit++)
         {
             Unit& u = **unit;
-            for(u.m_currentBufferOffset=0;u.m_currentBufferOffset<u.getBufferSize();u.m_currentBufferOffset++)
+            int bufSize = u.getBufferSize();
+            u.m_currentBufferOffset=0;
+            while(u.m_currentBufferOffset<bufSize){
                 (*unit)->tick();
+                u.m_currentBufferOffset++;
+            }
         }
 
         /* Push internally connected output signals to circuit output ports */

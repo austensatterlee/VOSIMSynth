@@ -30,14 +30,18 @@ namespace syn
         m_currStage(Attack),
         m_initial(0),
         m_target(1),
-        m_isActive(false),
-        m_pAttack(addParameter_(UnitParameter("atk", 0.0, 1.0, 0.001))),
-        m_pDecay(addParameter_(UnitParameter("dec", 0.0, 1.0, 0.1))),
-        m_pSustain(addParameter_(UnitParameter("sus", 0.0, 1.0, 0.707))),
-        m_pRelease(addParameter_(UnitParameter("rel", 0.0, 1.0, 0.20))),
-        m_pTimeScale(addParameter_(UnitParameter("timescale", 1, 10, 1, UnitParameter::Seconds)))
+        m_isActive(false)        
     {
-        m_iGate = addInput_("trig");
+        addInput_(Input::iAttack, "atk");
+        addInput_(Input::iDecay, "dec");
+        addInput_(Input::iSustain, "sus");
+        addInput_(Input::iRelease, "rel");
+        addInput_(Input::iGate, "trig");
+        addParameter_(Param::pAttack, UnitParameter("atk", 0.0, 1.0, 0.001));
+        addParameter_(Param::pDecay, UnitParameter("dec", 0.0, 1.0, 0.1));
+        addParameter_(Param::pSustain, UnitParameter("sus", 0.0, 1.0, 0.707));
+        addParameter_(Param::pRelease, UnitParameter("rel", 0.0, 1.0, 0.20));
+        addParameter_(Param::pTimescale, UnitParameter("timescale", 1, 10, 1, UnitParameter::Seconds));
         addOutput_("out");
     }
 
@@ -52,27 +56,27 @@ namespace syn
             switch (m_currStage)
             {
             case Attack:
-                segment_time = param(m_pAttack).getDouble();
+                segment_time = param(pAttack).getDouble() + READ_INPUT(iAttack);
                 m_initial = 0;
                 // skip decay segment if its length is zero
-                m_target = param(m_pDecay).getDouble() != 0 ? 1.0 : param(m_pSustain).getDouble();
+                m_target = param(pDecay).getDouble() + READ_INPUT(iDecay) != 0 ? 1.0 : param(pSustain).getDouble() + READ_INPUT(iSustain);
                 break;
             case Decay:
-                segment_time = param(m_pDecay).getDouble();
-                m_target = param(m_pSustain).getDouble();
+                segment_time = param(pDecay).getDouble() + READ_INPUT(iDecay);
+                m_target = param(pSustain).getDouble() + READ_INPUT(iSustain);
                 break;
             case Sustain:
                 segment_time = 0;
-                m_initial = param(m_pSustain).getDouble();
-                m_target = param(m_pSustain).getDouble();
+                m_initial = param(pSustain).getDouble() + READ_INPUT(iSustain);
+                m_target = m_initial;
                 break;
             case Release:
-                segment_time = param(m_pRelease).getDouble();
+                segment_time = param(pRelease).getDouble() + READ_INPUT(iRelease);
                 break;
             default:
                 throw std::logic_error("Invalid envelope stage");
             }
-            segment_time = segment_time * param(m_pTimeScale).getInt();
+            segment_time = segment_time * param(pTimescale).getInt();
             if (!segment_time)
             { // for zero second segment time, advance phase pointer to next segment
                 m_phase += 1;
@@ -116,11 +120,11 @@ namespace syn
             double output = LERP<double>(m_initial, m_target, INVLERP<double>(1, shape, pow(shape, m_phase)));
             WRITE_OUTPUT(0, output);
 
-            if ((!m_isActive || m_currStage == Release) && READ_INPUT(m_iGate) > 0.5)
+            if ((!m_isActive || m_currStage == Release) && READ_INPUT(iGate) > 0.5)
             {
                 trigger();
             }
-            else if (m_currStage != Release && READ_INPUT(m_iGate) <= 0.5)
+            else if (m_currStage != Release && READ_INPUT(iGate) <= 0.5)
             {
                 release(READ_OUTPUT(0));
             }

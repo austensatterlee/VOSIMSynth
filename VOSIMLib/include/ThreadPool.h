@@ -30,7 +30,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "CircularContainers.h"
 #include <boost/lockfree/queue.hpp>
 #include <boost/thread.hpp>
+
+#if defined(_DEBUG) && defined(_WINDOWS)
 #include <windows.h>
+#endif
 
 namespace syn
 {
@@ -80,83 +83,24 @@ namespace syn
             m_dispatchedWorkers(0),
             m_stopped(false) {};
 
-        virtual ~ThreadPool() { };
-
-        void notifyJobComplete()
+        virtual ~ThreadPool()
         {
-            boost::unique_lock<boost::mutex> dlck(m_dispatchMtx);
-            m_dispatchedWorkers--;
-            m_finishCV.notify_all();
-        }
+            resizePool(0);
+        };
 
-        void pop(ThreadJob*& item)
-        {
-            boost::unique_lock<boost::mutex> lck(m_dispatchMtx);
-            while(!m_stopped && m_tasks.empty())
-                m_dispatchCV.wait(lck);
-            if(m_stopped){
-                item = nullptr;
-            }else{
-                m_tasks.pop(item);
-                m_dispatchedWorkers++;
-            }
-        }
+        void notifyJobComplete();
 
-        void push(ThreadJob* item)
-        {
-            boost::unique_lock<boost::mutex> lck(m_dispatchMtx);
-            m_tasks.push(item);
-            m_dispatchCV.notify_one();
-        }
+        void pop(ThreadJob*& item);
 
-        void waitForWorkers()
-        {
-            boost::unique_lock<boost::mutex> lck(m_dispatchMtx);
+        void push(ThreadJob* item);
 
-            while(!m_tasks.empty() || m_dispatchedWorkers>0)
-                m_finishCV.wait(lck);
-            
-#ifdef _DEBUG
-            std::ostringstream oss;
-            oss << boost::this_thread::get_id() << " synced" << std::endl;
-            OutputDebugString(oss.str().c_str());
-#endif
-        }
+        void waitForWorkers();
 
-        void resizePool(int a_newSize)
-        {
-            // Wait for any active workers to finish their tasks.
-            waitForWorkers();
-            // Send stop signal.
-            _stop();
-            for (auto& worker : m_workers)
-            {
-                worker->thread.join();
-                delete worker;
-            }
-
-            // Reset the stop flag.
-            _start();
-            // Create new workers.
-            m_workers.resize(a_newSize);
-            for (int i = 0; i < a_newSize; i++)
-            {
-                m_workers[i] = new WorkerData(*this);
-                m_workers[i]->thread = boost::thread(runThreadWorker, m_workers[i]);
-            }
-        }
+        void resizePool(int a_newSize);
 
     private:
-        void _stop()
-        {
-            boost::unique_lock<boost::mutex> lck(m_dispatchMtx);
-            m_stopped = true;
-            m_dispatchCV.notify_all();
-        }
-        void _start()
-        {
-            boost::unique_lock<boost::mutex> lck(m_dispatchMtx);
-            m_stopped = false;
-        }
+        void _stop();
+
+        void _start();
     };
 }

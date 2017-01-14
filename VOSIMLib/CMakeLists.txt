@@ -25,20 +25,22 @@ set(Boost_USE_STATIC_LIBS   ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME ON)
 find_package(Boost COMPONENTS thread REQUIRED)
+get_property( BLUB TARGET Boost::thread PROPERTY IMPORTED_LOCATION_RELEASE)
+set_property( TARGET Boost::thread PROPERTY IMPORTED_LOCATION_RELWITHDEBINFO ${BLUB} )
 include_directories(${Boost_INCLUDE_DIRS})
 
 ##
 # Generate wavetables
 ##
-set(GENTABLES_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/lut_tables.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/lut_tables.h ${CMAKE_CURRENT_SOURCE_DIR}/src/table_data.cpp)
-set(GENTABLES_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/lut_tables.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/lut_tables.h)
-add_custom_command(OUTPUT ${GENTABLES_OUTPUT} COMMAND python ARGS ${CMAKE_CURRENT_SOURCE_DIR}/genTables.py --verbose COMMENT "Generating wavetables ${CMAKE_CURRENT_SOURCE_DIR}" PRE_BUILD VERBATIM WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+set(GENTABLES_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/table_data.cpp)
+set(GENTABLES_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/genTables.py)
+add_custom_command(OUTPUT ${GENTABLES_OUTPUT} COMMAND python ARGS ${CMAKE_CURRENT_SOURCE_DIR}/genTables.py --verbose DEPENDS ${GENTABLES_DEPENDS} COMMENT "Generating wavetables..." PRE_BUILD VERBATIM WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 ##
 # VOSIMLib source files
 ##
 file(GLOB VOSIMLIB_HDRS include/*.h)
-file(GLOB VOSIMLIB_SRCS src/*.cpp)
+file(GLOB VOSIMLIB_SRCS src/*.cpp src/table_data.cpp)
 file(GLOB VOSIMLIB_UNIT_HDRS units/include/*.h)
 file(GLOB VOSIMLIB_UNIT_SRCS units/src/*.cpp)
 file(GLOB VOSIMLIB_PYTHON_SRCS python/*.cpp)

@@ -36,7 +36,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 using std::vector;
 using std::list;
 
-#define MAX_UNITS 64
+#define MAX_UNITS 128
 
 namespace syn
 {

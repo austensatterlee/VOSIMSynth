@@ -79,6 +79,7 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
 
     // If tempo has changed, notify instrument
     if (m_tempo != GetTempo()) {
+        m_tempo = GetTempo();
         m_voiceManager->setTempo(GetTempo());
     }
 
@@ -192,6 +193,7 @@ void VOSIMSynth::registerUnits(syn::UnitFactory& a_uf)
 void VOSIMSynth::Reset() {
     m_MIDIReceiver->Resize(GetBlockSize());
     m_voiceManager->setBufferSize(GetBlockSize());
+    m_voiceManager->setInternalBufferSize(1);
     m_voiceManager->setFs(GetSampleRate());
 }
 

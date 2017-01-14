@@ -12,12 +12,17 @@
 #include <random>
 #include <cmath>
 #include <DSPMath.h>
+#include "VoiceManager.h"
+#include "MidiUnits.h"
+#include "ThreadPool.h"
+#include "ADSREnvelope.h"
 
 std::random_device RandomDevice;
 
 template <typename T>
 T detect_denormals(const std::vector<T>& a_data) {
-    const double epsilon = std::numeric_limits<double>::min();
+    auto min_double = std::numeric_limits<double>::min;
+    const double epsilon = min_double();
     int ndenormals = 0;
     for (const T& x : a_data) {
         if (std::abs(x) < epsilon)
@@ -116,7 +121,7 @@ TEST_CASE("Detect subnormals in ladder filter processing.",    "[ladder-denormal
     vector<double> ladder_out(N);
     for (int i = 0; i < N; i++) {
         ladder.tick();
-        ladder_out[i] = ladder.readOutput(0);
+        ladder_out[i] = ladder.readOutput(0,0);
         input = 0.0;
     }
 
@@ -131,9 +136,9 @@ TEST_CASE("Test stateless MemoryUnit::tick", "[unit]") {
         double input = 1.0;
         mu.connectInput(0, &input);
         mu.tick();
-        double out1 = mu.readOutput(0);
+        double out1 = mu.readOutput(0,0);
         mu.tick();
-        double out2 = mu.readOutput(0);
+        double out2 = mu.readOutput(0,0);
         REQUIRE(out1 == 0.0);
         REQUIRE(out2 == 1.0);
     }
@@ -174,4 +179,75 @@ TEST_CASE("Test stateless StateVariableFilter::tick", "[unit]") {
     svf.tick(inputs, outputs);
     INFO("Outputs: " << outputs);
     REQUIRE(outputs.any());
+}
+
+TEST_CASE("Test thread pool", "[threading]")
+{
+    int nSamples =  10000;
+    int bufSize = 64;
+    std::array<syn::Circuit*, 8> circuits;
+    std::array<syn::CircuitThreadJob*, 8> workItems;
+    for(int i=0;i<circuits.size();i++)
+    {
+        circuits[i] = new syn::Circuit("");
+        syn::Unit* gateUnit = new syn::GateUnit("gateUnit");
+        syn::Unit* envUnit = new syn::ADSREnvelope("envUnit");
+        envUnit->param(syn::ADSREnvelope::Param::pDecay).setNorm(1.0);
+        envUnit->param(syn::ADSREnvelope::Param::pSustain).setNorm(0.0);
+        circuits[i]->addUnit(gateUnit);
+        circuits[i]->addUnit(envUnit);
+        circuits[i]->connectInternal<std::string>("gateUnit", 0, "envUnit", 0);
+        circuits[i]->connectInternal<std::string>("envUnit", 0, "outputs", 0);
+        circuits[i]->setBufferSize(bufSize);
+        circuits[i]->noteOn(9, 255);
+        circuits[i]->setFs(nSamples);
+        workItems[i] = new syn::CircuitThreadJob;
+        workItems[i]->circuit = circuits[i];
+    }
+    
+    WARN("Starting thread pool");
+    syn::ThreadPool pool(1024);
+    WARN("Resizing pool");
+    pool.resizePool(2);
+    Eigen::Matrix<double,1,-1,Eigen::RowMajor> output(nSamples);
+    output.fill(0.0);
+    for(int i=0;i<nSamples;i+=bufSize)
+    {
+        REQUIRE(true);
+        for(int j=0;j<workItems.size();j++)
+        {
+            pool.push(workItems[j]);
+        }
+        pool.waitForWorkers();
+        for(int j=0;j<workItems.size();j++)
+        {
+            for(int k=0;k<bufSize && i+k<nSamples;k++)
+            {
+                output(i+k) += circuits[j]->readOutput(0,k);
+            }
+        }
+        REQUIRE(true);
+    }
+    WARN("Output (2 threads):" << "\n" << output);
+    
+    pool.resizePool(4);
+    output.fill(0.0);
+    for(int i=0;i<nSamples;i+=bufSize)
+    {
+        REQUIRE(true);
+        for(int j=0;j<workItems.size();j++)
+        {
+            pool.push(workItems[j]);
+        }
+        pool.waitForWorkers();
+        for(int j=0;j<workItems.size();j++)
+        {
+            for(int k=0;k<bufSize && i+k<nSamples;k++)
+            {
+                output(i+k) += circuits[j]->readOutput(0,k);
+            }
+        }
+        REQUIRE(true);
+    }
+    WARN("Output (4 threads):" << "\n" << output);
 }

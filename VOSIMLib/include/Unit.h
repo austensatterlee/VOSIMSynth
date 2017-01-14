@@ -302,7 +302,7 @@ namespace syn
         const string& name() const;
         void setName(const string& a_name);
 
-        unsigned int getClassIdentifier() const;
+        uint64_t getClassIdentifier() const;
 
         /**
          * Copies this unit into newly allocated memory (the caller is responsible for releasing the memory).

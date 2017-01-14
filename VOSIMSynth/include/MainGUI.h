@@ -29,7 +29,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include <common_serial.h>
 #include "nanogui/formhelper.h"
-#include <nanovg.h>
 
 namespace nanogui
 {
@@ -101,6 +100,53 @@ namespace synui
         int m_nextIndex;
     };
 
+    class SerializableFormHelper : public nanogui::FormHelper
+    {
+    public:
+        SerializableFormHelper(nanogui::Screen* screen)
+            : FormHelper(screen) {}
+
+        template <typename Type> 
+        nanogui::detail::FormWidget<Type>* addSerializableVariable(const std::string &label, const std::function<void(const Type &)> &setter, const std::function<Type()> &getter, bool editable = true)
+        {
+            auto ret = nanogui::FormHelper::addVariable(label, setter, getter, editable);
+            auto getterSerializer = [getter]()->json{
+                json j = getter();
+                return j;
+            };
+            auto setterSerializer = [setter](const json& j)
+            {
+                setter(j.get<Type>());
+            };
+            m_getterSerializers[label] = getterSerializer;
+            m_setterSerializers[label] = setterSerializer;
+            return ret;
+        }
+
+        operator json() const
+        {
+            json j;
+            for(auto& g : m_getterSerializers)
+            {
+                j[g.first] = g.second();
+            }
+            return j;
+        }
+
+        SerializableFormHelper* load(const json& j)
+        {
+            for(auto& s : m_setterSerializers)
+            {
+                s.second(j[s.first]);
+            }
+            return this;
+        }
+
+    protected:
+        std::map<std::string, std::function<json()> > m_getterSerializers;
+        std::map<std::string, std::function<void(const json&)> > m_setterSerializers;
+    };
+
     class MainGUI
     {
     public:
@@ -120,7 +166,7 @@ namespace synui
         void resize(int a_w, int a_h);
     protected:
         void createUnitSelector_(nanogui::Widget* a_widget);
-        void createSettingsEditor_(nanogui::Widget* a_widget, nanogui::FormHelper* a_fh);
+        void createSettingsEditor_(nanogui::Widget* a_widget, SerializableFormHelper* a_fh);
         void createLogViewer_(nanogui::Widget * a_widget);
         void initialize_(GLFWwindow* a_window);
 
@@ -132,7 +178,7 @@ namespace synui
 
         // Widgets
         synui::EnhancedWindow* m_buttonPanel;
-        synui::EnhancedWindow* m_settingsEditor; std::shared_ptr<nanogui::FormHelper> m_settingsFormHelper;
+        synui::EnhancedWindow* m_settingsEditor; std::shared_ptr<synui::SerializableFormHelper> m_settingsFormHelper;
         synui::EnhancedWindow* m_logViewer;
 
         synui::EnhancedWindow* m_sidePanelL;

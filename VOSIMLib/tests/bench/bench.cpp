@@ -6,9 +6,6 @@
 #include "NamedContainer.h"
 #include "Unit.h"
 
-#include <etl/unordered_map.h>
-#include <etl/flat_map.h>
-#include <etl/map.h>
 #include <array>
 #include <algorithm>
 #include <random>
@@ -16,14 +13,19 @@
 #include <StateVariableFilter.h>
 #include "Circuit.h"
 #include "MemoryUnit.h"
+#include "Oscillator.h"
+#include "MidiUnits.h"
+#include "ThreadPool.h"
+#include "ADSREnvelope.h"
 
 #define trig_benches 0
 #define ladder_benches 0
-#define circuit_benches 1
+#define circuit_benches 0
 #define modulus_benches 0
 #define lut_saw_benches 0
 #define lut_pitch_benches 0
 #define container_benches 0
+#define thread_benches 1
 
 std::random_device RandomDevice;
 
@@ -167,26 +169,71 @@ NONIUS_BENCHMARK("trapezoidal svf", [](nonius::chronometer& meter) {
 #endif
 
 #if circuit_benches
-NONIUS_BENCHMARK("memory circuit", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("memory circuit (buf size=1)", [](nonius::chronometer& meter) {
     const int runs = meter.runs();
     const int nUnits = 60;
     syn::Circuit mycircuit("main");
     mycircuit.setFs(48000.0);
-    syn::MemoryUnit* units[nUnits];
-    units[0] = new syn::MemoryUnit("u0");
-    mycircuit.addUnit(units[0], 2);
+    mycircuit.setBufferSize(1);
+    // Add a bunch of memory units in serial
+    syn::MemoryUnit* munits[nUnits];
+    munits[0] = new syn::MemoryUnit("u0");
+    mycircuit.addUnit(munits[0]);
     for (int i = 1; i < nUnits; i++) {
-        units[i] = new syn::MemoryUnit("u" + std::to_string(i));
-        mycircuit.addUnit(units[i], i + 2);
-        mycircuit.connectInternal(i + 2 - 1, 0, i + 2, 0);
+        munits[i] = new syn::MemoryUnit("u" + std::to_string(i));
+        mycircuit.addUnit(munits[i]);
+        mycircuit.connectInternal(mycircuit.getUnitId(munits[i - 1]), 0, mycircuit.getUnitId(munits[i]), 0);
     }
-    mycircuit.connectInternal(nUnits - 1 + 2, 0, 1, 0);
+    // Add pitch and oscillator units
+    syn::MidiNoteUnit* mnu = new syn::MidiNoteUnit("mnu0");
+    mycircuit.addUnit(mnu);
+    syn::BasicOscillator* bosc = new syn::BasicOscillator("bosc0");
+    mycircuit.addUnit(bosc);
+    mycircuit.connectInternal(mycircuit.getUnitId(mnu), 0, mycircuit.getUnitId(bosc), 0);
+    mycircuit.connectInternal(mycircuit.getUnitId(bosc), 0, mycircuit.getUnitId(munits[0]), 0);
+    // Connect final memory unit to circuit output
+    mycircuit.connectInternal(mycircuit.getUnitId(munits[nUnits - 1]), 0, mycircuit.getOutputUnitId(), 0);
+
+    double x;
+    meter.measure([&x, &mycircuit](int i)
+    {
+        for (int j = 0; j < 4096; j++)
+            mycircuit.tick();
+        x = mycircuit.readOutput(0, 0);
+        return x;
+    });
+})
+
+NONIUS_BENCHMARK("memory circuit (buf size=4800)", [](nonius::chronometer& meter) {
+    const int runs = meter.runs();
+    const int nUnits = 60;
+    syn::Circuit mycircuit("main");
+    mycircuit.setFs(48000.0);
+    mycircuit.setBufferSize(4096);
+    // Add a bunch of memory units in serial
+    syn::MemoryUnit* munits[nUnits];
+    munits[0] = new syn::MemoryUnit("u0");
+    mycircuit.addUnit(munits[0]);
+    for (int i = 1; i < nUnits; i++) {
+        munits[i] = new syn::MemoryUnit("u" + std::to_string(i));
+        mycircuit.addUnit(munits[i]);
+        mycircuit.connectInternal(mycircuit.getUnitId(munits[i - 1]), 0, mycircuit.getUnitId(munits[i]), 0);
+    }
+    // Add pitch and oscillator units
+    syn::MidiNoteUnit* mnu = new syn::MidiNoteUnit("mnu0");
+    mycircuit.addUnit(mnu);
+    syn::BasicOscillator* bosc = new syn::BasicOscillator("bosc0");
+    mycircuit.addUnit(bosc);
+    mycircuit.connectInternal(mycircuit.getUnitId(mnu), 0, mycircuit.getUnitId(bosc), 0);
+    mycircuit.connectInternal(mycircuit.getUnitId(bosc), 0, mycircuit.getUnitId(munits[0]), 0);
+    // Connect final memory unit to circuit output
+    mycircuit.connectInternal(mycircuit.getUnitId(munits[nUnits - 1]), 0, mycircuit.getOutputUnitId(), 0);
 
     double x;
     meter.measure([&x, &mycircuit](int i)
     {
         mycircuit.tick();
-        x = mycircuit.readOutput(0);
+        x = mycircuit.readOutput(0, 0);
         return x;
     });
 })
@@ -347,55 +394,98 @@ NONIUS_BENCHMARK("std::map [int]", [](nonius::chronometer& meter)
         myContainer[stores[i]] = myContainer[loads[i]];
     });
 })
+#endif
 
-NONIUS_BENCHMARK("etl::map [int]", [](nonius::chronometer& meter)
+#if thread_benches
+NONIUS_BENCHMARK("Thread pool (5 threads)", [](nonius::chronometer& meter)
 {
-    std::uniform_int_distribution<> _accessGenerator(0, container_size - 1);
-    std::vector<int> loads(meter.runs());
-    std::vector<int> stores(meter.runs());
-    std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
-    std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
-
-    etl::map<int, syn::InputPort, container_size> myContainer;
-    for (int i = 0; i < container_size; i++) myContainer[i] = syn::InputPort(i);
-
-    meter.measure([&myContainer, &stores, &loads](int i)
+    int nSamples = 8192;
+    int bufSize = 64;
+    std::array<syn::Circuit*, 8> circuits;
+    std::array<syn::CircuitThreadJob*, 8> workItems;
+    for (int i = 0; i < circuits.size(); i++)
     {
-        myContainer[stores[i]] = myContainer[loads[i]];
+        circuits[i] = new syn::Circuit("");
+        syn::Unit* gateUnit = new syn::GateUnit("gateUnit");
+        syn::Unit* envUnit = new syn::ADSREnvelope("envUnit");
+        envUnit->param(syn::ADSREnvelope::Param::pDecay).setNorm(1.0);
+        envUnit->param(syn::ADSREnvelope::Param::pSustain).setNorm(0.0);
+        circuits[i]->addUnit(gateUnit);
+        circuits[i]->addUnit(envUnit);
+        circuits[i]->connectInternal<std::string>("gateUnit", 0, "envUnit", 0);
+        circuits[i]->connectInternal<std::string>("envUnit", 0, "outputs", 0);
+        circuits[i]->setBufferSize(bufSize);
+        circuits[i]->noteOn(9, 255);
+        circuits[i]->setFs(48000.0);
+        workItems[i] = new syn::CircuitThreadJob;
+        workItems[i]->circuit = circuits[i];
+    }
+    
+
+    syn::ThreadPool pool{1024};
+    pool.resizePool(5);
+    meter.measure([&circuits, &workItems, &pool, nSamples, bufSize](int n)
+    {
+        Eigen::Matrix<double, 1, -1, Eigen::RowMajor> output(nSamples);
+        output.fill(0.0);
+        for (int i = 0; i < nSamples; i += bufSize)
+        {
+            for (int j = 0; j < workItems.size(); j++)
+            {
+                pool.push(workItems[j]);
+            }
+            pool.waitForWorkers();
+            for (int j = 0; j < workItems.size(); j++)
+            {
+                for (int k = 0; k < bufSize; k++)
+                {
+                    output(i + k) += circuits[j]->readOutput(0, k);
+                }
+            }
+        }
+        return output;
     });
 })
 
-NONIUS_BENCHMARK("etl::flat_map [int]", [](nonius::chronometer& meter)
+NONIUS_BENCHMARK("Single thread", [](nonius::chronometer& meter)
 {
-    std::uniform_int_distribution<> _accessGenerator(0, container_size - 1);
-    std::vector<int> loads(meter.runs());
-    std::vector<int> stores(meter.runs());
-    std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
-    std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
-
-    etl::flat_map<int, syn::InputPort, container_size> myContainer;
-    for (int i = 0; i < container_size; i++) myContainer[i] = syn::InputPort(i);
-
-    meter.measure([&myContainer, &stores, &loads](int i)
+    int nSamples = 8192;
+    int bufSize = 64;
+    std::array<syn::Circuit*, 8> circuits;
+    for (int i = 0; i < circuits.size(); i++)
     {
-        myContainer[stores[i]] = myContainer[loads[i]];
-    });
-})
+        circuits[i] = new syn::Circuit("");
+        syn::Unit* gateUnit = new syn::GateUnit("gateUnit");
+        syn::Unit* envUnit = new syn::ADSREnvelope("envUnit");
+        envUnit->param(syn::ADSREnvelope::Param::pDecay).setNorm(1.0);
+        envUnit->param(syn::ADSREnvelope::Param::pSustain).setNorm(0.0);
+        circuits[i]->addUnit(gateUnit);
+        circuits[i]->addUnit(envUnit);
+        circuits[i]->connectInternal<std::string>("gateUnit", 0, "envUnit", 0);
+        circuits[i]->connectInternal<std::string>("envUnit", 0, "outputs", 0);
+        circuits[i]->setBufferSize(bufSize);
+        circuits[i]->noteOn(9, 255);
+        circuits[i]->setFs(48000.0);
+    }
 
-NONIUS_BENCHMARK("etl::unordered_map [int]", [](nonius::chronometer& meter)
-{
-    std::uniform_int_distribution<> _accessGenerator(0, container_size - 1);
-    std::vector<int> loads(meter.runs());
-    std::vector<int> stores(meter.runs());
-    std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
-    std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
-
-    etl::unordered_map<int, syn::InputPort, container_size> myContainer;
-    for (int i = 0; i < container_size; i++) myContainer[i] = syn::InputPort(i);
-
-    meter.measure([&myContainer, &stores, &loads](int i)
+    meter.measure([&circuits, nSamples, bufSize](int n)
     {
-        myContainer[stores[i]] = myContainer[loads[i]];
+        Eigen::Matrix<double, 1, -1, Eigen::RowMajor> output(nSamples);
+        output.fill(0.0);
+
+        for (int i = 0; i < nSamples; i += bufSize)
+        {
+            for (int j = 0; j < circuits.size(); j++)
+            {
+                circuits[j]->tick();
+                
+                for (int k = 0; k < bufSize; k++)
+                {
+                    output(i + k) += circuits[j]->readOutput(0, k);
+                }
+            }
+        }
+        return output;
     });
 })
 #endif

@@ -78,10 +78,9 @@ synui::MainGUI::operator json() const
 {
     json j;
     j["circuit"] = m_circuit->operator json();
-    j["settings"] = json();
-    json& ws = j["settings"]["window_size"];
-    ws["w"] = m_screen->width();
-    ws["h"] = m_screen->height();
+    json& settings = j["settings"] = json();
+    settings = m_settingsFormHelper->operator json();
+    
     return j;
 }
 
@@ -89,13 +88,9 @@ synui::MainGUI* synui::MainGUI::load(const json& j)
 {
     reset();
     const json& settings = j.value("settings", json());
-    if(!settings.empty()){
-        const json& ws = settings.value("window_size", json());
-        if(!ws.empty()){
-            int w = ws.value("w", m_screen->width());
-            int h = ws.value("h", m_screen->height());
-            resize(w, h);
-        }
+    if (!settings.empty())
+    {
+        m_settingsFormHelper->load(settings);
     }
     m_circuit->load(j["circuit"]);
     return this;
@@ -192,18 +187,18 @@ void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget)
     }
 }
 
-void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, nanogui::FormHelper* a_fh)
+void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, SerializableFormHelper* a_fh)
 {
     auto layout = new nanogui::AdvancedGridLayout({10, 0, 10, 0}, {});
     layout->setMargin(10);
     layout->setColStretch(2, 1);
     a_widget->setLayout(layout);
-    nanogui::FormHelper* helper = a_fh;
+    SerializableFormHelper* helper = a_fh;
     helper->setWidget(a_widget);
 
     helper->addGroup("Plugin Settings");
 
-    helper->addVariable<int>("Grid Spacing", [this](const int& s)
+    helper->addSerializableVariable<int>("Grid Spacing", [this](const int& s)
         {
             m_circuit->resizeGrid(s);
             m_screen->performLayout();
@@ -213,12 +208,31 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, nanogui::F
             return gs;
         });
 
-    helper->addVariable<int>("Window width", [this](const int& w) { m_window->resize(w, m_screen->height()); }, [this]() { return m_screen->width(); });
-
-    helper->addVariable<int>("Window height", [this](const int& h) { m_window->resize(m_screen->width(), h); }, [this]() { return m_screen->height(); });
+    helper->addSerializableVariable<int>("Window width", [this](const int& w) { m_window->resize(w, m_screen->height()); }, [this]() { return m_screen->width(); });
+    helper->addSerializableVariable<int>("Window height", [this](const int& h) { m_window->resize(m_screen->width(), h); }, [this]() { return m_screen->height(); });
+    helper->addSerializableVariable<int>("Internal buf. size",
+        [this, helper](const int& size)
+        {
+            syn::RTMessage* msg = new syn::RTMessage;
+            PutArgs(&msg->data, m_vm, size, helper);
+            msg->action = [](syn::Circuit*, bool a_isLast, ByteChunk* a_data)
+            {
+                if(a_isLast){
+                    syn::VoiceManager* vm;
+                    int internalBufferSize;
+                    nanogui::FormHelper* helper;
+                    GetArgs(a_data, 0, vm, internalBufferSize, helper);
+                    vm->setInternalBufferSize(internalBufferSize);
+                    helper->refresh();
+                }
+            };
+            m_vm->queueAction(msg);
+        }, [this]()
+        {
+            return m_vm->getInternalBufferSize();
+        });
 
     nanogui::Theme* theme = m_screen->theme();
-
     /* Spacing-related parameters */
     helper->addGroup("Spacing");
     helper->addVariable("Standard Font Size", theme->mStandardFontSize);
@@ -424,7 +438,7 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
     auto settingsScrollPanel = new nanogui::VScrollPanel(m_settingsEditor);
     settingsScrollPanel->setFixedHeight(400);
     m_settingsEditor->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
-    m_settingsFormHelper = std::make_shared<nanogui::FormHelper>(m_screen);
+    m_settingsFormHelper = std::make_shared<synui::SerializableFormHelper>(m_screen);
     createSettingsEditor_(new nanogui::Widget(settingsScrollPanel), m_settingsFormHelper.get());
 
     /* Add a button for openning the settings editor window. */
