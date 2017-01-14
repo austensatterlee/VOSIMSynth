@@ -32,6 +32,9 @@ set(FFTS_INCLUDE_DIR ${FFTS_ROOT}/include CACHE PATH "")
 set(VOSIMLIB_DIR ${CMAKE_SOURCE_DIR}/vosimlib)
 set(VOSIMSYNTH_DIR ${CMAKE_SOURCE_DIR}/vosimsynth)
 
+set(Boost_INCLUDE_DIR "../libs/boost/boost_1_60_0" CACHE PATH "")
+set(Boost_LIBRARY_DIR "../libs/boost/boost_1_60_0/stage/lib" CACHE PATH "")
+
 message (STATUS "Build tool is ${CMAKE_BUILD_TOOL}")
 message (STATUS "System is ${CMAKE_SYSTEM_NAME}")
 
@@ -104,9 +107,14 @@ set(BUILD_SHARED_LIBS False)
 # Add boost
 message(STATUS "Boost root: ${BOOST_ROOT}")
 message(STATUS "Boost root (env): $ENV{BOOST_ROOT}")
+message(STATUS "Boost include dir: ${Boost_INCLUDE_DIR}")
+message(STATUS "Boost libs dir: ${Boost_LIBRARY_DIR}")
 set(Boost_NO_BOOST_CMAKE True)
 set(Boost_DETAILED_FAILURE_MSG True)
-find_package(Boost REQUIRED)
+set(Boost_USE_STATIC_LIBS   ON)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME ON)
+find_package(Boost COMPONENTS thread REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # FFTS

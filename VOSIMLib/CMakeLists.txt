@@ -17,6 +17,17 @@ endif()
 include_directories(${LIBS_DIR}/eigen)
 
 ##
+# Boost
+##
+set(Boost_NO_BOOST_CMAKE True)
+set(Boost_DETAILED_FAILURE_MSG True)
+set(Boost_USE_STATIC_LIBS   ON)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME ON)
+find_package(Boost COMPONENTS thread REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+
+##
 # Generate wavetables
 ##
 set(GENTABLES_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/lut_tables.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/lut_tables.h ${CMAKE_CURRENT_SOURCE_DIR}/src/table_data.cpp)
@@ -55,6 +66,7 @@ else()
   set_target_properties(VOSIMLib PROPERTIES MINSIZEREL_POSTFIX -s)
   set_target_properties(VOSIMLib PROPERTIES RELWITHDEBINFO_POSTFIX -s)
 endif()
+target_link_libraries(VOSIMLib ${Boost_LIBRARIES})
 
 ##
 # Add tests target
