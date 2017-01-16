@@ -59,7 +59,6 @@ namespace syn
         m_midiData.note = a_note;
         m_midiData.velocity = a_velocity;
         m_midiData.isNoteOn = true;
-        reset();
         onNoteOn_();
     }
 
@@ -131,7 +130,8 @@ namespace syn
         // set new input sources
         for (int i = 0; i < nInputs; i++) { m_inputPorts.getByIndex(i).src = &a_inputs(i, 0); }
        
-        tick();
+        for(m_currentBufferOffset=0;m_currentBufferOffset<nSamples;m_currentBufferOffset++)
+            tick();
 
         // record outputs
         for (int i = 0; i < m_outputPorts.size(); i++)

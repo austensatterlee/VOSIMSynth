@@ -51,22 +51,30 @@ def GenerateMinBLEP(nZeroCrossings, nOverSampling):
 
     return minBLEP
 
-def DSF(f0, fm, a, N, pts=None):
+def DSF(w, fc, fm, nharmonics, npoints=None):
     """
     Digital summation formula.
 
-    @returns $sum_{n=1}^{N} a^n sin(2\pi f0 t + 2\pi n fm t)$
+    Computes the sum of (w^k sin(u + k*v)) from k=0 to `nharmonics`.
+    u = 2*pi*fc*n/npoints for n=0 to npoints-1
+    v = 2*pi*fm*n/npoints for n=0 to npoints-1
 
     """
-    pts = pts or 2*N
-    # phase_shift = 2*pi*f0*arange(pts)*1.0/(pts)
-    phase_shift = 2*pi*f0
-    phases = 2*pi*fm*arange(pts)*1.0/(pts)
-    numerator = sin(phase_shift)-a*sin(phase_shift-phases)-a**(N+1)*(sin(phase_shift+(N+1)*phases)-a*sin(phase_shift+N*phases))
-    denominator = 1 + a**2 - 2*a*cos(phases)
-    result = numerator / denominator
-    result[where(denominator)==0]=1.0
-    return result/result.max()
+    npoints = npoints or 2*nharmonics+1
+    sample_pts = arange(npoints)*2.0*pi/npoints
+    u = fc*sample_pts
+    v = fm*sample_pts
+
+    nh = nharmonics
+    # num = (w*sin(v-u) + sin(u)) + w**(nh+1) * (w * sin(u + nh*v) - sin(u + (nh+1)*v))
+    # den = (1 + w*w - 2*w*cos(v))
+    cnum = exp(1j*u) * (1 - w**(nh+1)*exp(1j*v*(nh+1)))
+    cden = (1 - w*exp(1j*v))
+
+    limmask = where((cden==0) & (cnum==0))
+    result = cnum / cden
+    result[limmask] = 1.0
+    return result
 
 def RCCoefs(fc,fs):
     """
@@ -99,12 +107,12 @@ def bl_prefilter():
     prefilter=make_symmetric_l(prefilter_lhalf)
     return prefilter
 
-def GenerateBLSaw(nharmonics,npoints=None):
+def GenerateBLSaw(nharmonics,npoints=None, w0=1):
     """ Generate band limited sawtooth wave """
     npoints = npoints or nharmonics*2+1
     nharmonics = min(nharmonics, npoints/2-1 if npoints%2 else npoints/2)
 
-    harmonics = [x for x in xrange(1,nharmonics+1)]
+    harmonics = [w0*x for x in xrange(1,nharmonics+1)]
 
     gains = [1./x for x in harmonics]
 
@@ -113,11 +121,11 @@ def GenerateBLSaw(nharmonics,npoints=None):
     blsaw = -fft.fftshift(blsaw)
     return blsaw/blsaw.max()
 
-def GenerateBLSquare(nharmonics,npoints=None):
+def GenerateBLSquare(nharmonics,npoints=None, w0=1):
     npoints = npoints or nharmonics*2+1
     nharmonics = min(nharmonics, npoints/2-1 if npoints%2 else npoints/2)
 
-    harmonics = [x for x in xrange(1,nharmonics+1) if x%2]
+    harmonics = [w0*x for x in xrange(1,nharmonics+1) if x%2]
 
     gains = [1./x for x in harmonics]
 
@@ -125,11 +133,11 @@ def GenerateBLSquare(nharmonics,npoints=None):
     blsquare = sum([g*sin(h*sample_pts) for g,h in zip(gains,harmonics)],axis=0)
     return blsquare/blsquare.max()
 
-def GenerateBLTriangle(nharmonics,npoints=None):
+def GenerateBLTriangle(nharmonics,npoints=None, w0=1):
     npoints = npoints or nharmonics*2+1
     nharmonics = min(nharmonics, npoints/2-1 if npoints%2 else npoints/2)
 
-    harmonics = [x for x in xrange(1,nharmonics+1) if x%2]
+    harmonics = [w0*x for x in xrange(1,nharmonics+1) if x%2]
 
     gains = [1./x**2 if not i%2 else -1./x**2 for i,x in enumerate(harmonics)]
 

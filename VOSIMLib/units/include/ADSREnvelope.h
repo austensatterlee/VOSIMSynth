@@ -65,6 +65,7 @@ namespace syn
 
         void trigger();
         void release(double a_releaseValue);
+        void reset() override;
     private:
         enum EADSRStage
         {

@@ -2,14 +2,13 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
 project(VOSIMProject)
 enable_language(C CXX RC)
 
-# Define a macro that helps defining an option
-macro(set_option var default type docstring)
-    if(NOT DEFINED ${var})
-        set(${var} ${default})
-    endif()
-    set(${var} ${${var}} CACHE ${type} ${docstring} FORCE)
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake)
+
+macro(dbgmsg varname)
+  message(STATUS "${varname}: ${${varname}}")
 endmacro()
 
+# Define a macro that helps defining an option
 set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
@@ -23,17 +22,23 @@ else()
   set(PYTHON_EXECUTABLE "C:/Python27_32bit/python.exe" CACHE PATH "")
 endif()
 
-# define source directories
+#  Source/library directory options
 set(LIBS_DIR ${CMAKE_SOURCE_DIR}/libs CACHE PATH "")
 
 set(FFTS_ROOT "${LIBS_DIR_SYS}/ffts" CACHE PATH "")
 set(FFTS_INCLUDE_DIR ${FFTS_ROOT}/include CACHE PATH "")
 
-set(VOSIMLIB_DIR ${CMAKE_SOURCE_DIR}/vosimlib)
-set(VOSIMSYNTH_DIR ${CMAKE_SOURCE_DIR}/vosimsynth)
-
 set(Boost_INCLUDE_DIR "../libs/boost/boost_1_60_0" CACHE PATH "")
 set(Boost_LIBRARY_DIR "../libs/boost/boost_1_60_0/stage/lib" CACHE PATH "")
+
+set(MKLDIR "E:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl" CACHE PATH "")
+
+# Options
+option(EIGEN_USE_MKL "Should eigen use MKL as its backend?" TRUE)
+
+# Subproject directories
+set(VOSIMLIB_DIR ${CMAKE_SOURCE_DIR}/vosimlib)
+set(VOSIMSYNTH_DIR ${CMAKE_SOURCE_DIR}/vosimsynth)
 
 message (STATUS "Build tool is ${CMAKE_BUILD_TOOL}")
 message (STATUS "System is ${CMAKE_SYSTEM_NAME}")
@@ -150,6 +155,16 @@ set(IPLUG_FILES
   ${LIBS_DIR}/wdl/iplug/Log.h
 )
 include_directories(${LIBS_DIR}/wdl/iplug)
+
+##
+# MKL
+##
+set(MKL_INTEGER_MODE LP)
+set(MKL_THREADING_MODE INTELTHREAD)
+find_package(MKL)
+if(${EIGEN_USE_MKL})
+  add_definitions(-DEIGEN_USE_MKL_ALL)
+endif()
 
 
 ##

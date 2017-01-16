@@ -44,6 +44,7 @@ namespace syn
         void reset() override;
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
+        void onNoteOn_() override;
     private:
         double m_w;
         double m_output;

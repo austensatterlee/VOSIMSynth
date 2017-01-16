@@ -204,50 +204,115 @@ TEST_CASE("Test thread pool", "[threading]")
         workItems[i] = new syn::CircuitThreadJob;
         workItems[i]->circuit = circuits[i];
     }
-    
-    WARN("Starting thread pool");
-    syn::ThreadPool pool(1024);
-    WARN("Resizing pool");
-    pool.resizePool(2);
-    Eigen::Matrix<double,1,-1,Eigen::RowMajor> output(nSamples);
-    output.fill(0.0);
+
+    Eigen::Matrix<double,1,-1,Eigen::RowMajor> base_output(nSamples);
+    base_output.fill(0.0);
     for(int i=0;i<nSamples;i+=bufSize)
     {
-        REQUIRE(true);
-        for(int j=0;j<workItems.size();j++)
+        for(int j=0;j<circuits.size();j++)
         {
-            pool.push(workItems[j]);
-        }
-        pool.waitForWorkers();
-        for(int j=0;j<workItems.size();j++)
-        {
+            circuits[j]->tick();
             for(int k=0;k<bufSize && i+k<nSamples;k++)
             {
-                output(i+k) += circuits[j]->readOutput(0,k);
+                base_output(i+k) += circuits[j]->readOutput(0,k);
             }
         }
-        REQUIRE(true);
-    }
-    WARN("Output (2 threads):" << "\n" << output);
-    
-    pool.resizePool(4);
-    output.fill(0.0);
-    for(int i=0;i<nSamples;i+=bufSize)
+    }  
+
+    for(syn::Circuit* circuit : circuits)
     {
-        REQUIRE(true);
-        for(int j=0;j<workItems.size();j++)
+        circuit->reset();
+    }
+
+    SECTION("0 threads"){
+        syn::ThreadPool pool(1024);
+        pool.resizePool(0);
+        Eigen::Matrix<double,1,-1,Eigen::RowMajor> test_output(nSamples);
+        test_output.fill(0.0);
+        for(int i=0;i<nSamples;i+=bufSize)
         {
-            pool.push(workItems[j]);
-        }
-        pool.waitForWorkers();
-        for(int j=0;j<workItems.size();j++)
-        {
-            for(int k=0;k<bufSize && i+k<nSamples;k++)
+            for(int j=0;j<workItems.size();j++)
             {
-                output(i+k) += circuits[j]->readOutput(0,k);
+                pool.push(workItems[j]);
+            }
+            pool.waitForWorkers();
+            for(int j=0;j<workItems.size();j++)
+            {
+                for(int k=0;k<bufSize && i+k<nSamples;k++)
+                {
+                    test_output(i+k) += circuits[j]->readOutput(0,k);
+                }
             }
         }
-        REQUIRE(true);
+        REQUIRE( (test_output.array() == base_output.array()).all() );
     }
-    WARN("Output (4 threads):" << "\n" << output);
+    
+    SECTION("1 thread"){
+        syn::ThreadPool pool(1024);
+        pool.resizePool(1);
+        Eigen::Matrix<double,1,-1,Eigen::RowMajor> test_output(nSamples);
+        test_output.fill(0.0);
+        for(int i=0;i<nSamples;i+=bufSize)
+        {
+            for(int j=0;j<workItems.size();j++)
+            {
+                pool.push(workItems[j]);
+            }
+            pool.waitForWorkers();
+            for(int j=0;j<workItems.size();j++)
+            {
+                for(int k=0;k<bufSize && i+k<nSamples;k++)
+                {
+                    test_output(i+k) += circuits[j]->readOutput(0,k);
+                }
+            }
+        }
+        REQUIRE( (test_output.array() == base_output.array()).all() );
+    }
+
+    SECTION("2 threads"){
+        syn::ThreadPool pool(1024);
+        pool.resizePool(2);
+        Eigen::Matrix<double,1,-1,Eigen::RowMajor> test_output(nSamples);
+        test_output.fill(0.0);
+        for(int i=0;i<nSamples;i+=bufSize)
+        {
+            for(int j=0;j<workItems.size();j++)
+            {
+                pool.push(workItems[j]);
+            }
+            pool.waitForWorkers();
+            for(int j=0;j<workItems.size();j++)
+            {
+                for(int k=0;k<bufSize && i+k<nSamples;k++)
+                {
+                    test_output(i+k) += circuits[j]->readOutput(0,k);
+                }
+            }
+        }
+        REQUIRE( (test_output.array() == base_output.array()).all() );
+    }
+    
+    SECTION("4 threads"){
+        syn::ThreadPool pool(1024);
+        pool.resizePool(4);
+        Eigen::Matrix<double,1,-1,Eigen::RowMajor> test_output(nSamples);
+        test_output.fill(0.0);
+        for(int i=0;i<nSamples;i+=bufSize)
+        {
+            for(int j=0;j<workItems.size();j++)
+            {
+                pool.push(workItems[j]);
+            }
+            pool.waitForWorkers();
+            for(int j=0;j<workItems.size();j++)
+            {
+                for(int k=0;k<bufSize && i+k<nSamples;k++)
+                {
+                    test_output(i+k) += circuits[j]->readOutput(0,k);
+                }
+            }
+        }
+        REQUIRE( (test_output.array() == base_output.array()).all() );
+    }
 }

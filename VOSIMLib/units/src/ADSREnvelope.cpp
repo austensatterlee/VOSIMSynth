@@ -146,6 +146,12 @@ namespace syn
         m_phase = 0;
     }
 
+    void ADSREnvelope::reset()
+    {
+        trigger();
+        m_isActive=false;
+    }
+
     bool ADSREnvelope::isActive() const
     {
         return m_isActive;

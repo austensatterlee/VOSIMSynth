@@ -1,21 +1,21 @@
 #include "MemoryPool.h"
-
-MemoryPool::Chunk::~Chunk() {
+
+syn::MemoryPool::Chunk::~Chunk() {
     if (next)
         next->prev = prev;
     if (prev)
         prev->next = next;
 }
 
-bool MemoryPool::ChunkSortBySize::operator()(const Chunk& a_lhs, const Chunk& a_rhs) const {
+bool syn::MemoryPool::ChunkSortBySize::operator()(const Chunk& a_lhs, const Chunk& a_rhs) const {
     return a_lhs.size < a_rhs.size;
 }
 
-bool MemoryPool::ChunkSortByAddr::operator()(const Chunk& a_lhs, const Chunk& a_rhs) const {
+bool syn::MemoryPool::ChunkSortByAddr::operator()(const Chunk& a_lhs, const Chunk& a_rhs) const {
     return a_lhs.addr < a_rhs.addr;
 }
-
-MemoryPool::MemoryPool(size_t a_numBytes):
+
+syn::MemoryPool::MemoryPool(size_t a_numBytes):
     m_head{0, nullptr, false, nullptr, nullptr},
     m_bytesUsed(0)
 {
@@ -25,7 +25,7 @@ MemoryPool::MemoryPool(size_t a_numBytes):
     m_freeChunks.push_back(freechunk);
 }
 
-MemoryPool::~MemoryPool() {
+syn::MemoryPool::~MemoryPool() {
     Chunk* tmp = m_head.next;
     while (tmp) {
         delete tmp;
@@ -33,7 +33,7 @@ MemoryPool::~MemoryPool() {
     }
 }
 
-void* MemoryPool::allocate(size_t a_numBytes) {
+void* syn::MemoryPool::allocate(size_t a_numBytes) {
     // Find best free chunk
     int minSizeDiff = -1;
     Chunk* bestChunk = nullptr;
@@ -73,7 +73,7 @@ void* MemoryPool::allocate(size_t a_numBytes) {
     return usedChunk->addr;
 }
 
-void MemoryPool::free(void* a_ptr) {
+void syn::MemoryPool::free(void* a_ptr) {
     size_t numUsedChunks = m_usedChunks.size();
     for (int i = 0; i < numUsedChunks; i++) {
         Chunk* chunk = m_usedChunks[i];
@@ -88,7 +88,7 @@ void MemoryPool::free(void* a_ptr) {
     }
 }
 
-void MemoryPool::_joinFreeChunks(Chunk* a_chunk) {
+void syn::MemoryPool::_joinFreeChunks(Chunk* a_chunk) {
     if (!a_chunk->isFree)
         return;
     while (a_chunk->prev && a_chunk->prev->isFree) {

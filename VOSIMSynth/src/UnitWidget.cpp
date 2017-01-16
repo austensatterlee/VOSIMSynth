@@ -76,7 +76,7 @@ synui::UnitWidget::UnitWidget(synui::CircuitWidget* a_parent, syn::VoiceManager*
         int outputId = outputs.indices()[i];
         const string& outputName = outputs.name(outputId);
         auto lbl = new nanogui::Label(this, outputName, "sans", 0);
-        lbl->setTextAlign(nanogui::Label::Alignment::Right);
+        //lbl->setTextAlign(nanogui::Label::Alignment::Right);
         layout->setAnchor(lbl, Anchor{2, outputs.size() - i});
         lbl->setId(std::to_string(outputId));
         lbl->setTooltip(outputName);
@@ -106,7 +106,7 @@ void synui::UnitWidget::draw(NVGcontext* ctx)
 {
     // Perform initialization that cannot be done in the constructor
     if (m_state == Uninitialized) { m_state = Idle; }
-   
+
     nvgSave(ctx);
     nvgTranslate(ctx, mPos.x(), mPos.y());
 
@@ -126,7 +126,7 @@ void synui::UnitWidget::draw(NVGcontext* ctx)
 
     // Draw divisions
     int i = 0;
-    auto drawDivisions = [&](const map<int, Widget*>& lbls, const nanogui::Color& c1, const nanogui::Color& c2)
+    auto drawDivisions = [&](const map<int, nanogui::Label*>& lbls, const nanogui::Color& c1, const nanogui::Color& c2)
             {
                 for (auto lbl : lbls)
                 {
@@ -219,7 +219,7 @@ void synui::UnitWidget::draw(NVGcontext* ctx)
 
 bool synui::UnitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers)
 {
-    if(Widget::mouseButtonEvent(p, button, down, modifiers)) 
+    if (Widget::mouseButtonEvent(p, button, down, modifiers))
         return true;
 
     Eigen::Vector2i mousePos = p - position();
@@ -402,22 +402,46 @@ void synui::UnitWidget::updateRowSizes_()
     l->setRowSize(0, titleRowSize);
     m_titleLabel->setFontSize(titleRowFontSize);
     int portRowSize = m_parentCircuit->getGridSpacing();
-    int portRowFontSize = portRowSize < 10 ? 0 : portRowSize;
+    int portRowFontSize = portRowSize;
 
+
+    const syn::Unit& unit = getUnit_();
+    const auto& inputs = unit.inputs();
+    const auto& outputs = unit.outputs();
     // Apply new row size to port rows
     for (int r = 0; r < l->rowCount() - 1; r++)
     {
         if (m_inputLabels.find(r) != m_inputLabels.end())
         {
             m_inputLabels[r]->setFontSize(portRowFontSize);
-            m_inputLabels[r]->setFixedWidth(portRowFontSize ? 0 : rowHeight);
-            m_inputLabels[r]->setFixedHeight(portRowFontSize ? 0 : rowHeight);
+            if (portRowFontSize < 12)
+            {
+                m_inputLabels[r]->setCaption(inputs.name(r).substr(0, 2));
+                m_inputLabels[r]->setFixedWidth(rowHeight);
+                m_inputLabels[r]->setFixedHeight(rowHeight);
+            }
+            else
+            {
+                m_inputLabels[r]->setCaption(inputs.name(r));
+                m_inputLabels[r]->setFixedWidth(0);
+                m_inputLabels[r]->setFixedHeight(0);
+            }
         }
         if (m_outputLabels.find(r) != m_outputLabels.end())
         {
             m_outputLabels[r]->setFontSize(portRowFontSize);
-            m_outputLabels[r]->setFixedWidth(portRowFontSize ? 0 : rowHeight);
-            m_outputLabels[r]->setFixedHeight(portRowFontSize ? 0 : rowHeight);
+            if (portRowFontSize < 12)
+            {
+                m_outputLabels[r]->setCaption(outputs.name(r).substr(0, 2));
+                m_outputLabels[r]->setFixedWidth(rowHeight);
+                m_outputLabels[r]->setFixedHeight(rowHeight);
+            }
+            else
+            {
+                m_outputLabels[r]->setCaption(outputs.name(r));
+                m_outputLabels[r]->setFixedWidth(0);
+                m_outputLabels[r]->setFixedHeight(0);
+            }
         }
         l->setRowSize(r + 1, rowHeight);
     }

@@ -291,8 +291,7 @@ namespace syn
 
     void VoiceManager::setBufferSize(int a_bufferSize) {
         m_bufferSize = a_bufferSize > 0 ? a_bufferSize : 1;
-        if (a_bufferSize < m_bufferSize)
-            setInternalBufferSize(m_bufferSize);
+        setInternalBufferSize(m_internalBufferSize);
     }
 
     void VoiceManager::setInternalBufferSize(int a_internalBufferSize)

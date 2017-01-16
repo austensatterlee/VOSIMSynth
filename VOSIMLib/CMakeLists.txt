@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.3)
 project(VOSIMLib)
 
-set_option(VOSIMLIB_SHARED FALSE BOOL "Build as a shared library?")
+option(VOSIMLIB_SHARED "Build as a shared library?" FALSE)
 
 if(BUILD_SHARED_LIBS)
   set(VOSIMLIB_SHARED TRUE)
@@ -10,6 +10,8 @@ endif()
 if(VOSIMLIB_SHARED)
   list(APPEND VOSIMLIB_DEFS -DVOSIMLIB_SHARED)
 endif()
+
+set(ADDITIONAL_LIBRARIES "")
 
 ##
 # Eigen
@@ -28,6 +30,12 @@ find_package(Boost COMPONENTS thread REQUIRED)
 get_property( BLUB TARGET Boost::thread PROPERTY IMPORTED_LOCATION_RELEASE)
 set_property( TARGET Boost::thread PROPERTY IMPORTED_LOCATION_RELWITHDEBINFO ${BLUB} )
 include_directories(${Boost_INCLUDE_DIRS})
+
+##
+# MKL
+##
+list(APPEND ADDITIONAL_LIBRARIES ${MKL_LIBRARIES})
+include_directories(${MKL_INCLUDE_DIR})
 
 ##
 # Generate wavetables
@@ -68,7 +76,7 @@ else()
   set_target_properties(VOSIMLib PROPERTIES MINSIZEREL_POSTFIX -s)
   set_target_properties(VOSIMLib PROPERTIES RELWITHDEBINFO_POSTFIX -s)
 endif()
-target_link_libraries(VOSIMLib ${Boost_LIBRARIES})
+target_link_libraries(VOSIMLib ${Boost_LIBRARIES} ${ADDITIONAL_LIBRARIES})
 
 ##
 # Add tests target

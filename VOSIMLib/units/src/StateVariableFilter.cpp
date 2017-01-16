@@ -50,34 +50,39 @@ void syn::StateVariableFilter::reset()
 void syn::StateVariableFilter::process_()
 {
     BEGIN_PROC_FUNC
-        double fc = READ_INPUT(m_iFcMul) * (param(m_pFc).getDouble() + READ_INPUT(m_iFcAdd));
-        fc = CLAMP(fc, param(m_pFc).getMin(), param(m_pFc).getMax());
-        m_F = 2 * lut_sin_table().getlinear_periodic(0.5 * fc / (fs() * c_oversamplingFactor));
+    double fc = READ_INPUT(m_iFcMul) * (param(m_pFc).getDouble() + READ_INPUT(m_iFcAdd));
+    fc = CLAMP(fc, param(m_pFc).getMin(), param(m_pFc).getMax());
+    m_F = 2 * lut_sin_table().getlinear_periodic(0.5 * fc / (fs() * c_oversamplingFactor));
 
-        double input_res = READ_INPUT(m_iResMul) * param(m_pRes).getDouble() + READ_INPUT(m_iResAdd);
-        input_res = CLAMP<double>(input_res, 0, 1);
-        double res = LERP(c_minRes, c_maxRes, input_res);
-        m_damp = 1.0 / res;
+    double input_res = READ_INPUT(m_iResMul) * param(m_pRes).getDouble() + READ_INPUT(m_iResAdd);
+    input_res = CLAMP<double>(input_res, 0, 1);
+    double res = LERP(c_minRes, c_maxRes, input_res);
+    m_damp = 1.0 / res;
 
-        double input = READ_INPUT(0);
-        double LPOut = 0, HPOut = 0, BPOut = 0;
-        int i = c_oversamplingFactor;
-        while (i--)
-        {
-            LPOut = m_prevLPOut + m_F * m_prevBPOut;
-            HPOut = input - LPOut - m_damp * m_prevBPOut;
-            BPOut = m_F * HPOut + m_prevBPOut;
+    double input = READ_INPUT(0);
+    double LPOut = 0, HPOut = 0, BPOut = 0;
+    int i = c_oversamplingFactor;
+    while (i--)
+    {
+        LPOut = m_prevLPOut + m_F * m_prevBPOut;
+        HPOut = input - LPOut - m_damp * m_prevBPOut;
+        BPOut = m_F * HPOut + m_prevBPOut;
 
-            m_prevBPOut = BPOut;
-            m_prevLPOut = LPOut;
-        }
-        double NOut = HPOut + LPOut;
+        m_prevBPOut = BPOut;
+        m_prevLPOut = LPOut;
+    }
+    double NOut = HPOut + LPOut;
 
-        WRITE_OUTPUT(m_oLP, LPOut);
-        WRITE_OUTPUT(m_oHP, HPOut);
-        WRITE_OUTPUT(m_oBP, BPOut);
-        WRITE_OUTPUT(m_oN, NOut);
+    WRITE_OUTPUT(m_oLP, LPOut);
+    WRITE_OUTPUT(m_oHP, HPOut);
+    WRITE_OUTPUT(m_oBP, BPOut);
+    WRITE_OUTPUT(m_oN, NOut);
     END_PROC_FUNC
+}
+
+void syn::StateVariableFilter::onNoteOn_()
+{
+    reset();
 }
 
 syn::TrapStateVariableFilter::TrapStateVariableFilter(const string& a_name) : StateVariableFilter(a_name),
@@ -92,32 +97,32 @@ void syn::TrapStateVariableFilter::reset()
 void syn::TrapStateVariableFilter::process_()
 {
     BEGIN_PROC_FUNC
-        double fc = READ_INPUT(m_iFcMul) * (param(m_pFc).getDouble() + READ_INPUT(m_iFcAdd));
-        fc = CLAMP(fc, param(m_pFc).getMin(), param(m_pFc).getMax());
-        m_F = tan(DSP_PI * fc / (fs() * c_oversamplingFactor));
+    double fc = READ_INPUT(m_iFcMul) * (param(m_pFc).getDouble() + READ_INPUT(m_iFcAdd));
+    fc = CLAMP(fc, param(m_pFc).getMin(), param(m_pFc).getMax());
+    m_F = tan(DSP_PI * fc / (fs() * c_oversamplingFactor));
 
-        double input_res = READ_INPUT(m_iResMul) * param(m_pRes).getDouble() + READ_INPUT(m_iResAdd);
-        input_res = CLAMP<double>(input_res, 0, 1);
-        double res = LERP(c_minRes, c_maxRes, input_res);
-        m_damp = 1.0 / res;
+    double input_res = READ_INPUT(m_iResMul) * param(m_pRes).getDouble() + READ_INPUT(m_iResAdd);
+    input_res = CLAMP<double>(input_res, 0, 1);
+    double res = LERP(c_minRes, c_maxRes, input_res);
+    m_damp = 1.0 / res;
 
-        double input = READ_INPUT(0);
-        double LPOut = 0, HPOut = 0, BPOut = 0, NOut = 0;
-        int i = c_oversamplingFactor;
-        while (i--)
-        {
-            BPOut = (m_prevBPOut + m_F * (input + m_prevInput - (m_F + m_damp) * (m_prevBPOut) - 2 * m_prevLPOut)) / (1 + m_F * (m_F + m_damp));
-            LPOut = (m_prevLPOut + m_F * (2 * m_prevBPOut + m_F * (input + m_prevInput - m_prevLPOut) + m_damp * m_prevLPOut)) / (1 + m_F * (m_F + m_damp));
-            m_prevInput = input;
-            m_prevBPOut = BPOut;
-            m_prevLPOut = LPOut;
-        }
-        HPOut = input - m_damp * BPOut - LPOut;
-        NOut = HPOut + LPOut;
-        WRITE_OUTPUT(m_oLP, LPOut);
-        WRITE_OUTPUT(m_oHP, HPOut);
-        WRITE_OUTPUT(m_oBP, BPOut);
-        WRITE_OUTPUT(m_oN, NOut);
+    double input = READ_INPUT(0);
+    double LPOut = 0, HPOut = 0, BPOut = 0, NOut = 0;
+    int i = c_oversamplingFactor;
+    while (i--)
+    {
+        BPOut = (m_prevBPOut + m_F * (input + m_prevInput - (m_F + m_damp) * (m_prevBPOut) - 2 * m_prevLPOut)) / (1 + m_F * (m_F + m_damp));
+        LPOut = (m_prevLPOut + m_F * (2 * m_prevBPOut + m_F * (input + m_prevInput - m_prevLPOut) + m_damp * m_prevLPOut)) / (1 + m_F * (m_F + m_damp));
+        m_prevInput = input;
+        m_prevBPOut = BPOut;
+        m_prevLPOut = LPOut;
+    }
+    HPOut = input - m_damp * BPOut - LPOut;
+    NOut = HPOut + LPOut;
+    WRITE_OUTPUT(m_oLP, LPOut);
+    WRITE_OUTPUT(m_oHP, HPOut);
+    WRITE_OUTPUT(m_oBP, BPOut);
+    WRITE_OUTPUT(m_oN, NOut);
     END_PROC_FUNC
 }
 
@@ -166,16 +171,21 @@ void syn::OnePoleLP::reset()
 void syn::OnePoleLP::process_()
 {
     BEGIN_PROC_FUNC
-        // Calculate gain for specified cutoff
-        double fc = (param(pFc).getDouble() + READ_INPUT(iFcAdd)) * READ_INPUT(iFcMul); // freq cutoff
-        fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());
-        implem.setFc(fc, fs());
+    // Calculate gain for specified cutoff
+    double fc = (param(pFc).getDouble() + READ_INPUT(iFcAdd)) * READ_INPUT(iFcMul); // freq cutoff
+    fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());
+    implem.setFc(fc, fs());
 
-        double input = READ_INPUT(0);
-        double output = implem.process(input);
-        WRITE_OUTPUT(oLP, output);
-        WRITE_OUTPUT(oHP, input - output);
+    double input = READ_INPUT(0);
+    double output = implem.process(input);
+    WRITE_OUTPUT(oLP, output);
+    WRITE_OUTPUT(oHP, input - output);
     END_PROC_FUNC
+}
+
+void syn::OnePoleLP::onNoteOn_()
+{
+    reset();
 }
 
 syn::LadderFilterBase::LadderFilterBase(const string& a_name) : Unit(a_name)
@@ -189,8 +199,16 @@ syn::LadderFilterBase::LadderFilterBase(const string& a_name) : Unit(a_name)
     addOutput_("out");
 }
 
+void syn::LadderFilterBase::onNoteOn_()
+{
+    reset();
+}
+
 syn::LadderFilter::LadderFilter(const string& a_name) :
-    LadderFilterBase(a_name) {}
+    LadderFilterBase(a_name)
+{
+    LadderFilter::reset();
+}
 
 void syn::LadderFilter::reset()
 {
@@ -202,46 +220,48 @@ void syn::LadderFilter::reset()
 void syn::LadderFilter::process_()
 {
     BEGIN_PROC_FUNC
-        double input = READ_INPUT(iAudioIn);
-        // Calculate gain for specified cutoff
-        double fs = LadderFilter::fs() * c_oversamplingFactor;
+    double input = READ_INPUT(iAudioIn);
+    // Calculate gain for specified cutoff
+    double fs = LadderFilter::fs() * c_oversamplingFactor;
 
-        double fc = (param(pFc).getDouble() + READ_INPUT(iFcAdd)) * READ_INPUT(iFcMul); // freq cutoff
-        fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());
+    double fc = (param(pFc).getDouble() + READ_INPUT(iFcAdd)) * READ_INPUT(iFcMul); // freq cutoff
+    fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());
 
-        double wd = DSP_PI * fc / fs;
+    double wd = DSP_PI * fc / fs;
 
-        // Prepare parameter values and insert them into each stage.
-        double g = 4 * DSP_PI * VT * fc * (1.0 - wd) / (1.0 + wd);
-        double dV0, dV1, dV2, dV3;
-        double drive = 1 + 3 * param(pDrv).getDouble();
-        double res = 3.9 * param(pFb).getDouble();
+    // Prepare parameter values and insert them into each stage.
+    double g = 4 * DSP_PI * VT * fc * (1.0 - wd) / (1.0 + wd);
+    double dV0, dV1, dV2, dV3;
+    double drive = 1 + 3 * param(pDrv).getDouble();
+    double res = 3.9 * param(pFb).getDouble();
+    double stage_gain = 1.0/(2.0*VT);
+    double dt = 1.0/(2.0*fs);
 
-        int i = c_oversamplingFactor;
-        while (i--)
-        {
-            dV0 = -g * (fast_tanh_rat((drive * input + res * m_V[3]) / (2.0 * VT)) + m_tV[0]);
-            m_V[0] += (dV0 + m_dV[0]) / (2.0 * fs);
-            m_dV[0] = dV0;
-            m_tV[0] = fast_tanh_rat(m_V[0] / (2.0 * VT));
+    int i = c_oversamplingFactor;
+    while (i--)
+    {
+        dV0 = -g * (fast_tanh_rat((drive * input + res * m_V[3]) * stage_gain) + m_tV[0]);
+        m_V[0] += (dV0 + m_dV[0]) * dt;
+        m_dV[0] = dV0;
+        m_tV[0] = fast_tanh_rat(m_V[0] * stage_gain);
 
-            dV1 = g * (m_tV[0] - m_tV[1]);
-            m_V[1] += (dV1 + m_dV[1]) / (2.0 * fs);
-            m_dV[1] = dV1;
-            m_tV[1] = fast_tanh_rat(m_V[1] / (2.0 * VT));
+        dV1 = g * (m_tV[0] - m_tV[1]);
+        m_V[1] += (dV1 + m_dV[1]) * dt;
+        m_dV[1] = dV1;
+        m_tV[1] = fast_tanh_rat(m_V[1] * stage_gain);
 
-            dV2 = g * (m_tV[1] - m_tV[2]);
-            m_V[2] += (dV2 + m_dV[2]) / (2.0 * fs);
-            m_dV[2] = dV2;
-            m_tV[2] = fast_tanh_rat(m_V[2] / (2.0 * VT));
+        dV2 = g * (m_tV[1] - m_tV[2]);
+        m_V[2] += (dV2 + m_dV[2]) * dt;
+        m_dV[2] = dV2;
+        m_tV[2] = fast_tanh_rat(m_V[2] * stage_gain);
 
-            dV3 = g * (m_tV[2] - m_tV[3]);
-            m_V[3] += (dV3 + m_dV[3]) / (2.0 * fs);
-            m_dV[3] = dV3;
-            m_tV[3] = fast_tanh_rat(m_V[3] / (2.0 * VT));
-        }
+        dV3 = g * (m_tV[2] - m_tV[3]);
+        m_V[3] += (dV3 + m_dV[3]) * dt;
+        m_dV[3] = dV3;
+        m_tV[3] = fast_tanh_rat(m_V[3] * stage_gain);
+    }
 
-        WRITE_OUTPUT(0, m_V[3]);
+    WRITE_OUTPUT(0, m_V[3]);
     END_PROC_FUNC
 }
 
@@ -259,44 +279,44 @@ void syn::LadderFilterTwo::reset()
 void syn::LadderFilterTwo::process_()
 {
     BEGIN_PROC_FUNC
-        double input = READ_INPUT(iAudioIn);
-        // Calculate gain for specified cutoff
-        double fs = LadderFilterTwo::fs() * c_oversamplingFactor;
+    double input = READ_INPUT(iAudioIn);
+    // Calculate gain for specified cutoff
+    double fs = LadderFilterTwo::fs() * c_oversamplingFactor;
 
-        double fc, drive, res;
-        fc = (param(pFc).getDouble() + READ_INPUT(iFcAdd)) * READ_INPUT(iFcMul); // freq cutoff
-        fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());
-        drive = 1.0 + 3.0 * param(pDrv).getDouble();
-        res = 3.9 * param(pFb).getDouble();
+    double fc, drive, res;
+    fc = (param(pFc).getDouble() + READ_INPUT(iFcAdd)) * READ_INPUT(iFcMul); // freq cutoff
+    fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());
+    drive = 1.0 + 3.0 * param(pDrv).getDouble();
+    res = 3.9 * param(pFb).getDouble();
 
-        m_LP[0].setFc(fc, fs);
-        m_LP[1].m_G = m_LP[0].m_G;
-        m_LP[2].m_G = m_LP[0].m_G;
-        m_LP[3].m_G = m_LP[0].m_G;
+    m_LP[0].setFc(fc, fs);
+    m_LP[1].m_G = m_LP[0].m_G;
+    m_LP[2].m_G = m_LP[0].m_G;
+    m_LP[3].m_G = m_LP[0].m_G;
 
-        double g = m_LP[0].m_G / (1 - m_LP[0].m_G);
-        double lp3_fb_gain = 1.0 / (1.0 + g);
-        double lp2_fb_gain = m_LP[0].m_G * lp3_fb_gain;
-        double lp1_fb_gain = m_LP[0].m_G * lp2_fb_gain;
-        double lp0_fb_gain = m_LP[0].m_G * lp1_fb_gain;
+    double g = m_LP[0].m_G / (1 - m_LP[0].m_G);
+    double lp3_fb_gain = 1.0 / (1.0 + g);
+    double lp2_fb_gain = m_LP[0].m_G * lp3_fb_gain;
+    double lp1_fb_gain = m_LP[0].m_G * lp2_fb_gain;
+    double lp0_fb_gain = m_LP[0].m_G * lp1_fb_gain;
 
-        double G4 = m_LP[0].m_G * m_LP[0].m_G * m_LP[0].m_G * m_LP[0].m_G;
-        double out_fb_gain = 1.0 / (1.0 + res * G4);
+    double G4 = m_LP[0].m_G * m_LP[0].m_G * m_LP[0].m_G * m_LP[0].m_G;
+    double out_fb_gain = 1.0 / (1.0 + res * G4);
 
-        int i = c_oversamplingFactor;
-        Vector5d out_states;
-        input *= drive;
-        while (i--)
-        {
-            double out_fb = lp0_fb_gain * m_LP[0].m_state + lp1_fb_gain * m_LP[1].m_state + lp2_fb_gain * m_LP[2].m_state + lp3_fb_gain * m_LP[3].m_state;
+    int i = c_oversamplingFactor;
+    Vector5d out_states;
+    input *= drive;
+    while (i--)
+    {
+        double out_fb = lp0_fb_gain * m_LP[0].m_state + lp1_fb_gain * m_LP[1].m_state + lp2_fb_gain * m_LP[2].m_state + lp3_fb_gain * m_LP[3].m_state;
 
-            out_states[0] = fast_tanh_rat((input - res * (out_fb - input)) * out_fb_gain);
-            out_states[1] = m_LP[0].process(out_states[0]);
-            out_states[2] = m_LP[1].process(out_states[1]);
-            out_states[3] = m_LP[2].process(out_states[2]);
-            out_states[4] = m_LP[3].process(out_states[3]);
-        }
-        double out = m_ffGains.dot(out_states);
-        WRITE_OUTPUT(0, out);
+        out_states[0] = fast_tanh_rat((input - res * (out_fb - input)) * out_fb_gain);
+        out_states[1] = m_LP[0].process(out_states[0]);
+        out_states[2] = m_LP[1].process(out_states[1]);
+        out_states[3] = m_LP[2].process(out_states[2]);
+        out_states[4] = m_LP[3].process(out_states[3]);
+    }
+    double out = m_ffGains.dot(out_states);
+    WRITE_OUTPUT(0, out);
     END_PROC_FUNC
 }

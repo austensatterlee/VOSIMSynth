@@ -153,6 +153,12 @@ namespace syn
         return this;
     }
 
+    void Circuit::reset()
+    {
+        const int* unitIndices = m_units.indices();
+        for (int i = 0; i < m_units.size(); i++) { m_units[unitIndices[i]]->reset(); }
+    }
+
     void Circuit::process_()
     {
         // tick units in processing graph

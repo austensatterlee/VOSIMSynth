@@ -56,3 +56,8 @@ void syn::FollowerUnit::process_()
         WRITE_OUTPUT(0, sqrt(m_output));
     END_PROC_FUNC
 }
+
+void syn::FollowerUnit::onNoteOn_()
+{
+    reset();
+}

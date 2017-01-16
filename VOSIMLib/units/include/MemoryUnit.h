@@ -62,7 +62,7 @@ namespace syn
          */
         double readTap(double a_offset);
         void resizeBuffer(double a_newBufSize);
-        void clearBuffer();
+        void reset();
         int size() const;
     private:
         vector<double> m_buffer;
@@ -84,6 +84,7 @@ namespace syn
     protected:
         void onParamChange_(int a_paramId) override;
         void MSFASTCALL process_() GCCFASTCALL override;
+        void onNoteOn_() override;
 
     private:
         NSampleDelay m_delay;
@@ -124,6 +125,7 @@ namespace syn
     protected:
         void onParamChange_(int a_paramId) override;
         void MSFASTCALL process_() GCCFASTCALL override;
+        void onNoteOn_() override;
     private:
         NSampleDelay m_delay;
         double m_delaySamples;

@@ -61,12 +61,12 @@ namespace syn
 
         explicit Oscillator(const string& a_name);
 
+        void reset() override;
+
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
         virtual void MSFASTCALL tickPhase_(double a_phaseOffset) GCCFASTCALL;
         virtual void MSFASTCALL updatePhaseStep_() GCCFASTCALL;
-
-        virtual void MSFASTCALL sync_() GCCFASTCALL;
 
     protected:
         double m_basePhase;

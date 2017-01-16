@@ -70,9 +70,11 @@ namespace syn
         m_delaySamples = a_delaySamples;
     }
 
-    void NSampleDelay::clearBuffer()
+    void NSampleDelay::reset()
     {
         std::fill(&m_buffer.front(), &m_buffer.back(), 0.0);
+        m_curWritePhase = 0.0;
+        m_lastOutput = 0.0;
     }
 
     int NSampleDelay::size() const
@@ -111,15 +113,20 @@ namespace syn
     MemoryUnit::MemoryUnit(const MemoryUnit& a_rhs) :
         MemoryUnit(a_rhs.name()) { }
 
-    void MemoryUnit::reset() { m_delay.clearBuffer(); }
+    void MemoryUnit::reset() { m_delay.reset(); }
 
     void MemoryUnit::onParamChange_(int a_paramId) { }
 
     void MemoryUnit::process_()
     {
         BEGIN_PROC_FUNC
-            WRITE_OUTPUT(0, m_delay.process(READ_INPUT(0)));
+        WRITE_OUTPUT(0, m_delay.process(READ_INPUT(0)));
         END_PROC_FUNC
+    }
+
+    void MemoryUnit::onNoteOn_()
+    {
+        reset();
     }
 
     //---------------------
@@ -148,7 +155,7 @@ namespace syn
 
     void VariableMemoryUnit::reset()
     {
-        m_delay.clearBuffer();
+        m_delay.reset();
         m_lastOutput = 0.0;
     }
 
@@ -157,26 +164,26 @@ namespace syn
         int newtype;
         switch (a_paramId)
         {
-        case pBufType:
-            newtype = param(pBufType).getInt();
-            param(pBufDelay).setVisible(newtype == 0);
-            param(pBufFreq).setVisible(newtype == 1);
-            param(pBufBPMFreq).setVisible(newtype == 2);
-            m_lastOutput = 0.0;
-            break;
-        case pUseAP:
-            m_lastOutput = 0.0;
-        default:
-            break;
+            case pBufType:
+                newtype = param(pBufType).getInt();
+                param(pBufDelay).setVisible(newtype == 0);
+                param(pBufFreq).setVisible(newtype == 1);
+                param(pBufBPMFreq).setVisible(newtype == 2);
+                m_lastOutput = 0.0;
+                break;
+            case pUseAP:
+                m_lastOutput = 0.0;
+            default:
+                break;
         }
     }
 
     void VariableMemoryUnit::process_()
     {
         BEGIN_PROC_FUNC
-            int bufType = param(pBufType).getEnum();
-            switch (bufType)
-            {
+        int bufType = param(pBufType).getEnum();
+        switch (bufType)
+        {
             case pBufDelay:
                 m_delaySamples = periodToSamples(param(pBufDelay).getDouble() + READ_INPUT(iSizeMod), fs());
                 break;
@@ -188,26 +195,31 @@ namespace syn
                 break;
             default:
                 break;
-            }
-            m_delay.resizeBuffer(m_delaySamples);
-            double input = READ_INPUT(iIn);
-            double receive = READ_INPUT(iReceive);
-            double dryMix = input * param(pDryGain).getDouble();
-            double output;
-            if (param(pUseAP).getBool())
-            {
-                double lastInput = m_delay.readTap(0.0); // x[n-1]
-                double lastOutput = m_lastOutput; // y[n-1]
-                double a = (1 - m_delaySamples) / (1 + m_delaySamples);
-                output = (input - lastOutput) * a + lastInput;
-            }
-            else
-            {
-                output = m_delay.process(input + receive);
-            }
-            m_lastOutput = output;
-            WRITE_OUTPUT(oOut, output + dryMix);
-            WRITE_OUTPUT(oSend, output);
+        }
+        m_delay.resizeBuffer(m_delaySamples);
+        double input = READ_INPUT(iIn);
+        double receive = READ_INPUT(iReceive);
+        double dryMix = input * param(pDryGain).getDouble();
+        double output;
+        if (param(pUseAP).getBool())
+        {
+            double lastInput = m_delay.readTap(0.0); // x[n-1]
+            double lastOutput = m_lastOutput; // y[n-1]
+            double a = (1 - m_delaySamples) / (1 + m_delaySamples);
+            output = (input - lastOutput) * a + lastInput;
+        }
+        else
+        {
+            output = m_delay.process(input + receive);
+        }
+        m_lastOutput = output;
+        WRITE_OUTPUT(oOut, output + dryMix);
+        WRITE_OUTPUT(oSend, output);
         END_PROC_FUNC
+    }
+
+    void VariableMemoryUnit::onNoteOn_()
+    {
+        reset();
     }
 }

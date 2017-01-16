@@ -92,10 +92,10 @@ namespace synui
 
         nanogui::Label* m_titleLabel;
         nanogui::TextBox* m_titleTextBox;
-        std::map<int, Widget*> m_inputLabels;
-        std::map<int, Widget*> m_outputLabels;
-        std::map<int, Widget*> m_emptyInputLabels;
-        std::map<int, Widget*> m_emptyOutputLabels;
+        std::map<int, nanogui::Label*> m_inputLabels;
+        std::map<int, nanogui::Label*> m_outputLabels;
+        std::map<int, nanogui::Label*> m_emptyInputLabels;
+        std::map<int, nanogui::Label*> m_emptyOutputLabels;
 
         double m_lastClickTime;
 

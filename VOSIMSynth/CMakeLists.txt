@@ -1,10 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
 project(VOSIMSynth)
 
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
-
-set_option(VOSIMSYNTH_SHARED FALSE BOOL "Build as a shared library?")
-set_option(VOSIMSYNTH_BUILD_STANDALONE FALSE BOOL "Build standalone application?")
+option(VOSIMSYNTH_SHARED "Build as a shared library?" FALSE)
+option(VOSIMSYNTH_BUILD_STANDALONE "Build standalone application?" FALSE)
 
 if(BUILD_SHARED_LIBS)
   set(VOSIMSYNTH_SHARED TRUE)
@@ -40,6 +38,13 @@ add_definitions(${NANOGUI_EXTRA_DEFS})
 # string(REGEX REPLACE "(;?)[^;]*eigen[^;]*(;?)" "\\1\\2" NANOGUI_EXTRA_INCS "${NANOGUI_EXTRA_INCS}")
 include_directories(${NANOGUI_EXTRA_INCS})
 include_directories(${LIBS_DIR}/nanogui/include)
+
+
+##
+# MKL
+##
+list(APPEND ADDITIONAL_LIBRARIES ${MKL_LIBRARIES})
+include_directories(${MKL_INCLUDE_DIR})
 
 ##
 # VOSIMLib

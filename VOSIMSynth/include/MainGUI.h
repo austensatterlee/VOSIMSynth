@@ -137,7 +137,9 @@ namespace synui
         {
             for(auto& s : m_setterSerializers)
             {
-                s.second(j[s.first]);
+                const json& curr = j.value(s.first, json());
+                if(!curr.empty())
+                    s.second(curr);
             }
             return this;
         }

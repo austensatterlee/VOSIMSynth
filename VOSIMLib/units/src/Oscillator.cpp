@@ -21,8 +21,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "DSPMath.h"
 #include "tables.h"
 
-#include "common.h"
-
 namespace syn
 {
     Oscillator::Oscillator(const string& a_name) :
@@ -45,7 +43,10 @@ namespace syn
         addInput_(iPhaseAdd, "ph");
     }
 
-    void Oscillator::sync_() {}
+    void Oscillator::reset()
+    {
+        m_basePhase = 0.0;
+    }
 
     /******************************
     * Oscillator methods
@@ -75,36 +76,31 @@ namespace syn
         }
         m_phase = m_basePhase + a_phaseOffset;
         m_phase = WRAP(m_phase, 1.0);
-        if (1 - (m_last_phase - m_phase) < 0.5)
-        {
-            sync_();
-        }
         m_last_phase = m_phase;
     }
 
     void Oscillator::process_()
     {
         BEGIN_PROC_FUNC
-            double phase_offset = param(pPhaseOffset).getDouble() + READ_INPUT(iPhaseAdd);
-            m_gain = param(pGain).getDouble() * READ_INPUT(iGainMul);
-            m_bias = 0;
-            if (param(pUnipolar).getBool())
-            {
-                // make signal unipolar
-                m_gain *= 0.5;
-                m_bias = m_gain;
-            }
-            updatePhaseStep_();
-            tickPhase_(phase_offset);
+        double phase_offset = param(pPhaseOffset).getDouble() + READ_INPUT(iPhaseAdd);
+        m_gain = param(pGain).getDouble() * READ_INPUT(iGainMul);
+        m_bias = 0;
+        if (param(pUnipolar).getBool())
+        {
+            // make signal unipolar
+            m_gain *= 0.5;
+            m_bias = m_gain;
+        }
+        updatePhaseStep_();
+        tickPhase_(phase_offset);
 
-            WRITE_OUTPUT(oPhase, m_phase);
+        WRITE_OUTPUT(oPhase, m_phase);
         END_PROC_FUNC
     }
 
     void TunedOscillator::onNoteOn_()
     {
-        m_basePhase = 0.0;
-        sync_();
+        reset();
     }
 
     void TunedOscillator::updatePhaseStep_()
@@ -128,10 +124,10 @@ namespace syn
     void TunedOscillator::process_()
     {
         BEGIN_PROC_FUNC
-            double tune = param(pTune).getDouble() + READ_INPUT(iNote);
-            double oct = param(pOctave).getInt();
-            m_pitch = tune + oct * 12;
-            Oscillator::process_();
+        double tune = param(pTune).getDouble() + READ_INPUT(iNote);
+        double oct = param(pOctave).getInt();
+        m_pitch = tune + oct * 12;
+        Oscillator::process_();
         END_PROC_FUNC
     }
 
@@ -146,11 +142,11 @@ namespace syn
     void BasicOscillator::process_()
     {
         BEGIN_PROC_FUNC
-            TunedOscillator::process_();
-            double output;
-            WAVE_SHAPE shape = static_cast<WAVE_SHAPE>(param(pWaveform).getInt());
-            switch (shape)
-            {
+        TunedOscillator::process_();
+        double output;
+        WAVE_SHAPE shape = static_cast<WAVE_SHAPE>(param(pWaveform).getInt());
+        switch (shape)
+        {
             case SAW_WAVE:
                 output = lut_bl_saw_table().getresampled(m_phase, m_period);
                 break;
@@ -164,8 +160,8 @@ namespace syn
             case SQUARE_WAVE:
                 output = lut_bl_square_table().getresampled(m_phase, m_period);
                 break;
-            }
-            WRITE_OUTPUT(oOut, m_gain * output + m_bias);
+        }
+        WRITE_OUTPUT(oOut, m_gain * output + m_bias);
         END_PROC_FUNC
     }
 
@@ -189,27 +185,26 @@ namespace syn
     void LFOOscillator::process_()
     {
         BEGIN_PROC_FUNC
-            // determine frequency
-            if (param(pTempoSync).getBool())
-            {
-                m_freq = bpmToFreq(param(pBPMFreq).getEnum(READ_INPUT(iFreqMul) * (param(pBPMFreq).getInt() + READ_INPUT(iFreqAdd))), tempo());
-            }
-            else
-            {
-                m_freq = READ_INPUT(iFreqMul) * (param(pFreq).getDouble() + READ_INPUT(iFreqAdd));
-            }
-            // sync
-            if (m_lastSync <= 0.0 && READ_INPUT(iSync) > 0.0)
-            {
-                m_basePhase = 0.0;
-                sync_();
-            }
-            m_lastSync = READ_INPUT(iSync);
-            Oscillator::process_();
-            double output, quadoutput;
-            WAVE_SHAPE shape = static_cast<WAVE_SHAPE>(param(pWaveform).getInt());
-            switch (shape)
-            {
+        // determine frequency
+        if (param(pTempoSync).getBool())
+        {
+            m_freq = bpmToFreq(param(pBPMFreq).getEnum(READ_INPUT(iFreqMul) * (param(pBPMFreq).getInt() + READ_INPUT(iFreqAdd))), tempo());
+        }
+        else
+        {
+            m_freq = READ_INPUT(iFreqMul) * (param(pFreq).getDouble() + READ_INPUT(iFreqAdd));
+        }
+        // sync
+        if (m_lastSync <= 0.0 && READ_INPUT(iSync) > 0.0)
+        {
+            m_basePhase = 0.0;
+        }
+        m_lastSync = READ_INPUT(iSync);
+        Oscillator::process_();
+        double output, quadoutput;
+        WAVE_SHAPE shape = static_cast<WAVE_SHAPE>(param(pWaveform).getInt());
+        switch (shape)
+        {
             case SAW_WAVE:
                 output = naive_saw(m_phase);
                 quadoutput = naive_saw(m_phase + 0.25);
@@ -227,9 +222,9 @@ namespace syn
                 output = naive_square(m_phase);
                 quadoutput = naive_square(m_phase + 0.25);
                 break;
-            }
-            WRITE_OUTPUT(oOut, m_gain * output + m_bias);
-            WRITE_OUTPUT(oQuadOut, m_gain * quadoutput + m_bias);
+        }
+        WRITE_OUTPUT(oOut, m_gain * output + m_bias);
+        WRITE_OUTPUT(oQuadOut, m_gain * quadoutput + m_bias);
         END_PROC_FUNC
     }
 

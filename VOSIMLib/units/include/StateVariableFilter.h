@@ -48,8 +48,8 @@ namespace syn
     protected:
 
         void MSFASTCALL process_() GCCFASTCALL override;
+        void onNoteOn_() override;
 
-    protected:
         int m_pFc, m_pRes;
         int m_iResAdd, m_iResMul;
         int m_iFcAdd, m_iFcMul;
@@ -95,7 +95,7 @@ namespace syn
         double m_state = 0.0;
         double m_G = 0.0; /// feed forward gain
     };
-    
+
 
     /**
      * 1 Pole "TPT" unit wrapper
@@ -132,6 +132,7 @@ namespace syn
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
+        void onNoteOn_() override;
     private:
         _OnePoleLP implem;
     };
@@ -139,24 +140,28 @@ namespace syn
     struct LadderFilterBase : public Unit
     {
     public:
-      explicit LadderFilterBase(const string& a_name);
+        explicit LadderFilterBase(const string& a_name);
 
-      const int c_oversamplingFactor = 8;
-      const double VT = 0.312;
+    protected:
+        void onNoteOn_() override;
 
-      enum Param
-      {
-        pFc = 0,
-        pFb,
-        pDrv
-      };
+    public:
+        const int c_oversamplingFactor = 8;
+        const double VT = 0.312;
 
-      enum Input
-      {
-        iAudioIn = 0,
-        iFcAdd,
-        iFcMul
-      };
+        enum Param
+        {
+            pFc = 0,
+            pFb,
+            pDrv
+        };
+
+        enum Input
+        {
+            iAudioIn = 0,
+            iFcAdd,
+            iFcMul
+        };
     };
 
     class VOSIMLIB_API LadderFilter : public LadderFilterBase
@@ -169,9 +174,9 @@ namespace syn
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
     protected:
-        array<double, 4> m_V;
-        array<double, 4> m_dV;
-        array<double, 4> m_tV;
+        std::array<double, 5> m_V;
+        std::array<double, 5> m_dV;
+        std::array<double, 5> m_tV;
     };
 
     class VOSIMLIB_API LadderFilterTwo : public LadderFilterBase
@@ -184,7 +189,7 @@ namespace syn
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
     protected:
-        typedef Eigen::Matrix<double, 5, 1> Vector5d;
+        typedef Eigen::Matrix<double, 1, 5> Vector5d;
         _OnePoleLP m_LP[4];
         Vector5d m_ffGains; /// state feed forward gains
     };

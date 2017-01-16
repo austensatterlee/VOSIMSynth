@@ -12,7 +12,7 @@ void syn::MovingAverage::setWindowSize(int a_newWindowSize)
 {
     m_windowSize = a_newWindowSize;
     m_delay.resizeBuffer(m_windowSize);
-    m_delay.clearBuffer();
+    m_delay.reset();
     m_lastOutput = 0.0;
 }
 
@@ -59,6 +59,17 @@ void syn::DCRemoverUnit::process_()
         m_lastOutput = output;
         WRITE_OUTPUT(0, output);
     END_PROC_FUNC
+}
+
+void syn::DCRemoverUnit::reset()
+{
+    m_lastInput = 0.0;
+    m_lastOutput = 0.0;
+}
+
+void syn::DCRemoverUnit::onNoteOn_()
+{
+    reset();
 }
 
 syn::RectifierUnit::RectifierUnit(const string& a_name) :

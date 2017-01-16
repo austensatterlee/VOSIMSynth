@@ -180,6 +180,8 @@ namespace syn
 
         Unit* load(const json& j) override;
 
+        void reset() override;
+
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
 

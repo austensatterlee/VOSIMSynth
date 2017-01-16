@@ -69,6 +69,8 @@ namespace syn
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
+        void reset() override;
+        void onNoteOn_() override;
 
     private:
         int m_pAlpha;
