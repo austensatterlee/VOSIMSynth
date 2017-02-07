@@ -6,6 +6,7 @@
 #include "VoiceManager.h"
 #include "CircuitWidget.h"
 #include "UnitEditor.h"
+#include "Logger.h"
 
 namespace synui
 {

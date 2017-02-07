@@ -28,7 +28,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include <common_serial.h>
-#include "nanogui/formhelper.h"
+#include <nanogui/formhelper.h>
 
 namespace nanogui
 {
@@ -52,53 +52,6 @@ namespace synui
     class UnitEditorHost;
     class MainWindow;
     class CircuitWidget;
-
-    class Logger
-    {
-    public:
-        typedef std::function<void()> Listener;
-
-        static Logger& instance()
-        {
-            static Logger singleton;
-            return singleton;
-        }
-
-        void log(const std::string& a_channel, const std::string& a_msg)
-        {
-            if(m_logs.size()<m_maxLogs-1){
-                m_logs.push_back({ a_channel, a_msg });
-                m_nextIndex++;
-            }else{
-                m_logs[m_nextIndex] = {a_channel, a_msg};
-                m_nextIndex = m_nextIndex % m_maxLogs;
-            }
-
-            for (auto& listener : m_listeners)
-                listener();
-        }
-
-        const std::vector<std::pair<std::string, std::string> >& getLogs() { return m_logs; }
-
-        void addListener(Listener a_listener)
-        {
-            m_listeners.push_back(a_listener);
-        }
-
-        void reset()
-        {
-            m_listeners.clear();
-            m_logs.clear();
-            m_nextIndex = 0;
-        }
-
-    private:
-        Logger() : m_maxLogs(1000), m_nextIndex(0) {}
-        std::vector<std::pair<std::string, std::string> > m_logs;
-        std::vector<Listener> m_listeners;
-        int m_maxLogs;
-        int m_nextIndex;
-    };
 
     class SerializableFormHelper : public nanogui::FormHelper
     {
