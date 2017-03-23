@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "MainGUI.h"
 #include <GLFW/glfw3.h>
+#include "Log.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -15,6 +16,7 @@ static const char* wndClassName = "VOSIMWndClass";
 
 void synui::MainWindow::_OpenWindowImplem(HWND a_system_window)
 {
+    TRACE
     if (nWndClassReg++ == 0) {
         WNDCLASS wndClass = { NULL, drawFunc, 0, 0, m_HInstance, 0, NULL, 0, 0, wndClassName };
         RegisterClass(&wndClass);
@@ -32,6 +34,7 @@ void synui::MainWindow::_OpenWindowImplem(HWND a_system_window)
 
 void synui::MainWindow::_CloseWindowImplem()
 {
+    TRACE
     SetWindowLongW(glfwGetWin32Window(m_window), GWL_STYLE, GetWindowLongW(glfwGetWin32Window(m_window), GWL_STYLE) & ~WS_CHILD);
 
     DestroyWindow(m_timerWindow);
@@ -84,6 +87,7 @@ synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiCon
     m_guiInternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE),
     m_guiExternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE)
 {
+    TRACE
     auto error_callback = [](int error, const char* description)
             {
                 puts(description);
@@ -92,13 +96,19 @@ synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiCon
     // Create GLFW window
     if (!(nGlfwClassReg++) && !glfwInit())
     {
+        TRACEMSG("Failed to init GLFW.");
         throw "Failed to init GLFW.";
+    }
+    else
+    {
+        TRACEMSG("Successfully initialized GLFW.");        
     }
     initialize();
 }
 
 synui::MainWindow::~MainWindow()
 {
+    TRACE
     if(m_gui)
     {
         delete m_gui; m_gui = nullptr;
@@ -110,12 +120,12 @@ synui::MainWindow::~MainWindow()
 
 void synui::MainWindow::initialize()
 {
+    TRACE
     if(m_gui)
         return;
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+//    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     glfwWindowHint(GLFW_SAMPLES, 0);
     glfwWindowHint(GLFW_RED_BITS, 8);
@@ -132,17 +142,31 @@ void synui::MainWindow::initialize()
     m_window = glfwCreateWindow(m_size.x(), m_size.y(), "VOSIMSynth", nullptr, nullptr);
     if (m_window == nullptr) {
         glfwTerminate();
-        throw "Failed to create GLFW window";
+        TRACEMSG("Failed to create GLFW window.");
+        throw "Failed to create GLFW window.";
     }
+    else
+    {
+        TRACEMSG("Successfully created GLFW window.");
+    }
+
     glfwMakeContextCurrent(m_window);
     glfwSwapInterval(1);
     glfwSwapBuffers(m_window);
 
     // Construct GUI object
     m_gui = m_guiConstructor(this);
+
+#if defined(TRACER_BUILD)
+    int glMajorVer = glfwGetWindowAttrib(m_window, GLFW_CONTEXT_VERSION_MAJOR);
+    int glMinorVer = glfwGetWindowAttrib(m_window, GLFW_CONTEXT_VERSION_MINOR);
+    TRACEMSG("Using OpenGL version: %d.%d", glMajorVer, glMinorVer)
+#endif
+
     resize(m_size.x(), m_size.y());
     if(!m_guiState.empty())
         m_gui->load(m_guiState);
+
 
     glfwMakeContextCurrent(nullptr);
 }
@@ -180,6 +204,7 @@ synui::MainWindow::operator json()
 
 void synui::MainWindow::load(const json& j)
 {
+    TRACE
     m_guiState = j;
     if (m_gui)
         m_gui->load(j);
@@ -187,6 +212,7 @@ void synui::MainWindow::load(const json& j)
 
 void synui::MainWindow::reset()
 {
+    TRACE
     if (m_gui)
         m_gui->reset();
 }
@@ -214,6 +240,7 @@ void synui::MainWindow::queueExternalMessage(GUIMessage* a_msg) { m_guiExternalM
 
 bool synui::MainWindow::OpenWindow(HWND a_system_window)
 {
+    TRACE
     if (!m_isOpen) {
         initialize();
         m_gui->show();
@@ -225,6 +252,7 @@ bool synui::MainWindow::OpenWindow(HWND a_system_window)
 
 void synui::MainWindow::CloseWindow()
 {
+    TRACE
     if (m_isOpen) {
         _CloseWindowImplem();
         m_guiState = m_gui->operator json();
@@ -235,6 +263,7 @@ void synui::MainWindow::CloseWindow()
 
 void synui::MainWindow::resize(int w, int h)
 {
+    TRACE
     glfwSetWindowSize(m_window, w, h);
     m_gui->resize(w,h);
     m_size = { w,h };

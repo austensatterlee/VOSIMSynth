@@ -4,10 +4,10 @@
 #include "time.h"
 #include "ctype.h"
 
-#define TRACETOSTDOUT
+//#define TRACETOSTDOUT
 
 #ifdef OS_WIN
-#define LOGFILE "C:\\IPlugLog.txt" // TODO: what if no write permissions?
+#define LOGFILE "IPlugLog.txt" // TODO: what if no write permissions?
 
 void DBGMSG(const char *format, ...)
 {
@@ -235,7 +235,7 @@ void Trace(const char* funcName, int line, const char* format, ...)
     #endif
 #else
     WDL_MutexLock lock(&sLogMutex);
-    fprintf(sLogFile.mFP, "[%ld:%s:%d]%s", GetOrdinalThreadID(SYS_THREAD_ID), funcName, line, str);
+    fprintf(sLogFile.mFP, "[%Id:%s:%d] %s", GetOrdinalThreadID(SYS_THREAD_ID), funcName, line, str);
     fflush(sLogFile.mFP);
 #endif
   }

@@ -4,10 +4,6 @@ project(VOSIMSynth)
 option(VOSIMSYNTH_SHARED "Build as a shared library?" FALSE)
 option(VOSIMSYNTH_BUILD_STANDALONE "Build standalone application?" FALSE)
 
-if(BUILD_SHARED_LIBS)
-  set(VOSIMSYNTH_SHARED TRUE)
-endif()
-
 if(VOSIMSYNTH_SHARED)
   list(APPEND VOSIMSYNTH_DEFS -DVOSIMSYNTH_SHARED)
 endif()

@@ -54,8 +54,8 @@ set (MKL_MPI_VARIANTS NOMPI INTELMPI OPENMPI SGIMPT)
 find_path(MKL_ROOT_DIR
     include/mkl_cblas.h
     PATHS
-    $ENV{MKLDIR}
-    ${MKLDIR}
+    $ENV{MKL_DIR}
+    ${MKL_DIR}
     /opt/intel/mkl/*/
     /opt/intel/cmkl/*/
     /Library/Frameworks/Intel_MKL.framework/Versions/Current/lib/universal

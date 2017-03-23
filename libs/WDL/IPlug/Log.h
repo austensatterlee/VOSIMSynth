@@ -27,11 +27,13 @@
 
 #if defined TRACER_BUILD
   #define TRACE Trace(TRACELOC, "");
+  #define TRACEMSG(...) Trace(TRACELOC, __VA_ARGS__);
 //  #define TRACE_PROCESS Trace(TRACELOC, "");
   #define TRACE_PROCESS
 #else
   #define TRACE
   #define TRACE_PROCESS
+  #define TRACEMSG(msg)
 #endif
 
 #define TRACELOC __FUNCTION__,__LINE__

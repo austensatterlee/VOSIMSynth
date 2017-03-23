@@ -3,10 +3,6 @@ project(VOSIMLib)
 
 option(VOSIMLIB_SHARED "Build as a shared library?" FALSE)
 
-if(BUILD_SHARED_LIBS)
-  set(VOSIMLIB_SHARED TRUE)
-endif()
-
 if(VOSIMLIB_SHARED)
   list(APPEND VOSIMLIB_DEFS -DVOSIMLIB_SHARED)
 endif()

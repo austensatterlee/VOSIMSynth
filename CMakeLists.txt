@@ -28,13 +28,20 @@ set(LIBS_DIR ${CMAKE_SOURCE_DIR}/libs CACHE PATH "")
 set(FFTS_ROOT "${LIBS_DIR_SYS}/ffts" CACHE PATH "")
 set(FFTS_INCLUDE_DIR ${FFTS_ROOT}/include CACHE PATH "")
 
-set(Boost_INCLUDE_DIR "../libs/boost/boost_1_60_0" CACHE PATH "")
-set(Boost_LIBRARY_DIR "../libs/boost/boost_1_60_0/stage/lib" CACHE PATH "")
+set(Boost_INCLUDE_DIR "E:/users/austen/OneDrive/Code/libs/boost/boost_1_60_0" CACHE PATH "")
+set(Boost_LIBRARY_DIR "E:/users/austen/OneDrive/Code/libs/boost/boost_1_60_0/stage/lib" CACHE PATH "")
 
-set(MKLDIR "E:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl" CACHE PATH "")
+set(MKL_DIR "E:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl" CACHE PATH "")
 
 # Options
 option(EIGEN_USE_MKL "Should eigen use MKL as its backend?" TRUE)
+option(VOSIMPROJECT_USE_AVX2 "Compile with AVX2 optimizations?" FALSE)
+option(VOSIMPROJECT_TRACER_BUILD "Build 'trace' build (for debugging)" FALSE)
+
+if(VOSIMPROJECT_TRACER_BUILD)
+  add_definitions(-DTRACER_BUILD)
+endif()
+
 
 # Subproject directories
 set(VOSIMLIB_DIR ${CMAKE_SOURCE_DIR}/vosimlib)
@@ -79,8 +86,10 @@ if(MSVC)
   list(APPEND MSVC_REL /Ox /GL /Ob2 /Oi /Ot /Oy /fp:fast /fp:except- /Qpar /GT /GL)
   list(APPEND MSVC_RDEB /Ox /Ob2 /Oi /Ot /Oy /fp:fast /Qpar /GT /GL)
 
-  list(APPEND MSVC_REL /arch:AVX2)
-  list(APPEND MSVC_RDEB /arch:AVX2)
+  if(VOSIMPROJECT_USE_AVX2)
+    list(APPEND MSVC_REL /arch:AVX2)
+    list(APPEND MSVC_RDEB /arch:AVX2)
+  endif()
     
   add_compile_options("$<$<CONFIG:Release>:${MSVC_REL}>")
   add_compile_options("$<$<CONFIG:RelWithDebInfo>:${MSVC_RDEB}>")
@@ -101,8 +110,6 @@ add_compile_options("$<$<CONFIG:RelWithDebInfo>:-D_RELWITHDEBINFO>")
 ##
 # Configure compiled dependencies 
 ##
-
-set(BUILD_SHARED_LIBS False)
 
 # FFTS
 find_library(FFTS_RELEASE_LIBRARY ffts ffts_static PATHS ${FFTS_ROOT} PATH_SUFFIXES lib)

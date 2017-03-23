@@ -7,6 +7,7 @@
 #include "CircuitWidget.h"
 #include "UnitEditor.h"
 #include "Logger.h"
+#include "Log.h"
 
 namespace synui
 {
@@ -77,6 +78,7 @@ namespace synui
 
 synui::MainGUI::operator json() const
 {
+    TRACE
     json j;
     j["circuit"] = m_circuit->operator json();
     json& settings = j["settings"] = json();
@@ -87,6 +89,7 @@ synui::MainGUI::operator json() const
 
 synui::MainGUI* synui::MainGUI::load(const json& j)
 {
+    TRACE
     reset();
     const json& settings = j.value("settings", json());
     if (!settings.empty())
@@ -99,12 +102,14 @@ synui::MainGUI* synui::MainGUI::load(const json& j)
 
 void synui::MainGUI::reset()
 {
+    TRACE
     m_unitEditorHost->reset();
     m_circuit->reset();
 }
 
 void synui::MainGUI::resize(int a_w, int a_h)
 {
+    TRACE
     m_screen->resizeCallbackEvent(a_w, a_h);
     m_sidePanelL->setFixedHeight(m_screen->height());
     m_sidePanelR->setPosition({m_sidePanelL->width(), m_buttonPanel->height()});
@@ -119,6 +124,8 @@ void synui::MainGUI::resize(int a_w, int a_h)
 
 void synui::MainGUI::initialize_(GLFWwindow* a_window)
 {
+    TRACE
+
     /* Setup event handlers. */
     glfwSetWindowUserPointer(a_window, this);// Set user pointer so we can access ourselves inside the event handlers
 
@@ -153,11 +160,15 @@ void synui::MainGUI::initialize_(GLFWwindow* a_window)
             };
     glfwSetFramebufferSizeCallback(a_window, resizeCallback);
     glfwSetWindowSizeCallback(a_window, resizeCallback);
+
+    TRACEMSG("Initializing nanogui screen.")
     m_screen->initialize(a_window, true);
+    TRACEMSG("Finished initializing nanogui screen.");
 }
 
 void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget)
 {
+    TRACE
     nanogui::BoxLayout* layout = new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 1, 1);
     a_widget->setLayout(layout);
 
@@ -190,6 +201,7 @@ void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget)
 
 void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, SerializableFormHelper* a_fh)
 {
+    TRACE
     auto layout = new nanogui::AdvancedGridLayout({10, 0, 10, 0}, {});
     layout->setMargin(10);
     layout->setColStretch(2, 1);
@@ -282,6 +294,7 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
 
 void synui::MainGUI::createLogViewer_(nanogui::Widget* a_widget)
 {
+    TRACE
     auto layout = new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 10, 5);
     a_widget->setLayout(layout);
 
@@ -300,6 +313,7 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
                                                                                                         m_vm(a_vm),
                                                                                                         m_uf(a_uf)
 {
+    TRACE
     m_screen = new nanogui::Screen();
     initialize_(m_window->getWindow());
 
@@ -457,15 +471,24 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
 
 void synui::MainGUI::show()
 {
+    TRACE
     m_screen->setVisible(true);
     m_screen->performLayout();
 }
 
-void synui::MainGUI::hide() { m_screen->setVisible(false); }
+void synui::MainGUI::hide() 
+{ 
+    TRACE
+    m_screen->setVisible(false);
+}
 
-void synui::MainGUI::draw() { m_screen->drawAll(); }
+void synui::MainGUI::draw()
+{
+    m_screen->drawAll();
+}
 
 synui::MainGUI::~MainGUI()
 {
+    TRACE
     Logger::instance().reset();
 }
