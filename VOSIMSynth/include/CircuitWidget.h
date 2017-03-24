@@ -205,8 +205,8 @@ namespace synui
          * This method should be used to move units instead of interacting with the unit widget directly.
          * This method sets the position of the unit widget and updates the internal
          * grid to reflect the change in occupied and unoccupied cells.
+         * \param a_newPos The new position (in pixels).
          * \param a_force Perform the update even if the unit already occupies that position.
-         * \return true if the move succeeded and false otherwise.
          */
         void updateUnitPos_(UnitWidget* a_unitWidget, const Eigen::Vector2i& a_newPos, bool a_force = false);
 

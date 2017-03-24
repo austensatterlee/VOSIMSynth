@@ -76,7 +76,6 @@ void synui::UnitEditor::_build()
             std::transform(options.begin(), options.end(), items.begin(), [](const syn::UnitParameter::DisplayText& dt) { return dt.m_text; });
 
             nanogui::ComboBox* cb = new nanogui::ComboBox(this, items);
-
             cb->setFontSize(controlFontSize);
 
             auto setter = [this, cb, paramId](int val) { setParamFromString(paramId, cb->items()[val]); };
@@ -151,7 +150,7 @@ void synui::UnitEditor::_build()
             static_cast<nanogui::TextBox*>(fb)->setCallback(fb_setter);
 
             /* Build slider for "Bounded" parameters */
-            nanogui::Slider* s = param.getControlType() == syn::UnitParameter::Bounded ? new nanogui::Slider(control) : nullptr;
+            nanogui::Slider* s = paramControlType == syn::UnitParameter::Bounded ? new nanogui::Slider(control) : nullptr;
             
             if (s) {
                 s->setRange({ 0.0,1.0 });

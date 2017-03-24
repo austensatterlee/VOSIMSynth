@@ -898,6 +898,9 @@ void synui::CircuitWidget::endWireDraw_(int a_unitId, int a_portId, bool a_isOut
     {
         delete wire;
         m_drawingWireState.wire = nullptr;
+        // If the port was simply clicked on, activate the unit's editor
+        if(wire->getInputPort()==wire->getOutputPort())
+            m_unitWidgets[a_unitId]->triggerEditorCallback();
     }
     else
     {
@@ -926,6 +929,7 @@ void synui::CircuitWidget::startUnitMove_(const Eigen::Vector2i& a_start)
     }
     for (auto& w : m_selection)
     {
+        m_grid.replaceValue({GridCell::Unit, w}, {GridCell::Empty, nullptr});
         m_movingUnitState.originalPositions[w->getUnitId()] = w->position();
     }
 }
@@ -962,11 +966,12 @@ void synui::CircuitWidget::endUnitMove_(const Eigen::Vector2i& a_end)
     for (auto& oPos : m_movingUnitState.originalPositions)
     {
         UnitWidget* w = m_unitWidgets[oPos.first];
+        Vector2i oldPos = oPos.second;
         Vector2i newPos = oPos.second + offset;
         if (canDo)
             updateUnitPos_(w, newPos);
         else
-            w->setPosition(oPos.second);
+            updateUnitPos_(w, oldPos);
     }
     m_movingUnitState.originalPositions.clear();
     m_state = State::Idle;
