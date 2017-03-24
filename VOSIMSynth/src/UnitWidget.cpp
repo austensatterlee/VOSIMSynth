@@ -331,7 +331,7 @@ bool synui::UnitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, b
         if (down)
         {
             // Open unit editor if mouse click is not captured above.
-            m_editorCallback(m_classIdentifier, m_unitId);
+            triggerEditorCallback();
             return false;
         }
         else

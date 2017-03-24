@@ -161,7 +161,7 @@ namespace synui
                 if ((prev.array() > -1).all())
                 {
                     if (((curr - prev).array() != (next - curr).array()).any())
-                        score += 1;
+                        score += 5;
                 }
 
                 // Prefer empty over a wire, and prefer a wire over a unit.
@@ -189,11 +189,12 @@ namespace synui
          */
         void updatePath()
         {
+            // Update start and end positions
             updateStartAndEndPositions(m_end);
-
             auto startCell = m_parentCircuit->m_grid.fromPixel(m_start, m_parentCircuit->getGridSpacing());
             auto endCell = m_parentCircuit->m_grid.fromPixel(m_end, m_parentCircuit->getGridSpacing());
 
+            // Find new shortest path between start and end cells
             auto path = m_parentCircuit->m_grid.findPath<manhattan_distance, weight_func>(startCell, endCell);
             m_path.resize(path.size());
             std::copy(path.begin(), path.end(), m_path.begin());
@@ -378,8 +379,8 @@ bool synui::CircuitWidget::mouseMotionEvent(const Eigen::Vector2i& p, const Eige
     {
         m_selection.clear();
         m_drawingSelectionState.endPos = p - position();
-        auto pt0 = m_grid.fromPixel(m_drawingSelectionState.startPos, m_gridSpacing);
-        auto pt1 = m_grid.fromPixel(m_drawingSelectionState.endPos, m_gridSpacing);
+        Grid2DPoint pt0 = m_grid.fromPixel(m_drawingSelectionState.startPos, m_gridSpacing);
+        Grid2DPoint pt1 = m_grid.fromPixel(m_drawingSelectionState.endPos, m_gridSpacing) + Vector2i::Ones(2);
         auto blk = m_grid.forceGetBlock(pt0, pt1);
         for (int r = 0; r < blk.rows(); r++)
         {
@@ -573,7 +574,7 @@ void synui::CircuitWidget::resizeGrid(int a_newGridSpacing)
     a_newGridSpacing = a_newGridSpacing > 6 ? a_newGridSpacing : 6;
     Vector2i newGridShape = m_grid.fromPixel(size(), a_newGridSpacing);
 
-    // Require the grid resolution to be at least 10 x 10.
+    // Require the grid size to be at least 10 x 10.
     newGridShape = newGridShape.cwiseMax(10);
 
     if (m_gridSpacing == a_newGridSpacing && (newGridShape.array() == m_grid.getShape().array()).all())

@@ -106,8 +106,8 @@ namespace synui
     protected:
         syn::VoiceManager* m_vm;
         
-        std::unordered_map<int, UnitEditor*> m_editorMap; /// maps unit IDs to unit editors
-        std::unordered_map<unsigned, UnitEditorConstructor> m_registeredUnitEditors;
+        std::unordered_map<int, UnitEditor*> m_editorMap; /// maps unit IDs to unit editor instances
+        std::unordered_map<unsigned, UnitEditorConstructor> m_registeredUnitEditors; /// maps types of units (class IDs) to unit editor constructors
 
         int m_activeUnitId;
     };

@@ -301,12 +301,16 @@ synui::UnitEditorHost::UnitEditorHost(Widget* parent, syn::VoiceManager* a_vm) :
 
 void synui::UnitEditorHost::addEditor(unsigned a_classId, int a_unitId)
 {
+    // Remove any editor already associated with this unit.
     if (m_editorMap.find(a_unitId) != m_editorMap.end())
         removeEditor(a_unitId);
+    
+    // Construct the new editor.
     UnitEditorConstructor constructor = [](Widget* p, syn::VoiceManager* vm, int unitId) { return new UnitEditor(p, vm, unitId); };
     if (m_registeredUnitEditors.find(a_classId) != m_registeredUnitEditors.end())
         constructor = m_registeredUnitEditors[a_classId];
     UnitEditor* editor = constructor(this, m_vm, a_unitId);
+
     int oldSelectedIndex = selectedIndex();
     addChild(childCount(), editor);
     setSelectedIndex(oldSelectedIndex);
