@@ -969,9 +969,9 @@ void synui::CircuitWidget::endUnitMove_(const Eigen::Vector2i& a_end)
         Vector2i oldPos = oPos.second;
         Vector2i newPos = oPos.second + offset;
         if (canDo)
-            updateUnitPos_(w, newPos);
+            updateUnitPos_(w, newPos, true);
         else
-            updateUnitPos_(w, oldPos);
+            updateUnitPos_(w, oldPos, true);
     }
     m_movingUnitState.originalPositions.clear();
     m_state = State::Idle;
