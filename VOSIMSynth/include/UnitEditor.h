@@ -97,8 +97,8 @@ namespace synui
         void reset()
         {
             setSelectedIndex(-1);
-            m_editorMap.clear();
             m_activeUnitId = -1;
+            m_editorMap.clear();
             while (childCount())
                 removeChild(0);
         };
@@ -106,9 +106,9 @@ namespace synui
     protected:
         syn::VoiceManager* m_vm;
         
-        std::unordered_map<int, UnitEditor*> m_editorMap; /// maps unit IDs to unit editor instances
-        std::unordered_map<unsigned, UnitEditorConstructor> m_registeredUnitEditors; /// maps types of units (class IDs) to unit editor constructors
+        std::unordered_map<int, UnitEditor*> m_editorMap; /// maps unit IDs to unit editor instances.
+        std::unordered_map<unsigned, UnitEditorConstructor> m_registeredUnitEditors; /// maps types of units (class IDs) to unit editor constructors.
 
-        int m_activeUnitId;
+        int m_activeUnitId; /// ID of the unit whose editor is currently visible.
     };
 }

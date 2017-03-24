@@ -310,10 +310,9 @@ void synui::UnitEditorHost::addEditor(unsigned a_classId, int a_unitId)
     if (m_registeredUnitEditors.find(a_classId) != m_registeredUnitEditors.end())
         constructor = m_registeredUnitEditors[a_classId];
     UnitEditor* editor = constructor(this, m_vm, a_unitId);
+    editor->setVisible(false);
 
-    int oldSelectedIndex = selectedIndex();
-    addChild(childCount(), editor);
-    setSelectedIndex(oldSelectedIndex);
+    Widget::addChild(childCount(), editor);
     m_editorMap[a_unitId] = editor;
 }
 
@@ -321,24 +320,28 @@ void synui::UnitEditorHost::removeEditor(int a_unitId)
 {
     if (m_editorMap.find(a_unitId) == m_editorMap.end())
         return;
-    synui::UnitEditor* editor = m_editorMap[a_unitId];
+
+    UnitEditor* editor = m_editorMap[a_unitId];
     m_editorMap.erase(a_unitId);
-    if (selectedIndex() == childIndex(editor))
+    if (selectedIndex() == childIndex(editor)){
         setSelectedIndex(-1);
+        m_activeUnitId = -1;
+    }
     removeChild(editor);
 }
 
 void synui::UnitEditorHost::activateEditor(unsigned a_classId, int a_unitId)
 {
+    // Create this unit's editor if it doesn't already exist.
     if (m_editorMap.find(a_unitId) == m_editorMap.end())
         addEditor(a_classId, a_unitId);
+
+    // Make this editor the visible one.
     UnitEditor* editor = m_editorMap[a_unitId];
     setSelectedIndex(childIndex(editor));
     m_activeUnitId = a_unitId;
 
-    Widget* screen = this;
-    while (screen->parent()) screen = screen->parent();
-    static_cast<nanogui::Screen*>(screen)->performLayout();
+    screen()->performLayout();
 
     // If the editor host is in a tab widget, set the active tab to show the editor.
     Widget* w = this;
