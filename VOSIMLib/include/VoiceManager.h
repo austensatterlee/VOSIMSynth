@@ -112,7 +112,7 @@ namespace syn
 
         void setMaxVoices(unsigned a_newMax);
 
-        int getNumVoices() const;
+        vector<int> getActiveVoiceIndices() const;
 
         int getMaxVoices() const;
 

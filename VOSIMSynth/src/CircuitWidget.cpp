@@ -18,19 +18,28 @@ namespace synui
             m_parentCircuit(a_parentCircuit),
             m_inputPort({-1,-1}),
             m_outputPort({-1,-1}),
-            m_start({-1,-1}), m_end({-1,-1}),
+            m_start({-1,-1}), m_end({-1,-1}), 
+            m_cost(0),
             m_isFinal(false) { }
 
         virtual ~CircuitWire() { m_parentCircuit->m_grid.replaceValue({CircuitWidget::GridCell::Wire, this}, m_parentCircuit->m_grid.getEmptyValue()); }
 
-        std::string info() const
+        string info() const
         {
             if (!m_isFinal)
                 return "";
-            const syn::Unit& unit = m_parentCircuit->m_vm->getUnit(m_outputPort.first, m_parentCircuit->m_vm->getOldestVoiceIndex());
-            double value = unit.readOutput(m_outputPort.second, 0);
+
             std::ostringstream os;
-            os << std::setprecision(4) << value;
+            /// @DEBUG Show wire cost
+            os << "Cost: " << m_cost << std::endl;
+
+            // List current output value for this wire held by each active voice
+            vector<int> activeVoiceIndices = m_parentCircuit->m_vm->getActiveVoiceIndices();
+            for(int vind : activeVoiceIndices){
+                const syn::Unit& unit = m_parentCircuit->m_vm->getUnit(m_outputPort.first, vind);
+                double value = unit.readOutput(m_outputPort.second, 0);
+                os << "Voice " << vind << ": " << std::setprecision(4) << value << std::endl;
+            }
             return os.str();
         }
 
@@ -71,10 +80,24 @@ namespace synui
             nvgLineJoin(ctx, NVG_ROUND);
 
             nvgMoveTo(ctx, m_start.x(), m_start.y());
-            for (auto pt : m_path)
+
+            for (int i=0; i<m_path.size(); i+=1)
             {
-                pt = m_parentCircuit->m_grid.toPixel(pt, m_parentCircuit->getGridSpacing());
-                nvgLineTo(ctx, pt.x(), pt.y());
+                Grid2DPoint& currGridPt     = m_path[i];
+                Grid2DPoint& nextGridPt     = i+1<m_path.size() ? m_path[i+1] : m_path.back();
+                Grid2DPoint& nextGridPt2    = i+2<m_path.size() ? m_path[i+2] : m_path.back();
+                
+                Vector2i currPixelPt        = m_parentCircuit->m_grid.toPixel(currGridPt, m_parentCircuit->getGridSpacing());
+                Vector2i nextPixelPt        = m_parentCircuit->m_grid.toPixel(nextGridPt, m_parentCircuit->getGridSpacing());
+                Vector2i nextPixelPt2       = m_parentCircuit->m_grid.toPixel(nextGridPt2, m_parentCircuit->getGridSpacing());
+                
+                nvgLineTo(ctx, currPixelPt.x(), currPixelPt.y());
+                // Draw a curve when the path changes direction.
+                if ((nextGridPt2.array()!=currGridPt.array()).all())
+                {
+                    nvgQuadTo(ctx, nextPixelPt.x(), nextPixelPt.y(), nextPixelPt2.x(), nextPixelPt2.y());
+                    i+=1;
+                }
             }
             nvgLineTo(ctx, m_end.x(), m_end.y());
             nvgStroke(ctx);
@@ -85,17 +108,17 @@ namespace synui
                 float noseSize = m_parentCircuit->getGridSpacing() * 0.5;
                 float noseAngle = 45.0;
                 nvgBeginPath(ctx);
-                Eigen::Vector2i pt = m_parentCircuit->m_grid.toPixel(m_path[m_path.size() - 1], m_parentCircuit->getGridSpacing());
-                Eigen::Vector2i prevPt = m_parentCircuit->m_grid.toPixel(m_path[m_path.size() - 2], m_parentCircuit->getGridSpacing());
-                Eigen::Vector2f dir = (pt - prevPt).cast<float>();
+                Vector2i pt = m_parentCircuit->m_grid.toPixel(m_path[m_path.size() - 1], m_parentCircuit->getGridSpacing());
+                Vector2i prevPt = m_parentCircuit->m_grid.toPixel(m_path[m_path.size() - 2], m_parentCircuit->getGridSpacing());
+                Vector2f dir = (pt - prevPt).cast<float>();
                 dir.normalize();
                 float dangle = asin(dir[1]);
 
                 Eigen::Rotation2D<float> rot(dangle);
-                Eigen::Vector2f headOffset = rot * (Vector2f{0, 1} * noseSize);
-                Eigen::Vector2f noseOffset = rot * (Vector2f{sin(2 * PI / 180.0 * noseAngle), cos(2 * PI / 180.0 * noseAngle)} * noseSize);
+                Vector2f headOffset = rot * (Vector2f{0, 1} * noseSize);
+                Vector2f noseOffset = rot * (Vector2f{sin(2 * PI / 180.0 * noseAngle), cos(2 * PI / 180.0 * noseAngle)} * noseSize);
 
-                Eigen::Vector2f p0 = m_parentCircuit->m_grid.toPixel(m_path[m_path.size() - 1], m_parentCircuit->getGridSpacing()).cast<float>() - dir * noseSize;
+                Vector2f p0 = m_parentCircuit->m_grid.toPixel(m_path[m_path.size() - 1], m_parentCircuit->getGridSpacing()).cast<float>() - dir * noseSize;
                 nvgBeginPath(ctx);
                 nvgMoveTo(ctx, p0.x(), p0.y());
                 nvgLineTo(ctx, p0.x() + headOffset.x(), p0.y() + headOffset.y());
@@ -114,18 +137,18 @@ namespace synui
          * point, and the `a_endPt` argument is used to set the end point.
          * \param a_endPt End point to use in the case that one of the ports has not been set.
          */
-        void updateStartAndEndPositions(const Eigen::Vector2i& a_endPt = {-1,-1})
+        void updateStartAndEndPositions(const Vector2i& a_endPt = {-1,-1})
         {
             // Determine start/end points
-            Eigen::Vector2i startPos;
-            Eigen::Vector2i endPos = m_end;
+            Vector2i startPos;
+            Vector2i endPos = m_end;
             if (m_inputPort.first >= 0 && m_outputPort.first >= 0)
             {
                 m_isFinal = true;
                 auto inputWidget = m_parentCircuit->m_unitWidgets[m_inputPort.first];
                 auto outputWidget = m_parentCircuit->m_unitWidgets[m_outputPort.first];
-                Eigen::Vector2i inputPos = inputWidget->getInputPortAbsPosition(m_inputPort.second) - m_parentCircuit->absolutePosition();
-                Eigen::Vector2i outputPos = outputWidget->getOutputPortAbsPosition(m_outputPort.second) - m_parentCircuit->absolutePosition();
+                Vector2i inputPos = inputWidget->getInputPortAbsPosition(m_inputPort.second) - m_parentCircuit->absolutePosition();
+                Vector2i outputPos = outputWidget->getOutputPortAbsPosition(m_outputPort.second) - m_parentCircuit->absolutePosition();
                 startPos = outputPos;
                 endPos = inputPos;
             }
@@ -161,7 +184,7 @@ namespace synui
                 if ((prev.array() > -1).all())
                 {
                     if (((curr - prev).array() != (next - curr).array()).any())
-                        score += 5;
+                        score += 10;
                 }
 
                 // Prefer empty over a wire, and prefer a wire over a unit.
@@ -194,13 +217,15 @@ namespace synui
             auto startCell = m_parentCircuit->m_grid.fromPixel(m_start, m_parentCircuit->getGridSpacing());
             auto endCell = m_parentCircuit->m_grid.fromPixel(m_end, m_parentCircuit->getGridSpacing());
 
+            // Remove from grid            
+            m_parentCircuit->m_grid.replaceValue({CircuitWidget::GridCell::Wire, this}, m_parentCircuit->m_grid.getEmptyValue());
+
             // Find new shortest path between start and end cells
-            auto path = m_parentCircuit->m_grid.findPath<manhattan_distance, weight_func>(startCell, endCell);
+            auto path = m_parentCircuit->m_grid.findPath<manhattan_distance, weight_func>(startCell, endCell, &m_cost);
             m_path.resize(path.size());
-            std::copy(path.begin(), path.end(), m_path.begin());
+            copy(path.begin(), path.end(), m_path.begin());
 
             // Update grid to reflect new location
-            m_parentCircuit->m_grid.replaceValue({CircuitWidget::GridCell::Wire, this}, m_parentCircuit->m_grid.getEmptyValue());
             for (auto cell : m_path)
             {
                 if (!m_parentCircuit->m_grid.isOccupied(cell))
@@ -251,14 +276,15 @@ namespace synui
         CircuitWidget* m_parentCircuit;
         CircuitWidget::Port m_inputPort;
         CircuitWidget::Port m_outputPort;
-        Eigen::Vector2i m_start;
-        Eigen::Vector2i m_end;
-        std::vector<Grid2DPoint> m_path;
+        Vector2i m_start;
+        Vector2i m_end;
+        vector<Grid2DPoint> m_path;
+        double m_cost;
         bool m_isFinal;
     };
 }
 
-synui::CircuitWidget::CircuitWidget(nanogui::Widget* a_parent, synui::MainWindow* a_mainWindow, synui::UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf) :
+synui::CircuitWidget::CircuitWidget(Widget* a_parent, MainWindow* a_mainWindow, UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf) :
     Widget(a_parent),
     m_window(a_mainWindow),
     m_unitEditorHost(a_unitEditorHost),
@@ -275,7 +301,7 @@ synui::CircuitWidget::CircuitWidget(nanogui::Widget* a_parent, synui::MainWindow
     registerUnitWidget<syn::OutputUnit>([](CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new OutputUnitWidget(parent, a_vm, unitId); });
 }
 
-bool synui::CircuitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers)
+bool synui::CircuitWidget::mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers)
 {
     Grid2DPoint pt = m_grid.fromPixel(p - position(), m_gridSpacing);
 
@@ -373,14 +399,25 @@ bool synui::CircuitWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button
     return false;
 }
 
-bool synui::CircuitWidget::mouseMotionEvent(const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers)
+bool synui::CircuitWidget::mouseMotionEvent(const Vector2i& p, const Vector2i& rel, int button, int modifiers)
 {
     if (m_state == State::DrawingSelection)
     {
         m_selection.clear();
         m_drawingSelectionState.endPos = p - position();
         Grid2DPoint pt0 = m_grid.fromPixel(m_drawingSelectionState.startPos, m_gridSpacing);
-        Grid2DPoint pt1 = m_grid.fromPixel(m_drawingSelectionState.endPos, m_gridSpacing) + Vector2i::Ones(2);
+        Grid2DPoint pt1 = m_grid.fromPixel(m_drawingSelectionState.endPos, m_gridSpacing);
+
+        // Extend selection box by 1 grid point on the bottom and the right.
+        if (pt1.x() > pt0.x())
+            pt1.x() += 1;
+        else
+            pt0.x() += 1;
+        if (pt1.y() > pt0.y())
+            pt1.y() += 1;
+        else
+            pt0.y() += 1;
+
         auto blk = m_grid.forceGetBlock(pt0, pt1);
         for (int r = 0; r < blk.rows(); r++)
         {
@@ -464,30 +501,21 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
     /* Draw selection box */
     if (m_state == State::DrawingSelection)
     {
-        nanogui::Color selectionColor{1.0,1.0,0.0f,1.0f};
+        nanogui::Color selectionOutlineColor{0.0,0.0,0.0f,1.0f};
+        nanogui::Color selectionFillColor{1.0,1.0,0.0f,0.125f};
         const auto& boxPos = m_drawingSelectionState.startPos;
-        Eigen::Vector2i boxSize = m_drawingSelectionState.endPos - boxPos;
+        Vector2i boxSize = m_drawingSelectionState.endPos - boxPos;
         nvgBeginPath(ctx);
-        nvgRect(ctx, boxPos.x(), boxPos.y(), boxSize.x(), boxSize.y());
-        nvgStrokeColor(ctx, selectionColor);
+        nvgRect(ctx, boxPos.x(), boxPos.y(), boxSize.x(), boxSize.y());        
+        nvgFillColor(ctx, selectionFillColor);
+        nvgFill(ctx);
+        nvgStrokeColor(ctx, selectionOutlineColor);
         nvgStrokeWidth(ctx, 0.75f);
         nvgStroke(ctx);
     }
 
-    nanogui::Color selectedWidgetColor{1.0,1.0,0.0,0.9f};
-    for (auto w : m_selection)
-    {
-        const auto& p = w->position();
-        const auto& s = w->size();
-        nvgBeginPath(ctx);
-        nvgRect(ctx, p.x(), p.y(), s.x(), s.y());
-        nvgStrokeColor(ctx, selectedWidgetColor);
-        nvgStrokeWidth(ctx, 1.0f);
-        nvgStroke(ctx);
-    }
-
     /* Handle mouse hover */
-    if (contains(screen()->mousePos() - parent()->absolutePosition()));
+    if (contains(screen()->mousePos() - parent()->absolutePosition()))
     {
         Vector2i mousePos = screen()->mousePos() - absolutePosition();
         // Draw unit widget ghost if one is being placed
@@ -508,20 +536,7 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
         {
             m_drawingWireState.wire->updateStartAndEndPositions(mousePos);
             m_drawingWireState.wire->draw(ctx);
-        }
-        else if (m_state == State::Idle)
-        {
-            double elapsed = glfwGetTime() - m_wireHighlightTime;
-            if (m_highlightedWire)
-            {
-                if (elapsed > 0.15)
-                {
-                    nvgSave(ctx);
-                    drawTooltip(ctx, {mousePos.x(),mousePos.y() + 25}, m_highlightedWire->info(), elapsed);
-                    nvgRestore(ctx);
-                }
-            }
-        }
+        }        
     }
 
     // Draw wires
@@ -552,11 +567,45 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
     nvgRestore(ctx);
 
     Widget::draw(ctx);
+
+    nvgSave(ctx);
+    
+    if (contains(screen()->mousePos() - parent()->absolutePosition()))
+    {
+        Vector2i mousePos = screen()->mousePos() - absolutePosition();
+        if (m_state == State::Idle)
+        {
+            double elapsed = glfwGetTime() - m_wireHighlightTime;
+            if (m_highlightedWire)
+            {
+                if (elapsed > 0.15)
+                {
+                    nvgSave(ctx);
+                    drawTooltip(ctx, { mousePos.x(),mousePos.y() + 25 }, m_highlightedWire->info(), elapsed);
+                    nvgRestore(ctx);
+                }
+            }
+        }
+    }
+
+    // Highlight unit widgets in the current selection
+    nanogui::Color selectedWidgetColor{1.0f,1.0f,0.0f,0.9f};
+    for (auto w : m_selection)
+    {
+        const auto& p = w->position();
+        const auto& s = w->size();
+        nvgBeginPath(ctx);
+        nvgRect(ctx, p.x()-0.5f, p.y()-0.5f, s.x()+1.0f, s.y()+1.0f);
+        nvgStrokeColor(ctx, selectedWidgetColor);
+        nvgStrokeWidth(ctx, 1.0f);
+        nvgStroke(ctx);
+    }
+    nvgRestore(ctx);
 }
 
-void synui::CircuitWidget::loadPrototype(const std::string& a_unitPrototype) { createUnit_(a_unitPrototype); }
+void synui::CircuitWidget::loadPrototype(const string& a_unitPrototype) { createUnit_(a_unitPrototype); }
 
-Eigen::Vector2i synui::CircuitWidget::fixToGrid(const Eigen::Vector2i& a_pixelLocation) const { return m_grid.toPixel(m_grid.fromPixel(a_pixelLocation, m_gridSpacing), m_gridSpacing); }
+Eigen::Vector2i synui::CircuitWidget::fixToGrid(const Vector2i& a_pixelLocation) const { return m_grid.toPixel(m_grid.fromPixel(a_pixelLocation, m_gridSpacing), m_gridSpacing); }
 
 void synui::CircuitWidget::performLayout(NVGcontext* ctx)
 {
@@ -660,7 +709,7 @@ void synui::CircuitWidget::createInputOutputUnits_()
     updateUnitPos_(outWidget, {width() - 1.5 * outWidget->width(), height() * 0.5 - outWidget->height() * 0.5});
 }
 
-void synui::CircuitWidget::createUnit_(const std::string& a_unitPrototypeName)
+void synui::CircuitWidget::createUnit_(const string& a_unitPrototypeName)
 {
     syn::RTMessage* msg = new syn::RTMessage();
     msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
@@ -725,7 +774,7 @@ synui::UnitWidget* synui::CircuitWidget::createUnitWidget_(unsigned a_classId, i
     return widget;
 }
 
-bool synui::CircuitWidget::endCreateUnit_(const Eigen::Vector2i& a_pos)
+bool synui::CircuitWidget::endCreateUnit_(const Vector2i& a_pos)
 {
     if (m_state != State::CreatingUnit)
         return false;
@@ -912,7 +961,7 @@ void synui::CircuitWidget::endWireDraw_(int a_unitId, int a_portId, bool a_isOut
     }
 }
 
-void synui::CircuitWidget::startUnitMove_(const Eigen::Vector2i& a_start)
+void synui::CircuitWidget::startUnitMove_(const Vector2i& a_start)
 {
     m_state = State::MovingUnit;
     m_movingUnitState.start = a_start;
@@ -934,7 +983,7 @@ void synui::CircuitWidget::startUnitMove_(const Eigen::Vector2i& a_start)
     }
 }
 
-void synui::CircuitWidget::updateUnitMove_(const Eigen::Vector2i& a_current)
+void synui::CircuitWidget::updateUnitMove_(const Vector2i& a_current)
 {
     if (m_state != State::MovingUnit)
         throw std::runtime_error("Invalid state");
@@ -947,7 +996,7 @@ void synui::CircuitWidget::updateUnitMove_(const Eigen::Vector2i& a_current)
     }
 }
 
-void synui::CircuitWidget::endUnitMove_(const Eigen::Vector2i& a_end)
+void synui::CircuitWidget::endUnitMove_(const Vector2i& a_end)
 {
     if (m_state != State::MovingUnit)
         throw std::runtime_error("Invalid state");
@@ -977,7 +1026,7 @@ void synui::CircuitWidget::endUnitMove_(const Eigen::Vector2i& a_end)
     m_state = State::Idle;
 }
 
-void synui::CircuitWidget::updateUnitPos_(UnitWidget* a_unitWidget, const Eigen::Vector2i& a_newPos, bool a_force)
+void synui::CircuitWidget::updateUnitPos_(UnitWidget* a_unitWidget, const Vector2i& a_newPos, bool a_force)
 {
     /* Compute the grid cells of the unit's boundaries  */
     Grid2DPoint topLeftCell = m_grid.fromPixel(a_newPos, m_gridSpacing);
@@ -1020,7 +1069,7 @@ void synui::CircuitWidget::updateUnitPos_(UnitWidget* a_unitWidget, const Eigen:
     }
 }
 
-bool synui::CircuitWidget::checkUnitPos_(UnitWidget* a_unitWidget, const Eigen::Vector2i& a_newPos)
+bool synui::CircuitWidget::checkUnitPos_(UnitWidget* a_unitWidget, const Vector2i& a_newPos)
 {
     // Compute the grid cells of the unit's boundaries
     Grid2DPoint topLeftCell = m_grid.fromPixel(a_newPos, m_gridSpacing);
@@ -1038,7 +1087,7 @@ void synui::CircuitWidget::_deleteWireWidget(CircuitWire* wire)
 {
     if (!wire)
         return;
-    m_wires.erase(std::find(m_wires.begin(), m_wires.end(), wire));
+    m_wires.erase(find(m_wires.begin(), m_wires.end(), wire));
     if (m_highlightedWire == wire)
         m_highlightedWire = nullptr;
     delete wire;

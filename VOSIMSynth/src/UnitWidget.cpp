@@ -146,10 +146,8 @@ void synui::UnitWidget::draw(NVGcontext* ctx)
     nanogui::Color iColor(0.09f, 0.16f, 0.24f, 1.0f);
     nanogui::Color iColor2 = nanogui::Color(1.26f, 1.0f).cwiseProduct(iColor);
     drawDivisions(m_inputLabels, iColor, iColor2);
-    //drawDivisions(m_emptyInputLabels, iColor, iColor2);
     i = 0;
     drawDivisions(m_outputLabels, oColor, oColor2);
-    //drawDivisions(m_emptyOutputLabels, oColor, oColor2);
 
     /* Draw highlight if enabled. */
     if (highlighted())

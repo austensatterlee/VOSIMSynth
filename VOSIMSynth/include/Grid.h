@@ -378,8 +378,17 @@ namespace synui
             m_shape = a_newSize;
         }
 
+        /**
+         * \brief Find the shortest path between two vertices using the A* search algorithm.
+         * \tparam Heuristic Callable that computes a heuristic score between two points. Signature: int(const Grid2D<CellType>& grid, const Grid2DPoint& a, const Grid2DPoint& b).
+         * \tparam WeightFunc Callable that computes the weight of the edge between the `curr` and `next` nodes. Signature: int(const Grid2D<CellType>& grid, const Grid2DPoint& prev, const Grid2DPoint& curr, const Grid2DPoint& next).
+         * \param a_start Starting vertex.
+         * \param a_end Destination vertex.
+         * \param a_cost Optional double pointer where the final cost of the path will be stored.
+         * \return A list of Grid2DPoints.
+         */
         template <template <typename> typename Heuristic = manhattan_distance, template <typename> typename WeightFunc = default_weight_func>
-        std::list<Grid2DPoint> findPath(const Grid2DPoint& a_start, const Grid2DPoint& a_end) const
+        std::list<Grid2DPoint> findPath(const Grid2DPoint& a_start, const Grid2DPoint& a_end, double* a_cost=nullptr) const
         {
             using Vertex = Grid2DIndex;
             struct ScoredVertex
@@ -408,15 +417,19 @@ namespace synui
 
             std::list<Grid2DPoint> path;
 
-            auto reconstruct_path = [this, &path, &cameFrom, &end]()
+            auto reconstruct_path = [this, &path, &cameFrom, &end, &gScore, a_cost]()
             {
                 Vertex current = end;
                 path.insert(path.begin(), unravel_index(current));
+                double cost = 0;
                 while (cameFrom.find(current) != cameFrom.end())
                 {
                     current = cameFrom[current];
+                    cost += gScore[current];
                     path.insert(path.begin(), unravel_index(current));
                 }
+                if (a_cost!=nullptr)
+                    *a_cost = cost;
             };
 
             while (open.size())

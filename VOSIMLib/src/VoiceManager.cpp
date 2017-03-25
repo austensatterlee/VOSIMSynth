@@ -124,6 +124,15 @@ namespace syn
         }
     }
 
+    vector<int> VoiceManager::getActiveVoiceIndices() const
+    {
+        vector<int> voiceIndices(m_numActiveVoices);
+        for(int i=0; i<m_numActiveVoices; i++){
+            m_activeVoices.peek(voiceIndices[i], i);
+        }
+        return voiceIndices;
+    }
+
     void VoiceManager::tick(const double* a_left_input, const double* a_right_input, double* a_left_output, double* a_right_output) {
         _flushActionQueue();
 
@@ -213,10 +222,6 @@ namespace syn
     void VoiceManager::onIdle() {
         if (!m_numActiveVoices)
             _flushActionQueue();
-    }
-
-    int VoiceManager::getNumVoices() const {
-        return m_numActiveVoices;
     }
 
     unsigned VoiceManager::queueAction(RTMessage* a_msg) {

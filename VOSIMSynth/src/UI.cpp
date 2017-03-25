@@ -30,12 +30,12 @@ namespace synui
         nvgTextLineHeight(a_ctx, 1.1f);
         Eigen::Vector2i pos = a_pos;
 
-        nvgTextBounds(a_ctx, pos.x(), pos.y(), a_str.c_str(), nullptr, bounds);
+        nvgTextBoxBounds(a_ctx, pos.x(), pos.y(), tooltipWidth*1.0f, a_str.c_str(), nullptr, bounds);
         int h = (bounds[2] - bounds[0]) / 2;
         if (h > tooltipWidth / 2)
         {
             nvgTextAlign(a_ctx, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
-            nvgTextBoxBounds(a_ctx, pos.x(), pos.y(), tooltipWidth, a_str.c_str(), nullptr, bounds);
+            nvgTextBoxBounds(a_ctx, pos.x(), pos.y(), tooltipWidth*1.0f, a_str.c_str(), nullptr, bounds);
 
             h = (bounds[2] - bounds[0]) / 2;
         }
