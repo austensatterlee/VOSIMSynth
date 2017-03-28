@@ -325,8 +325,15 @@ void synui::UnitEditorHost::removeEditor(int a_unitId)
     if (selectedIndex() == childIndex(editor)){
         setSelectedIndex(-1);
         m_activeUnitId = -1;
+        removeChild(editor);
     }
-    removeChild(editor);
+    else
+    {    
+        Widget* selectedWidget = childAt(selectedIndex());    
+        removeChild(editor);
+        int newIndex = childIndex(selectedWidget);
+        setSelectedIndex(newIndex);
+    }
 }
 
 void synui::UnitEditorHost::activateEditor(unsigned a_classId, int a_unitId)

@@ -178,7 +178,6 @@ void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget)
     for (auto gname : m_uf->getGroupNames())
     {
         nanogui::PopupButton* button = new nanogui::PopupButton(a_widget, gname);
-        button->setDisposable(true);
         button->setFontSize(15);
         nanogui::Popup* popup = button->popup();
         popup->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 0));

@@ -47,12 +47,12 @@ namespace synui
         {
             nvgSave(ctx);
             nvgBeginPath(ctx);
-            nanogui::Color wireColor, wireFillColor;
+            nanogui::Color wireColor;
             // If wire is incomplete (still being drawn), draw a "ghost"
             if (m_inputPort.first < 0 || m_outputPort.first < 0)
             {
                 nvgStrokeWidth(ctx, 2.0f);
-                wireColor = nanogui::Color(1.0f, 0.0f, 0.0f, 0.3f);
+                wireColor = nanogui::Color(1.0f, 0.0f, 0.0f, 1.0f);
             }
             else
             {
@@ -60,21 +60,19 @@ namespace synui
                 switch (highlight)
                 {
                     case Incoming:
-                        wireColor = nanogui::Color(0.25f, 0.25f, 1.00f, 0.55f);
+                        wireColor = nanogui::Color(0.45f, 0.45f, 1.00f, 0.55f);
                         break;
                     case Outgoing:
                         wireColor = nanogui::Color(0.25f, 1.0f, 0.25f, 0.55f);
                         break;
                     case Selected:
-                        wireColor = nanogui::Color(0.75f, 0.75f, 0.0f, 0.55f);
+                        wireColor = nanogui::Color(0.75f, 0.75f, 0.75f, 0.75f);
                         break;
                     case None:
                     default:
-                        wireColor = nanogui::Color(1.00f, 0.0f, 0.0f, 0.55f);
+                        wireColor = nanogui::Color(0.85f, 0.20f, 0.10f, 0.65f);
                 }
             }
-            wireFillColor = wireColor;
-            wireFillColor.w() = 1.0;
             nvgStrokeColor(ctx, wireColor);
             nvgFillColor(ctx, wireColor);
             nvgLineJoin(ctx, NVG_ROUND);
@@ -86,17 +84,28 @@ namespace synui
                 Grid2DPoint& currGridPt     = m_path[i];
                 Grid2DPoint& nextGridPt     = i+1<m_path.size() ? m_path[i+1] : m_path.back();
                 Grid2DPoint& nextGridPt2    = i+2<m_path.size() ? m_path[i+2] : m_path.back();
-                
-                Vector2i currPixelPt        = m_parentCircuit->m_grid.toPixel(currGridPt, m_parentCircuit->getGridSpacing());
-                Vector2i nextPixelPt        = m_parentCircuit->m_grid.toPixel(nextGridPt, m_parentCircuit->getGridSpacing());
-                Vector2i nextPixelPt2       = m_parentCircuit->m_grid.toPixel(nextGridPt2, m_parentCircuit->getGridSpacing());
-                
+                Grid2DPoint& nextGridPt3    = i+3<m_path.size() ? m_path[i+3] : m_path.back();
+
+                Vector2i currPixelPt = m_parentCircuit->m_grid.toPixel(currGridPt, m_parentCircuit->getGridSpacing());
+
                 nvgLineTo(ctx, currPixelPt.x(), currPixelPt.y());
+
                 // Draw a curve when the path changes direction.
-                if ((nextGridPt2.array()!=currGridPt.array()).all())
+                if ((nextGridPt2.array() != currGridPt.array()).all())
                 {
-                    nvgQuadTo(ctx, nextPixelPt.x(), nextPixelPt.y(), nextPixelPt2.x(), nextPixelPt2.y());
-                    i+=1;
+                    Vector2i nextPixelPt  = m_parentCircuit->m_grid.toPixel(nextGridPt, m_parentCircuit->getGridSpacing());
+                    Vector2i nextPixelPt2 = m_parentCircuit->m_grid.toPixel(nextGridPt2, m_parentCircuit->getGridSpacing());
+                    // Handle "S-curves" and corner turns.
+                    if ((nextGridPt3.array() != nextGridPt.array()).all()) {
+                        Vector2i nextPixelPt3 = m_parentCircuit->m_grid.toPixel(nextGridPt3, m_parentCircuit->getGridSpacing());
+                        nvgBezierTo(ctx, nextPixelPt.x(), nextPixelPt.y(), nextPixelPt2.x(), nextPixelPt2.y(), nextPixelPt3.x(), nextPixelPt3.y());
+                        i += 2;
+                    } 
+                    else
+                    {
+                        nvgQuadTo(ctx, nextPixelPt.x(), nextPixelPt.y(), nextPixelPt2.x(), nextPixelPt2.y());
+                        i += 1;
+                    }
                 }
             }
             nvgLineTo(ctx, m_end.x(), m_end.y());
@@ -184,7 +193,7 @@ namespace synui
                 if ((prev.array() > -1).all())
                 {
                     if (((curr - prev).array() != (next - curr).array()).any())
-                        score += 10;
+                        score += 5;
                 }
 
                 // Prefer empty over a wire, and prefer a wire over a unit.
@@ -477,8 +486,9 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
 
     /* Draw background */
     nvgBeginPath(ctx);
+    nanogui::Color backgroundColor(34, 255);
     nvgRect(ctx, 0, 0, mSize.x(), mSize.y());
-    nvgFillColor(ctx, mTheme->mWindowFillFocused);
+    nvgFillColor(ctx, backgroundColor);
     nvgFill(ctx);
 
     /* Draw grid */
@@ -945,11 +955,13 @@ void synui::CircuitWidget::endWireDraw_(int a_unitId, int a_portId, bool a_isOut
     if (a_isOutput == m_drawingWireState.startedFromOutput ||
         wire->getInputPort().first == a_unitId || wire->getOutputPort().first == a_unitId)
     {
+        Port port1 = m_drawingWireState.startedFromOutput ? wire->getOutputPort() : wire->getInputPort();
+        Port port2 = {a_unitId, a_portId};
+        // If the port was simply clicked on, activate the unit's editor
+        if(port1==port2)
+            m_unitWidgets[a_unitId]->triggerEditorCallback();
         delete wire;
         m_drawingWireState.wire = nullptr;
-        // If the port was simply clicked on, activate the unit's editor
-        if(wire->getInputPort()==wire->getOutputPort())
-            m_unitWidgets[a_unitId]->triggerEditorCallback();
     }
     else
     {
