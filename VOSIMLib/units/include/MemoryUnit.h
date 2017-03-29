@@ -101,6 +101,7 @@ namespace syn
             pBufBPMFreq,
             pBufType,
             pDryGain,
+            pWetGain,
             pUseAP
         };
 

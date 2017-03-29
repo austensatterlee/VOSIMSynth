@@ -163,7 +163,7 @@ void synui::UnitEditor::_build()
             }
 
             /* Create getter function */
-            auto getter = [this, s, fb, paramId]()
+            auto getter = [this, control, s, fb, paramId]()
             {
                 auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(paramId);
                 string text = param.getValueString();
@@ -173,12 +173,12 @@ void synui::UnitEditor::_build()
                 int sig = param.getPrecision();
                 double valueIncr = std::pow(10, -sig);
 
-                bool isDirty = static_cast<nanogui::TextBox*>(fb)->value() != text || fb->visible() != visible || fb->getValueIncrement() != valueIncr || (s && norm != s->value());               
+                bool isDirty = static_cast<nanogui::TextBox*>(fb)->value() != text || control->visible() != visible || fb->getValueIncrement() != valueIncr || (s && norm != s->value());               
                 if (isDirty)
                 {
                     m_isDirty = true;
                     static_cast<nanogui::TextBox*>(fb)->setValue(text);
-                    fb->setVisible(visible);
+                    control->setVisible(visible);
 
                     if (sig <= 0)
                         fb->numberFormat("%.0f");

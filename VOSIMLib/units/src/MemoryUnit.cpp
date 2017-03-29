@@ -138,7 +138,7 @@ namespace syn
     {
         addInput_(iIn, "in");
         addInput_(iReceive, "recv");
-        addInput_(iSizeMod, "size");
+        addInput_(iSizeMod, "delay");
         addOutput_(oOut, "out");
         addOutput_(oSend, "send");
         addParameter_(pBufDelay, UnitParameter("time", 0.0001, 1.0, 0.0001, UnitParameter::EUnitsType::Seconds, 4));
@@ -146,6 +146,7 @@ namespace syn
         addParameter_(pBufBPMFreq, UnitParameter("rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM).setVisible(false));
         addParameter_(pBufType, UnitParameter("units", {"sec","Hz","BPM"}, {pBufDelay, pBufFreq, pBufBPMFreq}));
         addParameter_(pDryGain, UnitParameter("dry", 0.0, 1.0, 0.0));
+        addParameter_(pWetGain, UnitParameter("wet", 0.0, 1.0, 1.0));
         addParameter_(pUseAP, UnitParameter("use ap", false));
         m_delay.resizeBuffer(48000);
     }
@@ -199,7 +200,6 @@ namespace syn
         m_delay.resizeBuffer(m_delaySamples);
         double input = READ_INPUT(iIn);
         double receive = READ_INPUT(iReceive);
-        double dryMix = input * param(pDryGain).getDouble();
         double output;
         if (param(pUseAP).getBool())
         {
@@ -213,7 +213,10 @@ namespace syn
             output = m_delay.process(input + receive);
         }
         m_lastOutput = output;
-        WRITE_OUTPUT(oOut, output + dryMix);
+
+        double dryMix = input*param(pDryGain).getDouble();
+        double wetMix = output*param(pWetGain).getDouble();
+        WRITE_OUTPUT(oOut, wetMix + dryMix);
         WRITE_OUTPUT(oSend, output);
         END_PROC_FUNC
     }
