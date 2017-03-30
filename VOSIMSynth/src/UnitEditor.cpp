@@ -322,7 +322,7 @@ void synui::UnitEditorHost::removeEditor(int a_unitId)
 
     UnitEditor* editor = m_editorMap[a_unitId];
     m_editorMap.erase(a_unitId);
-    if (selectedIndex() == childIndex(editor)){
+    if (selectedIndex() >= childIndex(editor) || selectedIndex() < 0) {
         setSelectedIndex(-1);
         m_activeUnitId = -1;
         removeChild(editor);

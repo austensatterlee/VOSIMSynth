@@ -127,6 +127,7 @@ namespace syn
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
+        void onInputConnection_(int a_inputPort) override;
     };
 
     /**

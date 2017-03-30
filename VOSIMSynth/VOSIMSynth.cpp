@@ -34,8 +34,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "VoiceManager.h"
 #include "UnitFactory.h"
 #include "tables.h"
+#include "CircuitWidget.h"
 
 #include "MainGUI.h"
+#include "UnitWidget.h"
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo) : IPLUG_CTOR(0, 1, instanceInfo), m_tempo(0), m_tickCount(0) {
     TRACE;
@@ -53,11 +55,12 @@ void VOSIMSynth::makeGraphics() {
     mainWindow->setHInstance(gHInstance);
     mainWindow->setResizeFunc([this](int w, int h) { ResizeGraphics(w, h); });
     AttachAppWindow(mainWindow);
+    registerUnitWidgets(*mainWindow->getGUI()->circuitWidget());
 }
 
 void VOSIMSynth::makeInstrument() {
     m_unitFactory = &syn::UnitFactory::instance();
-    VOSIMSynth::registerUnits(*m_unitFactory);
+    registerUnits(*m_unitFactory);
 
     m_voiceManager = new syn::VoiceManager();
     m_voiceManager->setMaxVoices(8);
@@ -189,6 +192,12 @@ void VOSIMSynth::registerUnits(syn::UnitFactory& a_uf)
     a_uf.addUnitPrototype<syn::InputUnit>("", "in");
     a_uf.addUnitPrototype<syn::OutputUnit>("", "out");
 }
+
+void VOSIMSynth::registerUnitWidgets(synui::CircuitWidget& a_cw)
+{
+    a_cw.registerUnitWidget<syn::SummerUnit>([](synui::CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new synui::SummingUnitWidget(parent, a_vm, unitId); });
+}
+
 
 void VOSIMSynth::Reset() {
     m_MIDIReceiver->Resize(GetBlockSize());

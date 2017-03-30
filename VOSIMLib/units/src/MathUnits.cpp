@@ -137,9 +137,27 @@ syn::SummerUnit::SummerUnit(const SummerUnit& a_rhs) :
 void syn::SummerUnit::process_()
 {
     BEGIN_PROC_FUNC
-        double output = READ_INPUT(0) + READ_INPUT(1);
+        double output = 0;
+        for (int i = 0; i < numInputs(); i++) {
+            output += READ_INPUT(inputs().indices()[i]);
+        }
         WRITE_OUTPUT(0, output);
     END_PROC_FUNC
+}
+
+void syn::SummerUnit::onInputConnection_(int a_inputPort)
+{
+    // Create a new input if the current ones are all in use.
+    int numConnectedInputs = 0;
+    for(int  i=0;i<numInputs();i++)
+    {
+        if (inputSource(i)!=nullptr)
+            numConnectedInputs++;
+    }
+    if(numConnectedInputs==numInputs() && numInputs()<8)
+    {
+        addInput_(std::to_string(numInputs()+1), 0.0);
+    }
 }
 
 syn::ConstantUnit::ConstantUnit(const string& a_name) :

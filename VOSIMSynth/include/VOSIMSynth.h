@@ -23,6 +23,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "IPlug_include_in_plug_hdr.h"
 
 namespace synui {
+    class CircuitWidget;
     class VOSIMComponent;
 }
 
@@ -69,6 +70,7 @@ public:
     void OnGUIClose() override;
 
     static void registerUnits(syn::UnitFactory& a_uf);
+    static void registerUnitWidgets(synui::CircuitWidget& a_cw);
 
 private:
     syn::MIDIReceiver* m_MIDIReceiver;

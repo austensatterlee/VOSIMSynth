@@ -55,6 +55,7 @@ namespace synui
     class CircuitWidget : public nanogui::Widget
     {
         friend class UnitWidget;
+        friend class SummingUnitWidget;
         friend class CircuitWire;
         typedef std::pair<int, int> Port;
     public:
@@ -121,7 +122,23 @@ namespace synui
 
         operator json() const;
         CircuitWidget* load(const json& j);
-        void reset();
+        void reset();        
+
+        /**
+         * \brief Attempt to update the position of an existing unit and record the change if successful.
+         * This method should be used to move units instead of interacting with the unit widget directly.
+         * This method sets the position of the unit widget and updates the internal
+         * grid to reflect the change in occupied and unoccupied cells.
+         * \param a_newPos The new position (in pixels).
+         * \param a_force Perform the update even if the unit already occupies that position.
+         */
+        void updateUnitPos(UnitWidget* a_unitWidget, const Eigen::Vector2i& a_newPos, bool a_force = false);
+
+        /**
+         * \brief Checks if a unit would intersect another unit if placed at the specified position.
+         */
+        bool checkUnitPos(UnitWidget* a_unitWidget, const Eigen::Vector2i& a_newPos);
+
     protected:
 
         /**
@@ -200,21 +217,6 @@ namespace synui
          */
         void endUnitMove_(const Eigen::Vector2i& a_end);
 
-        /**
-         * \brief Attempt to update the position of an existing unit and record the change if successful.
-         * This method should be used to move units instead of interacting with the unit widget directly.
-         * This method sets the position of the unit widget and updates the internal
-         * grid to reflect the change in occupied and unoccupied cells.
-         * \param a_newPos The new position (in pixels).
-         * \param a_force Perform the update even if the unit already occupies that position.
-         */
-        void updateUnitPos_(UnitWidget* a_unitWidget, const Eigen::Vector2i& a_newPos, bool a_force = false);
-
-        /**
-         * \brief Checks if a unit would intersect another unit if placed at the specified position.
-         */
-        bool checkUnitPos_(UnitWidget* a_unitWidget, const Eigen::Vector2i& a_newPos);
-
     private:
         /**
          * \brief Delete the given wire widget.
@@ -226,6 +228,12 @@ namespace synui
          * Note that this method only affects the GUI. The actual connection on the real-time thread is not affected.
          */
         void _deleteUnitWidget(UnitWidget* widget);
+
+        /**
+         * \brief Combine the two wires into a summing junction.
+         */
+        void _createSummingJunction(CircuitWire* toWire, CircuitWire* fromWire, const Eigen::Vector2i& pos);
+
     private:
         synui::MainWindow* m_window;
         synui::UnitEditorHost* m_unitEditorHost;

@@ -112,13 +112,15 @@ namespace synui
         void hide();
         void draw();
 
-        nanogui::Screen*  getScreen() { return m_screen.get(); }
+        nanogui::Screen* getScreen() { return m_screen.get(); }
 
         operator json() const;
         MainGUI* load(const json& j);
 
-        void reset();
+        void reset(); 
         void resize(int a_w, int a_h);
+
+        CircuitWidget* circuitWidget() { return m_circuit; }
     protected:
         void createUnitSelector_(nanogui::Widget* a_widget);
         void createSettingsEditor_(nanogui::Widget* a_widget, SerializableFormHelper* a_fh);
