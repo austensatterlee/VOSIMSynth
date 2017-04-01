@@ -153,6 +153,7 @@ namespace synui
 
     class SummingUnitWidget : public UnitWidget
     {
+
     public:
         SummingUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId);
 

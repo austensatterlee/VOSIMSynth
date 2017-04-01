@@ -365,6 +365,11 @@ bool synui::CircuitWidget::mouseButtonEvent(const Vector2i& p, int button, bool 
             {
                 m_state = State::DrawingSelection;
                 m_selection.clear();
+                // Deselect active unit and clear editor.
+                if(m_unitEditorHost->getActiveUnitId()>=0){
+                    m_unitWidgets[m_unitEditorHost->getActiveUnitId()]->setHighlighted(false);
+                    m_unitEditorHost->reset();
+                }
                 m_drawingSelectionState.endPos = m_drawingSelectionState.startPos = p - position();
                 return true;
             }
@@ -819,6 +824,8 @@ void synui::CircuitWidget::deleteUnit_(int a_unitId)
     if (a_unitId == m_vm->getPrototypeCircuit()->getInputUnitId() || a_unitId == m_vm->getPrototypeCircuit()->getOutputUnitId())
         return;
 
+    m_state = State::Idle;
+
     _deleteUnitWidget(m_unitWidgets[a_unitId]);
 
     // Delete the unit from the circuit
@@ -922,7 +929,11 @@ void synui::CircuitWidget::onConnectionCreated_(const Port& a_inputPort, const P
     m_drawingWireState.wire->updatePath();
     m_wires.push_back(m_drawingWireState.wire);
     m_drawingWireState.wire = nullptr;
-
+    
+    // Re-set the widget positions on the grid
+    updateUnitPos(m_unitWidgets[a_inputPort.first], m_unitWidgets[a_inputPort.first]->position(), true);
+    updateUnitPos(m_unitWidgets[a_outputPort.first], m_unitWidgets[a_outputPort.first]->position(), true);
+  
     {
         std::ostringstream oss;
         syn::Unit* const* unit = m_vm->getPrototypeCircuit()->getProcGraph();
@@ -985,6 +996,7 @@ void synui::CircuitWidget::startUnitMove_(const Vector2i& a_start)
 {
     m_state = State::MovingUnit;
     m_movingUnitState.start = a_start;
+    m_movingUnitState.originalPositions.clear();
     auto cell = m_grid.get(m_grid.fromPixel(a_start, m_gridSpacing));
     // Reset the current selection if it does not contain the target unit widget.
     if (cell.state == GridCell::Unit)
@@ -1042,7 +1054,6 @@ void synui::CircuitWidget::endUnitMove_(const Vector2i& a_end)
         else
             updateUnitPos(w, oldPos, true);
     }
-    m_movingUnitState.originalPositions.clear();
     m_state = State::Idle;
 }
 

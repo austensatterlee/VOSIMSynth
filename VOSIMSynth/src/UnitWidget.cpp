@@ -457,8 +457,8 @@ synui::SummingUnitWidget::SummingUnitWidget(CircuitWidget* a_parent, syn::VoiceM
 
 Eigen::Vector2i synui::SummingUnitWidget::getInputPortAbsPosition(int a_portId)
 {
-    int nInputPorts = m_vm->getUnit(m_unitId).numInputs();
-    float angle = DSP_PI*(0.5 + (a_portId)*(1.0f / (nInputPorts)));
+    int nInputPorts = m_vm->getUnit(m_unitId).numInputs() - 1;
+    float angle = DSP_PI*(0.5 + (nInputPorts - a_portId)*(1.0f / (nInputPorts + 1)));
     Vector2f pos = absolutePosition().cast<float>() + size().cast<float>()*0.5 + Vector2f{ cos(angle), -sin(angle) }.cwiseProduct(size().cast<float>())*0.5;
     return pos.cast<int>();
 }
@@ -478,13 +478,13 @@ bool synui::SummingUnitWidget::isHandleSelected(const Vector2i& p) const
 
 int synui::SummingUnitWidget::getSelectedInputPort(const Eigen::Vector2i& p) const
 {
-    int nInputPorts = m_vm->getUnit(m_unitId).numInputs();
-    float dAngle = DSP_PI*1.0f/nInputPorts;
+    int nInputPorts = m_vm->getUnit(m_unitId).numInputs() - 1;
+    float dAngle = DSP_PI*1.0f / (nInputPorts + 1);
     Vector2f center = size().cast<float>() * 0.5f;
     Vector2f relMouse = p.cast<float>() - center;
     float mouseAngle = atan2f(relMouse.y(), relMouse.x()) - DSP_PI*0.5;
-    if(mouseAngle<0)
-        mouseAngle -= 2*DSP_PI * floor( mouseAngle / (2.0f*DSP_PI) );
+    if (mouseAngle < 0)
+        mouseAngle -= 2 * DSP_PI * floor(mouseAngle / (2.0f*DSP_PI));
     int slice = (mouseAngle - dAngle*0.5) / dAngle;
     return slice >= 0 && slice < nInputPorts ? slice : -1;
 }
@@ -498,68 +498,53 @@ void synui::SummingUnitWidget::draw(NVGcontext* ctx)
 {
     Vector2i mousePos = screen()->mousePos() - absolutePosition();
     float handleRadius = m_handleRadiusRatio*size().x()*0.5;
+    bool handleSelected = isHandleSelected(mousePos);
 
     nvgSave(ctx);
 
     nvgTranslate(ctx, mPos.x(), mPos.y());
-    nanogui::Color handleColor = nanogui::Color(0.4f, 0.5f);
-    nanogui::Color handleHighlightColor = nanogui::Color(0.1f, 0.7f);
-    nanogui::Color bgColor(0.6f, 1.0f);
-    nanogui::Color oColor(0.24f, 0.16f, 0.09f, 1.0f);
-    nanogui::Color iColor(0.09f, 0.16f, 0.24f, 1.0f);
-    nanogui::Color iColor2 = nanogui::Color(1.26f, 1.0f).cwiseProduct(iColor);
+    nanogui::Color bgColor(89, 63, 73, 255);
+    nanogui::Color bgHighlightColor(25, 50);
+    nanogui::Color handleColor(42, 43, 51, 255);
+    nanogui::Color handleHighlightColor(225, 178);
+    nanogui::Color plusColor(255, 255, 235, 255);
+    nanogui::Color oColor(187, 193, 29, 255);
+    nanogui::Color iColor(19, 80, 130, 255);
 
     nvgBeginPath(ctx);
-    nvgEllipse(ctx, size().x() * 0.5, size().y() * 0.5, size().x() * 0.5, size().y() * 0.5);
+    nvgEllipse(ctx, size().x() * 0.5, size().y() * 0.5, size().x() * 0.5, size().y() * 0.5);    
     nvgFillColor(ctx, bgColor);
     nvgFill(ctx);
+    if (contains(mousePos + position()) && !handleSelected)
+    {
+        nvgFillColor(ctx, bgHighlightColor);
+        nvgFill(ctx);        
+    }    
 
     // Draw outer circles (ports)
-    for (int i = 0; i < getUnit_().numInputs(); i++)
+    for (int i = 0; i < getUnit_().numInputs() - 1; i++)
     {
         nvgBeginPath(ctx);
         Vector2i portPos = getInputPortAbsPosition(i) - absolutePosition();
         nvgCircle(ctx, portPos.x(), portPos.y(), 2);
-        nvgFillColor(ctx, i % 2 ? iColor : iColor2);
+        nvgFillColor(ctx, iColor);
         nvgFill(ctx);
     }
-
-    // Highlight selected port            
-    if (contains(mousePos + position()) && !isHandleSelected(mousePos))
-    {
-        nvgSave(ctx);
-
-        int inputPort = getSelectedInputPort(mousePos);
-        int outputPort = getSelectedOutputPort(mousePos);
-        if (inputPort >= 0)
-        {
-            int nInputPorts = m_vm->getUnit(m_unitId).numInputs();
-            float dAngle = DSP_PI*1.0f/nInputPorts;
-            float portAngle0 = DSP_PI*(0.5 + inputPort*(1.0f/nInputPorts)) + dAngle*0.5;
-            float portAngle1 = portAngle0 + dAngle;
-            nvgBeginPath(ctx);
-            nvgArc(ctx, size().x()*0.5, size().y()*0.5, size().x()*0.5, portAngle0, portAngle1, NVG_CW);
-            nvgArc(ctx, size().x()*0.5, size().y()*0.5, size().x()*0.5*m_handleRadiusRatio, portAngle0, portAngle1, NVG_CCW);
-            nvgClosePath(ctx);
-            nvgFillColor(ctx, iColor);
-            nvgFill(ctx);
-            nvgStrokeColor(ctx, nanogui::Color(0.0f, 1.0f));
-            nvgStrokeWidth(ctx, 1.0f);
-            nvgStroke(ctx);
-        }
-        else if (outputPort >= 0)
-        {
-
-        }
-
-        nvgRestore(ctx);
-    }
+    nvgBeginPath(ctx);
+    Vector2i portPos = getOutputPortAbsPosition(0) - absolutePosition();
+    nvgCircle(ctx, portPos.x(), portPos.y(), 2);
+    nvgFillColor(ctx, oColor);
+    nvgFill(ctx);
 
     // Draw inner circle (handle)
     nvgBeginPath(ctx);
     nvgEllipse(ctx, size().x() * 0.5, size().y() * 0.5, handleRadius, handleRadius);
-    nvgFillColor(ctx, isHandleSelected(mousePos) ? handleHighlightColor : handleColor);
+    nvgFillColor(ctx, handleColor);
     nvgFill(ctx);
+    if (handleSelected) {
+        nvgFillColor(ctx, handleHighlightColor);
+        nvgFill(ctx);
+    }
 
     // Draw plus sign
     nvgBeginPath(ctx);
@@ -567,8 +552,8 @@ void synui::SummingUnitWidget::draw(NVGcontext* ctx)
     nvgLineTo(ctx, size().x()*0.5, size().y()*0.5 + handleRadius);
     nvgMoveTo(ctx, size().x()*0.5 - handleRadius, size().y() * 0.5);
     nvgLineTo(ctx, size().x()*0.5 + handleRadius, size().y() * 0.5);
-    nvgStrokeColor(ctx, bgColor.contrastingColor());
-    nvgStrokeWidth(ctx, 1.0f);
+    nvgStrokeColor(ctx, plusColor);
+    nvgStrokeWidth(ctx, 2.0f);
     nvgStroke(ctx);
 
     nvgRestore(ctx);
@@ -583,7 +568,7 @@ Eigen::Vector2i synui::SummingUnitWidget::preferredSize(NVGcontext* ctx) const
 bool synui::SummingUnitWidget::mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers)
 {
     Vector2i mousePos = p - position();
-    bool isOutputSelected = mousePos.x() > size().x()*0.5;
+    bool isOutputSelected = mousePos.x() > size().x()*0.5 && !isHandleSelected(mousePos);
     int selectedPort = isOutputSelected ? 0 : -1;
     const syn::Unit& unit = getUnit_();
 
@@ -593,13 +578,22 @@ bool synui::SummingUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
     }
     else
     {
-        for (int i = 0; i < unit.numInputs(); i++)
-        {
-            int inputId = unit.inputs().indices()[i];
-            if (unit.inputSource(inputId) == nullptr)
+        const int* portIndices = unit.inputs().indices();
+        int selectedInputPort = getSelectedInputPort(mousePos);
+
+        // Use the port selected by the mouse if it is free, otherwise find a free one.
+        if (selectedInputPort >= 0 && unit.inputSource(portIndices[selectedInputPort]) == nullptr) {
+            selectedPort = selectedInputPort;
+        }
+        else {
+            for (int i = 0; i < unit.numInputs(); i++)
             {
-                selectedPort = inputId;
-                break;
+                int inputId = unit.inputs().indices()[i];
+                if (unit.inputSource(inputId) == nullptr)
+                {
+                    selectedPort = inputId;
+                    break;
+                }
             }
         }
     }
@@ -607,12 +601,12 @@ bool synui::SummingUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
 
     if (button == GLFW_MOUSE_BUTTON_LEFT)
     {
-        if (!isHandleSelected(mousePos)) {
-            if (down)
-            {
-                triggerPortDrag_(selectedPort, isOutputSelected);
-                return false;
-            }
+        if (down && !isHandleSelected(mousePos))
+        {
+            triggerPortDrag_(selectedPort, isOutputSelected);
+            return false;
+        }
+        if (!down) {
             triggerPortDrop_(selectedPort, isOutputSelected);
             return false;
         }

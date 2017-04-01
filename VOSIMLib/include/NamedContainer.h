@@ -54,8 +54,9 @@ namespace syn
             typedef bool result_type;
 
             constexpr bool operator()(const _T& _Left, const _T& _Right) const
-            { // apply operator< to operands
-                return (_Left >= 0) && (_Left > _Right);
+            { // apply operator> to operands
+                return (_Left >= 0) && (_Right<0 || _Left < _Right);
+                // return (_Left >= 0) && (_Right > _Left);
             }
         };
 
