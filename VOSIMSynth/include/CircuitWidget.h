@@ -97,6 +97,7 @@ namespace synui
          * \param a_uf
          */
         CircuitWidget(nanogui::Widget* a_parent, synui::MainWindow* a_mainWindow, synui::UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf);
+        virtual ~CircuitWidget();
 
         bool mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
         bool mouseMotionEvent(const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override;
@@ -239,16 +240,10 @@ namespace synui
         void _deleteUnitWidget(UnitWidget* widget);
 
         /**
-         * \brief Combine the two wires into a summing junction.
+         * \brief Combine the two wires into a the ports of a new unit.
          */
-        void _createSummingJunction(CircuitWire* toWire, CircuitWire* fromWire, const Eigen::Vector2i& pos);
-
-
-        /**
-         * \brief Combine the two wires into a multiplying junction.
-         */
-        void _createMultiplyingJunction(CircuitWire* toWire, CircuitWire* fromWire, const Eigen::Vector2i& pos);
-
+        void _createJunction(CircuitWire* toWire, CircuitWire* fromWire, const Eigen::Vector2i& pos, const std::string& a_unitPrototype);
+        
     private:
         synui::MainWindow* m_window;
         synui::UnitEditorHost* m_unitEditorHost;

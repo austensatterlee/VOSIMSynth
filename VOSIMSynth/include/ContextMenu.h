@@ -125,18 +125,20 @@ namespace synui
     template <typename T>
     bool ContextMenu<T>::mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers)
     {
-        Eigen::Vector2i mousePos = p - mPos;
-        for (const auto& w : m_itemMap)
-        {
-            if (w.second->contains(mousePos))
+        if(!down){
+            Eigen::Vector2i mousePos = p - mPos;
+            for (const auto& w : m_itemMap)
             {
-                if (m_callback)
+                if (w.second->contains(mousePos))
                 {
-                    const auto& item = getMenuItem_(w.first);
-                    m_callback(item.first, item.second);
+                    if (m_callback)
+                    {
+                        const auto& item = getMenuItem_(w.first);
+                        m_callback(item.first, item.second);
+                    }
+                    deactivate();
+                    return true;
                 }
-                deactivate();
-                return true;
             }
         }
         return true;

@@ -395,7 +395,7 @@ namespace syn
     template <typename IDType>
     bool NamedContainer<T, MAXSIZE>::contains(const IDType& a_itemID) const
     {
-        return (getItemIndex(a_itemID) >= 0);
+        return getItemIndex(a_itemID) >= 0;
     }
 
     template <typename T, int MAXSIZE>
@@ -428,7 +428,7 @@ namespace syn
     template <typename T, int MAXSIZE>
     int NamedContainer<T, MAXSIZE>::getItemIndex(int a_itemId) const
     {
-        return m_existances[a_itemId] ? a_itemId : -1;
+        return a_itemId>=0 && m_existances[a_itemId] ? a_itemId : -1;
     }
 
     template <typename T, int MAXSIZE>

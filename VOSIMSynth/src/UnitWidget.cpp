@@ -601,18 +601,18 @@ bool synui::SummingUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
 
     if (button == GLFW_MOUSE_BUTTON_LEFT)
     {
-        if (down && !isHandleSelected(mousePos))
+        if (down && !isHandleSelected(mousePos) && selectedPort>=0)
         {
             triggerPortDrag_(selectedPort, isOutputSelected);
             return false;
         }
-        if (down && isHandleSelected(mousePos))
-        {
-            triggerEditorCallback();
+        if (!down && selectedPort>=0) {
+            triggerPortDrop_(selectedPort, isOutputSelected);
             return false;
         }
-        if (!down) {
-            triggerPortDrop_(selectedPort, isOutputSelected);
+        if (down)
+        {
+            triggerEditorCallback();
             return false;
         }
     }
@@ -690,7 +690,7 @@ void synui::MultiplyingUnitWidget::draw(NVGcontext* ctx)
     // Draw X sign
     nvgBeginPath(ctx);
     nvgTranslate(ctx, size().x()*0.5, size().y()*0.5);
-    nvgRotate(ctx, DSP_PI*0.25);
+    nvgRotate(ctx, DSP_PI*0.25f);
     nvgMoveTo(ctx, 0.0f, -handleRadius);
     nvgLineTo(ctx, 0.0f, handleRadius);
     nvgMoveTo(ctx, -handleRadius, 0.0f);

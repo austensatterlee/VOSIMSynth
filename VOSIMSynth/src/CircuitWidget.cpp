@@ -7,6 +7,7 @@
 #include "UnitEditor.h"
 #include "Logger.h"
 #include "ContextMenu.h"
+#include <unordered_set>
 
 namespace synui
 {
@@ -75,7 +76,6 @@ namespace synui
                 }
             }
             nvgStrokeColor(ctx, wireColor);
-            nvgFillColor(ctx, wireColor);
             nvgLineJoin(ctx, NVG_ROUND);
 
             nvgMoveTo(ctx, m_start.x(), m_start.y());
@@ -116,11 +116,21 @@ namespace synui
             }
             nvgStroke(ctx);
 
+            
+//            nvgBeginPath(ctx);
+//            nvgFillColor(ctx, nanogui::Color(0.0f,0.0f,0.0f,0.5f));
+//            for (auto gridPt : m_crossings)
+//            {                
+//                Vector2i pixelPt = m_parentCircuit->m_grid.toPixel({gridPt.first, gridPt.second}, m_parentCircuit->getGridSpacing());      
+//                nvgCircle(ctx, pixelPt.x(), pixelPt.y(), 1.0f);
+//            }
+//            nvgFill(ctx);
+
             /* Draw arrow */
             if (m_path.size() > 1)
             {
                 float noseSize = m_parentCircuit->getGridSpacing() * 0.33;
-                float noseAngle = 30.0;
+                float noseAngle = 45.0;
                 nvgBeginPath(ctx);
                 Vector2i pt = m_end;
                 Vector2i prevPt = m_parentCircuit->m_grid.toPixel(m_path[m_path.size() - 2], m_parentCircuit->getGridSpacing());
@@ -134,6 +144,7 @@ namespace synui
 
                 Vector2f p0 = m_end.cast<float>() - dir * noseSize;
                 nvgBeginPath(ctx);
+                nvgFillColor(ctx, wireColor);
                 nvgMoveTo(ctx, p0.x(), p0.y());
                 nvgLineTo(ctx, p0.x() + headOffset.x(), p0.y() + headOffset.y());
                 nvgLineTo(ctx, p0.x() + noseOffset.x(), p0.y() + noseOffset.y());
@@ -233,6 +244,7 @@ namespace synui
 
             // Remove from grid            
             m_parentCircuit->m_grid.replaceValue({CircuitWidget::GridCell::Wire, this}, m_parentCircuit->m_grid.getEmptyValue());
+            m_crossings.clear();
 
             // Find new shortest path between start and end cells
             auto path = m_parentCircuit->m_grid.findPath<manhattan_distance, weight_func>(startCell, endCell, &m_cost);
@@ -242,6 +254,8 @@ namespace synui
             // Update grid to reflect new location
             for (auto cell : m_path)
             {
+                if (m_parentCircuit->m_grid.get(cell).state==CircuitWidget::GridCell::Wire)
+                    m_crossings.insert({cell.x(), cell.y()});
                 if (!m_parentCircuit->m_grid.isOccupied(cell))
                     m_parentCircuit->m_grid.get(cell) = {CircuitWidget::GridCell::Wire, this};
             }
@@ -293,6 +307,7 @@ namespace synui
         Vector2i m_start;
         Vector2i m_end;
         vector<Grid2DPoint> m_path;
+        set<std::pair<int,int> > m_crossings;
         double m_cost;
         bool m_isFinal;
     };
@@ -309,12 +324,20 @@ synui::CircuitWidget::CircuitWidget(Widget* a_parent, MainWindow* a_mainWindow, 
     m_wireDrawStyle(Curved),
     m_state(State::Uninitialized),
     m_creatingUnitState{0, false, nullptr},
-    m_drawingWireState{false,nullptr},
+    m_drawingWireState{false, new CircuitWire(this)},
     m_highlightedWire{nullptr}
     
 {
     registerUnitWidget<syn::InputUnit>([](CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new InputUnitWidget(parent, a_vm, unitId); });
     registerUnitWidget<syn::OutputUnit>([](CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new OutputUnitWidget(parent, a_vm, unitId); });
+}
+
+synui::CircuitWidget::~CircuitWidget()
+{
+    for(auto m_wire : m_wires)
+        delete m_wire;
+    delete m_drawingWireState.wire;
+    m_drawingWireState.wire = nullptr;
 }
 
 bool synui::CircuitWidget::mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers)
@@ -415,21 +438,22 @@ bool synui::CircuitWidget::mouseButtonEvent(const Vector2i& p, int button, bool 
             if(m_grid.get(pt).state==GridCell::Wire && m_drawingWireState.startedFromOutput)
             {
                 CircuitWire* toWire = static_cast<CircuitWire*>(m_grid.get(pt).ptr);
-                CircuitWire* fromWire = m_drawingWireState.wire;
+                CircuitWire* fromWire = new CircuitWire(this);
+                fromWire->setInputPort(m_drawingWireState.wire->getInputPort());
+                fromWire->setOutputPort(m_drawingWireState.wire->getOutputPort());
                 ContextMenu<int>* cm =  new ContextMenu<int>(this, true, [this, fromWire, toWire, p](const string& a_item, const int& a_value)
                 {                    
-                    Logger::instance().log("circuit", a_item);
                     if(a_value==0)
                     {
-                        _createSummingJunction(toWire, fromWire, p - position());                        
+                        _createJunction(toWire, fromWire, p - position(), "sum");                        
                     }
                     else if(a_value==1)
                     {
-                        _createMultiplyingJunction(toWire, fromWire, p - position());
+                        _createJunction(toWire, fromWire, p - position(), "gain");       
                     }
                 });
-                cm->addMenuItem("sum", 0);
-                cm->addMenuItem("mul", 1);
+                cm->addMenuItem("Sum", 0);
+                cm->addMenuItem("Mul", 1);
                 cm->activate();
                 cm->setPosition(p - position());
                 performLayout(screen()->nvgContext());
@@ -585,11 +609,6 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
         }        
     }
 
-    // Draw wires
-    for (auto wire : m_wires)
-    {
-        wire->draw(ctx);
-    }
     // Highlight wires connected to a unit in the current selection
     for (auto wire : m_wires)
     {
@@ -601,6 +620,7 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
             wire->highlight = CircuitWire::Outgoing;
             wire->draw(ctx);
             wire->highlight = oldHighlight;
+            continue;
         }
         if (inUnit->getUnitId() == m_unitEditorHost->getActiveUnitId())
         {
@@ -608,7 +628,9 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
             wire->highlight = CircuitWire::Incoming;
             wire->draw(ctx);
             wire->highlight = oldHighlight;
+            continue;
         }
+        wire->draw(ctx);
     }
     nvgRestore(ctx);
 
@@ -630,6 +652,18 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
                     drawTooltip(ctx, { mousePos.x(),mousePos.y() + 25 }, m_highlightedWire->info(), elapsed);
                     nvgRestore(ctx);
                 }
+            }
+        }
+        else if (m_state == State::DrawingWire)
+        {
+            Grid2DPoint mousePt = m_grid.fromPixel(mousePos, m_gridSpacing);
+            if(m_grid.get(mousePt).state == GridCell::Wire)
+            {
+                Vector2i fixedMousePos = m_grid.toPixel(mousePt, m_gridSpacing);
+                nvgBeginPath(ctx);
+                nvgFillColor(ctx, nanogui::Color(0,0,0,200));
+                nvgCircle(ctx, fixedMousePos.x(), fixedMousePos.y(), m_gridSpacing*0.35);
+                nvgFill(ctx);                
             }
         }
     }
@@ -945,28 +979,15 @@ void synui::CircuitWidget::onConnectionCreated_(const Port& a_inputPort, const P
         }
     }
 
-    if (!m_drawingWireState.wire)
-        throw "No wire being drawn";
-    m_drawingWireState.wire->setInputPort(a_inputPort);
-    m_drawingWireState.wire->setOutputPort(a_outputPort);
-    m_drawingWireState.wire->updatePath();
-    m_wires.push_back(m_drawingWireState.wire);
-    m_drawingWireState.wire = nullptr;
+    CircuitWire* wire = new CircuitWire(this);
+    wire->setInputPort(a_inputPort);
+    wire->setOutputPort(a_outputPort);
+    wire->updatePath();
+    m_wires.push_back(wire);
     
     // Re-set the widget positions on the grid
     updateUnitPos(m_unitWidgets[a_inputPort.first], m_unitWidgets[a_inputPort.first]->position(), true);
-    updateUnitPos(m_unitWidgets[a_outputPort.first], m_unitWidgets[a_outputPort.first]->position(), true);
-  
-    {
-        std::ostringstream oss;
-        syn::Unit* const* unit = m_vm->getPrototypeCircuit()->getProcGraph();
-        while (*unit)
-        {
-            oss << (*unit)->name() << " ";
-            unit++;
-        }
-        Logger::instance().log("circuit", oss.str());
-    }
+    updateUnitPos(m_unitWidgets[a_outputPort.first], m_unitWidgets[a_outputPort.first]->position(), true);  
 }
 
 void synui::CircuitWidget::startWireDraw_(int a_unitId, int a_portId, bool a_isOutput)
@@ -974,8 +995,9 @@ void synui::CircuitWidget::startWireDraw_(int a_unitId, int a_portId, bool a_isO
     if (m_state != State::Idle)
         return;
     m_state = State::DrawingWire;
+    m_drawingWireState.wire->setOutputPort({-1,-1});
+    m_drawingWireState.wire->setInputPort({-1,-1});
     m_drawingWireState.startedFromOutput = a_isOutput;
-    m_drawingWireState.wire = new CircuitWire(this);
 
     Vector2i mousePos = screen()->mousePos() - absolutePosition();
     m_drawingWireState.wire->updateStartAndEndPositions(mousePos);
@@ -1002,8 +1024,6 @@ void synui::CircuitWidget::endWireDraw_(int a_unitId, int a_portId, bool a_isOut
         // If the port was simply clicked on, activate the unit's editor
         if(port1==port2)
             m_unitWidgets[a_unitId]->triggerEditorCallback();
-        delete wire;
-        m_drawingWireState.wire = nullptr;
     }
     else
     {
@@ -1175,7 +1195,7 @@ void synui::CircuitWidget::_deleteUnitWidget(UnitWidget* widget)
     m_unitWidgets.erase(unitId);
 }
 
-void synui::CircuitWidget::_createSummingJunction(CircuitWire* toWire, CircuitWire* fromWire, const Eigen::Vector2i& pos)
+void synui::CircuitWidget::_createJunction(CircuitWire* toWire, CircuitWire* fromWire, const Eigen::Vector2i& pos, const std::string& a_unitPrototype)
 {
     syn::RTMessage* msg = new syn::RTMessage();
     msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
@@ -1219,11 +1239,11 @@ void synui::CircuitWidget::_createSummingJunction(CircuitWire* toWire, CircuitWi
                                 self->onConnectionCreated_({unitId, 0}, fromWire->getOutputPort());
 
                                 // replace it with a wire going into the sum unit...
-                                self->m_drawingWireState.wire = new CircuitWire(self);
                                 self->onConnectionCreated_({unitId, 1}, toWire->getOutputPort());
                                 // and a wire going from the sum unit to the original input port
-                                self->m_drawingWireState.wire = new CircuitWire(self);
                                 self->onConnectionCreated_(toWire->getInputPort(), {unitId,0});
+                                
+                                delete fromWire;
                             };
                     PutArgs(&msg->data, self, classId, unitId, toWire, fromWire, px, py);
                     self->m_window->queueExternalMessage(msg);
@@ -1232,70 +1252,7 @@ void synui::CircuitWidget::_createSummingJunction(CircuitWire* toWire, CircuitWi
             };
 
     auto self = this;
-    auto unit = m_uf->createUnit("sum");
+    auto unit = m_uf->createUnit(a_unitPrototype);
     PutArgs(&msg->data, self, m_uf, unit, toWire, fromWire, pos.x(), pos.y());
     m_vm->queueAction(msg);
 }
-
-void synui::CircuitWidget::_createMultiplyingJunction(CircuitWire* toWire, CircuitWire* fromWire, const Eigen::Vector2i& pos)
-{
-    syn::RTMessage* msg = new syn::RTMessage();
-    msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
-            {
-                CircuitWidget* self;
-                syn::UnitFactory* unitFactory;
-                syn::Unit* unit;
-                CircuitWire* toWire;
-                CircuitWire* fromWire;
-                int px, py;
-                GetArgs(a_data, 0, self, unitFactory, unit, toWire, fromWire, px, py);
-                int unitId = a_circuit->addUnit(unit->clone());
-                unsigned classId = unit->getClassIdentifier();
-                // Connect both wires to the sum unit
-                a_circuit->connectInternal(fromWire->getOutputPort().first, fromWire->getOutputPort().second, unitId, 0);
-                a_circuit->connectInternal(toWire->getOutputPort().first, toWire->getOutputPort().second, unitId, 1);
-                // Replace toWire's connection with one from sum unit
-                a_circuit->connectInternal(unitId, 0, toWire->getInputPort().first, toWire->getInputPort().second);
-
-                // Queue return message
-                if (a_isLast)
-                {
-                    GUIMessage* msg = new GUIMessage;
-                    msg->action = [](MainWindow* a_win, ByteChunk* a_data)
-                            {
-                                CircuitWidget* self;
-                                unsigned classId;
-                                int unitId;
-                                CircuitWire* toWire;
-                                CircuitWire* fromWire;
-                                int px, py;
-                                GetArgs(a_data, 0, self, classId, unitId, toWire, fromWire, px, py);
-
-                                // Create + place unit widget
-                                self->onUnitCreated_(classId, unitId);  
-                                Eigen::Vector2i pos = {px, py};                      
-                                self->endCreateUnit_(pos - Vector2i::Ones()*self->getGridSpacing());         
-                                
-
-                                // Finish drawing wire
-                                self->onConnectionCreated_({unitId, 0}, fromWire->getOutputPort());
-
-                                // replace it with a wire going into the sum unit...
-                                self->m_drawingWireState.wire = new CircuitWire(self);
-                                self->onConnectionCreated_({unitId, 1}, toWire->getOutputPort());
-                                // and a wire going from the sum unit to the original input port
-                                self->m_drawingWireState.wire = new CircuitWire(self);
-                                self->onConnectionCreated_(toWire->getInputPort(), {unitId,0});
-                            };
-                    PutArgs(&msg->data, self, classId, unitId, toWire, fromWire, px, py);
-                    self->m_window->queueExternalMessage(msg);
-                    delete unit;
-                }
-            };
-
-    auto self = this;
-    auto unit = m_uf->createUnit("gain");
-    PutArgs(&msg->data, self, m_uf, unit, toWire, fromWire, pos.x(), pos.y());
-    m_vm->queueAction(msg);    
-}
-
