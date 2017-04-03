@@ -8,6 +8,7 @@
 #include "Logger.h"
 #include "ContextMenu.h"
 #include <unordered_set>
+#include "MathUnits.h"
 
 namespace synui
 {
@@ -448,11 +449,15 @@ bool synui::CircuitWidget::mouseButtonEvent(const Vector2i& p, int button, bool 
                 {                    
                     if(a_value==0)
                     {
-                        _createJunction(toWire, fromWire, p - position(), "sum");                        
+                        syn::Unit* u = new syn::SummerUnit("");
+                        u->setName(m_uf->generateUnitName(u));
+                        _createJunction(toWire, fromWire, p - position(), u);                        
                     }
                     else if(a_value==1)
                     {
-                        _createJunction(toWire, fromWire, p - position(), "gain");       
+                        syn::Unit* u = new syn::GainUnit("");
+                        u->setName(m_uf->generateUnitName(u));
+                        _createJunction(toWire, fromWire, p - position(), u);       
                     }
                 });
                 cm->addMenuItem("Sum", 0);
@@ -1198,7 +1203,7 @@ void synui::CircuitWidget::_deleteUnitWidget(UnitWidget* widget)
     m_unitWidgets.erase(unitId);
 }
 
-void synui::CircuitWidget::_createJunction(CircuitWire* toWire, CircuitWire* fromWire, const Eigen::Vector2i& pos, const std::string& a_unitPrototype)
+void synui::CircuitWidget::_createJunction(CircuitWire* toWire, CircuitWire* fromWire, const Eigen::Vector2i& pos, syn::Unit* a_unit)
 {
     syn::RTMessage* msg = new syn::RTMessage();
     msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
@@ -1255,7 +1260,6 @@ void synui::CircuitWidget::_createJunction(CircuitWire* toWire, CircuitWire* fro
             };
 
     auto self = this;
-    auto unit = m_uf->createUnit(a_unitPrototype);
-    PutArgs(&msg->data, self, m_uf, unit, toWire, fromWire, pos.x(), pos.y());
+    PutArgs(&msg->data, self, m_uf, a_unit, toWire, fromWire, pos.x(), pos.y());
     m_vm->queueAction(msg);
 }

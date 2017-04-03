@@ -42,7 +42,7 @@ namespace synui
               m_disposable(a_disposable),
               m_activated(false)
         {
-            m_gridLayout = new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Fill, 0, 5);
+            m_gridLayout = new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Fill, 5, 5);
             setLayout(m_gridLayout);
         }
 

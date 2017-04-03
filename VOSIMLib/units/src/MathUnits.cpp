@@ -105,8 +105,8 @@ syn::GainUnit::GainUnit(const string& a_name) :
     Unit(a_name),
     m_pGain(addParameter_(UnitParameter("gain", -1E4, 1E4, 1.0, UnitParameter::None, 2).setControlType(UnitParameter::Unbounded)))
 {
-    m_iInput = addInput_("in");
-    m_iGain = addInput_("g[x]", 1.0);
+    addInput_("1", 1.0);
+    addInput_("2", 1.0);
     addOutput_("out");
 }
 
@@ -116,11 +116,27 @@ syn::GainUnit::GainUnit(const GainUnit& a_rhs) :
 void syn::GainUnit::process_()
 {
     BEGIN_PROC_FUNC
-        double input = READ_INPUT(m_iInput);
-        double gain = param(m_pGain).getDouble();
-        gain *= READ_INPUT(m_iGain);
-        WRITE_OUTPUT(0, input * gain);
+    double output = param(m_pGain).getDouble();    
+    for (int i = 0; i < numInputs(); i++) {
+        output *= READ_INPUT(inputs().indices()[i]);
+    }
+    WRITE_OUTPUT(0, output);
     END_PROC_FUNC
+}
+
+void syn::GainUnit::onInputConnection_(int a_inputPort)
+{
+     // Create a new input if the current ones are all in use.
+    int numConnectedInputs = 0;
+    for(int  i=0;i<numInputs();i++)
+    {
+        if (inputSource(i)!=nullptr)
+            numConnectedInputs++;
+    }
+    if(numConnectedInputs==numInputs() && numInputs()<8)
+    {
+        addInput_(std::to_string(numInputs()+1), 0.0);
+    }
 }
 
 syn::SummerUnit::SummerUnit(const string& a_name) :

@@ -109,9 +109,9 @@ namespace syn
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
+        void onInputConnection_(int a_inputPort) override;
     private:
         int m_pGain;
-        int m_iGain, m_iInput;
     };
 
     /**

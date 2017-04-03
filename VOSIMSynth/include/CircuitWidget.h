@@ -242,7 +242,7 @@ namespace synui
         /**
          * \brief Combine the two wires into a the ports of a new unit.
          */
-        void _createJunction(CircuitWire* toWire, CircuitWire* fromWire, const Eigen::Vector2i& pos, const std::string& a_unitPrototype);
+        void _createJunction(CircuitWire* toWire, CircuitWire* fromWire, const Eigen::Vector2i& pos, syn::Unit* a_unit);
         
     private:
         synui::MainWindow* m_window;

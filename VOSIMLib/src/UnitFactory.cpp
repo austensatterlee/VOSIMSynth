@@ -10,6 +10,16 @@ syn::UnitFactory::FactoryPrototype::FactoryPrototype(std::string a_group_name, s
       build_count{0},
       size(a_class_size) {}
 
+syn::UnitFactory::~UnitFactory()
+{
+    for (auto proto : m_prototypes)
+    {
+        delete proto.prototype;
+    }
+    m_prototypes.clear();
+    m_group_names.clear();
+}
+
 set<string> syn::UnitFactory::getGroupNames() const {
     set<string> groupnames;
     for (const string& groupname : m_group_names) {
@@ -51,11 +61,17 @@ const syn::UnitFactory::FactoryPrototype* syn::UnitFactory::getFactoryPrototype(
     return nullptr;
 }
 
-syn::Unit* syn::UnitFactory::createUnit(int a_protoNum, const string& a_name) {
+const syn::UnitFactory::FactoryPrototype* syn::UnitFactory::getFactoryPrototype(const Unit& a_unit) const
+{
+    int prototypeIndex = getPrototypeIdx_(a_unit.getClassIdentifier());
+    return &m_prototypes[prototypeIndex];
+}
+
+syn::Unit* syn::UnitFactory::createUnit_(int a_protoNum, const string& a_name) {
     Unit* unit = m_prototypes[a_protoNum].prototype->clone();
     // Generate default name
     if(a_name.empty())
-        unit->_setName(incrementSuffix(m_prototypes[a_protoNum].name));
+        unit->_setName(generateUnitName(unit));
     else
         unit->_setName(a_name);
     return unit;
@@ -65,14 +81,19 @@ syn::Unit* syn::UnitFactory::createUnit(unsigned a_classIdentifier, const string
     int protonum = getPrototypeIdx_(a_classIdentifier);
     if (protonum < 0)
         return nullptr;
-    return createUnit(protonum, a_name);
+    return createUnit_(protonum, a_name);
 }
 
 syn::Unit* syn::UnitFactory::createUnit(string a_prototypeName, const string& a_name) {
     int protonum = getPrototypeIdx_(a_prototypeName);
     if (protonum < 0)
         return nullptr;
-    return createUnit(protonum, a_name);
+    return createUnit_(protonum, a_name);
+}
+
+std::string syn::UnitFactory::generateUnitName(Unit* a_unit) const
+{
+    return incrementSuffix(getFactoryPrototype(*a_unit)->name);    
 }
 
 bool syn::UnitFactory::hasClassId(unsigned a_classIdentifier) const {

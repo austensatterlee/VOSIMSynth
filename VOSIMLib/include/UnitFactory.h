@@ -62,10 +62,7 @@ namespace syn
             return singleton;
         }
 
-        virtual ~UnitFactory() {
-            m_prototypes.clear();
-            m_group_names.clear();
-        }
+        virtual ~UnitFactory();
 
         /**
          * \brief Register a prototype unit with the factory. Prototype deletion will be taken care of upon factory destruction.
@@ -83,11 +80,13 @@ namespace syn
 
         const FactoryPrototype* getFactoryPrototype(const std::string& a_prototypeName) const;
 
-        Unit* createUnit(int a_protoNum, const std::string& a_name = "");
+        const FactoryPrototype* getFactoryPrototype(const Unit& a_unit) const;
 
         Unit* createUnit(unsigned a_classIdentifier, const std::string& a_name = "");
 
         Unit* createUnit(std::string a_prototypeName, const std::string& a_name = "");
+
+        std::string generateUnitName(Unit* a_unit) const;
 
         bool hasClassId(unsigned a_classIdentifier) const;
 
@@ -105,6 +104,8 @@ namespace syn
         int getPrototypeIdx_(const std::string& a_name) const;
 
         int getPrototypeIdx_(unsigned a_classId) const;
+
+        Unit* createUnit_(int a_protoNum, const std::string& a_name);
 
     private:
         vector<FactoryPrototype> m_prototypes;

@@ -170,6 +170,6 @@ namespace syn
      * If the string ends with a number, this function creates a new string with that number incremented by one.
      * If the string does not end with a number, this function returns a new string with "_0" concatenated at the end.
      */
-    std::string incrementSuffix(const std::string& a_str);    
+    std::string incrementSuffix(const std::string& a_str, const std::string& a_sep=" ");    
 }
 #endif
