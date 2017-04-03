@@ -33,8 +33,8 @@ namespace synui
     template <typename T>
     class ContextMenu : public nanogui::Widget
     {
-        typedef std::function<void(const std::string&, const T&)> ItemSelectCallback;
     public:
+        typedef std::function<void(const std::string&, const T&)> ItemSelectCallback;
 
         ContextMenu(Widget* a_parent, bool a_disposable, ItemSelectCallback a_callback = nullptr)
             : Widget(a_parent),

@@ -330,6 +330,7 @@ namespace synui
             directions[2] = -Eigen::Vector2i::Unit(0);
             directions[1] = Eigen::Vector2i::Unit(1);
             directions[3] = -Eigen::Vector2i::Unit(1);
+            
             for (const Grid2DPoint& dir : directions)
             {
                 Grid2DPoint neighbor = a_pt + dir;

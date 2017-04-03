@@ -6,6 +6,7 @@
 #include "MainGUI.h"
 #include "UnitEditor.h"
 #include "Logger.h"
+#include "ContextMenu.h"
 
 namespace synui
 {
@@ -92,21 +93,24 @@ namespace synui
 
                 nvgLineTo(ctx, currPixelPt.x(), currPixelPt.y());
 
-                // Draw a curve when the path changes direction.
-                if ((nextGridPt2.array() != currGridPt.array()).all())
-                {
-                    Vector2i nextPixelPt  = i+1>=m_path.size()-1 ? m_end : m_parentCircuit->m_grid.toPixel(nextGridPt, m_parentCircuit->getGridSpacing());
-                    Vector2i nextPixelPt2 = i+2>=m_path.size()-1 ? m_end : m_parentCircuit->m_grid.toPixel(nextGridPt2, m_parentCircuit->getGridSpacing());
-                    // Handle "S-curves" and corner turns.
-                    if ((nextGridPt3.array() != nextGridPt.array()).all()) {
-                        Vector2i nextPixelPt3 = i+3>=m_path.size()-1 ? m_end : m_parentCircuit->m_grid.toPixel(nextGridPt3, m_parentCircuit->getGridSpacing());
-                        nvgBezierTo(ctx, nextPixelPt.x(), nextPixelPt.y(), nextPixelPt2.x(), nextPixelPt2.y(), nextPixelPt3.x(), nextPixelPt3.y());
-                        i += 2;
-                    } 
-                    else
+                if (m_parentCircuit->wireDrawStyle() == CircuitWidget::Curved) {
+                    // Draw a curve when the path changes direction.
+                    if (((nextGridPt2-nextGridPt).array() != (nextGridPt-currGridPt).array()).any())
                     {
-                        nvgQuadTo(ctx, nextPixelPt.x(), nextPixelPt.y(), nextPixelPt2.x(), nextPixelPt2.y());
-                        i += 1;
+                        Vector2i nextPixelPt = i + 1 >= m_path.size() - 1 ? m_end : m_parentCircuit->m_grid.toPixel(nextGridPt, m_parentCircuit->getGridSpacing());
+                        Vector2i nextPixelPt2 = i + 2 >= m_path.size() - 1 ? m_end : m_parentCircuit->m_grid.toPixel(nextGridPt2, m_parentCircuit->getGridSpacing());
+                        // Handle "S-curves" and corner turns.
+                        if (((nextGridPt3-nextGridPt2).array() != (nextGridPt2-nextGridPt).array()).any()) {
+                            Vector2i nextPixelPt3 = i + 3 >= m_path.size() - 1 ? m_end : m_parentCircuit->m_grid.toPixel(nextGridPt3, m_parentCircuit->getGridSpacing());
+                            nvgBezierTo(ctx, nextPixelPt.x(), nextPixelPt.y(), nextPixelPt2.x(), nextPixelPt2.y(), nextPixelPt3.x(), nextPixelPt3.y());
+                            i += 2;
+                        }
+                        else
+                        {
+                            //nvgArcTo(ctx, nextPixelPt.x(), nextPixelPt.y(), nextPixelPt2.x(), nextPixelPt2.y(), m_parentCircuit->getGridSpacing()*0.5f);
+                            nvgQuadTo(ctx, nextPixelPt.x(), nextPixelPt.y(), nextPixelPt2.x(), nextPixelPt2.y());
+                            i += 1;
+                        }
                     }
                 }
             }
@@ -115,8 +119,8 @@ namespace synui
             /* Draw arrow */
             if (m_path.size() > 1)
             {
-                float noseSize = m_parentCircuit->getGridSpacing() * 0.5;
-                float noseAngle = 45.0;
+                float noseSize = m_parentCircuit->getGridSpacing() * 0.33;
+                float noseAngle = 30.0;
                 nvgBeginPath(ctx);
                 Vector2i pt = m_end;
                 Vector2i prevPt = m_parentCircuit->m_grid.toPixel(m_path[m_path.size() - 2], m_parentCircuit->getGridSpacing());
@@ -302,10 +306,12 @@ synui::CircuitWidget::CircuitWidget(Widget* a_parent, MainWindow* a_mainWindow, 
     m_vm(a_vm),
     m_grid{{0,0}, GridCell{GridCell::Empty, nullptr}},
     m_gridSpacing(12),
+    m_wireDrawStyle(Curved),
     m_state(State::Uninitialized),
     m_creatingUnitState{0, false, nullptr},
     m_drawingWireState{false,nullptr},
     m_highlightedWire{nullptr}
+    
 {
     registerUnitWidget<syn::InputUnit>([](CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new InputUnitWidget(parent, a_vm, unitId); });
     registerUnitWidget<syn::OutputUnit>([](CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new OutputUnitWidget(parent, a_vm, unitId); });
@@ -409,7 +415,24 @@ bool synui::CircuitWidget::mouseButtonEvent(const Vector2i& p, int button, bool 
             if(m_grid.get(pt).state==GridCell::Wire && m_drawingWireState.startedFromOutput)
             {
                 CircuitWire* toWire = static_cast<CircuitWire*>(m_grid.get(pt).ptr);
-                _createSummingJunction(toWire, m_drawingWireState.wire, p - position());
+                CircuitWire* fromWire = m_drawingWireState.wire;
+                ContextMenu<int>* cm =  new ContextMenu<int>(this, true, [this, fromWire, toWire, p](const string& a_item, const int& a_value)
+                {                    
+                    Logger::instance().log("circuit", a_item);
+                    if(a_value==0)
+                    {
+                        _createSummingJunction(toWire, fromWire, p - position());                        
+                    }
+                    else if(a_value==1)
+                    {
+                        _createMultiplyingJunction(toWire, fromWire, p - position());
+                    }
+                });
+                cm->addMenuItem("sum", 0);
+                cm->addMenuItem("mul", 1);
+                cm->activate();
+                cm->setPosition(p - position());
+                performLayout(screen()->nvgContext());
                 return true;
             }else{
                 // Force wire creation to fail when the user lets the mouse up over a blank space
@@ -1212,5 +1235,67 @@ void synui::CircuitWidget::_createSummingJunction(CircuitWire* toWire, CircuitWi
     auto unit = m_uf->createUnit("sum");
     PutArgs(&msg->data, self, m_uf, unit, toWire, fromWire, pos.x(), pos.y());
     m_vm->queueAction(msg);
+}
+
+void synui::CircuitWidget::_createMultiplyingJunction(CircuitWire* toWire, CircuitWire* fromWire, const Eigen::Vector2i& pos)
+{
+    syn::RTMessage* msg = new syn::RTMessage();
+    msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
+            {
+                CircuitWidget* self;
+                syn::UnitFactory* unitFactory;
+                syn::Unit* unit;
+                CircuitWire* toWire;
+                CircuitWire* fromWire;
+                int px, py;
+                GetArgs(a_data, 0, self, unitFactory, unit, toWire, fromWire, px, py);
+                int unitId = a_circuit->addUnit(unit->clone());
+                unsigned classId = unit->getClassIdentifier();
+                // Connect both wires to the sum unit
+                a_circuit->connectInternal(fromWire->getOutputPort().first, fromWire->getOutputPort().second, unitId, 0);
+                a_circuit->connectInternal(toWire->getOutputPort().first, toWire->getOutputPort().second, unitId, 1);
+                // Replace toWire's connection with one from sum unit
+                a_circuit->connectInternal(unitId, 0, toWire->getInputPort().first, toWire->getInputPort().second);
+
+                // Queue return message
+                if (a_isLast)
+                {
+                    GUIMessage* msg = new GUIMessage;
+                    msg->action = [](MainWindow* a_win, ByteChunk* a_data)
+                            {
+                                CircuitWidget* self;
+                                unsigned classId;
+                                int unitId;
+                                CircuitWire* toWire;
+                                CircuitWire* fromWire;
+                                int px, py;
+                                GetArgs(a_data, 0, self, classId, unitId, toWire, fromWire, px, py);
+
+                                // Create + place unit widget
+                                self->onUnitCreated_(classId, unitId);  
+                                Eigen::Vector2i pos = {px, py};                      
+                                self->endCreateUnit_(pos - Vector2i::Ones()*self->getGridSpacing());         
+                                
+
+                                // Finish drawing wire
+                                self->onConnectionCreated_({unitId, 0}, fromWire->getOutputPort());
+
+                                // replace it with a wire going into the sum unit...
+                                self->m_drawingWireState.wire = new CircuitWire(self);
+                                self->onConnectionCreated_({unitId, 1}, toWire->getOutputPort());
+                                // and a wire going from the sum unit to the original input port
+                                self->m_drawingWireState.wire = new CircuitWire(self);
+                                self->onConnectionCreated_(toWire->getInputPort(), {unitId,0});
+                            };
+                    PutArgs(&msg->data, self, classId, unitId, toWire, fromWire, px, py);
+                    self->m_window->queueExternalMessage(msg);
+                    delete unit;
+                }
+            };
+
+    auto self = this;
+    auto unit = m_uf->createUnit("gain");
+    PutArgs(&msg->data, self, m_uf, unit, toWire, fromWire, pos.x(), pos.y());
+    m_vm->queueAction(msg);    
 }
 

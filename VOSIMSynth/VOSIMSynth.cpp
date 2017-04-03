@@ -196,6 +196,7 @@ void VOSIMSynth::registerUnits(syn::UnitFactory& a_uf)
 void VOSIMSynth::registerUnitWidgets(synui::CircuitWidget& a_cw)
 {
     a_cw.registerUnitWidget<syn::SummerUnit>([](synui::CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new synui::SummingUnitWidget(parent, a_vm, unitId); });
+    a_cw.registerUnitWidget<syn::GainUnit>([](synui::CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new synui::MultiplyingUnitWidget(parent, a_vm, unitId); });
 }
 
 

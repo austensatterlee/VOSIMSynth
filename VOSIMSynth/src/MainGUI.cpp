@@ -244,6 +244,15 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
             return m_vm->getInternalBufferSize();
         });
 
+    helper->addSerializableVariable<bool>("Curved Wires", 
+        [this](const bool& s)
+        {
+            m_circuit->setWireDrawStyle(static_cast<CircuitWidget::WireDrawStyle>(s));
+        }, [this]()
+        {
+            return static_cast<bool>(m_circuit->wireDrawStyle());
+        });
+
     nanogui::Theme* theme = m_screen->theme();
     /* Spacing-related parameters */
     helper->addGroup("Spacing");

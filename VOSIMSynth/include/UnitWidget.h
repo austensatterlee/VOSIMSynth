@@ -178,7 +178,16 @@ namespace synui
         /// \returns -1 if no ports are selected
         int getSelectedOutputPort(const Eigen::Vector2i& p) const;
 
-    private:
+    protected:
         float m_handleRadiusRatio;
+    };
+
+    class MultiplyingUnitWidget : public SummingUnitWidget
+    {
+
+    public:
+        MultiplyingUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId);
+
+        void draw(NVGcontext* ctx) override;
     };
 }

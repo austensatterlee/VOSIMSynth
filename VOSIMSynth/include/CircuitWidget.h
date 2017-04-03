@@ -82,6 +82,12 @@ namespace synui
             void* ptr;
         };
 
+        enum WireDrawStyle
+        {
+            Straight = 0,
+            Curved
+        };
+
         /**
          * \brief Displays and manipulates an audio circuit.
          * \param a_parent Parent widget.
@@ -110,9 +116,12 @@ namespace synui
          */
         Eigen::Vector2i fixToGrid(const Eigen::Vector2i& a_pixelLocation) const;
 
+        int getGridSpacing() const { return m_gridSpacing; }
+
         syn::VoiceManager* voiceManager() const { return m_vm; }
 
-        int getGridSpacing() const { return m_gridSpacing; }
+        WireDrawStyle wireDrawStyle() const { return m_wireDrawStyle; }
+        void setWireDrawStyle(WireDrawStyle a_newStyle) { m_wireDrawStyle = a_newStyle; }
 
         template<typename UnitType>
         void registerUnitWidget(UnitWidgetConstructor a_func) { m_registeredUnitWidgets[UnitType("").getClassIdentifier()] = a_func; }
@@ -122,7 +131,7 @@ namespace synui
 
         operator json() const;
         CircuitWidget* load(const json& j);
-        void reset();        
+        void reset();
 
         /**
          * \brief Attempt to update the position of an existing unit and record the change if successful.
@@ -197,7 +206,7 @@ namespace synui
         void endWireDraw_(int a_unitId, int a_portId, bool a_isOutput);
 
         /**
-         * \brief Place the CircuitWidget in the `MovingUnit` state. 
+         * \brief Place the CircuitWidget in the `MovingUnit` state.
          * During this state, all unit widgets in the selection set are moved.
          * \param a_start The location of the mouse; used as a reference point for determining movement amounts.
          */
@@ -234,6 +243,12 @@ namespace synui
          */
         void _createSummingJunction(CircuitWire* toWire, CircuitWire* fromWire, const Eigen::Vector2i& pos);
 
+
+        /**
+         * \brief Combine the two wires into a multiplying junction.
+         */
+        void _createMultiplyingJunction(CircuitWire* toWire, CircuitWire* fromWire, const Eigen::Vector2i& pos);
+
     private:
         synui::MainWindow* m_window;
         synui::UnitEditorHost* m_unitEditorHost;
@@ -242,6 +257,7 @@ namespace synui
         std::unordered_map<unsigned, UnitWidgetConstructor > m_registeredUnitWidgets;
         synui::Grid2D<GridCell> m_grid;
         int m_gridSpacing;
+        WireDrawStyle m_wireDrawStyle;
 
         enum class State
         {
