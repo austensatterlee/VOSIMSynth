@@ -606,6 +606,11 @@ bool synui::SummingUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
             triggerPortDrag_(selectedPort, isOutputSelected);
             return false;
         }
+        if (down && isHandleSelected(mousePos))
+        {
+            triggerEditorCallback();
+            return false;
+        }
         if (!down) {
             triggerPortDrop_(selectedPort, isOutputSelected);
             return false;
