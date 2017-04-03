@@ -131,24 +131,27 @@ namespace synui
             {
                 float noseSize = m_parentCircuit->getGridSpacing() * 0.33;
                 float noseAngle = 45.0;
-                nvgBeginPath(ctx);
+
                 Vector2i pt = m_end;
                 Vector2i prevPt = m_parentCircuit->m_grid.toPixel(m_path[m_path.size() - 2], m_parentCircuit->getGridSpacing());
+
                 Vector2f dir = (pt - prevPt).cast<float>();
                 dir.normalize();
                 float dangle = asin(dir[1]);
 
-                Eigen::Rotation2D<float> rot(dangle);
-                Vector2f headOffset = rot * (Vector2f{0, 1} * noseSize);
-                Vector2f noseOffset = rot * (Vector2f{sin(2 * PI / 180.0 * noseAngle), cos(2 * PI / 180.0 * noseAngle)} * noseSize);
+                Vector2f headOffset = Vector2f{0, 1} * noseSize;
+                Vector2f noseOffset = Vector2f{noseSize / sin(2 * PI / 180.0 * noseAngle), 0};
 
-                Vector2f p0 = m_end.cast<float>() - dir * noseSize;
+                Vector2f p0 = pt.cast<float>();
                 nvgBeginPath(ctx);
                 nvgFillColor(ctx, wireColor);
-                nvgMoveTo(ctx, p0.x(), p0.y());
-                nvgLineTo(ctx, p0.x() + headOffset.x(), p0.y() + headOffset.y());
-                nvgLineTo(ctx, p0.x() + noseOffset.x(), p0.y() + noseOffset.y());
-                nvgLineTo(ctx, p0.x() - headOffset.x(), p0.y() - headOffset.y());
+                nvgTranslate(ctx, pt.x(), pt.y());
+                nvgRotate(ctx, dangle);
+                nvgTranslate(ctx, -noseSize, 0);
+                nvgMoveTo(ctx, 0, 0);
+                nvgLineTo(ctx, headOffset.x(), headOffset.y());
+                nvgLineTo(ctx, noseOffset.x(), noseOffset.y());
+                nvgLineTo(ctx, headOffset.x(), -headOffset.y());
                 nvgClosePath(ctx);
                 nvgFill(ctx);
             }
