@@ -22,9 +22,9 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "Circuit.h"
 #include "Unit.h"
-#include "CircularContainers.h"
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/lockfree/policies.hpp>
+#include <boost/circular_buffer.hpp>
 #include <Containers.h>
 #include <map>
 
@@ -69,9 +69,9 @@ namespace syn
             m_bufferSize(1),
             m_internalBufferSize(1),
             m_tickCount(0),
-            m_activeVoices(0),
-            m_idleVoices(0),
-            m_garbageList(0),
+            m_activeVoices(MAX_VOICES),
+            m_idleVoices(MAX_VOICES),
+            m_garbageList(MAX_VOICES),
             m_instrument{"main"}
         {
             setBufferSize(m_bufferSize);
@@ -156,22 +156,22 @@ namespace syn
         int _stealIdleVoice();
 
     private:
-        typedef CircularQueue<int> VoiceIndexList;
-        typedef map<int, CircularQueue<int>> VoiceMap;
+        typedef boost::circular_buffer<int> VoiceIndexList;
+        typedef map<int, boost::circular_buffer<int>> VoiceMap;
 
         spsc_queue<RTMessage*> m_queuedActions;
 
         vector<Circuit> m_circuits;
-        int m_numActiveVoices; /// Number of active voices
-        int m_maxVoices; /// Total number of usable voices (idle voices + active voices)
+        int m_numActiveVoices; ///< Number of active voices
+        int m_maxVoices; ///< Total number of usable voices (idle voices + active voices)
         int m_bufferSize;
         int m_internalBufferSize;
         int m_tickCount;
 
-        VoiceMap m_voiceMap; /// maps midi notes to voice indices
-        VoiceIndexList m_activeVoices; /// list of active voice indices
-        VoiceIndexList m_idleVoices; /// list of idle voice indices
-        VoiceIndexList m_garbageList; /// pre-allocated storage for collecting idle voices during audio processing
+        VoiceMap m_voiceMap; ///< maps midi notes to voice indices
+        VoiceIndexList m_activeVoices; ///< list of active voice indices
+        VoiceIndexList m_idleVoices; ///< list of idle voice indices
+        VoiceIndexList m_garbageList; ///< pre-allocated storage for collecting idle voices during audio processing
         Circuit m_instrument;
     };
 }

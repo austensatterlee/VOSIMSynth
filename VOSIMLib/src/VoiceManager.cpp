@@ -24,11 +24,11 @@ namespace syn
     int VoiceManager::_createVoice(int a_note, int a_velocity) {
        int vind = _stealIdleVoice();
 
-        m_activeVoices.push_right(vind);
+        m_activeVoices.push_back(vind);
         if (m_voiceMap.find(a_note) == m_voiceMap.end()) {
-            m_voiceMap[a_note].resize(m_maxVoices);
+            m_voiceMap[a_note].set_capacity(m_maxVoices);
         }
-        m_voiceMap[a_note].push_right(vind);
+        m_voiceMap[a_note].push_back(vind);
         m_circuits[vind].noteOn(a_note, a_velocity);
         m_numActiveVoices++;
         return vind;
@@ -40,10 +40,10 @@ namespace syn
             int note = voice.note();
             int vel = voice.velocity();
             if (m_voiceMap.find(note) != m_voiceMap.end()) {
-                voice.noteOff(note, vel);
-                m_voiceMap[note].remove(a_voiceIndex);
-                m_activeVoices.remove(a_voiceIndex);
-                m_idleVoices.push_right(a_voiceIndex);
+                voice.noteOff(note, vel);                
+                m_voiceMap[note].erase(std::find(m_voiceMap[note].begin(), m_voiceMap[note].end(), a_voiceIndex));
+                m_activeVoices.erase(std::find(m_activeVoices.begin(), m_activeVoices.end(), a_voiceIndex));
+                m_idleVoices.push_back(a_voiceIndex);
                 m_numActiveVoices--;
             }
         }
@@ -52,15 +52,15 @@ namespace syn
     int VoiceManager::_stealIdleVoice() {
         // Try to find a voice that is already idle
         if (m_numActiveVoices < m_maxVoices) {
-            int vind;
-            m_idleVoices.pop_left(vind);
+            int vind = m_idleVoices.front();
+            m_idleVoices.pop_front();
             return vind;
         }
 
         // If none are found, force a voice off the active stack
         int vind = getOldestVoiceIndex();
         _makeIdle(vind);
-        m_idleVoices.remove(vind);
+        m_idleVoices.erase(std::find(m_idleVoices.begin(), m_idleVoices.end(), vind));
         return vind;
     }
 
@@ -70,9 +70,7 @@ namespace syn
 
     void VoiceManager::noteOff(int a_noteNumber, int a_velocity) {
         if (m_voiceMap.find(a_noteNumber) != m_voiceMap.end()) {
-             int vind;
-            unsigned off = 0;
-            while (m_voiceMap[a_noteNumber].peek(vind, off++)) {
+            for (int vind : m_voiceMap[a_noteNumber]) {
                 m_circuits[vind].noteOff(a_noteNumber, a_velocity);
             }
         }
@@ -94,19 +92,19 @@ namespace syn
 
         m_maxVoices = a_newMax;
         // Resize buffers
-        m_idleVoices.resize(m_maxVoices);
-        m_activeVoices.resize(m_maxVoices);
-        m_garbageList.resize(m_maxVoices);
+        m_idleVoices.set_capacity(m_maxVoices);
+        m_activeVoices.set_capacity(m_maxVoices);
+        m_garbageList.set_capacity(m_maxVoices);
 
         int vind;
          while (!m_activeVoices.empty()) {
-            m_activeVoices.peek(vind);
+            vind = m_activeVoices.front();
             _makeIdle(vind);
         }
         m_numActiveVoices = 0;
 
         while (!m_idleVoices.empty()) {
-                m_idleVoices.pop_left(vind);
+            m_idleVoices.pop_front();
         }
 
         while (m_circuits.size() > a_newMax) {
@@ -115,11 +113,11 @@ namespace syn
 
         for (unsigned i = 0; i < m_circuits.size(); i++) {
             m_circuits[i] = Circuit(m_instrument);
-            m_idleVoices.push_right(i);
+            m_idleVoices.push_back(i);
         }
 
         while (m_circuits.size() < a_newMax) {
-            m_idleVoices.push_right(m_circuits.size());
+            m_idleVoices.push_back(m_circuits.size());
             m_circuits.push_back(Circuit(m_instrument));
         }
     }
@@ -128,7 +126,7 @@ namespace syn
     {
         vector<int> voiceIndices(m_numActiveVoices);
         for(int i=0; i<m_numActiveVoices; i++){
-            m_activeVoices.peek(voiceIndices[i], i);
+            voiceIndices[i] = m_activeVoices.at(i);
         }
         return voiceIndices;
     }
@@ -139,15 +137,17 @@ namespace syn
         int vind;
 
         for (int i = 0; i < m_numActiveVoices; i++) {
-            m_activeVoices.peek(vind, i);
+            vind = m_activeVoices.at(i);
             Circuit& voice = m_circuits[vind];
             if (!voice.isActive()) {
-                m_garbageList.push_right(vind);
+                m_garbageList.push_back(vind);
             }
         }
 
-        while (m_garbageList.pop_left(vind)) {
+        while (!m_garbageList.empty()) {
+            vind = m_garbageList.front();
             _makeIdle(vind);
+            m_garbageList.pop_front();
         }
 
         for (int j = 0; j < m_bufferSize; j++) {
@@ -157,7 +157,7 @@ namespace syn
 
         for (int sample = 0; sample < m_bufferSize; sample += m_internalBufferSize) {
             for (int i = 0; i < m_numActiveVoices; i++) {
-                m_activeVoices.peek(vind, i);
+                vind = m_activeVoices.at(i);
                 Circuit& voice = m_circuits[vind];
                 voice.connectInput(0, a_left_input);
                 voice.connectInput(1, a_right_input);
@@ -173,11 +173,9 @@ namespace syn
 
     int VoiceManager::getLowestVoiceIndex() const {
         if (m_numActiveVoices > 0) {
-            VoiceMap::const_iterator it;
-            int voice;
-            for (it = m_voiceMap.cbegin(); it != m_voiceMap.cend(); ++it) {
-                if (it->second.peek(voice) && m_circuits[voice].isActive()) {
-                    return voice;
+            for (auto it = m_voiceMap.cbegin(); it != m_voiceMap.cend(); ++it) {
+                if (!it->second.empty() && m_circuits[it->second.front()].isActive()) {
+                    return it->second.front();
                 }         
             }
         }
@@ -186,30 +184,26 @@ namespace syn
 
     int VoiceManager::getNewestVoiceIndex() const {
         if (m_numActiveVoices > 0) {
-            int vind;
-            if (m_activeVoices.peek_right(vind))
-                return vind;
+            if(!m_activeVoices.empty())
+                return m_activeVoices.back();
         }
         return -1;
     }
 
     int VoiceManager::getOldestVoiceIndex() const {
-        if (m_numActiveVoices > 0) {
-            int vind;
-            if (m_activeVoices.peek_left(vind))
-                return vind;
+        if (m_numActiveVoices > 0) {            
+            if(!m_activeVoices.empty())
+                return m_activeVoices.front();
         }
         return -1;
     }
 
     int VoiceManager::getHighestVoiceIndex() const {
         if (m_numActiveVoices > 0) {
-            VoiceMap::const_iterator it;
-            int voice;
-            for (it = m_voiceMap.cbegin(); it != m_voiceMap.cend(); ++it) {
-                if (it->second.peek(voice) && m_circuits[voice].isActive()) {
-                    return voice;
-                }
+            for (auto it = m_voiceMap.crbegin(); it != m_voiceMap.crend(); ++it) {
+                if (!it->second.empty()) {
+                    return it->second.front();
+                } 
             }
         }
         return -1;
