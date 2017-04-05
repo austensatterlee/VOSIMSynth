@@ -135,7 +135,7 @@ void syn::GainUnit::onInputConnection_(int a_inputPort)
     }
     if(numConnectedInputs==numInputs() && numInputs()<8)
     {
-        addInput_(std::to_string(numInputs()+1), 0.0);
+        addInput_(std::to_string(numInputs()+1), 1.0);
     }
 }
 

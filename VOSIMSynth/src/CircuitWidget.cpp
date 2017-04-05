@@ -83,6 +83,7 @@ namespace synui
             if(m_path.empty())
                 nvgLineTo(ctx, m_end.x(), m_end.y());
 
+            int gs = m_parentCircuit->getGridSpacing();
             for (int i=0; i<m_path.size(); i+=1)
             {
                 Grid2DPoint& currGridPt     = m_path[i];
@@ -90,30 +91,32 @@ namespace synui
                 Grid2DPoint& nextGridPt2    = i+2<m_path.size() ? m_path[i+2] : m_path.back();
                 Grid2DPoint& nextGridPt3    = i+3<m_path.size() ? m_path[i+3] : m_path.back();
 
-                Vector2i currPixelPt = i>=m_path.size()-1 ? m_end : m_parentCircuit->m_grid.toPixel(currGridPt, m_parentCircuit->getGridSpacing());
-
+                Vector2i currPixelPt = i>=m_path.size()-1 ? m_end : m_parentCircuit->m_grid.toPixel(currGridPt, gs);
                 nvgLineTo(ctx, currPixelPt.x(), currPixelPt.y());
 
                 if (m_parentCircuit->wireDrawStyle() == CircuitWidget::Curved) {
+                    Vector2i dCurrGridPt = nextGridPt - currGridPt;
+                    Vector2i dNextGridPt = nextGridPt2 - nextGridPt;
+                    Vector2i dNextGridPt2 = nextGridPt3 - nextGridPt2;
                     // Draw a curve when the path changes direction.
-                    if (((nextGridPt2-nextGridPt).array() != (nextGridPt-currGridPt).array()).any())
+                    if (dNextGridPt.dot(dCurrGridPt) == 0)
                     {
-                        Vector2i nextPixelPt = i + 1 >= m_path.size() - 1 ? m_end : m_parentCircuit->m_grid.toPixel(nextGridPt, m_parentCircuit->getGridSpacing());
-                        Vector2i nextPixelPt2 = i + 2 >= m_path.size() - 1 ? m_end : m_parentCircuit->m_grid.toPixel(nextGridPt2, m_parentCircuit->getGridSpacing());
+                        Vector2i nextPixelPt = i + 1 >= m_path.size() - 1 ? m_end : m_parentCircuit->m_grid.toPixel(nextGridPt, gs);
+                        Vector2i nextPixelPt2 = i + 2 >= m_path.size() - 1 ? m_end : m_parentCircuit->m_grid.toPixel(nextGridPt2, gs);
                         // Handle "S-curves" and corner turns.
-                        if (((nextGridPt3-nextGridPt2).array() != (nextGridPt2-nextGridPt).array()).any()) {
-                            Vector2i nextPixelPt3 = i + 3 >= m_path.size() - 1 ? m_end : m_parentCircuit->m_grid.toPixel(nextGridPt3, m_parentCircuit->getGridSpacing());
+                        if (dNextGridPt2.dot(dNextGridPt) == 0) {
+                            Vector2i nextPixelPt3 = i + 3 >= m_path.size() - 1 ? m_end : m_parentCircuit->m_grid.toPixel(nextGridPt3, gs);
                             nvgBezierTo(ctx, nextPixelPt.x(), nextPixelPt.y(), nextPixelPt2.x(), nextPixelPt2.y(), nextPixelPt3.x(), nextPixelPt3.y());
                             i += 2;
                         }
                         else
                         {
-                            //nvgArcTo(ctx, nextPixelPt.x(), nextPixelPt.y(), nextPixelPt2.x(), nextPixelPt2.y(), m_parentCircuit->getGridSpacing()*0.5f);
-                            nvgQuadTo(ctx, nextPixelPt.x(), nextPixelPt.y(), nextPixelPt2.x(), nextPixelPt2.y());
+                            nvgBezierTo(ctx, currPixelPt.x(), currPixelPt.y(), nextPixelPt.x(), nextPixelPt.y(), nextPixelPt2.x(), nextPixelPt2.y());
                             i += 1;
                         }
                     }
                 }
+                
             }
             nvgStroke(ctx);
 
@@ -143,7 +146,6 @@ namespace synui
                 Vector2f headOffset = Vector2f{0, 1} * noseSize;
                 Vector2f noseOffset = Vector2f{noseSize / sin(2 * PI / 180.0 * noseAngle), 0};
 
-                Vector2f p0 = pt.cast<float>();
                 nvgBeginPath(ctx);
                 nvgFillColor(ctx, wireColor);
                 nvgTranslate(ctx, pt.x(), pt.y());
@@ -264,6 +266,7 @@ namespace synui
                     m_parentCircuit->m_grid.get(cell) = {CircuitWidget::GridCell::Wire, this};
             }
         }
+        float pathCost() const { return m_cost; } 
 
         void setInputPort(const CircuitWidget::Port& a_port)
         {
@@ -312,7 +315,7 @@ namespace synui
         Vector2i m_end;
         vector<Grid2DPoint> m_path;
         set<std::pair<int,int> > m_crossings;
-        double m_cost;
+        float m_cost;
         bool m_isFinal;
     };
 }
@@ -463,8 +466,9 @@ bool synui::CircuitWidget::mouseButtonEvent(const Vector2i& p, int button, bool 
                 cm->addMenuItem("Sum", 0);
                 cm->addMenuItem("Mul", 1);
                 cm->activate();
-                cm->setPosition(p - position());
                 performLayout(screen()->nvgContext());
+                cm->setPosition(p - position() - Vector2i{cm->width()*0.5,0});
+                endWireDraw_(0, 0, m_drawingWireState.startedFromOutput);
                 return true;
             }else{
                 // Force wire creation to fail when the user lets the mouse up over a blank space
@@ -617,7 +621,7 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
         }        
     }
 
-    // Highlight wires connected to a unit in the current selection
+    /* Highlight wires connected to a unit in the current selection */
     for (auto wire : m_wires)
     {
         auto outUnit = m_unitWidgets[wire->getOutputPort().first];
@@ -644,8 +648,8 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
 
     Widget::draw(ctx);
 
-    nvgSave(ctx);
-    
+    /* Handle mouse hover drawing that should be displayed in front of the unit widgets */
+    nvgSave(ctx);    
     if (contains(screen()->mousePos() - parent()->absolutePosition()))
     {
         Vector2i mousePos = screen()->mousePos() - absolutePosition();
@@ -664,14 +668,18 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
         }
         else if (m_state == State::DrawingWire)
         {
+            // Draw an overlay when dragging one wire onto another
             Grid2DPoint mousePt = m_grid.fromPixel(mousePos, m_gridSpacing);
             if(m_grid.get(mousePt).state == GridCell::Wire)
             {
                 Vector2i fixedMousePos = m_grid.toPixel(mousePt, m_gridSpacing);
                 nvgBeginPath(ctx);
-                nvgFillColor(ctx, nanogui::Color(0,0,0,200));
-                nvgCircle(ctx, fixedMousePos.x(), fixedMousePos.y(), m_gridSpacing*0.35);
-                nvgFill(ctx);                
+                nvgStrokeColor(ctx, nanogui::Color(200,0,0,200));
+                nvgMoveTo(ctx, fixedMousePos.x() - m_gridSpacing*0.5, fixedMousePos.y() - m_gridSpacing*0.5);
+                nvgLineTo(ctx, fixedMousePos.x() + m_gridSpacing*0.5, fixedMousePos.y() + m_gridSpacing*0.5);
+                nvgMoveTo(ctx, fixedMousePos.x() + m_gridSpacing*0.5, fixedMousePos.y() - m_gridSpacing*0.5);
+                nvgLineTo(ctx, fixedMousePos.x() - m_gridSpacing*0.5, fixedMousePos.y() + m_gridSpacing*0.5);
+                nvgStroke(ctx);                
             }
         }
     }
@@ -708,11 +716,12 @@ void synui::CircuitWidget::performLayout(NVGcontext* ctx)
 void synui::CircuitWidget::resizeGrid(int a_newGridSpacing)
 {
     // Require at least 6 pixels per grid point.
-    a_newGridSpacing = a_newGridSpacing > 6 ? a_newGridSpacing : 6;
+    const int minSpacing = 6;
+    // Require at least 20 rows and 20 columns (enforced only after first draw)
+    const int maxSpacing = m_state==State::Uninitialized ? a_newGridSpacing : syn::MIN(size().x(), size().y())/20;
+    a_newGridSpacing = syn::MAX(a_newGridSpacing, minSpacing);
+    a_newGridSpacing = syn::MIN(a_newGridSpacing, maxSpacing);
     Vector2i newGridShape = m_grid.fromPixel(size(), a_newGridSpacing);
-
-    // Require the grid size to be at least 10 x 10.
-    newGridShape = newGridShape.cwiseMax(10);
 
     if (m_gridSpacing == a_newGridSpacing && (newGridShape.array() == m_grid.getShape().array()).all())
         return;
@@ -1003,8 +1012,7 @@ void synui::CircuitWidget::startWireDraw_(int a_unitId, int a_portId, bool a_isO
     if (m_state != State::Idle)
         return;
     m_state = State::DrawingWire;
-    m_drawingWireState.wire->setOutputPort({-1,-1});
-    m_drawingWireState.wire->setInputPort({-1,-1});
+    *m_drawingWireState.wire = CircuitWire{this};
     m_drawingWireState.startedFromOutput = a_isOutput;
 
     Vector2i mousePos = screen()->mousePos() - absolutePosition();

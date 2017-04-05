@@ -110,6 +110,8 @@ void synui::MainGUI::reset()
 void synui::MainGUI::resize(int a_w, int a_h)
 {
     TRACE
+    a_w = syn::MIN(a_w, 800);
+    a_h = syn::MIN(a_w, 600);
     m_screen->resizeCallbackEvent(a_w, a_h);
     m_sidePanelL->setFixedHeight(m_screen->height());
     m_sidePanelR->setPosition({m_sidePanelL->width(), m_buttonPanel->height()});
@@ -222,6 +224,14 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
 
     helper->addSerializableVariable<int>("Window width", [this](const int& w) { m_window->resize(w, m_screen->height()); }, [this]() { return m_screen->width(); });
     helper->addSerializableVariable<int>("Window height", [this](const int& h) { m_window->resize(m_screen->width(), h); }, [this]() { return m_screen->height(); });
+    helper->addSerializableVariable<bool>("Curved Wires", 
+        [this](const bool& s)
+        {
+            m_circuit->setWireDrawStyle(static_cast<CircuitWidget::WireDrawStyle>(s));
+        }, [this]()
+        {
+            return static_cast<bool>(m_circuit->wireDrawStyle());
+        });
     helper->addSerializableVariable<int>("Internal buf. size",
         [this, helper](const int& size)
         {
@@ -243,16 +253,29 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
         {
             return m_vm->getInternalBufferSize();
         });
-
-    helper->addSerializableVariable<bool>("Curved Wires", 
-        [this](const bool& s)
+    helper->addSerializableVariable<int>("Max Voices", 
+        [this, helper](const int& maxVoices)
         {
-            m_circuit->setWireDrawStyle(static_cast<CircuitWidget::WireDrawStyle>(s));
+             syn::RTMessage* msg = new syn::RTMessage();
+             msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
+             {
+                 if(a_isLast)
+                 {
+                     syn::VoiceManager* vm;
+                     int maxVoices;
+                     SerializableFormHelper* helper;
+                     GetArgs(a_data, 0, vm, helper, maxVoices);
+                     vm->setMaxVoices(maxVoices);
+                     helper->refresh();
+                 }
+             };    
+            
+            PutArgs(&msg->data, m_vm, helper, maxVoices);
+            m_vm->queueAction(msg);            
         }, [this]()
         {
-            return static_cast<bool>(m_circuit->wireDrawStyle());
+            return m_vm->getMaxVoices();
         });
-
     nanogui::Theme* theme = m_screen->theme();
     /* Spacing-related parameters */
     helper->addGroup("Spacing");

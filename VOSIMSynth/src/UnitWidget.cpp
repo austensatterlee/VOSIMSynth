@@ -503,9 +503,10 @@ void synui::SummingUnitWidget::draw(NVGcontext* ctx)
     nvgSave(ctx);
 
     nvgTranslate(ctx, mPos.x(), mPos.y());
-    nanogui::Color bgColor(89, 63, 73, 255);
+    nanogui::Color bgColor = nanogui::Color(140, 73, 191, 255);
     nanogui::Color bgHighlightColor(25, 50);
-    nanogui::Color handleColor(42, 43, 51, 255);
+    nanogui::Color handleColor(3, 88, 88, 255);
+    nanogui::Color handleStrokeColor(0,97);
     nanogui::Color handleHighlightColor(225, 178);
     nanogui::Color plusColor(255, 255, 235, 255);
     nanogui::Color oColor(187, 193, 29, 255);
@@ -545,6 +546,9 @@ void synui::SummingUnitWidget::draw(NVGcontext* ctx)
         nvgFillColor(ctx, handleHighlightColor);
         nvgFill(ctx);
     }
+    nvgStrokeColor(ctx, handleStrokeColor);
+    nvgStrokeWidth(ctx, 5.0f);
+    nvgStroke(ctx);
 
     // Draw plus sign
     nvgBeginPath(ctx);
@@ -644,9 +648,10 @@ void synui::MultiplyingUnitWidget::draw(NVGcontext* ctx)
     nvgSave(ctx);
 
     nvgTranslate(ctx, mPos.x(), mPos.y());
-    nanogui::Color bgColor(89, 63, 73, 255);
+    nanogui::Color bgColor = nanogui::Color(127, 32, 11, 255);
     nanogui::Color bgHighlightColor(25, 50);
-    nanogui::Color handleColor(42, 43, 51, 255);
+    nanogui::Color handleColor(32, 33, 68, 255);
+    nanogui::Color handleStrokeColor(0,55);
     nanogui::Color handleHighlightColor(225, 178);
     nanogui::Color plusColor(255, 255, 235, 255);
     nanogui::Color oColor(187, 193, 29, 255);
@@ -686,6 +691,9 @@ void synui::MultiplyingUnitWidget::draw(NVGcontext* ctx)
         nvgFillColor(ctx, handleHighlightColor);
         nvgFill(ctx);
     }
+    nvgStrokeColor(ctx, handleStrokeColor);
+    nvgStrokeWidth(ctx, 5.0f);
+    nvgStroke(ctx);
 
     // Draw X sign
     nvgBeginPath(ctx);

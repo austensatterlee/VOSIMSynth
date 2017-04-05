@@ -389,7 +389,7 @@ namespace synui
          * \return A list of Grid2DPoints.
          */
         template <template <typename> typename Heuristic = manhattan_distance, template <typename> typename WeightFunc = default_weight_func>
-        std::list<Grid2DPoint> findPath(const Grid2DPoint& a_start, const Grid2DPoint& a_end, double* a_cost=nullptr) const
+        std::list<Grid2DPoint> findPath(const Grid2DPoint& a_start, const Grid2DPoint& a_end, float* a_cost=nullptr) const
         {
             using Vertex = Grid2DIndex;
             struct ScoredVertex

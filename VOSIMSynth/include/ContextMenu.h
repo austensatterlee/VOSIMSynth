@@ -42,7 +42,7 @@ namespace synui
               m_disposable(a_disposable),
               m_activated(false)
         {
-            m_gridLayout = new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Fill, 5, 5);
+            m_gridLayout = new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Fill, 0, 0);
             setLayout(m_gridLayout);
         }
 
@@ -96,6 +96,7 @@ namespace synui
         auto p = std::make_pair(a_name, a_value);
         m_menuItems.push_back(p);
         m_itemMap[a_name] = new nanogui::Label(this, a_name);
+        m_itemMap[a_name]->setHeight(m_itemMap[a_name]->fontSize()*1.5);
     }
 
     template <typename T>
@@ -154,9 +155,16 @@ namespace synui
         nvgSave(ctx);
         nvgResetScissor(ctx);
         nvgTranslate(ctx, mPos.x(), mPos.y());
+        
+        /* Draw outline */
+        nanogui::Color outlineColor{0.7f, 0.7f};
+        nvgBeginPath(ctx);
+        nvgRect(ctx, 0, 0, mSize.x(), mSize.y());
+        nvgStrokeColor(ctx, outlineColor);
+        nvgStroke(ctx);
 
         /* Draw background */
-        nanogui::Color bgColor{0.0f, 1.0f};
+        nanogui::Color bgColor{0.0f, 0.9f};
         nvgBeginPath(ctx);
         nvgRect(ctx, 0, 0, mSize.x(), mSize.y());
         nvgFillColor(ctx, bgColor);
@@ -165,7 +173,7 @@ namespace synui
         /* Draw separators */
 
         /* Highlight selected item */
-        nanogui::Color highlightColor(0.25, 1.0f);
+        nanogui::Color highlightColor(0.15f, 1.0f);
         Eigen::Vector2i mousePos = screen()->mousePos() - absolutePosition();
         for (const auto& w : m_itemMap)
         {
