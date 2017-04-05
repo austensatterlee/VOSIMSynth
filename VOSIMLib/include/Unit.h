@@ -195,7 +195,7 @@ namespace syn
         /**
          * Reset the units internal state (if any)
          */
-        virtual void reset() {};
+        virtual void reset() = 0;
 
         virtual void setBufferSize(int a_bufferSize);
 

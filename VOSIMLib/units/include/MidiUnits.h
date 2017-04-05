@@ -28,6 +28,8 @@ namespace syn
         MidiNoteUnit(const MidiNoteUnit& a_rhs) :
             MidiNoteUnit(a_rhs.name()) { }
 
+        void reset() override {};
+
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
     };
@@ -46,6 +48,8 @@ namespace syn
 
         VelocityUnit(const VelocityUnit& a_rhs) :
             VelocityUnit(a_rhs.name()) { }
+
+        void reset() override {};
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override {
@@ -70,12 +74,14 @@ namespace syn
         GateUnit(const GateUnit& a_rhs) :
             GateUnit(a_rhs.name()) { }
 
+        void reset() override {};
+
     protected:
         void MSFASTCALL process_() GCCFASTCALL override {
         BEGIN_PROC_FUNC
             WRITE_OUTPUT(0, static_cast<double>(isNoteOn()));
         END_PROC_FUNC
-        };
+        }
     };
 
     /**
@@ -95,6 +101,8 @@ namespace syn
 
         MidiCCUnit(const MidiCCUnit& a_rhs) :
             MidiCCUnit(a_rhs.name()) { }
+
+        void reset() override {};
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override {

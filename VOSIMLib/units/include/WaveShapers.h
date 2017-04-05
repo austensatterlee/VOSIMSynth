@@ -42,6 +42,8 @@ namespace syn {
 
         explicit TanhUnit(const string& a_name);
         TanhUnit(const TanhUnit& a_rhs);
+        
+        void reset() override {};
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
     };

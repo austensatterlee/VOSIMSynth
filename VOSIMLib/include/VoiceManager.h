@@ -64,8 +64,6 @@ namespace syn
     public:
         VoiceManager() :
             m_queuedActions{MAX_VOICEMANAGER_MSG_QUEUE_SIZE},
-            m_numActiveVoices(0),
-            m_maxVoices(0),
             m_bufferSize(1),
             m_internalBufferSize(1),
             m_tickCount(0),
@@ -162,10 +160,8 @@ namespace syn
         spsc_queue<RTMessage*> m_queuedActions;
 
         vector<Circuit> m_circuits;
-        int m_numActiveVoices; ///< Number of active voices
-        int m_maxVoices; ///< Total number of usable voices (idle voices + active voices)
-        int m_bufferSize;
-        int m_internalBufferSize;
+        int m_bufferSize; ///< size of the buffers that will be written to by VoiceManager::tick
+        int m_internalBufferSize; ///< size of the voice buffers that will be read from by VoiceManager::tick
         int m_tickCount;
 
         VoiceMap m_voiceMap; ///< maps midi notes to voice indices

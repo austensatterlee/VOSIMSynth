@@ -72,6 +72,8 @@ namespace syn
         PassthroughUnit(const PassthroughUnit& a_other) :
             PassthroughUnit(a_other.name()) { };
 
+        void reset() override {};
+
     protected:
         void MSFASTCALL process_() GCCFASTCALL override
         {

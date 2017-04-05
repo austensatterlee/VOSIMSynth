@@ -67,9 +67,10 @@ namespace syn
 
         DCRemoverUnit(const DCRemoverUnit& a_rhs);
 
+        void reset() override;
+
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
-        void reset() override;
         void onNoteOn_() override;
 
     private:
@@ -89,6 +90,8 @@ namespace syn
 
         RectifierUnit(const RectifierUnit& a_rhs);
 
+        void reset() override {};
+
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
 
@@ -106,6 +109,8 @@ namespace syn
         explicit GainUnit(const string& a_name);
 
         GainUnit(const GainUnit& a_rhs);
+
+        void reset() override {};
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
@@ -125,6 +130,8 @@ namespace syn
 
         SummerUnit(const SummerUnit& a_rhs);
 
+        void reset() override {};
+
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
         void onInputConnection_(int a_inputPort) override;
@@ -141,13 +148,15 @@ namespace syn
 
         ConstantUnit(const ConstantUnit& a_rhs);
 
+        void reset() override {};
+
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
     };
 
     /**
-    * Balances incoming signals between two outputs
-    */
+     * Balances incoming signals between two outputs
+     */
     class VOSIMLIB_API PanningUnit : public Unit
     {
         DERIVE_UNIT(PanningUnit)
@@ -155,6 +164,8 @@ namespace syn
         explicit PanningUnit(const string& a_name);
 
         PanningUnit(const PanningUnit& a_rhs);
+
+        void reset() override {};
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
@@ -164,8 +175,8 @@ namespace syn
     };
 
     /**
-    * Affine transform
-    */
+     * Affine transform
+     */
     class VOSIMLIB_API LerpUnit : public Unit
     {
         DERIVE_UNIT(LerpUnit)
@@ -173,6 +184,8 @@ namespace syn
         explicit LerpUnit(const string& a_name);
 
         LerpUnit(const LerpUnit& a_rhs);
+
+        void reset() override {};
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
@@ -201,6 +214,8 @@ namespace syn
         {
         }
 
+        void reset() override {};
+
     protected:
         void MSFASTCALL process_() GCCFASTCALL override {
         BEGIN_PROC_FUNC
@@ -227,6 +242,8 @@ namespace syn
         {
         }
 
+        void reset() override {};
+
     protected:
         void MSFASTCALL process_() GCCFASTCALL override {
             BEGIN_PROC_FUNC
@@ -246,10 +263,10 @@ namespace syn
     public:
         explicit SwitchUnit(const string& a_name) : Unit(a_name)
         {
-            addInput_("a");
-            addInput_("b");
-            addInput_("comp");
-            addInput_("ctrl");
+            addInput_("low");
+            addInput_("high");
+            addInput_("cmp");
+            addInput_("in");
             addOutput_("out");
         }
 
@@ -257,6 +274,8 @@ namespace syn
             SwitchUnit(a_rhs.name())
         {
         }
+
+        void reset() override {};
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override {
