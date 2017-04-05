@@ -431,9 +431,9 @@ bool synui::CircuitWidget::mouseButtonEvent(const Vector2i& p, int button, bool 
         }
         if (button == GLFW_MOUSE_BUTTON_RIGHT && down)
         {
+            m_state = State::Idle;
             removeChild(m_creatingUnitState.widget);
             m_creatingUnitState.widget = nullptr;
-            m_state = State::Idle;
             return true;
         }
     }
@@ -764,6 +764,7 @@ synui::CircuitWidget* synui::CircuitWidget::load(const json& j)
         Vector2i pos{unit["x"].get<int>(), unit["y"].get<int>()};
         UnitWidget* widget = createUnitWidget_(classId, unitId);
         updateUnitPos(widget, pos);
+        m_unitWidgets[unitId] = widget;
         m_unitWidgets[unitId]->load(j);
     }
 
@@ -865,7 +866,6 @@ synui::UnitWidget* synui::CircuitWidget::createUnitWidget_(unsigned a_classId, i
             m_unitEditorHost->activateEditor(classId, unitId);
             m_unitWidgets[unitId]->setHighlighted(true);
         });
-    m_unitWidgets[a_unitId] = widget;
     // Performing the layout is necesarry so we know what size the widget will be.
     screen()->performLayout();
     return widget;
@@ -875,19 +875,21 @@ bool synui::CircuitWidget::endCreateUnit_(const Vector2i& a_pos)
 {
     if (m_state != State::CreatingUnit)
         return false;
+    m_state = State::Idle;
     // Place the unit if the position is valid
     if (checkUnitPos(m_creatingUnitState.widget, a_pos))
     {
-        m_state = State::Idle;
         m_creatingUnitState.widget->setVisible(true);
         m_creatingUnitState.widget->setEnabled(true);
+        m_unitWidgets[m_creatingUnitState.unitId] = m_creatingUnitState.widget;
         updateUnitPos(m_creatingUnitState.widget, a_pos);
         m_creatingUnitState.widget->triggerEditorCallback();
         return true;
     }
     else
     {
-        m_creatingUnitState.isValid = false;
+        removeChild(m_creatingUnitState.widget);
+        m_creatingUnitState.widget = nullptr;
         return false;
     }
 }
