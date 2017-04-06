@@ -21,10 +21,6 @@ class PyUnit_tpl : public Base
 {
 public:
     using Base::Base; // Inherit constructors
-    void reset() override
-    {
-        PYBIND11_OVERLOAD(void, Base, reset, );
-    }
 
     bool isActive() const override
     {
@@ -69,6 +65,11 @@ public:
     void onInputDisconnection_(int a_inputPort) override
     {
         PYBIND11_OVERLOAD(void, Base, onInputDisconnection_, a_inputPort);
+    }
+    
+    void reset() override
+    {
+        PYBIND11_OVERLOAD_PURE(void, Base, reset, );
     }
 
     void MSFASTCALL process_() GCCFASTCALL override

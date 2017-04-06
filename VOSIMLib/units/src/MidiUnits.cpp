@@ -1,8 +1,6 @@
 #include "MidiUnits.h"
 #include "DSPMath.h"
 
-#include "common.h"
-
 void syn::MidiNoteUnit::process_()
 {
     BEGIN_PROC_FUNC

@@ -36,9 +36,8 @@ namespace synui
             }
             else
             {
-                if (Widget::mouseButtonEvent(p, button, down, modifiers))
-                    return true;
-                return false;
+                Widget::mouseButtonEvent(p, button, down, modifiers);
+                return true;
             }
         }
 
@@ -80,7 +79,7 @@ synui::MainGUI::operator json() const
 {
     TRACE
     json j;
-    j["circuit"] = m_circuit->operator json();
+    j["circuit"] = m_circuitWidget->operator json();
     json& settings = j["settings"] = json();
     settings = m_settingsFormHelper->operator json();
     
@@ -96,7 +95,7 @@ synui::MainGUI* synui::MainGUI::load(const json& j)
     {
         m_settingsFormHelper->load(settings);
     }
-    m_circuit->load(j["circuit"]);
+    m_circuitWidget->load(j["circuit"]);
     return this;
 }
 
@@ -104,7 +103,7 @@ void synui::MainGUI::reset()
 {
     TRACE
     m_unitEditorHost->reset();
-    m_circuit->reset();
+    m_circuitWidget->reset();
 }
 
 void synui::MainGUI::resize(int a_w, int a_h)
@@ -116,9 +115,9 @@ void synui::MainGUI::resize(int a_w, int a_h)
     m_sidePanelL->setFixedHeight(m_screen->height());
     m_sidePanelR->setPosition({m_sidePanelL->width(), m_buttonPanel->height()});
     m_sidePanelR->setFixedWidth(m_screen->width() - m_sidePanelR->absolutePosition().x());
-    m_circuit->setFixedHeight(m_screen->height() - m_sidePanelR->absolutePosition().y());
-    m_circuit->setFixedWidth(m_screen->width() - m_sidePanelR->absolutePosition().x());
-    m_circuit->resizeGrid(m_circuit->getGridSpacing());
+    m_circuitWidget->setFixedHeight(m_screen->height() - m_sidePanelR->absolutePosition().y());
+    m_circuitWidget->setFixedWidth(m_screen->width() - m_sidePanelR->absolutePosition().x());
+    m_circuitWidget->resizeGrid(m_circuitWidget->getGridSpacing());
     m_buttonPanel->setPosition({m_sidePanelL->width(), 0});
     m_buttonPanel->setFixedWidth(m_sidePanelR->width());
     m_screen->performLayout();
@@ -192,7 +191,7 @@ void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget)
             // Close popup
             subbtn->setCallback([this, button, subbtn]()
                 {
-                    this->m_circuit->loadPrototype(subbtn->id());
+                    this->m_circuitWidget->loadPrototype(subbtn->id());
                     button->setPushed(false);
                     m_screen->updateFocus(nullptr);
                 });
@@ -214,11 +213,11 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
 
     helper->addSerializableVariable<int>("Grid Spacing", [this](const int& s)
         {
-            m_circuit->resizeGrid(s);
+            m_circuitWidget->resizeGrid(s);
             m_screen->performLayout();
         }, [this]()
         {
-            int gs = m_circuit->getGridSpacing();
+            int gs = m_circuitWidget->getGridSpacing();
             return gs;
         });
 
@@ -227,11 +226,12 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
     helper->addSerializableVariable<bool>("Curved Wires", 
         [this](const bool& s)
         {
-            m_circuit->setWireDrawStyle(static_cast<CircuitWidget::WireDrawStyle>(s));
+            m_circuitWidget->setWireDrawStyle(static_cast<CircuitWidget::WireDrawStyle>(s));
         }, [this]()
         {
-            return static_cast<bool>(m_circuit->wireDrawStyle());
+            return static_cast<bool>(m_circuitWidget->wireDrawStyle());
         });
+
     helper->addSerializableVariable<int>("Internal buf. size",
         [this, helper](const int& size)
         {
@@ -253,6 +253,7 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
         {
             return m_vm->getInternalBufferSize();
         });
+
     helper->addSerializableVariable<int>("Max Voices", 
         [this, helper](const int& maxVoices)
         {
@@ -276,6 +277,55 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
         {
             return m_vm->getMaxVoices();
         });
+
+    helper->addSerializableVariable<bool>("Legato",
+        [this, helper](const bool& legato)
+        {
+            syn::RTMessage* msg = new syn::RTMessage();
+            msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
+            {
+                if (a_isLast)
+                {
+                    syn::VoiceManager* vm;
+                    bool legato;
+                    SerializableFormHelper* helper;
+                    GetArgs(a_data, 0, vm, helper, legato);
+                    vm->setLegato(legato);
+                    helper->refresh();
+                }
+            };
+
+            PutArgs(&msg->data, m_vm, helper, legato);
+            m_vm->queueAction(msg);
+        }, [this]()
+        {
+            return m_vm->getLegato();
+        });
+
+    helper->addVariable<syn::VoiceManager::VoiceStealingPolicy>("Voice Stealing",
+        [this, helper](const syn::VoiceManager::VoiceStealingPolicy& policy)
+        {
+            syn::RTMessage* msg = new syn::RTMessage();
+            msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
+            {
+                if (a_isLast)
+                {
+                    syn::VoiceManager* vm;
+                    syn::VoiceManager::VoiceStealingPolicy policy;
+                    SerializableFormHelper* helper;
+                    GetArgs(a_data, 0, vm, helper, policy);
+                    vm->setVoiceStealingPolicy(policy);
+                    helper->refresh();
+                }
+            };
+
+            PutArgs(&msg->data, m_vm, helper, policy);
+            m_vm->queueAction(msg);
+        }, [this]()
+        {
+            return m_vm->getVoiceStealingPolicy();
+        })->setItems({"Oldest", "Newest", "Highest", "Lowest"});
+
     nanogui::Theme* theme = m_screen->theme();
     /* Spacing-related parameters */
     helper->addGroup("Spacing");
@@ -435,7 +485,7 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
         });
 
     /* Create circuit widget in right pane. */
-    m_circuit = new CircuitWidget(m_sidePanelR, m_window, m_unitEditorHost, a_vm, a_uf);
+    m_circuitWidget = new CircuitWidget(m_sidePanelR, m_window, m_unitEditorHost, a_vm, a_uf);
 
     /* Create button panel */
     m_buttonPanel = new EnhancedWindow(m_screen, "");

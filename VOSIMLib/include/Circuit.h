@@ -127,6 +127,9 @@ namespace syn
          */
         bool isActive() const override;
 
+        void setVoiceIndex(double a_newVoiceIndex);
+        double getVoiceIndex() const;
+
         Unit& getUnit(int a_unitId);
         const Unit& getUnit(int a_unitId) const;
 
@@ -211,6 +214,7 @@ namespace syn
     private:
         friend class VoiceManager;
 
+        double m_voiceIndex; ///< A number between 0 and 1 assigned to the circuit by a VoiceManager.
         NamedContainer<Unit*, MAX_UNITS> m_units;
         vector<ConnectionRecord> m_connectionRecords;
         InputUnit* m_inputUnit;

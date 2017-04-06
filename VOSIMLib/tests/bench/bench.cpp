@@ -15,7 +15,6 @@
 #include "MemoryUnit.h"
 #include "Oscillator.h"
 #include "MidiUnits.h"
-#include "ThreadPool.h"
 #include "ADSREnvelope.h"
 
 #define trig_benches 0
@@ -25,7 +24,6 @@
 #define lut_saw_benches 0
 #define lut_pitch_benches 0
 #define container_benches 0
-#define thread_benches 1
 
 std::random_device RandomDevice;
 
@@ -392,100 +390,6 @@ NONIUS_BENCHMARK("std::map [int]", [](nonius::chronometer& meter)
     meter.measure([&myContainer, &stores, &loads](int i)
     {
         myContainer[stores[i]] = myContainer[loads[i]];
-    });
-})
-#endif
-
-#if thread_benches
-NONIUS_BENCHMARK("Thread pool (5 threads)", [](nonius::chronometer& meter)
-{
-    int nSamples = 8192;
-    int bufSize = 64;
-    std::array<syn::Circuit*, 8> circuits;
-    std::array<syn::CircuitThreadJob*, 8> workItems;
-    for (int i = 0; i < circuits.size(); i++)
-    {
-        circuits[i] = new syn::Circuit("");
-        syn::Unit* gateUnit = new syn::GateUnit("gateUnit");
-        syn::Unit* envUnit = new syn::ADSREnvelope("envUnit");
-        envUnit->param(syn::ADSREnvelope::Param::pDecay).setNorm(1.0);
-        envUnit->param(syn::ADSREnvelope::Param::pSustain).setNorm(0.0);
-        circuits[i]->addUnit(gateUnit);
-        circuits[i]->addUnit(envUnit);
-        circuits[i]->connectInternal<std::string>("gateUnit", 0, "envUnit", 0);
-        circuits[i]->connectInternal<std::string>("envUnit", 0, "outputs", 0);
-        circuits[i]->setBufferSize(bufSize);
-        circuits[i]->noteOn(9, 255);
-        circuits[i]->setFs(48000.0);
-        workItems[i] = new syn::CircuitThreadJob;
-        workItems[i]->circuit = circuits[i];
-    }
-    
-
-    syn::ThreadPool pool{1024};
-    pool.resizePool(5);
-    meter.measure([&circuits, &workItems, &pool, nSamples, bufSize](int n)
-    {
-        Eigen::Matrix<double, 1, -1, Eigen::RowMajor> output(nSamples);
-        output.fill(0.0);
-        for (int i = 0; i < nSamples; i += bufSize)
-        {
-            for (int j = 0; j < workItems.size(); j++)
-            {
-                pool.push(workItems[j]);
-            }
-            pool.waitForWorkers();
-            for (int j = 0; j < workItems.size(); j++)
-            {
-                for (int k = 0; k < bufSize; k++)
-                {
-                    output(i + k) += circuits[j]->readOutput(0, k);
-                }
-            }
-        }
-        return output;
-    });
-})
-
-NONIUS_BENCHMARK("Single thread", [](nonius::chronometer& meter)
-{
-    int nSamples = 8192;
-    int bufSize = 64;
-    std::array<syn::Circuit*, 8> circuits;
-    for (int i = 0; i < circuits.size(); i++)
-    {
-        circuits[i] = new syn::Circuit("");
-        syn::Unit* gateUnit = new syn::GateUnit("gateUnit");
-        syn::Unit* envUnit = new syn::ADSREnvelope("envUnit");
-        envUnit->param(syn::ADSREnvelope::Param::pDecay).setNorm(1.0);
-        envUnit->param(syn::ADSREnvelope::Param::pSustain).setNorm(0.0);
-        circuits[i]->addUnit(gateUnit);
-        circuits[i]->addUnit(envUnit);
-        circuits[i]->connectInternal<std::string>("gateUnit", 0, "envUnit", 0);
-        circuits[i]->connectInternal<std::string>("envUnit", 0, "outputs", 0);
-        circuits[i]->setBufferSize(bufSize);
-        circuits[i]->noteOn(9, 255);
-        circuits[i]->setFs(48000.0);
-    }
-
-    meter.measure([&circuits, nSamples, bufSize](int n)
-    {
-        Eigen::Matrix<double, 1, -1, Eigen::RowMajor> output(nSamples);
-        output.fill(0.0);
-
-        for (int i = 0; i < nSamples; i += bufSize)
-        {
-            for (int j = 0; j < circuits.size(); j++)
-            {
-                circuits[j]->tick();
-                
-                for (int k = 0; k < bufSize; k++)
-                {
-                    output(i + k) += circuits[j]->readOutput(0, k);
-                }
-            }
-        }
-        return output;
     });
 })
 #endif

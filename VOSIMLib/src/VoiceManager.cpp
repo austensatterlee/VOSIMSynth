@@ -40,9 +40,11 @@ namespace syn
             int note = voice.note();
             int vel = voice.velocity();
 
-            if(voice.isNoteOn())
-                voice.noteOff(note, vel);  
-            voice.reset();
+            // When active, perform reset unless 
+            if(voice.isNoteOn() && !m_legato) {
+                voice.noteOff(note, vel);
+            }
+
             m_activeVoices.erase(activeIt);
             auto mapIt = std::find(m_voiceMap[note].begin(), m_voiceMap[note].end(), a_voiceIndex);
             assert(mapIt!=m_voiceMap[note].end());
@@ -60,7 +62,25 @@ namespace syn
         }
 
         // If none are found, force a voice off the active stack
-        int vind = getOldestVoiceIndex();
+        int vind;
+        switch(m_voiceStealingPolicy)
+        {
+        case Oldest:
+            vind = getOldestVoiceIndex();
+            break;
+        case Newest:
+            vind = getNewestVoiceIndex();
+            break;
+        case Lowest:
+            vind = getLowestVoiceIndex();
+            break;
+        case Highest:
+            vind = getHighestVoiceIndex();
+            break;
+        default:
+            vind = getOldestVoiceIndex();
+            break;
+        }
         _makeIdle(vind);
         m_idleVoices.erase(std::find(m_idleVoices.begin(), m_idleVoices.end(), vind));
         return vind;
@@ -106,11 +126,13 @@ namespace syn
         m_voiceMap.clear();
         // Construct new voices
         m_circuits.clear();
-        m_circuits.resize(a_newMax, Circuit(m_instrument));
+        m_circuits.resize(a_newMax);
 
         // Add new voices to the idle list
         for(int i=0;i<a_newMax;i++)
         {
+            m_circuits[i] = Circuit(m_instrument);
+            m_circuits[i].setVoiceIndex(static_cast<double>(i)/a_newMax);
             m_idleVoices.push_back(i);
         }
     }
@@ -166,7 +188,7 @@ namespace syn
 
     int VoiceManager::getLowestVoiceIndex() const {
         if (m_activeVoices.size() > 0) {
-            for (auto it = m_voiceMap.cbegin(); it != m_voiceMap.cend(); ++it) {
+            for (auto it = m_voiceMap.crbegin(); it != m_voiceMap.crend(); ++it) {
                 if (!it->second.empty() && m_circuits[it->second.front()].isActive()) {
                     return it->second.front();
                 }         
@@ -189,7 +211,7 @@ namespace syn
 
     int VoiceManager::getHighestVoiceIndex() const {
         if (!m_activeVoices.empty()) {
-            for (auto it = m_voiceMap.crbegin(); it != m_voiceMap.crend(); ++it) {
+            for (auto it = m_voiceMap.cbegin(); it != m_voiceMap.cend(); ++it) {
                 if (!it->second.empty()) {
                     return it->second.front();
                 } 

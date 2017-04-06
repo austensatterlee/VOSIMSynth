@@ -28,7 +28,8 @@ using std::unordered_set;
 namespace syn
 {
     Circuit::Circuit(const string& a_name) :
-        Unit(a_name)
+        Unit(a_name),
+        m_voiceIndex(0.0)
     {
         m_procGraph.fill(nullptr);
         InputUnit* inputUnit = new InputUnit("inputs");
@@ -261,6 +262,10 @@ namespace syn
         }
         return false;
     }
+
+    void Circuit::setVoiceIndex(double a_newVoiceIndex) { m_voiceIndex = a_newVoiceIndex; }
+
+    double Circuit::getVoiceIndex() const { return m_voiceIndex; }
 
     void Circuit::onFsChange_()
     {

@@ -193,7 +193,7 @@ namespace syn
         void noteOff(int a_note, int a_velocity);
 
         /**
-         * Reset the units internal state (if any)
+         * Reset the unit's internal state (if any), as if Unit::tick had never been called.
          */
         virtual void reset() = 0;
 

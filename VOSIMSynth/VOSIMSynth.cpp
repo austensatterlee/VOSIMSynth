@@ -187,6 +187,7 @@ void VOSIMSynth::registerUnits(syn::UnitFactory& a_uf)
     a_uf.addUnitPrototype<syn::MidiNoteUnit>("MIDI", "pitch");
     a_uf.addUnitPrototype<syn::VelocityUnit>("MIDI", "vel");
     a_uf.addUnitPrototype<syn::MidiCCUnit>("MIDI", "CC");
+    a_uf.addUnitPrototype<syn::VoiceIndexUnit>("MIDI", "voice");
 
     a_uf.addUnitPrototype<syn::Circuit>("", "circuit");
     a_uf.addUnitPrototype<syn::InputUnit>("", "in");

@@ -120,7 +120,7 @@ namespace synui
         void reset(); 
         void resize(int a_w, int a_h);
 
-        CircuitWidget* circuitWidget() { return m_circuit; }
+        CircuitWidget* circuitWidget() { return m_circuitWidget; }
     protected:
         void createUnitSelector_(nanogui::Widget* a_widget);
         void createSettingsEditor_(nanogui::Widget* a_widget, SerializableFormHelper* a_fh);
@@ -144,6 +144,6 @@ namespace synui
         UnitEditorHost* m_unitEditorHost;
 
         synui::EnhancedWindow* m_sidePanelR;
-        CircuitWidget* m_circuit;
+        CircuitWidget* m_circuitWidget;
     };
 }

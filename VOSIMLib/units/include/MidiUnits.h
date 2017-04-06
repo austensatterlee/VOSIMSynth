@@ -9,6 +9,7 @@
 #define __MIDIUNITS__
 
 #include "Unit.h"
+#include "Circuit.h"
 
 namespace syn
 {
@@ -67,7 +68,9 @@ namespace syn
         DERIVE_UNIT(GateUnit)
     public:
         explicit GateUnit(const string& a_name) :
-            Unit(a_name) {
+            Unit(a_name),
+            m_queuedNoteOff(true)
+        {
             addOutput_("out");
         }
 
@@ -79,9 +82,18 @@ namespace syn
     protected:
         void MSFASTCALL process_() GCCFASTCALL override {
         BEGIN_PROC_FUNC
-            WRITE_OUTPUT(0, static_cast<double>(isNoteOn()));
+            if(m_queuedNoteOff){
+                m_queuedNoteOff = false;
+                WRITE_OUTPUT(0, 0.0);
+                return;
+            }            
+            WRITE_OUTPUT(0, static_cast<double>(isNoteOn()));            
         END_PROC_FUNC
         }
+
+        void onNoteOff_() override { m_queuedNoteOff = true; }
+    private:
+        bool m_queuedNoteOff; ///< Indicates that the next output should be a note off signal.
     };
 
     /**
@@ -130,6 +142,30 @@ namespace syn
     private:
         int m_pCC, m_pLearn;
         double m_value;
+    };
+
+
+    /**
+     * Outputs the index of the current voice.
+     */
+    class VOSIMLIB_API VoiceIndexUnit : public Unit
+    {
+        DERIVE_UNIT(VoiceIndexUnit)
+
+    public:
+        explicit VoiceIndexUnit(const string& a_name) :
+            Unit(a_name)
+        {            
+            addOutput_("out");
+        }
+
+        void reset() override {};
+    protected:
+       void MSFASTCALL process_() GCCFASTCALL override {
+        BEGIN_PROC_FUNC
+            WRITE_OUTPUT(0, parent() ? parent()->getVoiceIndex() : 0.0);
+        END_PROC_FUNC
+        };
     };
 }
 

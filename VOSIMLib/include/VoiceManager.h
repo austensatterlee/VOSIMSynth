@@ -54,13 +54,13 @@ namespace syn
     class VOSIMLIB_API VoiceManager
     {
     public:
-        enum VoiceSelectionPolicy
+        enum VoiceStealingPolicy
         {
-            LOW = 0,
-            HIGH,
-            OLD
+            Oldest = 0,
+            Newest,
+            Lowest,
+            Highest
         };
-
     public:
         VoiceManager() :
             m_queuedActions{MAX_VOICEMANAGER_MSG_QUEUE_SIZE},
@@ -70,7 +70,9 @@ namespace syn
             m_activeVoices(MAX_VOICES),
             m_idleVoices(MAX_VOICES),
             m_garbageList(MAX_VOICES),
-            m_instrument{"main"}
+            m_instrument{"main"},
+            m_voiceStealingPolicy(Oldest),
+            m_legato(false)
         {
             setBufferSize(m_bufferSize);
             setInternalBufferSize(m_internalBufferSize);
@@ -136,6 +138,12 @@ namespace syn
 
         void setPrototypeCircuit(const Circuit& a_circ);
 
+        VoiceStealingPolicy getVoiceStealingPolicy() const { return m_voiceStealingPolicy; }
+        void setVoiceStealingPolicy(VoiceStealingPolicy a_newPolicy) { m_voiceStealingPolicy = a_newPolicy; }
+        
+        bool getLegato() const { return m_legato; }
+        void setLegato(bool a_newLegato) { m_legato = a_newLegato; }
+
     private:
         /**
          * Processes all actions from the action queue
@@ -169,6 +177,10 @@ namespace syn
         VoiceIndexList m_idleVoices; ///< list of idle voice indices
         VoiceIndexList m_garbageList; ///< pre-allocated storage for collecting idle voices during audio processing
         Circuit m_instrument;
+
+        VoiceStealingPolicy m_voiceStealingPolicy; ///< Determines which voices are replaced when all of them are active
+
+        bool m_legato; ///< When true, voices get reset upon activation only if they are in the "note off" state.
     };
 }
 #endif

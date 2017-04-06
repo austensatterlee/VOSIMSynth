@@ -801,7 +801,9 @@ void synui::CircuitWidget::createInputOutputUnits_()
     unsigned outputClassId = circ->getUnit(outputUnitId).getClassIdentifier();
 
     UnitWidget* inWidget = createUnitWidget_(inputClassId, inputUnitId);
+    m_unitWidgets[inputUnitId] = inWidget;
     UnitWidget* outWidget = createUnitWidget_(outputClassId, outputUnitId);
+    m_unitWidgets[outputUnitId] = outWidget;
     screen()->performLayout();
     updateUnitPos(inWidget, {0.5 * inWidget->width(), height() * 0.5 - inWidget->height() * 0.5});
     updateUnitPos(outWidget, {width() - 1.5 * outWidget->width(), height() * 0.5 - outWidget->height() * 0.5});
