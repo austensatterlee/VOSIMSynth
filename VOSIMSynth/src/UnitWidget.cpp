@@ -552,10 +552,11 @@ void synui::SummingUnitWidget::draw(NVGcontext* ctx)
 
     // Draw plus sign
     nvgBeginPath(ctx);
-    nvgMoveTo(ctx, size().x()*0.5, size().y()*0.5 - handleRadius);
-    nvgLineTo(ctx, size().x()*0.5, size().y()*0.5 + handleRadius);
-    nvgMoveTo(ctx, size().x()*0.5 - handleRadius, size().y() * 0.5);
-    nvgLineTo(ctx, size().x()*0.5 + handleRadius, size().y() * 0.5);
+    nvgTranslate(ctx, size().x()*0.5, size().y()*0.5);
+    nvgMoveTo(ctx, 0.0f, -handleRadius);
+    nvgLineTo(ctx, 0.0f, handleRadius);
+    nvgMoveTo(ctx, -handleRadius, 0.0f);
+    nvgLineTo(ctx, handleRadius, 0.0f);
     nvgStrokeColor(ctx, plusColor);
     nvgStrokeWidth(ctx, 2.0f);
     nvgStroke(ctx);
