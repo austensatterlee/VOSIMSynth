@@ -113,13 +113,15 @@ namespace syn
         void setMaxVoices(unsigned a_newMax);
 
         vector<int> getActiveVoiceIndices() const;
+		vector<int> getReleasedVoiceIndices() const;
+		vector<int> getIdleVoiceIndices() const;
 
         int getMaxVoices() const;
 
-        int getLowestVoiceIndex() const;
-        int getNewestVoiceIndex() const;
-        int getOldestVoiceIndex() const;
-        int getHighestVoiceIndex() const;
+        int getLowestVoiceIndex(bool a_preferReleased=false) const;
+        int getNewestVoiceIndex(bool a_preferReleased=false) const;
+        int getOldestVoiceIndex(bool a_preferReleased=false) const;
+        int getHighestVoiceIndex(bool a_preferReleased=false) const;
 
         void onIdle();
 
@@ -162,8 +164,8 @@ namespace syn
         int _stealIdleVoice();
 
     private:
-        typedef boost::circular_buffer<int> VoiceIndexList;
-        typedef map<int, boost::circular_buffer<int>> VoiceMap;
+        typedef std::vector<int> VoiceIndexList;
+        typedef map<int, std::vector<int>> VoiceMap;
 
         spsc_queue<RTMessage*> m_queuedActions;
 
@@ -176,6 +178,7 @@ namespace syn
         VoiceIndexList m_activeVoices; ///< list of active voice indices
         VoiceIndexList m_idleVoices; ///< list of idle voice indices
         VoiceIndexList m_garbageList; ///< pre-allocated storage for collecting idle voices during audio processing
+        VoiceIndexList m_releasedVoices; ///< list of voices that are active but have been sent a note off signal
         Circuit m_instrument;
 
         VoiceStealingPolicy m_voiceStealingPolicy; ///< Determines which voices are replaced when all of them are active

@@ -185,7 +185,6 @@ void syn::OnePoleLP::process_()
 
 void syn::OnePoleLP::onNoteOn_()
 {
-    //reset();
 }
 
 syn::LadderFilterBase::LadderFilterBase(const string& a_name) : Unit(a_name)

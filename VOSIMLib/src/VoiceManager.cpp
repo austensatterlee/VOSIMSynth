@@ -26,7 +26,7 @@ namespace syn
 
         m_activeVoices.push_back(vind);
         if (m_voiceMap.find(a_note) == m_voiceMap.end()) {
-            m_voiceMap[a_note].set_capacity(m_circuits.size());
+            m_voiceMap[a_note].reserve(m_circuits.size());
         }
         m_voiceMap[a_note].push_back(vind);
         m_circuits[vind].noteOn(a_note, a_velocity);
@@ -40,24 +40,36 @@ namespace syn
             int note = voice.note();
             int vel = voice.velocity();
 
-            // When active, perform reset unless 
+            
+            // If the voice has been sent a note off signal, remove from released voices
+            auto releasedIt = std::find(m_releasedVoices.begin(), m_releasedVoices.end(), a_voiceIndex);
+            if(releasedIt!=m_releasedVoices.end())
+                m_releasedVoices.erase(releasedIt);
+
+            // If the voice has not been sent a note off signal, perform reset unless legato is on
             if(voice.isNoteOn() && !m_legato) {
                 voice.noteOff(note, vel);
             }
 
+            // Remove from active voice list
             m_activeVoices.erase(activeIt);
+            // Remove from note map
             auto mapIt = std::find(m_voiceMap[note].begin(), m_voiceMap[note].end(), a_voiceIndex);
             assert(mapIt!=m_voiceMap[note].end());
             m_voiceMap[note].erase(mapIt);
+            // Remove note from note map if no more voices exist there
+            if(m_voiceMap[note].empty())
+                m_voiceMap.erase(note);
+            // Add voice to idle voices
             m_idleVoices.push_back(a_voiceIndex);
         }
     }
 
     int VoiceManager::_stealIdleVoice() {
         // Try to find a voice that is already idle
-        if (m_activeVoices.size() < m_circuits.size()) {
-            int vind = m_idleVoices.front();
-            m_idleVoices.pop_front();
+        if (!m_idleVoices.empty()) {
+            int vind = m_idleVoices.back();
+            m_idleVoices.pop_back();
             return vind;
         }
 
@@ -66,19 +78,19 @@ namespace syn
         switch(m_voiceStealingPolicy)
         {
         case Oldest:
-            vind = getOldestVoiceIndex();
+            vind = getOldestVoiceIndex(true);
             break;
         case Newest:
-            vind = getNewestVoiceIndex();
+            vind = getNewestVoiceIndex(true);
             break;
         case Lowest:
-            vind = getLowestVoiceIndex();
+            vind = getLowestVoiceIndex(true);
             break;
         case Highest:
-            vind = getHighestVoiceIndex();
+            vind = getHighestVoiceIndex(true);
             break;
         default:
-            vind = getOldestVoiceIndex();
+            vind = getOldestVoiceIndex(true);
             break;
         }
         _makeIdle(vind);
@@ -94,6 +106,7 @@ namespace syn
         if (m_voiceMap.find(a_noteNumber) != m_voiceMap.end()) {
             for (int vind : m_voiceMap[a_noteNumber]) {
                 m_circuits[vind].noteOff(a_noteNumber, a_velocity);
+                m_releasedVoices.push_back(vind);
             }
         }
     }
@@ -117,15 +130,20 @@ namespace syn
         {
             _makeIdle(i);
         }
+
+        // Clear voice lists
         m_idleVoices.clear();
+        m_activeVoices.clear();
+        m_releasedVoices.clear();
+        m_voiceMap.clear();
+        m_circuits.clear();
 
         // Resize voice lists
-        m_idleVoices.set_capacity(a_newMax);
-        m_activeVoices.set_capacity(a_newMax);
-        m_garbageList.set_capacity(a_newMax);        
-        m_voiceMap.clear();
+        m_idleVoices.reserve(a_newMax);
+        m_activeVoices.reserve(a_newMax);
+        m_garbageList.reserve(a_newMax);        
+        m_releasedVoices.reserve(a_newMax);
         // Construct new voices
-        m_circuits.clear();
         m_circuits.resize(a_newMax);
 
         // Add new voices to the idle list
@@ -146,6 +164,22 @@ namespace syn
         return voiceIndices;
     }
 
+    vector<int> VoiceManager::getReleasedVoiceIndices() const {
+        vector<int> voiceIndices(m_releasedVoices.size());
+        for(int i=0; i<m_releasedVoices.size(); i++){
+            voiceIndices[i] = m_releasedVoices.at(i);
+        }
+        return voiceIndices;                
+    }
+
+    vector<int> VoiceManager::getIdleVoiceIndices() const {
+        vector<int> voiceIndices(m_idleVoices.size());
+        for(int i=0; i<m_idleVoices.size(); i++){
+            voiceIndices[i] = m_idleVoices.at(i);
+        }
+        return voiceIndices;          
+    }
+
     void VoiceManager::tick(const double* a_left_input, const double* a_right_input, double* a_left_output, double* a_right_output) {
         _flushActionQueue();
 
@@ -160,9 +194,9 @@ namespace syn
         }
 
         while (!m_garbageList.empty()) {
-            vind = m_garbageList.front();
+            vind = m_garbageList.back();
             _makeIdle(vind);
-            m_garbageList.pop_front();
+            m_garbageList.pop_back();
         }
 
         for (int j = 0; j < m_bufferSize; j++) {
@@ -186,35 +220,105 @@ namespace syn
         m_tickCount += m_bufferSize;
     }
 
-    int VoiceManager::getLowestVoiceIndex() const {
-        if (m_activeVoices.size() > 0) {
+    int VoiceManager::getLowestVoiceIndex(bool a_preferReleased) const {
+        if (!m_releasedVoices.empty() && a_preferReleased) {
+            bool first = true;
+            int minNote = 0;
+            int minVInd = 0;
+            for(auto vind : m_releasedVoices)
+            {
+                const Circuit& voice = m_circuits[vind];
+                if(first || voice.note()<minNote)
+                {
+                    minNote = voice.note();
+                    minVInd = vind;
+                    first = false;
+                }
+            }
+            return minVInd;
+        }
+        else if (m_activeVoices.size() > 0) 
+        {
             for (auto it = m_voiceMap.crbegin(); it != m_voiceMap.crend(); ++it) {
                 if (!it->second.empty() && m_circuits[it->second.front()].isActive()) {
                     return it->second.front();
-                }         
+                }
             }
         }
         return -1;
     }
 
-    int VoiceManager::getNewestVoiceIndex() const {
-        if(!m_activeVoices.empty())
+    int VoiceManager::getNewestVoiceIndex(bool a_preferReleased) const {
+        if (!m_releasedVoices.empty() && a_preferReleased) {
+            bool first = true;
+            int maxIndex = 0;
+            int maxVInd = 0;
+            for(auto vind : m_releasedVoices)
+            {
+                int activeVoiceIndex = std::find(m_activeVoices.begin(), m_activeVoices.end(), vind) - m_activeVoices.begin();
+                if(first || activeVoiceIndex>maxIndex)
+                {
+                    maxIndex = activeVoiceIndex;
+                    maxVInd = vind;
+                    first = false;
+                }
+            }
+            return maxVInd;
+        }
+        else if (!m_activeVoices.empty())
+        {
             return m_activeVoices.back();
+        }
         return -1;
     }
 
-    int VoiceManager::getOldestVoiceIndex() const {
-        if(!m_activeVoices.empty())
+    int VoiceManager::getOldestVoiceIndex(bool a_preferReleased) const {
+        if (!m_releasedVoices.empty() && a_preferReleased) {
+            bool first = true;
+            int minIndex = 0;
+            int minVInd = 0;
+            for(auto vind : m_releasedVoices)
+            {
+                int activeVoiceIndex = std::find(m_activeVoices.begin(), m_activeVoices.end(), vind) - m_activeVoices.begin();
+                if(first || activeVoiceIndex<minIndex)
+                {
+                    minIndex = activeVoiceIndex;
+                    minVInd = vind;
+                    first = false;
+                }
+            }
+            return minVInd;
+        }
+        else if (!m_activeVoices.empty())
+        {
             return m_activeVoices.front();
+        }
         return -1;
     }
 
-    int VoiceManager::getHighestVoiceIndex() const {
-        if (!m_activeVoices.empty()) {
+    int VoiceManager::getHighestVoiceIndex(bool a_preferReleased) const {
+        if (!m_releasedVoices.empty() && a_preferReleased) {
+            bool first = true;
+            int maxNote = 0;
+            int maxVInd = 0;
+            for(auto vind : m_releasedVoices)
+            {
+                const Circuit& voice = m_circuits[vind];
+                if(first || voice.note()>maxNote)
+                {
+                    maxNote = voice.note();
+                    maxVInd = vind;
+                    first = false;
+                }
+            }
+            return maxVInd;
+        }
+        else if (!m_activeVoices.empty())
+        {
             for (auto it = m_voiceMap.cbegin(); it != m_voiceMap.cend(); ++it) {
                 if (!it->second.empty()) {
                     return it->second.front();
-                } 
+                }
             }
         }
         return -1;
