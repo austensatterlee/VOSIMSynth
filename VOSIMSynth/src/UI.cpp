@@ -2,7 +2,7 @@
 
 namespace synui
 {
-    void drawShadow(NVGcontext* ctx, float x, float y, float w, float h, float r, float s, float f, const nanogui::Color& a_shadowColor, const nanogui::Color& a_transparentColor)
+    void drawRectShadow(NVGcontext* ctx, float x, float y, float w, float h, float r, float s, float f, const nanogui::Color& a_shadowColor, const nanogui::Color& a_transparentColor)
     {
         NVGpaint shadowPaint = nvgBoxGradient(
             ctx, x, y, w, h, r * 2, f * 2 * s,
@@ -13,6 +13,23 @@ namespace synui
         nvgBeginPath(ctx);
         nvgRect(ctx, x - s, y - s, w + 2 * s, h + 2 * s);
         nvgRoundedRect(ctx, x, y, w, h, r);
+        nvgPathWinding(ctx, NVG_HOLE);
+        nvgFillPaint(ctx, shadowPaint);
+        nvgFill(ctx);
+        nvgRestore(ctx);
+    }
+
+    void drawRadialShadow(NVGcontext* ctx, float x, float y, float r, float s, float f, const nanogui::Color& a_shadowColor, const nanogui::Color& a_transparentColor)
+    {
+        NVGpaint shadowPaint = nvgRadialGradient(
+            ctx, x, y, r+s, r+s+2*f,
+            a_shadowColor, a_transparentColor);
+
+        nvgSave(ctx);
+        nvgResetScissor(ctx);
+        nvgBeginPath(ctx);
+        nvgCircle(ctx, x, y, r+s+2*f);
+        nvgCircle(ctx, x, y, r);
         nvgPathWinding(ctx, NVG_HOLE);
         nvgFillPaint(ctx, shadowPaint);
         nvgFill(ctx);

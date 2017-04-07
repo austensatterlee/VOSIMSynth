@@ -223,7 +223,8 @@ namespace synui
      * \param a_shadowColor shadow (inner) color
      * \param a_transparentColor transparent (outer) color
      */
-    void drawShadow(NVGcontext* ctx, float x, float y, float w, float h, float r = 1.0f, float s = 5.0f, float f=1.0f, const nanogui::Color& a_shadowColor = {0.0f, 0.5f}, const nanogui::Color& a_transparentColor = {0.0f, 1.0f});
+    void drawRectShadow(NVGcontext* ctx, float x, float y, float w, float h, float r = 1.0f, float s = 5.0f, float f=1.0f, const nanogui::Color& a_shadowColor = {0.0f, 0.5f}, const nanogui::Color& a_transparentColor = {0.0f, 1.0f});
+    void drawRadialShadow(NVGcontext* ctx, float x, float y, float r, float s, float f, const nanogui::Color& a_shadowColor = {0.0f, 0.5f}, const nanogui::Color& a_transparentColor = {0.0f, 1.0f});
 
     void drawTooltip(NVGcontext* a_ctx, const Eigen::Vector2i& a_pos, const std::string& a_str, double elapsed);
 }

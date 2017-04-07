@@ -356,8 +356,10 @@ bool synui::CircuitWidget::mouseButtonEvent(const Vector2i& p, int button, bool 
         if (!down)
         {
             m_state = State::Idle;
-            if (m_selection.size() == 1)
+            if (m_selection.size() == 1){
                 (*m_selection.begin())->triggerEditorCallback();
+                m_selection.clear();
+            }
             return true;
         }
     }
@@ -380,7 +382,6 @@ bool synui::CircuitWidget::mouseButtonEvent(const Vector2i& p, int button, bool 
             if (m_selection.find(w) == m_selection.end())
             {
                 m_selection.clear();
-                m_selection.insert(w);
             }
         }
     }
@@ -434,6 +435,7 @@ bool synui::CircuitWidget::mouseButtonEvent(const Vector2i& p, int button, bool 
             m_state = State::Idle;
             removeChild(m_creatingUnitState.widget);
             m_creatingUnitState.widget = nullptr;
+            m_unitWidgets.erase(m_creatingUnitState.unitId);
             return true;
         }
     }
@@ -558,7 +560,7 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
 
     /* Draw background */
     nvgBeginPath(ctx);
-    nanogui::Color backgroundColor(34, 255);
+    nanogui::Color backgroundColor(24, 255);
     nvgRect(ctx, 0, 0, mSize.x(), mSize.y());
     nvgFillColor(ctx, backgroundColor);
     nvgFill(ctx);
@@ -576,7 +578,7 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
             nvgFillColor(ctx, nanogui::Color{0.0f,0.0f,1.0f,0.125f});
 
         nvgBeginPath(ctx);
-        nvgCircle(ctx, pixel.x(), pixel.y(), 1.0f);
+        nvgCircle(ctx, pixel.x(), pixel.y(), 0.75f);
         nvgFill(ctx);
     }
 
@@ -670,7 +672,7 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
         {
             // Draw an overlay when dragging one wire onto another
             Grid2DPoint mousePt = m_grid.fromPixel(mousePos, m_gridSpacing);
-            if(m_grid.get(mousePt).state == GridCell::Wire)
+            if(m_grid.get(mousePt).state == GridCell::Wire && m_drawingWireState.startedFromOutput)
             {
                 Vector2i fixedMousePos = m_grid.toPixel(mousePt, m_gridSpacing);
                 nvgBeginPath(ctx);
@@ -685,16 +687,18 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
     }
 
     // Highlight unit widgets in the current selection
-    nanogui::Color selectedWidgetColor{1.0f,1.0f,0.0f,0.9f};
-    for (auto w : m_selection)
-    {
-        const auto& p = w->position();
-        const auto& s = w->size();
-        nvgBeginPath(ctx);
-        nvgRect(ctx, p.x()-0.5f, p.y()-0.5f, s.x()+1.0f, s.y()+1.0f);
-        nvgStrokeColor(ctx, selectedWidgetColor);
-        nvgStrokeWidth(ctx, 1.0f);
-        nvgStroke(ctx);
+    if (m_selection.size() > 1) {
+        nanogui::Color selectedWidgetColor{ 1.0f,1.0f,0.0f,0.9f };
+        for (auto w : m_selection)
+        {
+            const auto& p = w->position();
+            const auto& s = w->size();
+            nvgBeginPath(ctx);
+            nvgRect(ctx, p.x() - 0.5f, p.y() - 0.5f, s.x() + 1.0f, s.y() + 1.0f);
+            nvgStrokeColor(ctx, selectedWidgetColor);
+            nvgStrokeWidth(ctx, 1.0f);
+            nvgStroke(ctx);
+        }
     }
     nvgRestore(ctx);
 }
@@ -851,6 +855,7 @@ void synui::CircuitWidget::onUnitCreated_(unsigned a_classId, int a_unitId)
     m_creatingUnitState.widget = createUnitWidget_(a_classId, a_unitId);
     m_creatingUnitState.widget->setVisible(false);
     m_creatingUnitState.widget->setEnabled(false);
+    m_unitWidgets[a_unitId] = m_creatingUnitState.widget;
 }
 
 synui::UnitWidget* synui::CircuitWidget::createUnitWidget_(unsigned a_classId, int a_unitId)
@@ -890,7 +895,8 @@ bool synui::CircuitWidget::endCreateUnit_(const Vector2i& a_pos)
     }
     else
     {
-        removeChild(m_creatingUnitState.widget);
+        removeChild(m_creatingUnitState.widget);        
+        m_unitWidgets.erase(m_creatingUnitState.unitId);
         m_creatingUnitState.widget = nullptr;
         return false;
     }
@@ -1211,7 +1217,7 @@ void synui::CircuitWidget::_deleteUnitWidget(UnitWidget* widget)
 
     // Delete the unit widget
     m_grid.replaceValue({GridCell::Unit, m_unitWidgets[unitId]}, m_grid.getEmptyValue());
-    removeChild(m_unitWidgets[unitId]);
+    removeChild(m_unitWidgets[unitId]);    
     m_unitWidgets.erase(unitId);
 }
 
@@ -1251,8 +1257,9 @@ void synui::CircuitWidget::_createJunction(CircuitWire* toWire, CircuitWire* fro
 
                                 // Create + place unit widget
                                 self->onUnitCreated_(classId, unitId);  
-                                Eigen::Vector2i pos = {px, py};                      
-                                self->endCreateUnit_(pos - Vector2i::Ones()*self->getGridSpacing());         
+                                Eigen::Vector2i pos = Vector2i{px, py} - Vector2i::Ones()*self->getGridSpacing();      
+                                if(self->checkUnitPos(self->m_creatingUnitState.widget, pos))
+                                    self->endCreateUnit_(pos);         
                                 
 
                                 // Finish drawing wire

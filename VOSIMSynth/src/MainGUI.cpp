@@ -70,6 +70,11 @@ namespace synui
         void setDrawCallback(DrawFunc f) { m_drawCallback = f; }
         DrawFunc getDrawCallback() const { return m_drawCallback; }
 
+        bool mouseMotionEvent(const Vector2i& p, const Vector2i& rel, int button, int modifiers) override {
+            Widget::mouseMotionEvent(p, rel, button, modifiers);
+            return true;
+        }
+        ;
     private:
         DrawFunc m_drawCallback;
     };

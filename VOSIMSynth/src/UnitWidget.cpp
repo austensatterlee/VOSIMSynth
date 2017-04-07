@@ -205,7 +205,7 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx)
     /* Draw highlight if enabled. */
     if (highlighted())
     {
-        drawShadow(ctx, 0, 0, width(), height(), 1.0f, 10.0f, 0.5f, { 0.32f, 0.9f, 0.9f, 0.9f }, { 0.0f, 0.0f });
+        drawRectShadow(ctx, 0, 0, width(), height(), 1.0f, 15.0f, 0.5f, { 0.32f, 0.9f, 0.9f, 0.9f }, { 0.0f, 0.0f });
     }
 
     /* Handle mouse movements */
@@ -213,7 +213,7 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx)
     if (contains(mousePos + position()))
     {
         // Highlight on mouse over
-        drawShadow(ctx, 0, 0, width(), height(), 1.0f, 5.0f, 0.46f, { 0.8f, 0.5f }, { 0.0f, 0.0f });
+        drawRectShadow(ctx, 0, 0, width(), height(), 1.0f, 5.0f, 0.46f, { 0.8f, 0.5f }, { 0.0f, 0.0f });
 
         if (mousePos.y() < m_titleLabel->height())
         {
@@ -559,6 +559,12 @@ void synui::SummingUnitWidget::draw(NVGcontext* ctx)
     nvgStrokeColor(ctx, plusColor);
     nvgStrokeWidth(ctx, 2.0f);
     nvgStroke(ctx);
+    
+    /* Draw highlight if enabled. */
+    if (highlighted())
+    {
+        drawRadialShadow(ctx, 0, 0, width()*0.5f, 0.0f, 2.0f, { 0.32f, 0.9f, 0.9f, 0.9f }, { 0.0f, 0.0f });
+    }
 
     nvgRestore(ctx);
 }
@@ -693,7 +699,7 @@ void synui::MultiplyingUnitWidget::draw(NVGcontext* ctx)
     }
     nvgStrokeColor(ctx, handleStrokeColor);
     nvgStrokeWidth(ctx, 5.0f);
-    nvgStroke(ctx);
+    nvgStroke(ctx);    
 
     // Draw X sign
     nvgBeginPath(ctx);
@@ -706,6 +712,13 @@ void synui::MultiplyingUnitWidget::draw(NVGcontext* ctx)
     nvgStrokeColor(ctx, plusColor);
     nvgStrokeWidth(ctx, 2.0f);
     nvgStroke(ctx);
+    
+    /* Draw highlight if enabled. */
+    if (highlighted())
+    {
+        drawRadialShadow(ctx, 0, 0, width()*0.5f, 0.0f, 2.0f, { 0.32f, 0.9f, 0.9f, 0.9f }, { 0.0f, 0.0f });
+    }
 
     nvgRestore(ctx);
+
 }

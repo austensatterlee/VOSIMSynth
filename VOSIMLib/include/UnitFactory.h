@@ -121,7 +121,7 @@ namespace syn
             return;
         m_prototypes.push_back(prototype);
         m_group_names.insert(prototype.group_name);
-        m_class_identifiers[prototype.classIdentifier] = m_prototypes.size() - 1;
+        m_class_identifiers[prototype.classIdentifier] = (int)m_prototypes.size() - 1;
     }
 }
 
