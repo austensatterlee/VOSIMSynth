@@ -17,13 +17,13 @@
 #include "MidiUnits.h"
 #include "ADSREnvelope.h"
 
-#define trig_benches 0
-#define ladder_benches 0
-#define circuit_benches 0
-#define modulus_benches 0
-#define lut_saw_benches 0
-#define lut_pitch_benches 0
-#define container_benches 0
+#define trig_benches 1
+#define ladder_benches 1
+#define circuit_benches 1
+#define modulus_benches 1
+#define lut_saw_benches 1
+#define lut_pitch_benches 1
+#define container_benches 1
 
 std::random_device RandomDevice;
 
@@ -34,6 +34,7 @@ NONIUS_BENCHMARK("syn::lut_sin.getraw", [](nonius::chronometer& meter) {
     const syn::LookupTable& lut_sin_table = syn::lut_sin_table();
     auto _phaseGenerator = [&runs, &lut_sin_table](int& n)->int { return n*1.0 / runs*lut_sin_table.size(); };
     std::transform(phases.begin(), phases.end(), phases.begin(), _phaseGenerator);
+    for (int i = 0; i < runs; i++) phases[i] = i * (1.0 / runs) * lut_sin_table.size();
     double x;
     meter.measure([&x, &phases, &lut_sin_table](int i) { x = lut_sin_table.getraw(phases[i]); });
 })
@@ -105,7 +106,7 @@ NONIUS_BENCHMARK("ladder", [](nonius::chronometer& meter) {
     meter.measure([&x, &input, &ladder](int i)
     {
         ladder.tick();
-        x = ladder.readOutput(0);
+        x = ladder.readOutput(0,0);
         return x;
     });
 })
@@ -124,7 +125,7 @@ NONIUS_BENCHMARK("ladder_B", [](nonius::chronometer& meter) {
     meter.measure([&x, &input, &ladder](int i)
     {
         ladder.tick();
-        x = ladder.readOutput(0);
+        x = ladder.readOutput(0,0);
         return x;
     });
 })
@@ -142,7 +143,7 @@ NONIUS_BENCHMARK("svf", [](nonius::chronometer& meter) {
     meter.measure([&x, &input, &svf](int i)
     {
         svf.tick();
-        x = svf.readOutput(0);
+        x = svf.readOutput(0,0);
         return x;
     });
 })
@@ -160,7 +161,7 @@ NONIUS_BENCHMARK("trapezoidal svf", [](nonius::chronometer& meter) {
     meter.measure([&x, &input, &tsvf](int i)
     {
         tsvf.tick();
-        x = tsvf.readOutput(0);
+        x = tsvf.readOutput(0,0);
         return x;
     });
 })

@@ -166,10 +166,20 @@ namespace syn
         virtual ~Unit() {}
 
         /**
-         * Clears the unit outputs and calls the unit's process_ method.
+         * Processes as many samples as required to fill the internal buffer (see Unit::getBufferSize and Unit::setBufferSize).
          */
         inline void MSFASTCALL tick() GCCFASTCALL;
 
+        /**
+         * Processes as many samples to fill the specified output buffer. 
+         * 
+         * Note that both buffers must have the same shape. Each row of a buffer corresponds to one of the
+         * Unit's input/output ports, in order by port id. That is, the first row corresponds to the port with
+         * the lowest id, the next row the port with the second lowest, etc...
+         *
+         * \param a_inputs Input buffer.
+         * \param a_outputs Output buffer.
+         */
         void MSFASTCALL tick(const dynamic_buffer_t& a_inputs, dynamic_buffer_t& a_outputs) GCCFASTCALL;
 
         /**

@@ -166,7 +166,6 @@ TEST_CASE("Test stateless MemoryUnit::tick", "[unit]") {
     }
 }
 
-
 TEST_CASE("Test stateless StateVariableFilter::tick", "[unit]") {
     syn::StateVariableFilter svf("svf0");
     Eigen::Array<double, -1, -1, Eigen::RowMajor> inputs(1, 10);

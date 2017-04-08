@@ -28,8 +28,8 @@ set(LIBS_DIR ${CMAKE_SOURCE_DIR}/libs CACHE PATH "")
 set(FFTS_ROOT "${LIBS_DIR_SYS}/ffts" CACHE PATH "")
 set(FFTS_INCLUDE_DIR ${FFTS_ROOT}/include CACHE PATH "")
 
-set(Boost_INCLUDE_DIR "E:/users/austen/OneDrive/Code/libs/boost/boost_1_60_0" CACHE PATH "")
-set(Boost_LIBRARY_DIR "E:/users/austen/OneDrive/Code/libs/boost/boost_1_60_0/stage/lib" CACHE PATH "")
+set(Boost_INCLUDE_DIR "C:/users/austen/OneDrive/Code/libs/boost/boost_1_60_0" CACHE PATH "")
+set(Boost_LIBRARY_DIR "C:/users/austen/OneDrive/Code/libs/boost/boost_1_60_0/stage/lib" CACHE PATH "")
 
 set(MKL_DIR "E:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl" CACHE PATH "")
 

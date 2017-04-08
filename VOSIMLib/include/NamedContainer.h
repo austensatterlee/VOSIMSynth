@@ -382,13 +382,13 @@ namespace syn
     template <typename T, int MAXSIZE>
     T& NamedContainer<T, MAXSIZE>::getByIndex(int a_itemIndex)
     {
-        return m_data[m_indices[m_size - 1 - a_itemIndex]];
+        return m_data[m_indices[a_itemIndex]];
     }
 
     template <typename T, int MAXSIZE>
     const T& NamedContainer<T, MAXSIZE>::getByIndex(int a_itemIndex) const
     {
-        return m_data[m_indices[m_size - 1 - a_itemIndex]];
+        return m_data[m_indices[a_itemIndex]];
     }
 
     template <typename T, int MAXSIZE>
