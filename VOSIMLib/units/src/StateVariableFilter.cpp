@@ -148,12 +148,14 @@ void syn::_OnePoleLP::reset()
 }
 
 syn::OnePoleLP::OnePoleLP(const string& a_name) :
-    Unit(a_name)
+    Unit(a_name),
+    m_lastSync(0.0)
 {
     addParameter_(pFc, UnitParameter("fc", 0.01, 20000.0, 1.0, UnitParameter::Freq));
     addInput_(iAudioIn, "in");
     addInput_(iFcAdd, "fc");
     addInput_(iFcMul, "fc[x]", 1.0);
+    addInput_(iSync, "rst");
     addOutput_(oLP, "LP");
     addOutput_(oHP, "HP");
 }
@@ -175,6 +177,13 @@ void syn::OnePoleLP::process_()
     double fc = (param(pFc).getDouble() + READ_INPUT(iFcAdd)) * READ_INPUT(iFcMul); // freq cutoff
     fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());
     implem.setFc(fc, fs());
+
+     // sync
+    if (m_lastSync <= 0.0 && READ_INPUT(iSync) > 0.0)
+    {
+        reset();
+    }
+    m_lastSync = READ_INPUT(iSync);
 
     double input = READ_INPUT(0);
     double output = implem.process(input);
@@ -230,7 +239,6 @@ void syn::LadderFilter::process_()
 
     // Prepare parameter values and insert them into each stage.
     double g = 4 * DSP_PI * VT * fc * (1.0 - wd) / (1.0 + wd);
-    double dV0, dV1, dV2, dV3;
     double drive = 1 + 3 * param(pDrv).getDouble();
     double res = 3.9 * param(pFb).getDouble();
     double stage_gain = 1.0/(2.0*VT);
@@ -239,22 +247,22 @@ void syn::LadderFilter::process_()
     int i = c_oversamplingFactor;
     while (i--)
     {
-        dV0 = -g * (fast_tanh_rat((drive * input + res * m_V[3]) * stage_gain) + m_tV[0]);
+        double dV0 = -g * (fast_tanh_rat((drive * input + res * m_V[3]) * stage_gain) + m_tV[0]);
         m_V[0] += (dV0 + m_dV[0]) * dt;
         m_dV[0] = dV0;
         m_tV[0] = fast_tanh_rat(m_V[0] * stage_gain);
 
-        dV1 = g * (m_tV[0] - m_tV[1]);
+        double dV1 = g * (m_tV[0] - m_tV[1]);
         m_V[1] += (dV1 + m_dV[1]) * dt;
         m_dV[1] = dV1;
         m_tV[1] = fast_tanh_rat(m_V[1] * stage_gain);
 
-        dV2 = g * (m_tV[1] - m_tV[2]);
+        double dV2 = g * (m_tV[1] - m_tV[2]);
         m_V[2] += (dV2 + m_dV[2]) * dt;
         m_dV[2] = dV2;
         m_tV[2] = fast_tanh_rat(m_V[2] * stage_gain);
 
-        dV3 = g * (m_tV[2] - m_tV[3]);
+        double dV3 = g * (m_tV[2] - m_tV[3]);
         m_V[3] += (dV3 + m_dV[3]) * dt;
         m_dV[3] = dV3;
         m_tV[3] = fast_tanh_rat(m_V[3] * stage_gain);

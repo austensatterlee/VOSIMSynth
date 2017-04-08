@@ -113,7 +113,8 @@ namespace syn
         {
             iAudioIn = 0,
             iFcAdd,
-            iFcMul
+            iFcMul,
+            iSync
         };
 
         enum Output
@@ -135,6 +136,7 @@ namespace syn
         void onNoteOn_() override;
     private:
         _OnePoleLP implem;
+        double m_lastSync;
     };
 
     struct LadderFilterBase : public Unit

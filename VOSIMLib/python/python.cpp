@@ -201,9 +201,9 @@ PYBIND11_PLUGIN(pyVOSIMLib)
             .def(py::init<const std::string&>());
     py::class_<syn::OnePoleLP, std::shared_ptr<syn::OnePoleLP>, PyUnit_tpl<syn::OnePoleLP>>(m, "OnePoleLP", py::base<syn::Unit>())
             .def(py::init<const std::string&>());
-    py::class_<syn::LadderFilter, std::shared_ptr<syn::LadderFilter>, PyUnit_tpl<syn::LadderFilter>>(m, "LadderFilter", py::base<syn::Unit>())
+    py::class_<syn::LadderFilter, std::shared_ptr<syn::LadderFilter>, PyUnit_tpl<syn::LadderFilter>>(m, "LadderFilterA", py::base<syn::Unit>())
             .def(py::init<const std::string&>());
-    py::class_<syn::LadderFilterTwo, std::shared_ptr<syn::LadderFilterTwo>, PyUnit_tpl<syn::LadderFilterTwo>>(m, "LadderFilterTwo", py::base<syn::Unit>())
+    py::class_<syn::LadderFilterTwo, std::shared_ptr<syn::LadderFilterTwo>, PyUnit_tpl<syn::LadderFilterTwo>>(m, "LadderFilterB", py::base<syn::Unit>())
             .def(py::init<const std::string&>());
 
     py::class_<syn::BasicOscillator, std::shared_ptr<syn::BasicOscillator>, PyUnit_tpl<syn::BasicOscillator>>(m, "BasicOscillator", py::base<syn::Unit>())

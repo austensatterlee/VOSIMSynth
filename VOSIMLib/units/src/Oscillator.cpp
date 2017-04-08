@@ -197,7 +197,7 @@ namespace syn
         // sync
         if (m_lastSync <= 0.0 && READ_INPUT(iSync) > 0.0)
         {
-            m_basePhase = 0.0;
+            reset();
         }
         m_lastSync = READ_INPUT(iSync);
         Oscillator::process_();
