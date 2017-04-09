@@ -128,7 +128,7 @@ PYBIND11_PLUGIN(pyVOSIMLib)
                     auto nc_parameters = self.parameters();
                     for (int i = self.numParams()-1; i>=0; i--)
                     {
-                        int item_id = nc_parameters.indices()[i];
+                        int item_id = nc_parameters.ids()[i];
                         parameters[self.paramName(item_id)] = self.param(item_id).get<double>();
                     }
                     return parameters;
@@ -140,7 +140,7 @@ PYBIND11_PLUGIN(pyVOSIMLib)
                     auto nc_inputs = self.inputs();
                     for (int i = self.numInputs()-1; i>=0; i--)
                     {
-                        int item_id = nc_inputs.indices()[i];
+                        int item_id = nc_inputs.ids()[i];
                         input_names.push_back(self.inputName(item_id));
                     }
                     return input_names;
@@ -160,7 +160,7 @@ PYBIND11_PLUGIN(pyVOSIMLib)
                     auto nc_outputs = self.outputs();
                     for (int i = self.numOutputs()-1; i >= 0; i--)
                     {
-                        int item_id = nc_outputs.indices()[i];
+                        int item_id = nc_outputs.ids()[i];
                         output_names.push_back(self.outputName(item_id));
                     }
                     return output_names;
@@ -171,7 +171,7 @@ PYBIND11_PLUGIN(pyVOSIMLib)
                     Eigen::Matrix<double, -1, -1, Eigen::RowMajor> outputs(self.numOutputs(), self.getBufferSize());
                     for (int i = self.numOutputs()-1; i >= 0; i--)
                     {
-                        int item_id = nc_outputs.indices()[i];
+                        int item_id = nc_outputs.ids()[i];
                         for (int j = 0; j < self.getBufferSize(); j++)
                         {
                             outputs(i, j) = self.readOutput(item_id, j);
@@ -184,15 +184,22 @@ PYBIND11_PLUGIN(pyVOSIMLib)
             .def(py::init<const std::string&>())
             .def("getUnit", static_cast<syn::Unit&(syn::Circuit::*)(int)>(&syn::Circuit::getUnit))
             .def("getConnections", &syn::Circuit::getConnections)
+
             .def("addUnit", [](syn::Circuit& self, syn::Unit& a_unit) { return self.addUnit(&a_unit); })
             .def("addUnit", [](syn::Circuit& self, syn::Unit& a_unit, int a_id) { return self.addUnit(&a_unit, a_id); })
-            .def("removeUnit", &syn::Circuit::removeUnit<int>)
-            .def("removeUnit", &syn::Circuit::removeUnit<const std::string&>)
-            .def("removeUnit", [](syn::Circuit& self, syn::Unit& a_unit) { return self.removeUnit(&a_unit); })
-            .def("connectInternal", &syn::Circuit::connectInternal<string>)
-            .def("connectInternal", &syn::Circuit::connectInternal<int>)
-            .def("disconnectInternal", &syn::Circuit::disconnectInternal<string>)
-            .def("disconnectInternal", &syn::Circuit::disconnectInternal<int>)
+
+            .def("removeUnit", (bool (syn::Circuit::*) (const string&)) &syn::Circuit::removeUnit)
+            .def("removeUnit", (bool (syn::Circuit::*) (const syn::Unit&)) &syn::Circuit::removeUnit)
+            .def("removeUnit", (bool (syn::Circuit::*) (int)) &syn::Circuit::removeUnit)
+
+            .def("connectInternal", (bool (syn::Circuit::*) (int, int, int, int)) &syn::Circuit::connectInternal)
+            .def("connectInternal", (bool (syn::Circuit::*) (const string&, int, const string&, int)) &syn::Circuit::connectInternal)
+            .def("connectInternal", (bool (syn::Circuit::*) (const syn::Unit&, int, const syn::Unit&, int)) &syn::Circuit::connectInternal)
+
+            .def("disconnectInternal", (bool (syn::Circuit::*) (int, int, int, int)) &syn::Circuit::disconnectInternal)
+            .def("disconnectInternal", (bool (syn::Circuit::*) (const string&, int, const string&, int)) &syn::Circuit::disconnectInternal)
+            .def("disconnectInternal", (bool (syn::Circuit::*) (int, int, int, int)) &syn::Circuit::disconnectInternal)
+
             .def("getConnections", &syn::Circuit::getConnectionsToInternalInput);
 
     py::class_<syn::StateVariableFilter, std::shared_ptr<syn::StateVariableFilter>, PyUnit_tpl<syn::StateVariableFilter>>(m, "StateVariableFilter", py::base<syn::Unit>())

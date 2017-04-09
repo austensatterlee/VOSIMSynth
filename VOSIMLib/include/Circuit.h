@@ -17,14 +17,6 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
- *  \file Circuit.h
- *  \brief
- *  \details
- *  \author Austen Satterlee
- *  \date 02/2016
- */
-
 #ifndef __Circuit__
 #define __Circuit__
 
@@ -130,16 +122,14 @@ namespace syn
         void setVoiceIndex(double a_newVoiceIndex);
         double getVoiceIndex() const;
 
-        Unit& getUnit(int a_unitId);
-        const Unit& getUnit(int a_unitId) const;
+        Unit& getUnit(int a_id);
+        const Unit& getUnit(int a_id) const;
 
         int getInputUnitId() const;
-        int getOutputUnitId() const;
+        int getOutputUnitId() const;   
 
-        template <typename UID>
-        bool hasUnit(const UID& a_unitIdentifier) const;
-        template <typename UID>
-        int getUnitId(const UID& a_unitIdentifier) const;
+        int getUnitId(const std::string& a_name) const { return m_units.findName(a_name); }
+        int getUnitId(const Unit& a_unit) const { const Unit* unitPtr = &a_unit; return m_units.findItem(unitPtr); }
 
         int getNumUnits() const;
 
@@ -153,7 +143,7 @@ namespace syn
          * Retrieves a list of output ports connected to an input port.
          * \returns A vector of (unit_id, port_id) pairs.
          */
-        vector<std::pair<int, int>> getConnectionsToInternalInput(int a_unitId, int a_portid) const;
+        vector<std::pair<int, int>> getConnectionsToInternalInput(int a_id, int a_portid) const;
 
         /**
          * Get a list of all connections within the Circuit.
@@ -168,18 +158,19 @@ namespace syn
         /**
          * \returns True if the unit was added to the circuit (i.e. the provided id was not already taken).
          */
-        bool addUnit(Unit* a_unit, int a_unitId);
+        bool addUnit(Unit* a_unit, int a_id);
 
-        template <typename ID>
-        bool removeUnit(const ID& a_identifier);
+        bool removeUnit(const string& a_name);
+        bool removeUnit(const Unit& a_unit);
+        bool removeUnit(int a_id);
 
-        template <typename ID>
-        bool connectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier, int
-                             a_toInputPort);
+        bool connectInternal(int a_fromId, int a_fromOutputPort, int a_toId, int a_toInputPort);
+        bool connectInternal(const string& a_fromName, int a_fromOutputPort, const string& a_toName, int a_toInputPort);
+        bool connectInternal(const Unit& a_fromUnit, int a_fromOutputPort, const Unit& a_toUnit, int a_toInputPort);
 
-        template <typename ID>
-        bool disconnectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier, int
-                                a_toInputPort);
+        bool disconnectInternal(int a_fromId, int a_fromOutputPort, int a_toId, int a_toInputPort);
+        bool disconnectInternal(const string& a_fromName, int a_fromOutputPort, const string& a_toName, int a_toInputPort);
+        bool disconnectInternal(const Unit& a_fromUnit, int a_fromOutputPort, const Unit& a_toUnit, int a_toInputPort);
 
         operator json() const override;
 
@@ -222,108 +213,6 @@ namespace syn
 
         array<Unit*, MAX_UNITS> m_procGraph;
     };
-
-    template <typename UID>
-    bool Circuit::hasUnit(const UID& a_unitIdentifier) const { return getUnitId(a_unitIdentifier) >= 0; }
-
-    template <typename UID>
-    int Circuit::getUnitId(const UID& a_unitIdentifier) const { return m_units.find(a_unitIdentifier); }
-
-    template <typename ID>
-    bool Circuit::removeUnit(const ID& a_unitIdentifier)
-    {
-        int unitId = m_units.find(a_unitIdentifier);
-        if (unitId < 0)
-            return false;
-        Unit* unit = m_units[unitId];
-        // Don't allow deletion of input or output unit
-        if (unit == m_inputUnit || unit == m_outputUnit)
-            return false;
-        // Erase connections
-        vector<ConnectionRecord> garbageList;
-        const size_t nRecords = m_connectionRecords.size();
-        for (int i = 0; i < nRecords; i++)
-        {
-            const ConnectionRecord& rec = m_connectionRecords[i];
-            if (unitId == rec.to_id || unitId == rec.from_id) { garbageList.push_back(rec); }
-        }
-        for (int i = 0; i < garbageList.size(); i++)
-        {
-            const ConnectionRecord& rec = garbageList[i];
-            disconnectInternal(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
-        }
-        m_units.remove(unitId);
-        delete unit;
-        _recomputeGraph();
-        return true;
-    }
-
-    template <typename ID>
-    bool Circuit::connectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier,
-                                  int a_toInputPort)
-    {
-        int fromUnitId = m_units.find(a_fromIdentifier);
-        int toUnitId = m_units.find(a_toIdentifier);
-
-        Unit* fromUnit = m_units[fromUnitId];
-        Unit* toUnit = m_units[toUnitId];
-
-        if (!fromUnit->hasOutput(a_fromOutputPort))
-            return false;
-        if (!toUnit->hasInput(a_toInputPort))
-            return false;
-
-        // remove record of old connection
-        if (toUnit->isConnected(a_toInputPort))
-        {
-            const size_t nRecords = m_connectionRecords.size();
-            for (int i = 0; i < nRecords; i++)
-            {
-                const ConnectionRecord& rec = m_connectionRecords[i];
-                if (rec.to_id == toUnitId && rec.to_port == a_toInputPort)
-                {
-                    m_connectionRecords.erase(m_connectionRecords.begin() + i);
-                    break;
-                }
-            }
-        }
-
-        // make new connection
-        toUnit->connectInput(a_toInputPort, &fromUnit->readOutput(a_fromOutputPort, 0));
-
-        // record the connection upon success
-        m_connectionRecords.push_back({fromUnitId, a_fromOutputPort, toUnitId,a_toInputPort});
-        _recomputeGraph();
-        return true;
-    }
-
-    template <typename ID>
-    bool Circuit::disconnectInternal(const ID& a_fromIdentifier, int a_fromOutputPort, const ID& a_toIdentifier,
-                                     int a_toInputPort)
-    {
-        int fromId = m_units.find(a_fromIdentifier);
-        int toId = m_units.find(a_toIdentifier);
-
-        Unit* toUnit = m_units[toId];
-        Unit* fromUnit = m_units[fromId];
-        _ASSERT(toUnit->inputSource(a_toInputPort) == &fromUnit->readOutput(a_fromOutputPort, 0));
-
-        bool result = toUnit->disconnectInput(a_toInputPort);
-
-        // Find and remove the associated connection record stored in this Circuit
-        ConnectionRecord record{fromId, a_fromOutputPort, toId, a_toInputPort};
-        for (unsigned i = 0; i < m_connectionRecords.size(); i++)
-        {
-            if (m_connectionRecords[i] == record)
-            {
-                result = true;
-                m_connectionRecords.erase(m_connectionRecords.begin() + i);
-                _recomputeGraph();
-                break;
-            }
-        }
-        return result;
-    }
 };
 
 #endif // __Circuit__

@@ -80,13 +80,11 @@ TEST_CASE("Serialization example.", "[serialization]") {
 
 template<typename Out, typename In>
 static double measure_error(std::function<Out(In)> a_baseFunc, std::function<Out(In)> a_testFunc, In a, In b, int N) {
-    Out base_result, test_result;
     Out avg_error = 0;
-    In phase;
     for (int i = 0; i < N; i++) {
-        phase = i * (b-a) / N + a; // lerp from -3 to 3
-        base_result = a_baseFunc(phase);
-        test_result = a_testFunc(phase);
+        In phase = i * (b-a) / N + a; // lerp from -3 to 3
+        Out base_result = a_baseFunc(phase);
+        Out test_result = a_testFunc(phase);
         avg_error += abs(base_result - test_result);
     }
     avg_error *= 1. / N;
@@ -150,9 +148,7 @@ TEST_CASE("Test stateless MemoryUnit::tick", "[unit]") {
         for (int i = 0; i<10; i++) {
             inputs(0, i) = i;
         }
-        INFO("Inputs: " << inputs);
         mu.tick(inputs, outputs);
-        INFO("Outputs: " << outputs);
         REQUIRE(outputs(0, 0) == 0);
         REQUIRE(outputs(0, 1) == 0);
         REQUIRE(outputs(0, 2) == 1);
@@ -168,13 +164,42 @@ TEST_CASE("Test stateless MemoryUnit::tick", "[unit]") {
 
 TEST_CASE("Test stateless StateVariableFilter::tick", "[unit]") {
     syn::StateVariableFilter svf("svf0");
+    REQUIRE(svf.inputName(0) == "in");
     Eigen::Array<double, -1, -1, Eigen::RowMajor> inputs(1, 10);
     Eigen::Array<double, -1, -1, Eigen::RowMajor> outputs(4, 10);
     for (int i = 0; i<10; i++) {
         inputs(0, i) = i;
     }
-    INFO("Inputs: " << inputs);
     svf.tick(inputs, outputs);
-    INFO("Outputs: " << outputs);
     REQUIRE(outputs.any());
+}
+
+TEST_CASE("NamedContainer Add/remove", "[namedcontainer]") {
+    syn::NamedContainer<int, 8> nc;
+    Eigen::Array<double, 1, -1> nc_vec(8);
+    nc.add("0",0);
+    nc.add("2",2);
+    nc.add("4",4);
+    REQUIRE(nc.getByIndex(0) == 0);
+    REQUIRE(nc.getByIndex(1) == 2);
+    REQUIRE(nc.getByIndex(2) == 4);
+    nc_vec[0] = nc.getByIndex(0);
+    nc_vec[1] = nc.getByIndex(1);
+    nc_vec[2] = nc.getByIndex(2);
+    INFO("nc contents: " << nc_vec);
+
+    nc.removeById(1);
+    REQUIRE(nc.getByIndex(0) == 0);
+    REQUIRE(nc.getByIndex(1) == 4);
+    nc.add("3",3);
+    REQUIRE(nc.getByIndex(0) == 0);
+    REQUIRE(nc.getByIndex(1) == 3);
+    REQUIRE(nc.getByIndex(2) == 4);
+    nc.removeById(0);
+    REQUIRE(nc.getByIndex(0) == 3);
+    REQUIRE(nc.getByIndex(1) == 4);
+    nc.removeById(1);
+    REQUIRE(nc.getByIndex(0) == 4);
+    nc.removeById(2);
+    REQUIRE(nc.empty());
 }

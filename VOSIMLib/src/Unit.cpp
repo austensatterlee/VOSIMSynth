@@ -107,7 +107,7 @@ namespace syn
 
     const Circuit* Unit::parent() const { return m_parent; }
 
-    const string& Unit::paramName(int a_index) const { return m_parameters.name(a_index); }
+    const string& Unit::paramName(int a_id) const { return m_parameters.getNameFromId(a_id); }
 
     const NamedContainer<UnitParameter, MAX_PARAMS>& Unit::parameters() const { return m_parameters; }
 
@@ -233,7 +233,7 @@ namespace syn
         j["parameters"] = json();
         for (int i = 0; i < m_parameters.size(); i++)
         {
-            int index = m_parameters.indices()[i];
+            int index = m_parameters.ids()[i];
             j["parameters"][std::to_string(index)] = m_parameters[index];
         }
         j["class_id"] = getClassIdentifier();
@@ -265,9 +265,9 @@ namespace syn
 
     const NamedContainer<InputPort, MAX_INPUTS>& Unit::inputs() const { return m_inputPorts; }
 
-    bool Unit::hasOutput(int a_outputPort) const { return m_outputPorts.contains(a_outputPort); }
+    bool Unit::hasOutput(int a_outputId) const { return m_outputPorts.containsId(a_outputId); }
 
-    bool Unit::hasInput(int a_inputPort) const { return m_inputPorts.contains(a_inputPort); }
+    bool Unit::hasInput(int a_inputId) const { return m_inputPorts.containsId(a_inputId); }
 
-    const string& Unit::inputName(int a_index) const { return m_inputPorts.name(a_index); }
+    const string& Unit::inputName(int a_id) const { return m_inputPorts.getNameFromId(a_id); }
 }

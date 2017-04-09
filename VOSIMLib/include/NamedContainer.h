@@ -22,6 +22,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "common.h"
 #include <array>
+#include <type_traits>
 
 using std::array;
 using std::string;
@@ -31,13 +32,23 @@ namespace syn
     template <typename T, int MAXSIZE>
     class VOSIMLIB_API NamedContainer
     {
+        // Used to correctly add constness when the template argument is a pointer.
+        template<typename value_type>
+        struct add_const { typedef const value_type type; };
+
+        template<typename value_type>
+        struct add_const<value_type*> { typedef const value_type* const type; };
+
     public:
-        const size_t max_size = MAXSIZE;
-        typedef T item_type;
-        typedef item_type& reference;
-        typedef const item_type& const_reference;
-        typedef item_type* pointer;
-        typedef const item_type* const_pointer;
+        static const size_t max_size = MAXSIZE;
+        using item_type = T;
+        using const_item_type = typename add_const<item_type>::type;
+        using reference = item_type&;
+        using const_reference = const T&;
+        using pointer = item_type*;
+        using const_pointer = const T*;
+
+        typedef int id_type;
 
     private:
         array<T, MAXSIZE> m_data;
@@ -172,12 +183,20 @@ namespace syn
         typedef typename std::iterator_traits<iterator>::difference_type difference_type;
         typedef std::reverse_iterator<iterator> reverse_iterator;
 
+        /**
+         * Increment the given index and check if it is out of bounds.
+         * \return The incremented offset, or -1 if it is out of bounds.
+         */
         int next_offset(int a_offset) const
         {
             a_offset++;
             return a_offset >= MAXSIZE ? -1 : a_offset;
         }
 
+        /**
+         * Decrement the given index and check if it is out of bounds.
+         * \return The decremented offset, or -1 if it is out of bounds.
+         */
         int prev_offset(int a_offset) const
         {
             a_offset--;
@@ -242,56 +261,136 @@ namespace syn
         }
 
         /**
-         * Remove an item from the container, either by its name, index, or a reference to the item itself.
+         * Remove the item with the specified name from the container.
          * \returns True upon successful removal, false if item does not exist.
-         */
-        template <typename IDType>
-        bool remove(const IDType& a_itemId);
+         */        
+        bool removeByName(const string& a_name) {
+            int id = _getIdFromName(a_name);
+            return _remove(id);
+        }
+        
+        /**
+         * Remove the specified item from the container.
+         * \returns True upon successful removal, false if item does not exist.
+         */    
+        bool removeByItem(const_item_type& a_item) {            
+            int id = _getIdFromItem(a_item);
+            return _remove(id);
+        }
+          
+        /**
+         * Remove the item with the specified id from the container.
+         * \returns True upon successful removal, false if item does not exist.
+         */   
+        bool removeById(const id_type& a_id) {
+            return _remove(a_id);
+        }
 
         /**
-         * Retrieves an item from the container by name.
+         * Retrieve an item by name.
          * \returns A reference to the item
          */
-        T& MSFASTCALL operator[](const string& a_itemName) GCCFASTCALL;
-        const T& MSFASTCALL operator[](const string& a_itemName) GCCFASTCALL const;
+        T& MSFASTCALL operator[](const string& a_name) GCCFASTCALL;
+        const T& MSFASTCALL operator[](const string& a_name) GCCFASTCALL const;
 
         /**
-        * Retrieves an item from the container by index.
-        * \returns A reference to the item
-        */
-        T& MSFASTCALL operator[](int a_itemIndex) GCCFASTCALL;
-        const T& MSFASTCALL operator[](int a_itemIndex) GCCFASTCALL const;
-
-        T& MSFASTCALL getByIndex(int a_itemIndex) GCCFASTCALL;
-        const T& MSFASTCALL getByIndex(int a_itemIndex) GCCFASTCALL const;
-
-        /**
-         * Verifies if an item is in the container, either by its name, index, or a reference to the item itself.
-         * \returns True if the item exists, false otherwise.
+         * Retrieve the item with the specified id.
+         * \returns A reference to the item
          */
-        template <typename IDType>
-        bool contains(const IDType& a_itemId) const;
+        T& MSFASTCALL operator[](int a_id) GCCFASTCALL;
+        const T& MSFASTCALL operator[](int a_id) GCCFASTCALL const;
+        
+        /**
+         * Retrieve the item at the specified index.
+         * \returns A reference to the item
+         */
+        T& MSFASTCALL getByIndex(int a_index) GCCFASTCALL;
+        const T& MSFASTCALL getByIndex(int a_index) GCCFASTCALL const;
 
-        template <typename IDType>
-        int find(const IDType& a_itemId) const;
+        /**
+         * Find the id of the item with the specified name.
+         * \returns -1 if the item does not exist
+         */
+        id_type findName(const string& a_name) const {
+            return _getIdFromName(a_name);
+        }
 
-        template <typename IDType>
-        const string& name(const IDType& a_itemId) const;
+        /**
+         * Find the id of the specified item.
+         * \returns -1 if the item does not exist
+         */
+        id_type findItem(const_item_type& a_item) const {
+            return _getIdFromItem(a_item);
+        }
+        
+        bool containsName(const string& a_name) const { return _getIdFromName(a_name)>=0; }
+        bool containsItem(const_item_type& a_item) const { return _getIdFromItem(a_item)>=0; }
+        bool containsId(id_type a_id) const { return _checkId(a_id)>=0; }
+
+        /**
+         * Get the name of the item with the specified id.
+         */
+        const string& getNameFromId(const id_type& a_id) const {
+            return m_names[a_id];
+        }
+
+        /**
+         * Get the name of the specified item.
+         */
+        const string& getNameFromItem(const_item_type& a_item) const {
+            int id = _getIdFromItem(a_item);
+            return m_names[id];
+        }
 
         int size() const;
 
-        const int* indices() const;
+        bool empty() const;
 
+        /**
+         * Retrieve a list of all the ids stored in the container. The size of the list is the same as the
+         * value returned by size().
+         */
+        const id_type* ids() const;
+
+        /**
+         * Retrieve a list of the names stored in the container. The size of the list is the same as the value
+         * returned by size().
+         */
         const string* names() const;
 
-        int getUnusedId();
+        id_type getUnusedId();
 
     private:
-        int getItemIndex(int a_itemId) const;
+        int _checkId(int a_id) const;
 
-        int getItemIndex(const string& a_name) const;
+        int _getIdFromName(const string& a_name) const;
 
-        int getItemIndex(const T& a_item) const;
+        int _getIdFromItem(const_item_type& a_item) const;
+
+        bool _remove(int a_index) {
+            if (a_index == -1)
+            return false;
+            m_existances[a_index] = false;
+            m_names[a_index] = "";
+
+            // update index list
+            for (int i = 0; i < m_size; i++)
+            {
+                if (m_indices[i] == a_index)
+                {
+                    for (int j = i; j < m_size - 1; j++)
+                    {
+                        m_indices[j] = m_indices[j + 1];
+                    }
+                    m_indices[m_size - 1] = -1;
+                    break;
+                }
+            }
+            std::sort(std::begin(m_indices), std::end(m_indices), id_comparator<int>());
+
+            m_size--;
+            return true;
+        }
     };
 
     template <typename T, int MAXSIZE>
@@ -304,20 +403,20 @@ namespace syn
     }
 
     template <typename T, int MAXSIZE>
-    bool NamedContainer<T, MAXSIZE>::add(const string& a_name, int a_index, const T& a_item)
+    bool NamedContainer<T, MAXSIZE>::add(const string& a_name, int a_id, const T& a_item)
     {
-        if (a_index >= MAXSIZE)
+        if (a_id >= MAXSIZE)
             return false;
-        if (contains(a_name))
+        if (findName(a_name)>=0)
             return false;
-        if (contains(a_index))
+        if (_checkId(a_id)>=0)
             return false;
-        m_data[a_index] = a_item;
-        m_existances[a_index] = true;
-        m_names[a_index] = a_name;
+        m_data[a_id] = a_item;
+        m_existances[a_id] = true;
+        m_names[a_id] = a_name;
 
         // update index list
-        m_indices[m_size] = a_index;
+        m_indices[m_size] = a_id;
         std::sort(std::begin(m_indices), std::end(m_indices), id_comparator<int>());
 
         m_size++;
@@ -325,114 +424,60 @@ namespace syn
     }
 
     template <typename T, int MAXSIZE>
-    template <typename IDType>
-    bool NamedContainer<T, MAXSIZE>::remove(const IDType& a_itemID)
+    T& NamedContainer<T, MAXSIZE>::operator[](const string& a_name)
     {
-        int index = getItemIndex(a_itemID);
-        if (index == -1)
-            return false;
-        m_existances[index] = false;
-        m_names[index] = "";
-
-        // update index list
-        for (int i = 0; i < m_size; i++)
-        {
-            if (m_indices[i] == index)
-            {
-                for (int j = i; j < m_size - 1; j++)
-                {
-                    m_indices[j] = m_indices[j + 1];
-                }
-                m_indices[m_size - 1] = -1;
-                break;
-            }
-        }
-        std::sort(std::begin(m_indices), std::end(m_indices), id_comparator<int>());
-
-        m_size--;
-        return true;
+        int id = _getIdFromName(a_name);
+        return m_data[id];
     }
 
     template <typename T, int MAXSIZE>
-    T& NamedContainer<T, MAXSIZE>::operator[](const string& a_itemName)
+    const T& NamedContainer<T, MAXSIZE>::operator[](const string& a_name) const
     {
-        int itemidx = getItemIndex(a_itemName);
-        return m_data[itemidx];
+        int id = _getIdFromName(a_name);
+        return m_data[id];
     }
 
     template <typename T, int MAXSIZE>
-    const T& NamedContainer<T, MAXSIZE>::operator[](const string& a_itemName) const
+    T& NamedContainer<T, MAXSIZE>::operator[](int a_id)
     {
-        int itemidx = getItemIndex(a_itemName);
-        return m_data[itemidx];
+        return m_data[a_id];
     }
 
     template <typename T, int MAXSIZE>
-    T& NamedContainer<T, MAXSIZE>::operator[](int a_itemId)
+    const T& NamedContainer<T, MAXSIZE>::operator[](int a_id) const
     {
-        return m_data[a_itemId];
+        return m_data[a_id];
     }
 
     template <typename T, int MAXSIZE>
-    const T& NamedContainer<T, MAXSIZE>::operator[](int a_itemId) const
+    T& NamedContainer<T, MAXSIZE>::getByIndex(int a_index)
     {
-        return m_data[a_itemId];
+        return m_data[m_indices[a_index]];
     }
 
     template <typename T, int MAXSIZE>
-    T& NamedContainer<T, MAXSIZE>::getByIndex(int a_itemIndex)
+    const T& NamedContainer<T, MAXSIZE>::getByIndex(int a_index) const
     {
-        return m_data[m_indices[a_itemIndex]];
+        return m_data[m_indices[a_index]];
     }
 
     template <typename T, int MAXSIZE>
-    const T& NamedContainer<T, MAXSIZE>::getByIndex(int a_itemIndex) const
+    int NamedContainer<T, MAXSIZE>::size() const { return m_size; }
+
+    template <typename T, int MAXSIZE>
+    bool NamedContainer<T, MAXSIZE>::empty() const { return !m_size; }
+
+    template <typename T, int MAXSIZE>
+    const typename NamedContainer<T, MAXSIZE>::id_type* NamedContainer<T, MAXSIZE>::ids() const { return m_indices.data(); }
+
+    template <typename T, int MAXSIZE>
+    int NamedContainer<T, MAXSIZE>::_checkId(int a_id) const
     {
-        return m_data[m_indices[a_itemIndex]];
+        return a_id>=0 && m_existances[a_id] ? a_id : -1;
     }
 
     template <typename T, int MAXSIZE>
-    template <typename IDType>
-    bool NamedContainer<T, MAXSIZE>::contains(const IDType& a_itemID) const
-    {
-        return getItemIndex(a_itemID) >= 0;
-    }
-
-    template <typename T, int MAXSIZE>
-    template <typename IDType>
-    int NamedContainer<T, MAXSIZE>::find(const IDType& a_itemId) const
-    {
-        return getItemIndex(a_itemId);
-    }
-
-    template <typename T, int MAXSIZE>
-    int NamedContainer<T, MAXSIZE>::size() const
-    {
-        return m_size;
-    }
-
-    template <typename T, int MAXSIZE>
-    const int* NamedContainer<T, MAXSIZE>::indices() const
-    {
-        return m_indices.data();
-    }
-
-    template <typename T, int MAXSIZE>
-    template <typename IDType>
-    const string& NamedContainer<T, MAXSIZE>::name(const IDType& a_itemID) const
-    {
-        int itemidx = getItemIndex(a_itemID);
-        return m_names[itemidx];
-    }
-
-    template <typename T, int MAXSIZE>
-    int NamedContainer<T, MAXSIZE>::getItemIndex(int a_itemId) const
-    {
-        return a_itemId>=0 && m_existances[a_itemId] ? a_itemId : -1;
-    }
-
-    template <typename T, int MAXSIZE>
-    int NamedContainer<T, MAXSIZE>::getItemIndex(const string& a_name) const
+    int NamedContainer<T, MAXSIZE>::_getIdFromName(const string& a_name) const
     {
         for (int i = 0; i < m_size; i++)
         {
@@ -443,7 +488,7 @@ namespace syn
     }
 
     template <typename T, int MAXSIZE>
-    int NamedContainer<T, MAXSIZE>::getItemIndex(const T& a_item) const
+    int NamedContainer<T, MAXSIZE>::_getIdFromItem(const_item_type& a_item) const
     {
         for (int i = 0; i < m_size; i++)
         {
@@ -460,7 +505,7 @@ namespace syn
     }
 
     template <typename T, int MAXSIZE>
-    int NamedContainer<T, MAXSIZE>::getUnusedId()
+    typename NamedContainer<T, MAXSIZE>::id_type NamedContainer<T, MAXSIZE>::getUnusedId()
     {
         int nextId = 0;
         while (m_existances[nextId])

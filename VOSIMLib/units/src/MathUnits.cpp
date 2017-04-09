@@ -90,11 +90,12 @@ void syn::RectifierUnit::process_()
         double output;
         switch (param(m_pRectType).getInt())
         {
-        case 0: // full
-            output = abs(input);
-            break;
         case 1: // half
             output = input > 0 ? input : 0;
+            break;
+        case 0: // full
+        default:
+            output = abs(input);
             break;
         }
         WRITE_OUTPUT(0, output);
@@ -118,7 +119,7 @@ void syn::GainUnit::process_()
     BEGIN_PROC_FUNC
     double output = param(m_pGain).getDouble();    
     for (int i = 0; i < numInputs(); i++) {
-        output *= READ_INPUT(inputs().indices()[i]);
+        output *= READ_INPUT(inputs().ids()[i]);
     }
     WRITE_OUTPUT(0, output);
     END_PROC_FUNC
@@ -155,7 +156,7 @@ void syn::SummerUnit::process_()
     BEGIN_PROC_FUNC
         double output = 0;
         for (int i = 0; i < numInputs(); i++) {
-            output += READ_INPUT(inputs().indices()[i]);
+            output += READ_INPUT(inputs().ids()[i]);
         }
         WRITE_OUTPUT(0, output);
     END_PROC_FUNC

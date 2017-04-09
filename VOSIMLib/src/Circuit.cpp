@@ -47,10 +47,10 @@ namespace syn
     Circuit::Circuit(const Circuit& a_other) :
         Circuit(a_other.name())
     {
-        const int* unitIndices = a_other.m_units.indices();
+        const int* unitIndices = a_other.m_units.ids();
         for (int i = 0; i < a_other.m_units.size(); i++)
         {
-            Unit* unit = a_other.m_units[unitIndices[i]];
+            const Unit* unit = a_other.m_units[unitIndices[i]];
             if (unit != a_other.m_inputUnit && unit != a_other.m_outputUnit)
                 addUnit(a_other.m_units[unitIndices[i]]->clone(), unitIndices[i]);
         }
@@ -67,20 +67,20 @@ namespace syn
         if (this != &a_other)
         {
             // delete old units
-            const int* unitIndices = m_units.indices();
+            const int* unitIndices = m_units.ids();
             for (int i = 0; i < m_units.size();)
             {
-                Unit* unit = m_units[unitIndices[i]];
+                const Unit* unit = m_units[unitIndices[i]];
                 if (unit != m_inputUnit && unit != m_outputUnit)
-                    removeUnit(unit);
+                    removeUnit(*unit);
                 else
                     i++;
             }
             // copy new units
-            const int* otherUnitIndices = a_other.m_units.indices();
+            const int* otherUnitIndices = a_other.m_units.ids();
             for (int i = 0; i < a_other.m_units.size(); i++)
             {
-                Unit* unit = a_other.m_units[otherUnitIndices[i]];
+                const Unit* unit = a_other.m_units[otherUnitIndices[i]];
                 if (unit != a_other.m_inputUnit && unit != a_other.m_outputUnit)
                     addUnit(a_other.m_units[otherUnitIndices[i]]->clone(), otherUnitIndices[i]);
             }
@@ -94,15 +94,35 @@ namespace syn
         return *this;
     }
 
-    Circuit::~Circuit() { for (int i = 0; i < m_units.size(); i++) { delete m_units[m_units.indices()[i]]; } }
-    
+    Circuit::~Circuit() { for (int i = 0; i < m_units.size(); i++) { delete m_units[m_units.ids()[i]]; } }
+
+    bool Circuit::disconnectInternal(int a_fromId, int a_fromOutputPort, int a_toId, int a_toInputPort) {
+        Unit* toUnit = m_units[a_toId];
+        Unit* fromUnit = m_units[a_fromId];
+        assert(toUnit->inputSource(a_toInputPort) == &fromUnit->readOutput(a_fromOutputPort, 0));
+
+        bool result = toUnit->disconnectInput(a_toInputPort);
+
+        // Find and remove the associated connection record stored in this Circuit
+        ConnectionRecord record{a_fromId, a_fromOutputPort, a_toId, a_toInputPort};
+        for (unsigned i = 0; i < m_connectionRecords.size(); i++) {
+            if (m_connectionRecords[i] == record) {
+                result = true;
+                m_connectionRecords.erase(m_connectionRecords.begin() + i);
+                _recomputeGraph();
+                break;
+            }
+        }
+        return result;
+    }
+
     Circuit::operator json() const
     {
         json j = Unit::operator json();
         j["units"] = json();
         for (int i = 0; i < m_units.size(); i++)
         {
-            int id = m_units.indices()[i];
+            int id = m_units.ids()[i];
             j["units"][std::to_string(id)] = (*m_units[id]).operator json();
         }
         j["connections"] = json();
@@ -119,8 +139,10 @@ namespace syn
     Unit* Circuit::load(const json& j)
     {
         json units = j["units"];
-        int inputUnitIndex = m_units.find(m_inputUnit);
-        int outputUnitIndex = m_units.find(m_outputUnit);
+        Unit* inputUnit = m_inputUnit;
+        Unit* outputUnit = m_outputUnit;
+        int inputUnitIndex = m_units.findItem(inputUnit);
+        int outputUnitIndex = m_units.findItem(outputUnit);
         /* Load units */
         for (json::iterator it = units.begin(); it != units.end(); ++it)
         {
@@ -156,7 +178,7 @@ namespace syn
 
     void Circuit::reset()
     {
-        const int* unitIndices = m_units.indices();
+        const int* unitIndices = m_units.ids();
         for (int i = 0; i < m_units.size(); i++) { m_units[unitIndices[i]]->reset(); }
     }
 
@@ -194,7 +216,7 @@ namespace syn
     bool Circuit::addUnit(Unit* a_unit, int a_unitId)
     {
         // increment name until there is no collision
-        while (m_units.contains(a_unit->name())) { a_unit->_setName(incrementSuffix(a_unit->name())); }
+        while (m_units.containsName(a_unit->name())) { a_unit->_setName(incrementSuffix(a_unit->name())); }
         bool retval = m_units.add(a_unit->name(), a_unitId, a_unit);
         if (!retval)
             return false;
@@ -207,6 +229,99 @@ namespace syn
         return true;
     }
 
+    bool Circuit::removeUnit(const string& a_name) {
+        int a_id = m_units.findName(a_name);
+        return removeUnit(a_id);
+    }
+
+    bool Circuit::removeUnit(const Unit& a_unit) {
+        const Unit* unitPtr = &a_unit;
+        int a_id = m_units.findItem(unitPtr);
+        return removeUnit(a_id);
+    }
+
+    bool Circuit::removeUnit(int a_id) {
+        if (a_id < 0)
+            return false;
+        Unit* unit = m_units[a_id];
+        // Don't allow deletion of input or output unit
+        if (unit == m_inputUnit || unit == m_outputUnit)
+            return false;
+        // Erase connections
+        vector<ConnectionRecord> garbageList;
+        const size_t nRecords = m_connectionRecords.size();
+        for (int i = 0; i < nRecords; i++) {
+            const ConnectionRecord& rec = m_connectionRecords[i];
+            if (a_id == rec.to_id || a_id == rec.from_id) { garbageList.push_back(rec); }
+        }
+        for (int i = 0; i < garbageList.size(); i++) {
+            const ConnectionRecord& rec = garbageList[i];
+            disconnectInternal(rec.from_id, rec.from_port, rec.to_id, rec.to_port);
+        }
+        m_units.removeById(a_id);
+        delete unit;
+        _recomputeGraph();
+        return true;
+    }
+
+    bool Circuit::connectInternal(int a_fromId, int a_fromOutputPort, int a_toId, int a_toInputPort) {
+        Unit* fromUnit = m_units[a_fromId];
+        Unit* toUnit = m_units[a_toId];
+
+        if (!fromUnit->hasOutput(a_fromOutputPort))
+            return false;
+        if (!toUnit->hasInput(a_toInputPort))
+            return false;
+
+        // remove record of old connection
+        if (toUnit->isConnected(a_toInputPort)) {
+            const size_t nRecords = m_connectionRecords.size();
+            for (int i = 0; i < nRecords; i++) {
+                const ConnectionRecord& rec = m_connectionRecords[i];
+                if (rec.to_id == a_toId && rec.to_port == a_toInputPort) {
+                    m_connectionRecords.erase(m_connectionRecords.begin() + i);
+                    break;
+                }
+            }
+        }
+
+        // make new connection
+        toUnit->connectInput(a_toInputPort, &fromUnit->readOutput(a_fromOutputPort, 0));
+
+        // record the connection upon success
+        m_connectionRecords.push_back({a_fromId, a_fromOutputPort, a_toId,a_toInputPort});
+        _recomputeGraph();
+        return true;
+    }
+
+    bool Circuit::connectInternal(const string& a_fromName, int a_fromOutputPort, const string& a_toName, int a_toInputPort) {
+        int fromId = m_units.findName(a_fromName);
+        int toId = m_units.findName(a_toName);
+        return connectInternal(fromId, a_fromOutputPort, toId, a_toInputPort);
+    }
+
+    bool Circuit::connectInternal(const Unit& a_fromUnit, int a_fromOutputPort, const Unit& a_toUnit, int a_toInputPort) {
+        const Unit* toUnitPtr = &a_toUnit;
+        const Unit* fromUnitPtr = &a_fromUnit;
+        int fromId = m_units.findItem(toUnitPtr);
+        int toId = m_units.findItem(fromUnitPtr);
+        return connectInternal(fromId, a_fromOutputPort, toId, a_toInputPort);
+    }
+
+    bool Circuit::disconnectInternal(const string& a_fromName, int a_fromOutputPort, const string& a_toName, int a_toInputPort) {
+        int fromId = m_units.findName(a_fromName);
+        int toId = m_units.findName(a_toName);
+        return disconnectInternal(fromId, a_fromOutputPort, toId, a_toInputPort);
+    }
+
+    bool Circuit::disconnectInternal(const Unit& a_fromUnit, int a_fromOutputPort, const Unit& a_toUnit, int a_toInputPort) {
+        const Unit* toUnitPtr = &a_toUnit;
+        const Unit* fromUnitPtr = &a_fromUnit;
+        int fromId = m_units.findItem(toUnitPtr);
+        int toId = m_units.findItem(fromUnitPtr);
+        return disconnectInternal(fromId, a_fromOutputPort, toId, a_toInputPort);
+    }
+
     const vector<ConnectionRecord>& Circuit::getConnections() const { return m_connectionRecords; };
 
     void Circuit::_recomputeGraph()
@@ -215,8 +330,8 @@ namespace syn
         // Find sinks
         for (int i = 0; i < m_units.size(); i++)
         {
-            Unit* unit = m_units.getByIndex(i);
-            if (!unit->numOutputs()) { sinks.push_back(m_units.find(unit)); }
+            const Unit* unit = m_units.getByIndex(i);
+            if (!unit->numOutputs()) { sinks.push_back(m_units.findItem(unit)); }
         }
         sinks.push_back(getOutputUnitId());
 
@@ -269,31 +384,31 @@ namespace syn
 
     void Circuit::onFsChange_()
     {
-        const int* unitIndices = m_units.indices();
+        const int* unitIndices = m_units.ids();
         for (int i = 0; i < m_units.size(); i++) { m_units[unitIndices[i]]->setFs(fs()); }
     }
 
     void Circuit::onTempoChange_()
     {
-        const int* unitIndices = m_units.indices();
+        const int* unitIndices = m_units.ids();
         for (int i = 0; i < m_units.size(); i++) { m_units[unitIndices[i]]->setTempo(tempo()); }
     }
 
     void Circuit::onNoteOn_()
     {
-        const int* unitIndices = m_units.indices();
+        const int* unitIndices = m_units.ids();
         for (int i = 0; i < m_units.size(); i++) { m_units[unitIndices[i]]->noteOn(note(), velocity()); }
     }
 
     void Circuit::onNoteOff_()
     {
-        const int* unitIndices = m_units.indices();
+        const int* unitIndices = m_units.ids();
         for (int i = 0; i < m_units.size(); i++) { m_units[unitIndices[i]]->noteOff(note(), velocity()); }
     }
 
     void Circuit::onMidiControlChange_(int a_cc, double a_value)
     {
-        const int* unitIndices = m_units.indices();
+        const int* unitIndices = m_units.ids();
         for (int i = 0; i < m_units.size(); i++) { m_units[unitIndices[i]]->onMidiControlChange_(a_cc, a_value); }
     }
 
@@ -321,9 +436,9 @@ namespace syn
         return outputid;
     }
 
-    int Circuit::getInputUnitId() const { return getUnitId(m_inputUnit); }
+    int Circuit::getInputUnitId() const { return getUnitId(*m_inputUnit); }
 
-    int Circuit::getOutputUnitId() const { return getUnitId(m_outputUnit); }
+    int Circuit::getOutputUnitId() const { return getUnitId(*m_outputUnit); }
 
     int Circuit::getNumUnits() const { return static_cast<int>(m_units.size()); }
 
@@ -336,7 +451,7 @@ namespace syn
         Unit::setBufferSize(a_bufferSize);
 
         /* Update buffer sizes of internal units */
-        const int* unitIndices = m_units.indices();
+        const int* unitIndices = m_units.ids();
         for (int i = 0; i < m_units.size(); i++)
         {
             m_units[unitIndices[i]]->setBufferSize(a_bufferSize);
@@ -353,12 +468,11 @@ namespace syn
 
     vector<std::pair<int, int>> Circuit::getConnectionsToInternalInput(int a_unitId, int a_portid) const
     {
-        int unitId = m_units.find(a_unitId);
         vector<std::pair<int, int>> connectedPorts;
         for (int i = 0; i < m_connectionRecords.size(); i++)
         {
             const ConnectionRecord& conn = m_connectionRecords[i];
-            if (conn.to_id == unitId && conn.to_port == a_portid) { connectedPorts.push_back(std::make_pair(conn.from_id, conn.from_port)); }
+            if (conn.to_id == a_unitId && conn.to_port == a_portid) { connectedPorts.push_back(std::make_pair(conn.from_id, conn.from_port)); }
         }
         return connectedPorts;
     }

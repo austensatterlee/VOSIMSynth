@@ -28,7 +28,7 @@ void synui::UnitEditor::_build()
 
     /* Add parameter controls */
     const syn::Unit& unit = m_vm->getUnit(m_unitId);
-    const int* paramIndices = unit.parameters().indices();
+    const int* paramIndices = unit.parameters().ids();
     int nParams = unit.numParams();
     for (int pNum = 0; pNum < nParams; pNum++)
     {
@@ -42,7 +42,6 @@ void synui::UnitEditor::_build()
         {
         case syn::UnitParameter::Null:
             continue;
-            break;
         case syn::UnitParameter::Bool:
         {
             auto setter = [this, paramId](bool val) { setParamValue(paramId, val); };
@@ -201,7 +200,6 @@ void synui::UnitEditor::_build()
         }
         default:
             continue;
-            break;
         }
 
         auto lbl = new nanogui::Label(this, paramName);

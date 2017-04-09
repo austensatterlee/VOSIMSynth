@@ -242,8 +242,8 @@ namespace syn
         /**
          * Determines whether or not the unit contains a specific parameter.
          */
-        template <typename ID>
-        bool hasParam(const ID& a_paramId) const;
+        bool hasParam(int a_id) const { return m_parameters.containsId(a_id); }
+        bool hasParam(const std::string& a_name) const { return m_parameters.containsName(a_name); }
 
         /**
          * Returns a reference to the requested parameter.
@@ -277,8 +277,7 @@ namespace syn
 
         bool hasOutput(int a_outputPort) const;
 
-        template <typename ID>
-        string outputName(const ID& a_identifier) const;
+        string outputName(int a_outputId) const { return m_outputPorts.getNameFromId(a_outputId); }
 
         template <typename ID>
         const double& readOutput(const ID& a_identifier, int a_offset) const;
@@ -416,22 +415,10 @@ namespace syn
         m_outputPorts[a_id][a_offset] = a_val;
     }
 
-    template <typename ID>
-    bool Unit::hasParam(const ID& a_paramId) const
-    {
-        return m_parameters.contains(a_paramId);
-    }
-
     template <typename ID, typename T>
     bool Unit::setParam(const ID& a_identifier, const T& a_value)
     {
         return m_parameters[a_identifier].set(a_value);
-    };
-
-    template <typename ID>
-    string Unit::outputName(const ID& a_identifier) const
-    {
-        return m_outputPorts.name<ID>(a_identifier);
     };
 }
 #endif

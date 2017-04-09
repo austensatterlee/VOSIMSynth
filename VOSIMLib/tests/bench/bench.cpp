@@ -5,24 +5,23 @@
 #include "DSPMath.h"
 #include "NamedContainer.h"
 #include "Unit.h"
+#include "StateVariableFilter.h"
+#include "Circuit.h"
+#include "Oscillator.h"
+#include "MidiUnits.h"
+#include "ADSREnvelope.h"
 
 #include <array>
 #include <algorithm>
 #include <random>
 #include <string>
-#include <StateVariableFilter.h>
-#include "Circuit.h"
-#include "MemoryUnit.h"
-#include "Oscillator.h"
-#include "MidiUnits.h"
-#include "ADSREnvelope.h"
 
-#define trig_benches 1
-#define ladder_benches 1
+#define trig_benches 0
+#define ladder_benches 0
 #define circuit_benches 1
-#define modulus_benches 1
+#define modulus_benches 0
 #define lut_saw_benches 1
-#define lut_pitch_benches 1
+#define lut_pitch_benches 0
 #define container_benches 1
 
 std::random_device RandomDevice;
@@ -168,65 +167,65 @@ NONIUS_BENCHMARK("trapezoidal svf", [](nonius::chronometer& meter) {
 #endif
 
 #if circuit_benches
-NONIUS_BENCHMARK("memory circuit (buf size=1)", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("ladder circuit (buf size=1)", [](nonius::chronometer& meter) {
     const int runs = meter.runs();
-    const int nUnits = 60;
+    const int nUnits = 12;
     syn::Circuit mycircuit("main");
     mycircuit.setFs(48000.0);
     mycircuit.setBufferSize(1);
-    // Add a bunch of memory units in serial
-    syn::MemoryUnit* munits[nUnits];
-    munits[0] = new syn::MemoryUnit("u0");
-    mycircuit.addUnit(munits[0]);
+    // Add a bunch of ladder filter units in serial
+    syn::LadderFilter* lf[nUnits];
+    lf[0] = new syn::LadderFilter("lf0");
+    mycircuit.addUnit(lf[0]);
     for (int i = 1; i < nUnits; i++) {
-        munits[i] = new syn::MemoryUnit("u" + std::to_string(i));
-        mycircuit.addUnit(munits[i]);
-        mycircuit.connectInternal(mycircuit.getUnitId(munits[i - 1]), 0, mycircuit.getUnitId(munits[i]), 0);
+        lf[i] = new syn::LadderFilter("lf" + std::to_string(i));
+        mycircuit.addUnit(lf[i]);
+        mycircuit.connectInternal(mycircuit.getUnitId(*lf[i - 1]), 0, mycircuit.getUnitId(*lf[i]), 0);
     }
     // Add pitch and oscillator units
     syn::MidiNoteUnit* mnu = new syn::MidiNoteUnit("mnu0");
     mycircuit.addUnit(mnu);
     syn::BasicOscillator* bosc = new syn::BasicOscillator("bosc0");
     mycircuit.addUnit(bosc);
-    mycircuit.connectInternal(mycircuit.getUnitId(mnu), 0, mycircuit.getUnitId(bosc), 0);
-    mycircuit.connectInternal(mycircuit.getUnitId(bosc), 0, mycircuit.getUnitId(munits[0]), 0);
-    // Connect final memory unit to circuit output
-    mycircuit.connectInternal(mycircuit.getUnitId(munits[nUnits - 1]), 0, mycircuit.getOutputUnitId(), 0);
+    mycircuit.connectInternal(mycircuit.getUnitId(*mnu), 0, mycircuit.getUnitId(*bosc), 0);
+    mycircuit.connectInternal(mycircuit.getUnitId(*bosc), 0, mycircuit.getUnitId(*lf[0]), 0);
+    // Connect final ladder unit to circuit output
+    mycircuit.connectInternal(mycircuit.getUnitId(*lf[nUnits - 1]), 0, mycircuit.getOutputUnitId(), 0);
 
     double x;
     meter.measure([&x, &mycircuit](int i)
     {
-        for (int j = 0; j < 4096; j++)
+        for (int j = 0; j < 4800; j++)
             mycircuit.tick();
         x = mycircuit.readOutput(0, 0);
         return x;
     });
 })
 
-NONIUS_BENCHMARK("memory circuit (buf size=4800)", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("ladder circuit (buf size=4800)", [](nonius::chronometer& meter) {
     const int runs = meter.runs();
-    const int nUnits = 60;
+    const int nUnits = 12;
     syn::Circuit mycircuit("main");
     mycircuit.setFs(48000.0);
-    mycircuit.setBufferSize(4096);
-    // Add a bunch of memory units in serial
-    syn::MemoryUnit* munits[nUnits];
-    munits[0] = new syn::MemoryUnit("u0");
-    mycircuit.addUnit(munits[0]);
+    mycircuit.setBufferSize(4800);
+    // Add a bunch of ladder filter units in serial
+    syn::LadderFilter* lf[nUnits];
+    lf[0] = new syn::LadderFilter("lf0");
+    mycircuit.addUnit(lf[0]);
     for (int i = 1; i < nUnits; i++) {
-        munits[i] = new syn::MemoryUnit("u" + std::to_string(i));
-        mycircuit.addUnit(munits[i]);
-        mycircuit.connectInternal(mycircuit.getUnitId(munits[i - 1]), 0, mycircuit.getUnitId(munits[i]), 0);
+        lf[i] = new syn::LadderFilter("lf" + std::to_string(i));
+        mycircuit.addUnit(lf[i]);
+        mycircuit.connectInternal(mycircuit.getUnitId(*lf[i - 1]), 0, mycircuit.getUnitId(*lf[i]), 0);
     }
     // Add pitch and oscillator units
     syn::MidiNoteUnit* mnu = new syn::MidiNoteUnit("mnu0");
     mycircuit.addUnit(mnu);
     syn::BasicOscillator* bosc = new syn::BasicOscillator("bosc0");
     mycircuit.addUnit(bosc);
-    mycircuit.connectInternal(mycircuit.getUnitId(mnu), 0, mycircuit.getUnitId(bosc), 0);
-    mycircuit.connectInternal(mycircuit.getUnitId(bosc), 0, mycircuit.getUnitId(munits[0]), 0);
-    // Connect final memory unit to circuit output
-    mycircuit.connectInternal(mycircuit.getUnitId(munits[nUnits - 1]), 0, mycircuit.getOutputUnitId(), 0);
+    mycircuit.connectInternal(mycircuit.getUnitId(*mnu), 0, mycircuit.getUnitId(*bosc), 0);
+    mycircuit.connectInternal(mycircuit.getUnitId(*bosc), 0, mycircuit.getUnitId(*lf[0]), 0);
+    // Connect final ladder unit to circuit output
+    mycircuit.connectInternal(mycircuit.getUnitId(*lf[nUnits - 1]), 0, mycircuit.getOutputUnitId(), 0);
 
     double x;
     meter.measure([&x, &mycircuit](int i)
