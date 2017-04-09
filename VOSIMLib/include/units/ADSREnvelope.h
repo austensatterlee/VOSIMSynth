@@ -18,7 +18,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
-* \file ADSREnvelope.h
+* \file units/ADSREnvelope.h
 * \brief
 * \details
 * \author Austen Satterlee

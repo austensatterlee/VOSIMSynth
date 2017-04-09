@@ -18,7 +18,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
- * \file MemoryUnit.h
+ * \file units/MemoryUnit.h
  * \brief
  * \details
  * \author Austen Satterlee

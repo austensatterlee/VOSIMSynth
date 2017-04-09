@@ -45,8 +45,8 @@ add_custom_command(OUTPUT ${GENTABLES_OUTPUT} COMMAND python ARGS ${CMAKE_CURREN
 ##
 file(GLOB VOSIMLIB_HDRS include/*.h)
 file(GLOB VOSIMLIB_SRCS src/*.cpp src/table_data.cpp)
-file(GLOB VOSIMLIB_UNIT_HDRS units/include/*.h)
-file(GLOB VOSIMLIB_UNIT_SRCS units/src/*.cpp)
+file(GLOB VOSIMLIB_UNIT_HDRS include/units/*.h)
+file(GLOB VOSIMLIB_UNIT_SRCS src/units/*.cpp)
 file(GLOB VOSIMLIB_PYTHON_SRCS python/*.cpp)
 set(VOSIMLIB_FILES ${VOSIMLIB_HDRS};${VOSIMLIB_UNIT_HDRS})
 set(VOSIMLIB_FILES ${VOSIMLIB_FILES};${VOSIMLIB_SRCS};${VOSIMLIB_UNIT_SRCS})
@@ -56,7 +56,7 @@ source_group(VOSIMLib/include FILES ${VOSIMLIB_HDRS})
 source_group(VOSIMLib-units FILES ${VOSIMLIB_UNIT_SRCS})
 source_group(VOSIMLib-units/include FILES ${VOSIMLIB_UNIT_HDRS})
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/units/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_definitions(${VOSIMLIB_DEFS})
 
 ##

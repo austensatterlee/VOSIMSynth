@@ -2,17 +2,17 @@
 #include <pybind11/eigen.h>
 #include <pybind11/stl.h>
 #include "Unit.h"
-#include "StateVariableFilter.h"
+#include "units/StateVariableFilter.h"
 #include <string>
 #include "Circuit.h"
-#include "Oscillator.h"
-#include "VosimOscillator.h"
-#include "ADSREnvelope.h"
-#include "MemoryUnit.h"
-#include "MidiUnits.h"
-#include "MathUnits.h"
-#include "WaveShapers.h"
-#include "Follower.h"
+#include "units/Oscillator.h"
+#include "units/VosimOscillator.h"
+#include "units/ADSREnvelope.h"
+#include "units/MemoryUnit.h"
+#include "units/MidiUnits.h"
+#include "units/MathUnits.h"
+#include "units/WaveShapers.h"
+#include "units/Follower.h"
 
 namespace py = pybind11;
 

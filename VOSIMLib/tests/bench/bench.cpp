@@ -5,11 +5,11 @@
 #include "DSPMath.h"
 #include "NamedContainer.h"
 #include "Unit.h"
-#include "StateVariableFilter.h"
+#include "units/StateVariableFilter.h"
 #include "Circuit.h"
-#include "Oscillator.h"
-#include "MidiUnits.h"
-#include "ADSREnvelope.h"
+#include "units/Oscillator.h"
+#include "units/MidiUnits.h"
+#include "units/ADSREnvelope.h"
 
 #include <array>
 #include <algorithm>

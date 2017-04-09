@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "VosimOscillator.h"
+#include "units/VosimOscillator.h"
 #include "tables.h"
 #include "DSPMath.h"
 

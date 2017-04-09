@@ -18,7 +18,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
-* \file Filter.h
+* \file units/Filter.h
 * \brief
 * \details
 * \author Austen Satterlee

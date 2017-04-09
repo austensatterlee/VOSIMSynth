@@ -2,10 +2,10 @@
 
 #include <common_serial.h>
 #include <Unit.h>
-#include <StateVariableFilter.h>
-#include <Oscillator.h>
+#include <units/StateVariableFilter.h>
+#include <units/Oscillator.h>
 #include <Circuit.h>
-#include <MemoryUnit.h>
+#include <units/MemoryUnit.h>
 
 #include <sstream>
 #include <memory>
@@ -13,8 +13,8 @@
 #include <cmath>
 #include <DSPMath.h>
 #include "VoiceManager.h"
-#include "MidiUnits.h"
-#include "ADSREnvelope.h"
+#include "units/MidiUnits.h"
+#include "units/ADSREnvelope.h"
 
 std::random_device RandomDevice;
 

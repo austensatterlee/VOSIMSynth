@@ -1,5 +1,5 @@
 #include "MemoryPool.h"
-
+
 syn::MemoryPool::Chunk::~Chunk() {
     if (next)
         next->prev = prev;
@@ -14,7 +14,7 @@ bool syn::MemoryPool::ChunkSortBySize::operator()(const Chunk& a_lhs, const Chun
 bool syn::MemoryPool::ChunkSortByAddr::operator()(const Chunk& a_lhs, const Chunk& a_rhs) const {
     return a_lhs.addr < a_rhs.addr;
 }
-
+
 syn::MemoryPool::MemoryPool(size_t a_numBytes):
     m_head{0, nullptr, false, nullptr, nullptr},
     m_bytesUsed(0)

@@ -1,5 +1,5 @@
 /**
- * \file MidiUnits.h
+ * \file units/MidiUnits.h
  * \brief
  * \details
  * \author Austen Satterlee

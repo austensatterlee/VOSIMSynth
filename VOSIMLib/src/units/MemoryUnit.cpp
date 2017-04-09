@@ -25,7 +25,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  * \date March 6, 2016
  */
 
-#include "MemoryUnit.h"
+#include "units/MemoryUnit.h"
 #include "DSPMath.h"
 #include <tables.h>
 

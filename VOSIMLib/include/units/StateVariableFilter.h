@@ -18,7 +18,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
-* \file StateVariableFilter.h
+* \file units/StateVariableFilter.h
 * \brief
 * \details
 * \author Austen Satterlee

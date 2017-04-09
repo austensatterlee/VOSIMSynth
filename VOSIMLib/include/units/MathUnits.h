@@ -18,7 +18,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
- * \file MathUnits.h
+ * \file units/MathUnits.h
  * \brief
  * \details
  * \author Austen Satterlee
@@ -29,7 +29,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __MATHUNITS__
 
 #include "Unit.h"
-#include "MemoryUnit.h"
+#include "units/MemoryUnit.h"
 #include "DSPMath.h"
 
 namespace syn

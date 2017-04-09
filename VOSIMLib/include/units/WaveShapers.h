@@ -18,39 +18,35 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
-* \file Follower.h
-* \brief
-* \details
-* \author Austen Satterlee
-*/
+ *  \file units/WaveShapers.h
+ *  \brief
+ *  \details
+ *  \author Austen Satterlee
+ *  \date 07/2016
+ */
 
-#ifndef __FOLLOWER__
-#define __FOLLOWER__
+#ifndef __WAVESHAPERS__
+#define __WAVESHAPERS__
+#include <Unit.h>
+#include <DSPMath.h>
 
-#include "Unit.h"
-
-namespace syn
-{
-    /**
-    * Envelope follower
-    */
-    class VOSIMLIB_API FollowerUnit : public Unit
+namespace syn {
+    class VOSIMLIB_API TanhUnit : public Unit
     {
-        DERIVE_UNIT(FollowerUnit)
+        DERIVE_UNIT(TanhUnit)
     public:
-        explicit FollowerUnit(const string& a_name);
+        enum Param
+        {
+            pSat = 0
+        };
 
-        FollowerUnit(const FollowerUnit& a_rhs);
-        void reset() override;
+        explicit TanhUnit(const string& a_name);
+        TanhUnit(const TanhUnit& a_rhs);
+        
+        void reset() override {};
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
-        void onNoteOn_() override;
-    private:
-        double m_w;
-        double m_output;
-
-        int m_pAlpha;
-        int m_pBeta;
     };
-};
+}
+
 #endif

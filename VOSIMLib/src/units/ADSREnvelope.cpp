@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "ADSREnvelope.h"
+#include "units/ADSREnvelope.h"
 #include "DSPMath.h"
 
 #include "common.h"
