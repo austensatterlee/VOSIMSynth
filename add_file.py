@@ -55,31 +55,49 @@ if __name__=="__main__":
     parser = ap.ArgumentParser(formatter_class=ap.ArgumentDefaultsHelpFormatter)
     subparsers = parser.add_subparsers()
 
-    parser_add = subparsers.add_parser("add", help="add source and include files to their respective directories")
-    parser_add.add_argument("directory",type=str)
+    parser_auto_add = subparsers.add_parser("auto-add",
+        help="Add source and include files to their respective directories. Automatically detect source and\
+              include directories given a base directory.")
+    parser_auto_add.add_argument("directory",type=str)
+    parser_auto_add.add_argument("filename",type=str)
+    parser_auto_add.add_argument("--list", "-l", action="store_true", default=False, help="List valid directories and exit.")
+    parser_auto_add.set_defaults(command="auto-add")
+
+    parser_add = subparsers.add_parser("add",  help="Add source and include files to the specified directories.")
+    parser_add.add_argument("source_dir", type=str)
+    parser_add.add_argument("include_dir", type=str)
     parser_add.add_argument("filename",type=str)
-    parser_add.add_argument("-f","--force",action="store_true",default=False,help="Overwrite when adding")
-    parser_add.add_argument("--guard",choices=["pragma","ifndef"],default="pragma",help="Use either #ifndef\
-            guards or #pragma once (default: pragma).")
     parser_add.set_defaults(command="add")
 
-    parser_list = subparsers.add_parser("list", help="List valid directories and exit")
-    parser_list.set_defaults(command="list")
+    parser.add_argument("-f", "--force", action="store_true", default=False, help="Overwrite when adding.")
+    parser.add_argument("--guard",choices=["pragma","ifndef"],default="pragma",help="Use either #ifndef\
+            guards or #pragma once (default: pragma).")
 
-    parser.add_argument("-S","--source-dir",type=str,default="src",help="Name of source directory")
-    parser.add_argument("-I","--include-dir",type=str,default="include",help="Name of include directory")
     parsed = parser.parse_args()
 
-    if parsed.command=="list":
-        print '\n'.join( find_valid_directories(parsed.source_dir, parsed.include_dir) )
-        sys.exit()
+    if parsed.command=="auto-add":
+        if parsed.list:
+            print '\n'.join( find_valid_directories('src', 'include') )
+            sys.exit()
+        dir_contents = os.listdir(parsed.directory)
+        if (parsed.source_dir not in dir_contents) or (parsed.include_dir not in dir_contents):
+            raise RuntimeError("\"%s\" and \"%s\" directories not found"%(parsed.source_dir,parsed.include_dir))
 
-    dir_contents = os.listdir(parsed.directory)
-    if (parsed.source_dir not in dir_contents) or (parsed.include_dir not in dir_contents):
-        raise RuntimeError("\"%s\" and \"%s\" directories not found"%(parsed.source_dir,parsed.include_dir))
+        include_dir = os.path.join(parsed.directory,"include")
+        src_dir = os.path.join(parsed.directory,"src")
 
-    include_fname = os.path.join(parsed.directory,parsed.include_dir,parsed.filename+".h")
-    src_fname = os.path.join(parsed.directory,parsed.source_dir,parsed.filename+".cpp")
+    if parsed.command=="add":
+        if not os.path.exists(parsed.source_dir):
+            raise RuntimeError("Source directory \"{}\" does not exist".format(parsed.source_dir))
+        if not os.path.exists(parsed.include_dir):
+            raise RuntimeError("Include directory \"{}\" does not exist".format(parsed.include_dir))
+
+        include_dir = parsed.include_dir
+        src_dir = parsed.source_dir
+
+
+    include_fname = os.path.join(include_dir, parsed.filename+".h")
+    src_fname = os.path.join(src_dir, parsed.filename+".cpp")
 
     if not parsed.force and (os.path.exists(include_fname) or os.path.exists(src_fname)):
         raise RuntimeError("\"%s\" or \"%s\" already exists!"%(include_fname,src_fname))
@@ -100,3 +118,6 @@ if __name__=="__main__":
     with open(src_fname,"w") as fp:
         fp.write(src_contents)
         sys.stdout.write("Added source file to {}\n".format(src_fname))
+
+    sys.exit()
+
