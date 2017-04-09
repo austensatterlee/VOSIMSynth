@@ -20,24 +20,25 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "VOSIMSynth.h"
 #include "IPlug_include_in_plug_src.h"
 
-#include "units/Oscillator.h"
-#include "units/VosimOscillator.h"
-#include "units/ADSREnvelope.h"
-#include "units/Follower.h"
-#include "units/MathUnits.h"
-#include "units/MemoryUnit.h"
-#include "units/MidiUnits.h"
-#include "units/StateVariableFilter.h"
-#include "units/WaveShapers.h"
-#include "MainWindow.h"
-#include "MIDIReceiver.h"
-#include "VoiceManager.h"
-#include "UnitFactory.h"
-#include "tables.h"
-#include "CircuitWidget.h"
+#include <units/Oscillator.h>
+#include <units/VosimOscillator.h>
+#include <units/ADSREnvelope.h>
+#include <units/Follower.h>
+#include <units/MathUnits.h>
+#include <units/MemoryUnit.h>
+#include <units/MidiUnits.h>
+#include <units/StateVariableFilter.h>
+#include <units/WaveShapers.h>
+#include <MIDIReceiver.h>
+#include <VoiceManager.h>
+#include <UnitFactory.h>
+#include <tables.h>
 
+#include "MainWindow.h"
 #include "MainGUI.h"
-#include "UnitWidget.h"
+#include "CircuitWidget.h"
+#include "Widgets/SummingUnitWidget.h"
+#include "Widgets/MultiplyingUnitWidget.h"
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo) : IPLUG_CTOR(0, 1, instanceInfo), m_tempo(0), m_tickCount(0) {
     TRACE;

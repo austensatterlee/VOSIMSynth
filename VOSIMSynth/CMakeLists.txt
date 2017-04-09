@@ -71,14 +71,17 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 # Collect VOSIMSynth sources
 ##
 file(GLOB PROJECT_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
+file(GLOB PROJECT_WIDGET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/widgets/*.cpp)
 set(PROJECT_SRCS ${PROJECT_SRCS};${CMAKE_CURRENT_SOURCE_DIR}/vosimsynth.cpp)
 file(GLOB PROJECT_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
-set(VOSIMSYNTH_PROJECT_FILES ${PROJECT_SRCS};${PROJECT_HDRS})
+file(GLOB PROJECT_WIDGET_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/include/widgets/*.h)
+set(VOSIMSYNTH_PROJECT_FILES ${PROJECT_SRCS};${PROJECT_HDRS};${PROJECT_WIDGET_SRCS};${PROJECT_WIDGET_HDRS})
 
 list(APPEND RESOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/vosimsynth.rc ${CMAKE_CURRENT_SOURCE_DIR}/include/resource.h)
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/vosimsynth.rc LANGUAGE RC)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/widgets)
 
 # Add standalone project
 if(${VOSIMSYNTH_BUILD_STANDALONE})
@@ -89,8 +92,10 @@ add_definitions(-DVST_API -DDLL_BUILD -DVST_FORCE_DEPRECATED)
 add_definitions(${VOSIMSYNTH_DEFS})
 
 # add source groups ("filters" for MSVC)
-source_group(VOSIMSynth\\include FILES ${PROJECT_HDRS})
-source_group(VOSIMSynth FILES ${PROJECT_SRCS})
+source_group(VOSIMSynth/include/widgets FILES ${PROJECT_WIDGET_HDRS}/)
+source_group(VOSIMSynth/include FILES ${PROJECT_HDRS})
+source_group(VOSIMSynth/src FILES ${PROJECT_SRCS})
+source_group(VOSIMSynth/src/widgets FILES ${PROJECT_WIDGET_SRCS})
 source_group(Resources FILES ${RESOURCE_FILES})
 source_group(WDL FILES ${WDL_FILES})
 source_group(IPlug FILES ${IPLUG_FILES})

@@ -51,10 +51,10 @@ file(GLOB VOSIMLIB_PYTHON_SRCS python/*.cpp)
 set(VOSIMLIB_FILES ${VOSIMLIB_HDRS};${VOSIMLIB_UNIT_HDRS})
 set(VOSIMLIB_FILES ${VOSIMLIB_FILES};${VOSIMLIB_SRCS};${VOSIMLIB_UNIT_SRCS})
 
-source_group(VOSIMLib FILES ${VOSIMLIB_SRCS})
+source_group(VOSIMLib/src FILES ${VOSIMLIB_SRCS})
 source_group(VOSIMLib/include FILES ${VOSIMLIB_HDRS})
-source_group(VOSIMLib-units FILES ${VOSIMLIB_UNIT_SRCS})
-source_group(VOSIMLib-units/include FILES ${VOSIMLIB_UNIT_HDRS})
+source_group(VOSIMLib/src/units FILES ${VOSIMLIB_UNIT_SRCS})
+source_group(VOSIMLib/include/units FILES ${VOSIMLIB_UNIT_HDRS})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_definitions(${VOSIMLIB_DEFS})

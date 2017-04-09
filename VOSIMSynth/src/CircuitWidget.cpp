@@ -1,14 +1,17 @@
 #include "CircuitWidget.h"
-#include "VoiceManager.h"
 #include "UI.h"
 #include "MainWindow.h"
 #include "UnitWidget.h"
+#include "widgets/DefaultUnitWidget.h"
+#include "widgets/MultiplyingUnitWidget.h"
+#include "widgets/SummingUnitWidget.h"
 #include "MainGUI.h"
 #include "UnitEditor.h"
-#include "Logger.h"
 #include "ContextMenu.h"
+#include <VoiceManager.h>
+#include <units/MathUnits.h>
 #include <unordered_set>
-#include "units/MathUnits.h"
+
 
 namespace synui
 {

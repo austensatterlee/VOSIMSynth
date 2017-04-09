@@ -58,8 +58,8 @@ if __name__=="__main__":
     parser_auto_add = subparsers.add_parser("auto-add",
         help="Add source and include files to their respective directories. Automatically detect source and\
               include directories given a base directory.")
-    parser_auto_add.add_argument("directory",type=str)
-    parser_auto_add.add_argument("filename",type=str)
+    parser_auto_add.add_argument("--directory", "-d", type=str)
+    parser_auto_add.add_argument("--filename", "-n", type=str)
     parser_auto_add.add_argument("--list", "-l", action="store_true", default=False, help="List valid directories and exit.")
     parser_auto_add.set_defaults(command="auto-add")
 
@@ -79,6 +79,11 @@ if __name__=="__main__":
         if parsed.list:
             print '\n'.join( find_valid_directories('src', 'include') )
             sys.exit()
+        if parsed.directory is None:
+            raise RuntimeError("\"directory\" argument must be specified")
+        if parsed.filename is None:
+            raise RuntimeError("\"filename\" argument must be specified")
+
         dir_contents = os.listdir(parsed.directory)
         if (parsed.source_dir not in dir_contents) or (parsed.include_dir not in dir_contents):
             raise RuntimeError("\"%s\" and \"%s\" directories not found"%(parsed.source_dir,parsed.include_dir))
