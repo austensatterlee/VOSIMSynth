@@ -141,8 +141,8 @@ namespace syn
         json units = j["units"];
         Unit* inputUnit = m_inputUnit;
         Unit* outputUnit = m_outputUnit;
-        int inputUnitIndex = m_units.findItem(inputUnit);
-        int outputUnitIndex = m_units.findItem(outputUnit);
+        int inputUnitIndex = m_units.getIdFromItem(inputUnit);
+        int outputUnitIndex = m_units.getIdFromItem(outputUnit);
         /* Load units */
         for (json::iterator it = units.begin(); it != units.end(); ++it)
         {
@@ -230,13 +230,13 @@ namespace syn
     }
 
     bool Circuit::removeUnit(const string& a_name) {
-        int a_id = m_units.findName(a_name);
+        int a_id = m_units.getIdFromName(a_name);
         return removeUnit(a_id);
     }
 
     bool Circuit::removeUnit(const Unit& a_unit) {
         const Unit* unitPtr = &a_unit;
-        int a_id = m_units.findItem(unitPtr);
+        int a_id = m_units.getIdFromItem(unitPtr);
         return removeUnit(a_id);
     }
 
@@ -295,30 +295,30 @@ namespace syn
     }
 
     bool Circuit::connectInternal(const string& a_fromName, int a_fromOutputPort, const string& a_toName, int a_toInputPort) {
-        int fromId = m_units.findName(a_fromName);
-        int toId = m_units.findName(a_toName);
+        int fromId = m_units.getIdFromName(a_fromName);
+        int toId = m_units.getIdFromName(a_toName);
         return connectInternal(fromId, a_fromOutputPort, toId, a_toInputPort);
     }
 
     bool Circuit::connectInternal(const Unit& a_fromUnit, int a_fromOutputPort, const Unit& a_toUnit, int a_toInputPort) {
         const Unit* toUnitPtr = &a_toUnit;
         const Unit* fromUnitPtr = &a_fromUnit;
-        int fromId = m_units.findItem(toUnitPtr);
-        int toId = m_units.findItem(fromUnitPtr);
+        int fromId = m_units.getIdFromItem(toUnitPtr);
+        int toId = m_units.getIdFromItem(fromUnitPtr);
         return connectInternal(fromId, a_fromOutputPort, toId, a_toInputPort);
     }
 
     bool Circuit::disconnectInternal(const string& a_fromName, int a_fromOutputPort, const string& a_toName, int a_toInputPort) {
-        int fromId = m_units.findName(a_fromName);
-        int toId = m_units.findName(a_toName);
+        int fromId = m_units.getIdFromName(a_fromName);
+        int toId = m_units.getIdFromName(a_toName);
         return disconnectInternal(fromId, a_fromOutputPort, toId, a_toInputPort);
     }
 
     bool Circuit::disconnectInternal(const Unit& a_fromUnit, int a_fromOutputPort, const Unit& a_toUnit, int a_toInputPort) {
         const Unit* toUnitPtr = &a_toUnit;
         const Unit* fromUnitPtr = &a_fromUnit;
-        int fromId = m_units.findItem(toUnitPtr);
-        int toId = m_units.findItem(fromUnitPtr);
+        int fromId = m_units.getIdFromItem(toUnitPtr);
+        int toId = m_units.getIdFromItem(fromUnitPtr);
         return disconnectInternal(fromId, a_fromOutputPort, toId, a_toInputPort);
     }
 
@@ -331,7 +331,7 @@ namespace syn
         for (int i = 0; i < m_units.size(); i++)
         {
             const Unit* unit = m_units.getByIndex(i);
-            if (!unit->numOutputs()) { sinks.push_back(m_units.findItem(unit)); }
+            if (!unit->numOutputs()) { sinks.push_back(m_units.getIdFromItem(unit)); }
         }
         sinks.push_back(getOutputUnitId());
 

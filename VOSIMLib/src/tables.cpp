@@ -69,14 +69,14 @@ namespace syn
         m_blimp_table_offline(a_blimp_table_offline),
         m_resampled_sizes(0),
         m_resampled_tables(0),
-        m_num_resampled_tables(0) 
+        m_num_resampled_tables(0)
     {
         resample_tables();
     }
 
     void ResampledLookupTable::resample_tables() {
         /* Construct resampled tables at ratios of powers of K */
-        m_num_resampled_tables = MAX<double>(1, log2(1.0*m_size)-2);
+        m_num_resampled_tables = MAX<double>(1, log2(1.0*m_size) - 2);
         m_resampled_sizes.resize(m_num_resampled_tables);
         m_resampled_tables.resize(m_num_resampled_tables);
         double currsize = m_size;
@@ -101,7 +101,7 @@ namespace syn
                 table_index = i;
             }
         }
-//        int table_index = CLAMP<int>(log2(period) - log2(m_size), 0, m_num_resampled_tables-1);
+        //        int table_index = CLAMP<int>(log2(period) - log2(m_size), 0, m_num_resampled_tables-1);
         return getresampled_single(&m_resampled_tables[table_index][0], m_resampled_sizes[table_index], phase, period, m_blimp_table_online);
     }
 
@@ -137,6 +137,7 @@ namespace syn
     double getresampled_single(const double* table, int size, double phase, double period, const BlimpTable& blimp_table) {
         double ratio = period * (1.0 / size);
         phase = WRAP(phase, 1.0)*size;
+
         double blimp_step;
         if (ratio < 1.0)
             blimp_step = static_cast<double>(blimp_table.m_resolution) * ratio;
@@ -145,18 +146,17 @@ namespace syn
 
         int index = static_cast<int>(phase);
         double offset = (phase - index) * blimp_step;
-        double    output = 0.0;
+        double output = 0.0;
         double filt_sum = 0.0;
 
         // Backward pass
-        double    bkwd_filt_phase = offset;
-        int        bkwd_table_index = index;
-        double bkwd_filt_sample;
+        double bkwd_filt_phase = offset;
+        int bkwd_table_index = index;
         while (bkwd_filt_phase < blimp_table.size()) {
 #ifdef DO_LERP_FOR_SINC
-            bkwd_filt_sample = blimp_table.getlinear_peri(bkwd_filt_phase / blimp_table.size());
+            double bkwd_filt_sample = blimp_table.getlinear(bkwd_filt_phase / blimp_table.size());
 #else
-            bkwd_filt_sample = blimp_table.getraw(static_cast<int>(bkwd_filt_phase));
+            double bkwd_filt_sample = blimp_table.getraw(static_cast<int>(bkwd_filt_phase));
 #endif
             if (bkwd_table_index < 0) {
                 bkwd_table_index = size - 1;
@@ -167,14 +167,13 @@ namespace syn
         }
 
         // Forward pass
-        double    fwd_filt_phase = blimp_step - offset;
-        int        fwd_table_index = index + 1;
-        double fwd_filt_sample;
+        double fwd_filt_phase = blimp_step - offset;
+        int fwd_table_index = index + 1;
         while (fwd_filt_phase < blimp_table.size()) {
 #ifdef DO_LERP_FOR_SINC
-            fwd_filt_sample = blimp_table.getlinear(fwd_filt_phase / blimp_table.size());
+            double fwd_filt_sample = blimp_table.getlinear(fwd_filt_phase / blimp_table.size());
 #else
-            fwd_filt_sample = blimp_table.getraw(static_cast<int>(fwd_filt_phase));
+            double fwd_filt_sample = blimp_table.getraw(static_cast<int>(fwd_filt_phase));
 #endif
             if (fwd_table_index >= size) {
                 fwd_table_index = 0;
@@ -185,5 +184,5 @@ namespace syn
         }
 
         return output / filt_sum;
-}
+    }
 }

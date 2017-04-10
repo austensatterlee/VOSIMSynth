@@ -152,6 +152,9 @@ namespace syn
     int Unit::addInput_(const string& a_name, double a_default) { return m_inputPorts.add(a_name, {a_default}); }
 
     bool Unit::addInput_(int a_id, const string& a_name, double a_default) { return m_inputPorts.add(a_name, a_id, {a_default}); }
+    
+    bool Unit::removeInput_(const string& a_name) { return m_inputPorts.removeByName(a_name); }
+    bool Unit::removeInput_(int a_id) { return m_inputPorts.removeById(a_id); }
 
     bool Unit::addOutput_(int a_id, const string& a_name) { return m_outputPorts.add(a_name, a_id, OutputPort(getBufferSize(), 0.0)); }
 
@@ -259,9 +262,9 @@ namespace syn
         return unit;
     }
 
-    const double& Unit::readInput(int a_index, int a_offset) const { return m_inputPorts[a_index].src ? *(m_inputPorts[a_index].src + a_offset) : m_inputPorts[a_index].defVal; }
+    const double& Unit::readInput(int a_id, int a_offset) const { return m_inputPorts[a_id].src ? *(m_inputPorts[a_id].src + a_offset) : m_inputPorts[a_id].defVal; }
 
-    const double* Unit::inputSource(int a_index) const { return m_inputPorts[a_index].src; }
+    const double* Unit::inputSource(int a_id) const { return m_inputPorts[a_id].src; }
 
     const NamedContainer<InputPort, MAX_INPUTS>& Unit::inputs() const { return m_inputPorts; }
 

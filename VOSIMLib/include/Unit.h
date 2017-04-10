@@ -361,6 +361,9 @@ namespace syn
         int addInput_(const string& a_name, double a_default = 0.0);
         bool addInput_(int a_id, const string& a_name, double a_default = 0.0);
 
+        bool removeInput_(const string& a_name);
+        bool removeInput_(int a_id);
+
         int addOutput_(const string& a_name);
         bool addOutput_(int a_id, const string& a_name);
 

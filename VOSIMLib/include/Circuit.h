@@ -128,8 +128,8 @@ namespace syn
         int getInputUnitId() const;
         int getOutputUnitId() const;   
 
-        int getUnitId(const std::string& a_name) const { return m_units.findName(a_name); }
-        int getUnitId(const Unit& a_unit) const { const Unit* unitPtr = &a_unit; return m_units.findItem(unitPtr); }
+        int getUnitId(const std::string& a_name) const { return m_units.getIdFromName(a_name); }
+        int getUnitId(const Unit& a_unit) const { const Unit* unitPtr = &a_unit; return m_units.getIdFromItem(unitPtr); }
 
         int getNumUnits() const;
 

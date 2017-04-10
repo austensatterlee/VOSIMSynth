@@ -37,11 +37,11 @@ namespace synui {
 
         void draw(NVGcontext* ctx) override;
 
-        Eigen::Vector2i preferredSize(NVGcontext* ctx) const override;
-
         Eigen::Vector2i getInputPortAbsPosition(int a_portId) override;
 
         Eigen::Vector2i getOutputPortAbsPosition(int a_portId) override;
+
+        Eigen::Vector2i preferredSize(NVGcontext* ctx) const override;
 
         bool mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
 
@@ -49,12 +49,6 @@ namespace synui {
 
     protected:
         void onGridChange_() override {};
-
-        /// \returns -1 if no ports are selected
-        int getSelectedInputPort(const Eigen::Vector2i& p) const;
-
-        /// \returns -1 if no ports are selected
-        int getSelectedOutputPort(const Eigen::Vector2i& p) const;
 
     protected:
         float m_handleRadiusRatio;

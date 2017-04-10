@@ -37,14 +37,17 @@ void synui::MultiplyingUnitWidget::draw(NVGcontext* ctx)
         nvgFill(ctx);        
     }    
 
-    // Draw outer circles (ports)
-    for (int i = 0; i < getUnit_().numInputs() - 1; i++)
+    // Draw connected input ports
+    for (int i = 0; i < getUnit_().numInputs(); i++)
     {
-        nvgBeginPath(ctx);
-        Vector2i portPos = getInputPortAbsPosition(i) - absolutePosition();
-        nvgCircle(ctx, portPos.x(), portPos.y(), 2);
-        nvgFillColor(ctx, iColor);
-        nvgFill(ctx);
+        int a_portId = getUnit_().inputs().ids()[i];
+        if(getUnit_().inputSource(a_portId)!=nullptr){
+            nvgBeginPath(ctx);
+            Vector2i portPos = getInputPortAbsPosition(a_portId) - absolutePosition();
+            nvgCircle(ctx, portPos.x(), portPos.y(), 2);
+            nvgFillColor(ctx, iColor);
+            nvgFill(ctx);
+        }
     }
     nvgBeginPath(ctx);
     Vector2i portPos = getOutputPortAbsPosition(0) - absolutePosition();

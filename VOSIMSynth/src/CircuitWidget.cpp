@@ -3,8 +3,6 @@
 #include "MainWindow.h"
 #include "UnitWidget.h"
 #include "widgets/DefaultUnitWidget.h"
-#include "widgets/MultiplyingUnitWidget.h"
-#include "widgets/SummingUnitWidget.h"
 #include "MainGUI.h"
 #include "UnitEditor.h"
 #include "ContextMenu.h"
@@ -72,6 +70,7 @@ namespace synui
                         wireColor = nanogui::Color(0.25f, 1.0f, 0.25f, 0.55f);
                         break;
                     case Selected:
+                        nvgStrokeWidth(ctx, 2.0f);
                         wireColor = nanogui::Color(0.75f, 0.75f, 0.75f, 0.75f);
                         break;
                     case None:
@@ -330,7 +329,7 @@ synui::CircuitWidget::CircuitWidget(Widget* a_parent, MainWindow* a_mainWindow, 
     m_uf(a_uf),
     m_vm(a_vm),
     m_grid{{0,0}, GridCell{GridCell::Empty, nullptr}},
-    m_gridSpacing(12),
+    m_gridSpacing(18),
     m_wireDrawStyle(Curved),
     m_state(State::Uninitialized),
     m_creatingUnitState{0, false, nullptr},
@@ -631,23 +630,18 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
     {
         auto outUnit = m_unitWidgets[wire->getOutputPort().first];
         auto inUnit = m_unitWidgets[wire->getInputPort().first];
-        if (outUnit->getUnitId() == m_unitEditorHost->getActiveUnitId())
-        {
+        wire->draw(ctx);
+        if (outUnit->getUnitId() == m_unitEditorHost->getActiveUnitId()) {
             auto oldHighlight = wire->highlight;
             wire->highlight = CircuitWire::Outgoing;
             wire->draw(ctx);
             wire->highlight = oldHighlight;
-            continue;
-        }
-        if (inUnit->getUnitId() == m_unitEditorHost->getActiveUnitId())
-        {
+        } else if (inUnit->getUnitId() == m_unitEditorHost->getActiveUnitId()) {
             auto oldHighlight = wire->highlight;
             wire->highlight = CircuitWire::Incoming;
             wire->draw(ctx);
             wire->highlight = oldHighlight;
-            continue;
         }
-        wire->draw(ctx);
     }
     nvgRestore(ctx);
 
@@ -953,12 +947,30 @@ void synui::CircuitWidget::deleteConnection_(const Port& a_inputPort, const Port
     PutArgs(&msg->data, self, a_outputPort.first, a_outputPort.second, a_inputPort.first, a_inputPort.second);
 
     msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
+    {
+        CircuitWidget* self;
+        int fromUnit, fromPort, toUnit, toPort;
+        GetArgs(a_data, 0, self, fromUnit, fromPort, toUnit, toPort);
+        a_circuit->disconnectInternal(fromUnit, fromPort, toUnit, toPort);
+
+        // Queue return message
+        if (a_isLast)
+        {
+            GUIMessage* msg = new GUIMessage;
+            msg->action = [](MainWindow* a_win, ByteChunk* a_data)
             {
                 CircuitWidget* self;
                 int fromUnit, fromPort, toUnit, toPort;
                 GetArgs(a_data, 0, self, fromUnit, fromPort, toUnit, toPort);
-                a_circuit->disconnectInternal(fromUnit, fromPort, toUnit, toPort);
+                UnitWidget* fromWidget = self->m_unitWidgets[fromUnit];
+                UnitWidget* toWidget = self->m_unitWidgets[toUnit];
+                self->updateUnitPos(fromWidget, fromWidget->position(), true);
+                self->updateUnitPos(toWidget, toWidget->position(), true);
             };
+            PutArgs(&msg->data, self, fromUnit, fromPort, toUnit, toPort);
+            self->m_window->queueExternalMessage(msg);
+        }
+    };
 
     m_vm->queueAction(msg);
 }

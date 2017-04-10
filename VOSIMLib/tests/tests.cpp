@@ -8,13 +8,10 @@
 #include <units/MemoryUnit.h>
 
 #include <sstream>
-#include <memory>
 #include <random>
-#include <cmath>
 #include <DSPMath.h>
 #include "VoiceManager.h"
-#include "units/MidiUnits.h"
-#include "units/ADSREnvelope.h"
+#include "units/MathUnits.h"
 
 std::random_device RandomDevice;
 
@@ -30,7 +27,7 @@ T detect_denormals(const std::vector<T>& a_data) {
     return ndenormals;
 }
 
-TEST_CASE("Serialization example.", "[serialization]") {
+TEST_CASE("Serialization can load what it saves", "[serialization]") {
     syn::UnitFactory& uf = syn::UnitFactory::instance();
     uf.addUnitPrototype<syn::StateVariableFilter>("Filters", "svf");
     uf.addUnitPrototype<syn::TrapStateVariableFilter>("Filters", "tsvf");
@@ -82,7 +79,7 @@ template<typename Out, typename In>
 static double measure_error(std::function<Out(In)> a_baseFunc, std::function<Out(In)> a_testFunc, In a, In b, int N) {
     Out avg_error = 0;
     for (int i = 0; i < N; i++) {
-        In phase = i * (b-a) / N + a; // lerp from -3 to 3
+        In phase = i * (b - a) / N + a; // lerp from -3 to 3
         Out base_result = a_baseFunc(phase);
         Out test_result = a_testFunc(phase);
         avg_error += abs(base_result - test_result);
@@ -91,7 +88,7 @@ static double measure_error(std::function<Out(In)> a_baseFunc, std::function<Out
     return avg_error;
 }
 
-TEST_CASE("Measure error for rational approximations of tanh.",    "[fast-tanh]") {
+TEST_CASE("Measure error for rational approximations of tanh.", "[fast_tanh]") {
     SECTION("fast_tanh_rat") {
         double avg_error = measure_error<double, double>([](double in)->double { return tanh(in); }, syn::fast_tanh_rat<double>, -3.0, 3.0, 6e3);
         INFO("Avg. error: " << avg_error);
@@ -104,11 +101,11 @@ TEST_CASE("Measure error for rational approximations of tanh.",    "[fast-tanh]"
     }
 }
 
-TEST_CASE("Detect subnormals in ladder filter processing.",    "[ladder-denormal]") {
-    const int N = 2.88e6;
+TEST_CASE("Detect subnormals in ladder filter processing.", "[LadderFilter]") {
+    const int N = 1.440e6;
     const double fs = 48e3;
     syn::LadderFilter ladder("ladder");
-    double input = 1.0;
+    double input = 1e-3; // Impulse at -60 dB
     ladder.setFs(fs);
     ladder.setParam(syn::LadderFilter::pFc, 1.0);
     ladder.setParam(syn::LadderFilter::pFb, 1.0);
@@ -118,24 +115,24 @@ TEST_CASE("Detect subnormals in ladder filter processing.",    "[ladder-denormal
     vector<double> ladder_out(N);
     for (int i = 0; i < N; i++) {
         ladder.tick();
-        ladder_out[i] = ladder.readOutput(0,0);
+        ladder_out[i] = ladder.readOutput(0, 0);
         input = 0.0;
     }
 
     int ndenormals = detect_denormals(ladder_out);
-    INFO( "Denormal count: " << ndenormals << "/" << N);
+    INFO("Denormal count: " << ndenormals << "/" << N);
     REQUIRE(ndenormals == 0);
 }
 
-TEST_CASE("Test stateless MemoryUnit::tick", "[unit]") {
+TEST_CASE("Test stateless MemoryUnit tick", "[MemoryUnit]") {
     SECTION("Single MemoryUnit tick") {
         syn::MemoryUnit mu("mu0");
         double input = 1.0;
         mu.connectInput(0, &input);
         mu.tick();
-        double out1 = mu.readOutput(0,0);
+        double out1 = mu.readOutput(0, 0);
         mu.tick();
-        double out2 = mu.readOutput(0,0);
+        double out2 = mu.readOutput(0, 0);
         REQUIRE(out1 == 0.0);
         REQUIRE(out2 == 1.0);
     }
@@ -145,7 +142,7 @@ TEST_CASE("Test stateless MemoryUnit::tick", "[unit]") {
         typedef Eigen::Array<double, -1, -1, Eigen::RowMajor> io_type;
         io_type inputs(1, 10);
         io_type outputs(1, 10);
-        for (int i = 0; i<10; i++) {
+        for (int i = 0; i < 10; i++) {
             inputs(0, i) = i;
         }
         mu.tick(inputs, outputs);
@@ -162,36 +159,35 @@ TEST_CASE("Test stateless MemoryUnit::tick", "[unit]") {
     }
 }
 
-TEST_CASE("Test stateless StateVariableFilter::tick", "[unit]") {
+TEST_CASE("Stateless SVF tick", "[StateVariableFilter]") {
     syn::StateVariableFilter svf("svf0");
     REQUIRE(svf.inputName(0) == "in");
     Eigen::Array<double, -1, -1, Eigen::RowMajor> inputs(1, 10);
     Eigen::Array<double, -1, -1, Eigen::RowMajor> outputs(4, 10);
-    for (int i = 0; i<10; i++) {
+    for (int i = 0; i < 10; i++) {
         inputs(0, i) = i;
     }
     svf.tick(inputs, outputs);
     REQUIRE(outputs.any());
 }
 
-TEST_CASE("NamedContainer Add/remove", "[namedcontainer]") {
+TEST_CASE("NamedContainer access by index", "[NamedContainer]") {
     syn::NamedContainer<int, 8> nc;
     Eigen::Array<double, 1, -1> nc_vec(8);
-    nc.add("0",0);
-    nc.add("2",2);
-    nc.add("4",4);
+    nc.add("0", 0);
+    nc.add("2", 2);
+    nc.add("4", 4);
     REQUIRE(nc.getByIndex(0) == 0);
     REQUIRE(nc.getByIndex(1) == 2);
     REQUIRE(nc.getByIndex(2) == 4);
     nc_vec[0] = nc.getByIndex(0);
     nc_vec[1] = nc.getByIndex(1);
     nc_vec[2] = nc.getByIndex(2);
-    INFO("nc contents: " << nc_vec);
 
     nc.removeById(1);
     REQUIRE(nc.getByIndex(0) == 0);
     REQUIRE(nc.getByIndex(1) == 4);
-    nc.add("3",3);
+    nc.add("3", 3);
     REQUIRE(nc.getByIndex(0) == 0);
     REQUIRE(nc.getByIndex(1) == 3);
     REQUIRE(nc.getByIndex(2) == 4);
@@ -202,4 +198,75 @@ TEST_CASE("NamedContainer Add/remove", "[namedcontainer]") {
     REQUIRE(nc.getByIndex(0) == 4);
     nc.removeById(2);
     REQUIRE(nc.empty());
+}
+
+TEST_CASE("GainUnit automatic input port creation & removal", "[GainUnit]") {
+    syn::GainUnit g;
+    double dummyInputSrc = 0.5;
+    const int* inputIds = g.inputs().ids();
+
+    REQUIRE(g.numInputs() == 2);
+    REQUIRE(inputIds[0] == 0);
+    REQUIRE(inputIds[1] == 1);
+    REQUIRE(!g.isConnected(0));
+    REQUIRE(!g.isConnected(1));
+
+    SECTION("Connect both initial inputs ports") {
+        g.connectInput(0, &dummyInputSrc);
+
+        REQUIRE(g.numInputs() == 2);
+        REQUIRE(inputIds[0] == 0);
+        REQUIRE(inputIds[1] == 1);
+        REQUIRE(g.isConnected(0));
+        REQUIRE(!g.isConnected(1));
+
+        g.connectInput(1, &dummyInputSrc);
+
+        REQUIRE(g.numInputs() == 3);
+        REQUIRE(inputIds[0] == 0);
+        REQUIRE(inputIds[1] == 1);
+        REQUIRE(inputIds[2] == 2);
+        REQUIRE(g.isConnected(0));
+        REQUIRE(g.isConnected(1));
+        REQUIRE(!g.isConnected(2));
+
+        SECTION("Disconnect port 0"){
+
+            g.disconnectInput(0);
+
+            REQUIRE(g.numInputs() == 2);
+            REQUIRE(inputIds[0] == 1);
+            REQUIRE(inputIds[1] == 2);
+            REQUIRE(g.isConnected(1));
+            REQUIRE(!g.isConnected(2));
+
+            SECTION("Connect port 2"){
+                g.connectInput(2, &dummyInputSrc);
+
+                REQUIRE(g.numInputs() == 3);
+                REQUIRE(inputIds[0] == 0);
+                REQUIRE(inputIds[1] == 1);
+                REQUIRE(inputIds[2] == 2);
+                REQUIRE(!g.isConnected(0));
+                REQUIRE(g.isConnected(1));
+                REQUIRE(g.isConnected(2));
+            }
+
+            SECTION("Disconnect port 1 then connect port 2") {                
+                g.disconnectInput(1);
+
+                REQUIRE(g.numInputs() == 1);
+                REQUIRE(inputIds[0] == 2);
+                REQUIRE(!g.isConnected(2));
+
+                g.connectInput(2, &dummyInputSrc);
+
+                REQUIRE(g.numInputs() == 2);
+                REQUIRE(inputIds[0] == 0);
+                REQUIRE(inputIds[1] == 2);
+                REQUIRE(!g.isConnected(0));
+                REQUIRE(g.isConnected(2));
+            }
+        }
+    }
 }

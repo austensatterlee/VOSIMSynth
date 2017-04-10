@@ -102,44 +102,6 @@ void syn::RectifierUnit::process_()
     END_PROC_FUNC
 }
 
-syn::GainUnit::GainUnit(const string& a_name) :
-    Unit(a_name),
-    m_pGain(addParameter_(UnitParameter("gain", -1E4, 1E4, 1.0, UnitParameter::None, 2).setControlType(UnitParameter::Unbounded)))
-{
-    addInput_("1", 1.0);
-    addInput_("2", 1.0);
-    addOutput_("out");
-}
-
-syn::GainUnit::GainUnit(const GainUnit& a_rhs) :
-    GainUnit(a_rhs.name()) { }
-
-void syn::GainUnit::process_()
-{
-    BEGIN_PROC_FUNC
-    double output = param(m_pGain).getDouble();    
-    for (int i = 0; i < numInputs(); i++) {
-        output *= READ_INPUT(inputs().ids()[i]);
-    }
-    WRITE_OUTPUT(0, output);
-    END_PROC_FUNC
-}
-
-void syn::GainUnit::onInputConnection_(int a_inputPort)
-{
-     // Create a new input if the current ones are all in use.
-    int numConnectedInputs = 0;
-    for(int  i=0;i<numInputs();i++)
-    {
-        if (inputSource(i)!=nullptr)
-            numConnectedInputs++;
-    }
-    if(numConnectedInputs==numInputs() && numInputs()<8)
-    {
-        addInput_(std::to_string(numInputs()+1), 1.0);
-    }
-}
-
 syn::SummerUnit::SummerUnit(const string& a_name) :
     Unit(a_name)
 {
@@ -168,12 +130,63 @@ void syn::SummerUnit::onInputConnection_(int a_inputPort)
     int numConnectedInputs = 0;
     for(int  i=0;i<numInputs();i++)
     {
-        if (inputSource(i)!=nullptr)
+        if (inputSource(inputs().ids()[i])!=nullptr)
             numConnectedInputs++;
     }
     if(numConnectedInputs==numInputs() && numInputs()<8)
     {
-        addInput_(std::to_string(numInputs()+1), 0.0);
+        int nextId = inputs().getUnusedId();
+        addInput_(nextId, std::to_string(nextId+1), 0.0);
+    }
+}
+
+void syn::SummerUnit::onInputDisconnection_(int a_inputPort) {
+    // Remove a free input port on disconnect
+    int numConnectedInputs = 0;
+    auto portIds = inputs().ids();
+    for(int i=0;i<numInputs();i++)
+    {
+        if (inputSource(portIds[i])!=nullptr)
+            numConnectedInputs++;
+    }
+    if (numConnectedInputs <= numInputs() - 1 && numInputs() > 1) {
+        removeInput_(a_inputPort);
+    }
+}
+
+syn::GainUnit::GainUnit(const string& a_name) :
+    SummerUnit(a_name),
+    m_pGain(addParameter_(UnitParameter("gain", -1E4, 1E4, 1.0, UnitParameter::None, 2).setControlType(UnitParameter::Unbounded)))
+{
+}
+
+syn::GainUnit::GainUnit(const GainUnit& a_rhs) :
+    GainUnit(a_rhs.name()) { }
+
+void syn::GainUnit::process_()
+{
+    BEGIN_PROC_FUNC
+    double output = param(m_pGain).getDouble();    
+    for (int i = 0; i < numInputs(); i++) {
+        output *= READ_INPUT(inputs().ids()[i]);
+    }
+    WRITE_OUTPUT(0, output);
+    END_PROC_FUNC
+}
+
+void syn::GainUnit::onInputConnection_(int a_inputPort)
+{
+     // Create a new input if the current ones are all in use.
+    int numConnectedInputs = 0;
+    for(int  i=0;i<numInputs();i++)
+    {
+        if (inputSource(inputs().ids()[i])!=nullptr)
+            numConnectedInputs++;
+    }
+    if(numConnectedInputs==numInputs() && numInputs()<8)
+    {
+        int nextId = inputs().getUnusedId();
+        addInput_(nextId, std::to_string(nextId+1), 1.0);
     }
 }
 

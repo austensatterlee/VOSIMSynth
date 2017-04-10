@@ -100,26 +100,6 @@ namespace syn
     };
 
     /**
-     * Multiplies two signals together
-     */
-    class VOSIMLIB_API GainUnit : public Unit
-    {
-        DERIVE_UNIT(GainUnit)
-    public:
-        explicit GainUnit(const string& a_name);
-
-        GainUnit(const GainUnit& a_rhs);
-
-        void reset() override {};
-
-    protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
-        void onInputConnection_(int a_inputPort) override;
-    private:
-        int m_pGain;
-    };
-
-    /**
     * Sums incomming signals
     */
     class VOSIMLIB_API SummerUnit : public Unit
@@ -135,6 +115,27 @@ namespace syn
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
         void onInputConnection_(int a_inputPort) override;
+        void onInputDisconnection_(int a_inputPort) override;
+    };
+
+    /**
+     * Multiplies incoming signals
+     */
+    class VOSIMLIB_API GainUnit : public SummerUnit
+    {
+        DERIVE_UNIT(GainUnit)
+    public:
+        explicit GainUnit(const string& a_name);
+
+        GainUnit(const GainUnit& a_rhs);
+
+        void reset() override {};
+
+    protected:
+        void MSFASTCALL process_() GCCFASTCALL override;
+        void onInputConnection_(int a_inputPort) override;
+    private:
+        int m_pGain;
     };
 
     /**

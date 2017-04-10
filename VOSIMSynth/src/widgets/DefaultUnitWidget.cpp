@@ -17,7 +17,7 @@ synui::DefaultUnitWidget::DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceM
     ////
     // Setup grid layout
     std::vector<int> rowSizes(syn::MAX(inputs.size(), outputs.size()) + 1, 0);
-    std::vector<int> colSizes{ 0, 5, 0 };
+    std::vector<int> colSizes{ 0, 0, 0 };
     // Create layout
     auto layout = new nanogui::AdvancedGridLayout(colSizes, rowSizes);
     layout->setColStretch(1, 1.0f);
@@ -54,7 +54,7 @@ synui::DefaultUnitWidget::DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceM
         int inputId = inputs.ids()[i];
         const string& inputName = inputs.getNameFromId(inputId);
         auto lbl = new nanogui::Label(this, inputName, "sans", 0);
-        layout->setAnchor(lbl, Anchor{ 0, inputs.size() - i });
+        layout->setAnchor(lbl, Anchor{ 0, 1 + i });
         lbl->setId(std::to_string(inputId));
         lbl->setTooltip(inputName);
         lbl->setDraggable(false);
@@ -67,7 +67,7 @@ synui::DefaultUnitWidget::DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceM
         const string& outputName = outputs.getNameFromId(outputId);
         auto lbl = new nanogui::Label(this, outputName, "sans", 0);
         //lbl->setTextAlign(nanogui::Label::Alignment::Right);
-        layout->setAnchor(lbl, Anchor{ 2, outputs.size() - i });
+        layout->setAnchor(lbl, Anchor{ 2, 1 + i });
         lbl->setId(std::to_string(outputId));
         lbl->setTooltip(outputName);
         lbl->setDraggable(false);

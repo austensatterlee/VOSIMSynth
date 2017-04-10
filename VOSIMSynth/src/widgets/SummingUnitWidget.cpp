@@ -10,8 +10,17 @@ synui::SummingUnitWidget::SummingUnitWidget(CircuitWidget* a_parent, syn::VoiceM
 
 Eigen::Vector2i synui::SummingUnitWidget::getInputPortAbsPosition(int a_portId)
 {
-    int nInputPorts = getUnit_().numInputs() - 1;
-    float angle = DSP_PI*(0.5 + (nInputPorts - a_portId)*(1.0f / (nInputPorts + 1)));
+    const int* ids = getUnit_().inputs().ids();
+    int nConnected = getUnit_().numInputs() - 1;
+    int index = 0;
+    // Find the port's index among only the connected ports.
+    for(int i=0;i<getUnit_().numInputs();i++) {
+        if(ids[i]==a_portId)
+            break;
+        if(getUnit_().isConnected(ids[i]))
+            index++;
+    }
+    float angle = DSP_PI*(0.5 + (nConnected - index)*(1.0f / (nConnected + 1)));
     Vector2f pos = absolutePosition().cast<float>() + size().cast<float>()*0.5 + Vector2f{ cos(angle), -sin(angle) }.cwiseProduct(size().cast<float>())*0.5;
     return pos.cast<int>();
 }
@@ -27,24 +36,6 @@ bool synui::SummingUnitWidget::isHandleSelected(const Vector2i& p) const
     float handleRadius = m_handleRadiusRatio * size().x() * 0.5;
     float distFromCenter = (center - p.cast<float>()).norm();
     return distFromCenter <= handleRadius;
-}
-
-int synui::SummingUnitWidget::getSelectedInputPort(const Vector2i& p) const
-{
-    int nInputPorts = getUnit_().numInputs() - 1;
-    float dAngle = DSP_PI*1.0f / (nInputPorts + 1);
-    Vector2f center = size().cast<float>() * 0.5f;
-    Vector2f relMouse = p.cast<float>() - center;
-    float mouseAngle = atan2f(relMouse.y(), relMouse.x()) - DSP_PI*0.5;
-    if (mouseAngle < 0)
-        mouseAngle -= 2 * DSP_PI * floor(mouseAngle / (2.0f*DSP_PI));
-    int slice = (mouseAngle - dAngle*0.5) / dAngle;
-    return slice >= 0 && slice < nInputPorts ? slice : -1;
-}
-
-int synui::SummingUnitWidget::getSelectedOutputPort(const Vector2i& p) const
-{
-    return p.x() >= size().x()*0.5 ? 0 : -1;
 }
 
 void synui::SummingUnitWidget::draw(NVGcontext* ctx)
@@ -78,11 +69,14 @@ void synui::SummingUnitWidget::draw(NVGcontext* ctx)
     // Draw outer circles (ports)
     for (int i = 0; i < getUnit_().numInputs() - 1; i++)
     {
-        nvgBeginPath(ctx);
-        Vector2i portPos = getInputPortAbsPosition(i) - absolutePosition();
-        nvgCircle(ctx, portPos.x(), portPos.y(), 2);
-        nvgFillColor(ctx, iColor);
-        nvgFill(ctx);
+        int a_portId = getUnit_().inputs().ids()[i];
+        if (getUnit_().inputSource(a_portId) != nullptr) {
+            nvgBeginPath(ctx);
+            Vector2i portPos = getInputPortAbsPosition(a_portId) - absolutePosition();
+            nvgCircle(ctx, portPos.x(), portPos.y(), 2);
+            nvgFillColor(ctx, iColor);
+            nvgFill(ctx);
+        }
     }
     nvgBeginPath(ctx);
     Vector2i portPos = getOutputPortAbsPosition(0) - absolutePosition();
@@ -142,26 +136,15 @@ bool synui::SummingUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
     }
     else
     {
-        const int* portIndices = unit.inputs().ids();
-        int selectedInputPort = getSelectedInputPort(mousePos);
-
-        // Use the port selected by the mouse if it is free, otherwise find a free one.
-        if (selectedInputPort >= 0 && unit.inputSource(portIndices[selectedInputPort]) == nullptr) {
-            selectedPort = selectedInputPort;
-        }
-        else {
-            for (int i = 0; i < unit.numInputs(); i++)
-            {
-                int inputId = unit.inputs().ids()[i];
-                if (unit.inputSource(inputId) == nullptr)
-                {
-                    selectedPort = inputId;
-                    break;
-                }
+        // Find a free input port
+        for (int i = 0; i < unit.numInputs(); i++) {
+            int inputId = unit.inputs().ids()[i];
+            if (unit.inputSource(inputId) == nullptr) {
+                selectedPort = inputId;
+                break;
             }
         }
-    }
-
+    }  
 
     if (button == GLFW_MOUSE_BUTTON_LEFT)
     {
