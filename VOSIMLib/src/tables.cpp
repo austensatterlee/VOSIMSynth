@@ -147,7 +147,7 @@ namespace syn
         int index = static_cast<int>(phase);
         double offset = (phase - index) * blimp_step;
         double output = 0.0;
-        double filt_sum = 0.0;
+        double filt_sum = 0.0; // used to make the filter unity gain
 
         // Backward pass
         double bkwd_filt_phase = offset;

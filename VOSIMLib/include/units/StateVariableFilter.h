@@ -162,7 +162,9 @@ namespace syn
         {
             iAudioIn = 0,
             iFcAdd,
-            iFcMul
+            iFcMul,
+            iFbAdd,
+            iDrvAdd
         };
     };
 

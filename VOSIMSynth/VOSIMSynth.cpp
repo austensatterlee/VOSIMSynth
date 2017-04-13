@@ -183,6 +183,7 @@ void VOSIMSynth::registerUnits(syn::UnitFactory& a_uf)
     a_uf.addUnitPrototype<syn::FreqToPitchUnit>("Math", "f2p");
     a_uf.addUnitPrototype<syn::TanhUnit>("Math", "tanh");
     a_uf.addUnitPrototype<syn::SwitchUnit>("Math", "switch");
+    a_uf.addUnitPrototype<syn::IntegerUnit>("Math", "integer");
 
     a_uf.addUnitPrototype<syn::GateUnit>("MIDI", "gate");
     a_uf.addUnitPrototype<syn::MidiNoteUnit>("MIDI", "pitch");

@@ -79,6 +79,7 @@ namespace syn
         EADSRStage m_currStage;
         double m_initial;
         double m_target;
+        double m_lastGate;
         bool m_isActive;
     };
 }

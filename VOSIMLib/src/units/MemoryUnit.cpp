@@ -27,9 +27,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "units/MemoryUnit.h"
 #include "DSPMath.h"
-#include <tables.h>
-
-#include "common.h"
 
 namespace syn
 {
@@ -141,13 +138,13 @@ namespace syn
         addInput_(iSizeMod, "delay");
         addOutput_(oOut, "out");
         addOutput_(oSend, "send");
-        addParameter_(pBufDelay, UnitParameter("time", 0.0001, 1.0, 0.0001, UnitParameter::EUnitsType::Seconds, 4));
-        addParameter_(pBufFreq, UnitParameter("freq", 1.0, 10000.0, 10000.0, UnitParameter::EUnitsType::Freq).setVisible(false));
+        addParameter_(pBufDelay, UnitParameter("time", 0.00005, 1.0, 0.00005, UnitParameter::EUnitsType::Seconds, 4));
+        addParameter_(pBufFreq, UnitParameter("freq", 1.0, 20000.0, 20000.0, UnitParameter::EUnitsType::Freq).setVisible(false));
         addParameter_(pBufBPMFreq, UnitParameter("rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM).setVisible(false));
-        addParameter_(pBufType, UnitParameter("units", {"sec","Hz","BPM"}, {pBufDelay, pBufFreq, pBufBPMFreq}));
+        addParameter_(pBufSamples, UnitParameter("samples", 1.0, 48000.0, 1.0, UnitParameter::EUnitsType::Samples).setVisible(false));
+        addParameter_(pBufType, UnitParameter("units", {"sec","Hz","BPM","samples"}, {pBufDelay, pBufFreq, pBufBPMFreq, pBufSamples}));
         addParameter_(pDryGain, UnitParameter("dry", 0.0, 1.0, 0.0));
         addParameter_(pWetGain, UnitParameter("wet", 0.0, 1.0, 1.0));
-        addParameter_(pUseAP, UnitParameter("use ap", false));
         m_delay.resizeBuffer(48000);
     }
 
@@ -162,18 +159,18 @@ namespace syn
 
     void VariableMemoryUnit::onParamChange_(int a_paramId)
     {
-        int newtype;
         switch (a_paramId)
         {
             case pBufType:
-                newtype = param(pBufType).getInt();
+            {
+                int newtype = param(pBufType).getInt();
                 param(pBufDelay).setVisible(newtype == 0);
                 param(pBufFreq).setVisible(newtype == 1);
                 param(pBufBPMFreq).setVisible(newtype == 2);
+                param(pBufSamples).setVisible(newtype == 3);
                 m_lastOutput = 0.0;
                 break;
-            case pUseAP:
-                m_lastOutput = 0.0;
+            }
             default:
                 break;
         }
@@ -194,6 +191,9 @@ namespace syn
             case pBufBPMFreq:
                 m_delaySamples = freqToSamples(bpmToFreq(param(pBufBPMFreq).getEnum(param(pBufBPMFreq).getInt() + READ_INPUT(iSizeMod)), tempo()), fs());
                 break;
+            case pBufSamples:
+                m_delaySamples = param(pBufSamples).getDouble() + READ_INPUT(iSizeMod);
+                break;
             default:
                 break;
         }
@@ -201,17 +201,7 @@ namespace syn
         double input = READ_INPUT(iIn);
         double receive = READ_INPUT(iReceive);
         double output;
-        if (param(pUseAP).getBool())
-        {
-            double lastInput = m_delay.readTap(0.0); // x[n-1]
-            double lastOutput = m_lastOutput; // y[n-1]
-            double a = (1 - m_delaySamples) / (1 + m_delaySamples);
-            output = (input - lastOutput) * a + lastInput;
-        }
-        else
-        {
-            output = m_delay.process(input + receive);
-        }
+        output = m_delay.process(input + receive);        
         m_lastOutput = output;
 
         double dryMix = input*param(pDryGain).getDouble();

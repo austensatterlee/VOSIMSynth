@@ -22,15 +22,15 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "common.h"
 
-namespace syn
-{
+namespace syn {
     ADSREnvelope::ADSREnvelope(const string& name) :
         Unit(name),
         m_phase(0),
         m_currStage(Attack),
         m_initial(0),
         m_target(1),
-        m_isActive(false)        
+        m_lastGate(0.0),
+        m_isActive(false)
     {
         addInput_(Input::iAttack, "atk");
         addInput_(Input::iDecay, "dec");
@@ -48,13 +48,11 @@ namespace syn
     ADSREnvelope::ADSREnvelope(const ADSREnvelope& a_rhs) :
         ADSREnvelope(a_rhs.name()) {}
 
-    void ADSREnvelope::process_()
-    {
+    void ADSREnvelope::process_() {
         BEGIN_PROC_FUNC
-            /* Determine phase increment based on current segment */
-            double segment_time;
-            switch (m_currStage)
-            {
+        /* Determine phase increment based on current segment */
+        double segment_time;
+        switch (m_currStage) {
             case Attack:
                 segment_time = param(pAttack).getDouble() + READ_INPUT(iAttack);
                 m_initial = 0;
@@ -75,85 +73,72 @@ namespace syn
                 break;
             default:
                 throw std::logic_error("Invalid envelope stage");
-            }
-            segment_time = segment_time * param(pTimescale).getInt();
-            if (!segment_time)
-            { // for zero second segment time, advance phase pointer to next segment
-                m_phase += 1;
-            }
-            else
-            {
-                m_phase += 1.0 / (fs() * segment_time);
-            }
+        }
+        segment_time = segment_time * param(pTimescale).getInt();
+        if (!segment_time) { // for zero second segment time, advance phase pointer to next segment
+            m_phase += 1;
+        } else {
+            m_phase += 1.0 / (fs() * segment_time);
+        }
 
-            /* Handle segment change */
+        /* Handle segment change */
 
-            if (m_phase >= 1.0)
-            {
-                if (m_currStage == Attack)
-                {
-                    m_currStage = Decay;
-                    m_initial = m_target;
-                    m_phase = 0.0;
-                }
-                else if (m_currStage == Decay)
-                {
-                    m_currStage = Sustain;
-                    m_phase = 1.0;
-                }
-                else if (m_currStage == Sustain)
-                {
-                    m_currStage = Sustain;
-                    m_phase = 0.0;
-                }
-                else if (m_currStage == Release)
-                {
-                    m_isActive = false;
-                    m_phase = 1.0;
-                }
+        if (m_phase >= 1.0) {
+            if (m_currStage == Attack) {
+                m_currStage = Decay;
+                m_initial = m_target;
+                m_phase = 0.0;
+            } else if (m_currStage == Decay) {
+                m_currStage = Sustain;
+                m_phase = 1.0;
+            } else if (m_currStage == Sustain) {
+                m_currStage = Sustain;
+                m_phase = 0.0;
+            } else if (m_currStage == Release) {
+                m_isActive = false;
+                m_phase = 1.0;
             }
+        }
 
-            //double output = LERP(m_initial, m_target, m_phase);
-            //@todo: this is just a test. it should be done more cleanly, possible in a new nonlinear unit
-            //double tau = -segment_time / -13.8;
-            double shape = 0.3; // std::exp(-1.0 / (tau*getFs()));
-            double output = LERP<double>(m_initial, m_target, INVLERP<double>(1, shape, pow(shape, m_phase)));
-            WRITE_OUTPUT(0, output);
+        //double output = LERP(m_initial, m_target, m_phase);
+        //@todo: this is just a test. it should be done more cleanly, possible in a new nonlinear unit
+        //double tau = -segment_time / -13.8;
+        double shape = 0.3; // std::exp(-1.0 / (tau*getFs()));
+        double output = LERP<double>(m_initial, m_target, INVLERP<double>(1, shape, pow(shape, m_phase)));
+        WRITE_OUTPUT(0, output);
 
-            if ((!m_isActive || m_currStage == Release) && READ_INPUT(iGate) > 0.5)
-            {
-                trigger();
-            }
-            else if (m_currStage != Release && READ_INPUT(iGate) <= 0.5)
-            {
-                release(READ_OUTPUT(0));
-            }
+        if ((!m_isActive || m_currStage == Release) && READ_INPUT(iGate) > 0.5) {
+            trigger();
+        } else if (m_currStage != Release && READ_INPUT(iGate) <= 0.5) {
+            release(output);
+        } else if (m_currStage == Sustain && output < 1e-6) // auto release when sustain drops below -120dB
+        {
+            release(output);
+        }
+        
+        m_lastGate = READ_INPUT(iGate);
         END_PROC_FUNC
     }
 
-    void ADSREnvelope::trigger()
-    {
+    void ADSREnvelope::trigger() {
         m_currStage = Attack;
         m_phase = 0;
         m_isActive = true;
     }
 
-    void ADSREnvelope::release(double a_releaseValue)
-    {
+    void ADSREnvelope::release(double a_releaseValue) {
         m_currStage = Release;
         m_initial = a_releaseValue;
         m_target = 0;
         m_phase = 0;
     }
 
-    void ADSREnvelope::reset()
-    {
+    void ADSREnvelope::reset() {
         trigger();
-        m_isActive=false;
+        m_isActive = false;
     }
 
-    bool ADSREnvelope::isActive() const
-    {
+    bool ADSREnvelope::isActive() const {
         return m_isActive;
     }
 }

@@ -10,15 +10,18 @@ synui::SummingUnitWidget::SummingUnitWidget(CircuitWidget* a_parent, syn::VoiceM
 
 Eigen::Vector2i synui::SummingUnitWidget::getInputPortAbsPosition(int a_portId)
 {
-    const int* ids = getUnit_().inputs().ids();
-    int nConnected = getUnit_().numInputs() - 1;
-    int index = 0;
-    // Find the port's index among only the connected ports.
+    auto inputs = getUnit_().inputs();
+    const int* ids = inputs.ids();
+    bool isConnected = getUnit_().isConnected(a_portId);
+    int nConnected = 0;
+    int index = isConnected ? -1 : inputs.getIndexFromId(a_portId);
+    // Find the port's index, ignoring disconnected ports.
     for(int i=0;i<getUnit_().numInputs();i++) {
-        if(ids[i]==a_portId)
-            break;
-        if(getUnit_().isConnected(ids[i]))
-            index++;
+        if(getUnit_().isConnected(ids[i])){
+            if(a_portId==ids[i])
+                index = nConnected;
+            nConnected++;
+        }
     }
     float angle = DSP_PI*(0.5 + (nConnected - index)*(1.0f / (nConnected + 1)));
     Vector2f pos = absolutePosition().cast<float>() + size().cast<float>()*0.5 + Vector2f{ cos(angle), -sin(angle) }.cwiseProduct(size().cast<float>())*0.5;
@@ -70,7 +73,7 @@ void synui::SummingUnitWidget::draw(NVGcontext* ctx)
     for (int i = 0; i < getUnit_().numInputs() - 1; i++)
     {
         int a_portId = getUnit_().inputs().ids()[i];
-        if (getUnit_().inputSource(a_portId) != nullptr) {
+        if (getUnit_().isConnected(a_portId)) {
             nvgBeginPath(ctx);
             Vector2i portPos = getInputPortAbsPosition(a_portId) - absolutePosition();
             nvgCircle(ctx, portPos.x(), portPos.y(), 2);

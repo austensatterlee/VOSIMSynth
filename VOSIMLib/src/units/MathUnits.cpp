@@ -140,24 +140,27 @@ void syn::SummerUnit::onInputConnection_(int a_inputPort)
     }
 }
 
-void syn::SummerUnit::onInputDisconnection_(int a_inputPort) {
-    // Remove a free input port on disconnect
-    int numConnectedInputs = 0;
-    auto portIds = inputs().ids();
-    for(int i=0;i<numInputs();i++)
-    {
-        if (inputSource(portIds[i])!=nullptr)
-            numConnectedInputs++;
-    }
-    if (numConnectedInputs <= numInputs() - 1 && numInputs() > 1) {
-        removeInput_(a_inputPort);
-    }
-}
+//void syn::SummerUnit::onInputDisconnection_(int a_inputPort) {
+//    // Remove a free input port on disconnect
+//    int numConnectedInputs = 0;
+//    auto portIds = inputs().ids();
+//    for(int i=0;i<numInputs();i++)
+//    {
+//        if (inputSource(portIds[i])!=nullptr)
+//            numConnectedInputs++;
+//    }
+//    if (numConnectedInputs <= numInputs() - 1 && numInputs() > 1) {
+//        removeInput_(a_inputPort);
+//    }
+//}
 
 syn::GainUnit::GainUnit(const string& a_name) :
-    SummerUnit(a_name),
+    Unit(a_name),
     m_pGain(addParameter_(UnitParameter("gain", -1E4, 1E4, 1.0, UnitParameter::None, 2).setControlType(UnitParameter::Unbounded)))
 {
+    addInput_("1", 1.0);
+    addInput_("2", 1.0);
+    addOutput_("out");
 }
 
 syn::GainUnit::GainUnit(const GainUnit& a_rhs) :

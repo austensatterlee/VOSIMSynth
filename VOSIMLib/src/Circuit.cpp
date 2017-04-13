@@ -94,7 +94,7 @@ namespace syn
         return *this;
     }
 
-    Circuit::~Circuit() { for (int i = 0; i < m_units.size(); i++) { delete m_units[m_units.ids()[i]]; } }
+    Circuit::~Circuit() { for (int i = 0; i < m_units.size(); i++) { delete m_units.getByIndex(i); } }
 
     bool Circuit::disconnectInternal(int a_fromId, int a_fromOutputPort, int a_toId, int a_toInputPort) {
         Unit* toUnit = m_units[a_toId];

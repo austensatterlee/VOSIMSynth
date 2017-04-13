@@ -204,6 +204,8 @@ syn::LadderFilterBase::LadderFilterBase(const string& a_name) : Unit(a_name)
     addInput_(iAudioIn, "in");
     addInput_(iFcAdd, "fc");
     addInput_(iFcMul, "fc[x]", 1.0);
+    addInput_(iFbAdd, "res");
+    addInput_(iDrvAdd, "drv");
     addOutput_("out");
 }
 
@@ -239,8 +241,8 @@ void syn::LadderFilter::process_()
 
     // Prepare parameter values and insert them into each stage.
     double g = 4 * DSP_PI * VT * fc * (1.0 - wd) / (1.0 + wd);
-    double drive = 1 + 3 * param(pDrv).getDouble();
-    double res = 3.9 * param(pFb).getDouble();
+    double drive = 1 + 3 * (param(pDrv).getDouble() + READ_INPUT(iDrvAdd));
+    double res = 3.9 * (param(pFb).getDouble() + READ_INPUT(iFbAdd));
     double stage_gain = 1.0/(2.0*VT);
     double dt = 1.0/(2.0*fs);
 
@@ -290,11 +292,10 @@ void syn::LadderFilterTwo::process_()
     // Calculate gain for specified cutoff
     double fs = LadderFilterTwo::fs() * c_oversamplingFactor;
 
-    double fc, drive, res;
-    fc = (param(pFc).getDouble() + READ_INPUT(iFcAdd)) * READ_INPUT(iFcMul); // freq cutoff
+    double fc = (param(pFc).getDouble() + READ_INPUT(iFcAdd)) * READ_INPUT(iFcMul); // freq cutoff
     fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());
-    drive = 1.0 + 3.0 * param(pDrv).getDouble();
-    res = 3.9 * param(pFb).getDouble();
+    double drive = 1.0 + 3.0 * (param(pDrv).getDouble() + READ_INPUT(iDrvAdd));
+    double res = 3.9 * (param(pFb).getDouble() + READ_INPUT(iFbAdd));
 
     m_LP[0].setFc(fc, fs);
     m_LP[1].m_G = m_LP[0].m_G;

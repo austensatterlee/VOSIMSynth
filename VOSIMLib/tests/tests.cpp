@@ -107,9 +107,9 @@ TEST_CASE("Detect subnormals in ladder filter processing.", "[LadderFilter]") {
     syn::LadderFilter ladder("ladder");
     double input = 1e-3; // Impulse at -60 dB
     ladder.setFs(fs);
-    ladder.setParam(syn::LadderFilter::pFc, 1.0);
+    ladder.setParam(syn::LadderFilter::pFc, 20000.0);
     ladder.setParam(syn::LadderFilter::pFb, 1.0);
-    ladder.setParam(syn::LadderFilter::pDrv, 1.0);
+    ladder.setParam(syn::LadderFilter::pDrv, 0.0);
     ladder.connectInput(0, &input);
 
     vector<double> ladder_out(N);
@@ -124,7 +124,7 @@ TEST_CASE("Detect subnormals in ladder filter processing.", "[LadderFilter]") {
     REQUIRE(ndenormals == 0);
 }
 
-TEST_CASE("Test stateless MemoryUnit tick", "[MemoryUnit]") {
+TEST_CASE("MemoryUnit stateless tick", "[MemoryUnit]") {
     SECTION("Single MemoryUnit tick") {
         syn::MemoryUnit mu("mu0");
         double input = 1.0;
@@ -159,7 +159,7 @@ TEST_CASE("Test stateless MemoryUnit tick", "[MemoryUnit]") {
     }
 }
 
-TEST_CASE("Stateless SVF tick", "[StateVariableFilter]") {
+TEST_CASE("SVF stateless tick", "[StateVariableFilter]") {
     syn::StateVariableFilter svf("svf0");
     REQUIRE(svf.inputName(0) == "in");
     Eigen::Array<double, -1, -1, Eigen::RowMajor> inputs(1, 10);
@@ -234,9 +234,11 @@ TEST_CASE("GainUnit automatic input port creation & removal", "[GainUnit]") {
 
             g.disconnectInput(0);
 
-            REQUIRE(g.numInputs() == 2);
-            REQUIRE(inputIds[0] == 1);
-            REQUIRE(inputIds[1] == 2);
+            REQUIRE(g.numInputs() == 3);
+            REQUIRE(inputIds[0] == 0);
+            REQUIRE(inputIds[1] == 1);
+            REQUIRE(inputIds[2] == 2);
+            REQUIRE(!g.isConnected(0));
             REQUIRE(g.isConnected(1));
             REQUIRE(!g.isConnected(2));
 
@@ -255,16 +257,22 @@ TEST_CASE("GainUnit automatic input port creation & removal", "[GainUnit]") {
             SECTION("Disconnect port 1 then connect port 2") {                
                 g.disconnectInput(1);
 
-                REQUIRE(g.numInputs() == 1);
-                REQUIRE(inputIds[0] == 2);
+                REQUIRE(g.numInputs() == 3);
+                REQUIRE(inputIds[0] == 0);
+                REQUIRE(inputIds[1] == 1);
+                REQUIRE(inputIds[2] == 2);
+                REQUIRE(!g.isConnected(0));
+                REQUIRE(!g.isConnected(1));
                 REQUIRE(!g.isConnected(2));
 
                 g.connectInput(2, &dummyInputSrc);
-
-                REQUIRE(g.numInputs() == 2);
+                
+                REQUIRE(g.numInputs() == 3);
                 REQUIRE(inputIds[0] == 0);
-                REQUIRE(inputIds[1] == 2);
+                REQUIRE(inputIds[1] == 1);
+                REQUIRE(inputIds[2] == 2);
                 REQUIRE(!g.isConnected(0));
+                REQUIRE(!g.isConnected(1));
                 REQUIRE(g.isConnected(2));
             }
         }

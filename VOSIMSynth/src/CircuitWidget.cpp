@@ -562,7 +562,7 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
 
     /* Draw background */
     nvgBeginPath(ctx);
-    nanogui::Color backgroundColor(24, 255);
+    nanogui::Color backgroundColor(30, 255);
     nvgRect(ctx, 0, 0, mSize.x(), mSize.y());
     nvgFillColor(ctx, backgroundColor);
     nvgFill(ctx);
@@ -570,14 +570,20 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
     /* Draw grid */
     for (int i = 0; i < m_grid.getSize(); i++)
     {
+        float ptSize = 0.75f;
         auto pt = m_grid.unravel_index(i);
         auto pixel = m_grid.toPixel(pt, m_gridSpacing);
-        if (m_grid.get(pt).state == GridCell::Empty)
-            nvgFillColor(ctx, nanogui::Color{1.0f,0.125f});
-        else if (m_grid.get(pt).state == GridCell::Unit)
-            nvgFillColor(ctx, nanogui::Color{0.0f,0.125f});
-        else if (m_grid.get(pt).state == GridCell::Wire)
-            nvgFillColor(ctx, nanogui::Color{0.0f,0.0f,1.0f,0.125f});
+        if (m_grid.get(pt).state == GridCell::Empty){
+            nvgFillColor(ctx, nanogui::Color{1.0f,0.16f});
+        }
+        else if (m_grid.get(pt).state == GridCell::Unit){
+            nvgFillColor(ctx, nanogui::Color{0.0f,0.5f});
+            ptSize = 1.25f;
+        }
+        else if (m_grid.get(pt).state == GridCell::Wire){
+            nvgFillColor(ctx, nanogui::Color{0.0f,0.0f,1.0f,0.5f});
+            ptSize = 1.25f;
+        }
 
         nvgBeginPath(ctx);
         nvgCircle(ctx, pixel.x(), pixel.y(), 0.75f);
@@ -885,15 +891,13 @@ bool synui::CircuitWidget::endCreateUnit_(const Vector2i& a_pos)
     {
         m_creatingUnitState.widget->setVisible(true);
         m_creatingUnitState.widget->setEnabled(true);
-        m_unitWidgets[m_creatingUnitState.unitId] = m_creatingUnitState.widget;
         updateUnitPos(m_creatingUnitState.widget, a_pos);
         m_creatingUnitState.widget->triggerEditorCallback();
         return true;
     }
     else
     {
-        removeChild(m_creatingUnitState.widget);        
-        m_unitWidgets.erase(m_creatingUnitState.unitId);
+        _deleteUnitWidget(m_creatingUnitState.widget);    
         m_creatingUnitState.widget = nullptr;
         return false;
     }

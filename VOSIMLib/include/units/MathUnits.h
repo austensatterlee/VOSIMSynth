@@ -32,13 +32,11 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "units/MemoryUnit.h"
 #include "DSPMath.h"
 
-namespace syn
-{
-    const vector<string> scale_selections = { "1","10","1E2","1E3","1E4" };
-    const vector<double> scale_values = { 1.,10.,100.,1000.,10000. };
+namespace syn {
+    const vector<string> scale_selections = {"1","10","1E2","1E3","1E4"};
+    const vector<double> scale_values = {1.,10.,100.,1000.,10000.};
 
-    class VOSIMLIB_API MovingAverage
-    {
+    class VOSIMLIB_API MovingAverage {
     public:
         MovingAverage();
 
@@ -59,8 +57,7 @@ namespace syn
     /**
      * DC-remover
      */
-    class VOSIMLIB_API DCRemoverUnit : public Unit
-    {
+    class VOSIMLIB_API DCRemoverUnit : public Unit {
         DERIVE_UNIT(DCRemoverUnit)
     public:
         explicit DCRemoverUnit(const string& a_name);
@@ -82,8 +79,7 @@ namespace syn
     /**
      * Full-wave rectifier
      */
-    class VOSIMLIB_API RectifierUnit : public Unit
-    {
+    class VOSIMLIB_API RectifierUnit : public Unit {
         DERIVE_UNIT(RectifierUnit)
     public:
         explicit RectifierUnit(const string& a_name);
@@ -102,8 +98,7 @@ namespace syn
     /**
     * Sums incomming signals
     */
-    class VOSIMLIB_API SummerUnit : public Unit
-    {
+    class VOSIMLIB_API SummerUnit : public Unit {
         DERIVE_UNIT(SummerUnit)
     public:
         explicit SummerUnit(const string& a_name);
@@ -115,14 +110,13 @@ namespace syn
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
         void onInputConnection_(int a_inputPort) override;
-        void onInputDisconnection_(int a_inputPort) override;
+        //void onInputDisconnection_(int a_inputPort) override;
     };
 
     /**
      * Multiplies incoming signals
      */
-    class VOSIMLIB_API GainUnit : public SummerUnit
-    {
+    class VOSIMLIB_API GainUnit : public Unit {
         DERIVE_UNIT(GainUnit)
     public:
         explicit GainUnit(const string& a_name);
@@ -141,8 +135,7 @@ namespace syn
     /**
      * Outputs a constant
      */
-    class VOSIMLIB_API ConstantUnit : public Unit
-    {
+    class VOSIMLIB_API ConstantUnit : public Unit {
         DERIVE_UNIT(ConstantUnit)
     public:
         explicit ConstantUnit(const string& a_name);
@@ -158,8 +151,7 @@ namespace syn
     /**
      * Balances incoming signals between two outputs
      */
-    class VOSIMLIB_API PanningUnit : public Unit
-    {
+    class VOSIMLIB_API PanningUnit : public Unit {
         DERIVE_UNIT(PanningUnit)
     public:
         explicit PanningUnit(const string& a_name);
@@ -178,8 +170,7 @@ namespace syn
     /**
      * Affine transform
      */
-    class VOSIMLIB_API LerpUnit : public Unit
-    {
+    class VOSIMLIB_API LerpUnit : public Unit {
         DERIVE_UNIT(LerpUnit)
     public:
         explicit LerpUnit(const string& a_name);
@@ -200,48 +191,44 @@ namespace syn
     /**
     * Pitch (normalized midi note) to frequency conversion
     */
-    class VOSIMLIB_API PitchToFreqUnit : public Unit
-    {
+    class VOSIMLIB_API PitchToFreqUnit : public Unit {
         DERIVE_UNIT(PitchToFreqUnit)
     public:
-        explicit PitchToFreqUnit(const string& a_name) : Unit(a_name)
-        {
+        explicit PitchToFreqUnit(const string& a_name)
+            : Unit(a_name) {
             addInput_("in");
             addOutput_("out");
         }
 
-        PitchToFreqUnit(const PitchToFreqUnit& a_rhs) :
-            PitchToFreqUnit(a_rhs.name())
-        {
-        }
+        PitchToFreqUnit(const PitchToFreqUnit& a_rhs)
+            :
+            PitchToFreqUnit(a_rhs.name()) { }
 
         void reset() override {};
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override {
-        BEGIN_PROC_FUNC
+            BEGIN_PROC_FUNC
             WRITE_OUTPUT(0, pitchToFreq(READ_INPUT(0)));
-        END_PROC_FUNC
+            END_PROC_FUNC
         }
     };
 
     /**
-    * Frequency to pitch conversion
+    * Frequency to pitch converter
     */
-    class VOSIMLIB_API FreqToPitchUnit : public Unit
-    {
+    class VOSIMLIB_API FreqToPitchUnit : public Unit {
         DERIVE_UNIT(FreqToPitchUnit)
     public:
-        explicit FreqToPitchUnit(const string& a_name) : Unit(a_name)
-        {
+        explicit FreqToPitchUnit(const string& a_name)
+            : Unit(a_name) {
             addInput_("in");
             addOutput_("out");
         }
 
-        FreqToPitchUnit(const FreqToPitchUnit& a_rhs) :
-            FreqToPitchUnit(a_rhs.name())
-        {
-        }
+        FreqToPitchUnit(const FreqToPitchUnit& a_rhs)
+            :
+            FreqToPitchUnit(a_rhs.name()) { }
 
         void reset() override {};
 
@@ -258,12 +245,11 @@ namespace syn
      *
      * Output `a` if `ctrl` is larger than `comp`, otherwise output `b`.
      */
-    class VOSIMLIB_API SwitchUnit : public Unit
-    {
+    class VOSIMLIB_API SwitchUnit : public Unit {
         DERIVE_UNIT(SwitchUnit)
     public:
-        explicit SwitchUnit(const string& a_name) : Unit(a_name)
-        {
+        explicit SwitchUnit(const string& a_name)
+            : Unit(a_name) {
             addInput_("low");
             addInput_("high");
             addInput_("cmp");
@@ -271,10 +257,9 @@ namespace syn
             addOutput_("out");
         }
 
-        SwitchUnit(const SwitchUnit& a_rhs) :
-            SwitchUnit(a_rhs.name())
-        {
-        }
+        SwitchUnit(const SwitchUnit& a_rhs)
+            :
+            SwitchUnit(a_rhs.name()) { }
 
         void reset() override {};
 
@@ -284,6 +269,52 @@ namespace syn
             double comp = READ_INPUT(2);
             double ctrl = READ_INPUT(3);
             WRITE_OUTPUT(0, ctrl > comp ? READ_INPUT(0) : READ_INPUT(1));
+            END_PROC_FUNC
+        }
+    };
+
+    /**
+     * Floor/ceil/round unit
+     */
+    class VOSIMLIB_API IntegerUnit : public Unit {
+        DERIVE_UNIT(IntegerUnit)
+    public:
+        enum Func {
+            Floor = 0,
+            Ceil,
+            Round
+        };
+
+        explicit IntegerUnit(const string& a_name) : Unit(a_name) {
+            addParameter_(0, {"func", {"floor", "ceil", "round"}});
+            addInput_(0, "in");
+            addOutput_(0, "out");
+        }
+
+        IntegerUnit(const IntegerUnit& a_rhs) : IntegerUnit(a_rhs.name()) { }
+
+        void reset() override {};
+
+    protected:
+        void MSFASTCALL process_() GCCFASTCALL override {
+            BEGIN_PROC_FUNC
+            double in = READ_INPUT(0);
+            double out;
+            Func func = (Func)param(0).getInt();
+            switch (func) {
+                case Floor:
+                    out = floor(in);
+                    break;
+                case Ceil:
+                    out = ceil(in);
+                    break;
+                case Round:
+                    out = round(in);
+                    break;
+                default:
+                    out = in;
+            }
+            WRITE_OUTPUT(0, out);
             END_PROC_FUNC
         }
     };

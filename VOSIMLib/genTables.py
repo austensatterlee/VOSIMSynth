@@ -145,19 +145,20 @@ def GenerateBLTriangle(nharmonics,npoints=None, w0=1):
     bltri = sum([g*sin(h*sample_pts) for g,h in zip(gains,harmonics)],axis=0)
     return bltri/bltri.max()
 
-def GenerateBlimp(intervals=10,resolution=2048,fs=48000,fc=20000,beta=9.,apgain=0.9,apbeta=0.7,ret_half=True):
+def GenerateBlimp(intervals=10,res=2048,fs=48000,fc=20000,beta=9.,apgain=0.9,apbeta=0.7,ret_half=True):
     """
     Generate a bandlimited dirac delta impulse.
 
     intervals - number of samples (sampled at fs) to span
-    resolution - number of points per sample; e.g. oversampling amount
+    res - number of points per sample; e.g. oversampling amount
     fs - sampling frequency
     fc - cutoff
     beta - first window param
     apgain - apodizing window gain
     """
     intervals=2*(int(intervals)/2)+1 # make intervals odd
-    pts = resolution*intervals+1 # impulse length in points
+    res = 2*(int(res)/2)+1 # make oversample factor odd
+    pts = res*intervals # impulse length in points
     ind = intervals*2*(arange(pts) - (pts-1)/2.)/(pts-1.) # pts points spread across [-intervals/2,intervals/2)
     x = fc*1./fs*ind # pts points spread across fc/fs*[-intervals/2, intervals/2)
     h = sinc(x)
@@ -165,12 +166,31 @@ def GenerateBlimp(intervals=10,resolution=2048,fs=48000,fc=20000,beta=9.,apgain=
     w = ss.kaiser(pts,beta) # window
     apw = 1-apgain*ss.kaiser(pts,apbeta) # apodization window
     window = w*apw
-    blimp = window*h # blimp
-    # blimp /= blimp.max()
+    blimp = window*h
+
+    # Scale
+    blimp = scale_fir(blimp)
+
     if ret_half:
         return blimp[len(blimp)/2:]
     else:
         return blimp
+
+def GenerateBlimp2(intervals=10, res=2048, fs=48e3, fc=20e3, width=None, beta=9., apgain=0.9, apbeta=0.7, ret_half=True):
+    intervals=2*(int(intervals)/2)+1 # make intervals odd
+    res = 2*(int(res)/2)+1 # make oversample factor odd
+    pts = res*intervals # impulse length in points
+    blimp_fir = ss.firwin(pts,2*fc*1.0/fs*1.0/res, width=width, window=('kaiser',beta))
+
+    apwin = 1-apgain*ss.kaiser(pts,apbeta) # apodization window
+    blimp_fir *= apwin
+    blimp_fir = scale_fir(blimp_fir)
+
+    if ret_half:
+        half = blimp_fir[len(blimp_fir)/2:]
+        return half
+
+    return blimp_fir
 
 def GenerateSine(n):
     k = arange(n)
@@ -245,17 +265,18 @@ def clipdb(s,cutoff):
     clipped[spos<thresh] = thresh
     return clipped
 
-def magspec(signal, pts=None, fs=None, xlogscale=True, ylogscale=True, **kwargs):
+def magspec(signal, pts=None, fs=None, log=(False, False), **kwargs):
     from matplotlib import pyplot as plt
     pts = pts or len(signal)
     k = arange(1,pts/2)
     fs = fs or 1.
-    freqs = linfreqs = k*1./pts*fs
-    if(xlogscale):
-        freqs = log2(freqs)
-    signalfft = fft.fft(signal,n=pts)[1:pts/2]/pts
-    signalfft = clipdb(signalfft,-180)
+    xlogscale, ylogscale = log
+    xlogscale = kwargs.pop('xlog', xlogscale)
+    ylogscale = kwargs.pop('ylog', ylogscale)
+    signalfft = fft.rfft(signal,n=pts)
+    freqs = arange(len(signalfft))*1./len(signalfft)*fs/2.0
     if ylogscale:
+        signalfft = clipdb(signalfft,-180)
         mag = 20*log10(abs(signalfft))
         ylabel = "dB"
     else:
@@ -264,25 +285,28 @@ def magspec(signal, pts=None, fs=None, xlogscale=True, ylogscale=True, **kwargs)
     f = plt.gcf()
     ax = plt.gca()
     if xlogscale:
-        ax.semilogx( linfreqs, mag, basex=10, **kwargs)
+        ax.semilogx( freqs, mag, basex=10, **kwargs)
     else:
-        ax.plot( linfreqs, mag, **kwargs)
+        ax.plot( freqs, mag, **kwargs)
     ax.set_xlabel("Hz")
     ax.set_ylabel(ylabel)
     ax.grid(True,which='both')
     f.show()
 
-def maggain(signal1,signal2,pts=None,fs=None,xlogscale=True,ylogscale=True,**kwargs):
+def maggain(signal1,signal2,pts=None,fs=None,log=(False,False),**kwargs):
     from matplotlib import pyplot as plt
     fftlength = pts or max(len(signal1),len(signal2))
-    k = arange(1,fftlength/2)
     fs = fs or 1.
-    linfreqs = freqs = k*1./fftlength*fs
-    signal1fft = fft.fft(signal1,n=fftlength)[1:fftlength/2]/fftlength
-    signal1fft = clipdb(signal1fft,-180)
-    signal2fft = fft.fft(signal2,n=fftlength)[1:fftlength/2]/fftlength
-    signal2fft = clipdb(signal2fft,-180)
+    xlogscale, ylogscale = log
+    xlogscale = kwargs.pop('xlog', xlogscale)
+    ylogscale = kwargs.pop('ylog', ylogscale)
+    signal1fft = fft.rfft(signal1,n=fftlength)
+    signal2fft = fft.rfft(signal2,n=fftlength)
+    k = arange(len(signal1fft))
+    freqs = k*1./fftlength*fs
     if ylogscale:
+        signal1fft = clipdb(signal1fft,-180)
+        signal2fft = clipdb(signal2fft,-180)
         mag1 = 20*log10(abs(signal1fft))
         mag2 = 20*log10(abs(signal2fft))
         gain = mag2-mag1
@@ -295,9 +319,9 @@ def maggain(signal1,signal2,pts=None,fs=None,xlogscale=True,ylogscale=True,**kwa
     f = plt.gcf()
     ax = plt.gca()
     if xlogscale:
-        ax.semilogx( linfreqs, gain, basex=10, **kwargs)
+        ax.semilogx( freqs, gain, basex=10, **kwargs)
     else:
-        ax.plot( linfreqs, gain, **kwargs )
+        ax.plot( freqs, gain, **kwargs )
     ax.set_xlabel("Hz")
     ax.set_ylabel(ylabel)
     ax.grid(True,which='both')
@@ -431,14 +455,32 @@ def genApodWindow(pts,beta,apgain,apbeta):
 def shift(signal,dPhase):
     return roll(signal,int(len(signal)*dPhase))
 
-def signal_power(signal):
+def power(signal):
     return sqrt(sum(signal**2)/len(signal))
 
-def normalize_power(signal):
-    input_power = signal_power(signal)
+def norm_power(signal):
+    input_power = power(signal)
     output_power = sqrt(2.)/2.
     signal_norm = signal/input_power*output_power
     return signal_norm
+
+def scale_fir(fir):
+    pts = len(fir)
+
+    # fresp = fft.rfft(fir)
+    # dcresp = abs(fresp)[0]
+    # return fir/dcresp
+
+    alpha = 0.5 * (pts - 1)
+    m = np.arange(0, pts) - alpha
+    c = np.cos(np.pi * m * 0.0)
+    s = np.sum(fir * c)
+    return fir/s
+
+def cutoff(mag, freqs=None):
+    freqs = freqs if freqs is not None else np.arange(len(mag))
+    corner_index = np.argmin(abs(mag-sqrt(2)/2.))
+    return freqs[corner_index]
 
 def main(pargs):
     v = pargs.verbose
@@ -460,32 +502,29 @@ def main(pargs):
     BLSAW_HARMONICS = 4096
     blsaw = GenerateBLSaw(BLSAW_HARMONICS)
     blsaw = convolve( prefilter, blsaw, 'same' ) # apply gain to high frequencies
-    blsaw = normalize_power(blsaw)
+    blsaw = norm_power(blsaw)
 
     """Bandlimited square wave"""
     BLSQUARE_HARMONICS = 4096
     blsquare = GenerateBLSquare(BLSQUARE_HARMONICS)
     blsquare = convolve( prefilter, blsquare, 'same' )
-    blsquare = normalize_power(blsquare)
+    blsquare = norm_power(blsquare)
 
     """Bandlimited triangle wave"""
     BLTRI_HARMONICS = 4096
     bltri = GenerateBLTriangle(BLTRI_HARMONICS)
     bltri = convolve( prefilter, bltri, 'same' )
-    bltri = normalize_power(bltri)
+    bltri = norm_power(bltri)
 
     """Offline and online BLIMP for resampling"""
     OFFLINE_BLIMP_INTERVALS = 257
     OFFLINE_BLIMP_RES = 2048
 
-    ONLINE_BLIMP_INTERVALS = 11
+    ONLINE_BLIMP_INTERVALS = 15
     ONLINE_BLIMP_RES = 2048
 
-    blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS,ONLINE_BLIMP_RES,fc=19e3)
-    blimp_offline = GenerateBlimp(OFFLINE_BLIMP_INTERVALS,OFFLINE_BLIMP_RES,fc=22e3)
-
-    blimp_online /= blimp_online.max()
-    blimp_offline /= blimp_offline.max()
+    blimp_online = GenerateBlimp2(ONLINE_BLIMP_INTERVALS,ONLINE_BLIMP_RES,fc=22e3)
+    blimp_offline = GenerateBlimp2(OFFLINE_BLIMP_INTERVALS,OFFLINE_BLIMP_RES,fc=22e3)
 
     """Generate C++ files"""
     key_order = {

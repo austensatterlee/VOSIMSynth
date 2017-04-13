@@ -72,7 +72,8 @@ namespace syn
             Semitones,
             Octaves,
             Seconds,
-            Decibal
+            Decibal,
+            Samples
         };
 
         enum EControlType
