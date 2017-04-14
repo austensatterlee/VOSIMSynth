@@ -1,10 +1,10 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
 project(VOSIMSynth)
 
-option(VOSIMSYNTH_SHARED "Build as a shared library?" FALSE)
-option(VOSIMSYNTH_BUILD_STANDALONE "Build standalone application?" FALSE)
+option(VOSIMSYNTH_BUILD_VST "Build as a VST?" TRUE)
 
 if(VOSIMSYNTH_SHARED)
+  list(APPEND VOSIMSYNTH_DEFS -DVST_API -DDLL_BUILD -DVST_FORCE_DEPRECATED)
   list(APPEND VOSIMSYNTH_DEFS -DVOSIMSYNTH_SHARED)
 endif()
 
@@ -46,7 +46,6 @@ include_directories(${MKL_INCLUDE_DIR})
 # VOSIMLib
 ##
 include_directories(${VOSIMLIB_DIR}/include)
-include_directories(${VOSIMLIB_DIR}/units/include)
 
 ##
 # Compile resources into C code to be compiled into the exe
@@ -84,11 +83,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/widgets)
 
 # Add standalone project
-if(${VOSIMSYNTH_BUILD_STANDALONE})
+if(NOT ${VOSIMSYNTH_BUILD_VST})
     add_subdirectory(${VOSIMSYNTH_STANDALONE_DIR} standalone)
 endif()
 
-add_definitions(-DVST_API -DDLL_BUILD -DVST_FORCE_DEPRECATED)
+add_definitions()
 add_definitions(${VOSIMSYNTH_DEFS})
 
 # add source groups ("filters" for MSVC)

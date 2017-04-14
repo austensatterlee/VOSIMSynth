@@ -18,7 +18,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /**
- *  \file common.h
+ *  \file vosimlib/common.h
  *  \brief 
  *  \details
  *  \author Austen Satterlee
@@ -26,6 +26,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
+#include <cinttypes>
 
 #if defined(VOSIMLIB_SHARED)
     #if defined(_WIN32)
@@ -52,3 +53,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define MSFASTCALL
 #define GCCFASTCALL __attribute__((fastcall))
 #endif
+
+namespace syn{
+    typedef uint64_t UnitTypeId;
+}

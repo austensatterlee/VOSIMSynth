@@ -296,7 +296,7 @@ void synui::UnitEditor::draw(NVGcontext* ctx)
 
 synui::UnitEditorHost::UnitEditorHost(Widget* parent, syn::VoiceManager* a_vm) : StackedWidget(parent), m_vm(a_vm), m_activeUnitId(-1) {}
 
-void synui::UnitEditorHost::addEditor(unsigned a_classId, int a_unitId)
+void synui::UnitEditorHost::addEditor(syn::UnitTypeId a_classId, int a_unitId)
 {
     // Remove any editor already associated with this unit.
     if (m_editorMap.find(a_unitId) != m_editorMap.end())
@@ -334,7 +334,7 @@ void synui::UnitEditorHost::removeEditor(int a_unitId)
     }
 }
 
-void synui::UnitEditorHost::activateEditor(unsigned a_classId, int a_unitId)
+void synui::UnitEditorHost::activateEditor(syn::UnitTypeId a_classId, int a_unitId)
 {
     // Create this unit's editor if it doesn't already exist.
     if (m_editorMap.find(a_unitId) == m_editorMap.end())

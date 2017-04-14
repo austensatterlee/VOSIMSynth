@@ -30,7 +30,7 @@
 
 //#define DO_LERP_FOR_SINC
 
-#include "common.h"
+#include "vosimlib/common.h"
 #include "lut_tables.h"
 #include <vector>
 

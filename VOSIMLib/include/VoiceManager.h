@@ -84,8 +84,13 @@ namespace syn
 
         /**
          * Safely queue a function to be called on the real-time thread in between samples.
+         * 
+         * Note that this function should ONLY be called from the gui thread! This is a single-producer
+         * single-consumer queue!
+         * 
+         * \returns True if the message was pushed onto the queue, false if the queue was full.
          */
-        unsigned queueAction(RTMessage* a_action);
+        bool queueAction(RTMessage* a_action);
 
         unsigned getTickCount() const;
 
@@ -110,7 +115,7 @@ namespace syn
 
         void sendControlChange(int a_cc, double a_newvalue);
 
-        void setMaxVoices(unsigned a_newMax);
+        void setMaxVoices(int a_newMax);
 
         vector<int> getActiveVoiceIndices() const;
 		vector<int> getReleasedVoiceIndices() const;

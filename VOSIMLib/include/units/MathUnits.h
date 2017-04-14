@@ -274,10 +274,10 @@ namespace syn {
     };
 
     /**
-     * Floor/ceil/round unit
+     * Quantization unit
      */
-    class VOSIMLIB_API IntegerUnit : public Unit {
-        DERIVE_UNIT(IntegerUnit)
+    class VOSIMLIB_API QuantizerUnit : public Unit {
+        DERIVE_UNIT(QuantizerUnit)
     public:
         enum Func {
             Floor = 0,
@@ -285,13 +285,13 @@ namespace syn {
             Round
         };
 
-        explicit IntegerUnit(const string& a_name) : Unit(a_name) {
-            addParameter_(0, {"func", {"floor", "ceil", "round"}});
+        explicit QuantizerUnit(const string& a_name) : Unit(a_name) {
+            addParameter_(0, {"step", 0.0, 1e6, 1.0});
             addInput_(0, "in");
             addOutput_(0, "out");
         }
 
-        IntegerUnit(const IntegerUnit& a_rhs) : IntegerUnit(a_rhs.name()) { }
+        QuantizerUnit(const QuantizerUnit& a_rhs) : QuantizerUnit(a_rhs.name()) { }
 
         void reset() override {};
 
@@ -299,21 +299,8 @@ namespace syn {
         void MSFASTCALL process_() GCCFASTCALL override {
             BEGIN_PROC_FUNC
             double in = READ_INPUT(0);
-            double out;
-            Func func = (Func)param(0).getInt();
-            switch (func) {
-                case Floor:
-                    out = floor(in);
-                    break;
-                case Ceil:
-                    out = ceil(in);
-                    break;
-                case Round:
-                    out = round(in);
-                    break;
-                default:
-                    out = in;
-            }
+            double quantStep = param(0).getDouble();
+            double out = quantStep * std::floor(in/quantStep+0.5);
             WRITE_OUTPUT(0, out);
             END_PROC_FUNC
         }

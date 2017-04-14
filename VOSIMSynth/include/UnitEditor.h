@@ -28,6 +28,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 #include <nanogui/nanogui.h>
 #include <nanogui/stackedwidget.h>
+#include "Unit.h"
 
 namespace syn
 {
@@ -87,9 +88,9 @@ namespace synui
     {
     public:
         UnitEditorHost(Widget* parent, syn::VoiceManager* a_vm);
-        void activateEditor(unsigned a_classId, int a_unitId);
+        void activateEditor(syn::UnitTypeId a_classId, int a_unitId);
         int getActiveUnitId() const { return m_activeUnitId; }
-        void addEditor(unsigned a_classId, int a_unitId);
+        void addEditor(syn::UnitTypeId a_classId, int a_unitId);
         void removeEditor(int a_unitId);
         template<typename UnitType>
         void registerUnitEditor(UnitEditorConstructor a_func) { m_registeredUnitEditors[UnitType("").getClassIdentifier()] = a_func; }
@@ -107,7 +108,7 @@ namespace synui
         syn::VoiceManager* m_vm;
         
         std::unordered_map<int, UnitEditor*> m_editorMap; /// maps unit IDs to unit editor instances.
-        std::unordered_map<unsigned, UnitEditorConstructor> m_registeredUnitEditors; /// maps types of units (class IDs) to unit editor constructors.
+        std::unordered_map<syn::UnitTypeId, UnitEditorConstructor> m_registeredUnitEditors; /// maps types of units (class IDs) to unit editor constructors.
 
         int m_activeUnitId; /// ID of the unit whose editor is currently visible.
     };

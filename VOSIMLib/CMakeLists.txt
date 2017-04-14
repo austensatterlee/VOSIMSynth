@@ -44,6 +44,7 @@ add_custom_command(OUTPUT ${GENTABLES_OUTPUT} COMMAND python ARGS ${CMAKE_CURREN
 # VOSIMLib source files
 ##
 file(GLOB VOSIMLIB_HDRS include/*.h)
+file(GLOB VOSIMLIB_HDRS include/vosimlib/*.h)
 file(GLOB VOSIMLIB_SRCS src/*.cpp src/table_data.cpp)
 file(GLOB VOSIMLIB_UNIT_HDRS include/units/*.h)
 file(GLOB VOSIMLIB_UNIT_SRCS src/units/*.cpp)

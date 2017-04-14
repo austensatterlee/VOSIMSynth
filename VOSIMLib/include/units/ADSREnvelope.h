@@ -61,7 +61,7 @@ namespace syn
         void MSFASTCALL process_() GCCFASTCALL override;
 
     public:
-        virtual bool isActive() const override;
+        bool isActive() const override;
 
         void trigger();
         void release(double a_releaseValue);
@@ -69,7 +69,8 @@ namespace syn
     private:
         enum EADSRStage
         {
-            Attack = 0,
+            Off = 0,
+            Attack,
             Decay,
             Sustain,
             Release
@@ -80,7 +81,6 @@ namespace syn
         double m_initial;
         double m_target;
         double m_lastGate;
-        bool m_isActive;
     };
 }
 #endif

@@ -21,7 +21,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "tables.h"
 #include "DSPMath.h"
 
-#include "common.h"
+#include "vosimlib/common.h"
 
 namespace syn
 {

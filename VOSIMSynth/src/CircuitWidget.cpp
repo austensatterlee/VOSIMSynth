@@ -9,7 +9,7 @@
 #include <VoiceManager.h>
 #include <units/MathUnits.h>
 #include <unordered_set>
-
+#include <set>
 
 namespace synui
 {
@@ -316,7 +316,7 @@ namespace synui
         Vector2i m_start;
         Vector2i m_end;
         vector<Grid2DPoint> m_path;
-        set<std::pair<int,int> > m_crossings;
+        std::set<std::pair<int,int> > m_crossings;
         float m_cost;
         bool m_isFinal;
     };
@@ -457,13 +457,13 @@ bool synui::CircuitWidget::mouseButtonEvent(const Vector2i& p, int button, bool 
                     if(a_value==0)
                     {
                         syn::Unit* u = new syn::SummerUnit("");
-                        u->setName(m_uf->generateUnitName(u));
+                        u->setName(m_uf->generateUnitName(*u));
                         _createJunction(toWire, fromWire, p - position(), u);                        
                     }
                     else if(a_value==1)
                     {
                         syn::Unit* u = new syn::GainUnit("");
-                        u->setName(m_uf->generateUnitName(u));
+                        u->setName(m_uf->generateUnitName(*u));
                         _createJunction(toWire, fromWire, p - position(), u);       
                     }
                 });
@@ -586,7 +586,7 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
         }
 
         nvgBeginPath(ctx);
-        nvgCircle(ctx, pixel.x(), pixel.y(), 0.75f);
+        nvgCircle(ctx, pixel.x(), pixel.y(), ptSize);
         nvgFill(ctx);
     }
 
@@ -706,7 +706,7 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
     nvgRestore(ctx);
 }
 
-void synui::CircuitWidget::loadPrototype(const string& a_unitPrototype) { createUnit_(a_unitPrototype); }
+void synui::CircuitWidget::loadPrototype(syn::UnitTypeId a_classId) { createUnit_(a_classId); }
 
 Eigen::Vector2i synui::CircuitWidget::fixToGrid(const Vector2i& a_pixelLocation) const { return m_grid.toPixel(m_grid.fromPixel(a_pixelLocation, m_gridSpacing), m_gridSpacing); }
 
@@ -766,7 +766,7 @@ synui::CircuitWidget* synui::CircuitWidget::load(const json& j)
     for (json::const_iterator it = units.cbegin(); it != units.cend(); ++it)
     {
         int unitId = stoi(it.key());
-        unsigned classId = circ->getUnit(unitId).getClassIdentifier();
+        syn::UnitTypeId classId = circ->getUnit(unitId).getClassIdentifier();
         const json& unit = it.value();
         Vector2i pos{unit["x"].get<int>(), unit["y"].get<int>()};
         UnitWidget* widget = createUnitWidget_(classId, unitId);
@@ -803,9 +803,9 @@ void synui::CircuitWidget::createInputOutputUnits_()
 {
     const syn::Circuit* circ = m_vm->getPrototypeCircuit();
     int inputUnitId = circ->getInputUnitId();
-    unsigned inputClassId = circ->getUnit(inputUnitId).getClassIdentifier();
+    syn::UnitTypeId inputClassId = circ->getUnit(inputUnitId).getClassIdentifier();
     int outputUnitId = circ->getOutputUnitId();
-    unsigned outputClassId = circ->getUnit(outputUnitId).getClassIdentifier();
+    syn::UnitTypeId outputClassId = circ->getUnit(outputUnitId).getClassIdentifier();
 
     UnitWidget* inWidget = createUnitWidget_(inputClassId, inputUnitId);
     m_unitWidgets[inputUnitId] = inWidget;
@@ -816,7 +816,7 @@ void synui::CircuitWidget::createInputOutputUnits_()
     updateUnitPos(outWidget, {width() - 1.5 * outWidget->width(), height() * 0.5 - outWidget->height() * 0.5});
 }
 
-void synui::CircuitWidget::createUnit_(const string& a_unitPrototypeName)
+void synui::CircuitWidget::createUnit_(syn::UnitTypeId a_classId)
 {
     syn::RTMessage* msg = new syn::RTMessage();
     msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
@@ -826,7 +826,7 @@ void synui::CircuitWidget::createUnit_(const string& a_unitPrototypeName)
                 syn::Unit* unit;
                 GetArgs(a_data, 0, self, unitFactory, unit);
                 int unitId = a_circuit->addUnit(unit->clone());
-                unsigned classId = unit->getClassIdentifier();
+                syn::UnitTypeId classId = unit->getClassIdentifier();
                 // Queue return message
                 if (a_isLast)
                 {
@@ -834,24 +834,23 @@ void synui::CircuitWidget::createUnit_(const string& a_unitPrototypeName)
                     msg->action = [](MainWindow* a_win, ByteChunk* a_data)
                             {
                                 CircuitWidget* self;
-                                unsigned classId;
+                                syn::UnitTypeId classId;
                                 int unitId;
                                 GetArgs(a_data, 0, self, classId, unitId);
                                 self->onUnitCreated_(classId, unitId);
                             };
                     PutArgs(&msg->data, self, classId, unitId);
                     self->m_window->queueExternalMessage(msg);
-                    delete unit;
                 }
             };
 
     auto self = this;
-    auto unit = m_uf->createUnit(a_unitPrototypeName);
+    auto unit = m_uf->getFactoryPrototype(a_classId)->prototype;
     PutArgs(&msg->data, self, m_uf, unit);
     m_vm->queueAction(msg);
 }
 
-void synui::CircuitWidget::onUnitCreated_(unsigned a_classId, int a_unitId)
+void synui::CircuitWidget::onUnitCreated_(syn::UnitTypeId a_classId, int a_unitId)
 {
     m_state = State::CreatingUnit;
     m_creatingUnitState.unitId = a_unitId;
@@ -861,7 +860,7 @@ void synui::CircuitWidget::onUnitCreated_(unsigned a_classId, int a_unitId)
     m_unitWidgets[a_unitId] = m_creatingUnitState.widget;
 }
 
-synui::UnitWidget* synui::CircuitWidget::createUnitWidget_(unsigned a_classId, int a_unitId)
+synui::UnitWidget* synui::CircuitWidget::createUnitWidget_(syn::UnitTypeId a_classId, int a_unitId)
 {
     UnitWidget* widget;
     if (m_registeredUnitWidgets.find(a_classId) == m_registeredUnitWidgets.end())
@@ -869,7 +868,7 @@ synui::UnitWidget* synui::CircuitWidget::createUnitWidget_(unsigned a_classId, i
     else
         widget = m_registeredUnitWidgets[a_classId](this, m_vm, a_unitId);
 
-    widget->setEditorCallback([&](unsigned classId, int unitId)
+    widget->setEditorCallback([&](syn::UnitTypeId classId, int unitId)
         {
             if (m_unitEditorHost->selectedIndex() >= 0)
                 m_unitWidgets[m_unitEditorHost->getActiveUnitId()]->setHighlighted(false);
@@ -1253,7 +1252,7 @@ void synui::CircuitWidget::_createJunction(CircuitWire* toWire, CircuitWire* fro
                 int px, py;
                 GetArgs(a_data, 0, self, unitFactory, unit, toWire, fromWire, px, py);
                 int unitId = a_circuit->addUnit(unit->clone());
-                unsigned classId = unit->getClassIdentifier();
+                syn::UnitTypeId classId = unit->getClassIdentifier();
                 // Connect both wires to the sum unit
                 a_circuit->connectInternal(fromWire->getOutputPort().first, fromWire->getOutputPort().second, unitId, 0);
                 a_circuit->connectInternal(toWire->getOutputPort().first, toWire->getOutputPort().second, unitId, 1);
@@ -1267,7 +1266,7 @@ void synui::CircuitWidget::_createJunction(CircuitWire* toWire, CircuitWire* fro
                     msg->action = [](MainWindow* a_win, ByteChunk* a_data)
                             {
                                 CircuitWidget* self;
-                                unsigned classId;
+                                syn::UnitTypeId classId;
                                 int unitId;
                                 CircuitWire* toWire;
                                 CircuitWire* fromWire;

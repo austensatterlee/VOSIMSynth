@@ -119,7 +119,7 @@ namespace syn
         m_instrument.notifyMidiControlChange(a_cc, a_value);
     }
 
-    void VoiceManager::setMaxVoices(unsigned a_newMax) {
+    void VoiceManager::setMaxVoices(int a_newMax) {
         if (a_newMax < 1)
             a_newMax = 1;
         if (a_newMax > MAX_VOICES)
@@ -333,9 +333,12 @@ namespace syn
             _flushActionQueue();
     }
 
-    unsigned VoiceManager::queueAction(RTMessage* a_msg) {
+    bool VoiceManager::queueAction(RTMessage* a_msg) {
+        if(!m_queuedActions.write_available()){
+            return false;
+        }
         m_queuedActions.push(a_msg);
-        return m_tickCount;
+        return true;
     }
 
     unsigned VoiceManager::getTickCount() const {

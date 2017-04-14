@@ -17,17 +17,10 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
- *  \file UnitWidget.h
- *  \brief
- *  \details
- *  \author Austen Satterlee
- *  \date 12/2016
- */
-
 #pragma once
 #include <nanogui/nanogui.h>
-#include <common_serial.h>
+#include <vosimlib/common.h>
+#include <vosimlib/common_serial.h>
 
 namespace syn
 {
@@ -63,7 +56,7 @@ namespace synui
          */
         virtual Eigen::Vector2i getOutputPortAbsPosition(int a_portId) = 0;
 
-        void setEditorCallback(std::function<void(unsigned, int)> a_callback) { m_editorCallback = a_callback; }
+        void setEditorCallback(std::function<void(syn::UnitTypeId, int)> a_callback) { m_editorCallback = a_callback; }
         void triggerEditorCallback() const { m_editorCallback(m_classIdentifier, m_unitId); }
 
         operator json() const;
@@ -85,10 +78,10 @@ namespace synui
         CircuitWidget* m_parentCircuit;
         syn::VoiceManager* m_vm;
 
-        std::function<void(unsigned, int)> m_editorCallback;
+        std::function<void(syn::UnitTypeId, int)> m_editorCallback;
 
         int m_unitId;
-        unsigned m_classIdentifier;
+        syn::UnitTypeId m_classIdentifier;
 
         bool m_highlighted;
     };

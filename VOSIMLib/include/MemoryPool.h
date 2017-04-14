@@ -28,7 +28,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __MEMORYPOOL__
 #define __MEMORYPOOL__
 
-#include "common.h"
+#include "vosimlib/common.h"
 #include <vector>
 
 namespace syn

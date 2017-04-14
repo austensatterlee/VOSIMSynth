@@ -17,20 +17,10 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __UNITFACTORY__
-#define __UNITFACTORY__
-#include "common.h"
+#pragma once
+#include "vosimlib/common.h"
 #include <vector>
-#include <set>
 #include <unordered_map>
-
-#define MAX_UNIT_NAME_LEN 256
-
-class ByteChunk;
-
-using std::vector;
-using std::set;
-using std::unordered_map;
 
 namespace syn
 {
@@ -38,13 +28,13 @@ namespace syn
 
     class VOSIMLIB_API UnitFactory
     {
-        UnitFactory() {} 
-        
+        UnitFactory() {}
+
         struct FactoryPrototype
         {
             FactoryPrototype(std::string a_group_name, Unit* a_unit, size_t a_class_size);
 
-            unsigned int classIdentifier;
+            UnitTypeId classIdentifier;
             std::string group_name;
             std::string name;
             Unit* prototype;
@@ -65,64 +55,66 @@ namespace syn
         virtual ~UnitFactory();
 
         /**
-         * \brief Register a prototype unit with the factory. Prototype deletion will be taken care of upon factory destruction.
+         * \brief Register a prototype unit with the factory. Prototype deletion will be taken care of upon
+         * factory destruction.
          */
         template <typename T, typename = std::enable_if_t<std::is_base_of<Unit, T>::value>>
         void addUnitPrototype(const std::string& a_group_name, const std::string& a_unit_name);
 
-        set<std::string> getGroupNames() const;
+        const std::vector<std::string>& getGroupNames() const;
 
-        vector<std::string> getPrototypeNames(const std::string& group) const;
+        std::vector<std::string> getPrototypeNames(const std::string& group) const;
 
-        vector<std::string> getPrototypeNames() const;
+        std::vector<std::string> getPrototypeNames() const;
 
-        const std::string& getPrototypeName(unsigned a_classIdentifier);
+        const FactoryPrototype* getFactoryPrototype(UnitTypeId a_classIdentifier) const;
 
-        const FactoryPrototype* getFactoryPrototype(const std::string& a_prototypeName) const;
+        Unit* createUnit(UnitTypeId a_classIdentifier, const std::string& a_name = "");
 
-        const FactoryPrototype* getFactoryPrototype(const Unit& a_unit) const;
+        std::string generateUnitName(const Unit& a_unit) const;
 
-        Unit* createUnit(unsigned a_classIdentifier, const std::string& a_name = "");
+        bool hasClassId(UnitTypeId a_classIdentifier) const;
 
-        Unit* createUnit(std::string a_prototypeName, const std::string& a_name = "");
-
-        std::string generateUnitName(Unit* a_unit) const;
-
-        bool hasClassId(unsigned a_classIdentifier) const;
-
-        bool hasClassId(std::string a_protoName) const;
-
-        unsigned getClassId(std::string a_protoName) const;
-
-        unsigned getClassId(int a_protoNum) const;
-
-        static unsigned getClassId(unsigned a_protoNum);
+        /**
+         * \returns -1 on failure.
+         */
+        UnitTypeId getClassId(const std::string& a_groupName, const std::string& a_protoName) const;
 
         void resetBuildCounts();
 
     protected:
         int getPrototypeIdx_(const std::string& a_name) const;
 
-        int getPrototypeIdx_(unsigned a_classId) const;
+        int getPrototypeIdx_(UnitTypeId a_classId) const;
+        
+        /**
+         * Fallback for finding prototypes by 32-bit id (instead of UnitTypeId). Probably not very safe.         
+         */
+        int getPrototypeIdx_(uint32_t a_classId) const;
 
         Unit* createUnit_(int a_protoNum, const std::string& a_name);
 
     private:
-        vector<FactoryPrototype> m_prototypes;
-        set<std::string> m_group_names;
+        std::vector<FactoryPrototype> m_prototypes;
+        std::vector<std::string> m_group_names;
 
-        unordered_map<unsigned int, int> m_class_identifiers; //<! mapping from unique class IDs to prototype numbers
+        std::unordered_map<UnitTypeId, int> m_class_identifiers; //<! mapping from unique class IDs to prototype numbers
     };
 
     template <typename T, typename>
     void UnitFactory::addUnitPrototype(const std::string& a_group_name, const std::string& a_unit_name) {
         FactoryPrototype prototype{a_group_name, new T(a_unit_name), sizeof(T)};
+        // Add prototype
         if (m_class_identifiers.find(prototype.classIdentifier) != m_class_identifiers.end())
             return;
         m_prototypes.push_back(prototype);
-        m_group_names.insert(prototype.group_name);
         m_class_identifiers[prototype.classIdentifier] = (int)m_prototypes.size() - 1;
+
+        // Add group
+        if (std::find(m_group_names.begin(), m_group_names.end(), a_group_name) != m_group_names.end())
+            return;
+        if (prototype.group_name.empty())
+            return;
+        m_group_names.push_back(prototype.group_name);        
     }
 }
-
-#endif

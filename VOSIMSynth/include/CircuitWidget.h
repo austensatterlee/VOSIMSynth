@@ -28,7 +28,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 #include "Grid.h"
 #include <nanogui/nanogui.h>
-#include <common_serial.h>
+#include <vosimlib/common_serial.h>
+#include <vosimlib/common.h>
 
 namespace syn
 {
@@ -110,7 +111,7 @@ namespace synui
          * click on a valid location.
          * \param a_unitPrototype The prototype name of the unit to create. Corresponds to a name registered with the syn::UnitFactory.
          */
-        void loadPrototype(const std::string& a_unitPrototype);
+        void loadPrototype(syn::UnitTypeId a_unitPrototype);
 
         /**
          * \brief Snaps the pixel coordinate to one that lies on the grid.
@@ -158,21 +159,21 @@ namespace synui
 
         /**
          * \brief Sends a request to the real-time thread to create a new unit.
-         * \param a_unitPrototypeName Prototype name of the unit to create. Corresponds to a prototype name in the unit factory.
+         * \param a_classId Prototype name of the unit to create. Corresponds to a prototype name in the unit factory.
          */
-        void createUnit_(const std::string& a_unitPrototypeName);
+        void createUnit_(syn::UnitTypeId a_classId);
 
         /**
          * \brief Called upon successful creation of a unit on the real-time thread. Creates the associated
          * unit widget and places the CircuitWidget in the `CreatingUnit` state.
          * \param a_unitId Id of the newly created unit.
          */
-        void onUnitCreated_(unsigned a_classId, int a_unitId);
+        void onUnitCreated_(syn::UnitTypeId a_classId, int a_unitId);
 
         /**
          * \brief Creates a unit widget of the specified classId and associate it with the given unitId.
          */
-        UnitWidget* createUnitWidget_(unsigned a_classId, int a_unitId);
+        UnitWidget* createUnitWidget_(syn::UnitTypeId a_classId, int a_unitId);
 
         /**
          * \brief Try to end the `CreatingUnit` state by setting the position of the widget being placed.
@@ -249,7 +250,7 @@ namespace synui
         synui::UnitEditorHost* m_unitEditorHost;
         syn::UnitFactory* m_uf;
         syn::VoiceManager* m_vm;
-        std::unordered_map<unsigned, UnitWidgetConstructor > m_registeredUnitWidgets;
+        std::unordered_map<syn::UnitTypeId, UnitWidgetConstructor > m_registeredUnitWidgets;
         synui::Grid2D<GridCell> m_grid;
         int m_gridSpacing;
         WireDrawStyle m_wireDrawStyle;

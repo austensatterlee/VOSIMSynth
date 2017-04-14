@@ -21,7 +21,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "DSPMath.h"
 #include "tables.h"
 
-#include "common.h"
+#include "vosimlib/common.h"
 
 syn::StateVariableFilter::StateVariableFilter(const string& a_name) :
     Unit(a_name),
@@ -168,6 +168,7 @@ double syn::OnePoleLP::getState() const
 void syn::OnePoleLP::reset()
 {
     implem.reset();
+    m_lastSync = 0.0;
 }
 
 void syn::OnePoleLP::process_()

@@ -17,15 +17,22 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
- * \file common_serial.h
- * \brief Contains common imports for serialization
- * \details
- * \author Austen Satterlee
- * \date March 6, 2016
- */
-
 #pragma once
-#include <json/json.hpp>
 
-using nlohmann::json;
+#if defined(VOSIMSYNTH_SHARED)
+    #if defined(_WIN32)
+        // Windows compilers need specific (and different) keywords for export and import
+        #if defined(VOSIMSynth_EXPORTS)
+            #define VOSIMSYNTH_API __declspec(dllexport)
+        #else
+            #define VOSIMSYNTH_API __declspec(dllimport)
+        #endif
+    #elif defined(VOSIMSynth_EXPORTS) // Linux, FreeBSD, Mac OS X
+        #define VOSIMSYNTH_API __attribute__ ((__visibility__ ("default")))
+    #else
+        #define VOSIMSYNTH_API
+    #endif
+#else
+    // Static build doesn't need import/export macros
+    #define VOSIMSYNTH_API
+#endif

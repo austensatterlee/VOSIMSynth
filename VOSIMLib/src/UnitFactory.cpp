@@ -16,17 +16,10 @@ syn::UnitFactory::~UnitFactory()
     {
         delete proto.prototype;
     }
-    m_prototypes.clear();
-    m_group_names.clear();
 }
 
-set<string> syn::UnitFactory::getGroupNames() const {
-    set<string> groupnames;
-    for (const string& groupname : m_group_names) {
-        if (groupname != "")
-            groupnames.insert(groupname);
-    }
-    return groupnames;
+const vector<string>& syn::UnitFactory::getGroupNames() const {
+    return m_group_names;
 }
 
 vector<string> syn::UnitFactory::getPrototypeNames(const string& group) const {
@@ -47,81 +40,52 @@ vector<string> syn::UnitFactory::getPrototypeNames() const {
     return names;
 }
 
-const std::string& syn::UnitFactory::getPrototypeName(unsigned a_classIdentifier)
-{
-    int protonum = getPrototypeIdx_(a_classIdentifier);
-    return m_prototypes[protonum].name;
-}
-
-const syn::UnitFactory::FactoryPrototype* syn::UnitFactory::getFactoryPrototype(const string& a_prototypeName) const {
+const syn::UnitFactory::FactoryPrototype* syn::UnitFactory::getFactoryPrototype(UnitTypeId a_classIdentifier) const {
     for (const FactoryPrototype& prototype : m_prototypes) {
-        if (prototype.name == a_prototypeName)
+        if (prototype.classIdentifier == a_classIdentifier)
             return& prototype;
     }
     return nullptr;
-}
-
-const syn::UnitFactory::FactoryPrototype* syn::UnitFactory::getFactoryPrototype(const Unit& a_unit) const
-{
-    int prototypeIndex = getPrototypeIdx_(a_unit.getClassIdentifier());
-    return &m_prototypes[prototypeIndex];
 }
 
 syn::Unit* syn::UnitFactory::createUnit_(int a_protoNum, const string& a_name) {
     Unit* unit = m_prototypes[a_protoNum].prototype->clone();
     // Generate default name
     if(a_name.empty())
-        unit->_setName(generateUnitName(unit));
+        unit->_setName(generateUnitName(*unit));
     else
         unit->_setName(a_name);
     return unit;
 }
 
-syn::Unit* syn::UnitFactory::createUnit(unsigned a_classIdentifier, const string& a_name) {
+syn::Unit* syn::UnitFactory::createUnit(syn::UnitTypeId a_classIdentifier, const string& a_name) {
     int protonum = getPrototypeIdx_(a_classIdentifier);
-    if (protonum < 0)
-        return nullptr;
+    if (protonum < 0){
+        // Maybe they gave us an old 32bit class ID?
+        protonum = getPrototypeIdx_((uint32_t)a_classIdentifier);
+        if(protonum < 0)
+            return nullptr;
+    }
     return createUnit_(protonum, a_name);
 }
 
-syn::Unit* syn::UnitFactory::createUnit(string a_prototypeName, const string& a_name) {
-    int protonum = getPrototypeIdx_(a_prototypeName);
-    if (protonum < 0)
-        return nullptr;
-    return createUnit_(protonum, a_name);
-}
-
-std::string syn::UnitFactory::generateUnitName(Unit* a_unit) const
+std::string syn::UnitFactory::generateUnitName(const Unit& a_unit) const
 {
-    return incrementSuffix(getFactoryPrototype(*a_unit)->name);    
+    return incrementSuffix(getFactoryPrototype(a_unit.getClassIdentifier())->name);    
 }
 
-bool syn::UnitFactory::hasClassId(unsigned a_classIdentifier) const {
+bool syn::UnitFactory::hasClassId(syn::UnitTypeId a_classIdentifier) const {
     bool result = m_class_identifiers.find(a_classIdentifier) != m_class_identifiers.end();
     return result;
 }
 
-bool syn::UnitFactory::hasClassId(string a_protoName) const {
-    int i = 0;
+syn::UnitTypeId syn::UnitFactory::getClassId(const string& a_groupName, const string& a_protoName) const {
     for (const FactoryPrototype& prototype : m_prototypes) {
-        if (prototype.name == a_protoName) {
-            return true;
+        if(prototype.group_name==a_groupName && prototype.name==a_protoName) {
+            return prototype.classIdentifier;
         }
-        i++;
     }
-    return false;
-}
-
-unsigned syn::UnitFactory::getClassId(string a_protoName) const {
-    return m_prototypes[getPrototypeIdx_(a_protoName)].prototype->getClassIdentifier();
-}
-
-unsigned syn::UnitFactory::getClassId(int a_protoNum) const {
-    return m_prototypes[a_protoNum].prototype->getClassIdentifier();
-}
-
-unsigned syn::UnitFactory::getClassId(unsigned a_protoNum) {
-    return a_protoNum;
+    return 0;
 }
 
 void syn::UnitFactory::resetBuildCounts() {
@@ -141,9 +105,17 @@ int syn::UnitFactory::getPrototypeIdx_(const string& a_name) const {
     return -1;
 }
 
-int syn::UnitFactory::getPrototypeIdx_(unsigned a_classId) const {
+int syn::UnitFactory::getPrototypeIdx_(syn::UnitTypeId a_classId) const {
     if (m_class_identifiers.find(a_classId) != m_class_identifiers.end()) {
         return m_class_identifiers.at(a_classId);
+    }
+    return -1;
+}
+
+int syn::UnitFactory::getPrototypeIdx_(uint32_t a_classId) const {
+    for(auto id_mapping : m_class_identifiers) {
+        if((uint32_t)id_mapping.first==a_classId)
+            return id_mapping.second;
     }
     return -1;
 }

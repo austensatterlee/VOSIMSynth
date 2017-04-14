@@ -105,7 +105,7 @@ namespace syn
 
         // Find and remove the associated connection record stored in this Circuit
         ConnectionRecord record{a_fromId, a_fromOutputPort, a_toId, a_toInputPort};
-        for (unsigned i = 0; i < m_connectionRecords.size(); i++) {
+        for (int i = 0; i < m_connectionRecords.size(); i++) {
             if (m_connectionRecords[i] == record) {
                 result = true;
                 m_connectionRecords.erase(m_connectionRecords.begin() + i);

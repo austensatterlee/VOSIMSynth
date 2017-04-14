@@ -35,10 +35,10 @@ namespace syn
 
     void Unit::setName(const string& a_name) { m_name = a_name; }
 
-    uint64_t Unit::getClassIdentifier() const
+    UnitTypeId Unit::getClassIdentifier() const
     {
         hash<string> hash_fn;
-        return static_cast<unsigned int>(hash_fn(getClassName()));
+        return static_cast<UnitTypeId>(hash_fn(getClassName()));
     }
 
     void Unit::setFs(double a_newFs)
@@ -246,7 +246,7 @@ namespace syn
     Unit* Unit::fromJSON(const json& j)
     {
         // Construct new Unit
-        unsigned class_id = j["class_id"].get<unsigned>();
+        UnitTypeId class_id = j["class_id"].get<UnitTypeId>();
         std::string name = j["name"].get<std::string>();
         Unit* unit = UnitFactory::instance().createUnit(class_id, name);
 

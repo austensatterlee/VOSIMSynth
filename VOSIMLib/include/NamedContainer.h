@@ -20,7 +20,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __NAMEDCONTAINER__
 #define __NAMEDCONTAINER__
 
-#include "common.h"
+#include "vosimlib/common.h"
 #include <array>
 
 using std::array;

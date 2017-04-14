@@ -1,7 +1,7 @@
 #ifndef __LUT_TABLES__
 #define __LUT_TABLES__
 
-#include "common.h"
+#include "vosimlib/common.h"
 
 /*::macro_defs::*/
 /*::/macro_defs::*/

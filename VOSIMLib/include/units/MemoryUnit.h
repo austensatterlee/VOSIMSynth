@@ -31,8 +31,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn {
     /**
-    * General N-Sample delay
-    */
+     * General N-Sample delay
+     */
     class VOSIMLIB_API NSampleDelay {
     public:
         NSampleDelay();
@@ -70,6 +70,9 @@ namespace syn {
         double m_lastOutput;
     };
 
+    /**
+     * Single sample delay unit
+     */
     class VOSIMLIB_API MemoryUnit : public Unit {
         DERIVE_UNIT(MemoryUnit)
     public:
@@ -87,6 +90,9 @@ namespace syn {
         NSampleDelay m_delay;
     };
 
+    /**
+     * Delay with variable-sized buffer and support for multiple units of time.
+     */
     class VOSIMLIB_API VariableMemoryUnit : public Unit {
         DERIVE_UNIT(VariableMemoryUnit)
 

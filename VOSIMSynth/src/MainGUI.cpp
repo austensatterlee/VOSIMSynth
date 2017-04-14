@@ -188,15 +188,15 @@ void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget)
         nanogui::Popup* popup = button->popup();
         popup->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 0));
         button->setCallback([this, popup]() { m_screen->moveWindowToFront(popup); });
-        for (auto uname : m_uf->getPrototypeNames(gname))
+        for (auto pname : m_uf->getPrototypeNames(gname))
         {
-            nanogui::Button* subbtn = new nanogui::Button(popup, uname);
-            subbtn->setId(uname);
+            nanogui::Button* subbtn = new nanogui::Button(popup, pname);
+            syn::UnitTypeId classId = m_uf->getClassId(gname, pname);
             subbtn->setFontSize(14);
             // Close popup
-            subbtn->setCallback([this, button, subbtn]()
+            subbtn->setCallback([this, button, classId]()
                 {
-                    this->m_circuitWidget->loadPrototype(subbtn->id());
+                    this->m_circuitWidget->loadPrototype(classId);
                     button->setPushed(false);
                     m_screen->updateFocus(nullptr);
                 });
@@ -216,7 +216,7 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
 
     helper->addGroup("Plugin Settings");
 
-    helper->addSerializableVariable<int>("Grid Spacing", [this](const int& s)
+    helper->addSerializableVariable<int>("grid_spacing", "Grid spacing", [this](const int& s)
         {
             m_circuitWidget->resizeGrid(s);
             m_screen->performLayout();
@@ -226,9 +226,9 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
             return gs;
         });
 
-    helper->addSerializableVariable<int>("Window width", [this](const int& w) { m_window->resize(w, m_screen->height()); }, [this]() { return m_screen->width(); });
-    helper->addSerializableVariable<int>("Window height", [this](const int& h) { m_window->resize(m_screen->width(), h); }, [this]() { return m_screen->height(); });
-    helper->addSerializableVariable<bool>("Curved Wires", 
+    helper->addSerializableVariable<int>("window_width", "Window width", [this](const int& w) { m_window->resize(w, m_screen->height()); }, [this]() { return m_screen->width(); });
+    helper->addSerializableVariable<int>("window_height", "Window height", [this](const int& h) { m_window->resize(m_screen->width(), h); }, [this]() { return m_screen->height(); });
+    helper->addVariable<bool>("Curved Wires", 
         [this](const bool& s)
         {
             m_circuitWidget->setWireDrawStyle(static_cast<CircuitWidget::WireDrawStyle>(s));
@@ -237,7 +237,7 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
             return static_cast<bool>(m_circuitWidget->wireDrawStyle());
         });
 
-    helper->addSerializableVariable<int>("Internal buf. size",
+    helper->addVariable<int>("Internal buffer size",
         [this, helper](const int& size)
         {
             syn::RTMessage* msg = new syn::RTMessage;
@@ -259,7 +259,7 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
             return m_vm->getInternalBufferSize();
         });
 
-    helper->addSerializableVariable<int>("Max Voices", 
+    helper->addSerializableVariable<int>("max_voices", "Max voices", 
         [this, helper](const int& maxVoices)
         {
              syn::RTMessage* msg = new syn::RTMessage();
@@ -283,7 +283,7 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
             return m_vm->getMaxVoices();
         });
 
-    helper->addSerializableVariable<bool>("Legato",
+    helper->addSerializableVariable<bool>("legato","Legato",
         [this, helper](const bool& legato)
         {
             syn::RTMessage* msg = new syn::RTMessage();

@@ -27,7 +27,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include <common_serial.h>
+#include <vosimlib/common_serial.h>
 #include <nanogui/formhelper.h>
 
 namespace nanogui
@@ -59,8 +59,14 @@ namespace synui
         SerializableFormHelper(nanogui::Screen* screen)
             : FormHelper(screen) {}
 
+        /**
+         * \brief Adds a variable that will be automatically serialized by this classes ::load and ::operator json methods.
+         * 
+         * \param name A name that will be used to serialize this variable. Will (ideally) never change.
+         * \param label The label for this variable that will be displayed in the gui.
+         */
         template <typename Type> 
-        nanogui::detail::FormWidget<Type>* addSerializableVariable(const std::string &label, const std::function<void(const Type &)> &setter, const std::function<Type()> &getter, bool editable = true)
+        nanogui::detail::FormWidget<Type>* addSerializableVariable(const std::string &name, const std::string &label, const std::function<void(const Type &)> &setter, const std::function<Type()> &getter, bool editable = true)
         {
             auto ret = nanogui::FormHelper::addVariable(label, setter, getter, editable);
             auto getterSerializer = [getter]()->json{
@@ -71,8 +77,8 @@ namespace synui
             {
                 setter(j.get<Type>());
             };
-            m_getterSerializers[label] = getterSerializer;
-            m_setterSerializers[label] = setterSerializer;
+            m_getterSerializers[name] = getterSerializer;
+            m_setterSerializers[name] = setterSerializer;
             return ret;
         }
 

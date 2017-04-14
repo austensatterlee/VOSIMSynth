@@ -28,8 +28,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __UNIT__
 #define __UNIT__
 
-#include "common_serial.h"
-#include "common.h"
+#include "vosimlib/common_serial.h"
+#include "vosimlib/common.h"
 #include "NamedContainer.h"
 #include "UnitParameter.h"
 #include "UnitFactory.h"
@@ -311,7 +311,7 @@ namespace syn
         const string& name() const;
         void setName(const string& a_name);
 
-        uint64_t getClassIdentifier() const;
+        UnitTypeId getClassIdentifier() const;
 
         /**
          * Copies this unit into newly allocated memory (the caller is responsible for releasing the memory).

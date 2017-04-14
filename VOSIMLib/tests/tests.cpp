@@ -1,6 +1,6 @@
 #include "Tests.h"
 
-#include <common_serial.h>
+#include <vosimlib/common_serial.h>
 #include <Unit.h>
 #include <units/StateVariableFilter.h>
 #include <units/Oscillator.h>
