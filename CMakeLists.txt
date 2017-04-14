@@ -83,8 +83,8 @@ if(MSVC)
   # /GL whole program optimization      /arch:SSE2 simd extensions
   # /fp:fast floating point model       /Qpar enable parallel code gen
   # /Oy omit frame pointers             /GT fiber-safe optimizations
-  list(APPEND MSVC_REL /Ox /GL /Ob2 /Oi /Ot /Oy /fp:fast /fp:except- /Qpar /GT /GL)
-  list(APPEND MSVC_RDEB /Ox /GL /Ob2 /Oi /Ot /Oy /fp:fast /fp:except- /Qpar /GT /GL)
+  list(APPEND MSVC_REL  /Ox  /Ob2  /Oi  /Ot  /Oy  /fp:fast  /fp:except-  /Qpar  /GT  /GL)
+  list(APPEND MSVC_RDEB /Ox  /Ob2  /Oi  /Ot  /Oy  /fp:fast  /fp:except-  /Qpar  /GT  /GL)
 
   if(VOSIMPROJECT_USE_AVX2)
     list(APPEND MSVC_REL /arch:AVX2)

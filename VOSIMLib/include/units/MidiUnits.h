@@ -72,7 +72,7 @@ namespace syn {
         GateUnit(const GateUnit& a_rhs) :
             GateUnit(a_rhs.name()) { }
 
-        void reset() override {};
+        void reset() override { m_queuedNoteOff = true; }
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override {

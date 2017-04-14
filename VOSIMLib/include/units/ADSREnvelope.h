@@ -29,14 +29,11 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __ADSRENVELOPE__
 #include "Unit.h"
 
-namespace syn
-{
-    class VOSIMLIB_API ADSREnvelope : public Unit
-    {
+namespace syn {
+    class VOSIMLIB_API ADSREnvelope : public Unit {
         DERIVE_UNIT(ADSREnvelope)
     public:
-        enum Param
-        {
+        enum Param {
             pAttack = 0,
             pDecay,
             pSustain,
@@ -44,8 +41,7 @@ namespace syn
             pTimescale
         };
 
-        enum Input
-        {
+        enum Input {
             iGate = 0,
             iAttack,
             iDecay,
@@ -59,6 +55,10 @@ namespace syn
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
+        bool isGateRising() const;
+        bool isGateFalling() const;
+        void onNoteOn_() override;
+        void onNoteOff_() override;
 
     public:
         bool isActive() const override;
@@ -67,8 +67,7 @@ namespace syn
         void release(double a_releaseValue);
         void reset() override;
     private:
-        enum EADSRStage
-        {
+        enum EADSRStage {
             Off = 0,
             Attack,
             Decay,
@@ -76,10 +75,11 @@ namespace syn
             Release
         };
 
-        double m_phase;
         EADSRStage m_currStage;
-        double m_initial;
-        double m_target;
+        double m_phase;
+        double m_currInitial;
+        double m_currTarget;
+        double m_lastOutput;
         double m_lastGate;
     };
 }
