@@ -19,7 +19,7 @@ if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 else()
   set(ARCH 32)
   set(LIBS_DIR_SYS "C:/Program Files (x86)")
-  set(PYTHON_EXECUTABLE "C:/Python27_32bit/python.exe" CACHE PATH "")
+  set(PYTHON_EXECUTABLE "C:/Python27/python.exe" CACHE PATH "")
 endif()
 
 #  Source/library directory options
@@ -28,8 +28,8 @@ set(LIBS_DIR ${CMAKE_SOURCE_DIR}/libs CACHE PATH "")
 set(FFTS_ROOT "${LIBS_DIR_SYS}/ffts" CACHE PATH "")
 set(FFTS_INCLUDE_DIR ${FFTS_ROOT}/include CACHE PATH "")
 
-set(Boost_INCLUDE_DIR "C:/users/austen/OneDrive/Code/libs/boost/boost_1_60_0" CACHE PATH "")
-set(Boost_LIBRARY_DIR "C:/users/austen/OneDrive/Code/libs/boost/boost_1_60_0/stage/lib" CACHE PATH "")
+set(Boost_INCLUDE_DIR "C:/users/austen/OneDrive/Code/libs/boost/boost_1_60_0" CACHE PATH "Boost directory (i.e. .../boost/boost_1_60)")
+set(Boost_LIBRARY_DIR "${Boost_INCLUDE_DIR}/stage/lib")
 
 set(MKL_DIR "E:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl" CACHE PATH "")
 
@@ -41,7 +41,6 @@ option(VOSIMPROJECT_TRACER_BUILD "Build 'trace' build (for debugging)" FALSE)
 if(VOSIMPROJECT_TRACER_BUILD)
   add_definitions(-DTRACER_BUILD)
 endif()
-
 
 # Subproject directories
 set(VOSIMLIB_DIR ${CMAKE_SOURCE_DIR}/vosimlib)
@@ -117,9 +116,17 @@ add_compile_options("$<$<CONFIG:RelWithDebInfo>:-D_RELWITHDEBINFO>")
 # FFTS
 find_library(FFTS_RELEASE_LIBRARY ffts ffts_static PATHS ${FFTS_ROOT} PATH_SUFFIXES lib)
 find_library(FFTS_DEBUG_LIBRARY fftsd ffts_staticd PATHS ${FFTS_ROOT} PATH_SUFFIXES lib)
-include_directories(${FFTS_INCLUDE_DIR})
-list(APPEND DBG_LIBS ${FFTS_DEBUG_LIBRARY})
-list(APPEND REL_LIBS ${FFTS_RELEASE_LIBRARY})
+if(FFTS_RELEASE_LIBRARY STREQUAL "FFTS_RELEASE_LIBRARY-NOTFOUND")
+    message(WARNING "Unable to locate FFTS release library.")
+endif()
+if(FFTS_DEBUG_LIBRARY STREQUAL "FFTS_DEBUG_LIBRARY-NOTFOUND")
+    message(WARNING "Unable to locate FFTS debug library.")
+endif()
+if(NOT FFTS_RELEASE_LIBRARY STREQUAL "FFTS_RELEASE_LIBRARY-NOTFOUND" AND NOT FFTS_DEBUG_LIBRARY STREQUAL "FFTS_DEBUG_LIBRARY-NOTFOUND")
+    include_directories(${FFTS_INCLUDE_DIR})
+    list(APPEND DBG_LIBS ${FFTS_DEBUG_LIBRARY})
+    list(APPEND REL_LIBS ${FFTS_RELEASE_LIBRARY})
+endif()
 
 ##
 # pybind11
@@ -172,7 +179,7 @@ include_directories(${LIBS_DIR}/wdl/iplug)
 set(MKL_INTEGER_MODE LP)
 set(MKL_THREADING_MODE INTELTHREAD)
 find_package(MKL)
-if(${EIGEN_USE_MKL})
+if(EIGEN_USE_MKL AND MKL_FOUND)
   add_definitions(-DEIGEN_USE_MKL_ALL)
 endif()
 

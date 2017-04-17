@@ -34,12 +34,13 @@ add_definitions(${NANOGUI_EXTRA_DEFS})
 include_directories(${NANOGUI_EXTRA_INCS})
 include_directories(${LIBS_DIR}/nanogui/include)
 
-
 ##
 # MKL
 ##
-list(APPEND ADDITIONAL_LIBRARIES ${MKL_LIBRARIES})
-include_directories(${MKL_INCLUDE_DIR})
+if(MKL_FOUND)
+    list(APPEND ADDITIONAL_LIBRARIES ${MKL_LIBRARIES})
+    include_directories(${MKL_INCLUDE_DIR})
+endif()
 
 ##
 # VOSIMLib

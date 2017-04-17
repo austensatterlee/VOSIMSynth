@@ -30,15 +30,20 @@ include_directories(${Boost_INCLUDE_DIRS})
 ##
 # MKL
 ##
-list(APPEND ADDITIONAL_LIBRARIES ${MKL_LIBRARIES})
-include_directories(${MKL_INCLUDE_DIR})
+if(MKL_FOUND)
+    list(APPEND ADDITIONAL_LIBRARIES ${MKL_LIBRARIES})
+    include_directories(${MKL_INCLUDE_DIR})
+endif()
 
 ##
 # Generate wavetables
 ##
-set(GENTABLES_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/table_data.cpp)
+set(GENTABLES_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/table_data.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/lut_tables.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/lut_tables.h)
 set(GENTABLES_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/genTables.py)
-add_custom_command(OUTPUT ${GENTABLES_OUTPUT} COMMAND python ARGS ${CMAKE_CURRENT_SOURCE_DIR}/genTables.py --verbose DEPENDS ${GENTABLES_DEPENDS} COMMENT "Generating wavetables..." PRE_BUILD VERBATIM WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_custom_command(OUTPUT ${GENTABLES_OUTPUT} COMMAND python 
+    ARGS ${CMAKE_CURRENT_SOURCE_DIR}/genTables.py --verbose 
+    DEPENDS ${GENTABLES_DEPENDS} COMMENT "Generating wavetables..." 
+    PRE_BUILD VERBATIM WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 ##
 # VOSIMLib source files

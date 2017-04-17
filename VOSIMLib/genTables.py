@@ -2,20 +2,20 @@ import numpy as np
 from numpy import *
 from scipy import signal as ss
 import re
-import os,sys
+import os, sys
 
 LUT_TABLEDATA_FILE = "src/table_data.cpp"
 LUT_TABLEHDR_FILE = "include/lut_tables.h"
 LUT_TABLESRC_FILE = "src/lut_tables.cpp"
 
-def RealCepstrum(n,signal):
+def RealCepstrum(n, signal):
     freq = fft.fft(signal)
     freq = log(abs(freq))
     realCepstrum = real(fft.ifft(freq))
 
     return realCepstrum
 
-def MinimumPhase(n,realCepstrum):
+def MinimumPhase(n, realCepstrum):
     nd2 = n/2
     realTime = zeros(n)
     imagTime = zeros(n)
@@ -42,8 +42,8 @@ def GenerateMinBLEP(nZeroCrossings, nOverSampling):
 
     buffer1 *= blackman(n)
 
-    buffer2 = RealCepstrum(n,buffer1)
-    buffer1 = MinimumPhase(n,buffer2)
+    buffer2 = RealCepstrum(n, buffer1)
+    buffer1 = MinimumPhase(n, buffer2)
 
     minBLEP = buffer1.cumsum()
 
@@ -76,21 +76,21 @@ def DSF(w, fc, fm, nharmonics, npoints=None):
     result[limmask] = 1.0
     return result
 
-def RCCoefs(fc,fs):
+def RCCoefs(fc, fs):
     """
     fn - normalized frequency
 
-    @returns bcoefs,acoefs
+    @returns bcoefs, acoefs
     """
     T = 1./fs
     RC = 1./(2*pi*fc)
-    bcoefs = array([1.,1.])
+    bcoefs = array([1., 1.])
     acoefs = array([1.+2*RC/T, 1.-2*RC/T])
     bcoefs /= acoefs[0]
     acoefs /= acoefs[0]
-    return bcoefs,acoefs
+    return bcoefs, acoefs
 
-def GenerateBlit(pts,nharmonics=None):
+def GenerateBlit(pts, nharmonics=None):
     """
     Generate a band-limited impulse train using the FFT
 
@@ -103,49 +103,49 @@ def GenerateBlit(pts,nharmonics=None):
     return blit
 
 def bl_prefilter():
-    prefilter_lhalf=[0.0028,-0.0119,0.0322,-0.0709,0.1375,-0.2544,0.4385,-0.6334,1.7224]
+    prefilter_lhalf=[0.0028, -0.0119, 0.0322, -0.0709, 0.1375, -0.2544, 0.4385, -0.6334, 1.7224]
     prefilter=make_symmetric_l(prefilter_lhalf)
     return prefilter
 
-def GenerateBLSaw(nharmonics,npoints=None, w0=1):
+def GenerateBLSaw(nharmonics, npoints=None, w0=1):
     """ Generate band limited sawtooth wave """
     npoints = npoints or nharmonics*2+1
     nharmonics = min(nharmonics, npoints/2-1 if npoints%2 else npoints/2)
 
-    harmonics = [w0*x for x in xrange(1,nharmonics+1)]
+    harmonics = [w0*x for x in xrange(1, nharmonics+1)]
 
     gains = [1./x for x in harmonics]
 
     sample_pts = arange(npoints)*2.0*pi/npoints
-    blsaw = sum([g*sin(h*sample_pts) for g,h in zip(gains,harmonics)],axis=0)
+    blsaw = sum([g*sin(h*sample_pts) for g, h in zip(gains, harmonics)], axis=0)
     blsaw = -fft.fftshift(blsaw)
     return blsaw/blsaw.max()
 
-def GenerateBLSquare(nharmonics,npoints=None, w0=1):
+def GenerateBLSquare(nharmonics, npoints=None, w0=1):
     npoints = npoints or nharmonics*2+1
     nharmonics = min(nharmonics, npoints/2-1 if npoints%2 else npoints/2)
 
-    harmonics = [w0*x for x in xrange(1,nharmonics+1) if x%2]
+    harmonics = [w0*x for x in xrange(1, nharmonics+1) if x%2]
 
     gains = [1./x for x in harmonics]
 
     sample_pts = arange(npoints)*2.0*pi/npoints;
-    blsquare = sum([g*sin(h*sample_pts) for g,h in zip(gains,harmonics)],axis=0)
+    blsquare = sum([g*sin(h*sample_pts) for g, h in zip(gains, harmonics)], axis=0)
     return blsquare/blsquare.max()
 
-def GenerateBLTriangle(nharmonics,npoints=None, w0=1):
+def GenerateBLTriangle(nharmonics, npoints=None, w0=1):
     npoints = npoints or nharmonics*2+1
     nharmonics = min(nharmonics, npoints/2-1 if npoints%2 else npoints/2)
 
-    harmonics = [w0*x for x in xrange(1,nharmonics+1) if x%2]
+    harmonics = [w0*x for x in xrange(1, nharmonics+1) if x%2]
 
-    gains = [1./x**2 if not i%2 else -1./x**2 for i,x in enumerate(harmonics)]
+    gains = [1./x**2 if not i%2 else -1./x**2 for i, x in enumerate(harmonics)]
 
     sample_pts = arange(npoints)*2.0*pi/npoints
-    bltri = sum([g*sin(h*sample_pts) for g,h in zip(gains,harmonics)],axis=0)
+    bltri = sum([g*sin(h*sample_pts) for g, h in zip(gains, harmonics)], axis=0)
     return bltri/bltri.max()
 
-def GenerateBlimp(intervals=10,res=2048,fs=48000,fc=20000,beta=9.,apgain=0.9,apbeta=0.7,ret_half=True):
+def GenerateBlimp(intervals=10, res=2048, fs=48000, fc=20000, beta=9., apgain=0.9, apbeta=0.7, ret_half=True):
     """
     Generate a bandlimited dirac delta impulse.
 
@@ -159,12 +159,12 @@ def GenerateBlimp(intervals=10,res=2048,fs=48000,fc=20000,beta=9.,apgain=0.9,apb
     intervals=2*(int(intervals)/2)+1 # make intervals odd
     res = 2*(int(res)/2)+1 # make oversample factor odd
     pts = res*intervals # impulse length in points
-    ind = intervals*2*(arange(pts) - (pts-1)/2.)/(pts-1.) # pts points spread across [-intervals/2,intervals/2)
+    ind = intervals*2*(arange(pts) - (pts-1)/2.)/(pts-1.) # pts points spread across [-intervals/2, intervals/2)
     x = fc*1./fs*ind # pts points spread across fc/fs*[-intervals/2, intervals/2)
     h = sinc(x)
 
-    w = ss.kaiser(pts,beta) # window
-    apw = 1-apgain*ss.kaiser(pts,apbeta) # apodization window
+    w = ss.kaiser(pts, beta) # window
+    apw = 1-apgain*ss.kaiser(pts, apbeta) # apodization window
     window = w*apw
     blimp = window*h
 
@@ -176,13 +176,13 @@ def GenerateBlimp(intervals=10,res=2048,fs=48000,fc=20000,beta=9.,apgain=0.9,apb
     else:
         return blimp
 
-def GenerateBlimp2(intervals=10, res=2048, fs=48e3, fc=20e3, width=None, beta=9., apgain=0.9, apbeta=0.7, ret_half=True):
+def GenerateBlimp2(intervals=10, res=2048, fs=48e3, fc=20e3, beta=7.20, apgain=0.89, apbeta=0.7, ret_half=True, width=None):
     intervals=2*(int(intervals)/2)+1 # make intervals odd
     res = 2*(int(res)/2)+1 # make oversample factor odd
     pts = res*intervals # impulse length in points
-    blimp_fir = ss.firwin(pts,2*fc*1.0/fs*1.0/res, width=width, window=('kaiser',beta))
+    blimp_fir = ss.firwin(pts, 2*fc*1.0/fs*1.0/res, width=width, window=('kaiser', beta))
 
-    apwin = 1-apgain*ss.kaiser(pts,apbeta) # apodization window
+    apwin = 1-apgain*ss.kaiser(pts, apbeta) # apodization window
     blimp_fir *= apwin
     blimp_fir = scale_fir(blimp_fir)
 
@@ -198,12 +198,12 @@ def GenerateSine(n):
     c = sin(k*T*2*pi)
     return c
 
-def GeneratePitchTable(notestart,notefinish,npoints):
-    N = linspace(notestart,notefinish,npoints)
-    return N,440*2**((N-69.)/12.)
+def GeneratePitchTable(notestart, notefinish, npoints):
+    N = linspace(notestart, notefinish, npoints)
+    return N, 440*2**((N-69.)/12.)
 
 """Tools"""
-def RewriteAutomatedSection(full_text,tag,replacement_text):
+def RewriteAutomatedSection(full_text, tag, replacement_text):
     """
     Finds a portion of text surrounded by:
 
@@ -221,14 +221,14 @@ def RewriteAutomatedSection(full_text,tag,replacement_text):
     match = block_pattern.search(full_text)
     if not match:
         return full_text
-    replacement_text=re.sub("\n\\s*","\n"+match.groupdict()['spacing'],replacement_text)
+    replacement_text=re.sub("\n\\s*", "\n"+match.groupdict()['spacing'], replacement_text)
     result = full_text[:match.start("block")] + replacement_text + full_text[match.end("block"):]
     return result
 
-def MakeTableStr(table,name,ctype="double"):
+def MakeTableStr(table, name, ctype="double"):
     rows = int(sqrt(table.size))
     cols = int(ceil(sqrt(table.size)))
-    tablestr = "{} {}[{}] = {{\n".format(ctype,name,table.size)
+    tablestr = "{} {}[{}] = {{\n".format(ctype, name, table.size)
     cellstr = "{:.18f}"
     ind = 0
     for i in xrange(rows):
@@ -236,7 +236,7 @@ def MakeTableStr(table,name,ctype="double"):
             tablestr+='\n'
         for j in xrange(cols):
             tablestr+=cellstr.format(table[ind])
-            tablestr+=','
+            tablestr+=', '
             ind+=1
             if ind>=table.size:
                 break
@@ -247,13 +247,13 @@ def MakeTableStr(table,name,ctype="double"):
 
 def make_symmetric_r(right_half):
     left_half = list(reversed(right_half))
-    return hstack([left_half[:-1],right_half])
+    return hstack([left_half[:-1], right_half])
 
 def make_symmetric_l(left_half):
     right_half = list(reversed(left_half))
-    return hstack([left_half[:-1],right_half])
+    return hstack([left_half[:-1], right_half])
 
-def clipdb(s,cutoff):
+def clipdb(s, cutoff):
     clipped = s[:]
     spos = abs(s)
     mspos = max(spos)
@@ -265,18 +265,18 @@ def clipdb(s,cutoff):
     clipped[spos<thresh] = thresh
     return clipped
 
-def magspec(signal, pts=None, fs=None, log=(False, False), **kwargs):
+def magspec(signal, pts=None, fs=None, xlog=False, ylog=False, **kwargs):
     from matplotlib import pyplot as plt
     pts = pts or len(signal)
-    k = arange(1,pts/2)
+    k = arange(1, pts/2)
     fs = fs or 1.
-    xlogscale, ylogscale = log
+    xlogscale, ylogscale = (xlog, ylog)
     xlogscale = kwargs.pop('xlog', xlogscale)
     ylogscale = kwargs.pop('ylog', ylogscale)
-    signalfft = fft.rfft(signal,n=pts)
+    signalfft = fft.rfft(signal, n=pts)
     freqs = arange(len(signalfft))*1./len(signalfft)*fs/2.0
     if ylogscale:
-        signalfft = clipdb(signalfft,-180)
+        signalfft = clipdb(signalfft, -180)
         mag = 20*log10(abs(signalfft))
         ylabel = "dB"
     else:
@@ -290,23 +290,23 @@ def magspec(signal, pts=None, fs=None, log=(False, False), **kwargs):
         ax.plot( freqs, mag, **kwargs)
     ax.set_xlabel("Hz")
     ax.set_ylabel(ylabel)
-    ax.grid(True,which='both')
+    ax.grid(True, which='both')
     f.show()
 
-def maggain(signal1,signal2,pts=None,fs=None,log=(False,False),**kwargs):
+def maggain(signal1, signal2, pts=None, fs=None, xlog=False, ylog=False, **kwargs):
     from matplotlib import pyplot as plt
-    fftlength = pts or max(len(signal1),len(signal2))
+    fftlength = pts or max(len(signal1), len(signal2))
     fs = fs or 1.
-    xlogscale, ylogscale = log
+    xlogscale, ylogscale = (xlog, ylog)
     xlogscale = kwargs.pop('xlog', xlogscale)
     ylogscale = kwargs.pop('ylog', ylogscale)
-    signal1fft = fft.rfft(signal1,n=fftlength)
-    signal2fft = fft.rfft(signal2,n=fftlength)
+    signal1fft = fft.rfft(signal1, n=fftlength)
+    signal2fft = fft.rfft(signal2, n=fftlength)
     k = arange(len(signal1fft))
     freqs = k*1./fftlength*fs
     if ylogscale:
-        signal1fft = clipdb(signal1fft,-180)
-        signal2fft = clipdb(signal2fft,-180)
+        signal1fft = clipdb(signal1fft, -180)
+        signal2fft = clipdb(signal2fft, -180)
         mag1 = 20*log10(abs(signal1fft))
         mag2 = 20*log10(abs(signal2fft))
         gain = mag2-mag1
@@ -314,7 +314,7 @@ def maggain(signal1,signal2,pts=None,fs=None,log=(False,False),**kwargs):
     else:
         mag1 = abs(signal1fft)**2
         mag2 = abs(signal2fft)**2
-        gain = [m2/m1 if m1 else 0.0 for m2,m1 in zip(mag2,mag1)]
+        gain = [m2/m1 if m1 else 0.0 for m2, m1 in zip(mag2, mag1)]
         ylabel = "Amp"
     f = plt.gcf()
     ax = plt.gca()
@@ -324,10 +324,10 @@ def maggain(signal1,signal2,pts=None,fs=None,log=(False,False),**kwargs):
         ax.plot( freqs, gain, **kwargs )
     ax.set_xlabel("Hz")
     ax.set_ylabel(ylabel)
-    ax.grid(True,which='both')
+    ax.grid(True, which='both')
     f.show()
 
-def unitplot(*sigs,**kwargs):
+def unitplot(*sigs, **kwargs):
     """
     plots multiple signals on the same timescale
 
@@ -337,16 +337,16 @@ def unitplot(*sigs,**kwargs):
     ax = plt.gca()
     pltsigs = []
     for sig in sigs:
-        pltsigs.append( linspace(0,1,len(sig)) )
+        pltsigs.append( linspace(0, 1, len(sig)) )
         pltsigs.append( sig )
-    ax.plot(*pltsigs,**kwargs)
-    ax.grid(True,which="both")
+    ax.plot(*pltsigs, **kwargs)
+    ax.grid(True, which="both")
     f.show()
 
-def lerp(a,b,frac):
+def lerp(a, b, frac):
     return (b-a)*frac + a
 
-def invlerp(a,b,pt):
+def invlerp(a, b, pt):
     return (pt-a)*1.0/(b-a)
 
 def resample(signal, new_table_size, filt, filt_res, numperiods=1, isperiodic=True, useinterp=True):
@@ -384,14 +384,14 @@ def resample(signal, new_table_size, filt, filt_res, numperiods=1, isperiodic=Tr
         filt_sum = 0
         while filt_phase < len(filt):
             if useinterp:
-                next_filt_phase = clip(int(filt_phase)+1,0,len(filt)-1)
+                next_filt_phase = clip(int(filt_phase)+1, 0, len(filt)-1)
                 frac_filt_phase = filt_phase - int(filt_phase)
-                filt_sample = lerp(filt[int(filt_phase)],filt[next_filt_phase],frac_filt_phase)
+                filt_sample = lerp(filt[int(filt_phase)], filt[next_filt_phase], frac_filt_phase)
             else:
                 filt_sample = filt[int(filt_phase)]
             sig_index = index - i
             if isperiodic:
-                sig_index = mod(sig_index,siglen)
+                sig_index = mod(sig_index, siglen)
                 newsig[new_index] += filt_sample * signal[sig_index]
             elif sig_index >= 0 and sig_index < siglen:
                 newsig[new_index] += filt_sample * signal[sig_index]
@@ -403,14 +403,14 @@ def resample(signal, new_table_size, filt, filt_res, numperiods=1, isperiodic=Tr
         i = 0
         while filt_phase < len(filt):
             if useinterp:
-                next_filt_phase = clip(int(filt_phase)+1,0,len(filt)-1)
+                next_filt_phase = clip(int(filt_phase)+1, 0, len(filt)-1)
                 frac_filt_phase = filt_phase - int(filt_phase)
-                filt_sample = lerp(filt[int(filt_phase)],filt[next_filt_phase],frac_filt_phase)
+                filt_sample = lerp(filt[int(filt_phase)], filt[next_filt_phase], frac_filt_phase)
             else:
                 filt_sample = filt[int(filt_phase)]
             sig_index = index + 1 + i
             if isperiodic:
-                sig_index = mod(sig_index,siglen)
+                sig_index = mod(sig_index, siglen)
                 newsig[new_index] += filt_sample * signal[sig_index]
             elif sig_index >= 0 and sig_index < siglen:
                 newsig[new_index] += filt_sample * signal[sig_index]
@@ -428,7 +428,7 @@ def resample(signal, new_table_size, filt, filt_res, numperiods=1, isperiodic=Tr
             currperiod+=1
     return newsig
 
-def sinclowpass(signal,fc,winlen=10):
+def sinclowpass(signal, fc, winlen=10):
     newsignal = zeros(len(signal))
     M = arange(len(signal))
     # for m in M:
@@ -436,24 +436,24 @@ def sinclowpass(signal,fc,winlen=10):
             # newsignal[m] += signal[n]*sinc(fc*(m-n))
         # newsignal[m]*=2*fc
     fc = fc
-    sincfir = sinc(fc*arange(-winlen+1,winlen+1))
-    apwin = genApodWindow(len(sincfir),9.,0.9,0.7)
+    sincfir = sinc(fc*arange(-winlen+1, winlen+1))
+    apwin = genApodWindow(len(sincfir), 9., 0.9, 0.7)
     sincfir *= apwin
     sincfir /= sincfir.max()
     for m in M:
-        for n in xrange(m-winlen+1,m+winlen+1):
-            k = clip(n,0,len(signal)-1)
+        for n in xrange(m-winlen+1, m+winlen+1):
+            k = clip(n, 0, len(signal)-1)
             newsignal[m] += signal[k]*sincfir[m-n+winlen]
     return newsignal*fc
 
-def genApodWindow(pts,beta,apgain,apbeta):
-    w = ss.kaiser(pts,beta) # window
-    apw = 1-apgain*ss.kaiser(pts,apbeta) # apodization window
+def genApodWindow(pts, beta, apgain, apbeta):
+    w = ss.kaiser(pts, beta) # window
+    apw = 1-apgain*ss.kaiser(pts, apbeta) # apodization window
     W = w*apw
     return W
 
-def shift(signal,dPhase):
-    return roll(signal,int(len(signal)*dPhase))
+def shift(signal, dPhase):
+    return roll(signal, int(len(signal)*dPhase))
 
 def power(signal):
     return sqrt(sum(signal**2)/len(signal))
@@ -493,7 +493,7 @@ def main(pargs):
     PITCH_RES = 1024
     MIN_PITCH = -128
     MAX_PITCH = 128
-    pitches,pitchtable = GeneratePitchTable(MIN_PITCH,MAX_PITCH,PITCH_RES)
+    pitches, pitchtable = GeneratePitchTable(MIN_PITCH, MAX_PITCH, PITCH_RES)
 
     """Prefilter for bandlimited waveforms"""
     prefilter = bl_prefilter()
@@ -523,42 +523,42 @@ def main(pargs):
     ONLINE_BLIMP_INTERVALS = 15
     ONLINE_BLIMP_RES = 2048
 
-    blimp_online = GenerateBlimp2(ONLINE_BLIMP_INTERVALS,ONLINE_BLIMP_RES,fc=22e3)
-    blimp_offline = GenerateBlimp2(OFFLINE_BLIMP_INTERVALS,OFFLINE_BLIMP_RES,fc=22e3)
+    blimp_online = GenerateBlimp2(ONLINE_BLIMP_INTERVALS, ONLINE_BLIMP_RES, fc=22e3)
+    blimp_offline = GenerateBlimp2(OFFLINE_BLIMP_INTERVALS, OFFLINE_BLIMP_RES, fc=22e3)
 
     """Generate C++ files"""
     key_order = {
-            "LookupTable":['size','input_min','input_max', 'isPeriodic'],
-            "ResampledLookupTable":['size','blimp_online','blimp_offline'],
-            "BlimpTable":['size','intervals','res']
+            "LookupTable":['size', 'input_min', 'input_max', 'isPeriodic'],
+            "ResampledLookupTable":['size', 'blimp_online', 'blimp_offline'],
+            "BlimpTable":['size', 'intervals', 'res']
             }
     tables = [
-            ['BLIMP_TABLE_OFFLINE',dict(classname="BlimpTable", data=blimp_offline,
+            ['BLIMP_TABLE_OFFLINE', dict(classname="BlimpTable", data=blimp_offline,
                 size=len(blimp_offline),
                 intervals=OFFLINE_BLIMP_INTERVALS,
                 res=OFFLINE_BLIMP_RES)],
-            ['BLIMP_TABLE_ONLINE',dict(classname="BlimpTable", data=blimp_online,
+            ['BLIMP_TABLE_ONLINE', dict(classname="BlimpTable", data=blimp_online,
                 size=len(blimp_online),
                 intervals=ONLINE_BLIMP_INTERVALS,
                 res=ONLINE_BLIMP_RES)],
-            ['PITCH_TABLE',dict(classname="LookupTable", data=pitchtable,
+            ['PITCH_TABLE', dict(classname="LookupTable", data=pitchtable,
                 size=len(pitchtable),
                 input_min = MIN_PITCH,
                 input_max = MAX_PITCH,
                 isPeriodic=False)],
-            ['BL_SAW_TABLE',dict(classname="ResampledLookupTable", data=blsaw,
+            ['BL_SAW_TABLE', dict(classname="ResampledLookupTable", data=blsaw,
                 size=len(blsaw),
                 blimp_online="lut_blimp_table_online()",
                 blimp_offline="lut_blimp_table_offline()")],
-            ['BL_SQUARE_TABLE',dict(classname="ResampledLookupTable", data=blsquare,
+            ['BL_SQUARE_TABLE', dict(classname="ResampledLookupTable", data=blsquare,
                 size=len(blsquare),
                 blimp_online="lut_blimp_table_online()",
                 blimp_offline="lut_blimp_table_offline()")],
-            ['BL_TRI_TABLE',dict(classname="ResampledLookupTable", data=bltri,
+            ['BL_TRI_TABLE', dict(classname="ResampledLookupTable", data=bltri,
                 size=len(bltri),
                 blimp_online="lut_blimp_table_online()",
                 blimp_offline="lut_blimp_table_offline()")],
-            ['SIN_TABLE',dict(classname="LookupTable",data=sintable,
+            ['SIN_TABLE', dict(classname="LookupTable", data=sintable,
                 size=len(sintable),
                 input_min = 0,
                 input_max = 1,
@@ -569,7 +569,7 @@ def main(pargs):
 
     # Generate macro defines
     macrodefine_code = ""
-    for macroname,macroval in macrodefines:
+    for macroname, macroval in macrodefines:
         line = "#define {} {}".format(macroname, macroval)
         macrodefine_code += line + "\n"
 
@@ -578,8 +578,8 @@ def main(pargs):
     tabledata_decl = ""
     tableobjfuncs_decl = ""
     tableobjfuncs_def = ""
-    for name,struct in tables:
-        tabledata_def += MakeTableStr(struct['data'],name)
+    for name, struct in tables:
+        tabledata_def += MakeTableStr(struct['data'], name)
         tabledata_decl += "extern double {}[];\n".format(name)
 
         currargs = []
@@ -596,8 +596,8 @@ def main(pargs):
                 val = "true" if val else "false"
             currargs.append("{}".format(val))
         tableargs = "{}, ".format(name)+", ".join(currargs)
-        tableobjfunc_currdecl = """{0:}& VOSIMLIB_API lut_{1:}();\n""".format(classname,name.lower())
-        tableobjfunc_currdef = """{0:}& lut_{1:}() {{ static {0:} table({2:}); return table; }}\n""".format(classname,name.lower(),tableargs)
+        tableobjfunc_currdecl = """{0:}& VOSIMLIB_API lut_{1:}();\n""".format(classname, name.lower())
+        tableobjfunc_currdef = """{0:}& lut_{1:}() {{ static {0:} table({2:}); return table; }}\n""".format(classname, name.lower(), tableargs)
         tableobjfuncs_decl += tableobjfunc_currdecl
         tableobjfuncs_def += tableobjfunc_currdef
 
@@ -605,14 +605,14 @@ def main(pargs):
     if os.path.isfile(LUT_TABLEDATA_FILE):
         if v:
             print "Backing up old {}...".format(LUT_TABLEDATA_FILE)
-        old_table_data = open(LUT_TABLEDATA_FILE,'r').read()
-        with open(LUT_TABLEDATA_FILE+'.bk','w') as fp:
+        old_table_data = open(LUT_TABLEDATA_FILE, 'r').read()
+        with open(LUT_TABLEDATA_FILE+'.bk', 'w') as fp:
             fp.write(old_table_data)
 
     # Write new table data file
     if v:
         print "Writing new {}...".format(LUT_TABLEDATA_FILE)
-    with open(LUT_TABLEDATA_FILE,'w') as fp:
+    with open(LUT_TABLEDATA_FILE, 'w') as fp:
         fp.write(tabledata_def)
 
     # Back up old table header file
@@ -620,16 +620,16 @@ def main(pargs):
     if os.path.isfile(LUT_TABLEHDR_FILE):
         if v:
             print "Backing up old {}...".format(LUT_TABLEHDR_FILE)
-        old_code = open('{}'.format(LUT_TABLEHDR_FILE),'r').read()
-        with open('{}.bk'.format(LUT_TABLEHDR_FILE),'w') as fp:
+        old_code = open('{}'.format(LUT_TABLEHDR_FILE), 'r').read()
+        with open('{}.bk'.format(LUT_TABLEHDR_FILE), 'w') as fp:
             fp.write(old_code)
 
     if v:
         print "Writing new {}...".format(LUT_TABLEHDR_FILE)
 
-    new_code = RewriteAutomatedSection(old_code,'lut_decl', tableobjfuncs_decl)
-    new_code = RewriteAutomatedSection(new_code,'macro_defs', macrodefine_code)
-    new_code = RewriteAutomatedSection(new_code,'table_decl', tabledata_decl)
+    new_code = RewriteAutomatedSection(old_code, 'lut_decl', tableobjfuncs_decl)
+    new_code = RewriteAutomatedSection(new_code, 'macro_defs', macrodefine_code)
+    new_code = RewriteAutomatedSection(new_code, 'table_decl', tabledata_decl)
     with open(LUT_TABLEHDR_FILE, 'w') as fp:
         fp.write(new_code)
 
@@ -638,8 +638,8 @@ def main(pargs):
     if os.path.isfile(LUT_TABLESRC_FILE):
         if v:
             print "Backing up old {}...".format(LUT_TABLESRC_FILE)
-        old_code = open('{}'.format(LUT_TABLESRC_FILE),'r').read()
-        with open('{}.bk'.format(LUT_TABLESRC_FILE),'w') as fp:
+        old_code = open('{}'.format(LUT_TABLESRC_FILE), 'r').read()
+        with open('{}.bk'.format(LUT_TABLESRC_FILE), 'w') as fp:
             fp.write(old_code)
 
     if v:
@@ -653,7 +653,7 @@ if __name__=="__main__":
     import argparse as ap
     psr = ap.ArgumentParser()
     psr.epilog = "Output files: {}".format(", ".join([LUT_TABLESRC_FILE, LUT_TABLEHDR_FILE, LUT_TABLEDATA_FILE]))
-    psr.add_argument("-v","--verbose",action="store_true")
+    psr.add_argument("-v", "--verbose", action="store_true")
     pargs = psr.parse_args()
 
     main(pargs)

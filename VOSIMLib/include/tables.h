@@ -39,7 +39,7 @@ namespace syn
     class VOSIMLIB_API LookupTable
     {
     public:
-        LookupTable(const double* table, int size, double input_min = 0, double input_max = 1, bool isPeriodic = true);
+        LookupTable(const double* a_table, int a_size, double a_inputMin = 0, double a_inputMax = 1, bool a_periodic = true);
 
         LookupTable(const LookupTable& a_o) : 
             LookupTable(a_o.m_table, a_o.m_size, a_o.m_input_min, a_o.m_input_max, a_o.m_isperiodic) 
@@ -73,20 +73,18 @@ namespace syn
     class VOSIMLIB_API BlimpTable : public LookupTable
     {
     public:
-        BlimpTable(const double* a_table, int a_size, int a_num_intervals, int a_resolution)
+        BlimpTable(const double* a_table, int a_size, int a_taps, int a_res)
             : LookupTable(a_table, a_size, 0.0, 1.0, false),
-              m_num_intervals(a_num_intervals),
-              m_resolution(a_resolution) {}
+              m_taps(a_taps),
+              m_res(a_res) {}
 
-        virtual ~BlimpTable() {
-            
-        }
+        virtual ~BlimpTable() { }
 
         BlimpTable(const BlimpTable& a_other)
-            : BlimpTable(a_other.m_table, a_other.m_size, a_other.m_num_intervals, a_other.m_resolution) {}
+            : BlimpTable(a_other.m_table, a_other.m_size, a_other.m_taps, a_other.m_res) {}
 
-        const int m_num_intervals;
-        const int m_resolution;
+        const int m_taps;
+        const int m_res;
     };
 
     /**
@@ -127,9 +125,9 @@ namespace syn
      *
      * \param size the size of the input table
      * \param phase the desired phase to sample at, in the range [0,1).
-     * \param period the desired period to resample at (in fractional number of samples)
+     * \param newSize the desired period to resample at (in fractional number of samples)
      */
-    double VOSIMLIB_API getresampled_single(const double* table, int size, double phase, double period, const BlimpTable& blimp_table);
+    double VOSIMLIB_API getresampled_single(const double* table, int size, double phase, double newSize, const BlimpTable& blimp_table);
     /**
      * Resample an entire table to have the specified period and store the
      * result in resampled_table (which should already be allocated), using

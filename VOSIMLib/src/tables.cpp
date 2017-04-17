@@ -23,23 +23,23 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn
 {
-    LookupTable::LookupTable(const double* a_tableptr, int a_size, double a_input_min, double a_input_max, bool a_isPeriodic) :
+    LookupTable::LookupTable(const double* a_table, int a_size, double a_inputMin, double a_inputMax, bool a_periodic) :
         m_size(a_size),
-        m_input_min(a_input_min),
-        m_input_max(a_input_max),
-        m_isperiodic(a_isPeriodic),
-        m_table(a_tableptr),
+        m_input_min(a_inputMin),
+        m_input_max(a_inputMax),
+        m_isperiodic(a_periodic),
+        m_table(a_table),
         m_diff_table(a_size)
     {
-        m_norm_bias = a_input_min;
-        m_norm_scale = 1. / (a_input_max - a_input_min);
+        m_norm_bias = a_inputMin;
+        m_norm_scale = 1. / (a_inputMax - a_inputMin);
         /* Construct difference table for linear interpolation */
         m_diff_table.resize(a_size);
         for (int i = 0; i < a_size - 1; i++) {
-            m_diff_table[i] = a_tableptr[i + 1] - a_tableptr[i];
+            m_diff_table[i] = a_table[i + 1] - a_table[i];
         }
-        /* If table is periodic, the last difference wraps around */
-        m_diff_table[m_size - 1] = a_isPeriodic ? m_table[0] - m_table[m_size - 1] : 0.0;
+        /* The last difference wraps around for use during periodic linear interpolation. */
+        m_diff_table[m_size - 1] = m_table[0] - m_table[m_size - 1];
     }
 
     double LookupTable::getlinear(double phase) const {
@@ -59,17 +59,16 @@ namespace syn
     }
 
     double LookupTable::getraw(int index) const {
-        index = CLAMP(index, 0, m_size - 1);
         return m_table[index];
     }
 
     ResampledLookupTable::ResampledLookupTable(const double* a_table, int a_size, const BlimpTable& a_blimp_table_online, const BlimpTable& a_blimp_table_offline) :
         LookupTable(a_table, a_size, 0, 1, true),
-        m_blimp_table_online(a_blimp_table_online),
-        m_blimp_table_offline(a_blimp_table_offline),
+        m_num_resampled_tables(0),
         m_resampled_sizes(0),
         m_resampled_tables(0),
-        m_num_resampled_tables(0)
+        m_blimp_table_online(a_blimp_table_online),
+        m_blimp_table_offline(a_blimp_table_offline)
     {
         resample_tables();
     }
@@ -134,15 +133,15 @@ namespace syn
     {
     }
 
-    double getresampled_single(const double* table, int size, double phase, double period, const BlimpTable& blimp_table) {
-        double ratio = period * (1.0 / size);
-        phase = WRAP(phase, 1.0)*size;
+    double getresampled_single(const double* table, int size, double phase, double newSize, const BlimpTable& blimp_table) {
+        double ratio = newSize * (1.0 / size);
+        phase = WRAP(phase, 1.0)*(size-1);
 
         double blimp_step;
         if (ratio < 1.0)
-            blimp_step = static_cast<double>(blimp_table.m_resolution) * ratio;
+            blimp_step = static_cast<double>(blimp_table.m_res) * ratio;
         else
-            blimp_step = static_cast<double>(blimp_table.m_resolution);
+            blimp_step = static_cast<double>(blimp_table.m_res);
 
         int index = static_cast<int>(phase);
         double offset = (phase - index) * blimp_step;
