@@ -135,7 +135,7 @@ namespace syn
 
     double getresampled_single(const double* table, int size, double phase, double newSize, const BlimpTable& blimp_table) {
         double ratio = newSize * (1.0 / size);
-        phase = WRAP(phase, 1.0)*(size-1);
+        phase = WRAP(phase, 1.0)*size;
 
         double blimp_step;
         if (ratio < 1.0)
@@ -152,7 +152,7 @@ namespace syn
         double bkwd_filt_phase = offset;
         int bkwd_table_index = index;
         while (bkwd_filt_phase < blimp_table.size()) {
-#ifdef DO_LERP_FOR_SINC
+#if DO_LERP_FOR_SINC
             double bkwd_filt_sample = blimp_table.getlinear(bkwd_filt_phase / blimp_table.size());
 #else
             double bkwd_filt_sample = blimp_table.getraw(static_cast<int>(bkwd_filt_phase));
