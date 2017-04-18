@@ -42,11 +42,11 @@ Copyright 2016, Austen Satterlee
     #endif
 #endif
 
+#include "UI.h"
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/lockfree/policies.hpp>
-
-#include "UI.h"
 #include <json/json.hpp>
+#include <gallant/Signal.h>
 
 #define MAX_GUI_MSG_QUEUE_SIZE 64
 
@@ -77,70 +77,62 @@ namespace synui
         MainWindow(int a_width, int a_height, GUIConstructor a_guiConstructor);
         virtual ~MainWindow();
 
-        void initialize();
-
         GLFWwindow* getWindow() const { return m_window; }
-
         bool isOpen() const { return m_isOpen; }
-
         Vector2i getSize() const { return m_size; }
-
         double getFps() const { return m_fps; }
-
         MainGUI* getGUI() const { return m_gui; }
         
+        /// Open the system window
         bool OpenWindow(HWND a_system_window);
-
+        /// Close the system window (the GUI is preserved)
         void CloseWindow();
 
+        /// Resize the system window and the GUI
         void resize(int w, int h);
-
+        /// Queue a task (to be called only from the real-time thread)
         void queueExternalMessage(GUIMessage* a_msg);
+        /// Queue a task (to be called only from the GUI thread)
         void queueInternalMessage(GUIMessage* a_msg);
 
-        /// Assign a function to be called when the user requests a resize
-        void setResizeFunc(std::function<void(int w,int h)> a_func);
-
+        /// Serialize GUI
         operator nlohmann::json();
+        /// Deserialize GUI
         void load(const nlohmann::json& j);
+        /// Reset the GUI to its initial state
+        void reset();
 
-        void reset();;
+        Gallant::Signal2<int, int> onResize;
 
 #ifdef _WIN32
+        HINSTANCE m_HInstance;
+        HWND m_timerWindow;
         void setHInstance(HINSTANCE a_newHInstance) { m_HInstance = a_newHInstance; }
         HINSTANCE getHInstance() const { return m_HInstance; }
         static LRESULT CALLBACK drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam);
-#endif
-    private:
         void _OpenWindowImplem(HWND a_system_window);
         void _CloseWindowImplem();
-        
+#endif
+    private:
+        void _createGLFWWindow();        
         void _runLoop();
-
         void _flushMessageQueues();
         void _processMessage(GUIMessage* a_msg);
 
     private:
-#ifdef _WIN32
-        HINSTANCE m_HInstance;
-        HWND m_timerWindow;
-#endif
         GLFWwindow* m_window;
+        Vector2i m_size;
         bool m_isOpen;
 
         GUIConstructor m_guiConstructor;
         MainGUI* m_gui;
         nlohmann::json m_guiState;
 
-        Vector2i m_size;
-
         unsigned m_frameCount;
         double m_fps;
 
         spsc_queue<GUIMessage*> m_guiInternalMsgQueue;
         spsc_queue<GUIMessage*> m_guiExternalMsgQueue;
-
-        std::function<void(int, int)> m_resizeFunc;
     };
 }
 #endif

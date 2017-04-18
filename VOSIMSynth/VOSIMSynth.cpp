@@ -54,7 +54,7 @@ void VOSIMSynth::makeGraphics() {
     syn::UnitFactory* uf = m_unitFactory;
     synui::MainWindow* mainWindow = new synui::MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm, uf](synui::MainWindow* a_win) { return new synui::MainGUI(a_win, vm, uf); });
     mainWindow->setHInstance(gHInstance);
-    mainWindow->setResizeFunc([this](int w, int h) { ResizeGraphics(w, h); });
+    mainWindow->onResize.Connect(this, &VOSIMSynth::ResizeGraphics);
     AttachAppWindow(mainWindow);
     registerUnitWidgets(*mainWindow->getGUI()->circuitWidget());
 }
@@ -136,7 +136,6 @@ int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
     Reset();
     // Load gui
     GetAppWindow()->load(gui);
-    registerUnitWidgets(*GetAppWindow()->getGUI()->circuitWidget());
 
     startPos += ss.gcount();
     return startPos;

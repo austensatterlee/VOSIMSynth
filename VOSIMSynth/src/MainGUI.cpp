@@ -9,18 +9,14 @@
 #include "Logger.h"
 #include "Log.h"
 
-namespace synui
-{
-    class EnhancedWindow : public nanogui::Window
-    {
+namespace synui {
+    class EnhancedWindow : public nanogui::Window {
     public:
         typedef std::function<void(EnhancedWindow*, NVGcontext*)> DrawFunc;
 
         EnhancedWindow(Widget* a_parent, const std::string& a_title)
-            : Window(a_parent, a_title)
-        {
-            if (!a_title.empty())
-            {
+            : Window(a_parent, a_title) {
+            if (!a_title.empty()) {
                 // Close button
                 auto settings_close_button = new nanogui::Button(buttonPanel(), "", ENTYPO_CROSS);
                 settings_close_button->setFixedWidth(18);
@@ -28,37 +24,27 @@ namespace synui
             }
         }
 
-        bool mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers) override
-        {
-            if (!title().empty())
-            {
+        bool mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers) override {
+            if (!title().empty()) {
                 return Window::mouseButtonEvent(p, button, down, modifiers);
-            }
-            else
-            {
+            } else {
                 Widget::mouseButtonEvent(p, button, down, modifiers);
                 return true;
             }
         }
 
-        void draw(NVGcontext* ctx) override
-        {
-            if (m_drawCallback)
-            {
+        void draw(NVGcontext* ctx) override {
+            if (m_drawCallback) {
                 m_drawCallback(this, ctx);
-            }
-            else
-            {
+            } else {
                 Window::draw(ctx);
             }
         }
 
-        nanogui::Button* createOpenButton(Widget* a_parent, const string& text = "", int icon = 0, std::function<void()> a_callback = nullptr)
-        {
+        nanogui::Button* createOpenButton(Widget* a_parent, const string& text = "", int icon = 0, std::function<void()> a_callback = nullptr) {
             auto settings_button = new nanogui::Button(a_parent, text, icon);
             settings_button->setFixedSize({20,20});
-            settings_button->setCallback([this, a_callback]()
-                {
+            settings_button->setCallback([this, a_callback]() {
                     setVisible(true);
                     screen()->moveWindowToFront(this);
                     if (a_callback)
@@ -80,39 +66,33 @@ namespace synui
     };
 }
 
-synui::MainGUI::operator json() const
-{
+synui::MainGUI::operator json() const {
     TRACE
     json j;
     j["circuit"] = m_circuitWidget->operator json();
     json& settings = j["settings"] = json();
     settings = m_settingsFormHelper->operator json();
-    
+
     return j;
 }
 
-synui::MainGUI* synui::MainGUI::load(const json& j)
-{
+synui::MainGUI* synui::MainGUI::load(const json& j) {
     TRACE
-    reset();
     const json& settings = j.value("settings", json());
-    if (!settings.empty())
-    {
+    if (!settings.empty()) {
         m_settingsFormHelper->load(settings);
     }
     m_circuitWidget->load(j["circuit"]);
     return this;
 }
 
-void synui::MainGUI::reset()
-{
+void synui::MainGUI::reset() {
     TRACE
     m_unitEditorHost->reset();
     m_circuitWidget->reset();
 }
 
-void synui::MainGUI::resize(int a_w, int a_h)
-{
+void synui::MainGUI::resize(int a_w, int a_h) {
     TRACE
     a_w = syn::MIN(a_w, 800);
     a_h = syn::MIN(a_w, 600);
@@ -128,8 +108,7 @@ void synui::MainGUI::resize(int a_w, int a_h)
     m_screen->performLayout();
 }
 
-void synui::MainGUI::initialize_(GLFWwindow* a_window)
-{
+void synui::MainGUI::setGLFWWindow(GLFWwindow* a_window) {
     TRACE
 
     /* Setup event handlers. */
@@ -159,8 +138,7 @@ void synui::MainGUI::initialize_(GLFWwindow* a_window)
         [](GLFWwindow* w, double x, double y) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->scrollCallbackEvent(x, y); }
     );
 
-    auto resizeCallback = [](GLFWwindow* w, int width, int height)
-            {
+    auto resizeCallback = [](GLFWwindow* w, int width, int height) {
                 auto mainGui = static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w));
                 mainGui->resize(width, height);
             };
@@ -172,8 +150,7 @@ void synui::MainGUI::initialize_(GLFWwindow* a_window)
     TRACEMSG("Finished initializing nanogui screen.");
 }
 
-void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget)
-{
+void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget) {
     TRACE
     nanogui::BoxLayout* layout = new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 1, 1);
     a_widget->setLayout(layout);
@@ -181,21 +158,18 @@ void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget)
     auto unitSelectorTitle = new nanogui::Widget(a_widget);
     unitSelectorTitle->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 2, 10));
 
-    for (auto gname : m_uf->getGroupNames())
-    {
+    for (auto gname : m_uf->getGroupNames()) {
         nanogui::PopupButton* button = new nanogui::PopupButton(a_widget, gname);
         button->setFontSize(15);
         nanogui::Popup* popup = button->popup();
         popup->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 0));
         button->setCallback([this, popup]() { m_screen->moveWindowToFront(popup); });
-        for (auto pname : m_uf->getPrototypeNames(gname))
-        {
+        for (auto pname : m_uf->getPrototypeNames(gname)) {
             nanogui::Button* subbtn = new nanogui::Button(popup, pname);
             syn::UnitTypeId classId = m_uf->getClassId(gname, pname);
             subbtn->setFontSize(14);
             // Close popup
-            subbtn->setCallback([this, button, classId]()
-                {
+            subbtn->setCallback([this, button, classId]() {
                     this->m_circuitWidget->loadPrototype(classId);
                     button->setPushed(false);
                     m_screen->updateFocus(nullptr);
@@ -204,8 +178,7 @@ void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget)
     }
 }
 
-void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, SerializableFormHelper* a_fh)
-{
+void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, SerializableFormHelper* a_fh) {
     TRACE
     auto layout = new nanogui::AdvancedGridLayout({10, 0, 10, 0}, {});
     layout->setMargin(10);
@@ -216,176 +189,158 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
 
     helper->addGroup("Plugin Settings");
 
-    helper->addSerializableVariable<int>("grid_spacing", "Grid spacing", [this](const int& s)
-        {
+    helper->addSerializableVariable<int>("grid_spacing", "Grid spacing", [this](const int& s) {
             m_circuitWidget->resizeGrid(s);
             m_screen->performLayout();
-        }, [this]()
-        {
+        }, [this]() {
             int gs = m_circuitWidget->getGridSpacing();
             return gs;
         });
 
     helper->addSerializableVariable<int>("window_width", "Window width", [this](const int& w) { m_window->resize(w, m_screen->height()); }, [this]() { return m_screen->width(); });
     helper->addSerializableVariable<int>("window_height", "Window height", [this](const int& h) { m_window->resize(m_screen->width(), h); }, [this]() { return m_screen->height(); });
-    helper->addVariable<bool>("Curved Wires", 
-        [this](const bool& s)
-        {
+    helper->addVariable<bool>("Curved Wires",
+        [this](const bool& s) {
             m_circuitWidget->setWireDrawStyle(static_cast<CircuitWidget::WireDrawStyle>(s));
-        }, [this]()
-        {
+        }, [this]() {
             return static_cast<bool>(m_circuitWidget->wireDrawStyle());
         });
 
     helper->addVariable<int>("Internal buffer size",
-        [this, helper](const int& size)
-        {
+        [this, helper](const int& size) {
             syn::RTMessage* msg = new syn::RTMessage;
             PutArgs(&msg->data, m_vm, size, helper);
-            msg->action = [](syn::Circuit*, bool a_isLast, ByteChunk* a_data)
-            {
-                if(a_isLast){
-                    syn::VoiceManager* vm;
-                    int internalBufferSize;
-                    nanogui::FormHelper* helper;
-                    GetArgs(a_data, 0, vm, internalBufferSize, helper);
-                    vm->setInternalBufferSize(internalBufferSize);
-                    helper->refresh();
-                }
-            };
+            msg->action = [](syn::Circuit*, bool a_isLast, ByteChunk* a_data) {
+                        if (a_isLast) {
+                            syn::VoiceManager* vm;
+                            int internalBufferSize;
+                            nanogui::FormHelper* helper;
+                            GetArgs(a_data, 0, vm, internalBufferSize, helper);
+                            vm->setInternalBufferSize(internalBufferSize);
+                            helper->refresh();
+                        }
+                    };
             m_vm->queueAction(msg);
-        }, [this]()
-        {
+        }, [this]() {
             return m_vm->getInternalBufferSize();
         });
 
-    helper->addSerializableVariable<int>("max_voices", "Max voices", 
-        [this, helper](const int& maxVoices)
-        {
-             syn::RTMessage* msg = new syn::RTMessage();
-             msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
-             {
-                 if(a_isLast)
-                 {
-                     syn::VoiceManager* vm;
-                     int maxVoices;
-                     SerializableFormHelper* helper;
-                     GetArgs(a_data, 0, vm, helper, maxVoices);
-                     vm->setMaxVoices(maxVoices);
-                     helper->refresh();
-                 }
-             };    
-            
+    helper->addSerializableVariable<int>("max_voices", "Max voices",
+        [this, helper](const int& maxVoices) {
+            syn::RTMessage* msg = new syn::RTMessage();
+            msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data) {
+                        if (a_isLast) {
+                            syn::VoiceManager* vm;
+                            int maxVoices;
+                            SerializableFormHelper* helper;
+                            GetArgs(a_data, 0, vm, helper, maxVoices);
+                            vm->setMaxVoices(maxVoices);
+                            helper->refresh();
+                        }
+                    };
+
             PutArgs(&msg->data, m_vm, helper, maxVoices);
-            m_vm->queueAction(msg);            
-        }, [this]()
-        {
+            m_vm->queueAction(msg);
+        }, [this]() {
             return m_vm->getMaxVoices();
         });
 
-    helper->addSerializableVariable<bool>("legato","Legato",
-        [this, helper](const bool& legato)
-        {
+    helper->addSerializableVariable<bool>("legato", "Legato",
+        [this, helper](const bool& legato) {
             syn::RTMessage* msg = new syn::RTMessage();
-            msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
-            {
-                if (a_isLast)
-                {
-                    syn::VoiceManager* vm;
-                    bool legato;
-                    SerializableFormHelper* helper;
-                    GetArgs(a_data, 0, vm, helper, legato);
-                    vm->setLegato(legato);
-                    helper->refresh();
-                }
-            };
+            msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data) {
+                        if (a_isLast) {
+                            syn::VoiceManager* vm;
+                            bool legato;
+                            SerializableFormHelper* helper;
+                            GetArgs(a_data, 0, vm, helper, legato);
+                            vm->setLegato(legato);
+                            helper->refresh();
+                        }
+                    };
 
             PutArgs(&msg->data, m_vm, helper, legato);
             m_vm->queueAction(msg);
-        }, [this]()
-        {
+        }, [this]() {
             return m_vm->getLegato();
         });
 
     helper->addVariable<syn::VoiceManager::VoiceStealingPolicy>("Voice Stealing",
-        [this, helper](const syn::VoiceManager::VoiceStealingPolicy& policy)
-        {
+        [this, helper](const syn::VoiceManager::VoiceStealingPolicy& policy) {
             syn::RTMessage* msg = new syn::RTMessage();
-            msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
-            {
-                if (a_isLast)
-                {
-                    syn::VoiceManager* vm;
-                    syn::VoiceManager::VoiceStealingPolicy policy;
-                    SerializableFormHelper* helper;
-                    GetArgs(a_data, 0, vm, helper, policy);
-                    vm->setVoiceStealingPolicy(policy);
-                    helper->refresh();
-                }
-            };
+            msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data) {
+                        if (a_isLast) {
+                            syn::VoiceManager* vm;
+                            syn::VoiceManager::VoiceStealingPolicy policy;
+                            SerializableFormHelper* helper;
+                            GetArgs(a_data, 0, vm, helper, policy);
+                            vm->setVoiceStealingPolicy(policy);
+                            helper->refresh();
+                        }
+                    };
 
             PutArgs(&msg->data, m_vm, helper, policy);
             m_vm->queueAction(msg);
-        }, [this]()
-        {
+        }, [this]() {
             return m_vm->getVoiceStealingPolicy();
         })->setItems({"Oldest", "Newest", "Highest", "Lowest"});
 
-    nanogui::Theme* theme = m_screen->theme();
+    
+#define ADD_FH_VAR(label, type, lvalue) helper->addVariable<type>(label, [this](const type& val){ lvalue = val; }, [this](){ return lvalue; });
     /* Spacing-related parameters */
     helper->addGroup("Spacing");
-    helper->addVariable("Standard Font Size", theme->mStandardFontSize);
-    helper->addVariable("Button Font Size", theme->mButtonFontSize);
-    helper->addVariable("Text Box Font Size", theme->mTextBoxFontSize);
-    helper->addVariable("Window Corner Radius", theme->mWindowCornerRadius);
-    helper->addVariable("Window Drop Shadow Size", theme->mWindowDropShadowSize);
-    helper->addVariable("Button Corner Radius", theme->mButtonCornerRadius);
+    ADD_FH_VAR("Standard Font Size", int, m_screen->theme()->mStandardFontSize);
+    ADD_FH_VAR("Button Font Size", int, m_screen->theme()->mButtonFontSize);
+    ADD_FH_VAR("Text Box Font Size", int, m_screen->theme()->mTextBoxFontSize)
+    ADD_FH_VAR("Window Corner Radius", int, m_screen->theme()->mWindowCornerRadius)
+    ADD_FH_VAR("Window Drop Shadow Size", int, m_screen->theme()->mWindowDropShadowSize)
+    ADD_FH_VAR("Button Corner Radius", int, m_screen->theme()->mButtonCornerRadius)
 
     /* Generic colors */
     helper->addGroup("Global Colors");
-    helper->addVariable("Border Dark", theme->mBorderDark);
-    helper->addVariable("Border Light", theme->mBorderLight);
-    helper->addVariable("Border Medium", theme->mBorderMedium);
-    helper->addVariable("Drop Shadow", theme->mDropShadow);
-    helper->addVariable("Icon Color", theme->mIconColor);
-    helper->addVariable("Transparent", theme->mTransparent);
-    helper->addVariable("Text Color", theme->mTextColor);
-    helper->addVariable("Text Color Shadow", theme->mTextColorShadow);
-    helper->addVariable("Disabled Text Color", theme->mDisabledTextColor);
+    ADD_FH_VAR("Border Dark", nanogui::Color, m_screen->theme()->mBorderDark)
+    ADD_FH_VAR("Border Light", nanogui::Color, m_screen->theme()->mBorderLight)
+    ADD_FH_VAR("Border Medium", nanogui::Color, m_screen->theme()->mBorderMedium)
+    ADD_FH_VAR("Drop Shadow", nanogui::Color, m_screen->theme()->mDropShadow)
+    ADD_FH_VAR("Icon Color", nanogui::Color, m_screen->theme()->mIconColor)
+    ADD_FH_VAR("Transparent", nanogui::Color, m_screen->theme()->mTransparent)
+    ADD_FH_VAR("Text Color", nanogui::Color, m_screen->theme()->mTextColor)
+    ADD_FH_VAR("Text Color",  nanogui::Color, m_screen->theme()->mTextColorShadow)
+    ADD_FH_VAR("Disabled Text Color", nanogui::Color, m_screen->theme()->mDisabledTextColor)
 
     /* Button colors */
     helper->addGroup("Button Colors");
-    helper->addVariable("Button Top (Focused)", theme->mButtonGradientTopFocused);
-    helper->addVariable("Button Top (Unfocused)", theme->mButtonGradientTopUnfocused);
-    helper->addVariable("Button Top (Pushed)", theme->mButtonGradientTopPushed);
-    helper->addVariable("Button Bot (Focused)", theme->mButtonGradientBotFocused);
-    helper->addVariable("Button Bot (Unfocused)", theme->mButtonGradientBotUnfocused);
-    helper->addVariable("Button Bot (Pushed)", theme->mButtonGradientBotPushed);
+    ADD_FH_VAR("Button Top (Unfocused)", nanogui::Color, m_screen->theme()->mButtonGradientTopUnfocused)
+    ADD_FH_VAR("Button Bot (Unfocused)", nanogui::Color, m_screen->theme()->mButtonGradientBotUnfocused)
+    ADD_FH_VAR("Button Top (Focused)", nanogui::Color, m_screen->theme()->mButtonGradientTopFocused)
+    ADD_FH_VAR("Button Bot (Focused)", nanogui::Color, m_screen->theme()->mButtonGradientBotFocused)
+    ADD_FH_VAR("Button Top (Pushed)", nanogui::Color, m_screen->theme()->mButtonGradientTopPushed)
+    ADD_FH_VAR("Button Bot (Pushed)", nanogui::Color, m_screen->theme()->mButtonGradientBotPushed)
 
     /* Window colors */
     helper->addGroup("Window Colors");
-    helper->addVariable("Window Fill (Unfocused)", theme->mWindowFillUnfocused);
-    helper->addVariable("Window Fill (Focused)", theme->mWindowFillFocused);
-    helper->addVariable("Window Title (Unfocused)", theme->mWindowTitleUnfocused);
-    helper->addVariable("Window Title (Focused)", theme->mWindowTitleFocused);
+    ADD_FH_VAR("Window Fill (Unfocused)", nanogui::Color, m_screen->theme()->mWindowFillUnfocused)
+    ADD_FH_VAR("Window Title (Unfocused)", nanogui::Color, m_screen->theme()->mWindowTitleUnfocused)
+    ADD_FH_VAR("Window Fill (Focused)", nanogui::Color, m_screen->theme()->mWindowFillFocused)
+    ADD_FH_VAR("Window Title (Focused)", nanogui::Color, m_screen->theme()->mWindowTitleFocused)
 
-    helper->addVariable("Window Header Top", theme->mWindowHeaderGradientTop);
-    helper->addVariable("Window Header Bot", theme->mWindowHeaderGradientBot);
-    helper->addVariable("Window Header Sep Top", theme->mWindowHeaderSepTop);
-    helper->addVariable("Window Header Sep Bot", theme->mWindowHeaderSepBot);
+    ADD_FH_VAR("Window Header Top", nanogui::Color, m_screen->theme()->mWindowHeaderGradientTop)
+    ADD_FH_VAR("Window Header Bot", nanogui::Color, m_screen->theme()->mWindowHeaderGradientBot)
+    ADD_FH_VAR("Window Header Sep Top", nanogui::Color, m_screen->theme()->mWindowHeaderSepTop)
+    ADD_FH_VAR("Window Header Sep Bot", nanogui::Color, m_screen->theme()->mWindowHeaderSepBot)
 
-    helper->addVariable("Window Popup", theme->mWindowPopup);
-    helper->addVariable("Window Popup Transparent", theme->mWindowPopupTransparent);
+    ADD_FH_VAR("Window Popup", nanogui::Color, m_screen->theme()->mWindowPopup)
+    ADD_FH_VAR("Window Popup Transparent", nanogui::Color, m_screen->theme()->mWindowPopupTransparent)
+
+#undef ADD_FH_VAR
 }
 
-void synui::MainGUI::createLogViewer_(nanogui::Widget* a_widget)
-{
+void synui::MainGUI::createLogViewer_(nanogui::Widget* a_widget) {
     TRACE
     auto layout = new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 10, 5);
     a_widget->setLayout(layout);
 
-    Logger::instance().addListener([a_widget]()
-        {
+    Logger::instance().addListener([a_widget]() {
             const auto& log = Logger::instance().getLogs().back();
             std::ostringstream value;
             value << "[ " << log.first << "] " << log.second;
@@ -394,14 +349,14 @@ void synui::MainGUI::createLogViewer_(nanogui::Widget* a_widget)
         });
 }
 
-synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf) : m_window(a_window),
-                                                                                                        m_screen(nullptr),
-                                                                                                        m_vm(a_vm),
-                                                                                                        m_uf(a_uf)
-{
+synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf)
+    : m_window(a_window),
+      m_screen(nullptr),
+      m_vm(a_vm),
+      m_uf(a_uf) {
     TRACE
     m_screen = new nanogui::Screen();
-    initialize_(m_window->getWindow());
+    setGLFWWindow(m_window->getWindow());
 
     m_screen->theme()->mWindowDropShadowSize = 2;
 
@@ -411,8 +366,7 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
     m_sidePanelL->setLayout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Fill, 5, 0));
     m_sidePanelL->setFixedHeight(m_screen->height());
     m_sidePanelL->setFixedWidth(200);
-    m_sidePanelL->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx)
-        {
+    m_sidePanelL->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
             nanogui::Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(nanogui::Color(0.9f, 1.0f));
 
             nvgSave(ctx);
@@ -446,8 +400,7 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
     m_sidePanelR = new synui::EnhancedWindow(m_screen, "");
     m_sidePanelR->setIsBackgroundWindow(true);
     m_sidePanelR->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 0));
-    m_sidePanelR->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx)
-        {
+    m_sidePanelR->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
             nanogui::Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(nanogui::Color(0.9f, 1.0f));
             nanogui::Color shineColor = self->theme()->mBorderLight;
             nanogui::Color shadowColor = self->theme()->mBorderDark;
@@ -495,8 +448,7 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
     /* Create button panel */
     m_buttonPanel = new EnhancedWindow(m_screen, "");
     m_buttonPanel->setIsBackgroundWindow(true);
-    m_buttonPanel->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx)
-        {
+    m_buttonPanel->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
             nanogui::Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(nanogui::Color(0.9f, 1.0f));
 
             nvgSave(ctx);
@@ -526,8 +478,7 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
     /* Add a button for openning the log viewer window. */
     buttonPanelLayout->appendCol(0, 0);
 
-    auto log_callback = [this]()
-            {
+    auto log_callback = [this]() {
                 m_screen->centerWindow(m_logViewer);
             };
     auto logviewer_button = m_logViewer->createOpenButton(m_buttonPanel, "", ENTYPO_TRAFFIC_CONE, log_callback);
@@ -544,8 +495,7 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
 
     /* Add a button for openning the settings editor window. */
     buttonPanelLayout->appendCol(0, 0);
-    auto settings_callback = [this]()
-            {
+    auto settings_callback = [this]() {
                 m_settingsFormHelper->refresh();
                 m_screen->centerWindow(m_settingsEditor);
             };
@@ -555,26 +505,22 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
     m_screen->performLayout();
 }
 
-void synui::MainGUI::show()
-{
+void synui::MainGUI::show() {
     TRACE
     m_screen->setVisible(true);
     m_screen->performLayout();
 }
 
-void synui::MainGUI::hide() 
-{ 
+void synui::MainGUI::hide() {
     TRACE
     m_screen->setVisible(false);
 }
 
-void synui::MainGUI::draw()
-{
+void synui::MainGUI::draw() {
     m_screen->drawAll();
 }
 
-synui::MainGUI::~MainGUI()
-{
+synui::MainGUI::~MainGUI() {
     TRACE
     Logger::instance().reset();
 }

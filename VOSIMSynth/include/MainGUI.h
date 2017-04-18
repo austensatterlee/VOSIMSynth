@@ -29,6 +29,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include <vosimlib/common_serial.h>
 #include <nanogui/formhelper.h>
+#include <map>
+#include <memory>
 
 namespace nanogui
 {
@@ -113,12 +115,14 @@ namespace synui
     public:
         MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf);
         virtual ~MainGUI();
+        
+        void setGLFWWindow(GLFWwindow* a_window);
+
+        nanogui::Screen* getScreen() { return m_screen.get(); }
 
         void show();
         void hide();
         void draw();
-
-        nanogui::Screen* getScreen() { return m_screen.get(); }
 
         operator json() const;
         MainGUI* load(const json& j);
@@ -131,7 +135,6 @@ namespace synui
         void createUnitSelector_(nanogui::Widget* a_widget);
         void createSettingsEditor_(nanogui::Widget* a_widget, SerializableFormHelper* a_fh);
         void createLogViewer_(nanogui::Widget * a_widget);
-        void initialize_(GLFWwindow* a_window);
 
     private:
         MainWindow* m_window;

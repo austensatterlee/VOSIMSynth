@@ -14,6 +14,11 @@ set(VOSIMSYNTH_STANDALONE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/standalone)
 
 
 ##
+# Gallant signals
+##
+include_directories(${LIBS_DIR}/gallant/include)
+
+##
 # Boost
 ##
 set(Boost_NO_BOOST_CMAKE True)

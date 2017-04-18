@@ -103,7 +103,7 @@ synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiCon
     {
         TRACEMSG("Successfully initialized GLFW.");        
     }
-    initialize();
+    _createGLFWWindow();
 }
 
 synui::MainWindow::~MainWindow()
@@ -118,14 +118,11 @@ synui::MainWindow::~MainWindow()
         glfwTerminate();
 }
 
-void synui::MainWindow::initialize()
+void synui::MainWindow::_createGLFWWindow()
 {
     TRACE
-    if(m_gui)
-        return;
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-//    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     glfwWindowHint(GLFW_SAMPLES, 0);
     glfwWindowHint(GLFW_RED_BITS, 8);
@@ -155,7 +152,11 @@ void synui::MainWindow::initialize()
     glfwSwapBuffers(m_window);
 
     // Construct GUI object
-    m_gui = m_guiConstructor(this);
+    if(!m_gui){
+        m_gui = m_guiConstructor(this);
+    }else {
+        m_gui->setGLFWWindow(m_window);        
+    }
 
 #if defined(TRACER_BUILD)
     int glMajorVer = glfwGetWindowAttrib(m_window, GLFW_CONTEXT_VERSION_MAJOR);
@@ -164,9 +165,6 @@ void synui::MainWindow::initialize()
 #endif
 
     resize(m_size.x(), m_size.y());
-    if(!m_guiState.empty())
-        m_gui->load(m_guiState);
-
 
     glfwMakeContextCurrent(nullptr);
 }
@@ -187,11 +185,6 @@ void synui::MainWindow::_runLoop()
 }
 
 void synui::MainWindow::queueInternalMessage(GUIMessage* a_msg) { m_guiInternalMsgQueue.push(a_msg); }
-
-void synui::MainWindow::setResizeFunc(std::function<void(int w, int h)> a_func)
-{
-    m_resizeFunc = a_func;
-}
 
 synui::MainWindow::operator json()
 {
@@ -242,7 +235,7 @@ bool synui::MainWindow::OpenWindow(HWND a_system_window)
 {
     TRACE
     if (!m_isOpen) {
-        initialize();
+        _createGLFWWindow();
         m_gui->show();
         _OpenWindowImplem(a_system_window);
         m_isOpen = true;
@@ -255,8 +248,6 @@ void synui::MainWindow::CloseWindow()
     TRACE
     if (m_isOpen) {
         _CloseWindowImplem();
-        m_guiState = m_gui->operator json();
-        delete m_gui; m_gui=nullptr;
         m_isOpen = false;
     }
 }
@@ -267,6 +258,5 @@ void synui::MainWindow::resize(int w, int h)
     glfwSetWindowSize(m_window, w, h);
     m_gui->resize(w,h);
     m_size = { w,h };
-    if (m_resizeFunc)
-        m_resizeFunc(w, h);
+    onResize(w,h);
 }
