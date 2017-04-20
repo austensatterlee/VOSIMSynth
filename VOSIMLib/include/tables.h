@@ -28,63 +28,96 @@
 #ifndef __TABLES__
 #define __TABLES__
 
-//#define DO_LERP_FOR_SINC
+#define DO_LERP_FOR_SINC true
 
 #include "vosimlib/common.h"
+#include "DSPMath.h"
 #include "lut_tables.h"
 #include <vector>
 
-namespace syn
-{
-    class VOSIMLIB_API LookupTable
-    {
+namespace syn {
+
+    template <class T>
+    class VOSIMLIB_API LUT {
+    protected:
+        const double* m_data;
     public:
-        LookupTable(const double* a_table, int a_size, double a_inputMin = 0, double a_inputMax = 1, bool a_periodic = true);
+        const int size;
 
-        LookupTable(const LookupTable& a_o) : 
-            LookupTable(a_o.m_table, a_o.m_size, a_o.m_input_min, a_o.m_input_max, a_o.m_isperiodic) 
-        {}
+        LUT(const double* a_data, int a_size)
+            : m_data(a_data),
+              size(a_size) {}
 
-        virtual ~LookupTable() {
-            
-        };
+        double lerp(double phase) const {
+            double index = static_cast<const T*>(this)->index(phase);
+            index *= size;
 
-        double getlinear(double phase) const;
-        double getlinear_periodic(double phase) const;
-        double getraw(int index) const;
-
-        int size() const {
-            return m_size;
+            int intPart = static_cast<int>(index);
+            double fracPart = index - intPart;
+            return m_data[intPart] * (1 - fracPart) + m_data[intPart + 1] * fracPart;
         }
 
-    protected:
-        int m_size;
-        double m_input_min, m_input_max;
-        bool m_isperiodic;
-        double m_norm_bias;
-        double m_norm_scale;
-        const double* m_table;
-        std::vector<double> m_diff_table;
+        double plerp(double phase) const {
+            double index = static_cast<const T*>(this)->index(phase);
+            index = WRAP<double>(index) * size;
+
+            int intPart = index;
+            double fracPart = index - intPart;
+            if (intPart < size - 1) {
+                return m_data[intPart] * (1 - fracPart) + m_data[intPart + 1] * fracPart;
+            }
+            if (intPart == size - 1) {
+                return m_data[intPart];
+            }
+            throw "Phase out of bounds.";
+        }
+
+        double operator[](int index) const {
+            return m_data[index];
+        }
     };
 
-    /**
-     *
-     */
-    class VOSIMLIB_API BlimpTable : public LookupTable
-    {
+    class VOSIMLIB_API AffineTable : public LUT<AffineTable> {
+        double m_min, m_max, m_scale;
     public:
-        BlimpTable(const double* a_table, int a_size, int a_taps, int a_res)
-            : LookupTable(a_table, a_size, 0.0, 1.0, false),
-              m_taps(a_taps),
-              m_res(a_res) {}
+        AffineTable(const double* a_data, int a_size, double a_min = 0.0, double a_max = 1.0)
+            : LUT<AffineTable>(a_data, a_size),
+              m_min(a_min),
+              m_max(a_max),
+              m_scale(1. / (a_max - a_min)) {}
+
+        double inputMin() const { return m_min; }
+        double inputMax() const { return m_max; }
+
+        double index(double phase) const {
+            return (phase - m_min) * m_scale;
+        }
+    };
+
+    class VOSIMLIB_API NormalTable : public LUT<NormalTable> {
+    public:
+        NormalTable(const double* a_data, int a_size)
+            : LUT<NormalTable>(a_data, a_size) {}
+
+        double index(double phase) const {
+            return phase;
+        }
+    };
+
+    class VOSIMLIB_API BlimpTable : public NormalTable {
+    public:
+        BlimpTable(const double* a_data, int a_size, int a_taps, int a_res)
+            : NormalTable(a_data, a_size),
+              taps(a_taps),
+              res(a_res) {}
 
         virtual ~BlimpTable() { }
 
         BlimpTable(const BlimpTable& a_other)
-            : BlimpTable(a_other.m_table, a_other.m_size, a_other.m_taps, a_other.m_res) {}
+            : BlimpTable(a_other.m_data, a_other.size, a_other.taps, a_other.res) {}
 
-        const int m_taps;
-        const int m_res;
+        const int taps;
+        const int res;
     };
 
     /**
@@ -94,20 +127,16 @@ namespace syn
      * so log2(N) tables are created, where N is the size of the initial
      * table.
      */
-    class VOSIMLIB_API ResampledLookupTable : public LookupTable
-    {
+    class VOSIMLIB_API ResampledTable : public NormalTable {
     public:
-        ResampledLookupTable(const double* a_table, int a_size, const BlimpTable& a_blimp_table_online, const BlimpTable& a_blimp_table_offline);
+        ResampledTable(const double* a_table, int a_size, const BlimpTable& a_blimp_table_online, const BlimpTable& a_blimp_table_offline);
 
-        ResampledLookupTable(const ResampledLookupTable& a_o) : 
-            ResampledLookupTable(a_o.m_table, a_o.m_size, a_o.m_blimp_table_online, a_o.m_blimp_table_offline) 
-        {}
+        ResampledTable(const ResampledTable& a_o)
+            : ResampledTable(a_o.m_data, a_o.size, a_o.m_blimp_table_online, a_o.m_blimp_table_offline) {}
 
         void resample_tables();
 
-        virtual ~ResampledLookupTable() {
-            
-        }
+        virtual ~ResampledTable() { }
 
         /// Retrieve a single sample from the table at the specified phase, as if the table were resampled to have the given period.
         double getresampled(double phase, double period) const;

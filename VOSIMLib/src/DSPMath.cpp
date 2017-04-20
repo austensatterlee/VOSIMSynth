@@ -30,7 +30,9 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <cmath>
 
 double syn::pitchToFreq(double pitch) {
-    return lut_pitch_table().getlinear(pitch);
+    const AffineTable& pitchTable = lut_pitch_table();
+    pitch = CLAMP(pitch, pitchTable.inputMin(), pitchTable.inputMax());
+    return pitchTable.lerp(pitch);
 }
 
 double syn::naive_pitchToFreq(double pitch) {
@@ -79,14 +81,14 @@ double syn::db2lin(double db) {
 double syn::blackman_harris(int a_k, size_t a_winSize) {
     static const double a[4] = { 0.35875, 0.48829, 0.14128, 0.01168 };
     double phase = a_k * 1.0 / (a_winSize - 1);
-    double s1 = lut_sin_table().getlinear_periodic(phase + 0.25);
-    double s2 = lut_sin_table().getlinear_periodic(2 * phase + 0.25);
-    double s3 = lut_sin_table().getlinear_periodic(3 * phase + 0.25);
+    double s1 = lut_sin_table().plerp(phase + 0.25);
+    double s2 = lut_sin_table().plerp(2 * phase + 0.25);
+    double s3 = lut_sin_table().plerp(3 * phase + 0.25);
     return a[0] - a[1] * s1 + a[2] * s2 - a[3] * s3;
 }
 
 double syn::hanning(int a_k, size_t a_winSize) {
-    return 0.5*(1 - lut_sin_table().getlinear_periodic(a_k * 1.0 / (a_winSize - 1)));
+    return 0.5*(1 - lut_sin_table().plerp(a_k * 1.0 / (a_winSize - 1)));
 }
 
 double syn::naive_tri(double a_phase) {

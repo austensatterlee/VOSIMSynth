@@ -67,7 +67,7 @@ namespace syn
      * Computes x modulo m 
      */
     template <typename T>
-    T WRAP(const T& x, const T& m) {
+    T WRAP(const T& x, const T& m=1.0) {
         if (!m)
             return x;
         T newx = x;

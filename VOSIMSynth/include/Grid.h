@@ -91,11 +91,11 @@ namespace synui
 
         CellType& get(const Grid2DPoint& a_pt) { return m_grid(a_pt[0], a_pt[1]); }
 
-        const CellType& get(const Grid2DPoint& a_pt) const { return m_grid(a_pt[0], a_pt[1]); }
+        const CellType& get(const Grid2DPoint& a_pt) const { return contains(a_pt) ? m_grid(a_pt[0], a_pt[1]) : getEmptyValue(); }
 
         CellType& get(const Grid2DIndex& a_ind) { return m_grid(a_ind); }
 
-        const CellType& get(const Grid2DIndex& a_ind) const { return m_grid(a_ind); }
+        const CellType& get(const Grid2DIndex& a_ind) const { return a_ind>=0 && a_ind<m_grid.size() ? m_grid(a_ind) : getEmptyValue(); }
 
         MatrixXt& get() { return m_grid; }
 

@@ -75,7 +75,7 @@ namespace syn
         typedef int id_type;
 
     private:
-        array<T, MAXSIZE> m_data;
+        T m_data[MAXSIZE];
         array<bool, MAXSIZE> m_existances;
         array<int, MAXSIZE> m_ids;
         array<string, MAXSIZE> m_names;
@@ -280,7 +280,7 @@ namespace syn
 
         const T* data() const
         {
-            return m_data.data();
+            return m_data;
         }
 
         /**
@@ -455,13 +455,13 @@ namespace syn
     }
 
     template <typename T, int MAXSIZE>
-    T& NamedContainer<T, MAXSIZE>::operator[](int a_id)
+    T& MSFASTCALL NamedContainer<T, MAXSIZE>::operator[](int a_id) GCCFASTCALL
     {
         return m_data[a_id];
     }
 
     template <typename T, int MAXSIZE>
-    const T& NamedContainer<T, MAXSIZE>::operator[](int a_id) const
+    const T& MSFASTCALL NamedContainer<T, MAXSIZE>::operator[](int a_id) const GCCFASTCALL
     {
         return m_data[a_id];
     }

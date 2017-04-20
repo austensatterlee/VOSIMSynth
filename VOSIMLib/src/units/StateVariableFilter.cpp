@@ -52,7 +52,7 @@ void syn::StateVariableFilter::process_()
     BEGIN_PROC_FUNC
     double fc = READ_INPUT(m_iFcMul) * (param(m_pFc).getDouble() + READ_INPUT(m_iFcAdd));
     fc = CLAMP(fc, param(m_pFc).getMin(), param(m_pFc).getMax());
-    m_F = 2 * lut_sin_table().getlinear_periodic(0.5 * fc / (fs() * c_oversamplingFactor));
+    m_F = 2 * lut_sin_table().plerp(0.5 * fc / (fs() * c_oversamplingFactor));
 
     double input_res = READ_INPUT(m_iResMul) * param(m_pRes).getDouble() + READ_INPUT(m_iResAdd);
     input_res = CLAMP<double>(input_res, 0, 1);

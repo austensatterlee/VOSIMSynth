@@ -23,47 +23,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn
 {
-    LookupTable::LookupTable(const double* a_table, int a_size, double a_inputMin, double a_inputMax, bool a_periodic) :
-        m_size(a_size),
-        m_input_min(a_inputMin),
-        m_input_max(a_inputMax),
-        m_isperiodic(a_periodic),
-        m_table(a_table),
-        m_diff_table(a_size)
-    {
-        m_norm_bias = a_inputMin;
-        m_norm_scale = 1. / (a_inputMax - a_inputMin);
-        /* Construct difference table for linear interpolation */
-        m_diff_table.resize(a_size);
-        for (int i = 0; i < a_size - 1; i++) {
-            m_diff_table[i] = a_table[i + 1] - a_table[i];
-        }
-        /* The last difference wraps around for use during periodic linear interpolation. */
-        m_diff_table[m_size - 1] = m_table[0] - m_table[m_size - 1];
-    }
-
-    double LookupTable::getlinear(double phase) const {
-        phase = (phase - m_norm_bias) * m_norm_scale;
-        phase = CLAMP(phase, 0.0, 1.0);
-        phase *= m_size - 1;
-        int int_index = int(phase);
-        return m_table[int_index] + m_diff_table[int_index] * (phase - int_index);
-    }
-
-    double LookupTable::getlinear_periodic(double phase) const {
-        phase = (phase - m_norm_bias) * m_norm_scale;
-        phase = WRAP(phase, 1.0);
-        phase *= m_size;
-        int int_index = int(phase);
-        return m_table[int_index] + m_diff_table[int_index] * (phase - int_index);
-    }
-
-    double LookupTable::getraw(int index) const {
-        return m_table[index];
-    }
-
-    ResampledLookupTable::ResampledLookupTable(const double* a_table, int a_size, const BlimpTable& a_blimp_table_online, const BlimpTable& a_blimp_table_offline) :
-        LookupTable(a_table, a_size, 0, 1, true),
+    ResampledTable::ResampledTable(const double* a_data, int a_size, const BlimpTable& a_blimp_table_online, const BlimpTable& a_blimp_table_offline) :
+        NormalTable(a_data, a_size),
         m_num_resampled_tables(0),
         m_resampled_sizes(0),
         m_resampled_tables(0),
@@ -73,21 +34,21 @@ namespace syn
         resample_tables();
     }
 
-    void ResampledLookupTable::resample_tables() {
+    void ResampledTable::resample_tables() {
         /* Construct resampled tables at ratios of powers of K */
-        m_num_resampled_tables = MAX<double>(1, log2(1.0*m_size) - 2);
+        m_num_resampled_tables = MAX<double>(1, log2(1.0*size) - 2);
         m_resampled_sizes.resize(m_num_resampled_tables);
         m_resampled_tables.resize(m_num_resampled_tables);
-        double currsize = m_size;
+        double currsize = size;
         for (int i = 0; i < m_num_resampled_tables; i++) {
             m_resampled_sizes[i] = currsize;
             m_resampled_tables[i].resize(currsize);
-            resample_table(m_table, m_size, &m_resampled_tables[i][0], m_resampled_sizes[i], m_blimp_table_offline);
+            resample_table(m_data, size, &m_resampled_tables[i][0], m_resampled_sizes[i], m_blimp_table_offline);
             currsize *= 0.5;
         }
     }
 
-    double ResampledLookupTable::getresampled(double phase, double period) const {
+    double ResampledTable::getresampled(double phase, double period) const {
         int min_size_diff = -1;
         int table_index = 0;
         for (int i = 0; i < m_num_resampled_tables; i++) {
@@ -123,8 +84,9 @@ namespace syn
             }
             double input_power = input_energy / size;
             double output_power = output_energy / period;
+            double norm_gain = sqrt(input_power/output_power);
             for (int i = 0; i < period; i++) {
-                resampled_table[i] = resampled_table[i] * sqrt(output_power) / sqrt(input_power);
+                resampled_table[i] = resampled_table[i] * norm_gain;
             }
         }
     }
@@ -139,9 +101,9 @@ namespace syn
 
         double blimp_step;
         if (ratio < 1.0)
-            blimp_step = static_cast<double>(blimp_table.m_res) * ratio;
+            blimp_step = static_cast<double>(blimp_table.res) * ratio;
         else
-            blimp_step = static_cast<double>(blimp_table.m_res);
+            blimp_step = static_cast<double>(blimp_table.res);
 
         int index = static_cast<int>(phase);
         double offset = (phase - index) * blimp_step;
@@ -151,11 +113,11 @@ namespace syn
         // Backward pass
         double bkwd_filt_phase = offset;
         int bkwd_table_index = index;
-        while (bkwd_filt_phase < blimp_table.size()) {
+        while (bkwd_filt_phase < blimp_table.size) {
 #if DO_LERP_FOR_SINC
-            double bkwd_filt_sample = blimp_table.getlinear(bkwd_filt_phase / blimp_table.size());
+            double bkwd_filt_sample = blimp_table.plerp(bkwd_filt_phase / blimp_table.size);
 #else
-            double bkwd_filt_sample = blimp_table.getraw(static_cast<int>(bkwd_filt_phase));
+            double bkwd_filt_sample = blimp_table[static_cast<int>(bkwd_filt_phase)];
 #endif
             if (bkwd_table_index < 0) {
                 bkwd_table_index = size - 1;
@@ -168,11 +130,11 @@ namespace syn
         // Forward pass
         double fwd_filt_phase = blimp_step - offset;
         int fwd_table_index = index + 1;
-        while (fwd_filt_phase < blimp_table.size()) {
-#ifdef DO_LERP_FOR_SINC
-            double fwd_filt_sample = blimp_table.getlinear(fwd_filt_phase / blimp_table.size());
+        while (fwd_filt_phase < blimp_table.size) {
+#if DO_LERP_FOR_SINC
+            double fwd_filt_sample = blimp_table.plerp(fwd_filt_phase / blimp_table.size);
 #else
-            double fwd_filt_sample = blimp_table.getraw(static_cast<int>(fwd_filt_phase));
+            double fwd_filt_sample = blimp_table[static_cast<int>(fwd_filt_phase)];
 #endif
             if (fwd_table_index >= size) {
                 fwd_table_index = 0;

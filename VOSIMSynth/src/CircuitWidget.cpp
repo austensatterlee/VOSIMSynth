@@ -352,6 +352,8 @@ synui::CircuitWidget::~CircuitWidget()
 bool synui::CircuitWidget::mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers)
 {
     Grid2DPoint pt = m_grid.fromPixel(p - position(), m_gridSpacing);
+    if(!m_grid.contains(pt))
+        return true;
 
     if (m_state == State::DrawingSelection)
     {

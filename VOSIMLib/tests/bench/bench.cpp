@@ -16,12 +16,12 @@
 #include <random>
 #include <string>
 
-#define trig_benches 0
+#define trig_benches 1
 #define ladder_benches 0
 #define circuit_benches 1
 #define modulus_benches 0
 #define lut_saw_benches 1
-#define lut_pitch_benches 0
+#define lut_pitch_benches 1
 #define container_benches 1
 
 std::random_device RandomDevice;
@@ -30,36 +30,36 @@ std::random_device RandomDevice;
 NONIUS_BENCHMARK("syn::lut_sin.getraw", [](nonius::chronometer& meter) {
     const int runs = meter.runs();
     std::vector<int> phases(runs);
-    const syn::LookupTable& lut_sin_table = syn::lut_sin_table();
-    auto _phaseGenerator = [&runs, &lut_sin_table](int& n)->int { return n*1.0 / runs*lut_sin_table.size(); };
+    const auto& lut_sin_table = syn::lut_sin_table();
+    auto _phaseGenerator = [&runs, &lut_sin_table](int& n)->int { return n*1.0 / runs*lut_sin_table.size; };
     std::transform(phases.begin(), phases.end(), phases.begin(), _phaseGenerator);
-    for (int i = 0; i < runs; i++) phases[i] = i * (1.0 / runs) * lut_sin_table.size();
+    for (int i = 0; i < runs; i++) phases[i] = i * (1.0 / runs) * lut_sin_table.size;
     double x;
-    meter.measure([&x, &phases, &lut_sin_table](int i) { x = lut_sin_table.getraw(phases[i]); });
+    meter.measure([&x, &phases, &lut_sin_table](int i) { x = lut_sin_table[phases[i]]; });
 })
 
-NONIUS_BENCHMARK("syn::lut_sin.getlinear", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("syn::lut_sin.lerp", [](nonius::chronometer& meter) {
     const int runs = meter.runs();
     std::vector<double> phases(runs);
-    const syn::LookupTable& lut_sin_table = syn::lut_sin_table();
+    const auto& lut_sin_table = syn::lut_sin_table();
     for (int i = 0; i < runs; i++) phases[i] = i*1.0 / runs;
     double x;
-    meter.measure([&x, &phases, &lut_sin_table](int i) { x = lut_sin_table.getlinear(phases[i]); });
+    meter.measure([&x, &phases, &lut_sin_table](int i) { x = lut_sin_table.lerp(phases[i]); });
 })
 
-NONIUS_BENCHMARK("syn::lut_sin.getlinear_periodic", [](nonius::chronometer& meter) {
+NONIUS_BENCHMARK("syn::lut_sin.plerp", [](nonius::chronometer& meter) {
     const int runs = meter.runs();
     std::vector<double> phases(runs);
-    const syn::LookupTable& lut_sin_table = syn::lut_sin_table();
+    const auto& lut_sin_table = syn::lut_sin_table();
     for (int i = 0; i < runs; i++) phases[i] = i*1.0 / runs;
     double x;
-    meter.measure([&x, &phases, &lut_sin_table](int i) { x = lut_sin_table.getlinear_periodic(phases[i]); });
+    meter.measure([&x, &phases, &lut_sin_table](int i) { x = lut_sin_table.plerp(phases[i]); });
 })
 
 NONIUS_BENCHMARK("std::sin", [](nonius::chronometer& meter) {
     const int runs = meter.runs();
     std::vector<double> phases(runs);
-    const syn::LookupTable& lut_sin_table = syn::lut_sin_table();
+    const auto& lut_sin_table = syn::lut_sin_table();
     for (int i = 0; i < runs; i++) phases[i] = DSP_PI * i * 1.0 / runs;
     double x;
     meter.measure([&x, &phases](int i) { x = std::sin(phases[i]); });
@@ -259,7 +259,7 @@ NONIUS_BENCHMARK("syn::WRAP", [](nonius::chronometer& meter) {
 NONIUS_BENCHMARK("lut saw", [](nonius::chronometer& meter) {
     std::vector<double> periods(meter.runs());
     std::vector<double> phases(meter.runs());
-    std::uniform_int_distribution<> _periodGenerator(2, syn::lut_bl_saw_table().size() - 1);
+    std::uniform_int_distribution<> _periodGenerator(2, syn::lut_bl_saw_table().size - 1);
     std::uniform_real_distribution<> _phaseGenerator(0.0, 1.0);
     std::transform(periods.begin(), periods.end(), periods.begin(), [&_periodGenerator](double& x) {return _periodGenerator(RandomDevice); });
     std::transform(phases.begin(), phases.end(), phases.begin(), [&_phaseGenerator](double& x) {return _phaseGenerator(RandomDevice); });

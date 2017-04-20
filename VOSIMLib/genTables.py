@@ -145,7 +145,7 @@ def GenerateBLTriangle(nharmonics, npoints=None, w0=1):
     bltri = sum([g*sin(h*sample_pts) for g, h in zip(gains, harmonics)], axis=0)
     return bltri/bltri.max()
 
-def GenerateBlimp(intervals=10, res=2048, fs=48000, fc=20000, beta=9., apgain=0.9, apbeta=0.7, ret_half=True):
+def GenerateBlimp(intervals=10, res=2048, fs=48000, fc=20000, beta=7.20, apgain=0.89, apbeta=0.7, ret_half=True):
     """
     Generate a bandlimited dirac delta impulse.
 
@@ -167,6 +167,7 @@ def GenerateBlimp(intervals=10, res=2048, fs=48000, fc=20000, beta=9., apgain=0.
     apw = 1-apgain*ss.kaiser(pts, apbeta) # apodization window
     window = w*apw
     blimp = window*h
+    blimp = convolve(blimp, blimp, 'same')
 
     # Scale
     blimp = scale_fir(blimp)
@@ -184,6 +185,9 @@ def GenerateBlimp2(intervals=10, res=2048, fs=48e3, fc=20e3, beta=7.20, apgain=0
 
     apwin = 1-apgain*ss.kaiser(pts, apbeta) # apodization window
     blimp_fir *= apwin
+    blimp_fir = convolve(blimp_fir, blimp_fir, 'same')
+
+    # Scale
     blimp_fir = scale_fir(blimp_fir)
 
     if ret_half:
@@ -484,52 +488,73 @@ def cutoff(mag, freqs=None):
 
 def main(pargs):
     v = pargs.verbose
+    clean = pargs.clean
 
     """Sin table"""
+    if v:
+        print "Generating sine table..."
     SINE_RES = 1024
     sintable = GenerateSine(SINE_RES)
 
     """Pitch table"""
+    if v:
+        print "Generating pitch table..."
     PITCH_RES = 1024
     MIN_PITCH = -128
-    MAX_PITCH = 128
+    MAX_PITCH = 256
     pitches, pitchtable = GeneratePitchTable(MIN_PITCH, MAX_PITCH, PITCH_RES)
 
     """Prefilter for bandlimited waveforms"""
     prefilter = bl_prefilter()
 
     """Bandlimited saw wave"""
+    if v:
+        print "Generating band-limited saw wavetable..."
     BLSAW_HARMONICS = 4096
     blsaw = GenerateBLSaw(BLSAW_HARMONICS)
     blsaw = convolve( prefilter, blsaw, 'same' ) # apply gain to high frequencies
     blsaw = norm_power(blsaw)
 
     """Bandlimited square wave"""
+    if v:
+        print "Generating band-limited square wavetable..."
     BLSQUARE_HARMONICS = 4096
     blsquare = GenerateBLSquare(BLSQUARE_HARMONICS)
     blsquare = convolve( prefilter, blsquare, 'same' )
     blsquare = norm_power(blsquare)
 
     """Bandlimited triangle wave"""
+    if v:
+        print "Generating band-limited triangle wavetable..."
     BLTRI_HARMONICS = 4096
     bltri = GenerateBLTriangle(BLTRI_HARMONICS)
     bltri = convolve( prefilter, bltri, 'same' )
     bltri = norm_power(bltri)
 
     """Offline and online BLIMP for resampling"""
-    OFFLINE_BLIMP_INTERVALS = 257
+    OFFLINE_BLIMP_INTERVALS = 127
     OFFLINE_BLIMP_RES = 2048
 
-    ONLINE_BLIMP_INTERVALS = 15
+    ONLINE_BLIMP_INTERVALS = 11
     ONLINE_BLIMP_RES = 2048
 
-    blimp_online = GenerateBlimp2(ONLINE_BLIMP_INTERVALS, ONLINE_BLIMP_RES, fc=22e3)
-    blimp_offline = GenerateBlimp2(OFFLINE_BLIMP_INTERVALS, OFFLINE_BLIMP_RES, fc=22e3)
+    if v:
+        print "Generating 'online' band-limited impulse table..."
+    blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS, ONLINE_BLIMP_RES, fc=22e3, fs=48e3)
+    if v:
+        print "Generating 'offline' band-limited impulse table..."
+    blimp_offline = GenerateBlimp(OFFLINE_BLIMP_INTERVALS, OFFLINE_BLIMP_RES, fc=23e3, fs=48e3)
+
+    if v:
+        print "Generating C++ code..."
 
     """Generate C++ files"""
+    NAMESPACE = "syn"
+
     key_order = {
-            "LookupTable":['size', 'input_min', 'input_max', 'isPeriodic'],
-            "ResampledLookupTable":['size', 'blimp_online', 'blimp_offline'],
+            "NormalTable":['size'],
+            "AffineTable":['size', 'input_min', 'input_max'],
+            "ResampledTable":['size', 'blimp_online', 'blimp_offline'],
             "BlimpTable":['size', 'intervals', 'res']
             }
     tables = [
@@ -541,28 +566,24 @@ def main(pargs):
                 size=len(blimp_online),
                 intervals=ONLINE_BLIMP_INTERVALS,
                 res=ONLINE_BLIMP_RES)],
-            ['PITCH_TABLE', dict(classname="LookupTable", data=pitchtable,
+            ['PITCH_TABLE', dict(classname="AffineTable", data=pitchtable,
                 size=len(pitchtable),
                 input_min = MIN_PITCH,
-                input_max = MAX_PITCH,
-                isPeriodic=False)],
-            ['BL_SAW_TABLE', dict(classname="ResampledLookupTable", data=blsaw,
+                input_max = MAX_PITCH)],
+            ['BL_SAW_TABLE', dict(classname="ResampledTable", data=blsaw,
                 size=len(blsaw),
                 blimp_online="lut_blimp_table_online()",
                 blimp_offline="lut_blimp_table_offline()")],
-            ['BL_SQUARE_TABLE', dict(classname="ResampledLookupTable", data=blsquare,
+            ['BL_SQUARE_TABLE', dict(classname="ResampledTable", data=blsquare,
                 size=len(blsquare),
                 blimp_online="lut_blimp_table_online()",
                 blimp_offline="lut_blimp_table_offline()")],
-            ['BL_TRI_TABLE', dict(classname="ResampledLookupTable", data=bltri,
+            ['BL_TRI_TABLE', dict(classname="ResampledTable", data=bltri,
                 size=len(bltri),
                 blimp_online="lut_blimp_table_online()",
                 blimp_offline="lut_blimp_table_offline()")],
-            ['SIN_TABLE', dict(classname="LookupTable", data=sintable,
-                size=len(sintable),
-                input_min = 0,
-                input_max = 1,
-                isPeriodic = True)]
+            ['SIN_TABLE', dict(classname="NormalTable", data=sintable,
+                size=len(sintable))]
             ]
     macrodefines = [
             ]
@@ -613,6 +634,10 @@ def main(pargs):
     if v:
         print "Writing new {}...".format(LUT_TABLEDATA_FILE)
     with open(LUT_TABLEDATA_FILE, 'w') as fp:
+        # Add code to namespace
+        tabledata_def = """namespace {} {{
+    {}
+}}""".format(NAMESPACE, tabledata_def)
         fp.write(tabledata_def)
 
     # Back up old table header file
@@ -626,8 +651,30 @@ def main(pargs):
 
     if v:
         print "Writing new {}...".format(LUT_TABLEHDR_FILE)
+    if clean:
+        old_code = ""
 
-    new_code = RewriteAutomatedSection(old_code, 'lut_decl', tableobjfuncs_decl)
+    # Add tags if the file is empty
+    if not old_code:
+        old_code=\
+"""#pragma once
+
+#include "vosimlib/common.h"
+
+/*::macro_defs::*/
+/*::/macro_defs::*/
+
+namespace {}{{
+    /*::table_decl::*/
+    /*::/table_decl::*/
+
+    /*::lut_decl::*/
+    /*::/lut_decl::*/
+}}
+""".format(NAMESPACE)
+
+    class_fwd_decls = "\n".join(["class {};".format(cls) for cls in key_order.keys()])
+    new_code = RewriteAutomatedSection(old_code, 'lut_decl', class_fwd_decls + "\n\n" + tableobjfuncs_decl)
     new_code = RewriteAutomatedSection(new_code, 'macro_defs', macrodefine_code)
     new_code = RewriteAutomatedSection(new_code, 'table_decl', tabledata_decl)
     with open(LUT_TABLEHDR_FILE, 'w') as fp:
@@ -644,6 +691,20 @@ def main(pargs):
 
     if v:
         print "Writing new {}...".format(LUT_TABLESRC_FILE)
+    if clean:
+        old_code=""
+
+    # Add tags if the file is empty
+    if not old_code:
+        old_code=\
+"""#include "tables.h"
+#include "lut_tables.h"
+
+namespace {} {{
+    /*::lut_defs::*/
+    /*::/lut_defs::*/
+}}
+""".format(NAMESPACE)
 
     new_code = RewriteAutomatedSection(old_code, 'lut_defs', tableobjfuncs_def)
     with open(LUT_TABLESRC_FILE, 'w') as fp:
@@ -654,6 +715,7 @@ if __name__=="__main__":
     psr = ap.ArgumentParser()
     psr.epilog = "Output files: {}".format(", ".join([LUT_TABLESRC_FILE, LUT_TABLEHDR_FILE, LUT_TABLEDATA_FILE]))
     psr.add_argument("-v", "--verbose", action="store_true")
+    psr.add_argument("-c", "--clean", action="store_true")
     pargs = psr.parse_args()
 
     main(pargs)

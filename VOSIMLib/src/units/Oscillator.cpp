@@ -151,7 +151,7 @@ namespace syn
                 output = lut_bl_saw_table().getresampled(m_phase, m_period);
                 break;
             case SINE_WAVE:
-                output = lut_sin_table().getlinear_periodic(m_phase);
+                output = lut_sin_table().plerp(m_phase);
                 break;
             case TRI_WAVE:
                 output = lut_bl_tri_table().getresampled(m_phase, m_period);
@@ -210,8 +210,8 @@ namespace syn
                 quadoutput = naive_saw(m_phase + 0.25);
                 break;
             case SINE_WAVE:
-                output = lut_sin_table().getlinear_periodic(m_phase);
-                quadoutput = lut_sin_table().getlinear_periodic(m_phase + 0.25);
+                output = lut_sin_table().plerp(m_phase);
+                quadoutput = lut_sin_table().plerp(m_phase + 0.25);
                 break;
             case TRI_WAVE:
                 output = naive_tri(m_phase);
