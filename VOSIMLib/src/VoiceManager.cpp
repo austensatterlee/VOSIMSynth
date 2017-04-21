@@ -329,8 +329,7 @@ namespace syn
     }
 
     void VoiceManager::onIdle() {
-        if (!m_activeVoices.size())
-            _flushActionQueue();
+        _flushActionQueue();
     }
 
     bool VoiceManager::queueAction(RTMessage* a_msg) {

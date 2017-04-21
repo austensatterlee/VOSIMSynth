@@ -136,6 +136,7 @@ int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
     Reset();
     // Load gui
     GetAppWindow()->load(gui);
+    m_voiceManager->onIdle();
 
     startPos += ss.gcount();
     return startPos;
