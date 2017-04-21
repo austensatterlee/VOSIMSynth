@@ -11,6 +11,7 @@ environment:
     USE_MSVC_RUNTIME_LIBRARY_DLL: OFF 
     VOSIMLIB_SHARED: OFF 
     VOSIMSYNTH_BUILD_VST: ON
+    BUILD_SHARED_LIBS: OFF 
 
     matrix:
         - GENERATOR: "Visual Studio 15 2017"
@@ -31,7 +32,7 @@ install:
 before_build:
     - mkdir _build
     - cd _build
-    - cmake -G "%GENERATOR%" ..  BUILD_SHARED_LIBS: OFF 
+    - cmake .. -G "%GENERATOR%"
 
 build_script:
     - cmake --build . --config "%CONFIG%"
