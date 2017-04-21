@@ -19,6 +19,9 @@ environment:
       CONFIG: Release
 
 before_build:
+    - mkdir _build
+    - cd _build
+    - cmake .. -G "%GENERATOR%" 
     - cmake -D BUILD_SHARED_LIBS:BOOL=OFF
     - cmake -D PYTHON_EXECUTABLE_32:PATH=C:/Python27
     - cmake -D PYTHON_EXECUTABLE_64:PATH=C:/Python27-x64
@@ -28,5 +31,4 @@ before_build:
     - cmake -D VOSIMSYNTH_BUILD_VST:BOOL=ON
 
 build_script:
-    - cmake "-G%GENERATOR%" -H. -B_builds
-    - cmake --build _builds --config "%CONFIG%"
+    - cmake --build . --config "%CONFIG%"
