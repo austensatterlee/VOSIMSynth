@@ -331,7 +331,9 @@ namespace syn
         for (int i = 0; i < m_units.size(); i++)
         {
             const Unit* unit = m_units.getByIndex(i);
-            if (!unit->numOutputs()) { sinks.push_back(m_units.getIdFromItem(unit)); }
+            if (!unit->numOutputs()) {
+                sinks.push_back(m_units.getIdFromItem(unit));
+            }
         }
         sinks.push_back(getOutputUnitId());
 

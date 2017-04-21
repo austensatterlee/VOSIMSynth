@@ -39,6 +39,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "CircuitWidget.h"
 #include "Widgets/SummingUnitWidget.h"
 #include "Widgets/MultiplyingUnitWidget.h"
+#include "OscilloscopeWidget.h"
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo) : IPLUG_CTOR(0, 1, instanceInfo), m_tempo(0), m_tickCount(0) {
     TRACE;
@@ -193,6 +194,8 @@ void VOSIMSynth::registerUnits(syn::UnitFactory& a_uf)
     a_uf.addUnitPrototype<syn::VelocityUnit>("MIDI", "vel");
     a_uf.addUnitPrototype<syn::MidiCCUnit>("MIDI", "CC");
     a_uf.addUnitPrototype<syn::VoiceIndexUnit>("MIDI", "voice");
+    
+    a_uf.addUnitPrototype<synui::OscilloscopeUnit>("Visualizers", "osc");
 
     a_uf.addUnitPrototype<syn::Circuit>("", "circuit");
     a_uf.addUnitPrototype<syn::InputUnit>("", "in");

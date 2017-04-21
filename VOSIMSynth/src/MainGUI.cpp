@@ -8,6 +8,7 @@
 #include "UnitEditor.h"
 #include "Logger.h"
 #include "Log.h"
+#include "OscilloscopeWidget.h"
 
 namespace synui {
     class EnhancedWindow : public nanogui::Window {
@@ -349,6 +350,14 @@ void synui::MainGUI::createLogViewer_(nanogui::Widget* a_widget) {
         });
 }
 
+void synui::MainGUI::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
+    TRACE
+    auto layout = new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 10, 5);
+    a_widget->setLayout(layout);
+
+    OscilloscopeWidget* oscwidget = new OscilloscopeWidget(a_widget, m_vm);
+}
+
 synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf)
     : m_window(a_window),
       m_screen(nullptr),
@@ -483,6 +492,21 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
             };
     auto logviewer_button = m_logViewer->createOpenButton(m_buttonPanel, "", ENTYPO_TRAFFIC_CONE, log_callback);
     buttonPanelLayout->setAnchor(logviewer_button, nanogui::AdvancedGridLayout::Anchor{buttonPanelLayout->colCount() - 1,0});
+    
+    /* Create oscilloscope viewer window. */
+    m_oscViewer = new synui::EnhancedWindow(m_screen, "Visualizers");
+    m_oscViewer->setVisible(false);
+    m_oscViewer->setFixedHeight(400);
+    createOscilloscopeViewer_(m_oscViewer);
+
+    /* Add a button for openning the log viewer window. */
+    buttonPanelLayout->appendCol(0, 0);
+
+    auto osc_viewer_callback = [this]() {
+                m_screen->centerWindow(m_oscViewer);
+            };
+    auto osc_viewer_button = m_oscViewer->createOpenButton(m_buttonPanel, "", ENTYPO_AREA_GRAPH, osc_viewer_callback);
+    buttonPanelLayout->setAnchor(osc_viewer_button, nanogui::AdvancedGridLayout::Anchor{buttonPanelLayout->colCount() - 1,0});
 
     /* Create the settings editor window. */
     m_settingsEditor = new EnhancedWindow(m_screen, "Settings");

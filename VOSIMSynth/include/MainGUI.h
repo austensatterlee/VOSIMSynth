@@ -135,6 +135,7 @@ namespace synui
         void createUnitSelector_(nanogui::Widget* a_widget);
         void createSettingsEditor_(nanogui::Widget* a_widget, SerializableFormHelper* a_fh);
         void createLogViewer_(nanogui::Widget * a_widget);
+        void createOscilloscopeViewer_(nanogui::Widget* a_widget);
 
     private:
         MainWindow* m_window;
@@ -146,6 +147,7 @@ namespace synui
         synui::EnhancedWindow* m_buttonPanel;
         synui::EnhancedWindow* m_settingsEditor; std::shared_ptr<synui::SerializableFormHelper> m_settingsFormHelper;
         synui::EnhancedWindow* m_logViewer;
+        synui::EnhancedWindow* m_oscViewer;
 
         synui::EnhancedWindow* m_sidePanelL;
         nanogui::TabWidget* m_tabWidget;

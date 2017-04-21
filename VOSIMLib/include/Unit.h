@@ -44,6 +44,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
     Unit *_clone() const override {return new TYPE(*this);}\
 public:\
     string getClassName() const override {return #TYPE;}\
+    static string className() { return #TYPE; }\
+    static syn::UnitTypeId classIdentifier() { std::hash<string> hash_fn; return static_cast<syn::UnitTypeId>(hash_fn(#TYPE)); }\
     TYPE() : TYPE("") {}\
 private:
 

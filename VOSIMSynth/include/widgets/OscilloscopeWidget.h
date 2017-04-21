@@ -26,4 +26,70 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
+#include "Unit.h"
+#include "VoiceManager.h"
 
+#include <nanogui/graph.h>
+
+namespace synui {
+    class OscilloscopeWidget;
+
+    class OscilloscopeUnit : public syn::Unit {
+        DERIVE_UNIT(OscilloscopeUnit)
+    public:
+        enum Parameter {
+            pBufferSize,
+            pNumPeriods
+        };
+
+        explicit OscilloscopeUnit(const string& a_name);
+
+        OscilloscopeUnit(const OscilloscopeUnit& a_rhs)
+            :
+            OscilloscopeUnit(a_rhs.name()) {}
+
+        int getNumBuffers() const;
+        const Eigen::VectorXf& OscilloscopeUnit::getBuffer(int a_bufIndex) const;
+        int getBufferSize(int a_bufIndex) const;
+
+        void reset() override {};
+
+    protected:
+        void onParamChange_(int a_paramId) override;
+        void MSFASTCALL process_() GCCFASTCALL override;
+
+    private:
+        void _sync();
+
+    private:
+        friend class OscilloscopeWidget;
+        OscilloscopeWidget* m_widget;
+        int m_bufferIndex;
+        int m_bufferSize;
+        int m_numBuffers;
+        int m_iPhase;
+
+        vector<Eigen::VectorXf> m_buffers;
+
+        double m_lastPhase;
+        int m_lastSync;
+        int m_syncCount;
+    };
+
+    class OscilloscopeWidget : public nanogui::Graph {
+    public:
+        OscilloscopeWidget(Widget* a_parent, syn::VoiceManager* a_vm)
+            : Graph(a_parent, "Oscilloscope"),
+              m_vm(a_vm),
+              m_unitId(-1) 
+        {
+            setFixedSize({400,400});    
+        }
+
+        void draw(NVGcontext* ctx) override;
+    private:
+        friend class OscilloscopeUnit;
+        syn::VoiceManager* m_vm;
+        int m_unitId;
+    };
+}
