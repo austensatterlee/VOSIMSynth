@@ -35,11 +35,17 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn
 {
+    /**
+     * Linearly interpolate between pt1 and pt2.
+     */
     template <typename T>
     T LERP(const T& pt1, const T& pt2, const T& frac) {
         return (pt2 - pt1)*frac + pt1;
     }
 
+    /**
+     * Scale lerped_pt from a value between pt1 and pt2 to a value between 0 and 1.
+     */
     template <typename T>
     T INVLERP(const T& pt1, const T& pt2, const T& lerped_pt) {
         return (lerped_pt - pt1) / (pt2 - pt1);

@@ -12,25 +12,25 @@ endmacro()
 set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
+#  Source/library directory options
+set(PYTHON_EXECUTABLE_32 "C:/Python27_32/python.exe" CACHE PATH "")
+set(PYTHON_EXECUTABLE_64 "C:/Python27/python.exe" CACHE PATH "")
+set(LIBS_DIR ${CMAKE_SOURCE_DIR}/libs CACHE PATH "")
+
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
   set(ARCH 64)
   set(LIBS_DIR_SYS "C:/Program Files")
-  set(PYTHON_EXECUTABLE "C:/Python27/python.exe" CACHE PATH "")
+  set(PYTHON_EXECUTABLE ${PYTHON_EXECUTABLE_64})
 else()
   set(ARCH 32)
   set(LIBS_DIR_SYS "C:/Program Files (x86)")
-  set(PYTHON_EXECUTABLE "C:/Python27/python.exe" CACHE PATH "")
+  set(PYTHON_EXECUTABLE ${PYTHON_EXECUTABLE_32})
 endif()
-
-#  Source/library directory options
-set(LIBS_DIR ${CMAKE_SOURCE_DIR}/libs CACHE PATH "")
 
 set(FFTS_ROOT "${LIBS_DIR_SYS}/ffts" CACHE PATH "")
 set(FFTS_INCLUDE_DIR ${FFTS_ROOT}/include CACHE PATH "")
-
 set(Boost_INCLUDE_DIR "C:/users/austen/OneDrive/Code/libs/boost/boost_1_60_0" CACHE PATH "Boost directory (i.e. .../boost/boost_1_60)")
 set(Boost_LIBRARY_DIR "${Boost_INCLUDE_DIR}/stage/lib")
-
 set(MKL_DIR "E:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl" CACHE PATH "")
 
 # Options
@@ -41,7 +41,6 @@ option(VOSIMPROJECT_TRACER_BUILD "Build 'trace' build (for debugging)" FALSE)
 if(VOSIMPROJECT_TRACER_BUILD)
   add_definitions(-DTRACER_BUILD)
 endif()
-
 # Subproject directories
 set(VOSIMLIB_DIR ${CMAKE_SOURCE_DIR}/vosimlib)
 set(VOSIMSYNTH_DIR ${CMAKE_SOURCE_DIR}/vosimsynth)

@@ -28,12 +28,14 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 #include "Unit.h"
 #include "VoiceManager.h"
-
 #include <nanogui/graph.h>
 
 namespace synui {
     class OscilloscopeWidget;
 
+    /**
+     * Collects input samples into a buffer to be displayed by an OscilloscopeWidget.
+     */
     class OscilloscopeUnit : public syn::Unit {
         DERIVE_UNIT(OscilloscopeUnit)
     public:
@@ -76,20 +78,35 @@ namespace synui {
         int m_syncCount;
     };
 
+    /**
+     * Displays the contents of an OscilloscopeUnit on a graph.
+     */
     class OscilloscopeWidget : public nanogui::Graph {
+        friend class OscilloscopeUnit;
     public:
         OscilloscopeWidget(Widget* a_parent, syn::VoiceManager* a_vm)
-            : Graph(a_parent, "Oscilloscope"),
+            : Graph(a_parent, "Scope"),
               m_vm(a_vm),
-              m_unitId(-1) 
+              m_unitId(-1),
+              m_yMin(-1.0),
+              m_yMax(1.0),
+              m_autoAdjustSpeed(60.0)
         {
-            setFixedSize({400,400});    
+            setFixedSize({400,400});
         }
 
         void draw(NVGcontext* ctx) override;
-    private:
-        friend class OscilloscopeUnit;
+
+        /**
+         * Smoothly update the y-axis viewing limits according to the auto adjust speed. Should be called
+         * every time the buffer is updated.
+         */
+        void updateYBounds(float a_yMin, float a_yMax);
+
+    protected:
         syn::VoiceManager* m_vm;
         int m_unitId;
+        float m_yMin, m_yMax;
+        float m_autoAdjustSpeed;
     };
 }

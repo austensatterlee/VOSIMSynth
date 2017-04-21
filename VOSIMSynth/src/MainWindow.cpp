@@ -82,8 +82,6 @@ synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiCon
     m_guiConstructor(a_guiConstructor),
     m_gui(nullptr),
     m_size(a_width, a_height),
-    m_frameCount(0),
-    m_fps(1.0),
     m_guiInternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE),
     m_guiExternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE)
 {
@@ -171,17 +169,8 @@ void synui::MainWindow::_createGLFWWindow()
 
 void synui::MainWindow::_runLoop()
 {
-    double cpuStartTime = glfwGetTime();
-
     _flushMessageQueues();
-
     m_gui->draw();
-
-    m_frameCount++;
-
-    double dCpuTime = glfwGetTime() - cpuStartTime;
-    double fps = 1. / dCpuTime;
-    m_fps = m_fps + 0.0175 * (fps - m_fps);
 }
 
 void synui::MainWindow::queueInternalMessage(GUIMessage* a_msg) { m_guiInternalMsgQueue.push(a_msg); }

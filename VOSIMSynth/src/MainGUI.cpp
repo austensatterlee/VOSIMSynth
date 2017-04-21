@@ -43,15 +43,15 @@ namespace synui {
         }
 
         nanogui::Button* createOpenButton(Widget* a_parent, const string& text = "", int icon = 0, std::function<void()> a_callback = nullptr) {
-            auto settings_button = new nanogui::Button(a_parent, text, icon);
-            settings_button->setFixedSize({20,20});
-            settings_button->setCallback([this, a_callback]() {
+            auto openButton = new nanogui::Button(a_parent, text, icon);
+            openButton->setFixedSize({20,20});
+            openButton->setCallback([this, a_callback]() {
                     setVisible(true);
                     screen()->moveWindowToFront(this);
                     if (a_callback)
                         a_callback();
                 });
-            return settings_button;
+            return openButton;
         }
 
         void setDrawCallback(DrawFunc f) { m_drawCallback = f; }
@@ -352,7 +352,7 @@ void synui::MainGUI::createLogViewer_(nanogui::Widget* a_widget) {
 
 void synui::MainGUI::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
     TRACE
-    auto layout = new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 10, 5);
+    auto layout = new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 0, 0);
     a_widget->setLayout(layout);
 
     OscilloscopeWidget* oscwidget = new OscilloscopeWidget(a_widget, m_vm);
@@ -496,8 +496,9 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
     /* Create oscilloscope viewer window. */
     m_oscViewer = new synui::EnhancedWindow(m_screen, "Visualizers");
     m_oscViewer->setVisible(false);
-    m_oscViewer->setFixedHeight(400);
-    createOscilloscopeViewer_(m_oscViewer);
+    auto oscScrollPanel = new nanogui::VScrollPanel(m_oscViewer);
+    m_oscViewer->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
+    createOscilloscopeViewer_(new nanogui::Widget(oscScrollPanel));
 
     /* Add a button for openning the log viewer window. */
     buttonPanelLayout->appendCol(0, 0);

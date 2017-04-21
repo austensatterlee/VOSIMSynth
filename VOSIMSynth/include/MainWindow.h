@@ -80,7 +80,6 @@ namespace synui
         GLFWwindow* getWindow() const { return m_window; }
         bool isOpen() const { return m_isOpen; }
         Vector2i getSize() const { return m_size; }
-        double getFps() const { return m_fps; }
         MainGUI* getGUI() const { return m_gui; }
         
         /// Open the system window
@@ -127,9 +126,6 @@ namespace synui
         GUIConstructor m_guiConstructor;
         MainGUI* m_gui;
         nlohmann::json m_guiState;
-
-        unsigned m_frameCount;
-        double m_fps;
 
         spsc_queue<GUIMessage*> m_guiInternalMsgQueue;
         spsc_queue<GUIMessage*> m_guiExternalMsgQueue;
