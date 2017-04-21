@@ -18,6 +18,9 @@ environment:
     - GENERATOR: "Visual Studio 15 2017 Win64"
       CONFIG: Release
 
+install:
+    - git submodule update --init --recursive
+
 before_build:
     - mkdir _build
     - cd _build
