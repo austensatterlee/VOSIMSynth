@@ -8,40 +8,65 @@ macro(dbgmsg varname)
   message(STATUS "${varname}: ${${varname}}")
 endmacro()
 
+macro(setenv varname value)
+    if(DEFINED ENV{${varname}})
+        if(${ARGC} GREATER 2)
+            set(${varname} $ENV{${varname}} ${ARGV2} ${ARGV3} "${ARGV4}" ${ARGV5})
+        else()
+            set(${varname} $ENV{${varname}})
+        endif()
+    elseif(NOT ${varname} STREQUAL "")
+        if(${ARGC} GREATER 2)
+            set(${varname} ${value} ${ARGV2} ${ARGV3} "${ARGV4}" ${ARGV5})
+        else()
+            set(${varname} ${value})
+        endif()
+    endif()
+    dbgmsg(${varname})
+endmacro()
+
+macro(optionenv varname desc value)
+    if(DEFINED ENV{${varname}})
+        option(${varname} ${desc} $ENV{${varname}})
+    else()
+        option(${varname} ${desc} ${value})
+    endif()
+endmacro()
+
+
 # Define a macro that helps defining an option
 set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
+#  Source/library directory options
+setenv(PYTHON_EXECUTABLE_32 "C:/Python27_32/python.exe" CACHE PATH "")
+setenv(PYTHON_EXECUTABLE_64 "C:/Python27/python.exe" CACHE PATH "")
+setenv(LIBS_DIR ${CMAKE_SOURCE_DIR}/libs CACHE PATH "")
+
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
   set(ARCH 64)
   set(LIBS_DIR_SYS "C:/Program Files")
-  set(PYTHON_EXECUTABLE "C:/Python27/python.exe" CACHE PATH "")
+  set(PYTHON_EXECUTABLE ${PYTHON_EXECUTABLE_64})
 else()
   set(ARCH 32)
   set(LIBS_DIR_SYS "C:/Program Files (x86)")
-  set(PYTHON_EXECUTABLE "C:/Python27/python.exe" CACHE PATH "")
+  set(PYTHON_EXECUTABLE ${PYTHON_EXECUTABLE_32})
 endif()
 
-#  Source/library directory options
-set(LIBS_DIR ${CMAKE_SOURCE_DIR}/libs CACHE PATH "")
-
-set(FFTS_ROOT "${LIBS_DIR_SYS}/ffts" CACHE PATH "")
-set(FFTS_INCLUDE_DIR ${FFTS_ROOT}/include CACHE PATH "")
-
-set(Boost_INCLUDE_DIR "C:/users/austen/OneDrive/Code/libs/boost/boost_1_60_0" CACHE PATH "Boost directory (i.e. .../boost/boost_1_60)")
-set(Boost_LIBRARY_DIR "${Boost_INCLUDE_DIR}/stage/lib")
-
-set(MKL_DIR "E:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl" CACHE PATH "")
+setenv(FFTS_ROOT ${LIBS_DIR_SYS}/ffts CACHE PATH "")
+setenv(FFTS_INCLUDE_DIR ${FFTS_ROOT}/include CACHE PATH "")
+setenv(BOOST_ROOT "C:/users/austen/OneDrive/Code/libs/boost/boost_1_60_0" CACHE PATH "Boost directory (i.e. .../boost/boost_1_60)")
+setenv(Boost_COMPILER "-vc140" CACHE STRING "Boost compiler prefix")
+setenv(MKL_DIR "E:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl" CACHE PATH "")
 
 # Options
-option(EIGEN_USE_MKL "Should eigen use MKL as its backend?" TRUE)
-option(VOSIMPROJECT_USE_AVX2 "Compile with AVX2 optimizations?" FALSE)
-option(VOSIMPROJECT_TRACER_BUILD "Build 'trace' build (for debugging)" FALSE)
+optionenv(EIGEN_USE_MKL "Should eigen use MKL as its backend?" TRUE)
+optionenv(VOSIMPROJECT_USE_AVX2 "Compile with AVX2 optimizations?" FALSE)
+optionenv(VOSIMPROJECT_TRACER_BUILD "Build 'trace' build (for debugging)" FALSE)
 
 if(VOSIMPROJECT_TRACER_BUILD)
   add_definitions(-DTRACER_BUILD)
 endif()
-
 # Subproject directories
 set(VOSIMLIB_DIR ${CMAKE_SOURCE_DIR}/vosimlib)
 set(VOSIMSYNTH_DIR ${CMAKE_SOURCE_DIR}/vosimsynth)
@@ -52,20 +77,6 @@ message (STATUS "System is ${CMAKE_SYSTEM_NAME}")
 ##
 # Set compiler/linker settings
 ##
-
-if (MINGW)
-  set(CMAKE_CXX_FLAGS "-std=gnu++0x -fpermissive -wno-unknown-pragmas-wno-write-strings" CACHE STRING "")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math  -D__NO_INLINE__" CACHE STRING "")
-  # compile the runtime as static (this will make sure that libgcc_s_seh-1.dll et al. won't show up in DEPENDENCY walker)
-  set(CMAKE_SHARED_LINKER_FLAGS "-static -static-libgcc -static-libstdc++" CACHE STRING "")
-  set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++" CACHE STRING "")
-
-  set(CMAKE_RC_COMPILER_INIT windres CACHE STRING "" FORCE)
-  set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> <FLAGS> -O coff <DEFINES> -i <SOURCE> -o <OBJECT>" CACHE STRING "")
-
-  # some flags apparently needed to compile with gcc
-  add_definitions(-Dstricmp=strcasecmp -DWIN32 -DNTDDI_VERSION=0x05010000 -D_WIN32_WINNT=0x0501 -DWINVER=0x0501 -D_WIN32_IE=0x0500) 
-endif (MINGW)
 
 if(MSVC)
   # Runtime library, exceptions, parallel compilation
@@ -137,11 +148,11 @@ add_subdirectory(${LIBS_DIR}/pybind11)
 # nanogui
 ##
 # Disable building extras we won't need (pure C++ project)
-set(NANOGUI_BUILD_EXAMPLE OFF CACHE BOOL " " FORCE)
-set(NANOGUI_BUILD_PYTHON  OFF CACHE BOOL " " FORCE)
-set(NANOGUI_INSTALL       OFF CACHE BOOL " " FORCE)
-set(NANOGUI_BUILD_SHARED  OFF CACHE BOOL " " FORCE)
-set(NANOGUI_BUILD_SHARED  OFF CACHE BOOL " " FORCE)
+setenv(NANOGUI_BUILD_EXAMPLE OFF CACHE BOOL " " FORCE)
+setenv(NANOGUI_BUILD_PYTHON  OFF CACHE BOOL " " FORCE)
+setenv(NANOGUI_INSTALL       OFF CACHE BOOL " " FORCE)
+setenv(NANOGUI_BUILD_SHARED  OFF CACHE BOOL " " FORCE)
+setenv(NANOGUI_BUILD_SHARED  OFF CACHE BOOL " " FORCE)
 
 # Add the configurations from nanogui
 add_subdirectory(${LIBS_DIR}/nanogui)
