@@ -52,6 +52,6 @@ build_script:
 
 artifacts:
   - path: '%BUILD_DIR%/VOSIMSynth/Release/*.dll'
-    name: 'hared-Library-Release'
+    name: 'VOSIMSynth-Release'
   - path: '%BUILD_DIR%/VOSIMSynth/Debug/*.dll'
-    name: 'Shared-Library-Debug'
+    name: 'VOSIMSynth-Debug'
