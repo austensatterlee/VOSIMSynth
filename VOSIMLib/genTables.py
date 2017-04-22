@@ -632,7 +632,7 @@ def main(pargs):
 
     # Write new table data file
     if v:
-        print "Writing new {}...".format(LUT_TABLEDATA_FILE)
+        print "Writing new {}...".format(os.path.realpath(LUT_TABLEDATA_FILE))
     with open(LUT_TABLEDATA_FILE, 'w') as fp:
         # Add code to namespace
         tabledata_def = """namespace {} {{
@@ -650,7 +650,7 @@ def main(pargs):
             fp.write(old_code)
 
     if v:
-        print "Writing new {}...".format(LUT_TABLEHDR_FILE)
+        print "Writing new {}...".format(os.path.realpath(LUT_TABLEHDR_FILE))
     if clean:
         old_code = ""
 
@@ -690,7 +690,7 @@ namespace {}{{
             fp.write(old_code)
 
     if v:
-        print "Writing new {}...".format(LUT_TABLESRC_FILE)
+        print "Writing new {}...".format(os.path.realpath(LUT_TABLESRC_FILE))
     if clean:
         old_code=""
 

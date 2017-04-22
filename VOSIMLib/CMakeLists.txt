@@ -48,8 +48,8 @@ add_custom_command(OUTPUT ${GENTABLES_OUTPUT} COMMAND python
 ##
 # VOSIMLib source files
 ##
-file(GLOB VOSIMLIB_HDRS include/*.h include/vosimlib/*.h)
-file(GLOB VOSIMLIB_SRCS src/*.cpp src/table_data.cpp)
+file(GLOB VOSIMLIB_HDRS include/*.h include/lut_tables.h include/vosimlib/*.h)
+file(GLOB VOSIMLIB_SRCS src/*.cpp src/table_data.cpp src/lut_tables.cpp)
 file(GLOB VOSIMLIB_UNIT_HDRS include/units/*.h)
 file(GLOB VOSIMLIB_UNIT_SRCS src/units/*.cpp)
 file(GLOB VOSIMLIB_PYTHON_SRCS python/*.cpp)
