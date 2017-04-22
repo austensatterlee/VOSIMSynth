@@ -29,6 +29,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "Unit.h"
 #include "VoiceManager.h"
 #include <nanogui/graph.h>
+#include "../../../libs/eigen/eigen/src/Core/util/ForwardDeclarations.h"
 
 namespace synui {
     class OscilloscopeWidget;
@@ -51,8 +52,7 @@ namespace synui {
             OscilloscopeUnit(a_rhs.name()) {}
 
         int getNumBuffers() const;
-        const Eigen::VectorXf& OscilloscopeUnit::getBuffer(int a_bufIndex) const;
-        int getBufferSize(int a_bufIndex) const;
+        Eigen::Map<const Eigen::VectorXf> OscilloscopeUnit::getBuffer(int a_bufIndex) const;
 
         void reset() override {};
 
@@ -96,12 +96,23 @@ namespace synui {
         }
 
         void draw(NVGcontext* ctx) override;
+        void drawGrid(NVGcontext* ctx);
 
         /**
          * Smoothly update the y-axis viewing limits according to the auto adjust speed. Should be called
          * every time the buffer is updated.
          */
         void updateYBounds(float a_yMin, float a_yMax);
+
+        /**
+         * Transform a signal point to a screen point.
+         */
+        float toScreen(float a_yPt);
+        
+        /**
+         * Transform a screen point to a signal point.
+         */
+        float fromScreen(float a_yScreen);
 
     protected:
         syn::VoiceManager* m_vm;
