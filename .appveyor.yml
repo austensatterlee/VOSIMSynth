@@ -16,18 +16,23 @@ environment:
         - GENERATOR: "Visual Studio 14 2015"
           CONFIG: Debug
           PYTHON: C:/Miniconda
+          ARCH: x86
+          BUILD_DIR: _build32
 
         - GENERATOR: "Visual Studio 14 2015"
           CONFIG: Release
           PYTHON: C:/Miniconda
+          BUILD_DIR: _build32
 
         - GENERATOR: "Visual Studio 14 2015 Win64"
           CONFIG: Debug
           PYTHON: C:/Miniconda-x64
+          BUILD_DIR: _build64
 
         - GENERATOR: "Visual Studio 14 2015 Win64"
           CONFIG: Release
           PYTHON: C:/Miniconda-x64
+          BUILD_DIR: _build64
 
 install:
     - git submodule update --init --recursive
@@ -37,7 +42,7 @@ install:
 
 before_build:
     - pushd VOSIMLib && python genTables.py -v && popd
-    - mkdir _build && cd _build
+    - mkdir %BUILD_DIR% && cd %BUILD_DIR%
     - cmake .. -G "%GENERATOR%"
 
 build_script:
