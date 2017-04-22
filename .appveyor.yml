@@ -46,5 +46,12 @@ before_build:
     - cmake .. -G "%GENERATOR%"
 
 build_script:
+    - set
     - cd
     - cmake --build . --config "%CONFIG%"
+
+artifacts:
+  - path: %BUILD_DIR%/VOSIMSynth/Release/*.dll'
+    name: Shared-Library-Release
+  - path: %BUILD_DIR%/VOSIMSynth/Debug/*.dll'
+    name: Shared-Library-Debug
