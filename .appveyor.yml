@@ -37,9 +37,10 @@ install:
     - conda install -y numpy scipy
 
 before_build:
-    - mkdir _build
-    - cd _build
+    - pushd VOSIMLib && python genTables.py -v && popd
+    - mkdir _build && cd _build
     - cmake .. -G "%GENERATOR%"
 
 build_script:
+    - cd
     - cmake --build . --config "%CONFIG%"
