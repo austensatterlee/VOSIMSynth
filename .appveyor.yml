@@ -5,9 +5,8 @@ build:
     verbosity: detailed
 
 environment:
-    PYTHON: C:/Python27
-    PYTHON_EXECUTABLE_32: C:/Python27/python.exe
-    PYTHON_EXECUTABLE_64: C:/Python27-x64/python.exe
+    PYTHON_EXECUTABLE_32: C:/Miniconda/python.exe
+    PYTHON_EXECUTABLE_64: C:/Miniconda-x64/python.exe
     BOOST_ROOT: C:/Libraries/boost_1_63_0 
     USE_MSVC_RUNTIME_LIBRARY_DLL: OFF 
     VOSIMLIB_SHARED: OFF 
@@ -17,21 +16,25 @@ environment:
     matrix:
         - GENERATOR: "Visual Studio 14 2015"
           CONFIG: Debug
+          PYTHON: C:/Miniconda
 
         - GENERATOR: "Visual Studio 14 2015"
           CONFIG: Release
+          PYTHON: C:/Miniconda
 
         - GENERATOR: "Visual Studio 14 2015 Win64"
           CONFIG: Debug
+          PYTHON: C:/Miniconda-x64
 
         - GENERATOR: "Visual Studio 14 2015 Win64"
           CONFIG: Release
+          PYTHON: C:/Miniconda-x64
 
 install:
     - git submodule update --init --recursive
-    - "SET PATH=%PYTHON%;%PYTHON%/Scripts;%PATH%"
-    - pip install numpy
-    - pip install scipy
+    - SET PATH=%PYTHON%;%PYTHON%/Scripts;%PATH%
+    - conda update -y conda
+    - conda install -y numpy scipy
 
 before_build:
     - mkdir _build
