@@ -1,7 +1,7 @@
 #include "MainWindow.h"
 #include "MainGUI.h"
 #include <GLFW/glfw3.h>
-#include "Log.h"
+#include "IPlug/Log.h"
 
 #ifdef _WIN32
 #include <windows.h>

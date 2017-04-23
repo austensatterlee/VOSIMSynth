@@ -99,7 +99,7 @@ namespace syn {
         NormalTable(const double* a_data, int a_size)
             : LUT<NormalTable>(a_data, a_size) {}
 
-        double index(double phase) const {
+        static double index(double phase) {
             return phase;
         }
     };

@@ -50,6 +50,9 @@ build_script:
     - cd
     - cmake --build . --config "%CONFIG%"
 
+test_script:
+    - ctest -V -j 2 -C %CONFIG%
+
 artifacts:
   - path: '%BUILD_DIR%/VOSIMSynth/%CONFIG%/*.dll'
     name: 'VST'

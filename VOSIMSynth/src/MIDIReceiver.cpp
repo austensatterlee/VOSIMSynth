@@ -17,9 +17,9 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "IPlugStructs.h"
 #include "MIDIReceiver.h"
 #include "VoiceManager.h"
+#include <IPlug/IPlugStructs.h>
 
 namespace syn {
     void MIDIReceiver::onMessageReceived(IMidiMsg* midiMessage) {

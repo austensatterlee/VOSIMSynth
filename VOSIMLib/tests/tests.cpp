@@ -1,17 +1,17 @@
-#include "Tests.h"
+#include "tests.h"
 
-#include <vosimlib/common_serial.h>
 #include <Unit.h>
+#include <Circuit.h>
+#include <DSPMath.h>
 #include <units/StateVariableFilter.h>
 #include <units/Oscillator.h>
-#include <Circuit.h>
 #include <units/MemoryUnit.h>
+#include <units/MathUnits.h>
+#include <VoiceManager.h>
+#include <vosimlib/common_serial.h>
 
 #include <sstream>
 #include <random>
-#include <DSPMath.h>
-#include "VoiceManager.h"
-#include "units/MathUnits.h"
 
 std::random_device RandomDevice;
 

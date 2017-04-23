@@ -21,8 +21,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "tables.h"
 #include "DSPMath.h"
 
-#include "vosimlib/common.h"
-
 namespace syn
 {
     VosimOscillator::VosimOscillator(string name) :

@@ -1,10 +1,9 @@
 #include "UnitWidget.h"
 #include "CircuitWidget.h"
-#include <Unit.h>
-#include <VoiceManager.h>
-#include <DSPMath.h>
 #include "MainWindow.h"
 #include "MainGUI.h"
+#include <Unit.h>
+#include <VoiceManager.h>
 
 synui::UnitWidget::UnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId) :
     Widget(a_parent),

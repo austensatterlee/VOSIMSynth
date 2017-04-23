@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.3)
-project(VOSIMLib_tests)
+project(VOSIMSynth_tests)
 
-FILE(GLOB TEST_FILES *.cpp *.h)
+set(CATCH_ROOT ${LIBS_DIR}/catch)
+
+file(GLOB TEST_FILES *.cpp)
 add_executable(vosimsynth_tests ${TEST_FILES})
-
+target_include_directories(vosimsynth_tests PRIVATE ${CATCH_ROOT})
 target_link_libraries(vosimsynth_tests VOSIMSynth)
 
-if(WIN32)
-  target_compile_definitions(vosimlib_bench PRIVATE -DWIN32_LEAN_AND_MEAN)
-endif()
+add_test(NAME run_tests COMMAND vosimsynth_tests)
