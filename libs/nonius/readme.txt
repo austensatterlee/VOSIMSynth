@@ -1,1 +1,1 @@
-https://github.com/rmartinho/nonius.git
+https://github.com/libnonius/nonius
