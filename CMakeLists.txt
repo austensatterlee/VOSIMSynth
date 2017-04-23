@@ -55,8 +55,7 @@ endif()
 
 setenv(FFTS_ROOT ${LIBS_DIR_SYS}/ffts CACHE PATH "")
 setenv(FFTS_INCLUDE_DIR ${FFTS_ROOT}/include CACHE PATH "")
-setenv(BOOST_ROOT "C:/users/austen/OneDrive/Code/libs/boost/boost_1_60_0" CACHE PATH "Boost directory (i.e. .../boost/boost_1_60)")
-setenv(Boost_COMPILER "-vc140" CACHE STRING "Boost compiler prefix")
+setenv(BOOST_ROOT "C:/users/austen/OneDrive/Code/libs/boost/boost_1_64_0" CACHE PATH "Boost directory (i.e. .../boost/boost_1_60)")
 setenv(MKL_DIR "E:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl" CACHE PATH "")
 
 # Options

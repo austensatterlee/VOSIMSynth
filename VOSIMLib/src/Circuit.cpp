@@ -150,7 +150,8 @@ namespace syn
             if (id == inputUnitIndex || id == outputUnitIndex)
                 continue;
             const json unitJson = j["units"][it.key()];
-            addUnit(Unit::fromJSON(unitJson), id);
+            bool success = addUnit(Unit::fromJSON(unitJson), id);
+            assert(success);
         }
 
         /* Load connection records */
@@ -171,7 +172,8 @@ namespace syn
                 cr.to_id = getUnitId(cr_j["to"][0].get<string>());
             else
                 cr.to_id = cr_j["to"][0];
-            connectInternal(cr.from_id, cr.from_port, cr.to_id, cr.to_port);
+            bool success = connectInternal(cr.from_id, cr.from_port, cr.to_id, cr.to_port);
+            assert(success);
         }
         return this;
     }
