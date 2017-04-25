@@ -161,9 +161,17 @@ void VOSIMSynth::registerUnits(syn::UnitFactory& a_uf)
     a_uf.addUnitPrototype<syn::TrapStateVariableFilter>("Audio Filters", "tsvf");
     a_uf.addUnitPrototype<syn::LadderFilter>("Audio Filters", "ldrA");
     a_uf.addUnitPrototype<syn::LadderFilterTwo>("Audio Filters", "ldrB");
+
     a_uf.addUnitPrototype<syn::OnePoleLP>("Mod Filters", "lag");
     a_uf.addUnitPrototype<syn::FollowerUnit>("Mod Filters", "follow");
     a_uf.addUnitPrototype<syn::DCRemoverUnit>("Mod Filters", "dc");
+    
+    a_uf.addUnitPrototype<syn::SummerUnit>("Math", "sum");
+    a_uf.addUnitPrototype<syn::GainUnit>("Math", "mul");
+    a_uf.addUnitPrototype<syn::LerpUnit>("Math", "affine");
+    a_uf.addUnitPrototype<syn::TanhUnit>("Math", "tanh");
+    a_uf.addUnitPrototype<syn::RectifierUnit>("Math", "rect");
+    a_uf.addUnitPrototype<syn::ConstantUnit>("Math", "const");
 
     a_uf.addUnitPrototype<syn::BasicOscillator>("Oscillators", "basic");
     a_uf.addUnitPrototype<syn::VosimOscillator>("Oscillators", "vosim");
@@ -177,14 +185,7 @@ void VOSIMSynth::registerUnits(syn::UnitFactory& a_uf)
     
     a_uf.addUnitPrototype<syn::PanningUnit>("Manipulators", "pan");
     a_uf.addUnitPrototype<syn::SwitchUnit>("Manipulators", "switch");
-    a_uf.addUnitPrototype<syn::LerpUnit>("Manipulators", "affine");
     a_uf.addUnitPrototype<syn::QuantizerUnit>("Manipulators", "quantize");
-    a_uf.addUnitPrototype<syn::RectifierUnit>("Manipulators", "rect");
-    a_uf.addUnitPrototype<syn::TanhUnit>("Manipulators", "tanh");
-
-    a_uf.addUnitPrototype<syn::ConstantUnit>("Arithmetics", "const");
-    a_uf.addUnitPrototype<syn::SummerUnit>("Arithmetics", "sum");
-    a_uf.addUnitPrototype<syn::GainUnit>("Arithmetics", "mul");
     
     a_uf.addUnitPrototype<syn::PitchToFreqUnit>("Converters", "p2f");
     a_uf.addUnitPrototype<syn::FreqToPitchUnit>("Converters", "f2p");

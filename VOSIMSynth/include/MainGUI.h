@@ -130,7 +130,7 @@ namespace synui
         void reset(); 
         void resize(int a_w, int a_h);
 
-        CircuitWidget* circuitWidget() { return m_circuitWidget; }
+        CircuitWidget* circuitWidget() const { return m_circuitWidget; }
     protected:
         void createUnitSelector_(nanogui::Widget* a_widget);
         void createSettingsEditor_(nanogui::Widget* a_widget, SerializableFormHelper* a_fh);

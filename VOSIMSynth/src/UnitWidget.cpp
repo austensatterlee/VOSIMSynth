@@ -11,6 +11,7 @@ synui::UnitWidget::UnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, 
     m_parentCircuit(a_parent),
     m_vm(a_vm),
     m_unitId(a_unitId),
+    m_name(""),
     m_classIdentifier(getUnit_().getClassIdentifier()),
     m_highlighted(false)
 {
@@ -22,7 +23,12 @@ synui::UnitWidget::~UnitWidget() {}
 
 const string& synui::UnitWidget::getName() const
 {
-    return getUnit_().name();
+    return m_name;
+}
+
+void synui::UnitWidget::setName(const string& a_name)
+{
+    m_name = a_name;
 }
 
 synui::UnitWidget::operator json() const
@@ -30,20 +36,18 @@ synui::UnitWidget::operator json() const
     json j;
     j["x"] = position().x();
     j["y"] = position().y();
+    j["name"] = getName();
     return j;
 }
 
 synui::UnitWidget* synui::UnitWidget::load(const json& j)
 {
+    if(j.find("name")!=j.end())
+        m_name = j["name"].get<std::string>();
     return this;
 }
 
 const syn::Unit& synui::UnitWidget::getUnit_() const { return m_vm->getUnit(m_unitId); }
-
-void synui::UnitWidget::setName_(const string& a_name)
-{
-    m_vm->getUnit(m_unitId).setName(a_name);
-}
 
 bool synui::UnitWidget::promptForDelete_()
 {

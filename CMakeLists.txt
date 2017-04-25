@@ -78,22 +78,23 @@ message (STATUS "System is ${CMAKE_SYSTEM_NAME}")
 ##
 
 if(MSVC)
+  # Disable some warnings
+  set(MSVC_DISABLED_WARNINGS /wd4996 /wd4224 /wd4244 /wd4091 /wd4018 /wd4503 /wd4390)
+  add_compile_options(${MSVC_DISABLED_WARNINGS})
+  add_definitions(-D_ENABLE_ATOMIC_ALIGNMENT_FIX)
+
   # Runtime library, exceptions, parallel compilation
   set(MSVC_REL /EHsc /MT /MP)
   set(MSVC_RDEB /EHsc /MT /MP /Z7)
   set(MSVC_DEB /EHsc /MTd /MP /ZI)
-
-  # Disable some warnings
-  set(MSVC_DISABLED_WARNINGS /wd4996 /wd4224 /wd4244 /wd4091 /wd4018 /wd4503 /wd4390)
-  add_compile_options("${MSVC_DISABLED_WARNINGS}")
-  add_definitions(-D_ENABLE_ATOMIC_ALIGNMENT_FIX)
-  # /Ox full opt                        /Ob2 any suitable inline function expansion
-  # /Oi enable intrinsics               /Ot favor fast code
-  # /GL whole program optimization      /arch:SSE2 simd extensions
-  # /fp:fast floating point model       /Qpar enable parallel code gen
-  # /Oy omit frame pointers             /GT fiber-safe optimizations
+  # /Ox Full opt                        /Ob2 Any suitable inline function expansion
+  #                                     /Ob0 Disable inlining
+  # /Oi Enable intrinsics               /Ot Favor fast code
+  # /GL Whole program optimization      /arch:SSE2 SIMD extensions
+  # /fp:fast Floating point model       /Qpar Enable parallel code gen
+  # /Oy Omit frame pointers             /GT Fiber-safe optimizations
   list(APPEND MSVC_REL  /Ox  /Ob2  /Oi  /Ot  /Oy  /fp:fast  /fp:except-  /Qpar  /GT  /GL)
-  list(APPEND MSVC_RDEB /Ox  /Ob2  /Oi  /Ot  /Oy  /fp:fast  /fp:except-  /Qpar  /GT  /GL)
+  list(APPEND MSVC_RDEB /Ox  /Ob0  /Oi  /Ot  /Oy-  /fp:fast  /fp:except-  /Qpar  /GT  /GL)
 
   if(VOSIMPROJECT_USE_AVX2)
     list(APPEND MSVC_REL /arch:AVX2)
@@ -114,6 +115,10 @@ if(MSVC)
   set(CMAKE_STATIC_LINKER_FLAGS_RELEASE "/LTCG")
   set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
   set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
+
+  set(CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO "/LTCG")
+  set(CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO "/DEBUG /LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
+  set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "/DEBUG /LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
 endif()
 
 # configurations for all compilers

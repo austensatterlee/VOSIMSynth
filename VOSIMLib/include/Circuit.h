@@ -145,7 +145,7 @@ namespace syn
          * \returns A vector of (unit_id, port_id) pairs.
          */
         vector<std::pair<int, int>> getConnectionsToInternalInput(int a_id, int a_portid) const;
-
+        
         /**
          * Get a list of all connections within the Circuit.
          */

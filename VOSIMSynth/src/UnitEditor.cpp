@@ -342,7 +342,10 @@ void synui::UnitEditorHost::activateEditor(syn::UnitTypeId a_classId, int a_unit
 
     // Make this editor the visible one.
     UnitEditor* editor = m_editorMap[a_unitId];
-    setSelectedIndex(childIndex(editor));
+    int editorIndex = childIndex(editor);
+    if(selectedIndex()==editorIndex && m_activeUnitId==a_unitId)
+        return;
+    setSelectedIndex(editorIndex);
     m_activeUnitId = a_unitId;
 
     screen()->performLayout();

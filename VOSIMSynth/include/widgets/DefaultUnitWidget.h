@@ -35,6 +35,7 @@ namespace synui {
         DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId);
 
         void draw(NVGcontext* ctx) override;
+        void setName(const std::string& a_name) override;;
         Eigen::Vector2i getInputPortAbsPosition(int a_portId) override;
         Eigen::Vector2i getOutputPortAbsPosition(int a_portId) override;
         Eigen::Vector2i preferredSize(NVGcontext* ctx) const override;

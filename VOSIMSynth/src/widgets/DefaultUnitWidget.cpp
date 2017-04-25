@@ -7,8 +7,8 @@
 #include <string>
 
 synui::DefaultUnitWidget::DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId)
-    : UnitWidget(a_parent, a_vm, a_unitId), m_lastClickTime(0)
-{
+    : UnitWidget(a_parent, a_vm, a_unitId),
+      m_lastClickTime(0) {
     const syn::Unit& unit = getUnit_();
 
     const auto& inputs = unit.inputs();
@@ -17,7 +17,7 @@ synui::DefaultUnitWidget::DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceM
     ////
     // Setup grid layout
     std::vector<int> rowSizes(syn::MAX(inputs.size(), outputs.size()) + 1, 0);
-    std::vector<int> colSizes{ 0, 0, 0 };
+    std::vector<int> colSizes{0, 0, 0};
     // Create layout
     auto layout = new nanogui::AdvancedGridLayout(colSizes, rowSizes);
     layout->setColStretch(1, 1.0f);
@@ -25,73 +25,67 @@ synui::DefaultUnitWidget::DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceM
     setLayout(layout);
 
     // Create title
-    m_titleLabel = new nanogui::Label(this, unit.name(), "sans-bold", 0);
+    m_titleLabel = new nanogui::Label(this, "", "sans-bold", 0);
     m_titleLabel->setTooltip("Ctrl+click to edit title\nRight click to delete");
     m_titleLabel->setDraggable(false);
     m_titleLabel->setTextAlign(nanogui::Label::Alignment::Left);
-    layout->setAnchor(m_titleLabel, Anchor{ 0,0,3,1,nanogui::Alignment::Middle });
-    m_titleTextBox = new nanogui::TextBox(this, unit.name());
+    layout->setAnchor(m_titleLabel, Anchor{0,0,3,1,nanogui::Alignment::Middle});
+    m_titleTextBox = new nanogui::TextBox(this, "");
     m_titleTextBox->setEditable(true);
     m_titleTextBox->setVisible(false);
-    m_titleTextBox->setCallback([this, layout](const std::string& a_str)
-    {
-        if (a_str.empty())
-            return false;
-        setName_(a_str);
-        layout->removeAnchor(m_titleTextBox);
-        layout->setAnchor(m_titleLabel, Anchor{ 0,0,3,1,nanogui::Alignment::Middle });
-        m_titleLabel->setVisible(true);
-        m_titleTextBox->setVisible(false);
-        onGridChange_();
-        screen()->performLayout();
-        m_parentCircuit->updateUnitPos(this, position(), true);
-        return true;
-    });
+    m_titleTextBox->setCallback([this, layout](const std::string& a_str) {
+            if (a_str.empty())
+                return false;
+            setName(a_str);
+            layout->removeAnchor(m_titleTextBox);
+            layout->setAnchor(m_titleLabel, Anchor{0,0,3,1,nanogui::Alignment::Middle});
+            m_titleLabel->setVisible(true);
+            m_titleTextBox->setVisible(false);
+            onGridChange_();
+            screen()->performLayout();
+            m_parentCircuit->updateUnitPos(this, position(), true);
+            return true;
+        });
 
     // Create input port labels
-    for (int i = 0; i < inputs.size(); i++)
-    {
+    for (int i = 0; i < inputs.size(); i++) {
         int inputId = inputs.ids()[i];
         const string& inputName = inputs.getNameFromId(inputId);
         auto lbl = new nanogui::Label(this, inputName, "sans", 0);
-        layout->setAnchor(lbl, Anchor{ 0, 1 + i });
+        layout->setAnchor(lbl, Anchor{0, 1 + i});
         lbl->setId(std::to_string(inputId));
         lbl->setTooltip(inputName);
         lbl->setDraggable(false);
         m_inputLabels[inputId] = lbl;
     }
     // Create output port labels
-    for (int i = 0; i < outputs.size(); i++)
-    {
+    for (int i = 0; i < outputs.size(); i++) {
         int outputId = outputs.ids()[i];
         const string& outputName = outputs.getNameFromId(outputId);
         auto lbl = new nanogui::Label(this, outputName, "sans", 0);
         //lbl->setTextAlign(nanogui::Label::Alignment::Right);
-        layout->setAnchor(lbl, Anchor{ 2, 1 + i });
+        layout->setAnchor(lbl, Anchor{2, 1 + i});
         lbl->setId(std::to_string(outputId));
         lbl->setTooltip(outputName);
         lbl->setDraggable(false);
         m_outputLabels[outputId] = lbl;
     }
     // Fill empty rows with empty labels (for aesthetics)
-    for (int i = inputs.size(); i < rowSizes.size() - 1; i++)
-    {
+    for (int i = inputs.size(); i < rowSizes.size() - 1; i++) {
         auto lbl = new nanogui::Label(this, "", "sans", 0);
-        layout->setAnchor(lbl, Anchor{ 0, i + 1 });
+        layout->setAnchor(lbl, Anchor{0, i + 1});
         m_emptyInputLabels[i] = lbl;
     }
-    for (int i = outputs.size(); i < rowSizes.size() - 1; i++)
-    {
+    for (int i = outputs.size(); i < rowSizes.size() - 1; i++) {
         auto lbl = new nanogui::Label(this, "", "sans", 0);
-        layout->setAnchor(lbl, Anchor{ 2, i + 1 });
+        layout->setAnchor(lbl, Anchor{2, i + 1});
         m_emptyOutputLabels[i] = lbl;
     }
 
     DefaultUnitWidget::onGridChange_();
 }
 
-void synui::DefaultUnitWidget::draw(NVGcontext* ctx)
-{
+void synui::DefaultUnitWidget::draw(NVGcontext* ctx) {
     m_titleLabel->setCaption(getName());
 
     nvgSave(ctx);
@@ -113,20 +107,18 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx)
 
     // Draw divisions
     int i = 0;
-    auto drawDivisions = [&](const map<int, nanogui::Label*>& lbls, const nanogui::Color& c1, const nanogui::Color& c2)
-    {
-        for (auto lbl : lbls)
-        {
-            nvgBeginPath(ctx);
-            if (i % 2 == 0)
-                nvgFillColor(ctx, c1);
-            else
-                nvgFillColor(ctx, c2);
-            nvgRect(ctx, lbl.second->position().x(), lbl.second->position().y(), lbl.second->width(), lbl.second->height());
-            nvgFill(ctx);
-            i++;
-        }
-    };
+    auto drawDivisions = [&](const map<int, nanogui::Label*>& lbls, const nanogui::Color& c1, const nanogui::Color& c2) {
+                for (auto lbl : lbls) {
+                    nvgBeginPath(ctx);
+                    if (i % 2 == 0)
+                        nvgFillColor(ctx, c1);
+                    else
+                        nvgFillColor(ctx, c2);
+                    nvgRect(ctx, lbl.second->position().x(), lbl.second->position().y(), lbl.second->width(), lbl.second->height());
+                    nvgFill(ctx);
+                    i++;
+                }
+            };
 
     nanogui::Color oColor(0.24f, 0.16f, 0.09f, 1.0f);
     nanogui::Color oColor2 = nanogui::Color(1.26f, 1.0f).cwiseProduct(oColor);
@@ -137,33 +129,26 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx)
     drawDivisions(m_outputLabels, oColor, oColor2);
 
     /* Draw highlight if enabled. */
-    if (highlighted())
-    {
-        drawRectShadow(ctx, 0, 0, width(), height(), 1.0f, 15.0f, 0.5f, { 0.32f, 0.9f, 0.9f, 0.9f }, { 0.0f, 0.0f });
+    if (highlighted()) {
+        drawRectShadow(ctx, 0, 0, width(), height(), 1.0f, 15.0f, 0.5f, {0.32f, 0.9f, 0.9f, 0.9f}, {0.0f, 0.0f});
     }
 
     /* Handle mouse movements */
     Vector2i mousePos = screen()->mousePos() - absolutePosition();
-    if (contains(mousePos + position()))
-    {
+    if (contains(mousePos + position())) {
         // Highlight on mouse over
-        drawRectShadow(ctx, 0, 0, width(), height(), 1.0f, 5.0f, 0.46f, { 0.8f, 0.5f }, { 0.0f, 0.0f });
+        drawRectShadow(ctx, 0, 0, width(), height(), 1.0f, 5.0f, 0.46f, {0.8f, 0.5f}, {0.0f, 0.0f});
 
-        if (mousePos.y() < m_titleLabel->height())
-        {
+        if (mousePos.y() < m_titleLabel->height()) {
             // Highlight title
             nvgBeginPath(ctx);
             nvgRect(ctx, 0.0f, 0.0f, width(), m_titleLabel->height());
             nvgFillColor(ctx, nanogui::Color(1.0f, 0.05f));
             nvgFill(ctx);
-        }
-        else
-        {
+        } else {
             // Highlight ports
-            for (auto& p : m_inputLabels)
-            {
-                if (p.second->contains(mousePos))
-                {
+            for (auto& p : m_inputLabels) {
+                if (p.second->contains(mousePos)) {
                     const Vector2i& pos = p.second->position();
                     const Vector2i& size = p.second->size();
                     nvgBeginPath(ctx);
@@ -174,10 +159,8 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx)
                 }
             }
 
-            for (auto& p : m_outputLabels)
-            {
-                if (p.second->contains(mousePos))
-                {
+            for (auto& p : m_outputLabels) {
+                if (p.second->contains(mousePos)) {
                     const Vector2i& pos = p.second->position();
                     const Vector2i& size = p.second->size();
                     nvgBeginPath(ctx);
@@ -202,14 +185,20 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx)
     Widget::draw(ctx);
 }
 
+void synui::DefaultUnitWidget::setName(const std::string& a_name) {
+    UnitWidget::setName(a_name);
+    m_titleLabel->setCaption(a_name);
+    m_titleTextBox->setValue(a_name);
+}
+
 Eigen::Vector2i synui::DefaultUnitWidget::getInputPortAbsPosition(int a_portId) {
     auto& port = m_inputLabels[a_portId];
-    return port->absolutePosition() + Vector2f{ 0, port->height() * 0.5 }.cast<int>();
+    return port->absolutePosition() + Vector2f{0, port->height() * 0.5}.cast<int>();
 }
 
 Eigen::Vector2i synui::DefaultUnitWidget::getOutputPortAbsPosition(int a_portId) {
     auto& port = m_outputLabels[a_portId];
-    return port->absolutePosition() + Vector2f{ port->width(), port->height() * 0.5 }.cast<int>();
+    return port->absolutePosition() + Vector2f{port->width(), port->height() * 0.5}.cast<int>();
 }
 
 Eigen::Vector2i synui::DefaultUnitWidget::preferredSize(NVGcontext* ctx) const {
@@ -220,35 +209,30 @@ Eigen::Vector2i synui::DefaultUnitWidget::preferredSize(NVGcontext* ctx) const {
     return fixed_size.cast<int>();
 }
 
-bool synui::DefaultUnitWidget::mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers)
-{
+bool synui::DefaultUnitWidget::mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers) {
 
     if (Widget::mouseButtonEvent(p, button, down, modifiers))
         return true;
 
     Vector2i mousePos = p - position();
     bool dblClick = false;
-    if (down)
-    {
+    if (down) {
         double clickTime = glfwGetTime() - m_lastClickTime;
         m_lastClickTime = glfwGetTime();
         dblClick = clickTime < 0.25;
     }
 
     // Check if title was clicked
-    if (m_titleLabel && m_titleLabel->contains(mousePos))
-    {
-        if (button == GLFW_MOUSE_BUTTON_LEFT && down)
-        {
+    if (m_titleLabel && m_titleLabel->contains(mousePos)) {
+        if (button == GLFW_MOUSE_BUTTON_LEFT && down) {
             // Open textbox on ctrl+click
-            if (dblClick)
-            {
+            if (dblClick) {
                 auto l = static_cast<nanogui::AdvancedGridLayout*>(layout());
                 l->removeAnchor(m_titleLabel);
-                l->setAnchor(m_titleTextBox, nanogui::AdvancedGridLayout::Anchor{ 0,0,3,1,nanogui::Alignment::Fill });
+                l->setAnchor(m_titleTextBox, nanogui::AdvancedGridLayout::Anchor{0,0,3,1,nanogui::Alignment::Fill});
                 m_titleTextBox->setValue(m_titleLabel->caption());
                 m_titleTextBox->setPosition(position());
-                m_titleTextBox->setFixedSize({ width(), m_titleLabel->height() });
+                m_titleTextBox->setFixedSize({width(), m_titleLabel->height()});
                 m_titleTextBox->setFontSize(m_titleLabel->fontSize());
                 m_titleTextBox->setVisible(true);
                 m_titleTextBox->setEditable(true);
@@ -259,28 +243,21 @@ bool synui::DefaultUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
         }
 
         // Delete unit on right click
-        if (button == GLFW_MOUSE_BUTTON_RIGHT && down)
-        {
+        if (button == GLFW_MOUSE_BUTTON_RIGHT && down) {
             if (promptForDelete_()) {
                 return true;
             }
         }
-    }
-    else if (m_titleTextBox && m_titleTextBox->visible())
-    {
+    } else if (m_titleTextBox && m_titleTextBox->visible()) {
         m_titleTextBox->callback()(m_titleTextBox->value());
         return true;
     }
 
     // Check if an input port was clicked
-    for (auto inputLabel : m_inputLabels)
-    {
-        if (inputLabel.second->contains(mousePos))
-        {
-            if (button == GLFW_MOUSE_BUTTON_LEFT)
-            {
-                if (down)
-                {
+    for (auto inputLabel : m_inputLabels) {
+        if (inputLabel.second->contains(mousePos)) {
+            if (button == GLFW_MOUSE_BUTTON_LEFT) {
+                if (down) {
                     triggerPortDrag_(inputLabel.first, false);
                     return false;
                 }
@@ -291,14 +268,10 @@ bool synui::DefaultUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
     }
 
     // Check if an output port was clicked
-    for (auto outputLabel : m_outputLabels)
-    {
-        if (outputLabel.second->contains(mousePos))
-        {
-            if (button == GLFW_MOUSE_BUTTON_LEFT)
-            {
-                if (down)
-                {
+    for (auto outputLabel : m_outputLabels) {
+        if (outputLabel.second->contains(mousePos)) {
+            if (button == GLFW_MOUSE_BUTTON_LEFT) {
+                if (down) {
                     triggerPortDrag_(outputLabel.first, true);
                     return false;
                 }
@@ -308,10 +281,8 @@ bool synui::DefaultUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
         }
     }
 
-    if (button == GLFW_MOUSE_BUTTON_LEFT)
-    {
-        if (down)
-        {
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (down) {
             // Open unit editor if mouse click is not captured above.
             triggerEditorCallback();
         }
@@ -321,8 +292,7 @@ bool synui::DefaultUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
     return false;
 }
 
-void synui::DefaultUnitWidget::onGridChange_()
-{
+void synui::DefaultUnitWidget::onGridChange_() {
     auto l = static_cast<nanogui::AdvancedGridLayout*>(layout());
 
     int rowHeight = m_parentCircuit->getGridSpacing();
@@ -344,35 +314,26 @@ void synui::DefaultUnitWidget::onGridChange_()
     const auto& inputs = unit.inputs();
     const auto& outputs = unit.outputs();
     // Apply new row size to port rows
-    for (int r = 0; r < l->rowCount() - 1; r++)
-    {
-        if (m_inputLabels.find(r) != m_inputLabels.end())
-        {
+    for (int r = 0; r < l->rowCount() - 1; r++) {
+        if (m_inputLabels.find(r) != m_inputLabels.end()) {
             m_inputLabels[r]->setFontSize(portRowFontSize);
-            if (portRowFontSize < 12)
-            {
+            if (portRowFontSize < 12) {
                 m_inputLabels[r]->setCaption(inputs.getNameFromId(r).substr(0, 2));
                 m_inputLabels[r]->setFixedWidth(rowHeight);
                 m_inputLabels[r]->setFixedHeight(rowHeight);
-            }
-            else
-            {
+            } else {
                 m_inputLabels[r]->setCaption(inputs.getNameFromId(r));
                 m_inputLabels[r]->setFixedWidth(0);
                 m_inputLabels[r]->setFixedHeight(0);
             }
         }
-        if (m_outputLabels.find(r) != m_outputLabels.end())
-        {
+        if (m_outputLabels.find(r) != m_outputLabels.end()) {
             m_outputLabels[r]->setFontSize(portRowFontSize);
-            if (portRowFontSize < 12)
-            {
+            if (portRowFontSize < 12) {
                 m_outputLabels[r]->setCaption(outputs.getNameFromId(r).substr(0, 2));
                 m_outputLabels[r]->setFixedWidth(rowHeight);
                 m_outputLabels[r]->setFixedHeight(rowHeight);
-            }
-            else
-            {
+            } else {
                 m_outputLabels[r]->setCaption(outputs.getNameFromId(r));
                 m_outputLabels[r]->setFixedWidth(0);
                 m_outputLabels[r]->setFixedHeight(0);
@@ -380,8 +341,6 @@ void synui::DefaultUnitWidget::onGridChange_()
         }
         l->setRowSize(r + 1, rowHeight);
     }
-
-    setSize({ 0,0 });
 }
 
 synui::InputUnitWidget::InputUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId)

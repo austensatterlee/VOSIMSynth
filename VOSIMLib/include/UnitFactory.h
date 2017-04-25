@@ -71,7 +71,7 @@ namespace syn
 
         Unit* createUnit(UnitTypeId a_classIdentifier, const std::string& a_name = "");
 
-        std::string generateUnitName(const Unit& a_unit) const;
+        std::string generateUnitName(UnitTypeId a_classIdentifier) const;
 
         bool hasClassId(UnitTypeId a_classIdentifier) const;
 

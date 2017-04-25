@@ -268,9 +268,9 @@ namespace syn
 
     const NamedContainer<InputPort, MAX_INPUTS>& Unit::inputs() const { return m_inputPorts; }
 
-    bool Unit::hasOutput(int a_outputId) const { return m_outputPorts.containsId(a_outputId); }
+    bool Unit::hasOutput(int a_id) const { return m_outputPorts.containsId(a_id); }
 
-    bool Unit::hasInput(int a_inputId) const { return m_inputPorts.containsId(a_inputId); }
+    bool Unit::hasInput(int a_id) const { return m_inputPorts.containsId(a_id); }
 
     const string& Unit::inputName(int a_id) const { return m_inputPorts.getNameFromId(a_id); }
 }

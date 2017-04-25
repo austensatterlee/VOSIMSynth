@@ -176,6 +176,8 @@ void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget) {
                     m_screen->updateFocus(nullptr);
                 });
         }
+        if(m_uf->getPrototypeNames(gname).size()==1)
+            popup->setAnchorHeight(15);
     }
 }
 
@@ -345,7 +347,7 @@ void synui::MainGUI::createLogViewer_(nanogui::Widget* a_widget) {
             const auto& log = Logger::instance().getLogs().back();
             std::ostringstream value;
             value << "[ " << log.first << "] " << log.second;
-            auto txt = new nanogui::Label(a_widget, value.str(), "sans", 10);
+            auto txt = new nanogui::Label(a_widget, value.str(), "sans", 12);
             a_widget->screen()->performLayout();
         });
 }

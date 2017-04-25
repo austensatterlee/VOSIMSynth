@@ -40,6 +40,7 @@ namespace synui
         virtual ~UnitWidget();
 
         const std::string& getName() const;
+        virtual void setName(const std::string& a_name);
         int getUnitId() const { return m_unitId; }
 
         /**
@@ -69,7 +70,6 @@ namespace synui
         /// Update layout configuration based on parent circuit's grid spacing.
         virtual void onGridChange_() = 0;
         const syn::Unit& getUnit_() const;
-        void setName_(const std::string& a_name);
         bool promptForDelete_();
         void triggerPortDrag_(int a_portId, bool a_isOutput);
         void triggerPortDrop_(int a_portId, bool a_isOutput);
@@ -82,6 +82,7 @@ namespace synui
 
         int m_unitId;
         syn::UnitTypeId m_classIdentifier;
+        std::string m_name;
 
         bool m_highlighted;
     };

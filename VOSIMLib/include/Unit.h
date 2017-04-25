@@ -251,12 +251,12 @@ namespace syn
          * Returns a reference to the requested parameter.
          */
         template <typename ID>
-        UnitParameter& param(const ID& a_identifier);
+        UnitParameter& param(const ID& a_id);
 
         template <typename ID>
-        const UnitParameter& param(const ID& a_identifier) const;
+        const UnitParameter& param(const ID& a_id) const;
 
-        const string& paramName(int a_index) const;
+        const string& paramName(int a_id) const;
 
         const NamedContainer<UnitParameter, MAX_PARAMS>& parameters() const;
 
@@ -265,24 +265,24 @@ namespace syn
          * \see UnitParameter::set
          */
         template <typename ID, typename T>
-        bool setParam(const ID& a_identifier, const T& a_value);
+        bool setParam(const ID& a_id, const T& a_value);
 
-        bool hasInput(int a_inputPort) const;
+        bool hasInput(int a_id) const;
 
-        const string& inputName(int a_index) const;
+        const string& inputName(int a_id) const;
 
-        const double& readInput(int a_index, int a_offset) const;
+        const double& readInput(int a_id, int a_offset) const;
 
-        const double* inputSource(int a_index) const;
+        const double* inputSource(int a_id) const;
 
         const NamedContainer<InputPort, MAX_INPUTS>& inputs() const;
 
-        bool hasOutput(int a_outputPort) const;
+        bool hasOutput(int a_id) const;
 
-        string outputName(int a_outputId) const { return m_outputPorts.getNameFromId(a_outputId); }
+        string outputName(int a_id) const { return m_outputPorts.getNameFromId(a_id); }
 
         template <typename ID>
-        const double& readOutput(const ID& a_identifier, int a_offset) const;
+        const double& readOutput(const ID& a_id, int a_offset) const;
 
         const NamedContainer<OutputPort, MAX_OUTPUTS>& outputs() const;
 
@@ -397,21 +397,21 @@ namespace syn
     };
 
     template <typename ID>
-    const double& Unit::readOutput(const ID& a_identifier, int a_offset) const
+    const double& Unit::readOutput(const ID& a_id, int a_offset) const
     {
-        return m_outputPorts[a_identifier][a_offset];
+        return m_outputPorts[a_id][a_offset];
     }
 
     template <typename ID>
-    UnitParameter& Unit::param(const ID& a_identifier)
+    UnitParameter& Unit::param(const ID& a_id)
     {
-        return m_parameters[a_identifier];
+        return m_parameters[a_id];
     }
 
     template <typename ID>
-    const UnitParameter& Unit::param(const ID& a_identifier) const
+    const UnitParameter& Unit::param(const ID& a_id) const
     {
-        return m_parameters[a_identifier];
+        return m_parameters[a_id];
     }
 
     template <typename ID>
@@ -421,9 +421,9 @@ namespace syn
     }
 
     template <typename ID, typename T>
-    bool Unit::setParam(const ID& a_identifier, const T& a_value)
+    bool Unit::setParam(const ID& a_id, const T& a_value)
     {
-        return m_parameters[a_identifier].set(a_value);
+        return m_parameters[a_id].set(a_value);
     };
 }
 #endif

@@ -129,8 +129,8 @@ namespace syn
         for (auto& cr : m_connectionRecords)
         {
             json cr_j;
-            cr_j["from"] = {getUnit(cr.from_id).name(), cr.from_port};
-            cr_j["to"] = {getUnit(cr.to_id).name(), cr.to_port};
+            cr_j["from"] = {cr.from_id, cr.from_port};
+            cr_j["to"] = {cr.to_id, cr.to_port};
             j["connections"].push_back(cr_j);
         }
         return j;

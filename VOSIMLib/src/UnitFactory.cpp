@@ -52,7 +52,7 @@ syn::Unit* syn::UnitFactory::createUnit_(int a_protoNum, const string& a_name) {
     Unit* unit = m_prototypes[a_protoNum].prototype->clone();
     // Generate default name
     if(a_name.empty())
-        unit->_setName(generateUnitName(*unit));
+        unit->_setName(generateUnitName(unit->getClassIdentifier()));
     else
         unit->_setName(a_name);
     return unit;
@@ -69,9 +69,9 @@ syn::Unit* syn::UnitFactory::createUnit(syn::UnitTypeId a_classIdentifier, const
     return createUnit_(protonum, a_name);
 }
 
-std::string syn::UnitFactory::generateUnitName(const Unit& a_unit) const
+std::string syn::UnitFactory::generateUnitName(syn::UnitTypeId a_classIdentifier) const
 {
-    return incrementSuffix(getFactoryPrototype(a_unit.getClassIdentifier())->name);    
+    return incrementSuffix(getFactoryPrototype(a_classIdentifier)->name);    
 }
 
 bool syn::UnitFactory::hasClassId(syn::UnitTypeId a_classIdentifier) const {

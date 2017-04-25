@@ -6,6 +6,7 @@
 #include "MainGUI.h"
 #include "UnitEditor.h"
 #include "ContextMenu.h"
+#include "Logger.h"
 #include <VoiceManager.h>
 #include <units/MathUnits.h>
 #include <unordered_set>
@@ -352,8 +353,10 @@ synui::CircuitWidget::~CircuitWidget()
 bool synui::CircuitWidget::mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers)
 {
     Grid2DPoint pt = m_grid.fromPixel(p - position(), m_gridSpacing);
-    if(!m_grid.contains(pt))
-        return true;
+    if(!m_grid.contains(pt)){
+        pt[0] = syn::CLAMP<int>(pt[0], 0, m_grid.getShape()[0]);
+        pt[1] = syn::CLAMP<int>(pt[1], 0, m_grid.getShape()[1]);
+    }
 
     if (m_state == State::DrawingSelection)
     {
@@ -382,7 +385,7 @@ bool synui::CircuitWidget::mouseButtonEvent(const Vector2i& p, int button, bool 
         // Reset the current selection if it does not contain the clicked unit widget.
         if (cell.state == GridCell::Unit)
         {
-            UnitWidget* w = reinterpret_cast<UnitWidget*>(cell.ptr);
+            UnitWidget* w = reinterpret_cast<UnitWidget*>(cell.ptr);  
             if (m_selection.find(w) == m_selection.end())
             {
                 m_selection.clear();
@@ -459,13 +462,14 @@ bool synui::CircuitWidget::mouseButtonEvent(const Vector2i& p, int button, bool 
                     if(a_value==0)
                     {
                         syn::Unit* u = new syn::SummerUnit("");
-                        u->setName(m_uf->generateUnitName(*u));
+                        /// TODO: Remove unit names on the real-time thread.
+                        u->setName(m_uf->generateUnitName(u->getClassIdentifier()));
                         _createJunction(toWire, fromWire, p - position(), u);                        
                     }
                     else if(a_value==1)
                     {
                         syn::Unit* u = new syn::GainUnit("");
-                        u->setName(m_uf->generateUnitName(*u));
+                        u->setName(m_uf->generateUnitName(u->getClassIdentifier()));
                         _createJunction(toWire, fromWire, p - position(), u);       
                     }
                 });
@@ -572,24 +576,28 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
     /* Draw grid */
     for (int i = 0; i < m_grid.getSize(); i++)
     {
-        float ptSize = 0.75f;
+        float ptSize = m_gridSpacing*0.5f;
+        const float strokeWidth = 1.0f;
+
         auto pt = m_grid.unravel_index(i);
         auto pixel = m_grid.toPixel(pt, m_gridSpacing);
         if (m_grid.get(pt).state == GridCell::Empty){
-            nvgFillColor(ctx, nanogui::Color{1.0f,0.16f});
+            nvgStrokeColor(ctx, nanogui::Color{70,255});
         }
         else if (m_grid.get(pt).state == GridCell::Unit){
-            nvgFillColor(ctx, nanogui::Color{0.0f,0.5f});
-            ptSize = 1.25f;
+            nvgStrokeColor(ctx, nanogui::Color{10, 255});
         }
         else if (m_grid.get(pt).state == GridCell::Wire){
-            nvgFillColor(ctx, nanogui::Color{0.0f,0.0f,1.0f,0.5f});
-            ptSize = 1.25f;
+            nvgStrokeColor(ctx, nanogui::Color{25,25,75,255});
         }
 
         nvgBeginPath(ctx);
-        nvgCircle(ctx, pixel.x(), pixel.y(), ptSize);
-        nvgFill(ctx);
+        nvgMoveTo(ctx, pixel.x()-ptSize*0.5f, pixel.y());
+        nvgLineTo(ctx, pixel.x()+ptSize*0.5f, pixel.y());
+        nvgMoveTo(ctx, pixel.x(), pixel.y()-ptSize*0.5f);
+        nvgLineTo(ctx, pixel.x(), pixel.y()+ptSize*0.5f);
+        nvgStrokeWidth(ctx, strokeWidth);
+        nvgStroke(ctx);
     }
 
     /* Draw selection box */
@@ -606,31 +614,6 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
         nvgStrokeColor(ctx, selectionOutlineColor);
         nvgStrokeWidth(ctx, 0.75f);
         nvgStroke(ctx);
-    }
-
-    /* Handle mouse hover */
-    if (contains(screen()->mousePos() - parent()->absolutePosition()))
-    {
-        Vector2i mousePos = screen()->mousePos() - absolutePosition();
-        // Draw unit widget ghost if one is being placed
-        if (m_state == State::CreatingUnit)
-        {
-            UnitWidget* w = m_creatingUnitState.widget;
-            m_creatingUnitState.isValid = checkUnitPos(m_creatingUnitState.widget, mousePos);
-            nvgBeginPath(ctx);
-            if (m_creatingUnitState.isValid)
-                nvgStrokeColor(ctx, nanogui::Color(0.7f, 0.7f, 0.7f, 0.75f));
-            else
-                nvgStrokeColor(ctx, nanogui::Color(0.7f, 0.0f, 0.0f, 0.75f));
-            nvgRect(ctx, mousePos[0], mousePos[1], w->width(), w->height());
-            nvgStroke(ctx);
-        }
-        // Draw wire ghost if one is being placed
-        else if (m_state == State::DrawingWire)
-        {
-            m_drawingWireState.wire->updateStartAndEndPositions(mousePos);
-            m_drawingWireState.wire->draw(ctx);
-        }        
     }
 
     /* Highlight wires connected to a unit in the current selection */
@@ -657,9 +640,9 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
 
     /* Handle mouse hover drawing that should be displayed in front of the unit widgets */
     nvgSave(ctx);    
-    if (contains(screen()->mousePos() - parent()->absolutePosition()))
+    Vector2i mousePos = screen()->mousePos() - absolutePosition();
+    if (contains(mousePos))
     {
-        Vector2i mousePos = screen()->mousePos() - absolutePosition();
         if (m_state == State::Idle)
         {
             double elapsed = glfwGetTime() - m_wireHighlightTime;
@@ -673,8 +656,11 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
                 }
             }
         }
+        // Draw wire ghost if one is being placed
         else if (m_state == State::DrawingWire)
         {
+            m_drawingWireState.wire->updateStartAndEndPositions(mousePos);
+            m_drawingWireState.wire->draw(ctx);
             // Draw an overlay when dragging one wire onto another
             Grid2DPoint mousePt = m_grid.fromPixel(mousePos, m_gridSpacing);
             if(m_grid.get(mousePt).state == GridCell::Wire && m_drawingWireState.startedFromOutput)
@@ -689,6 +675,19 @@ void synui::CircuitWidget::draw(NVGcontext* ctx)
                 nvgStroke(ctx);                
             }
         }
+        // Draw unit widget ghost if one is being placed
+        else if (m_state == State::CreatingUnit)
+        {
+            UnitWidget* w = m_creatingUnitState.widget;
+            m_creatingUnitState.isValid = checkUnitPos(m_creatingUnitState.widget, mousePos);
+            nvgBeginPath(ctx);
+            if (m_creatingUnitState.isValid)
+                nvgStrokeColor(ctx, nanogui::Color(0.7f, 0.7f, 0.7f, 0.75f));
+            else
+                nvgStrokeColor(ctx, nanogui::Color(0.7f, 0.0f, 0.0f, 0.75f));
+            nvgRect(ctx, mousePos[0], mousePos[1], w->width(), w->height());
+            nvgStroke(ctx);
+        }    
     }
 
     // Highlight unit widgets in the current selection
@@ -714,12 +713,20 @@ Eigen::Vector2i synui::CircuitWidget::fixToGrid(const Vector2i& a_pixelLocation)
 
 void synui::CircuitWidget::performLayout(NVGcontext* ctx)
 {
+    std::unordered_map<int, Vector2i> oldSizes;
     for (auto w : m_unitWidgets)
     {
+        oldSizes[w.first] = w.second->size();
         w.second->onGridChange_();
+        // reset size so it doesn't affect next layout computation
         w.second->setSize({0,0});
     }
     Widget::performLayout(ctx);
+    for (auto w : m_unitWidgets)
+    {
+        if((oldSizes[w.first].array()!=w.second->size().array()).any())
+            updateUnitPos(w.second, w.second->position(), true);
+    }
 }
 
 void synui::CircuitWidget::resizeGrid(int a_newGridSpacing)
@@ -771,10 +778,9 @@ synui::CircuitWidget* synui::CircuitWidget::load(const json& j)
         syn::UnitTypeId classId = circ->getUnit(unitId).getClassIdentifier();
         const json& unit = it.value();
         Vector2i pos{unit["x"].get<int>(), unit["y"].get<int>()};
-        UnitWidget* widget = createUnitWidget_(classId, unitId);
+        UnitWidget* widget = createUnitWidget_(classId, unitId)->load(unit);
         updateUnitPos(widget, pos);
         m_unitWidgets[unitId] = widget;
-        m_unitWidgets[unitId]->load(j);
     }
 
     /* Load new wires */
@@ -869,7 +875,7 @@ synui::UnitWidget* synui::CircuitWidget::createUnitWidget_(syn::UnitTypeId a_cla
         widget = new DefaultUnitWidget(this, m_vm, a_unitId);
     else
         widget = m_registeredUnitWidgets[a_classId](this, m_vm, a_unitId);
-
+    widget->setName(m_uf->generateUnitName(a_classId));
     widget->setEditorCallback([&](syn::UnitTypeId classId, int unitId)
         {
             if (m_unitEditorHost->selectedIndex() >= 0)
@@ -1279,13 +1285,10 @@ void synui::CircuitWidget::_createJunction(CircuitWire* toWire, CircuitWire* fro
                                 self->onUnitCreated_(classId, unitId);  
                                 Eigen::Vector2i pos = Vector2i{px, py} - Vector2i::Ones()*self->getGridSpacing();      
                                 if(self->checkUnitPos(self->m_creatingUnitState.widget, pos))
-                                    self->endCreateUnit_(pos);         
-                                
-
+                                    self->endCreateUnit_(pos);   
                                 // Finish drawing wire
                                 self->onConnectionCreated_({unitId, 0}, fromWire->getOutputPort());
-
-                                // replace it with a wire going into the sum unit...
+                                // Add the wire going into the sum unit...
                                 self->onConnectionCreated_({unitId, 1}, toWire->getOutputPort());
                                 // and a wire going from the sum unit to the original input port
                                 self->onConnectionCreated_(toWire->getInputPort(), {unitId,0});
