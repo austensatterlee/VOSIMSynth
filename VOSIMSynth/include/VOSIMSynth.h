@@ -43,7 +43,7 @@ public:
 
     void makeInstrument();
 
-    virtual ~VOSIMSynth();
+    ~VOSIMSynth();
 
     void Reset() override;
 
@@ -69,13 +69,12 @@ public:
 
     void OnGUIClose() override;
 
-    static void registerUnits(syn::UnitFactory& a_uf);
+    static void registerUnits();
     static void registerUnitWidgets(synui::CircuitWidget& a_cw);
 
 private:
     syn::MIDIReceiver* m_MIDIReceiver;
     syn::VoiceManager* m_voiceManager;
-    syn::UnitFactory* m_unitFactory;
 
     int m_tempo;
     unsigned m_tickCount;

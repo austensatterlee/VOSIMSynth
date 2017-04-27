@@ -309,7 +309,7 @@ namespace synui
          */
         Grid2DPoint fromPixel(const Eigen::Vector2i& a_pixel, int pixelsPerCell) const
         {
-            Eigen::Vector2f point{ std::round(a_pixel[1] * 1.0f / pixelsPerCell),std::round(a_pixel[0] * 1.0f / pixelsPerCell) };
+            Eigen::Vector2f point{ round(a_pixel[1] * 1.0f / pixelsPerCell),round(a_pixel[0] * 1.0f / pixelsPerCell) };
             return point.cast<int>();
         }
 

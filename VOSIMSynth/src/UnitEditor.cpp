@@ -70,8 +70,8 @@ void synui::UnitEditor::_build()
         case syn::UnitParameter::Enum:
         {
             // Build item list
-            const std::vector<syn::UnitParameter::DisplayText>& options = param.getDisplayTexts();
-            std::vector<string> items{ options.size() };
+            const vector<syn::UnitParameter::DisplayText>& options = param.getDisplayTexts();
+            vector<string> items{ options.size() };
             std::transform(options.begin(), options.end(), items.begin(), [](const syn::UnitParameter::DisplayText& dt) { return dt.m_text; });
 
             nanogui::ComboBox* cb = new nanogui::ComboBox(this, items);
@@ -354,7 +354,7 @@ void synui::UnitEditorHost::activateEditor(syn::UnitTypeId a_classId, int a_unit
     Widget* w = this;
     while (w->parent())
     {
-        auto tabContent = dynamic_cast<nanogui::StackedWidget*>(w->parent());
+        auto tabContent = dynamic_cast<StackedWidget*>(w->parent());
         if (tabContent && tabContent->parent())
         {
             auto tabWidget = dynamic_cast<nanogui::TabWidget*>(tabContent->parent());

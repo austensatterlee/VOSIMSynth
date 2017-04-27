@@ -54,6 +54,8 @@ namespace synui
                 _build();
         }
 
+        virtual ~UnitEditor() {}
+
         int getUnitId() const { return m_unitId; }
 
         void setUnitId(int a_unitId)
@@ -68,12 +70,12 @@ namespace synui
         void setParamValue(int a_paramId, double a_val) const;
         void setParamNorm(int a_paramId, double a_normval) const;
         void nudgeParam(int a_paramId, double a_logScale, double a_linScale) const;
-        void setParamFromString(int a_paramId, const std::string& a_str) const;
+        void setParamFromString(int a_paramId, const string& a_str) const;
 
         void draw(NVGcontext* ctx) override;
 
     protected:
-        std::unordered_map<int, nanogui::Widget*> m_controls;
+        std::unordered_map<int, Widget*> m_controls;
         std::unordered_map<int, nanogui::Label*> m_controlLabels;
         std::unordered_map<int, std::function<void()> > m_refreshFuncs;
         syn::VoiceManager* m_vm;

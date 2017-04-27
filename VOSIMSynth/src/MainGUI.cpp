@@ -15,7 +15,7 @@ namespace synui {
     public:
         typedef std::function<void(EnhancedWindow*, NVGcontext*)> DrawFunc;
 
-        EnhancedWindow(Widget* a_parent, const std::string& a_title)
+        EnhancedWindow(Widget* a_parent, const string& a_title)
             : Window(a_parent, a_title) {
             if (!a_title.empty()) {
                 // Close button
@@ -103,7 +103,7 @@ void synui::MainGUI::resize(int a_w, int a_h) {
     m_sidePanelR->setFixedWidth(m_screen->width() - m_sidePanelR->absolutePosition().x());
     m_circuitWidget->setFixedHeight(m_screen->height() - m_sidePanelR->absolutePosition().y());
     m_circuitWidget->setFixedWidth(m_screen->width() - m_sidePanelR->absolutePosition().x());
-    m_circuitWidget->resizeGrid(m_circuitWidget->getGridSpacing());
+    m_circuitWidget->resizeGrid(m_circuitWidget->gridSpacing());
     m_buttonPanel->setPosition({m_sidePanelL->width(), 0});
     m_buttonPanel->setFixedWidth(m_sidePanelR->width());
     m_screen->performLayout();
@@ -116,31 +116,31 @@ void synui::MainGUI::setGLFWWindow(GLFWwindow* a_window) {
     glfwSetWindowUserPointer(a_window, this);// Set user pointer so we can access ourselves inside the event handlers
 
     glfwSetCursorPosCallback(a_window,
-        [](GLFWwindow* w, double x, double y) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->cursorPosCallbackEvent(x, y); }
+        [](GLFWwindow* w, double x, double y) { static_cast<MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->cursorPosCallbackEvent(x, y); }
     );
 
     glfwSetMouseButtonCallback(a_window,
-        [](GLFWwindow* w, int button, int action, int modifiers) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->mouseButtonCallbackEvent(button, action, modifiers); }
+        [](GLFWwindow* w, int button, int action, int modifiers) { static_cast<MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->mouseButtonCallbackEvent(button, action, modifiers); }
     );
 
     glfwSetKeyCallback(a_window,
-        [](GLFWwindow* w, int key, int scancode, int action, int mods) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->keyCallbackEvent(key, scancode, action, mods); }
+        [](GLFWwindow* w, int key, int scancode, int action, int mods) { static_cast<MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->keyCallbackEvent(key, scancode, action, mods); }
     );
 
     glfwSetCharCallback(a_window,
-        [](GLFWwindow* w, unsigned int codepoint) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->charCallbackEvent(codepoint); }
+        [](GLFWwindow* w, unsigned int codepoint) { static_cast<MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->charCallbackEvent(codepoint); }
     );
 
     glfwSetDropCallback(a_window,
-        [](GLFWwindow* w, int count, const char** filenames) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->dropCallbackEvent(count, filenames); }
+        [](GLFWwindow* w, int count, const char** filenames) { static_cast<MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->dropCallbackEvent(count, filenames); }
     );
 
     glfwSetScrollCallback(a_window,
-        [](GLFWwindow* w, double x, double y) { static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->scrollCallbackEvent(x, y); }
+        [](GLFWwindow* w, double x, double y) { static_cast<MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->scrollCallbackEvent(x, y); }
     );
 
     auto resizeCallback = [](GLFWwindow* w, int width, int height) {
-                auto mainGui = static_cast<synui::MainGUI*>(glfwGetWindowUserPointer(w));
+                auto mainGui = static_cast<MainGUI*>(glfwGetWindowUserPointer(w));
                 mainGui->resize(width, height);
             };
     glfwSetFramebufferSizeCallback(a_window, resizeCallback);
@@ -196,7 +196,7 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
             m_circuitWidget->resizeGrid(s);
             m_screen->performLayout();
         }, [this]() {
-            int gs = m_circuitWidget->getGridSpacing();
+            int gs = m_circuitWidget->gridSpacing();
             return gs;
         });
 
@@ -360,7 +360,7 @@ void synui::MainGUI::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
     OscilloscopeWidget* oscwidget = new OscilloscopeWidget(a_widget, m_vm);
 }
 
-synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf)
+synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf)
     : m_window(a_window),
       m_screen(nullptr),
       m_vm(a_vm),
@@ -372,7 +372,7 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
     m_screen->theme()->mWindowDropShadowSize = 2;
 
     /* Create left pane. */
-    m_sidePanelL = new synui::EnhancedWindow(m_screen, "");
+    m_sidePanelL = new EnhancedWindow(m_screen, "");
     m_sidePanelL->setIsBackgroundWindow(true);
     m_sidePanelL->setLayout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Fill, 5, 0));
     m_sidePanelL->setFixedHeight(m_screen->height());
@@ -408,7 +408,7 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
     m_tabWidget->setActiveTab(0);
 
     /* Create right pane. */
-    m_sidePanelR = new synui::EnhancedWindow(m_screen, "");
+    m_sidePanelR = new EnhancedWindow(m_screen, "");
     m_sidePanelR->setIsBackgroundWindow(true);
     m_sidePanelR->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 0));
     m_sidePanelR->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
@@ -479,7 +479,7 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
     buttonPanelLayout->appendCol(0, 1.0);
 
     /* Create log viewer window. */
-    m_logViewer = new synui::EnhancedWindow(m_screen, "Logs");
+    m_logViewer = new EnhancedWindow(m_screen, "Logs");
     m_logViewer->setVisible(false);
     auto logScrollPanel = new nanogui::VScrollPanel(m_logViewer);
     m_logViewer->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
@@ -496,7 +496,7 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
     buttonPanelLayout->setAnchor(logviewer_button, nanogui::AdvancedGridLayout::Anchor{buttonPanelLayout->colCount() - 1,0});
     
     /* Create oscilloscope viewer window. */
-    m_oscViewer = new synui::EnhancedWindow(m_screen, "Visualizers");
+    m_oscViewer = new EnhancedWindow(m_screen, "Visualizers");
     m_oscViewer->setVisible(false);
     auto oscScrollPanel = new nanogui::VScrollPanel(m_oscViewer);
     m_oscViewer->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
@@ -517,7 +517,7 @@ synui::MainGUI::MainGUI(synui::MainWindow* a_window, syn::VoiceManager* a_vm, sy
     auto settingsScrollPanel = new nanogui::VScrollPanel(m_settingsEditor);
     settingsScrollPanel->setFixedHeight(400);
     m_settingsEditor->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
-    m_settingsFormHelper = std::make_shared<synui::SerializableFormHelper>(m_screen);
+    m_settingsFormHelper = std::make_shared<SerializableFormHelper>(m_screen);
     createSettingsEditor_(new nanogui::Widget(settingsScrollPanel), m_settingsFormHelper.get());
 
     /* Add a button for openning the settings editor window. */

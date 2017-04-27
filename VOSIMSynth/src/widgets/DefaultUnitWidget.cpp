@@ -16,8 +16,8 @@ synui::DefaultUnitWidget::DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceM
 
     ////
     // Setup grid layout
-    std::vector<int> rowSizes(syn::MAX(inputs.size(), outputs.size()) + 1, 0);
-    std::vector<int> colSizes{0, 0, 0};
+    vector<int> rowSizes(syn::MAX(inputs.size(), outputs.size()) + 1, 0);
+    vector<int> colSizes{0, 0, 0};
     // Create layout
     auto layout = new nanogui::AdvancedGridLayout(colSizes, rowSizes);
     layout->setColStretch(1, 1.0f);
@@ -33,7 +33,7 @@ synui::DefaultUnitWidget::DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceM
     m_titleTextBox = new nanogui::TextBox(this, "");
     m_titleTextBox->setEditable(true);
     m_titleTextBox->setVisible(false);
-    m_titleTextBox->setCallback([this, layout](const std::string& a_str) {
+    m_titleTextBox->setCallback([this, layout](const string& a_str) {
             if (a_str.empty())
                 return false;
             setName(a_str);
@@ -185,7 +185,7 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx) {
     Widget::draw(ctx);
 }
 
-void synui::DefaultUnitWidget::setName(const std::string& a_name) {
+void synui::DefaultUnitWidget::setName(const string& a_name) {
     UnitWidget::setName(a_name);
     m_titleLabel->setCaption(a_name);
     m_titleTextBox->setValue(a_name);
@@ -201,11 +201,33 @@ Eigen::Vector2i synui::DefaultUnitWidget::getOutputPortAbsPosition(int a_portId)
     return port->absolutePosition() + Vector2f{port->width(), port->height() * 0.5}.cast<int>();
 }
 
+int synui::DefaultUnitWidget::getInputPort(const Eigen::Vector2i& a_pos) {    
+    int i = 0;
+    for (auto inputLabel : m_inputLabels) {
+        if (inputLabel.second->contains(a_pos)) {
+            return i;
+        }
+        i++;
+    }
+    return -1;
+}
+
+int synui::DefaultUnitWidget::getOutputPort(const Eigen::Vector2i& a_pos) {
+    int i = 0;
+    for (auto outputLabel : m_outputLabels) {
+        if (outputLabel.second->contains(a_pos)) {
+            return i;
+        }
+        i++;
+    }
+    return -1;
+}
+
 Eigen::Vector2i synui::DefaultUnitWidget::preferredSize(NVGcontext* ctx) const {
     // Snap size to grid
     Vector2f pref_size = Widget::preferredSize(ctx).cast<float>();
-    Vector2f fixed_size = (pref_size / m_parentCircuit->getGridSpacing()).unaryExpr([](float a) { return ceil(a); });
-    fixed_size *= m_parentCircuit->getGridSpacing();
+    Vector2f fixed_size = (pref_size / m_parentCircuit->gridSpacing()).unaryExpr([](float a) { return ceil(a); });
+    fixed_size *= m_parentCircuit->gridSpacing();
     return fixed_size.cast<int>();
 }
 
@@ -253,49 +275,21 @@ bool synui::DefaultUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
         return true;
     }
 
-    // Check if an input port was clicked
-    for (auto inputLabel : m_inputLabels) {
-        if (inputLabel.second->contains(mousePos)) {
-            if (button == GLFW_MOUSE_BUTTON_LEFT) {
-                if (down) {
-                    triggerPortDrag_(inputLabel.first, false);
-                    return false;
-                }
-                triggerPortDrop_(inputLabel.first, false);
-                return false;
-            }
-        }
-    }
-
-    // Check if an output port was clicked
-    for (auto outputLabel : m_outputLabels) {
-        if (outputLabel.second->contains(mousePos)) {
-            if (button == GLFW_MOUSE_BUTTON_LEFT) {
-                if (down) {
-                    triggerPortDrag_(outputLabel.first, true);
-                    return false;
-                }
-                triggerPortDrop_(outputLabel.first, true);
-                return false;
-            }
-        }
-    }
-
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
         if (down) {
             // Open unit editor if mouse click is not captured above.
             triggerEditorCallback();
+            return true;
         }
-        return false;
     }
 
-    return false;
+    return true;
 }
 
 void synui::DefaultUnitWidget::onGridChange_() {
     auto l = static_cast<nanogui::AdvancedGridLayout*>(layout());
 
-    int rowHeight = m_parentCircuit->getGridSpacing();
+    int rowHeight = m_parentCircuit->gridSpacing();
 
     // Special sizing for title label (so grid point will be centered relative to port labels)
     if (m_titleLabel) {
@@ -306,7 +300,7 @@ void synui::DefaultUnitWidget::onGridChange_() {
         l->setRowSize(0, titleRowSize);
         m_titleLabel->setFontSize(titleRowFontSize);
     }
-    int portRowSize = m_parentCircuit->getGridSpacing();
+    int portRowSize = m_parentCircuit->gridSpacing();
     int portRowFontSize = portRowSize;
 
 

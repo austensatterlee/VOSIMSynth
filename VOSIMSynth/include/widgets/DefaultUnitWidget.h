@@ -29,7 +29,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "UnitWidget.h"
 
 namespace synui {
-    class DefaultUnitWidget : public synui::UnitWidget
+    class DefaultUnitWidget : public UnitWidget
     {
     public:
         DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId);
@@ -38,13 +38,14 @@ namespace synui {
         void setName(const std::string& a_name) override;;
         Eigen::Vector2i getInputPortAbsPosition(int a_portId) override;
         Eigen::Vector2i getOutputPortAbsPosition(int a_portId) override;
+        int getInputPort(const Eigen::Vector2i& a_pos) override;
+        int getOutputPort(const Eigen::Vector2i& a_pos) override;
         Eigen::Vector2i preferredSize(NVGcontext* ctx) const override;
 
         bool mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
 
     protected:
         void onGridChange_() override;
-
         nanogui::Label* m_titleLabel;
         nanogui::TextBox* m_titleTextBox;
         std::map<int, nanogui::Label*> m_inputLabels;

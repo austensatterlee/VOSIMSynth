@@ -52,7 +52,7 @@ namespace syn
             return singleton;
         }
 
-        virtual ~UnitFactory();
+        ~UnitFactory();
 
         /**
          * \brief Register a prototype unit with the factory. Prototype deletion will be taken care of upon

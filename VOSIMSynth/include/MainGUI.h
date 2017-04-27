@@ -70,7 +70,7 @@ namespace synui
         template <typename Type> 
         nanogui::detail::FormWidget<Type>* addSerializableVariable(const std::string &name, const std::string &label, const std::function<void(const Type &)> &setter, const std::function<Type()> &getter, bool editable = true)
         {
-            auto ret = nanogui::FormHelper::addVariable(label, setter, getter, editable);
+            auto ret = FormHelper::addVariable(label, setter, getter, editable);
             auto getterSerializer = [getter]()->json{
                 json j = getter();
                 return j;
@@ -114,7 +114,7 @@ namespace synui
     {
     public:
         MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf);
-        virtual ~MainGUI();
+        ~MainGUI();
         
         void setGLFWWindow(GLFWwindow* a_window);
 
@@ -144,17 +144,17 @@ namespace synui
         syn::UnitFactory* m_uf;
 
         // Widgets
-        synui::EnhancedWindow* m_buttonPanel;
-        synui::EnhancedWindow* m_settingsEditor; std::shared_ptr<synui::SerializableFormHelper> m_settingsFormHelper;
-        synui::EnhancedWindow* m_logViewer;
-        synui::EnhancedWindow* m_oscViewer;
+        EnhancedWindow* m_buttonPanel;
+        EnhancedWindow* m_settingsEditor; std::shared_ptr<SerializableFormHelper> m_settingsFormHelper;
+        EnhancedWindow* m_logViewer;
+        EnhancedWindow* m_oscViewer;
 
-        synui::EnhancedWindow* m_sidePanelL;
+        EnhancedWindow* m_sidePanelL;
         nanogui::TabWidget* m_tabWidget;
         nanogui::Widget* m_unitSelector;
         UnitEditorHost* m_unitEditorHost;
 
-        synui::EnhancedWindow* m_sidePanelR;
+        EnhancedWindow* m_sidePanelR;
         CircuitWidget* m_circuitWidget;
     };
 }

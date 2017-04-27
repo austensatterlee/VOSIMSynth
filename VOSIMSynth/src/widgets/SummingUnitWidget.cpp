@@ -33,6 +33,27 @@ Eigen::Vector2i synui::SummingUnitWidget::getOutputPortAbsPosition(int a_portId)
     return absolutePosition() + Vector2i{ size().x(), size().y()*0.5 };
 }
 
+int synui::SummingUnitWidget::getInputPort(const Eigen::Vector2i& a_pos) {
+    bool isOutputSelected = a_pos.x() > size().x()*0.5 && !isHandleSelected(a_pos);
+    const syn::Unit& unit = getUnit_();
+    if(!isOutputSelected && !isHandleSelected(a_pos)){
+        // Find a free input port
+        for (int i = 0; i < unit.numInputs(); i++) {
+            int inputId = unit.inputs().ids()[i];
+            if (unit.inputSource(inputId) == nullptr) {
+                return inputId;                
+            }
+        }
+    }
+    return -1;
+}
+int synui::SummingUnitWidget::getOutputPort(const Eigen::Vector2i& a_pos) {    
+    bool isOutputSelected = a_pos.x() > size().x()*0.5 && !isHandleSelected(a_pos);
+    if(isOutputSelected)
+        return 0;
+    return -1;
+}
+
 bool synui::SummingUnitWidget::isHandleSelected(const Vector2i& p) const
 {
     Vector2f center = size().cast<float>() * 0.5f;
@@ -122,48 +143,20 @@ void synui::SummingUnitWidget::draw(NVGcontext* ctx)
 
 Eigen::Vector2i synui::SummingUnitWidget::preferredSize(NVGcontext* ctx) const
 {
-    Vector2f pref_size = { m_parentCircuit->getGridSpacing() * 2, m_parentCircuit->getGridSpacing() * 2 };
+    Vector2f pref_size = { m_parentCircuit->gridSpacing() * 2, m_parentCircuit->gridSpacing() * 2 };
     return pref_size.cast<int>();
 }
 
 bool synui::SummingUnitWidget::mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers)
 {
     Vector2i mousePos = p - position();
-    bool isOutputSelected = mousePos.x() > size().x()*0.5 && !isHandleSelected(mousePos);
-    int selectedPort = isOutputSelected ? 0 : -1;
-    const syn::Unit& unit = getUnit_();
-
-    if (isOutputSelected)
-    {
-        selectedPort = 0;
-    }
-    else
-    {
-        // Find a free input port
-        for (int i = 0; i < unit.numInputs(); i++) {
-            int inputId = unit.inputs().ids()[i];
-            if (unit.inputSource(inputId) == nullptr) {
-                selectedPort = inputId;
-                break;
-            }
-        }
-    }  
 
     if (button == GLFW_MOUSE_BUTTON_LEFT)
     {
-        if (down && !isHandleSelected(mousePos) && selectedPort >= 0)
-        {
-            triggerPortDrag_(selectedPort, isOutputSelected);
-            return false;
-        }
-        if (!down && selectedPort >= 0) {
-            triggerPortDrop_(selectedPort, isOutputSelected);
-            return false;
-        }
         if (down)
         {
             triggerEditorCallback();
-            return false;
+            return true;
         }
     }
     else if (button == GLFW_MOUSE_BUTTON_RIGHT)

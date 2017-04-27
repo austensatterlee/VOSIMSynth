@@ -22,18 +22,15 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <vosimlib/common.h>
 #include <vosimlib/common_serial.h>
 
-namespace syn
-{
+namespace syn {
     class VoiceManager;
     class Unit;
 }
 
-namespace synui
-{
+namespace synui {
     class CircuitWidget;
 
-    class UnitWidget : public nanogui::Widget
-    {
+    class UnitWidget : public nanogui::Widget {
         friend class CircuitWidget;
     public:
         UnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId);
@@ -51,11 +48,21 @@ namespace synui
         virtual Eigen::Vector2i getInputPortAbsPosition(int a_portId) = 0;
 
         /**
+         * \returns The id of the input port containing the given position. If none, return -1.
+         */
+        virtual int getInputPort(const Eigen::Vector2i& a_pos) = 0;
+
+        /**
          * \brief Compute the coordinates of the output port with the given id.
          * \param a_portId The id of the requested output port, corresponding with the id of an output port on the associated syn::Unit.
          * \return Coordinates of the requested output port.
          */
         virtual Eigen::Vector2i getOutputPortAbsPosition(int a_portId) = 0;
+
+        /**
+         * \returns The id of the output port containing the given position. If none, return -1.
+         */
+        virtual int getOutputPort(const Eigen::Vector2i& a_pos) = 0;
 
         void setEditorCallback(std::function<void(syn::UnitTypeId, int)> a_callback) { m_editorCallback = a_callback; }
         void triggerEditorCallback() const { m_editorCallback(m_classIdentifier, m_unitId); }
@@ -71,8 +78,6 @@ namespace synui
         virtual void onGridChange_() = 0;
         const syn::Unit& getUnit_() const;
         bool promptForDelete_();
-        void triggerPortDrag_(int a_portId, bool a_isOutput);
-        void triggerPortDrop_(int a_portId, bool a_isOutput);
 
     protected:
         CircuitWidget* m_parentCircuit;

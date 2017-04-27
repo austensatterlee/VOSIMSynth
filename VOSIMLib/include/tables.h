@@ -47,6 +47,8 @@ namespace syn {
         LUT(const double* a_data, int a_size)
             : m_data(a_data),
               size(a_size) {}
+        
+        virtual ~LUT() {}
 
         double lerp(double phase) const {
             double index = static_cast<const T*>(this)->index(phase);
@@ -111,8 +113,6 @@ namespace syn {
               taps(a_taps),
               res(a_res) {}
 
-        virtual ~BlimpTable() { }
-
         BlimpTable(const BlimpTable& a_other)
             : BlimpTable(a_other.m_data, a_other.size, a_other.taps, a_other.res) {}
 
@@ -135,8 +135,6 @@ namespace syn {
             : ResampledTable(a_o.m_data, a_o.size, a_o.m_blimp_table_online, a_o.m_blimp_table_offline) {}
 
         void resample_tables();
-
-        virtual ~ResampledTable() { }
 
         /// Retrieve a single sample from the table at the specified phase, as if the table were resampled to have the given period.
         double getresampled(double phase, double period) const;

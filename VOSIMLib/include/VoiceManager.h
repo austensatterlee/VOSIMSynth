@@ -76,9 +76,7 @@ namespace syn
         {
             setBufferSize(m_bufferSize);
             setInternalBufferSize(m_internalBufferSize);
-        };
-
-        virtual ~VoiceManager() { }
+        }
 
         void MSFASTCALL tick(const double* a_left_input, const double* a_right_input, double* a_left_output, double* a_right_output) GCCFASTCALL;
 

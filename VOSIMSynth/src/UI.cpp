@@ -36,7 +36,7 @@ namespace synui
         nvgRestore(ctx);
     }
 
-    void drawTooltip(NVGcontext* a_ctx, const Eigen::Vector2i& a_pos, const std::string& a_str, double elapsed)
+    void drawTooltip(NVGcontext* a_ctx, const Vector2i& a_pos, const std::string& a_str, double elapsed)
     {
         int tooltipWidth = 150;
 
@@ -45,7 +45,7 @@ namespace synui
         nvgFontSize(a_ctx, 15.0f);
         nvgTextAlign(a_ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
         nvgTextLineHeight(a_ctx, 1.1f);
-        Eigen::Vector2i pos = a_pos;
+        Vector2i pos = a_pos;
 
         nvgTextBoxBounds(a_ctx, pos.x(), pos.y(), tooltipWidth*1.0f, a_str.c_str(), nullptr, bounds);
         int h = (bounds[2] - bounds[0]) / 2;

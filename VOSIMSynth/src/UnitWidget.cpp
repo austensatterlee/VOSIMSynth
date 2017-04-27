@@ -43,7 +43,7 @@ synui::UnitWidget::operator json() const
 synui::UnitWidget* synui::UnitWidget::load(const json& j)
 {
     if(j.find("name")!=j.end())
-        m_name = j["name"].get<std::string>();
+        m_name = j["name"].get<string>();
     return this;
 }
 
@@ -64,14 +64,4 @@ bool synui::UnitWidget::promptForDelete_()
         return true;
     }
     return false;
-}
-
-
-void synui::UnitWidget::triggerPortDrag_(int a_portId, bool a_isOutput)
-{
-    m_parentCircuit->startWireDraw_(m_unitId, a_portId, a_isOutput);
-}
-void synui::UnitWidget::triggerPortDrop_(int a_portId, bool a_isOutput)
-{
-    m_parentCircuit->endWireDraw_(m_unitId, a_portId, a_isOutput);
 }

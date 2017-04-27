@@ -34,7 +34,7 @@ namespace synui
     class ContextMenu : public nanogui::Widget
     {
     public:
-        typedef std::function<void(const std::string&, const T&)> ItemSelectCallback;
+        typedef std::function<void(const string&, const T&)> ItemSelectCallback;
 
         ContextMenu(Widget* a_parent, bool a_disposable, ItemSelectCallback a_callback = nullptr)
             : Widget(a_parent),
@@ -67,29 +67,29 @@ namespace synui
          * \param a_name The display text of the item
          * \param a_value The associated value of the item
          */
-        void addMenuItem(const std::string& a_name, const T& a_value);
-        void removeMenuItem(const std::string& a_name);
+        void addMenuItem(const string& a_name, const T& a_value);
+        void removeMenuItem(const string& a_name);
         void removeMenuItem(int a_index);
         void setCallback(ItemSelectCallback a_callback) { m_callback = a_callback; }
         ItemSelectCallback getCallback() const { return m_callback; }
 
-        bool mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
+        bool mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers) override;
         void draw(NVGcontext* ctx) override;
     protected:
-        std::pair<std::string, T>& getMenuItem_(const std::string& a_name);
+        std::pair<string, T>& getMenuItem_(const string& a_name);
     private:
         void _dispose();
     private:
         ItemSelectCallback m_callback;
-        std::vector<std::pair<std::string, T>> m_menuItems;
-        std::unordered_map<std::string, nanogui::Label*> m_itemMap;
+        vector<std::pair<string, T>> m_menuItems;
+        std::unordered_map<string, nanogui::Label*> m_itemMap;
         nanogui::GridLayout* m_gridLayout;
         bool m_disposable;
         bool m_activated;
     };
 
     template <typename T>
-    void ContextMenu<T>::addMenuItem(const std::string& a_name, const T& a_value)
+    void ContextMenu<T>::addMenuItem(const string& a_name, const T& a_value)
     {
         if (m_itemMap.find(a_name) != m_itemMap.end())
             removeMenuItem(a_name);
@@ -100,7 +100,7 @@ namespace synui
     }
 
     template <typename T>
-    void ContextMenu<T>::removeMenuItem(const std::string& a_name)
+    void ContextMenu<T>::removeMenuItem(const string& a_name)
     {
         int index = -1;
         for (auto& p : m_menuItems)
@@ -124,10 +124,10 @@ namespace synui
     }
 
     template <typename T>
-    bool ContextMenu<T>::mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers)
+    bool ContextMenu<T>::mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers)
     {
         if(!down){
-            Eigen::Vector2i mousePos = p - mPos;
+            Vector2i mousePos = p - mPos;
             for (const auto& w : m_itemMap)
             {
                 if (w.second->contains(mousePos))
@@ -174,7 +174,7 @@ namespace synui
 
         /* Highlight selected item */
         nanogui::Color highlightColor(0.15f, 1.0f);
-        Eigen::Vector2i mousePos = screen()->mousePos() - absolutePosition();
+        Vector2i mousePos = screen()->mousePos() - absolutePosition();
         for (const auto& w : m_itemMap)
         {
             if (w.second->contains(mousePos))
@@ -193,7 +193,7 @@ namespace synui
     }
 
     template <typename T>
-    std::pair<std::string, T>& ContextMenu<T>::getMenuItem_(const std::string& a_name)
+    std::pair<string, T>& ContextMenu<T>::getMenuItem_(const string& a_name)
     {
         int index = -1;
         for (auto& p : m_menuItems)

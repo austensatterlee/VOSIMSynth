@@ -31,60 +31,57 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <vosimlib/common_serial.h>
 #include <vosimlib/common.h>
 
-namespace syn
-{
+namespace syn {
     class VoiceManager;
     class UnitFactory;
     class Unit;
 }
 
-namespace synui
-{
+namespace synui {
     class MainWindow;
     class UnitWidget;
     class UnitEditorHost;
     class UnitEditor;
 }
 
-namespace synui
-{
+namespace synui {
     class CircuitWire;
     class CircuitWidget;
 
+    namespace cwstate {
+        class State;
+    }
+
     typedef std::function<UnitWidget*(CircuitWidget*, syn::VoiceManager*, int)> UnitWidgetConstructor;
 
-    class CircuitWidget : public nanogui::Widget
-    {
+    class CircuitWidget : public nanogui::Widget {
         friend class UnitWidget;
-        friend class SummingUnitWidget;
         friend class CircuitWire;
-        typedef std::pair<int, int> Port;
+        friend class cwstate::State;
     public:
-        struct GridCell
-        {
-            friend bool operator==(const GridCell& a_lhs, const GridCell& a_rhs)
-            {
+        typedef std::pair<int, int> Port;
+
+        struct GridCell {
+            friend bool operator==(const GridCell& a_lhs, const GridCell& a_rhs) {
                 return a_lhs.state == a_rhs.state && (a_lhs.state == Empty || a_lhs.ptr == a_rhs.ptr);
             }
 
             friend bool operator!=(const GridCell& a_lhs, const GridCell& a_rhs) { return !(a_lhs == a_rhs); }
 
-            operator bool() const
-            {
+            operator bool() const {
                 return state != Empty;
             }
 
-            enum
-            {
+            enum {
                 Empty,
                 Wire,
                 Unit
             } state;
+
             void* ptr;
         };
 
-        enum WireDrawStyle
-        {
+        enum WireDrawStyle {
             Straight = 0,
             Curved
         };
@@ -97,8 +94,8 @@ namespace synui
          * \param a_vm
          * \param a_uf
          */
-        CircuitWidget(nanogui::Widget* a_parent, synui::MainWindow* a_mainWindow, synui::UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf);
-        virtual ~CircuitWidget();
+        CircuitWidget(Widget* a_parent, MainWindow* a_mainWindow, UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf);
+        ~CircuitWidget();
 
         bool mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
         bool mouseMotionEvent(const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override;
@@ -118,14 +115,19 @@ namespace synui
          */
         Eigen::Vector2i fixToGrid(const Eigen::Vector2i& a_pixelLocation) const;
 
-        int getGridSpacing() const { return m_gridSpacing; }
+        int gridSpacing() const { return m_gridSpacing; }
 
-        syn::VoiceManager* voiceManager() const { return m_vm; }
+        Grid2D<GridCell>& grid() { return m_grid; }
+        std::vector<CircuitWire*>& wires() { return m_wires; }
+        syn::VoiceManager& vm() const { return *m_vm; }
+        UnitEditorHost& unitEditorHost() const { return *m_unitEditorHost; }
+        std::unordered_set<UnitWidget*>& unitSelection() { return m_unitSelection; }
+        std::unordered_map<int, UnitWidget*>& unitWidgets() { return m_unitWidgets; }
 
         WireDrawStyle wireDrawStyle() const { return m_wireDrawStyle; }
         void setWireDrawStyle(WireDrawStyle a_newStyle) { m_wireDrawStyle = a_newStyle; }
 
-        template<typename UnitType>
+        template <typename UnitType>
         void registerUnitWidget(UnitWidgetConstructor a_func) { m_registeredUnitWidgets[UnitType("").getClassIdentifier()] = a_func; }
 
         void performLayout(NVGcontext* ctx) override;
@@ -150,6 +152,36 @@ namespace synui
          */
         bool checkUnitPos(UnitWidget* a_unitWidget, const Eigen::Vector2i& a_newPos);
 
+
+        /**
+         * \brief Creates a unit widget of the specified classId and associate it with the given unitId.
+         */
+        UnitWidget* createUnitWidget(syn::UnitTypeId a_classId, int a_unitId);
+
+        /**
+         * \brief Delete the given unit widget.
+         * Note that this method only affects the GUI. The actual connection on the real-time thread is not affected.
+         */
+        void deleteUnitWidget(UnitWidget* widget);
+
+        /**
+         * \brief Delete the given wire widget.
+         * Note that this method only affects the GUI. The actual connection on the real-time thread is not affected.
+         */
+        void deleteWireWidget(CircuitWire* wire);
+
+        /**
+         * \brief Sends a message to the real-time thread to create a new connection between two units.
+         */
+        void createConnection(const Port& a_inputPort, const Port& a_outputPort);
+
+        void deleteConnection(const Port& a_inputPort, const Port& a_outputPort);
+
+        /**
+         * \brief Combine the two wires into a new unit.
+         */
+        void createJunction(CircuitWire* toWire, CircuitWire* fromWire, const Eigen::Vector2i& pos, syn::Unit* a_unit);
+
     protected:
 
         /**
@@ -163,136 +195,137 @@ namespace synui
          */
         void createUnit_(syn::UnitTypeId a_classId);
 
-        /**
-         * \brief Called upon successful creation of a unit on the real-time thread. Creates the associated
-         * unit widget and places the CircuitWidget in the `CreatingUnit` state.
-         * \param a_unitId Id of the newly created unit.
-         */
-        void onUnitCreated_(syn::UnitTypeId a_classId, int a_unitId);
-
-        /**
-         * \brief Creates a unit widget of the specified classId and associate it with the given unitId.
-         */
-        UnitWidget* createUnitWidget_(syn::UnitTypeId a_classId, int a_unitId);
-
-        /**
-         * \brief Try to end the `CreatingUnit` state by setting the position of the widget being placed.
-         * \returns true if unit was placed, false if the position was not valid.
-         */
-        bool endCreateUnit_(const Eigen::Vector2i& a_pos);
-
         void deleteUnit_(int a_unitId);
-
-        void deleteConnection_(const Port& a_inputPort, const Port& a_outputPort);
-
-        /**
-         * \brief Sends a message to the real-time thread to create a new connection between two units.
-         */
-        void createConnection_(const Port& a_inputPort, const Port& a_outputPort);
 
         /**
          * \brief End the `DrawingWire` state.
          */
         void onConnectionCreated_(const Port& a_inputPort, const Port& a_outputPort);
 
-        /**
-         * \brief Place the CircuitWidget in the `DrawingWire` state.
-         * \param a_isOutput Whether or not the specified port is an output port.
-         */
-        void startWireDraw_(int a_unitId, int a_portId, bool a_isOutput);
+    private:
 
-        /**
-         * \brief Finishes the wire currently being drawn and attempts to create the connection on the real-time thread if the wire is valid.
-         * \param a_isOutput Whether or not the specified port is an output port.
-         */
-        void endWireDraw_(int a_unitId, int a_portId, bool a_isOutput);
-
-        /**
-         * \brief Place the CircuitWidget in the `MovingUnit` state.
-         * During this state, all unit widgets in the selection set are moved.
-         * \param a_start The location of the mouse; used as a reference point for determining movement amounts.
-         */
-        void startUnitMove_(const Eigen::Vector2i& a_start);
-
-        /**
-         * \brief Tentatively update the positions of the units being moved for visual feedback.
-         * Should only be called while in the `MovingUnit` state.
-         * \param a_current The current location of the mouse.
-         */
-        void updateUnitMove_(const Eigen::Vector2i& a_current);
-
-        /**
-         * \brief Try to commit the unit widgets to their new positions. Ends the `MovingUnit` state.
-         * Should only be called while in the `MovingUnit` state.
-         * \param a_end The current location of the mouse.
-         */
-        void endUnitMove_(const Eigen::Vector2i& a_end);
+        void _changeState(cwstate::State* a_state);
 
     private:
-        /**
-         * \brief Delete the given wire widget.
-         * Note that this method only affects the GUI. The actual connection on the real-time thread is not affected.
-         */
-        void _deleteWireWidget(CircuitWire* wire);
-        /**
-         * \brief Delete the given unit widget.
-         * Note that this method only affects the GUI. The actual connection on the real-time thread is not affected.
-         */
-        void _deleteUnitWidget(UnitWidget* widget);
-
-        /**
-         * \brief Combine the two wires into a the ports of a new unit.
-         */
-        void _createJunction(CircuitWire* toWire, CircuitWire* fromWire, const Eigen::Vector2i& pos, syn::Unit* a_unit);
-        
-    private:
-        synui::MainWindow* m_window;
-        synui::UnitEditorHost* m_unitEditorHost;
+        MainWindow* m_window;
+        UnitEditorHost* m_unitEditorHost;
         syn::UnitFactory* m_uf;
         syn::VoiceManager* m_vm;
-        std::unordered_map<syn::UnitTypeId, UnitWidgetConstructor > m_registeredUnitWidgets;
-        synui::Grid2D<GridCell> m_grid;
+        std::unordered_map<syn::UnitTypeId, UnitWidgetConstructor> m_registeredUnitWidgets;
+        Grid2D<GridCell> m_grid;
         int m_gridSpacing;
         WireDrawStyle m_wireDrawStyle;
+        std::unordered_set<UnitWidget*> m_unitSelection;
+        std::unique_ptr<cwstate::State> m_state;
+        bool m_uninitialized;
 
-        enum class State
-        {
-            Uninitialized,
-            Idle,
-            CreatingUnit,
-            MovingUnit,
-            DrawingWire,
-            DrawingSelection
-        } m_state;
-
-        struct CreatingUnitState
-        {
-            int unitId;
-            bool isValid;
-            synui::UnitWidget* widget;
-        } m_creatingUnitState;
         std::unordered_map<int, UnitWidget*> m_unitWidgets;
 
-        struct MovingUnitState
-        {
-            std::unordered_map<int, Eigen::Vector2i> originalPositions;
-            Eigen::Vector2i start;
-        } m_movingUnitState;
+        struct DrawingWireState { } m_drawingWireState;
 
-        struct DrawingWireState
-        {
-            bool startedFromOutput;
-            CircuitWire* wire;
-        } m_drawingWireState;
-        double m_wireHighlightTime;
-        CircuitWire* m_highlightedWire;
         std::vector<CircuitWire*> m_wires;
-
-        struct DrawingSelectionState
-        {
-            Eigen::Vector2i startPos;
-            Eigen::Vector2i endPos;
-        } m_drawingSelectionState;
-        std::unordered_set<UnitWidget*> m_selection;
     };
+
+    namespace cwstate {
+        class State {
+        public:
+            virtual ~State() {}
+            virtual bool mouseButtonEvent(CircuitWidget& cw, const Eigen::Vector2i& p, int button, bool down, int modifiers) = 0;
+            virtual bool mouseMotionEvent(CircuitWidget& cw, const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) = 0;
+            virtual void draw(CircuitWidget& cw, NVGcontext* ctx) = 0;
+            virtual void enter(CircuitWidget& cw, State& oldState) = 0;
+            virtual void exit(CircuitWidget& cw, State& newState) = 0;
+        protected:
+            void changeState(CircuitWidget& cw, State& state) {
+                cw._changeState(&state);
+            }
+        };
+
+        class IdleState : public State {
+            double m_wireHighlightTime;
+            CircuitWire* m_highlightedWire;
+        public:
+            IdleState()
+                : m_wireHighlightTime(0),
+                  m_highlightedWire(nullptr) {}
+
+            bool mouseButtonEvent(CircuitWidget& cw, const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
+            bool mouseMotionEvent(CircuitWidget& cw, const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override;
+
+            void draw(CircuitWidget& cw, NVGcontext* ctx) override;
+            void enter(CircuitWidget& cw, State& oldState) override {}
+            void exit(CircuitWidget& cw, State& newState) override {}
+        };
+
+        /**
+         * `MovingUnit` state.
+         * 
+         *  During this state, all unit widgets in the selection set are moved.
+         */
+        class MovingUnitState : public State {
+            std::unordered_map<int, Eigen::Vector2i> m_origPositions;
+            Eigen::Vector2i m_start; //<! The location of the mouse; used as a reference point for determining movement amounts.
+        public:
+            bool mouseButtonEvent(CircuitWidget& cw, const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
+            bool mouseMotionEvent(CircuitWidget& cw, const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override;
+            void draw(CircuitWidget& cw, NVGcontext* ctx) override;
+            void enter(CircuitWidget& cw, State& oldState) override;
+            void exit(CircuitWidget& cw, State& newState) override {};
+        };
+
+        class DrawingSelectionState : public State {
+            Eigen::Vector2i m_startPos;
+            Eigen::Vector2i m_endPos;
+        public:
+            bool mouseButtonEvent(CircuitWidget& cw, const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
+            bool mouseMotionEvent(CircuitWidget& cw, const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override;
+            void draw(CircuitWidget& cw, NVGcontext* ctx) override;
+            void enter(CircuitWidget& cw, State& oldState) override;
+            void exit(CircuitWidget& cw, State& newState) override {};
+        };
+
+        class DrawingWireState : public State {
+            bool m_startedFromOutput;
+            bool m_endedOnOutput;
+            CircuitWidget::Port m_startPort;
+            CircuitWidget::Port m_endPort;
+            CircuitWire* m_wire;
+        public:
+            DrawingWireState(const CircuitWidget::Port& a_port, bool a_isOutput)
+                : m_startedFromOutput(a_isOutput),
+                  m_endedOnOutput(a_isOutput),
+                  m_startPort(a_port),
+                  m_endPort({-1,-1}),
+                  m_wire(nullptr) {}
+
+            ~DrawingWireState();
+
+            bool mouseButtonEvent(CircuitWidget& cw, const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
+            bool mouseMotionEvent(CircuitWidget& cw, const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override {return false;}
+            void draw(CircuitWidget& cw, NVGcontext* ctx) override;
+            void enter(CircuitWidget& cw, State& oldState) override;
+            void exit(CircuitWidget& cw, State& newState) override;
+        };
+
+        class CreatingUnitState : public State {
+            int m_unitId;
+            bool m_isValid;
+            UnitWidget* m_widget;
+            std::function<void(bool)> onExit;
+        public:
+            CreatingUnitState(int a_unitId, std::function<void(bool)> a_onExit = [](){})
+                : m_unitId(a_unitId),
+                  m_isValid(true),
+                  m_widget(nullptr), 
+                  onExit(a_onExit) {
+                m_unitId = a_unitId;
+            }
+
+            bool mouseButtonEvent(CircuitWidget& cw, const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
+            bool mouseMotionEvent(CircuitWidget& cw, const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override {return false;};
+            void draw(CircuitWidget& cw, NVGcontext* ctx) override;
+            void enter(CircuitWidget& cw, State& oldState) override;
+            void exit(CircuitWidget& cw, State& newState) override { onExit(); };
+        };
+    }
 }

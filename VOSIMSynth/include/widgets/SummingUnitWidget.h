@@ -29,7 +29,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "UnitWidget.h"
 
 namespace synui {
-    class SummingUnitWidget : public synui::UnitWidget
+    class SummingUnitWidget : public UnitWidget
     {
 
     public:
@@ -38,8 +38,9 @@ namespace synui {
         void draw(NVGcontext* ctx) override;
 
         Eigen::Vector2i getInputPortAbsPosition(int a_portId) override;
-
         Eigen::Vector2i getOutputPortAbsPosition(int a_portId) override;
+        int getInputPort(const Eigen::Vector2i& a_pos) override;
+        int getOutputPort(const Eigen::Vector2i& a_pos) override;
 
         Eigen::Vector2i preferredSize(NVGcontext* ctx) const override;
 
@@ -48,7 +49,7 @@ namespace synui {
         bool isHandleSelected(const Eigen::Vector2i& p) const;
 
     protected:
-        void onGridChange_() override {};
+        void onGridChange_() override {}
 
     protected:
         float m_handleRadiusRatio;
