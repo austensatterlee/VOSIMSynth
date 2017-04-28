@@ -27,13 +27,13 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __UI__
 #define __UI__
+#include "DSPMath.h"
 #include <eigen/Core>
 #include <nanogui/nanogui.h>
 #include <functional>
 #include <vector>
 #include <memory>
-#include "DSPMath.h"
-#include "Containers.h"
+#include <IPlug/Containers.h>
 #include "entypo.h"
 
 namespace synui

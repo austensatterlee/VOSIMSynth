@@ -20,7 +20,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __VOSIMSYNTH__
 #define __VOSIMSYNTH__
 
-#include "IPlug_include_in_plug_hdr.h"
+#include <IPlug/IPlug_include_in_plug_hdr.h>
 
 namespace synui {
     class CircuitWidget;

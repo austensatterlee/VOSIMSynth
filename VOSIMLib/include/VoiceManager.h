@@ -24,8 +24,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "Unit.h"
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/lockfree/policies.hpp>
-#include <boost/circular_buffer.hpp>
-#include <Containers.h>
+#include <IPlug/Containers.h>
 #include <map>
 
 #define MAX_VOICEMANAGER_MSG_QUEUE_SIZE 1024

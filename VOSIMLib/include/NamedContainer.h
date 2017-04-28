@@ -210,8 +210,7 @@ namespace syn
          * Increment the given index and check if it is out of bounds.
          * \return The incremented offset, or -1 if it is out of bounds.
          */
-        int next_offset(int a_offset) const
-        {
+        static int next_offset(int a_offset) {
             a_offset++;
             return a_offset >= MAXSIZE ? -1 : a_offset;
         }
@@ -220,8 +219,7 @@ namespace syn
          * Decrement the given index and check if it is out of bounds.
          * \return The decremented offset, or -1 if it is out of bounds.
          */
-        int prev_offset(int a_offset) const
-        {
+        static int prev_offset(int a_offset) {
             a_offset--;
             return a_offset < 0 ? -1 : a_offset;
         }

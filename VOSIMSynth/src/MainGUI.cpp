@@ -1,14 +1,14 @@
 #include "MainGUI.h"
 #include "UnitFactory.h"
-#include <nanogui/nanogui.h>
-#include <nanogui/theme.h>
 #include "MainWindow.h"
 #include "VoiceManager.h"
 #include "CircuitWidget.h"
 #include "UnitEditor.h"
 #include "Logger.h"
-#include "Log.h"
 #include "OscilloscopeWidget.h"
+#include <nanogui/nanogui.h>
+#include <nanogui/theme.h>
+#include <IPlug/Log.h>
 
 namespace synui {
     class EnhancedWindow : public nanogui::Window {

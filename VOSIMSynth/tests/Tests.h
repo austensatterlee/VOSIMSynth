@@ -1,2 +1,2 @@
 #pragma once
-#include "include/catch.hpp"
+#include "catch/catch.hpp"

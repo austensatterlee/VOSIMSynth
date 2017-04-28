@@ -2,7 +2,7 @@
 #define __MIDIRECEIVER__
 
 #include "VOSIMSynth.h"
-#include "IMidiQueue.h"
+#include <IPlug/IMidiQueue.h>
 
 struct IMidiMsg;
 

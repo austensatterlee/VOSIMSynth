@@ -316,7 +316,7 @@ namespace synui
         /**
          * \brief Converts a grid coordinate (row, col) into a pixel coordinate (x,y).
          */
-        Eigen::Vector2i toPixel(const Grid2DPoint& a_pt, int pixelsPerCell) const { return a_pt.reverse() * pixelsPerCell; }
+        static Eigen::Vector2i toPixel(const Grid2DPoint& a_pt, int pixelsPerCell) { return a_pt.reverse() * pixelsPerCell; }
 
         /**
          * \brief Return points that are adjacent to the one provided.

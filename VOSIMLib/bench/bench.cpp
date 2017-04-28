@@ -1,12 +1,12 @@
 #define NONIUS_RUNNER
-#include <nonius.h++>
+#include <nonius/nonius.h++>
 
 #include "tables.h"
 #include "DSPMath.h"
 #include "NamedContainer.h"
 #include "Unit.h"
-#include "units/StateVariableFilter.h"
 #include "Circuit.h"
+#include "units/StateVariableFilter.h"
 #include "units/Oscillator.h"
 #include "units/MidiUnits.h"
 

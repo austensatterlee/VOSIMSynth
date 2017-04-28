@@ -107,7 +107,7 @@ void syn::TrapStateVariableFilter::process_()
     m_damp = 1.0 / res;
 
     double input = READ_INPUT(0);
-    double LPOut = 0, HPOut = 0, BPOut = 0, NOut = 0;
+    double LPOut = 0, BPOut = 0;
     int i = c_oversamplingFactor;
     while (i--)
     {
@@ -117,8 +117,8 @@ void syn::TrapStateVariableFilter::process_()
         m_prevBPOut = BPOut;
         m_prevLPOut = LPOut;
     }
-    HPOut = input - m_damp * BPOut - LPOut;
-    NOut = HPOut + LPOut;
+    double HPOut = input - m_damp * BPOut - LPOut;
+    double NOut = HPOut + LPOut;
     WRITE_OUTPUT(m_oLP, LPOut);
     WRITE_OUTPUT(m_oHP, HPOut);
     WRITE_OUTPUT(m_oBP, BPOut);
