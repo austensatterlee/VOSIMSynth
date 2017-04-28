@@ -71,7 +71,8 @@ syn::Unit* syn::UnitFactory::createUnit(syn::UnitTypeId a_classIdentifier, const
 
 std::string syn::UnitFactory::generateUnitName(syn::UnitTypeId a_classIdentifier) const
 {
-    return incrementSuffix(getFactoryPrototype(a_classIdentifier)->name);    
+    const FactoryPrototype* p = getFactoryPrototype(a_classIdentifier);
+    return p->name+std::to_string(p->build_count);
 }
 
 bool syn::UnitFactory::hasClassId(syn::UnitTypeId a_classIdentifier) const {

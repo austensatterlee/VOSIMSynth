@@ -405,20 +405,25 @@ void synui::CircuitWidget::draw(NVGcontext* ctx) {
     nvgRestore(ctx);
 }
 
-void synui::CircuitWidget::loadPrototype(syn::UnitTypeId a_classId) { createUnit_(a_classId); }
+void synui::CircuitWidget::loadPrototype(syn::UnitTypeId a_classId) { createUnit(a_classId); }
 
 Eigen::Vector2i synui::CircuitWidget::fixToGrid(const Vector2i& a_pixelLocation) const { return m_grid.toPixel(m_grid.fromPixel(a_pixelLocation, m_gridSpacing), m_gridSpacing); }
 
 void synui::CircuitWidget::performLayout(NVGcontext* ctx) {
     std::unordered_map<int, Vector2i> oldSizes;
     for (auto w : m_unitWidgets) {
+        if (!w.second->visible())
+            continue;
         oldSizes[w.first] = w.second->size();
+        // update layout
         w.second->onGridChange_();
         // reset size so it doesn't affect next layout computation
         w.second->setSize({0,0});
     }
     Widget::performLayout(ctx);
     for (auto w : m_unitWidgets) {
+        if (!w.second->visible())
+            continue;
         if ((oldSizes[w.first].array() != w.second->size().array()).any())
             updateUnitPos(w.second, w.second->position(), true);
     }
@@ -504,21 +509,19 @@ void synui::CircuitWidget::createInputOutputUnits_() {
     syn::UnitTypeId outputClassId = circ->getUnit(outputUnitId).getClassIdentifier();
 
     UnitWidget* inWidget = createUnitWidget(inputClassId, inputUnitId);
-    m_unitWidgets[inputUnitId] = inWidget;
     UnitWidget* outWidget = createUnitWidget(outputClassId, outputUnitId);
-    m_unitWidgets[outputUnitId] = outWidget;
     screen()->performLayout();
     updateUnitPos(inWidget, {0.5 * inWidget->width(), height() * 0.5 - inWidget->height() * 0.5});
     updateUnitPos(outWidget, {width() - 1.5 * outWidget->width(), height() * 0.5 - outWidget->height() * 0.5});
 }
 
-void synui::CircuitWidget::createUnit_(syn::UnitTypeId a_classId) {
-    auto unit = syn::UnitFactory::instance().getFactoryPrototype(a_classId)->prototype;
+void synui::CircuitWidget::createUnit(syn::UnitTypeId a_classId) {
+    auto unit = syn::UnitFactory::instance().createUnit(a_classId);
     auto f = [this, unit]() {
+                int unitId = m_vm->getPrototypeCircuit()->addUnit(unit);
                 for (int i = 0; i < m_vm->getMaxVoices(); i++) {
                     m_vm->getVoiceCircuit(i)->addUnit(unit->clone());
                 }
-                int unitId = m_vm->getPrototypeCircuit()->addUnit(unit->clone());
                 // Queue return message
                 auto f = [this, unitId]() {
                             _changeState(new cwstate::CreatingUnitState(unitId));
@@ -534,19 +537,25 @@ synui::UnitWidget* synui::CircuitWidget::createUnitWidget(syn::UnitTypeId a_clas
         widget = new DefaultUnitWidget(this, m_vm, a_unitId);
     else
         widget = m_registeredUnitWidgets[a_classId](this, m_vm, a_unitId);
-    widget->setName(m_uf->generateUnitName(a_classId));
+    widget->setName(syn::UnitFactory::instance().getFactoryPrototype(a_classId)->name);
     widget->setEditorCallback([&](syn::UnitTypeId classId, int unitId) {
             if (m_unitEditorHost->selectedIndex() >= 0)
                 m_unitWidgets[m_unitEditorHost->getActiveUnitId()]->setHighlighted(false);
             m_unitEditorHost->activateEditor(classId, unitId);
             m_unitWidgets[unitId]->setHighlighted(true);
         });
-    // Performing the layout is necesarry so we know what size the widget will be.
-    screen()->performLayout();
+    m_unitWidgets[a_unitId] = widget;
+    // Update the widget's size
+    Vector2i pref = widget->preferredSize(screen()->nvgContext()), fix = widget->fixedSize();
+    widget->setSize(Vector2i(
+        fix[0] ? fix[0] : pref[0],
+        fix[1] ? fix[1] : pref[1]
+    ));
+    widget->performLayout(screen()->nvgContext());
     return widget;
 }
 
-void synui::CircuitWidget::deleteUnit_(int a_unitId) {
+void synui::CircuitWidget::deleteUnit(int a_unitId) {
     // Disallow removing the input and output units.
     if (a_unitId == m_vm->getPrototypeCircuit()->getInputUnitId() || a_unitId == m_vm->getPrototypeCircuit()->getOutputUnitId())
         return;
@@ -581,7 +590,7 @@ void synui::CircuitWidget::deleteConnection(const Port& a_inputPort, const Port&
         return;
 
     // Send message to RT thread to delete the connection
-    auto f = [this, a_outputPort, a_inputPort]() {        
+    auto f = [this, a_outputPort, a_inputPort]() {
                 for (int i = 0; i < m_vm->getMaxVoices(); i++) {
                     syn::Circuit* circuit = m_vm->getVoiceCircuit(i);
                     circuit->disconnectInternal(a_outputPort.first, a_outputPort.second, a_inputPort.first, a_inputPort.second);
@@ -595,8 +604,8 @@ void synui::CircuitWidget::deleteConnection(const Port& a_inputPort, const Port&
                             updateUnitPos(fromWidget, fromWidget->position(), true);
                             updateUnitPos(toWidget, toWidget->position(), true);
                         };
-                m_window->queueExternalMessage(syn::MakeCommand(f));                
-            };    
+                m_window->queueExternalMessage(syn::MakeCommand(f));
+            };
     m_vm->queueAction(syn::MakeCommand(f));
 }
 
@@ -612,15 +621,15 @@ void synui::CircuitWidget::createConnection(const Port& a_inputPort, const Port&
 
                 // Queue return message
                 auto f = [this, a_outputPort, a_inputPort]() {
-                            this->createWire_(a_inputPort, a_outputPort);
+                            this->createWireWidget(a_inputPort, a_outputPort);
                         };
-                m_window->queueExternalMessage(syn::MakeCommand(f));                
+                m_window->queueExternalMessage(syn::MakeCommand(f));
             };
 
     m_vm->queueAction(syn::MakeCommand(f));
 }
 
-void synui::CircuitWidget::createWire_(const Port& a_inputPort, const Port& a_outputPort) {
+void synui::CircuitWidget::createWireWidget(const Port& a_inputPort, const Port& a_outputPort) {
     // Remove any wire widgets that already point to that unit input
     for (int i = 0; i < m_wires.size(); i++) {
         auto wire = m_wires[i];
@@ -724,54 +733,35 @@ void synui::CircuitWidget::deleteUnitWidget(UnitWidget* widget) {
     m_unitWidgets.erase(unitId);
 }
 
-void synui::CircuitWidget::createJunction(CircuitWire* a_toWire, CircuitWire* a_fromWire, const Vector2i& a_pos, syn::Unit* a_unit) {
-    auto f = [this, a_toWire, a_fromWire, a_unit, a_pos]() {
-                int unitId;
-                for (int i = -1; i < m_vm->getMaxVoices(); i++) {
-                    syn::Circuit* circuit = m_vm->getVoiceCircuit(i);
-                    unitId = circuit->addUnit(a_unit->clone());
-                    // Connect both wires to the sum unit
-                    circuit->connectInternal(a_fromWire->getOutputPort().first, a_fromWire->getOutputPort().second, unitId, 0);
-                    circuit->connectInternal(a_toWire->getOutputPort().first, a_toWire->getOutputPort().second, unitId, 1);
-                    // Replace toWire's connection with one from sum unit
-                    circuit->connectInternal(unitId, 0, a_toWire->getInputPort().first, a_toWire->getInputPort().second);
+void synui::CircuitWidget::createJunction(CircuitWire* a_toWire, CircuitWire* a_fromWire, const Vector2i& a_pos, syn::UnitTypeId a_classId) {
+    auto unit = syn::UnitFactory::instance().createUnit(a_classId);
+    auto f = [this, unit, a_toWire, a_fromWire, a_pos]() {
+                int unitId = m_vm->getPrototypeCircuit()->addUnit(unit);
+                for (int i = 0; i < m_vm->getMaxVoices(); i++) {
+                    m_vm->getVoiceCircuit(i)->addUnit(unit->clone());
                 }
-
                 // Queue return message
-                auto f = [this, unitId, a_unit, a_toWire, a_fromWire, a_pos]() {
-                            // Create + place unit widget
-                            auto classId = a_unit->getClassIdentifier();
-                            delete a_unit;
-                            UnitWidget* uw = createUnitWidget(classId, unitId);
+                auto f = [this, unit, unitId, a_toWire, a_fromWire, a_pos]() {
+                            UnitWidget* uw = createUnitWidget(unit->getClassIdentifier(), unitId);
                             Vector2i pos = a_pos - Vector2i::Ones() * gridSpacing();
+                            auto onSuccess = [this, unitId, a_fromWire, a_toWire]() {
+                                        // Connect wires to the new unit.
+                                        createConnection({unitId, 0}, a_fromWire->getOutputPort());
+                                        createConnection({unitId, 1}, a_toWire->getOutputPort());
+                                        // Connect the new unit to the original wire's destination
+                                        createConnection(a_toWire->getInputPort(), {unitId,0});
+                                    };
                             if (checkUnitPos(uw, pos)) {
-                                m_unitWidgets[unitId] = uw;
                                 updateUnitPos(uw, pos);
                                 uw->triggerEditorCallback();
-                                // Finish drawing wire
-                                createWire_({unitId, 0}, a_fromWire->getOutputPort());
-                                // Add the wire going into the sum unit...
-                                createWire_({unitId, 1}, a_toWire->getOutputPort());
-                                // and a wire going from the sum unit to the original input port
-                                createWire_(a_toWire->getInputPort(), {unitId,0});
+                                onSuccess();
                             } else {
-                                removeChild(uw);
-                                auto onWidgetPlaced = [this, unitId, a_toWire, a_fromWire](bool a_success) {
-                                            if (a_success) {
-                                                // Finish drawing wire
-                                                createWire_({unitId, 0}, a_fromWire->getOutputPort());
-                                                // Add the wire going into the sum unit...
-                                                createWire_({unitId, 1}, a_toWire->getOutputPort());
-                                                // and a wire going from the sum unit to the original input port
-                                                createWire_(a_toWire->getInputPort(), {unitId,0});
-                                            }
-                                        };
-                                _changeState(new cwstate::CreatingUnitState(unitId, onWidgetPlaced));
+                                deleteUnitWidget(uw);
+                                _changeState(new cwstate::CreatingUnitState(unitId, onSuccess));
                             }
                         };
                 m_window->queueExternalMessage(syn::MakeCommand(f));
             };
-
     m_window->queueExternalMessage(syn::MakeCommand(f));
 }
 
@@ -937,14 +927,9 @@ bool synui::cwstate::DrawingWireState::mouseButtonEvent(CircuitWidget& cw, const
             fromWire->setOutputPort(m_wire->getOutputPort());
             ContextMenu<int>* cm = new ContextMenu<int>(&cw, true, [&cw, fromWire, toWire, mousePos](const string& a_item, const int& a_value) {
                     if (a_value == 0) {
-                        syn::Unit* u = new syn::SummerUnit("");
-                        /// TODO: Remove unit names on the real-time thread.
-                        u->setName(syn::UnitFactory::instance().generateUnitName(u->getClassIdentifier()));
-                        cw.createJunction(toWire, fromWire, mousePos, u);
+                        cw.createJunction(toWire, fromWire, mousePos, syn::SummerUnit::classIdentifier());
                     } else if (a_value == 1) {
-                        syn::Unit* u = new syn::GainUnit("");
-                        u->setName(syn::UnitFactory::instance().generateUnitName(u->getClassIdentifier()));
-                        cw.createJunction(toWire, fromWire, mousePos, u);
+                        cw.createJunction(toWire, fromWire, mousePos, syn::GainUnit::classIdentifier());
                     }
                 });
             cm->addMenuItem("Sum", 0);
@@ -964,6 +949,7 @@ bool synui::cwstate::DrawingWireState::mouseButtonEvent(CircuitWidget& cw, const
 bool synui::cwstate::CreatingUnitState::mouseButtonEvent(CircuitWidget& cw, const Eigen::Vector2i& p, int button, bool down, int modifiers) {
     if (button == GLFW_MOUSE_BUTTON_LEFT && down) {
         Vector2i a_pos = p - cw.position();
+        a_pos -= m_widget->size()/2;
         // Place the unit if the position is valid
         if (cw.checkUnitPos(m_widget, a_pos)) {
             m_widget->setVisible(true);
@@ -972,23 +958,14 @@ bool synui::cwstate::CreatingUnitState::mouseButtonEvent(CircuitWidget& cw, cons
             m_widget->triggerEditorCallback();
             m_isValid = true;
             changeState(cw, *new IdleState());
-            return true;
+        } else {
+            cw.deleteUnit(m_unitId);
+            m_widget = nullptr;
+            m_isValid = false;
+            changeState(cw, *new IdleState());
         }
-        cw.deleteUnitWidget(m_widget);
-        m_widget = nullptr;
-        m_isValid = false;
-        changeState(cw, *new IdleState());
     } else if (button == GLFW_MOUSE_BUTTON_RIGHT && down) {
-        // Delete the wire widgets connected to this unit
-        for (int i = 0; i < cw.wires().size(); i++) {
-            auto wire = cw.wires()[i];
-            if (wire->getInputPort().first == m_unitId || wire->getOutputPort().first == m_unitId) {
-                cw.deleteWireWidget(wire.get());
-                i--;
-            }
-        }
-        cw.removeChild(m_widget);
-        cw.unitWidgets().erase(m_unitId);
+        cw.deleteUnit(m_unitId);
         m_widget = nullptr;
         m_isValid = false;
         changeState(cw, *new IdleState());
@@ -998,6 +975,7 @@ bool synui::cwstate::CreatingUnitState::mouseButtonEvent(CircuitWidget& cw, cons
 
 void synui::cwstate::CreatingUnitState::draw(CircuitWidget& cw, NVGcontext* ctx) {
     Vector2i mousePos = cw.screen()->mousePos() - cw.absolutePosition();
+    mousePos -= m_widget->size()/2;
     UnitWidget* w = m_widget;
     m_isValid = cw.checkUnitPos(m_widget, mousePos);
     nvgBeginPath(ctx);
@@ -1014,7 +992,14 @@ void synui::cwstate::CreatingUnitState::enter(CircuitWidget& cw, State& oldState
     m_widget = cw.createUnitWidget(classId, m_unitId);
     m_widget->setVisible(false);
     m_widget->setEnabled(false);
-    cw.unitWidgets()[m_unitId] = m_widget;
+}
+
+void synui::cwstate::CreatingUnitState::exit(CircuitWidget& cw, State& newState) {
+    if (m_isValid) {
+        m_onSuccess();
+    } else {
+        m_onFailure();
+    }
 }
 
 bool synui::cwstate::MovingUnitState::mouseButtonEvent(CircuitWidget& cw, const Eigen::Vector2i& p, int button, bool down, int modifiers) {

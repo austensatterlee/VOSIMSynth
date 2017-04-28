@@ -58,7 +58,7 @@ bool synui::UnitWidget::promptForDelete_()
         {
             if (x == 0)
             {
-                m_parentCircuit->deleteUnit_(m_unitId);
+                m_parentCircuit->deleteUnit(m_unitId);
             }
         });
         return true;

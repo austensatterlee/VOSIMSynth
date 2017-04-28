@@ -66,7 +66,7 @@ namespace syn {
             int intPart = index;
             double fracPart = index - intPart;
             if (intPart < size - 1) {
-                return m_data[intPart] * (1 - fracPart) + m_data[intPart + 1] * fracPart;
+                return m_data[intPart] + (m_data[intPart + 1] - m_data[intPart]) * fracPart;
             }
             if (intPart == size - 1) {
                 return m_data[intPart];

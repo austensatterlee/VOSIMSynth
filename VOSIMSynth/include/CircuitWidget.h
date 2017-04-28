@@ -30,6 +30,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <nanogui/nanogui.h>
 #include <vosimlib/common_serial.h>
 #include <vosimlib/common.h>
+#include "../../libs/eigen/eigen/src/Core/util/ForwardDeclarations.h"
 
 namespace syn {
     class VoiceManager;
@@ -95,7 +96,7 @@ namespace synui {
          * \param a_uf
          */
         CircuitWidget(Widget* a_parent, MainWindow* a_mainWindow, UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf);
-       
+
         bool mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
         bool mouseMotionEvent(const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override;
 
@@ -164,6 +165,12 @@ namespace synui {
         void deleteUnitWidget(UnitWidget* widget);
 
         /**
+         * \brief Create a wire widget.
+         * Note that this method only affects the GUI. The actual connection on the real-time thread is not affected.
+         */
+        void createWireWidget(const Port& a_inputPort, const Port& a_outputPort);
+
+        /**
          * \brief Delete the given wire widget.
          * Note that this method only affects the GUI. The actual connection on the real-time thread is not affected.
          */
@@ -179,7 +186,15 @@ namespace synui {
         /**
          * \brief Combine the two wires into a new unit.
          */
-        void createJunction(CircuitWire* a_toWire, CircuitWire* a_fromWire, const Eigen::Vector2i& a_pos, syn::Unit* a_unit);
+        void createJunction(CircuitWire* a_toWire, CircuitWire* a_fromWire, const Eigen::Vector2i& a_pos, syn::UnitTypeId a_classId);
+
+        /**
+         * \brief Sends a request to the real-time thread to create a new unit.
+         * \param a_classId Class id of the type of the unit to create.
+         */
+        void createUnit(syn::UnitTypeId a_classId);
+
+        void deleteUnit(int a_unitId);
 
     protected:
 
@@ -187,19 +202,6 @@ namespace synui {
          * \brief Create widgets for input/output units.
          */
         void createInputOutputUnits_();
-
-        /**
-         * \brief Sends a request to the real-time thread to create a new unit.
-         * \param a_classId Prototype name of the unit to create. Corresponds to a prototype name in the unit factory.
-         */
-        void createUnit_(syn::UnitTypeId a_classId);
-
-        void deleteUnit_(int a_unitId);
-
-        /**
-         * \brief Create a wire widget.
-         */
-        void createWire_(const Port& a_inputPort, const Port& a_outputPort);
 
     private:
 
@@ -298,31 +300,34 @@ namespace synui {
                   m_wire(nullptr) {}
 
             bool mouseButtonEvent(CircuitWidget& cw, const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
-            bool mouseMotionEvent(CircuitWidget& cw, const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override {return false;}
+            bool mouseMotionEvent(CircuitWidget& cw, const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override { return false; }
             void draw(CircuitWidget& cw, NVGcontext* ctx) override;
             void enter(CircuitWidget& cw, State& oldState) override;
             void exit(CircuitWidget& cw, State& newState) override;
         };
 
         class CreatingUnitState : public State {
+            typedef std::function<void(void)> ExitFunc;
             int m_unitId;
             bool m_isValid;
             UnitWidget* m_widget;
-            std::function<void(bool)> onExit;
+            ExitFunc m_onSuccess;
+            ExitFunc m_onFailure;
         public:
-            CreatingUnitState(int a_unitId, std::function<void(bool)> a_onExit = [](bool success){})
+            CreatingUnitState(int a_unitId, ExitFunc a_onSuccess = [] {}, ExitFunc a_onFailure = [] {})
                 : m_unitId(a_unitId),
                   m_isValid(true),
-                  m_widget(nullptr), 
-                  onExit(a_onExit) {
+                  m_widget(nullptr),
+                  m_onSuccess(a_onSuccess),
+                  m_onFailure(a_onFailure) {
                 m_unitId = a_unitId;
             }
 
             bool mouseButtonEvent(CircuitWidget& cw, const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
-            bool mouseMotionEvent(CircuitWidget& cw, const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override {return false;};
+            bool mouseMotionEvent(CircuitWidget& cw, const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override { return false; };
             void draw(CircuitWidget& cw, NVGcontext* ctx) override;
             void enter(CircuitWidget& cw, State& oldState) override;
-            void exit(CircuitWidget& cw, State& newState) override { onExit(m_isValid); }
+            void exit(CircuitWidget& cw, State& newState) override;
         };
     }
 }

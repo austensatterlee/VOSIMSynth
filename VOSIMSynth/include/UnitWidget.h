@@ -79,6 +79,7 @@ namespace synui {
         const syn::Unit& getUnit_() const;
         bool promptForDelete_();
 
+    
     protected:
         CircuitWidget* m_parentCircuit;
         syn::VoiceManager* m_vm;

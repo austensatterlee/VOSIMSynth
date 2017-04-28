@@ -349,7 +349,7 @@ namespace syn
         Command* msg;
         while (m_queuedActions.pop(msg)) {
             (*msg)();
-            msg->destroy();
+            delete msg;
         }
     }
 

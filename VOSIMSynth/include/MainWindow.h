@@ -114,7 +114,6 @@ namespace synui
         void _createGLFWWindow();        
         void _runLoop();
         void _flushMessageQueues();
-        void _processMessage(syn::Command* a_msg);
 
     private:
         GLFWwindow* m_window;

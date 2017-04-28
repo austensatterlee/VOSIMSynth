@@ -205,19 +205,13 @@ void synui::MainWindow::_flushMessageQueues()
     while (m_guiInternalMsgQueue.pop(msg))
     {
         (*msg)();
-        msg->destroy();
+        delete msg;
     }
     while (m_guiExternalMsgQueue.pop(msg))
     {
         (*msg)();
-        msg->destroy();
+        delete msg;
     }
-}
-
-void synui::MainWindow::_processMessage(syn::Command* a_msg)
-{
-    (*a_msg)();
-    a_msg->destroy();
 }
 
 bool synui::MainWindow::queueInternalMessage(syn::Command* a_msg) {
