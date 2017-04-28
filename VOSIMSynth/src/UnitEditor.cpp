@@ -1,6 +1,7 @@
 #include "UnitEditor.h"
-#include "VoiceManager.h"
 #include "UI.h"
+#include <VoiceManager.h>
+#include <Command.h>
 
 void synui::UnitEditor::_build()
 {
@@ -211,71 +212,48 @@ void synui::UnitEditor::_build()
     }
 }
 
-void synui::UnitEditor::setParamValue(int a_paramId, double a_val) const
+void synui::UnitEditor::setParamValue(int a_paramId, double a_val)
 {
-    syn::RTMessage* msg = new syn::RTMessage();
-    msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
-    {
-        UnitEditor* self;
-        double val;
-        int unitId, paramId;
-        GetArgs(a_data, 0, self, unitId, paramId, val);
-        a_circuit->getUnit(unitId).param(paramId).set(val);
-        if (a_isLast)
-            self->m_isDirty = true;
-    };
-    PutArgs(&msg->data, this, m_unitId, a_paramId, a_val);
-    m_vm->queueAction(msg);
+    auto f = [this, a_paramId, a_val]() {
+                for (int i = -1; i < m_vm->getMaxVoices(); i++) {
+                    m_vm->getVoiceCircuit(i)->getUnit(m_unitId).param(a_paramId).set(a_val);
+                }
+                m_isDirty = true;
+            };
+    m_vm->queueAction(syn::MakeCommand(f));
 }
 
-void synui::UnitEditor::setParamNorm(int a_paramId, double a_normval) const
+void synui::UnitEditor::setParamNorm(int a_paramId, double a_normval)
 {
-    syn::RTMessage* msg = new syn::RTMessage();
-    msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
-    {
-        double val;
-        int unitId, paramId;
-        int pos = 0;
-        pos = a_data->Get<int>(&unitId, pos);
-        pos = a_data->Get<int>(&paramId, pos);
-        pos = a_data->Get<double>(&val, pos);
-        a_circuit->getUnit(unitId).param(paramId).setNorm(val);
-    };
-    msg->data.Put<int>(&m_unitId);
-    msg->data.Put<int>(&a_paramId);
-    msg->data.Put<double>(&a_normval);
-    m_vm->queueAction(msg);
+    auto f = [this, a_paramId, a_normval]() {
+                for (int i = -1; i < m_vm->getMaxVoices(); i++) {
+                    m_vm->getVoiceCircuit(i)->getUnit(m_unitId).param(a_paramId).setNorm(a_normval);
+                }
+                m_isDirty = true;
+            };
+    m_vm->queueAction(syn::MakeCommand(f));
 }
 
-void synui::UnitEditor::nudgeParam(int a_paramId, double a_logScale, double a_linScale) const
+void synui::UnitEditor::nudgeParam(int a_paramId, double a_logScale, double a_linScale)
 {
-    syn::RTMessage* msg = new syn::RTMessage();
-    PutArgs(&msg->data, m_unitId, a_paramId, a_logScale, a_linScale);
-    msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
-    {
-        double logScale, linScale;
-        int unitId, paramId;
-        GetArgs(a_data, 0, unitId, paramId, logScale, linScale);
-        a_circuit->getUnit(unitId).param(paramId).nudge(logScale, linScale);
-    };
-    m_vm->queueAction(msg);
+    auto f = [this, a_paramId, a_logScale, a_linScale]() {
+                for (int i = -1; i < m_vm->getMaxVoices(); i++) {
+                    m_vm->getVoiceCircuit(i)->getUnit(m_unitId).param(a_paramId).nudge(a_logScale, a_linScale);
+                }
+                m_isDirty = true;
+            };
+    m_vm->queueAction(syn::MakeCommand(f));
 }
 
-void synui::UnitEditor::setParamFromString(int a_paramId, const string& a_str) const
+void synui::UnitEditor::setParamFromString(int a_paramId, const string& a_str)
 {
-    syn::RTMessage* msg = new syn::RTMessage();
-    PutArgs(&msg->data, this, a_str, m_unitId, a_paramId);
-    msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data)
-    {
-        UnitEditor* self;
-        string valStr;
-        int unitId, paramId;
-        GetArgs(a_data, 0, self, valStr, unitId, paramId);
-        a_circuit->getUnit(unitId).param(paramId).setFromString(valStr);
-        if (a_isLast)
-            self->m_isDirty = true;
-    };
-    m_vm->queueAction(msg);
+    auto f = [this, a_paramId, a_str]() {
+                for (int i = -1; i < m_vm->getMaxVoices(); i++) {
+                    m_vm->getVoiceCircuit(i)->getUnit(m_unitId).param(a_paramId).setFromString(a_str);
+                }
+                m_isDirty = true;
+            };
+    m_vm->queueAction(syn::MakeCommand(f));
 }
 
 void synui::UnitEditor::draw(NVGcontext* ctx)

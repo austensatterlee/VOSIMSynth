@@ -95,8 +95,7 @@ namespace synui {
          * \param a_uf
          */
         CircuitWidget(Widget* a_parent, MainWindow* a_mainWindow, UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf);
-        ~CircuitWidget();
-
+       
         bool mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
         bool mouseMotionEvent(const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override;
 
@@ -118,7 +117,7 @@ namespace synui {
         int gridSpacing() const { return m_gridSpacing; }
 
         Grid2D<GridCell>& grid() { return m_grid; }
-        std::vector<CircuitWire*>& wires() { return m_wires; }
+        std::vector<std::shared_ptr<CircuitWire>>& wires() { return m_wires; }
         syn::VoiceManager& vm() const { return *m_vm; }
         UnitEditorHost& unitEditorHost() const { return *m_unitEditorHost; }
         std::unordered_set<UnitWidget*>& unitSelection() { return m_unitSelection; }
@@ -180,7 +179,7 @@ namespace synui {
         /**
          * \brief Combine the two wires into a new unit.
          */
-        void createJunction(CircuitWire* toWire, CircuitWire* fromWire, const Eigen::Vector2i& pos, syn::Unit* a_unit);
+        void createJunction(CircuitWire* a_toWire, CircuitWire* a_fromWire, const Eigen::Vector2i& a_pos, syn::Unit* a_unit);
 
     protected:
 
@@ -198,9 +197,9 @@ namespace synui {
         void deleteUnit_(int a_unitId);
 
         /**
-         * \brief End the `DrawingWire` state.
+         * \brief Create a wire widget.
          */
-        void onConnectionCreated_(const Port& a_inputPort, const Port& a_outputPort);
+        void createWire_(const Port& a_inputPort, const Port& a_outputPort);
 
     private:
 
@@ -223,7 +222,7 @@ namespace synui {
 
         struct DrawingWireState { } m_drawingWireState;
 
-        std::vector<CircuitWire*> m_wires;
+        std::vector<std::shared_ptr<CircuitWire>> m_wires;
     };
 
     namespace cwstate {
@@ -236,18 +235,18 @@ namespace synui {
             virtual void enter(CircuitWidget& cw, State& oldState) = 0;
             virtual void exit(CircuitWidget& cw, State& newState) = 0;
         protected:
-            void changeState(CircuitWidget& cw, State& state) {
+            void changeState(CircuitWidget& cw, State& state) const {
                 cw._changeState(&state);
             }
         };
 
         class IdleState : public State {
+            std::shared_ptr<CircuitWire> m_highlightedWire;
             double m_wireHighlightTime;
-            CircuitWire* m_highlightedWire;
         public:
             IdleState()
-                : m_wireHighlightTime(0),
-                  m_highlightedWire(nullptr) {}
+                : m_highlightedWire(nullptr),
+                  m_wireHighlightTime(0) {}
 
             bool mouseButtonEvent(CircuitWidget& cw, const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
             bool mouseMotionEvent(CircuitWidget& cw, const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override;
@@ -289,7 +288,7 @@ namespace synui {
             bool m_endedOnOutput;
             CircuitWidget::Port m_startPort;
             CircuitWidget::Port m_endPort;
-            CircuitWire* m_wire;
+            std::shared_ptr<CircuitWire> m_wire;
         public:
             DrawingWireState(const CircuitWidget::Port& a_port, bool a_isOutput)
                 : m_startedFromOutput(a_isOutput),
@@ -297,8 +296,6 @@ namespace synui {
                   m_startPort(a_port),
                   m_endPort({-1,-1}),
                   m_wire(nullptr) {}
-
-            ~DrawingWireState();
 
             bool mouseButtonEvent(CircuitWidget& cw, const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
             bool mouseMotionEvent(CircuitWidget& cw, const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override {return false;}
@@ -313,7 +310,7 @@ namespace synui {
             UnitWidget* m_widget;
             std::function<void(bool)> onExit;
         public:
-            CreatingUnitState(int a_unitId, std::function<void(bool)> a_onExit = [](){})
+            CreatingUnitState(int a_unitId, std::function<void(bool)> a_onExit = [](bool success){})
                 : m_unitId(a_unitId),
                   m_isValid(true),
                   m_widget(nullptr), 
@@ -325,7 +322,7 @@ namespace synui {
             bool mouseMotionEvent(CircuitWidget& cw, const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override {return false;};
             void draw(CircuitWidget& cw, NVGcontext* ctx) override;
             void enter(CircuitWidget& cw, State& oldState) override;
-            void exit(CircuitWidget& cw, State& newState) override { onExit(); };
+            void exit(CircuitWidget& cw, State& newState) override { onExit(m_isValid); }
         };
     }
 }

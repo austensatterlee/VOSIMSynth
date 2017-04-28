@@ -67,10 +67,10 @@ namespace synui
             }
         }
 
-        void setParamValue(int a_paramId, double a_val) const;
-        void setParamNorm(int a_paramId, double a_normval) const;
-        void nudgeParam(int a_paramId, double a_logScale, double a_linScale) const;
-        void setParamFromString(int a_paramId, const string& a_str) const;
+        void setParamValue(int a_paramId, double a_val);
+        void setParamNorm(int a_paramId, double a_normval);
+        void nudgeParam(int a_paramId, double a_logScale, double a_linScale);
+        void setParamFromString(int a_paramId, const string& a_str);
 
         void draw(NVGcontext* ctx) override;
 

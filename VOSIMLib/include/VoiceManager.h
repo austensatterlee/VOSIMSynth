@@ -25,7 +25,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/lockfree/policies.hpp>
 #include <boost/circular_buffer.hpp>
-#include <Containers.h>
 #include <map>
 
 #define MAX_VOICEMANAGER_MSG_QUEUE_SIZE 1024
@@ -36,33 +35,22 @@ using std::string;
 using boost::lockfree::spsc_queue;
 using boost::lockfree::capacity;
 
-namespace syn
-{
-    /**
-     * \brief Used to pass messages to a voice manager via VoiceManager::queueAction.
-     *
-     * The action function pointer will be called once for each voice (with the corresponding circuit passed as the first parameter).
-     * On the last voice, the second parameter will be true.
-     * The third parameter is a pointer to the ByteChunk stored in this structure, which is useful for passing arguments.
-     */
-    struct VOSIMLIB_API RTMessage
-    {
-        void (*action)(Circuit*, bool, ByteChunk*);
-        ByteChunk data;
-    };
+namespace syn {
+    
+    class Command;
 
-    class VOSIMLIB_API VoiceManager
-    {
+    class VOSIMLIB_API VoiceManager {
     public:
-        enum VoiceStealingPolicy
-        {
+        enum VoiceStealingPolicy {
             Oldest = 0,
             Newest,
             Lowest,
             Highest
         };
+
     public:
-        VoiceManager() :
+        VoiceManager()
+            :
             m_queuedActions{MAX_VOICEMANAGER_MSG_QUEUE_SIZE},
             m_bufferSize(1),
             m_internalBufferSize(1),
@@ -72,8 +60,7 @@ namespace syn
             m_garbageList(MAX_VOICES),
             m_instrument{"main"},
             m_voiceStealingPolicy(Oldest),
-            m_legato(false)
-        {
+            m_legato(false) {
             setBufferSize(m_bufferSize);
             setInternalBufferSize(m_internalBufferSize);
         }
@@ -88,7 +75,7 @@ namespace syn
          * 
          * \returns True if the message was pushed onto the queue, false if the queue was full.
          */
-        bool queueAction(RTMessage* a_action);
+        bool queueAction(Command* a_action);
 
         unsigned getTickCount() const;
 
@@ -116,21 +103,21 @@ namespace syn
         void setMaxVoices(int a_newMax);
 
         vector<int> getActiveVoiceIndices() const;
-		vector<int> getReleasedVoiceIndices() const;
-		vector<int> getIdleVoiceIndices() const;
+        vector<int> getReleasedVoiceIndices() const;
+        vector<int> getIdleVoiceIndices() const;
 
         int getMaxVoices() const;
 
-        int getLowestVoiceIndex(bool a_preferReleased=false) const;
-        int getNewestVoiceIndex(bool a_preferReleased=false) const;
-        int getOldestVoiceIndex(bool a_preferReleased=false) const;
-        int getHighestVoiceIndex(bool a_preferReleased=false) const;
+        int getLowestVoiceIndex(bool a_preferReleased = false) const;
+        int getNewestVoiceIndex(bool a_preferReleased = false) const;
+        int getOldestVoiceIndex(bool a_preferReleased = false) const;
+        int getHighestVoiceIndex(bool a_preferReleased = false) const;
 
         void onIdle();
 
         /**
          * Retrieves a unit from a specific voice circuit.
-         * If the given voice id is negative, the unit is retrieved from the prototype circuit.
+         * If \p a_voiceId is negative, the unit is retrieved from the prototype circuit.
          */
         Unit& getUnit(int a_id, int a_voiceId = -1);
         const Unit& getUnit(int a_id, int a_voiceId = -1) const;
@@ -138,6 +125,9 @@ namespace syn
         Circuit* getPrototypeCircuit();
         const Circuit* getPrototypeCircuit() const;
 
+        /**
+         * Retrieve the specified voice circuit. Returns the prototype circuit if \p a_voiceId is negative.
+         */
         Circuit* getVoiceCircuit(int a_voiceId);
         const Circuit* getVoiceCircuit(int a_voiceId) const;
 
@@ -145,7 +135,7 @@ namespace syn
 
         VoiceStealingPolicy getVoiceStealingPolicy() const { return m_voiceStealingPolicy; }
         void setVoiceStealingPolicy(VoiceStealingPolicy a_newPolicy) { m_voiceStealingPolicy = a_newPolicy; }
-        
+
         bool getLegato() const { return m_legato; }
         void setLegato(bool a_newLegato) { m_legato = a_newLegato; }
 
@@ -154,11 +144,6 @@ namespace syn
          * Processes all actions from the action queue
          */
         void _flushActionQueue();
-
-        /**
-         * Processes the next action from the action queue
-         */
-        void _processAction(RTMessage* a_msg);
 
         int _createVoice(int a_note, int a_velocity);
 
@@ -170,7 +155,7 @@ namespace syn
         typedef std::vector<int> VoiceIndexList;
         typedef map<int, std::vector<int>> VoiceMap;
 
-        spsc_queue<RTMessage*> m_queuedActions;
+        spsc_queue<Command*> m_queuedActions;
 
         vector<Circuit> m_circuits;
         int m_bufferSize; ///< size of the buffers that will be written to by VoiceManager::tick

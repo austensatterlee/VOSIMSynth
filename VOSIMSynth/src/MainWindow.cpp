@@ -1,7 +1,9 @@
 #include "MainWindow.h"
 #include "MainGUI.h"
+#include <Log.h>
+#include <Command.h>
+
 #include <GLFW/glfw3.h>
-#include "Log.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -173,8 +175,6 @@ void synui::MainWindow::_runLoop()
     m_gui->draw();
 }
 
-void synui::MainWindow::queueInternalMessage(GUIMessage* a_msg) { m_guiInternalMsgQueue.push(a_msg); }
-
 synui::MainWindow::operator json()
 {
     if (m_gui)
@@ -201,24 +201,40 @@ void synui::MainWindow::reset()
 
 void synui::MainWindow::_flushMessageQueues()
 {
-    GUIMessage* msg;
+    syn::Command* msg;
     while (m_guiInternalMsgQueue.pop(msg))
     {
-        _processMessage(msg);
+        (*msg)();
+        msg->destroy();
     }
     while (m_guiExternalMsgQueue.pop(msg))
     {
-        _processMessage(msg);
+        (*msg)();
+        msg->destroy();
     }
 }
 
-void synui::MainWindow::_processMessage(GUIMessage* a_msg)
+void synui::MainWindow::_processMessage(syn::Command* a_msg)
 {
-    a_msg->action(this, &a_msg->data);
-    delete a_msg;
+    (*a_msg)();
+    a_msg->destroy();
 }
 
-void synui::MainWindow::queueExternalMessage(GUIMessage* a_msg) { m_guiExternalMsgQueue.push(a_msg); }
+bool synui::MainWindow::queueInternalMessage(syn::Command* a_msg) {
+    if (!m_guiInternalMsgQueue.write_available()) {
+        return false;
+    }
+    m_guiInternalMsgQueue.push(a_msg);
+    return true;
+}
+
+bool synui::MainWindow::queueExternalMessage(syn::Command* a_msg) {
+    if (!m_guiExternalMsgQueue.write_available()) {
+        return false;
+    }
+    m_guiExternalMsgQueue.push(a_msg);
+    return true;
+}
 
 bool synui::MainWindow::OpenWindow(HWND a_system_window)
 {

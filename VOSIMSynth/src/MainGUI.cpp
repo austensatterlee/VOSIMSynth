@@ -1,14 +1,16 @@
 #include "MainGUI.h"
-#include "UnitFactory.h"
-#include <nanogui/nanogui.h>
-#include <nanogui/theme.h>
 #include "MainWindow.h"
 #include "VoiceManager.h"
 #include "CircuitWidget.h"
 #include "UnitEditor.h"
 #include "Logger.h"
-#include "Log.h"
 #include "OscilloscopeWidget.h"
+
+#include <Command.h>
+#include <UnitFactory.h>
+#include <Log.h>
+#include <nanogui/nanogui.h>
+#include <nanogui/theme.h>
 
 namespace synui {
     class EnhancedWindow : public nanogui::Window {
@@ -211,79 +213,44 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
 
     helper->addVariable<int>("Internal buffer size",
         [this, helper](const int& size) {
-            syn::RTMessage* msg = new syn::RTMessage;
-            PutArgs(&msg->data, m_vm, size, helper);
-            msg->action = [](syn::Circuit*, bool a_isLast, ByteChunk* a_data) {
-                        if (a_isLast) {
-                            syn::VoiceManager* vm;
-                            int internalBufferSize;
-                            nanogui::FormHelper* helper;
-                            GetArgs(a_data, 0, vm, internalBufferSize, helper);
-                            vm->setInternalBufferSize(internalBufferSize);
-                            helper->refresh();
-                        }
+            auto f = [this, size, helper]() {
+                        m_vm->setInternalBufferSize(size);
+                        helper->refresh();                        
                     };
-            m_vm->queueAction(msg);
+            m_vm->queueAction(syn::MakeCommand(f));
         }, [this]() {
             return m_vm->getInternalBufferSize();
         });
 
     helper->addSerializableVariable<int>("max_voices", "Max voices",
         [this, helper](const int& maxVoices) {
-            syn::RTMessage* msg = new syn::RTMessage();
-            msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data) {
-                        if (a_isLast) {
-                            syn::VoiceManager* vm;
-                            int maxVoices;
-                            SerializableFormHelper* helper;
-                            GetArgs(a_data, 0, vm, helper, maxVoices);
-                            vm->setMaxVoices(maxVoices);
-                            helper->refresh();
-                        }
+            auto f = [this, maxVoices, helper]() {
+                        m_vm->setMaxVoices(maxVoices);
+                        helper->refresh();                        
                     };
-
-            PutArgs(&msg->data, m_vm, helper, maxVoices);
-            m_vm->queueAction(msg);
+            m_vm->queueAction(syn::MakeCommand(f));
         }, [this]() {
             return m_vm->getMaxVoices();
         });
 
     helper->addSerializableVariable<bool>("legato", "Legato",
-        [this, helper](const bool& legato) {
-            syn::RTMessage* msg = new syn::RTMessage();
-            msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data) {
-                        if (a_isLast) {
-                            syn::VoiceManager* vm;
-                            bool legato;
-                            SerializableFormHelper* helper;
-                            GetArgs(a_data, 0, vm, helper, legato);
-                            vm->setLegato(legato);
-                            helper->refresh();
-                        }
+        [this, helper](const bool& legato) {            
+            auto f = [this, legato, helper]() {
+                        m_vm->setLegato(legato);
+                        helper->refresh();                        
                     };
-
-            PutArgs(&msg->data, m_vm, helper, legato);
-            m_vm->queueAction(msg);
+            m_vm->queueAction(syn::MakeCommand(f));
         }, [this]() {
             return m_vm->getLegato();
         });
 
     helper->addVariable<syn::VoiceManager::VoiceStealingPolicy>("Voice Stealing",
-        [this, helper](const syn::VoiceManager::VoiceStealingPolicy& policy) {
-            syn::RTMessage* msg = new syn::RTMessage();
-            msg->action = [](syn::Circuit* a_circuit, bool a_isLast, ByteChunk* a_data) {
-                        if (a_isLast) {
-                            syn::VoiceManager* vm;
-                            syn::VoiceManager::VoiceStealingPolicy policy;
-                            SerializableFormHelper* helper;
-                            GetArgs(a_data, 0, vm, helper, policy);
-                            vm->setVoiceStealingPolicy(policy);
-                            helper->refresh();
-                        }
+        [this, helper](const syn::VoiceManager::VoiceStealingPolicy& policy) {                
+            auto f = [this, policy, helper]() {
+                        m_vm->setVoiceStealingPolicy(policy);
+                        helper->refresh();                        
                     };
-
-            PutArgs(&msg->data, m_vm, helper, policy);
-            m_vm->queueAction(msg);
+            m_vm->queueAction(syn::MakeCommand(f));
         }, [this]() {
             return m_vm->getVoiceStealingPolicy();
         })->setItems({"Oldest", "Newest", "Highest", "Lowest"});

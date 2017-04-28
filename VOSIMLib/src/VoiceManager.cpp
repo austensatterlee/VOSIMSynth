@@ -18,6 +18,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "VoiceManager.h"
+#include "Command.h"
 
 namespace syn
 {
@@ -332,7 +333,7 @@ namespace syn
         _flushActionQueue();
     }
 
-    bool VoiceManager::queueAction(RTMessage* a_msg) {
+    bool VoiceManager::queueAction(Command* a_msg) {
         if(!m_queuedActions.write_available()){
             return false;
         }
@@ -345,19 +346,11 @@ namespace syn
     }
 
     void VoiceManager::_flushActionQueue() {
-        RTMessage* msg;
+        Command* msg;
         while (m_queuedActions.pop(msg)) {
-            _processAction(msg);
-            delete msg;
+            (*msg)();
+            msg->destroy();
         }
-    }
-
-    void VoiceManager::_processAction(RTMessage* a_msg) {
-        // Apply action to all voices
-        for (int i = 0; i < m_circuits.size(); i++) {
-            a_msg->action(&m_circuits[i], false, &a_msg->data);
-        }
-        a_msg->action(&m_instrument, true, &a_msg->data);
     }
 
     Circuit* VoiceManager::getPrototypeCircuit() {
@@ -370,12 +363,12 @@ namespace syn
 
     Circuit* VoiceManager::getVoiceCircuit(int a_voiceId)
     {
-        return &m_circuits[a_voiceId];
+        return a_voiceId<0 ? &m_instrument : &m_circuits[a_voiceId];
     }
 
     const Circuit* VoiceManager::getVoiceCircuit(int a_voiceId) const
     {
-        return &m_circuits[a_voiceId];
+        return a_voiceId<0 ? &m_instrument : &m_circuits[a_voiceId];
     }
 
     void VoiceManager::setPrototypeCircuit(const Circuit& a_circ) {

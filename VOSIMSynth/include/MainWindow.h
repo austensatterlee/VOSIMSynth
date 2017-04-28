@@ -50,6 +50,10 @@ Copyright 2016, Austen Satterlee
 
 #define MAX_GUI_MSG_QUEUE_SIZE 64
 
+namespace syn {
+    class Command;
+}
+
 using boost::lockfree::spsc_queue;
 using boost::lockfree::capacity;
 
@@ -59,12 +63,6 @@ namespace synui
 {
     class MainWindow;
     class MainGUI;
-
-    struct GUIMessage
-    {
-        void(*action)(MainWindow*, ByteChunk*);
-        ByteChunk data;
-    };
 
     class MainWindow
     {
@@ -90,9 +88,9 @@ namespace synui
         /// Resize the system window and the GUI
         void resize(int w, int h);
         /// Queue a task (to be called only from the real-time thread)
-        void queueExternalMessage(GUIMessage* a_msg);
+        bool queueExternalMessage(syn::Command* a_msg);
         /// Queue a task (to be called only from the GUI thread)
-        void queueInternalMessage(GUIMessage* a_msg);
+        bool queueInternalMessage(syn::Command* a_msg);
 
         /// Serialize GUI
         operator nlohmann::json();
@@ -116,7 +114,7 @@ namespace synui
         void _createGLFWWindow();        
         void _runLoop();
         void _flushMessageQueues();
-        void _processMessage(GUIMessage* a_msg);
+        void _processMessage(syn::Command* a_msg);
 
     private:
         GLFWwindow* m_window;
@@ -127,8 +125,8 @@ namespace synui
         MainGUI* m_gui;
         nlohmann::json m_guiState;
 
-        spsc_queue<GUIMessage*> m_guiInternalMsgQueue;
-        spsc_queue<GUIMessage*> m_guiExternalMsgQueue;
+        spsc_queue<syn::Command*> m_guiInternalMsgQueue;
+        spsc_queue<syn::Command*> m_guiExternalMsgQueue;
     };
 }
 #endif
