@@ -91,7 +91,7 @@ namespace syn
 
     int Unit::velocity() const { return m_midiData.velocity; }
 
-    const NamedContainer<OutputPort, 8>& Unit::outputs() const { return m_outputPorts; }
+    const StrMap<OutputPort, 8>& Unit::outputs() const { return m_outputPorts; }
 
     int Unit::numParams() const { return static_cast<int>(m_parameters.size()); }
 
@@ -109,7 +109,7 @@ namespace syn
 
     const string& Unit::paramName(int a_id) const { return m_parameters.getNameFromId(a_id); }
 
-    const NamedContainer<UnitParameter, MAX_PARAMS>& Unit::parameters() const { return m_parameters; }
+    const StrMap<UnitParameter, MAX_PARAMS>& Unit::parameters() const { return m_parameters; }
 
     void Unit::tick()
     {
@@ -266,7 +266,7 @@ namespace syn
 
     const double* Unit::inputSource(int a_id) const { return m_inputPorts[a_id].src; }
 
-    const NamedContainer<InputPort, MAX_INPUTS>& Unit::inputs() const { return m_inputPorts; }
+    const StrMap<InputPort, MAX_INPUTS>& Unit::inputs() const { return m_inputPorts; }
 
     bool Unit::hasOutput(int a_id) const { return m_outputPorts.containsId(a_id); }
 

@@ -34,8 +34,8 @@ namespace syn
         m_procGraph.fill(nullptr);
         InputUnit* inputUnit = new InputUnit("inputs");
         OutputUnit* outputUnit = new OutputUnit("outputs");
-        m_units.add("inputs", inputUnit);
-        m_units.add("outputs", outputUnit);
+        m_units.add(inputUnit);
+        m_units.add(outputUnit);
         m_inputUnit = inputUnit;
         m_outputUnit = outputUnit;
         addExternalInput_("left in");
@@ -163,15 +163,9 @@ namespace syn
             cr.from_port = cr_j["from"][1];
             cr.to_port = cr_j["to"][1];
 
-            // Extract unit IDs depending on how they were stored
-            if (cr_j["from"][0].is_string())
-                cr.from_id = getUnitId(cr_j["from"][0].get<string>());
-            else
-                cr.from_id = cr_j["from"][0];
-            if (cr_j["to"][0].is_string())
-                cr.to_id = getUnitId(cr_j["to"][0].get<string>());
-            else
-                cr.to_id = cr_j["to"][0];
+            // Extract unit IDs
+            cr.from_id = cr_j["from"][0];
+            cr.to_id = cr_j["to"][0];
             bool success = connectInternal(cr.from_id, cr.from_port, cr.to_id, cr.to_port);
             assert(success);
         }
@@ -217,9 +211,7 @@ namespace syn
 
     bool Circuit::addUnit(Unit* a_unit, int a_unitId)
     {
-        // increment name until there is no collision
-        while (m_units.containsName(a_unit->name())) { a_unit->_setName(incrementSuffix(a_unit->name())); }
-        bool retval = m_units.add(a_unit->name(), a_unitId, a_unit);
+        bool retval = m_units.add(a_unitId, a_unit);
         if (!retval)
             return false;
         a_unit->_setParent(this);
@@ -229,11 +221,6 @@ namespace syn
         a_unit->m_midiData = m_midiData;
         _recomputeGraph();
         return true;
-    }
-
-    bool Circuit::removeUnit(const string& a_name) {
-        int a_id = m_units.getIdFromName(a_name);
-        return removeUnit(a_id);
     }
 
     bool Circuit::removeUnit(const Unit& a_unit) {
@@ -296,24 +283,12 @@ namespace syn
         return true;
     }
 
-    bool Circuit::connectInternal(const string& a_fromName, int a_fromOutputPort, const string& a_toName, int a_toInputPort) {
-        int fromId = m_units.getIdFromName(a_fromName);
-        int toId = m_units.getIdFromName(a_toName);
-        return connectInternal(fromId, a_fromOutputPort, toId, a_toInputPort);
-    }
-
     bool Circuit::connectInternal(const Unit& a_fromUnit, int a_fromOutputPort, const Unit& a_toUnit, int a_toInputPort) {
         const Unit* toUnitPtr = &a_toUnit;
         const Unit* fromUnitPtr = &a_fromUnit;
         int fromId = m_units.getIdFromItem(toUnitPtr);
         int toId = m_units.getIdFromItem(fromUnitPtr);
         return connectInternal(fromId, a_fromOutputPort, toId, a_toInputPort);
-    }
-
-    bool Circuit::disconnectInternal(const string& a_fromName, int a_fromOutputPort, const string& a_toName, int a_toInputPort) {
-        int fromId = m_units.getIdFromName(a_fromName);
-        int toId = m_units.getIdFromName(a_toName);
-        return disconnectInternal(fromId, a_fromOutputPort, toId, a_toInputPort);
     }
 
     bool Circuit::disconnectInternal(const Unit& a_fromUnit, int a_fromOutputPort, const Unit& a_toUnit, int a_toInputPort) {

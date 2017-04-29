@@ -51,7 +51,7 @@ TEST_CASE("Serialization can load what it saves", "[serialization]") {
         syn::Unit* oscUnit = new syn::BasicOscillator("oscUnit");
         circ->addUnit(svfUnit);
         circ->addUnit(oscUnit);
-        circ->connectInternal("oscUnit", 0, "svfUnit", 0);
+        circ->connectInternal(*oscUnit, 0, *svfUnit, 0);
         std::stringstream ss;
         {
             json j = circ->operator json();
@@ -171,12 +171,12 @@ TEST_CASE("SVF stateless tick", "[StateVariableFilter]") {
     REQUIRE(outputs.any());
 }
 
-TEST_CASE("NamedContainer access by index", "[NamedContainer]") {
-    syn::NamedContainer<int, 8> nc;
+TEST_CASE("IntMap access by index", "[IntMap]") {
+    syn::IntMap<int, 8> nc;
     Eigen::Array<double, 1, -1> nc_vec(8);
-    nc.add("0", 0);
-    nc.add("2", 2);
-    nc.add("4", 4);
+    nc.add(0);
+    nc.add(2);
+    nc.add(4);
     REQUIRE(nc.getByIndex(0) == 0);
     REQUIRE(nc.getByIndex(1) == 2);
     REQUIRE(nc.getByIndex(2) == 4);
@@ -187,7 +187,7 @@ TEST_CASE("NamedContainer access by index", "[NamedContainer]") {
     nc.removeById(1);
     REQUIRE(nc.getByIndex(0) == 0);
     REQUIRE(nc.getByIndex(1) == 4);
-    nc.add("3", 3);
+    nc.add(3);
     REQUIRE(nc.getByIndex(0) == 0);
     REQUIRE(nc.getByIndex(1) == 3);
     REQUIRE(nc.getByIndex(2) == 4);

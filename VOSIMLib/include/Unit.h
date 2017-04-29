@@ -30,7 +30,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include "vosimlib/common_serial.h"
 #include "vosimlib/common.h"
-#include "NamedContainer.h"
+#include "StrMap.h"
 #include "UnitParameter.h"
 #include "UnitFactory.h"
 
@@ -258,7 +258,7 @@ namespace syn
 
         const string& paramName(int a_id) const;
 
-        const NamedContainer<UnitParameter, MAX_PARAMS>& parameters() const;
+        const StrMap<UnitParameter, MAX_PARAMS>& parameters() const;
 
         /**
          * Sets the value of an internal parameter
@@ -275,7 +275,7 @@ namespace syn
 
         const double* inputSource(int a_id) const;
 
-        const NamedContainer<InputPort, MAX_INPUTS>& inputs() const;
+        const StrMap<InputPort, MAX_INPUTS>& inputs() const;
 
         bool hasOutput(int a_id) const;
 
@@ -284,7 +284,7 @@ namespace syn
         template <typename ID>
         const double& readOutput(const ID& a_id, int a_offset) const;
 
-        const NamedContainer<OutputPort, MAX_OUTPUTS>& outputs() const;
+        const StrMap<OutputPort, MAX_OUTPUTS>& outputs() const;
 
         int numParams() const;
 
@@ -387,9 +387,9 @@ namespace syn
 
     private:
         string m_name;
-        NamedContainer<UnitParameter, MAX_PARAMS> m_parameters;
-        NamedContainer<OutputPort, MAX_OUTPUTS> m_outputPorts;
-        NamedContainer<InputPort, MAX_INPUTS> m_inputPorts;
+        StrMap<UnitParameter, MAX_PARAMS> m_parameters;
+        StrMap<OutputPort, MAX_OUTPUTS> m_outputPorts;
+        StrMap<InputPort, MAX_INPUTS> m_inputPorts;
         Circuit* m_parent;
         AudioConfig m_audioConfig;
         MidiData m_midiData;

@@ -430,8 +430,8 @@ void synui::CircuitWidget::performLayout(NVGcontext* ctx) {
 }
 
 void synui::CircuitWidget::resizeGrid(int a_newGridSpacing) {
-    // Require at least 6 pixels per grid point.
-    const int minSpacing = 6;
+    // Require at least 10 pixels per grid point.
+    const int minSpacing = 10;
     // Require at least 20 rows and 20 columns (enforced only after first draw)
     const int maxSpacing = m_uninitialized ? a_newGridSpacing : syn::MIN(size().x(), size().y()) / 20;
     a_newGridSpacing = syn::MAX(a_newGridSpacing, minSpacing);
