@@ -1,5 +1,4 @@
 #include "units/WaveShapers.h"
-#include "vosimlib/common.h"
 
 syn::TanhUnit::TanhUnit(const string& a_name) : Unit(a_name)
 {

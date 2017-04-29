@@ -232,9 +232,8 @@ namespace syn {
                 size_t num_digits;
                 double value = stod(a_str, &num_digits);
 
-                size_t decimal_pos;
                 // adjust parameter precision
-                decimal_pos = a_str.find_first_of(".");
+                size_t decimal_pos = a_str.find_first_of(".");
                 if (decimal_pos != string::npos) {
                     int newParamPrecision = static_cast<int>(num_digits) - static_cast<int>(decimal_pos) - 1;
                     setPrecision(newParamPrecision);

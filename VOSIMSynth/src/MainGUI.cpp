@@ -11,6 +11,7 @@
 #include <Log.h>
 #include <nanogui/nanogui.h>
 #include <nanogui/theme.h>
+#include <IPlug/Log.h>
 
 namespace synui {
     class EnhancedWindow : public nanogui::Window {
@@ -215,7 +216,7 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
         [this, helper](const int& size) {
             auto f = [this, size, helper]() {
                         m_vm->setInternalBufferSize(size);
-                        helper->refresh();                        
+                            helper->refresh();
                     };
             m_vm->queueAction(syn::MakeCommand(f));
         }, [this]() {
@@ -226,7 +227,7 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
         [this, helper](const int& maxVoices) {
             auto f = [this, maxVoices, helper]() {
                         m_vm->setMaxVoices(maxVoices);
-                        helper->refresh();                        
+                            helper->refresh();
                     };
             m_vm->queueAction(syn::MakeCommand(f));
         }, [this]() {
@@ -234,10 +235,10 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
         });
 
     helper->addSerializableVariable<bool>("legato", "Legato",
-        [this, helper](const bool& legato) {            
+        [this, helper](const bool& legato) {
             auto f = [this, legato, helper]() {
                         m_vm->setLegato(legato);
-                        helper->refresh();                        
+                            helper->refresh();
                     };
             m_vm->queueAction(syn::MakeCommand(f));
         }, [this]() {
@@ -245,10 +246,10 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
         });
 
     helper->addVariable<syn::VoiceManager::VoiceStealingPolicy>("Voice Stealing",
-        [this, helper](const syn::VoiceManager::VoiceStealingPolicy& policy) {                
+        [this, helper](const syn::VoiceManager::VoiceStealingPolicy& policy) {
             auto f = [this, policy, helper]() {
                         m_vm->setVoiceStealingPolicy(policy);
-                        helper->refresh();                        
+                            helper->refresh();
                     };
             m_vm->queueAction(syn::MakeCommand(f));
         }, [this]() {

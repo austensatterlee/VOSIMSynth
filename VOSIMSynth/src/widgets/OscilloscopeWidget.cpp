@@ -125,21 +125,21 @@ namespace synui {
             nvgFontSize(ctx, 14.0f);
             nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
             nvgFillColor(ctx, mTextColor);
-            nvgText(ctx, mPos.x() + 3, mPos.y() + 1, mCaption.c_str(), NULL);
+            nvgText(ctx, mPos.x() + 3, mPos.y() + 1, mCaption.c_str(), nullptr);
         }
 
         if (!mHeader.empty()) {
             nvgFontSize(ctx, 18.0f);
             nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
             nvgFillColor(ctx, mTextColor);
-            nvgText(ctx, mPos.x() + mSize.x() - 3, mPos.y() + 1, mHeader.c_str(), NULL);
+            nvgText(ctx, mPos.x() + mSize.x() - 3, mPos.y() + 1, mHeader.c_str(), nullptr);
         }
 
         if (!mFooter.empty()) {
             nvgFontSize(ctx, 15.0f);
             nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_BOTTOM);
             nvgFillColor(ctx, mTextColor);
-            nvgText(ctx, mPos.x() + mSize.x() - 3, mPos.y() + mSize.y() - 1, mFooter.c_str(), NULL);
+            nvgText(ctx, mPos.x() + mSize.x() - 3, mPos.y() + mSize.y() - 1, mFooter.c_str(), nullptr);
         }
 
         nvgBeginPath(ctx);

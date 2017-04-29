@@ -18,7 +18,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "VOSIMSynth.h"
-#include "IPlug_include_in_plug_src.h"
+#include <IPlug/IPlug_include_in_plug_src.h>
 
 #include <units/Oscillator.h>
 #include <units/VosimOscillator.h>
@@ -107,7 +107,7 @@ bool VOSIMSynth::SerializeState(ByteChunk* pChunk) {
     synth["circuit"] = circuit->operator json();
 
     // Store gui data
-    json& gui = j["gui"] = GetAppWindow()->operator json();
+    j["gui"] = GetAppWindow()->operator json();
 
     ss << j;
     pChunk->PutStr(ss.str().c_str());

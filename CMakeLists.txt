@@ -22,7 +22,6 @@ macro(setenv varname value)
             set(${varname} ${value})
         endif()
     endif()
-    dbgmsg(${varname})
 endmacro()
 
 macro(optionenv varname desc value)
@@ -61,7 +60,9 @@ setenv(MKL_DIR "E:/Program Files (x86)/IntelSWTools/compilers_and_libraries/wind
 # Options
 optionenv(EIGEN_USE_MKL "Should eigen use MKL as its backend?" TRUE)
 optionenv(VOSIMPROJECT_USE_AVX2 "Compile with AVX2 optimizations?" FALSE)
-optionenv(VOSIMPROJECT_TRACER_BUILD "Build 'trace' build (for debugging)" FALSE)
+optionenv(VOSIMPROJECT_TRACER_BUILD "Enable tracing?" FALSE)
+optionenv(VOSIMPROJECT_BUILD_TESTS "Build tests?" TRUE)
+optionenv(VOSIMPROJECT_BUILD_BENCHMARKS "Build benchmarks?" TRUE)
 
 if(VOSIMPROJECT_TRACER_BUILD)
   add_definitions(-DTRACER_BUILD)
@@ -177,16 +178,15 @@ include_directories(${LIBS_DIR}/wdl)
 # IPlug
 ##
 set(IPLUG_FILES
-  ${LIBS_DIR}/wdl/iplug/Containers.h ${LIBS_DIR}/wdl/iplug/Hosts.cpp ${LIBS_DIR}/wdl/iplug/Hosts.h
-  ${LIBS_DIR}/wdl/iplug/IPlugBase.cpp ${LIBS_DIR}/wdl/iplug/IPlugBase.h
-  ${LIBS_DIR}/wdl/iplug/IPlugOSDetect.h ${LIBS_DIR}/wdl/iplug/IPlugStructs.cpp
-  ${LIBS_DIR}/wdl/iplug/IPlugStructs.h ${LIBS_DIR}/wdl/iplug/IPlugVST.cpp
-  ${LIBS_DIR}/wdl/iplug/IPlugVST.h ${LIBS_DIR}/wdl/iplug/IPlug_Prefix.pch
-  ${LIBS_DIR}/wdl/iplug/IPlug_include_in_plug_hdr.h
-  ${LIBS_DIR}/wdl/iplug/IPlug_include_in_plug_src.h ${LIBS_DIR}/wdl/iplug/Log.cpp
-  ${LIBS_DIR}/wdl/iplug/Log.h
+  ${LIBS_DIR}/wdl/IPlug/Containers.h ${LIBS_DIR}/wdl/IPlug/Hosts.cpp ${LIBS_DIR}/wdl/IPlug/Hosts.h
+  ${LIBS_DIR}/wdl/IPlug/IPlugBase.cpp ${LIBS_DIR}/wdl/IPlug/IPlugBase.h
+  ${LIBS_DIR}/wdl/IPlug/IPlugOSDetect.h ${LIBS_DIR}/wdl/IPlug/IPlugStructs.cpp
+  ${LIBS_DIR}/wdl/IPlug/IPlugStructs.h ${LIBS_DIR}/wdl/IPlug/IPlugVST.cpp
+  ${LIBS_DIR}/wdl/IPlug/IPlugVST.h ${LIBS_DIR}/wdl/IPlug/IPlug_Prefix.pch
+  ${LIBS_DIR}/wdl/IPlug/IPlug_include_in_plug_hdr.h
+  ${LIBS_DIR}/wdl/IPlug/IPlug_include_in_plug_src.h ${LIBS_DIR}/wdl/IPlug/Log.cpp
+  ${LIBS_DIR}/wdl/IPlug/Log.h
 )
-include_directories(${LIBS_DIR}/wdl/iplug)
 
 ##
 # MKL
@@ -198,11 +198,14 @@ if(EIGEN_USE_MKL AND MKL_FOUND)
   add_definitions(-DEIGEN_USE_MKL_ALL)
 endif()
 
-
 ##
 # JSON for Modern C++
 ##
 include_directories(${LIBS_DIR}/json)
+
+if(VOSIMPROJECT_BUILD_TESTS)
+    enable_testing()
+endif()
 
 ##
 # Add VOSIMLib

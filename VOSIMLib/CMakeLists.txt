@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.3)
 project(VOSIMLib)
 
-option(VOSIMLIB_SHARED "Build as a shared library?" FALSE)
+optionenv(VOSIMLIB_SHARED "Build as a shared library?" FALSE)
+optionenv(VOSIMLIB_PYTHON "Build python library?" TRUE)
 
 if(VOSIMLIB_SHARED)
   list(APPEND VOSIMLIB_DEFS -DVOSIMLIB_SHARED)
@@ -78,19 +79,28 @@ else()
   set_target_properties(VOSIMLib PROPERTIES RELWITHDEBINFO_POSTFIX -s)
 endif()
 target_link_libraries(VOSIMLib ${Boost_LIBRARIES} ${ADDITIONAL_LIBRARIES})
-
-##
-# Add tests target
-##
-add_subdirectory(tests tests)
-
-##
-# Add pybind11 target
-##
-pybind11_add_module(pyVOSIMLib ${VOSIMLIB_PYTHON_SRCS})
-target_link_libraries(pyVOSIMLib PRIVATE VOSIMLib)
-
 if(WIN32)
   target_compile_definitions(VOSIMLib PRIVATE -DWIN32_LEAN_AND_MEAN)
 endif()
 
+##
+# Add tests target
+##
+if(VOSIMPROJECT_BUILD_TESTS)
+    add_subdirectory(tests tests)
+endif()
+
+##
+# Add bench target
+##
+if(VOSIMPROJECT_BUILD_BENCHMARKS)
+    add_subdirectory(bench bench)
+endif()
+
+##
+# Add pybind11 target
+##
+if(VOSIMLIB_PYTHON)
+    pybind11_add_module(pyVOSIMLib ${VOSIMLIB_PYTHON_SRCS})
+    target_link_libraries(pyVOSIMLib PRIVATE VOSIMLib)
+endif()

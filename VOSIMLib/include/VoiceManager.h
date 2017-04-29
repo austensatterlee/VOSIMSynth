@@ -103,15 +103,15 @@ namespace syn {
         void setMaxVoices(int a_newMax);
 
         vector<int> getActiveVoiceIndices() const;
-        vector<int> getReleasedVoiceIndices() const;
-        vector<int> getIdleVoiceIndices() const;
+		vector<int> getReleasedVoiceIndices() const;
+		vector<int> getIdleVoiceIndices() const;
 
         int getMaxVoices() const;
 
-        int getLowestVoiceIndex(bool a_preferReleased = false) const;
-        int getNewestVoiceIndex(bool a_preferReleased = false) const;
-        int getOldestVoiceIndex(bool a_preferReleased = false) const;
-        int getHighestVoiceIndex(bool a_preferReleased = false) const;
+        int getLowestVoiceIndex(bool a_preferReleased=false) const;
+        int getNewestVoiceIndex(bool a_preferReleased=false) const;
+        int getOldestVoiceIndex(bool a_preferReleased=false) const;
+        int getHighestVoiceIndex(bool a_preferReleased=false) const;
 
         void onIdle();
 
@@ -135,7 +135,7 @@ namespace syn {
 
         VoiceStealingPolicy getVoiceStealingPolicy() const { return m_voiceStealingPolicy; }
         void setVoiceStealingPolicy(VoiceStealingPolicy a_newPolicy) { m_voiceStealingPolicy = a_newPolicy; }
-
+        
         bool getLegato() const { return m_legato; }
         void setLegato(bool a_newLegato) { m_legato = a_newLegato; }
 
