@@ -178,9 +178,9 @@ namespace syn
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
     protected:
-        Eigen::Matrix<double, 5, 1> m_V;
-        Eigen::Matrix<double, 5, 1> m_dV;
-        Eigen::Matrix<double, 5, 1> m_tV;
+        std::array<double, 5> m_V;
+        std::array<double, 5> m_dV;
+        std::array<double, 5> m_tV;
     };
 
     class VOSIMLIB_API LadderFilterTwo : public LadderFilterBase

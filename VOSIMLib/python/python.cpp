@@ -191,16 +191,13 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
             .def("add", [](syn::Circuit& self, syn::Unit& a_unit) { return self.addUnit(&a_unit); })
             .def("add", [](syn::Circuit& self, syn::Unit& a_unit, int a_id) { return self.addUnit(&a_unit, a_id); })
 
-            .def("remove", (bool (syn::Circuit::*)(const std::string&))&syn::Circuit::removeUnit)
             .def("remove", (bool (syn::Circuit::*)(const syn::Unit&))&syn::Circuit::removeUnit)
             .def("remove", (bool (syn::Circuit::*)(int))&syn::Circuit::removeUnit)
 
             .def("connect", (bool (syn::Circuit::*)(int, int, int, int))&syn::Circuit::connectInternal)
-            .def("connect", (bool (syn::Circuit::*)(const std::string&, int, const std::string&, int))&syn::Circuit::connectInternal)
             .def("connect", (bool (syn::Circuit::*)(const syn::Unit&, int, const syn::Unit&, int))&syn::Circuit::connectInternal)
 
             .def("disconnect", (bool (syn::Circuit::*)(int, int, int, int))&syn::Circuit::disconnectInternal)
-            .def("disconnect", (bool (syn::Circuit::*)(const std::string&, int, const std::string&, int))&syn::Circuit::disconnectInternal)
             .def("disconnect", (bool (syn::Circuit::*)(int, int, int, int))&syn::Circuit::disconnectInternal)
 
             .def("conns", &syn::Circuit::getConnectionsToInternalInput, "Get all connections to an internal input.");

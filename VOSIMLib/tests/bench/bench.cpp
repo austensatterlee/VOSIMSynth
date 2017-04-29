@@ -3,7 +3,7 @@
 
 #include "tables.h"
 #include "DSPMath.h"
-#include "NamedContainer.h"
+#include "IntMap.h"
 #include "Unit.h"
 #include "units/StateVariableFilter.h"
 #include "Circuit.h"
@@ -284,7 +284,7 @@ NONIUS_BENCHMARK("[lut][pitch] naive pitch2freq", [](nonius::chronometer& meter)
 })
 
 #define container_size 1024
-NONIUS_BENCHMARK("[container] syn::NamedContainer", [](nonius::chronometer& meter)
+NONIUS_BENCHMARK("[container] syn::IntMap", [](nonius::chronometer& meter)
 {
     std::uniform_int_distribution<> _accessGenerator(0, container_size - 1);
     std::vector<int> loads(meter.runs());
@@ -292,8 +292,8 @@ NONIUS_BENCHMARK("[container] syn::NamedContainer", [](nonius::chronometer& mete
     std::transform(loads.begin(), loads.end(), loads.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
     std::transform(stores.begin(), stores.end(), stores.begin(), [&_accessGenerator](int& x) {return _accessGenerator(RandomDevice); });
 
-    syn::NamedContainer<syn::InputPort, container_size> myContainer;
-    for (int i = 0; i < container_size; i++) myContainer.add(std::to_string(i), syn::InputPort(i));
+    syn::IntMap<syn::InputPort, container_size> myContainer;
+    for (int i = 0; i < container_size; i++) myContainer.add(syn::InputPort(i));
 
     meter.measure([&myContainer, &stores, &loads](int i)
     {

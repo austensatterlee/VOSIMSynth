@@ -21,7 +21,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __Circuit__
 
 #include "Unit.h"
-#include "NamedContainer.h"
+#include "IntMap.h"
 #include <vector>
 #include <list>
 
@@ -128,7 +128,6 @@ namespace syn
         int getInputUnitId() const;
         int getOutputUnitId() const;   
 
-        int getUnitId(const std::string& a_name) const { return m_units.getIdFromName(a_name); }
         int getUnitId(const Unit& a_unit) const { const Unit* unitPtr = &a_unit; return m_units.getIdFromItem(unitPtr); }
         int getUnitId(int a_index) const { return m_units.getIdFromIndex(a_index); }
 
@@ -161,16 +160,13 @@ namespace syn
          */
         bool addUnit(Unit* a_unit, int a_id);
 
-        bool removeUnit(const string& a_name);
         bool removeUnit(const Unit& a_unit);
         bool removeUnit(int a_id);
 
         bool connectInternal(int a_fromId, int a_fromOutputPort, int a_toId, int a_toInputPort);
-        bool connectInternal(const string& a_fromName, int a_fromOutputPort, const string& a_toName, int a_toInputPort);
         bool connectInternal(const Unit& a_fromUnit, int a_fromOutputPort, const Unit& a_toUnit, int a_toInputPort);
 
         bool disconnectInternal(int a_fromId, int a_fromOutputPort, int a_toId, int a_toInputPort);
-        bool disconnectInternal(const string& a_fromName, int a_fromOutputPort, const string& a_toName, int a_toInputPort);
         bool disconnectInternal(const Unit& a_fromUnit, int a_fromOutputPort, const Unit& a_toUnit, int a_toInputPort);
 
         operator json() const override;
@@ -207,7 +203,7 @@ namespace syn
         friend class VoiceManager;
 
         double m_voiceIndex; ///< A number between 0 and 1 assigned to the circuit by a VoiceManager.
-        NamedContainer<Unit*, MAX_UNITS> m_units;
+        IntMap<Unit*, MAX_UNITS> m_units;
         vector<ConnectionRecord> m_connectionRecords;
         InputUnit* m_inputUnit;
         OutputUnit* m_outputUnit;
