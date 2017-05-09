@@ -8,7 +8,6 @@
 
 #include <Command.h>
 #include <UnitFactory.h>
-#include <Log.h>
 #include <nanogui/nanogui.h>
 #include <nanogui/theme.h>
 #include <IPlug/Log.h>
