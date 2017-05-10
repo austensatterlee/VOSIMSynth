@@ -126,7 +126,7 @@ void syn::TrapStateVariableFilter::process_()
     END_PROC_FUNC
 }
 
-void syn::_OnePoleLP::setFc(double a_fc, double a_fs)
+void syn::OnePoleLP::setFc(double a_fc, double a_fs)
 {
     a_fc = DSP_PI * a_fc / a_fs;
     double g = tan(a_fc);
@@ -134,7 +134,7 @@ void syn::_OnePoleLP::setFc(double a_fc, double a_fs)
     m_G = g / (1 + g);
 }
 
-double syn::_OnePoleLP::process(double a_input)
+double syn::OnePoleLP::process(double a_input)
 {
     double trap_in = m_G * (a_input - m_state);
     double output = trap_in + m_state;
@@ -142,12 +142,12 @@ double syn::_OnePoleLP::process(double a_input)
     return output;
 }
 
-void syn::_OnePoleLP::reset()
+void syn::OnePoleLP::reset()
 {
     m_state = 0.0;
 }
 
-syn::OnePoleLP::OnePoleLP(const string& a_name) :
+syn::OnePoleLPUnit::OnePoleLPUnit(const string& a_name) :
     Unit(a_name),
     m_lastSync(0.0)
 {
@@ -160,18 +160,18 @@ syn::OnePoleLP::OnePoleLP(const string& a_name) :
     addOutput_(oHP, "HP");
 }
 
-double syn::OnePoleLP::getState() const
+double syn::OnePoleLPUnit::getState() const
 {
     return implem.m_state;
 }
 
-void syn::OnePoleLP::reset()
+void syn::OnePoleLPUnit::reset()
 {
     implem.reset();
     m_lastSync = 0.0;
 }
 
-void syn::OnePoleLP::process_()
+void syn::OnePoleLPUnit::process_()
 {
     BEGIN_PROC_FUNC
     // Calculate gain for specified cutoff
@@ -193,7 +193,7 @@ void syn::OnePoleLP::process_()
     END_PROC_FUNC
 }
 
-void syn::OnePoleLP::onNoteOn_()
+void syn::OnePoleLPUnit::onNoteOn_()
 {
 }
 
@@ -215,25 +215,25 @@ void syn::LadderFilterBase::onNoteOn_()
     reset();
 }
 
-syn::LadderFilter::LadderFilter(const string& a_name) :
+syn::LadderFilterA::LadderFilterA(const string& a_name) :
     LadderFilterBase(a_name)
 {
-    LadderFilter::reset();
+    LadderFilterA::reset();
 }
 
-void syn::LadderFilter::reset()
+void syn::LadderFilterA::reset()
 {
     m_V.fill(0.0);
     m_dV.fill(0.0);
     m_tV.fill(0.0);
 }
 
-void syn::LadderFilter::process_()
+void syn::LadderFilterA::process_()
 {
     BEGIN_PROC_FUNC
     double input = READ_INPUT(iAudioIn);
     // Calculate gain for specified cutoff
-    double fs = LadderFilter::fs() * c_oversamplingFactor;
+    double fs = LadderFilterA::fs() * c_oversamplingFactor;
 
     double fc = (param(pFc).getDouble() + READ_INPUT(iFcAdd)) * READ_INPUT(iFcMul); // freq cutoff
     fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());
@@ -275,10 +275,10 @@ void syn::LadderFilter::process_()
     END_PROC_FUNC
 }
 
-syn::LadderFilterTwo::LadderFilterTwo(const string& a_name) : LadderFilterBase(a_name),
+syn::LadderFilterB::LadderFilterB(const string& a_name) : LadderFilterBase(a_name),
                                                               m_ffGains(Eigen::Matrix<double, 5, 1>::Unit(4)) {}
 
-void syn::LadderFilterTwo::reset()
+void syn::LadderFilterB::reset()
 {
     m_LP[0].reset();
     m_LP[1].reset();
@@ -286,12 +286,12 @@ void syn::LadderFilterTwo::reset()
     m_LP[3].reset();
 }
 
-void syn::LadderFilterTwo::process_()
+void syn::LadderFilterB::process_()
 {
     BEGIN_PROC_FUNC
     double input = READ_INPUT(iAudioIn);
     // Calculate gain for specified cutoff
-    double fs = LadderFilterTwo::fs() * c_oversamplingFactor;
+    double fs = LadderFilterB::fs() * c_oversamplingFactor;
 
     double fc = (param(pFc).getDouble() + READ_INPUT(iFcAdd)) * READ_INPUT(iFcMul); // freq cutoff
     fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());

@@ -24,7 +24,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 namespace syn
 {
     VosimOscillator::VosimOscillator(string name) :
-        TunedOscillator(name),
+        TunedOscillatorUnit(name),
         m_pulse_step(0.0),
         m_pulse_tune(0),
         m_num_pulses(1)
@@ -45,7 +45,7 @@ namespace syn
         BEGIN_PROC_FUNC
             m_num_pulses = param(pNumPulses).getInt();
             m_pulse_tune = CLAMP<double>(READ_INPUT(iPulseTuneMul) * param(pPulseTune).getDouble() + READ_INPUT(iPulseTuneAdd), 0, 1);
-            TunedOscillator::process_();
+            TunedOscillatorUnit::process_();
             double pulse_decay = CLAMP<double>(READ_INPUT(iDecayMul) * param(pPulseDecay).getDouble(), 0, 1);
 
             double output = 0.0;
@@ -74,7 +74,7 @@ namespace syn
 
     void VosimOscillator::updatePhaseStep_()
     {
-        TunedOscillator::updatePhaseStep_();
+        TunedOscillatorUnit::updatePhaseStep_();
         double pulse_freq;
         double min_freq = m_num_pulses * m_freq;
         int MAX_PULSE_FREQ = 3000;
@@ -90,7 +90,7 @@ namespace syn
     }
 
     FormantOscillator::FormantOscillator(string name) :
-        TunedOscillator(name)
+        TunedOscillatorUnit(name)
     {
         addParameter_(pWidth, {"width", 0.0, 1.0, 0.0});
         addParameter_(pFmt, {"fmt", 0.0, 1.0, 0.0});
@@ -106,7 +106,7 @@ namespace syn
     void FormantOscillator::process_()
     {
         BEGIN_PROC_FUNC
-            TunedOscillator::process_();
+            TunedOscillatorUnit::process_();
             double formant_freq;
             double cos_width;
             int MAX_FMT_FREQ = 3000;

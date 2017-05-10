@@ -20,7 +20,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "VOSIMSynth.h"
 #include <IPlug/IPlug_include_in_plug_src.h>
 
-#include <units/Oscillator.h>
+#include <units/OscillatorUnit.h>
 #include <units/VosimOscillator.h>
 #include <units/ADSREnvelope.h>
 #include <units/Follower.h>
@@ -159,10 +159,10 @@ void VOSIMSynth::registerUnits()
     syn::UnitFactory& uf = syn::UnitFactory::instance();
     uf.addUnitPrototype<syn::StateVariableFilter>("Audio Filters", "svf");
     uf.addUnitPrototype<syn::TrapStateVariableFilter>("Audio Filters", "tsvf");
-    uf.addUnitPrototype<syn::LadderFilter>("Audio Filters", "ldrA");
-    uf.addUnitPrototype<syn::LadderFilterTwo>("Audio Filters", "ldrB");
+    uf.addUnitPrototype<syn::LadderFilterA>("Audio Filters", "ldrA");
+    uf.addUnitPrototype<syn::LadderFilterB>("Audio Filters", "ldrB");
 
-    uf.addUnitPrototype<syn::OnePoleLP>("Mod Filters", "lag");
+    uf.addUnitPrototype<syn::OnePoleLPUnit>("Mod Filters", "lag");
     uf.addUnitPrototype<syn::FollowerUnit>("Mod Filters", "follow");
     uf.addUnitPrototype<syn::DCRemoverUnit>("Mod Filters", "dc");
     
@@ -173,12 +173,12 @@ void VOSIMSynth::registerUnits()
     uf.addUnitPrototype<syn::RectifierUnit>("Math", "rect");
     uf.addUnitPrototype<syn::ConstantUnit>("Math", "const");
 
-    uf.addUnitPrototype<syn::BasicOscillator>("Oscillators", "basic");
+    uf.addUnitPrototype<syn::BasicOscillatorUnit>("Oscillators", "basic");
     uf.addUnitPrototype<syn::VosimOscillator>("Oscillators", "vosim");
     uf.addUnitPrototype<syn::FormantOscillator>("Oscillators", "formant");
 
     uf.addUnitPrototype<syn::ADSREnvelope>("Modulators", "ADSR");
-    uf.addUnitPrototype<syn::LFOOscillator>("Modulators", "LFO");
+    uf.addUnitPrototype<syn::LFOOscillatorUnit>("Modulators", "LFO");
 
     uf.addUnitPrototype<syn::MemoryUnit>("Delays", "z^-1");
     uf.addUnitPrototype<syn::VariableMemoryUnit>("Delays", "z^-t");

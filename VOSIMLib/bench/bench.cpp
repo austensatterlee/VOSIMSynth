@@ -7,7 +7,7 @@
 #include "Unit.h"
 #include "Circuit.h"
 #include "units/StateVariableFilter.h"
-#include "units/Oscillator.h"
+#include "units/OscillatorUnit.h"
 #include "units/MidiUnits.h"
 
 #include <array>
@@ -78,12 +78,12 @@ NONIUS_BENCHMARK("[math][tanh] syn::fast_tanh_rat_2", [](nonius::chronometer& me
 
 NONIUS_BENCHMARK("[units][filters] LadderA", [](nonius::chronometer& meter) {
     const int runs = meter.runs();
-    syn::LadderFilter ladder("");
+    syn::LadderFilterA ladder("");
     double input = 1.0;
     ladder.setFs(48000.0);
-    ladder.setParam(syn::LadderFilter::pFc, 10000.0);
-    ladder.setParam(syn::LadderFilter::pFb, 1.0);
-    ladder.setParam(syn::LadderFilter::pDrv, 0.0);
+    ladder.setParam(syn::LadderFilterA::pFc, 10000.0);
+    ladder.setParam(syn::LadderFilterA::pFb, 1.0);
+    ladder.setParam(syn::LadderFilterA::pDrv, 0.0);
     ladder.connectInput(0, &input);
 
     double x;
@@ -97,12 +97,12 @@ NONIUS_BENCHMARK("[units][filters] LadderA", [](nonius::chronometer& meter) {
 
 NONIUS_BENCHMARK("[units][filters] LadderB", [](nonius::chronometer& meter) {
     const int runs = meter.runs();
-    syn::LadderFilterTwo ladder("");
+    syn::LadderFilterB ladder("");
     double input = 1.0;
     ladder.setFs(48000.0);
-    ladder.setParam(syn::LadderFilter::pFc, 10000.0);
-    ladder.setParam(syn::LadderFilter::pFb, 1.0);
-    ladder.setParam(syn::LadderFilter::pDrv, 0.0);
+    ladder.setParam(syn::LadderFilterA::pFc, 10000.0);
+    ladder.setParam(syn::LadderFilterA::pFb, 1.0);
+    ladder.setParam(syn::LadderFilterA::pDrv, 0.0);
     ladder.connectInput(0, &input);
 
     double x;
@@ -157,18 +157,18 @@ NONIUS_BENCHMARK("[units][buffer size] Ladder Circuit (Buffer Size: 1)", [](noni
     mycircuit.setFs(48000.0);
     mycircuit.setBufferSize(1);
     // Add a bunch of ladder filter units in serial
-    syn::LadderFilter* lf[nUnits];
-    lf[0] = new syn::LadderFilter("lf0");
+    syn::LadderFilterA* lf[nUnits];
+    lf[0] = new syn::LadderFilterA("lf0");
     mycircuit.addUnit(lf[0]);
     for (int i = 1; i < nUnits; i++) {
-        lf[i] = new syn::LadderFilter("lf" + std::to_string(i));
+        lf[i] = new syn::LadderFilterA("lf" + std::to_string(i));
         mycircuit.addUnit(lf[i]);
         mycircuit.connectInternal(mycircuit.getUnitId(*lf[i - 1]), 0, mycircuit.getUnitId(*lf[i]), 0);
     }
     // Add pitch and oscillator units
     syn::MidiNoteUnit* mnu = new syn::MidiNoteUnit("mnu0");
     mycircuit.addUnit(mnu);
-    syn::BasicOscillator* bosc = new syn::BasicOscillator("bosc0");
+    syn::BasicOscillatorUnit* bosc = new syn::BasicOscillatorUnit("bosc0");
     mycircuit.addUnit(bosc);
     mycircuit.connectInternal(mycircuit.getUnitId(*mnu), 0, mycircuit.getUnitId(*bosc), 0);
     mycircuit.connectInternal(mycircuit.getUnitId(*bosc), 0, mycircuit.getUnitId(*lf[0]), 0);
@@ -192,18 +192,18 @@ NONIUS_BENCHMARK("[units][buffer size] Ladder Circuit (Buffer Size: 200)", [](no
     mycircuit.setFs(48000.0);
     mycircuit.setBufferSize(200);
     // Add a bunch of ladder filter units in serial
-    syn::LadderFilter* lf[nUnits];
-    lf[0] = new syn::LadderFilter("lf0");
+    syn::LadderFilterA* lf[nUnits];
+    lf[0] = new syn::LadderFilterA("lf0");
     mycircuit.addUnit(lf[0]);
     for (int i = 1; i < nUnits; i++) {
-        lf[i] = new syn::LadderFilter("lf" + std::to_string(i));
+        lf[i] = new syn::LadderFilterA("lf" + std::to_string(i));
         mycircuit.addUnit(lf[i]);
         mycircuit.connectInternal(mycircuit.getUnitId(*lf[i - 1]), 0, mycircuit.getUnitId(*lf[i]), 0);
     }
     // Add pitch and oscillator units
     syn::MidiNoteUnit* mnu = new syn::MidiNoteUnit("mnu0");
     mycircuit.addUnit(mnu);
-    syn::BasicOscillator* bosc = new syn::BasicOscillator("bosc0");
+    syn::BasicOscillatorUnit* bosc = new syn::BasicOscillatorUnit("bosc0");
     mycircuit.addUnit(bosc);
     mycircuit.connectInternal(mycircuit.getUnitId(*mnu), 0, mycircuit.getUnitId(*bosc), 0);
     mycircuit.connectInternal(mycircuit.getUnitId(*bosc), 0, mycircuit.getUnitId(*lf[0]), 0);

@@ -4,7 +4,7 @@
 #include <Circuit.h>
 #include <DSPMath.h>
 #include <units/StateVariableFilter.h>
-#include <units/Oscillator.h>
+#include <units/OscillatorUnit.h>
 #include <units/MemoryUnit.h>
 #include <units/MathUnits.h>
 #include <VoiceManager.h>
@@ -31,12 +31,12 @@ TEST_CASE("Serialization can load what it saves", "[serialization]") {
     syn::UnitFactory& uf = syn::UnitFactory::instance();
     uf.addUnitPrototype<syn::StateVariableFilter>("Filters", "svf");
     uf.addUnitPrototype<syn::TrapStateVariableFilter>("Filters", "tsvf");
-    uf.addUnitPrototype<syn::OnePoleLP>("Filters", "lag");
-    uf.addUnitPrototype<syn::LadderFilter>("Filters", "ladderA");
-    uf.addUnitPrototype<syn::LadderFilterTwo>("Filters", "ladderB");
+    uf.addUnitPrototype<syn::OnePoleLPUnit>("Filters", "lag");
+    uf.addUnitPrototype<syn::LadderFilterA>("Filters", "ladderA");
+    uf.addUnitPrototype<syn::LadderFilterB>("Filters", "ladderB");
 
-    uf.addUnitPrototype<syn::BasicOscillator>("Oscillators", "basic");
-    uf.addUnitPrototype<syn::LFOOscillator>("Modulators", "LFO");
+    uf.addUnitPrototype<syn::BasicOscillatorUnit>("Oscillators", "basic");
+    uf.addUnitPrototype<syn::LFOOscillatorUnit>("Modulators", "LFO");
 
     uf.addUnitPrototype<syn::MemoryUnit>("DSP", "unit delay");
     uf.addUnitPrototype<syn::VariableMemoryUnit>("DSP", "var delay");
@@ -48,7 +48,7 @@ TEST_CASE("Serialization can load what it saves", "[serialization]") {
     SECTION("Serialize") {
         syn::Circuit* circ = new syn::Circuit("main");
         syn::Unit* svfUnit = new syn::StateVariableFilter("svfUnit");
-        syn::Unit* oscUnit = new syn::BasicOscillator("oscUnit");
+        syn::Unit* oscUnit = new syn::BasicOscillatorUnit("oscUnit");
         circ->addUnit(svfUnit);
         circ->addUnit(oscUnit);
         circ->connectInternal(*oscUnit, 0, *svfUnit, 0);
@@ -104,12 +104,12 @@ TEST_CASE("Measure error for rational approximations of tanh.", "[fast_tanh]") {
 TEST_CASE("Detect subnormals in ladder filter processing.", "[LadderFilter]") {
     const int N = 1.440e6;
     const double fs = 48e3;
-    syn::LadderFilter ladder("ladder");
+    syn::LadderFilterA ladder("ladder");
     double input = 1e-3; // Impulse at -60 dB
     ladder.setFs(fs);
-    ladder.setParam(syn::LadderFilter::pFc, 20000.0);
-    ladder.setParam(syn::LadderFilter::pFb, 1.0);
-    ladder.setParam(syn::LadderFilter::pDrv, 0.0);
+    ladder.setParam(syn::LadderFilterA::pFc, 20000.0);
+    ladder.setParam(syn::LadderFilterA::pFb, 1.0);
+    ladder.setParam(syn::LadderFilterA::pDrv, 0.0);
     ladder.connectInput(0, &input);
 
     vector<double> ladder_out(N);

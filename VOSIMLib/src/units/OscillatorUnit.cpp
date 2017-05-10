@@ -17,13 +17,13 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "units/Oscillator.h"
+#include "units/OscillatorUnit.h"
 #include "DSPMath.h"
 #include "tables.h"
 
 namespace syn
 {
-    Oscillator::Oscillator(const string& a_name) :
+    OscillatorUnit::OscillatorUnit(const string& a_name) :
         Unit(a_name),
         m_basePhase(0),
         m_phase(0),
@@ -43,7 +43,7 @@ namespace syn
         addInput_(iPhaseAdd, "ph");
     }
 
-    void Oscillator::reset()
+    void OscillatorUnit::reset()
     {
         m_basePhase = 0.0;
     }
@@ -53,7 +53,7 @@ namespace syn
     *
     ******************************/
 
-    void Oscillator::updatePhaseStep_()
+    void OscillatorUnit::updatePhaseStep_()
     {
         if (m_freq)
         {
@@ -67,7 +67,7 @@ namespace syn
         }
     }
 
-    void Oscillator::tickPhase_(double a_phaseOffset)
+    void OscillatorUnit::tickPhase_(double a_phaseOffset)
     {
         m_basePhase += m_phase_step;
         if (m_basePhase >= 1)
@@ -79,9 +79,8 @@ namespace syn
         m_last_phase = m_phase;
     }
 
-    void Oscillator::process_()
+    void OscillatorUnit::process_()
     {
-        BEGIN_PROC_FUNC
         double phase_offset = param(pPhaseOffset).getDouble() + READ_INPUT(iPhaseAdd);
         m_gain = param(pGain).getDouble() * READ_INPUT(iGainMul);
         m_bias = 0;
@@ -95,22 +94,21 @@ namespace syn
         tickPhase_(phase_offset);
 
         WRITE_OUTPUT(oPhase, m_phase);
-        END_PROC_FUNC
     }
 
-    void TunedOscillator::onNoteOn_()
+    void TunedOscillatorUnit::onNoteOn_()
     {
         reset();
     }
 
-    void TunedOscillator::updatePhaseStep_()
+    void TunedOscillatorUnit::updatePhaseStep_()
     {
         m_freq = pitchToFreq(m_pitch);
-        Oscillator::updatePhaseStep_();
+        OscillatorUnit::updatePhaseStep_();
     }
 
-    TunedOscillator::TunedOscillator(const string& a_name) :
-        Oscillator(a_name),
+    TunedOscillatorUnit::TunedOscillatorUnit(const string& a_name) :
+        OscillatorUnit(a_name),
         m_pitch(0)
     {
         addParameter_(pTune, {"semi", -12.0, 12.0, 0.0});
@@ -118,31 +116,29 @@ namespace syn
         addInput_(iNote, "pitch");
     }
 
-    TunedOscillator::TunedOscillator(const TunedOscillator& a_rhs) :
-        TunedOscillator(a_rhs.name()) {}
+    TunedOscillatorUnit::TunedOscillatorUnit(const TunedOscillatorUnit& a_rhs) :
+        TunedOscillatorUnit(a_rhs.name()) {}
 
-    void TunedOscillator::process_()
+    void TunedOscillatorUnit::process_()
     {
-        BEGIN_PROC_FUNC
         double tune = param(pTune).getDouble() + READ_INPUT(iNote);
         double oct = param(pOctave).getInt();
         m_pitch = tune + oct * 12;
-        Oscillator::process_();
-        END_PROC_FUNC
+        OscillatorUnit::process_();
     }
 
-    BasicOscillator::BasicOscillator(const string& a_name) :
-        TunedOscillator(a_name)
+    BasicOscillatorUnit::BasicOscillatorUnit(const string& a_name) :
+        TunedOscillatorUnit(a_name)
     {
         addParameter_(pWaveform, UnitParameter("waveform", WAVE_SHAPE_NAMES));
     }
 
-    BasicOscillator::BasicOscillator(const BasicOscillator& a_rhs) : BasicOscillator(a_rhs.name()) {}
+    BasicOscillatorUnit::BasicOscillatorUnit(const BasicOscillatorUnit& a_rhs) : BasicOscillatorUnit(a_rhs.name()) {}
 
-    void BasicOscillator::process_()
+    void BasicOscillatorUnit::process_()
     {
         BEGIN_PROC_FUNC
-        TunedOscillator::process_();
+        TunedOscillatorUnit::process_();
         double output;
         WAVE_SHAPE shape = static_cast<WAVE_SHAPE>(param(pWaveform).getInt());
         switch (shape)
@@ -165,8 +161,8 @@ namespace syn
         END_PROC_FUNC
     }
 
-    LFOOscillator::LFOOscillator(const string& a_name) :
-        Oscillator(a_name),
+    LFOOscillatorUnit::LFOOscillatorUnit(const string& a_name) :
+        OscillatorUnit(a_name),
         m_lastSync(0.0)
     {
         addOutput_(oQuadOut, "quad");
@@ -179,10 +175,10 @@ namespace syn
         addParameter_(pTempoSync, UnitParameter("tempo sync", false));
     }
 
-    LFOOscillator::LFOOscillator(const LFOOscillator& a_rhs) :
-        LFOOscillator(a_rhs.name()) { }
+    LFOOscillatorUnit::LFOOscillatorUnit(const LFOOscillatorUnit& a_rhs) :
+        LFOOscillatorUnit(a_rhs.name()) { }
 
-    void LFOOscillator::process_()
+    void LFOOscillatorUnit::process_()
     {
         BEGIN_PROC_FUNC
         // determine frequency
@@ -200,7 +196,7 @@ namespace syn
             reset();
         }
         m_lastSync = READ_INPUT(iSync);
-        Oscillator::process_();
+        OscillatorUnit::process_();
         double output, quadoutput;
         WAVE_SHAPE shape = static_cast<WAVE_SHAPE>(param(pWaveform).getInt());
         switch (shape)
@@ -228,7 +224,7 @@ namespace syn
         END_PROC_FUNC
     }
 
-    void LFOOscillator::onParamChange_(int a_paramId)
+    void LFOOscillatorUnit::onParamChange_(int a_paramId)
     {
         if (a_paramId == pTempoSync)
         {

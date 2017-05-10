@@ -81,7 +81,7 @@ namespace syn
     /**
      * 1 Pole "TPT" implementation
      */
-    struct _OnePoleLP
+    struct OnePoleLP
     {
         /**
          * Set forward gain by specifying cutoff frequency and sampling rate.
@@ -100,9 +100,9 @@ namespace syn
     /**
      * 1 Pole "TPT" unit wrapper
      */
-    class VOSIMLIB_API OnePoleLP : public Unit
+    class VOSIMLIB_API OnePoleLPUnit : public Unit
     {
-        DERIVE_UNIT(OnePoleLP)
+        DERIVE_UNIT(OnePoleLPUnit)
     public:
         enum Param
         {
@@ -123,9 +123,9 @@ namespace syn
             oHP = 1
         };
 
-        explicit OnePoleLP(const string& a_name);
+        explicit OnePoleLPUnit(const string& a_name);
 
-        OnePoleLP(const OnePoleLP& a_rhs) : OnePoleLP(a_rhs.name()) {};
+        OnePoleLPUnit(const OnePoleLPUnit& a_rhs) : OnePoleLPUnit(a_rhs.name()) {};
 
         double getState() const;
 
@@ -135,11 +135,11 @@ namespace syn
         void MSFASTCALL process_() GCCFASTCALL override;
         void onNoteOn_() override;
     private:
-        _OnePoleLP implem;
+        OnePoleLP implem;
         double m_lastSync;
     };
 
-    struct LadderFilterBase : public Unit
+    class LadderFilterBase : public Unit
     {
     public:
         explicit LadderFilterBase(const string& a_name);
@@ -149,7 +149,6 @@ namespace syn
 
     public:
         const int c_oversamplingFactor = 8;
-        const double VT = 0.312;
 
         enum Param
         {
@@ -168,33 +167,34 @@ namespace syn
         };
     };
 
-    class VOSIMLIB_API LadderFilter : public LadderFilterBase
+    class VOSIMLIB_API LadderFilterA : public LadderFilterBase
     {
-        DERIVE_UNIT(LadderFilter)
+        DERIVE_UNIT(LadderFilterA)
     public:
-        explicit LadderFilter(const string& a_name);
-        LadderFilter(const LadderFilter& a_rhs) : LadderFilter(a_rhs.name()) {};
+        explicit LadderFilterA(const string& a_name);
+        LadderFilterA(const LadderFilterA& a_rhs) : LadderFilterA(a_rhs.name()) {};
         void reset() override;
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
     protected:
+        const double VT = 0.312;
         std::array<double, 5> m_V;
         std::array<double, 5> m_dV;
         std::array<double, 5> m_tV;
     };
 
-    class VOSIMLIB_API LadderFilterTwo : public LadderFilterBase
+    class VOSIMLIB_API LadderFilterB : public LadderFilterBase
     {
-        DERIVE_UNIT(LadderFilterTwo)
+        DERIVE_UNIT(LadderFilterB)
     public:
-        explicit LadderFilterTwo(const string& a_name);
-        LadderFilterTwo(const LadderFilterTwo& a_rhs) : LadderFilterTwo(a_rhs.name()) {};
+        explicit LadderFilterB(const string& a_name);
+        LadderFilterB(const LadderFilterB& a_rhs) : LadderFilterB(a_rhs.name()) {};
         void reset() override;
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
     protected:
         typedef Eigen::Matrix<double, 1, 5> Vector5d;
-        _OnePoleLP m_LP[4];
+        OnePoleLP m_LP[4];
         Vector5d m_ffGains; /// state feed forward gains
     };
 }
