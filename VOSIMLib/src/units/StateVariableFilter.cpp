@@ -247,8 +247,7 @@ void syn::LadderFilterA::process_()
     double stage_gain = 1.0/(2.0*VT);
     double dt = 1.0/(2.0*fs);
 
-    int i = c_oversamplingFactor;
-    while (i--)
+    for(int i=0;i<c_oversamplingFactor;i++)
     {
         double dV0 = -g * (fast_tanh_rat((drive * input + res * m_V[3]) * stage_gain) + m_tV[0]);
         m_V[0] += (dV0 + m_dV[0]) * dt;
@@ -312,10 +311,9 @@ void syn::LadderFilterB::process_()
     double G4 = m_LP[0].m_G * m_LP[0].m_G * m_LP[0].m_G * m_LP[0].m_G;
     double out_fb_gain = 1.0 / (1.0 + res * G4);
 
-    int i = c_oversamplingFactor;
     Vector5d out_states;
     input *= drive;
-    while (i--)
+    for(int i=0;i<c_oversamplingFactor;i++)
     {
         double out_fb = lp0_fb_gain * m_LP[0].m_state + lp1_fb_gain * m_LP[1].m_state + lp2_fb_gain * m_LP[2].m_state + lp3_fb_gain * m_LP[3].m_state;
 
