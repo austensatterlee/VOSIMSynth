@@ -97,8 +97,6 @@ void synui::MainGUI::reset() {
 
 void synui::MainGUI::resize(int a_w, int a_h) {
     TRACE
-    a_w = syn::MIN(a_w, 800);
-    a_h = syn::MIN(a_w, 600);
     m_screen->resizeCallbackEvent(a_w, a_h);
     m_sidePanelL->setFixedHeight(m_screen->height());
     m_sidePanelR->setPosition({m_sidePanelL->width(), m_buttonPanel->height()});

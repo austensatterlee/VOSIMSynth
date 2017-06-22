@@ -255,6 +255,8 @@ void synui::MainWindow::CloseWindow()
 void synui::MainWindow::resize(int w, int h)
 {
     TRACE
+    w = syn::MAX(w, 800);
+    h = syn::MAX(h, 600);
     glfwSetWindowSize(m_window, w, h);
     m_gui->resize(w,h);
     m_size = { w,h };
