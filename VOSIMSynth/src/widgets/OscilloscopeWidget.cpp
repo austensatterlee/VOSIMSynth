@@ -1,7 +1,7 @@
 #include "OscilloscopeWidget.h"
 #include "DSPMath.h"
 #include <nanovg.h>
-#include "nanogui/screen.h"
+#include <nanogui/screen.h>
 
 namespace synui {
     OscilloscopeUnit::OscilloscopeUnit(const string& a_name)
@@ -22,7 +22,7 @@ namespace synui {
             m_buffers[i].resize(param(pBufferSize).getMax());
             m_buffers[i].fill(0.0f);
         }
-        m_iPhase = addInput_("ph");
+        m_iPhase = addInput_("ph");        
     }
 
     int OscilloscopeUnit::getNumBuffers() const {
@@ -100,8 +100,10 @@ namespace synui {
         nvgFillColor(ctx, mBackgroundColor);
         nvgFill(ctx);
 
-        if (mValues.size() < 2)
+        if (mValues.size() < 2){
+            nvgRestore(ctx);
             return;
+        }
 
         nvgBeginPath(ctx);
         for (size_t i = 0; i < (size_t)mValues.size(); i++) {

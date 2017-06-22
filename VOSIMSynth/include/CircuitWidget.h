@@ -92,10 +92,9 @@ namespace synui {
          * \param a_parent Parent widget.
          * \param a_mainWindow Serves as an interface for queueing messages to the real-time thread.
          * \param a_unitEditorHost The widget that will host unit editor interfaces.
-         * \param a_vm
-         * \param a_uf
+         * \param a_vm Voice manager from the real-time thread.
          */
-        CircuitWidget(Widget* a_parent, MainWindow* a_mainWindow, UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf);
+        CircuitWidget(Widget* a_parent, MainWindow* a_mainWindow, UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm);
 
         bool mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
         bool mouseMotionEvent(const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override;
@@ -210,7 +209,6 @@ namespace synui {
     private:
         MainWindow* m_window;
         UnitEditorHost* m_unitEditorHost;
-        syn::UnitFactory* m_uf;
         syn::VoiceManager* m_vm;
         std::unordered_map<syn::UnitTypeId, UnitWidgetConstructor> m_registeredUnitWidgets;
         Grid2D<GridCell> m_grid;

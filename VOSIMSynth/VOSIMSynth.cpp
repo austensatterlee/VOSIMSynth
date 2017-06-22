@@ -52,8 +52,7 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo) : IPLUG_CTOR(0, 1, instan
 
 void VOSIMSynth::makeGraphics() {
     syn::VoiceManager* vm = m_voiceManager;
-    syn::UnitFactory* uf = &syn::UnitFactory::instance();
-    synui::MainWindow* mainWindow = new synui::MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm, uf](synui::MainWindow* a_win) { return new synui::MainGUI(a_win, vm, uf); });
+    synui::MainWindow* mainWindow = new synui::MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm](synui::MainWindow* a_win) { return new synui::MainGUI(a_win, vm); });
     mainWindow->setHInstance(gHInstance);
     mainWindow->onResize.Connect(this, &VOSIMSynth::ResizeGraphics);
     AttachAppWindow(mainWindow);

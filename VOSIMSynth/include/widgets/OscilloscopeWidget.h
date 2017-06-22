@@ -29,7 +29,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "Unit.h"
 #include "VoiceManager.h"
 #include <nanogui/graph.h>
-#include "../../../libs/eigen/eigen/src/Core/util/ForwardDeclarations.h"
 
 namespace synui {
     class OscilloscopeWidget;
