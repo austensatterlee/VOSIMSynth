@@ -159,15 +159,16 @@ void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget) {
     auto unitSelectorTitle = new nanogui::Widget(a_widget);
     unitSelectorTitle->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 2, 10));
 
-    for (auto gname : m_uf->getGroupNames()) {
+    const syn::UnitFactory& uf = syn::UnitFactory::instance();
+    for (auto gname : uf.getGroupNames()) {
         nanogui::PopupButton* button = new nanogui::PopupButton(a_widget, gname);
         button->setFontSize(15);
         nanogui::Popup* popup = button->popup();
         popup->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 0));
         button->setCallback([this, popup]() { m_screen->moveWindowToFront(popup); });
-        for (auto pname : m_uf->getPrototypeNames(gname)) {
+        for (auto pname : uf.getPrototypeNames(gname)) {
             nanogui::Button* subbtn = new nanogui::Button(popup, pname);
-            syn::UnitTypeId classId = m_uf->getClassId(gname, pname);
+            syn::UnitTypeId classId = uf.getClassId(gname, pname);
             subbtn->setFontSize(14);
             // Close popup
             subbtn->setCallback([this, button, classId]() {
@@ -176,7 +177,7 @@ void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget) {
                     m_screen->updateFocus(nullptr);
                 });
         }
-        if(m_uf->getPrototypeNames(gname).size()==1)
+        if(uf.getPrototypeNames(gname).size()==1)
             popup->setAnchorHeight(15);
     }
 }
@@ -319,17 +320,16 @@ void synui::MainGUI::createLogViewer_(nanogui::Widget* a_widget) {
 
 void synui::MainGUI::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
     TRACE
-    auto layout = new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Fill, 0, 0);
+    auto layout = new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 0);
     a_widget->setLayout(layout);
 
-    OscilloscopeWidget* oscwidget = new OscilloscopeWidget(a_widget, m_vm);
+    a_widget->add<OscilloscopeWidget>(m_vm);
 }
 
-synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf)
+synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     : m_window(a_window),
       m_screen(nullptr),
-      m_vm(a_vm),
-      m_uf(a_uf) {
+      m_vm(a_vm) {
     TRACE
     m_screen = new nanogui::Screen();
     setGLFWWindow(m_window->getWindow());
@@ -419,7 +419,7 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm, syn::Unit
         });
 
     /* Create circuit widget in right pane. */
-    m_circuitWidget = new CircuitWidget(m_sidePanelR, m_window, m_unitEditorHost, a_vm, a_uf);
+    m_circuitWidget = new CircuitWidget(m_sidePanelR, m_window, m_unitEditorHost, a_vm);
 
     /* Create button panel */
     m_buttonPanel = new EnhancedWindow(m_screen, "");
@@ -497,6 +497,11 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm, syn::Unit
     m_screen->performLayout();
 }
 
+synui::MainGUI::~MainGUI() {
+    TRACE
+    Logger::instance().reset();
+}
+
 void synui::MainGUI::show() {
     TRACE
     m_screen->setVisible(true);
@@ -510,9 +515,4 @@ void synui::MainGUI::hide() {
 
 void synui::MainGUI::draw() {
     m_screen->drawAll();
-}
-
-synui::MainGUI::~MainGUI() {
-    TRACE
-    Logger::instance().reset();
 }

@@ -296,11 +296,10 @@ namespace synui {
     };
 }
 
-synui::CircuitWidget::CircuitWidget(Widget* a_parent, MainWindow* a_mainWindow, UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf)
+synui::CircuitWidget::CircuitWidget(Widget* a_parent, MainWindow* a_mainWindow, UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm)
     : Widget(a_parent),
       m_window(a_mainWindow),
       m_unitEditorHost(a_unitEditorHost),
-      m_uf(a_uf),
       m_vm(a_vm),
       m_grid{{0,0}, GridCell{GridCell::Empty, nullptr}},
       m_gridSpacing(18),
@@ -518,10 +517,10 @@ void synui::CircuitWidget::createInputOutputUnits_() {
 void synui::CircuitWidget::createUnit(syn::UnitTypeId a_classId) {
     auto unit = syn::UnitFactory::instance().createUnit(a_classId);
     auto f = [this, unit]() {
-                int unitId = m_vm->getPrototypeCircuit()->addUnit(unit);
                 for (int i = 0; i < m_vm->getMaxVoices(); i++) {
                     m_vm->getVoiceCircuit(i)->addUnit(unit->clone());
                 }
+                int unitId = m_vm->getPrototypeCircuit()->addUnit(unit);
                 // Queue return message
                 auto f = [this, unitId]() {
                             _changeState(new cwstate::CreatingUnitState(unitId));
@@ -564,9 +563,10 @@ void synui::CircuitWidget::deleteUnit(int a_unitId) {
 
     // Delete the unit from the circuit
     auto f = [this, a_unitId]() {
-                for (int i = -1; i < m_vm->getMaxVoices(); i++) {
+                for (int i = 0; i < m_vm->getMaxVoices(); i++) {
                     m_vm->getVoiceCircuit(i)->removeUnit(a_unitId);
                 }
+                m_vm->getPrototypeCircuit()->removeUnit(a_unitId);
             };
 
     syn::Command* msg = syn::MakeCommand(f);
@@ -736,10 +736,10 @@ void synui::CircuitWidget::deleteUnitWidget(UnitWidget* widget) {
 void synui::CircuitWidget::createJunction(CircuitWire* a_toWire, CircuitWire* a_fromWire, const Vector2i& a_pos, syn::UnitTypeId a_classId) {
     auto unit = syn::UnitFactory::instance().createUnit(a_classId);
     auto f = [this, unit, a_toWire, a_fromWire, a_pos]() {
-                int unitId = m_vm->getPrototypeCircuit()->addUnit(unit);
                 for (int i = 0; i < m_vm->getMaxVoices(); i++) {
                     m_vm->getVoiceCircuit(i)->addUnit(unit->clone());
                 }
+                int unitId = m_vm->getPrototypeCircuit()->addUnit(unit);
                 // Queue return message
                 auto f = [this, unit, unitId, a_toWire, a_fromWire, a_pos]() {
                             UnitWidget* uw = createUnitWidget(unit->getClassIdentifier(), unitId);

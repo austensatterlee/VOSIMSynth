@@ -113,7 +113,7 @@ namespace synui
     class MainGUI
     {
     public:
-        MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm, syn::UnitFactory* a_uf);
+        MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm);
         ~MainGUI();
         
         void setGLFWWindow(GLFWwindow* a_window);
