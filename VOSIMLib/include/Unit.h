@@ -17,14 +17,6 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
- *  \file Unit.h
- *  \brief
- *  \details
- *  \author Austen Satterlee
- *  \date 02/2016
- */
-
 #ifndef __UNIT__
 #define __UNIT__
 
@@ -41,22 +33,24 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define MAX_OUTPUTS 8
 
 #define DERIVE_UNIT(TYPE) \
-    Unit *_clone() const override {return new TYPE(*this);}\
-public:\
-    string getClassName() const override {return #TYPE;}\
-    static string className() { return #TYPE; }\
-    static syn::UnitTypeId classIdentifier() { std::hash<string> hash_fn; return static_cast<syn::UnitTypeId>(hash_fn(#TYPE)); }\
-    TYPE() : TYPE("") {}\
+    Unit *_clone() const override {return new TYPE(*this);} \
+public: \
+    string getClassName() const override {return #TYPE;} \
+    static string className() { return #TYPE; } \
+    static syn::UnitTypeId classIdentifier() { std::hash<string> hash_fn; return static_cast<syn::UnitTypeId>(hash_fn(#TYPE)); } \
+    TYPE() : TYPE("") {} \
 private:
 
-#define BEGIN_PROC_FUNC
-#define END_PROC_FUNC
+#define BEGIN_PROC_FUNC \
+    assert(m_currentBufferOffset==0 || m_currentBufferOffset==getBufferSize()); \
+    for(m_currentBufferOffset=0;m_currentBufferOffset<getBufferSize();m_currentBufferOffset++){
+#define END_PROC_FUNC }
 #define READ_OUTPUT(OUTPUT) \
-    readOutput(OUTPUT, getCurrentBufferOffset_())
+    readOutput(OUTPUT, m_currentBufferOffset)
 #define READ_INPUT(INPUT) \
-    readInput(INPUT, getCurrentBufferOffset_())
+    readInput(INPUT, m_currentBufferOffset)
 #define WRITE_OUTPUT(OUTPUT, VALUE) \
-    writeOutput_(OUTPUT, getCurrentBufferOffset_(), VALUE)
+    writeOutput_(OUTPUT, m_currentBufferOffset, VALUE)
 
 namespace syn
 {
@@ -94,26 +88,36 @@ namespace syn
     /**
      * \class Unit
      *
-     * \brief Units encapsulate a discrete processor with an internal state, plus a collection of inputs, outputs, and parameters.
+     * \brief Basic DSP block with an internal state, plus a collection of I/O ports and user parameters.
      *
-     * A unit is composed of internal state variables, a number of outputs and inputs, and a transition
-     * function, Unit::process_, which updates the Unit's outputs given the state of the Unit and the current
-     * inputs + parameters.
+     * A unit is composed of internal state variables, a number of input and output ports, and a processing
+     * function, Unit::process_, which updates the Unit's output buffers.
      *
-     * New units should be derived by adding the DERIVE_UNIT macro immediately after the class declaration,
-     * and using Unit::addInput_, Unit::addOutput_, and Unit::addParameter_ to configure the unit in its
-     * constructor. A constructor taking a single string argument as the unit's name should be supplied. The
-     * default constructor is generated automatically. A copy constructor must also be provided. See the
-     * example below for a minimum working copy constructor.
+     * ## Using the Unit class
+     * New units should be derived by adding the `DERIVE_UNIT` macro immediately after the opening brace of the
+     * class declaration (see below for an example).
      *
-     * Serialization is done via a conversion operator to the nlohmann::json type. This can be overriden to
-     * specialize serialization, but make sure to call the base class version first since this takes care of
-     * serializing information such as the unit's name and parameters. Deserialization happens via the static
-     * function Unit::fromJSON, which creates a new Unit object using the UnitFactory singleton. However, the
-     * virtual function Unit::load is called at the end of Unit::fromJSON, so it can be overridden to provide
-     * any specialized deserialization.
+     * A constructor taking a single string argument as the unit's name should be supplied. Unit::addInput_,
+     * Unit::addOutput_, and Unit::addParameter_ should be used in the constructor to add input ports, output
+     * ports, and user parameters respectively.
      *
-     * For example:
+     * A copy constructor must also be provided. See the example below for a minimum working copy constructor.
+     *
+     * ### Serialization
+     * The Unit class uses the "JSON For Modern C++" library for serialization.
+     *
+     * Serialization occurs in the nlohmann::json conversion operator. You may override this function, but
+     * make sure to call the base class implementation at some point. This ensures critical information
+     * necessary for deserialization (e.g. unit type) is saved.
+     * 
+     * Deserialization happens via the static method Unit::fromJSON, which leverages the UnitFactory singleton
+     * to produce a new instance of your derived class (if it has been registered). See the documentation for
+     * UnitFactory to learn how to register your derived type. 
+     *
+     * To specialize deserialization, override the virtual method Unit::load. This method is called from
+     * Unit::fromJSON on the newly created instance.
+     *
+     * ### Example:
      * \code{.cpp}
      *  class DerivedUnit : public Unit {
      *        DERIVE_UNIT(DerivedUnit)
@@ -130,28 +134,23 @@ namespace syn
      *        // Optional methods (can be used to implement special behavior)
      *        operator json() const override {
      *          json j = Unit::operator json();
-     *          ...serialize class internals...
+     *          // ...serialize class internals...
      *          return j;
      *        }
      *
      *        Unit* load(const json& j) override {
-     *          ...deserialize class internals...
+     *          // ...deserialize class internals...
      *          return this;
      *        }
-     *
+     *        
+     *  protected:
+     *        void MSFASTCALL process_() override {
+     *          BEGIN_PROC_FUNC
+     *          // ...compute output sample...
+     *          END_PROC_FUNC
+     *        }
      *    };
      * \endcode
-     *
-     * The macros will generate the code needed to enable serialization and cloning of your class. To do so
-     * manually, it is necessary to implement the Unit::_clone and Unit::getClassName methods.
-     *
-     * Unit::_clone should simply return a new copy of the derived class:
-     * \code{.cpp}
-     *        Unit* DerivedUnit::_clone(){ return new DerivedUnit(*this); }
-     * \endcode
-     *
-     * Unit::getClassName should return a string form of the class name. This value is used for factory
-     * construction. The class name must be unique (i.e.  not used by any other Unit derived classes).
      *
      */
     class VOSIMLIB_API Unit
@@ -353,8 +352,6 @@ namespace syn
 
         virtual void onInputDisconnection_(int a_inputPort) {};
 
-        int getCurrentBufferOffset_() const { return m_currentBufferOffset; }
-
         template <typename ID>
         void writeOutput_(const ID& a_id, int a_offset, const double& a_val);
 
@@ -385,6 +382,9 @@ namespace syn
         friend class UnitFactory;
         friend class Circuit;
 
+    protected:
+        int m_currentBufferOffset;
+
     private:
         string m_name;
         StrMap<UnitParameter, MAX_PARAMS> m_parameters;
@@ -393,7 +393,6 @@ namespace syn
         Circuit* m_parent;
         AudioConfig m_audioConfig;
         MidiData m_midiData;
-        int m_currentBufferOffset;
     };
 
     template <typename ID>

@@ -1,7 +1,7 @@
 #include "Unit.h"
 #include "Circuit.h"
 #include "units/StateVariableFilter.h"
-#include "units/Oscillator.h"
+#include "units/OscillatorUnit.h"
 #include "units/VosimOscillator.h"
 #include "units/ADSREnvelope.h"
 #include "tables.h"
@@ -208,20 +208,20 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
     py::class_<syn::TrapStateVariableFilter, PyUnit<syn::TrapStateVariableFilter>>(m, "TSVF", svf)
             .def(py::init<const std::string&>(), "State variable filter ('Zero feedback delay' version)");
 
-    py::class_<syn::OnePoleLP, PyUnit<syn::OnePoleLP>>(m, "OnePoleLP", unit)
+    py::class_<syn::OnePoleLPUnit, PyUnit<syn::OnePoleLPUnit>>(m, "OnePoleLP", unit)
             .def(py::init<const std::string&>(), "One pole low pass filter ('Zero feedback delay' verion)");
 
-    py::class_<syn::LadderFilter, PyUnit<syn::LadderFilter>>(m, "LdrA", unit)
+    py::class_<syn::LadderFilterA, PyUnit<syn::LadderFilterA>>(m, "LdrA", unit)
             .def(py::init<const std::string&>(), "Ladder filter (type A)");
 
-    py::class_<syn::LadderFilterTwo, PyUnit<syn::LadderFilterTwo>>(m, "LdrB", unit)
+    py::class_<syn::LadderFilterB, PyUnit<syn::LadderFilterB>>(m, "LdrB", unit)
             .def(py::init<const std::string&>(), "Ladder filter (type B)");
 
 
-    py::class_<syn::BasicOscillator, PyUnit<syn::BasicOscillator>>(m, "BasicOsc", unit)
+    py::class_<syn::BasicOscillatorUnit, PyUnit<syn::BasicOscillatorUnit>>(m, "BasicOsc", unit)
             .def(py::init<const std::string&>());
 
-    py::class_<syn::LFOOscillator, PyUnit<syn::LFOOscillator>>(m, "LFO", unit)
+    py::class_<syn::LFOOscillatorUnit, PyUnit<syn::LFOOscillatorUnit>>(m, "LFO", unit)
             .def(py::init<const std::string&>());
 
     py::class_<syn::VosimOscillator, PyUnit<syn::VosimOscillator>>(m, "VosimOsc", unit)

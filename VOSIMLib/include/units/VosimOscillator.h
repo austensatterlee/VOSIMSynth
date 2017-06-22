@@ -20,28 +20,28 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __VOSIMOSCILLATOR__
 #define __VOSIMOSCILLATOR__
 
-#include "units/Oscillator.h"
+#include "units/OscillatorUnit.h"
 
 namespace syn
 {
-    class VOSIMLIB_API VosimOscillator : public TunedOscillator
+    class VOSIMLIB_API VosimOscillator : public TunedOscillatorUnit
     {
         DERIVE_UNIT(VosimOscillator)
     public:
         enum Param
         {
-            pPulseTune = TunedOscillator::NumParams,
+            pPulseTune = TunedOscillatorUnit::NUM_PARAMS,
             pNumPulses,
             pPulseDecay,
-            NumParams
+            NUM_PARAMS
         };
 
         enum Input
         {
-            iPulseTuneAdd = TunedOscillator::NumInputs,
+            iPulseTuneAdd = TunedOscillatorUnit::NUM_INPUTS,
             iPulseTuneMul,
             iDecayMul,
-            NumInputs
+            NUM_INPUTS
         };
 
         explicit VosimOscillator(string name);
@@ -57,25 +57,25 @@ namespace syn
         int m_num_pulses;
     };
 
-    class VOSIMLIB_API FormantOscillator : public TunedOscillator
+    class VOSIMLIB_API FormantOscillator : public TunedOscillatorUnit
     {
         DERIVE_UNIT(FormantOscillator)
     public:
         
         enum Param
         {
-            pWidth = TunedOscillator::NumParams,
+            pWidth = TunedOscillatorUnit::NUM_PARAMS,
             pFmt,
-            NumParams
+            NUM_PARAMS
         };
 
         enum Input
         {
-            iWidthAdd = TunedOscillator::NumInputs,
+            iWidthAdd = TunedOscillatorUnit::NUM_INPUTS,
             iFmtAdd,
             iWidthMul,
             iFmtMul,
-            NumInputs
+            NUM_INPUTS
         };
 
         explicit FormantOscillator(string name);

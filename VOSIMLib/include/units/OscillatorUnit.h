@@ -34,7 +34,7 @@ namespace syn
 
     const vector<string> WAVE_SHAPE_NAMES{ "Saw", "Sine", "Tri", "Square" };
 
-    class VOSIMLIB_API Oscillator : public Unit
+    class VOSIMLIB_API OscillatorUnit : public Unit
     {
     public:
         enum Param
@@ -42,24 +42,24 @@ namespace syn
             pGain = 0,
             pPhaseOffset,
             pUnipolar,
-            NumParams
+            NUM_PARAMS
         };
 
         enum Output
         {
             oOut = 0,
             oPhase,
-            NumOutputs
+            NUM_OUTPUTS
         };
 
         enum Input
         {
             iGainMul = 0,
             iPhaseAdd,
-            NumInputs
+            NUM_INPUTS
         };
 
-        explicit Oscillator(const string& a_name);
+        explicit OscillatorUnit(const string& a_name);
 
         void reset() override;
 
@@ -78,25 +78,25 @@ namespace syn
         double m_bias;
     };
 
-    class VOSIMLIB_API TunedOscillator : public Oscillator
+    class VOSIMLIB_API TunedOscillatorUnit : public OscillatorUnit
     {
     public:
         enum Param
         {
-            pTune = Oscillator::NumParams,
+            pTune = OscillatorUnit::NUM_PARAMS,
             pOctave,
-            NumParams
+            NUM_PARAMS
         };
 
         enum Input
         {
-            iNote = Oscillator::NumInputs,
-            NumInputs
+            iNote = OscillatorUnit::NUM_INPUTS,
+            NUM_INPUTS
         };
 
-        explicit TunedOscillator(const string& a_name);
+        explicit TunedOscillatorUnit(const string& a_name);
 
-        explicit TunedOscillator(const TunedOscillator& a_rhs);
+        explicit TunedOscillatorUnit(const TunedOscillatorUnit& a_rhs);
 
     protected:
         void MSFASTCALL process_() override GCCFASTCALL;
@@ -106,52 +106,55 @@ namespace syn
         double m_pitch;
     };
 
-    class VOSIMLIB_API BasicOscillator : public TunedOscillator
+    class VOSIMLIB_API BasicOscillatorUnit : public TunedOscillatorUnit
     {
-        DERIVE_UNIT(BasicOscillator)
+        DERIVE_UNIT(BasicOscillatorUnit)
     public:
         enum Param
         {
-            pWaveform = TunedOscillator::NumParams
+            pWaveform = TunedOscillatorUnit::NUM_PARAMS,
+            NUM_PARAMS
         };
-        explicit BasicOscillator(const string& a_name);
+        explicit BasicOscillatorUnit(const string& a_name);
 
-        explicit BasicOscillator(const BasicOscillator& a_rhs);
+        explicit BasicOscillatorUnit(const BasicOscillatorUnit& a_rhs);
 
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
     };
 
-    class VOSIMLIB_API LFOOscillator : public Oscillator
+    class VOSIMLIB_API LFOOscillatorUnit : public OscillatorUnit
     {
-        DERIVE_UNIT(LFOOscillator)
+        DERIVE_UNIT(LFOOscillatorUnit)
     public:
         enum Param
         {
-            pWaveform = Oscillator::NumParams,
+            pWaveform = OscillatorUnit::NUM_PARAMS,
             pBPMFreq,
             pFreq,
             pTempoSync,
-            NumParams
+            NUM_PARAMS
         };
 
         enum Input
         {
-            iFreqAdd = Oscillator::NumInputs,
+            iFreqAdd = OscillatorUnit::NUM_INPUTS,
             iFreqMul,
-            iSync
+            iSync,
+            NUM_INPUTS
         };
 
         enum Output
         {
-            oQuadOut = Oscillator::NumOutputs
+            oQuadOut = OscillatorUnit::NUM_OUTPUTS,
+            NUM_OUTPUTS
         };
 
-        explicit LFOOscillator(const string& a_name);
+        explicit LFOOscillatorUnit(const string& a_name);
 
-        explicit LFOOscillator(const LFOOscillator& a_rhs);
+        explicit LFOOscillatorUnit(const LFOOscillatorUnit& a_rhs);
 
-        explicit LFOOscillator(const BasicOscillator& a_rhs) : LFOOscillator(a_rhs.name()) {}
+        explicit LFOOscillatorUnit(const BasicOscillatorUnit& a_rhs) : LFOOscillatorUnit(a_rhs.name()) {}
 
     protected:
 

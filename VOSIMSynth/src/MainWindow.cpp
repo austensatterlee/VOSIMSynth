@@ -80,16 +80,17 @@ synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiCon
     m_HInstance(nullptr),
     m_timerWindow(nullptr),
     m_window(nullptr),
-    m_isOpen(false), 
+    m_size(a_width, a_height), 
+    m_isOpen(false),
     m_guiConstructor(a_guiConstructor),
     m_gui(nullptr),
-    m_size(a_width, a_height),
     m_guiInternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE),
     m_guiExternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE)
 {
     TRACE
     auto error_callback = [](int error, const char* description)
             {
+                TRACEMSG(description);
                 puts(description);
             };
     glfwSetErrorCallback(error_callback);
@@ -254,6 +255,8 @@ void synui::MainWindow::CloseWindow()
 void synui::MainWindow::resize(int w, int h)
 {
     TRACE
+    w = syn::MAX(w, 800);
+    h = syn::MAX(h, 600);
     glfwSetWindowSize(m_window, w, h);
     m_gui->resize(w,h);
     m_size = { w,h };

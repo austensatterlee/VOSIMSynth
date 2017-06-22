@@ -183,13 +183,7 @@ namespace syn
         // tick units in processing graph
         for (Unit** unit = m_procGraph.data(); *unit != nullptr; unit++)
         {
-            Unit& u = **unit;
-            int bufSize = u.getBufferSize();
-            u.m_currentBufferOffset=0;
-            while(u.m_currentBufferOffset<bufSize){
-                (*unit)->tick();
-                u.m_currentBufferOffset++;
-            }
+            (*unit)->tick();
         }
 
         /* Push internally connected output signals to circuit output ports */

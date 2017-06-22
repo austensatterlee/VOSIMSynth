@@ -154,8 +154,8 @@ namespace syn
 
     /// Best if |x|<3.1
     template<typename T>
-    T fast_tanh_rat(const T& x_) {
-        T x = abs(x_);
+    T MSFASTCALL fast_tanh_rat(const T& x_) GCCFASTCALL {
+        const T x = abs(x_);
         return sgn(x_)*(-.67436811832e-5 + (.2468149110712040 + (.583691066395175e-1 + .3357335044280075e-1*x)*x)*x) / (.2464845986383725 + (.609347197060491e-1 + (.1086202599228572 + .2874707922475963e-1*x)*x)*x);
     }
 

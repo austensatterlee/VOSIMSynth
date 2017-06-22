@@ -97,8 +97,6 @@ void synui::MainGUI::reset() {
 
 void synui::MainGUI::resize(int a_w, int a_h) {
     TRACE
-    a_w = syn::MIN(a_w, 800);
-    a_h = syn::MIN(a_w, 600);
     m_screen->resizeCallbackEvent(a_w, a_h);
     m_sidePanelL->setFixedHeight(m_screen->height());
     m_sidePanelR->setPosition({m_sidePanelL->width(), m_buttonPanel->height()});
@@ -113,6 +111,10 @@ void synui::MainGUI::resize(int a_w, int a_h) {
 
 void synui::MainGUI::setGLFWWindow(GLFWwindow* a_window) {
     TRACE
+
+    TRACEMSG("Initializing nanogui screen.")
+    m_screen->initialize(a_window, true);
+    TRACEMSG("Finished initializing nanogui screen.");
 
     /* Setup event handlers. */
     glfwSetWindowUserPointer(a_window, this);// Set user pointer so we can access ourselves inside the event handlers
@@ -147,10 +149,6 @@ void synui::MainGUI::setGLFWWindow(GLFWwindow* a_window) {
             };
     glfwSetFramebufferSizeCallback(a_window, resizeCallback);
     glfwSetWindowSizeCallback(a_window, resizeCallback);
-
-    TRACEMSG("Initializing nanogui screen.")
-    m_screen->initialize(a_window, true);
-    TRACEMSG("Finished initializing nanogui screen.");
 }
 
 void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget) {
