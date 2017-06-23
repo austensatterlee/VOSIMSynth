@@ -103,7 +103,8 @@ void syn::RectifierUnit::process_()
 }
 
 syn::SummerUnit::SummerUnit(const string& a_name) :
-    Unit(a_name)
+    Unit(a_name),
+    m_pBias(addParameter_(UnitParameter("bias", -1E6, 1E6, 0.0, UnitParameter::None, 2).setControlType(UnitParameter::Unbounded)))
 {
     addInput_("1");
     addInput_("2");
@@ -116,7 +117,7 @@ syn::SummerUnit::SummerUnit(const SummerUnit& a_rhs) :
 void syn::SummerUnit::process_()
 {
     BEGIN_PROC_FUNC
-        double output = 0;
+        double output = param(m_pBias).getDouble();
         for (int i = 0; i < numInputs(); i++) {
             output += READ_INPUT(inputs().ids()[i]);
         }
@@ -140,23 +141,9 @@ void syn::SummerUnit::onInputConnection_(int a_inputPort)
     }
 }
 
-//void syn::SummerUnit::onInputDisconnection_(int a_inputPort) {
-//    // Remove a free input port on disconnect
-//    int numConnectedInputs = 0;
-//    auto portIds = inputs().ids();
-//    for(int i=0;i<numInputs();i++)
-//    {
-//        if (inputSource(portIds[i])!=nullptr)
-//            numConnectedInputs++;
-//    }
-//    if (numConnectedInputs <= numInputs() - 1 && numInputs() > 1) {
-//        removeInput_(a_inputPort);
-//    }
-//}
-
 syn::GainUnit::GainUnit(const string& a_name) :
     Unit(a_name),
-    m_pGain(addParameter_(UnitParameter("gain", -1E4, 1E4, 1.0, UnitParameter::None, 2).setControlType(UnitParameter::Unbounded)))
+    m_pGain(addParameter_(UnitParameter("gain", -1E6, 1E6, 1.0, UnitParameter::None, 2).setControlType(UnitParameter::Unbounded)))
 {
     addInput_("1", 1.0);
     addInput_("2", 1.0);

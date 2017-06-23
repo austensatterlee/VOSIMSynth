@@ -110,7 +110,8 @@ namespace syn {
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
         void onInputConnection_(int a_inputPort) override;
-        //void onInputDisconnection_(int a_inputPort) override;
+    private:
+        int m_pBias;
     };
 
     /**
