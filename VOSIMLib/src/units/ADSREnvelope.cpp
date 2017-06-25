@@ -34,7 +34,7 @@ namespace syn {
         addInput_(iDecay, "dec");
         addInput_(iSustain, "sus");
         addInput_(iRelease, "rel");
-        addInput_(iGate, "trig");
+        addInput_(iGate, "gate");
         addParameter_(pAttack, UnitParameter("atk", 0.0, 1.0, 0.001));
         addParameter_(pDecay, UnitParameter("dec", 0.0, 1.0, 0.1));
         addParameter_(pSustain, UnitParameter("sus", 0.0, 1.0, 0.707));

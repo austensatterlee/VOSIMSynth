@@ -72,8 +72,8 @@ namespace syn
         enum Input
         {
             iWidthAdd = TunedOscillatorUnit::NUM_INPUTS,
-            iFmtAdd,
             iWidthMul,
+            iFmtAdd,
             iFmtMul,
             NUM_INPUTS
         };

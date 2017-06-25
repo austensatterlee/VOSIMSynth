@@ -44,7 +44,7 @@ namespace syn
     {
         BEGIN_PROC_FUNC
             m_num_pulses = param(pNumPulses).getInt();
-            m_pulse_tune = CLAMP<double>(READ_INPUT(iPulseTuneMul) * param(pPulseTune).getDouble() + READ_INPUT(iPulseTuneAdd), 0, 1);
+            m_pulse_tune = CLAMP<double>(READ_INPUT(iPulseTuneMul) * (param(pPulseTune).getDouble() + READ_INPUT(iPulseTuneAdd)), 0, 1);
             TunedOscillatorUnit::process_();
             double pulse_decay = CLAMP<double>(READ_INPUT(iDecayMul) * param(pPulseDecay).getDouble(), 0, 1);
 
@@ -65,8 +65,8 @@ namespace syn
                     curr_pulse_gain *= (1 - pulse_decay);
                 }
 
-                output = pulseval * abs(pulseval);
-                output *= curr_pulse_gain * sqrt(m_pulse_step / m_phase_step);
+                output = pulseval * pulseval;
+                output *= curr_pulse_gain; // * sqrt(m_pulse_step / m_phase_step);
             }
             WRITE_OUTPUT(oOut, m_gain * output + m_bias);
         END_PROC_FUNC
@@ -93,7 +93,7 @@ namespace syn
         TunedOscillatorUnit(name)
     {
         addParameter_(pWidth, {"width", 0.0, 1.0, 0.0});
-        addParameter_(pFmt, {"fmt", 0.0, 1.0, 0.0});
+        addParameter_(pFmt, {"fmt", 200.0, 4000.0, 200.0});
         addInput_(iWidthAdd, "w");
         addInput_(iWidthMul, "w[x]", 1.0);
         addInput_(iFmtAdd, "fmt");
@@ -107,29 +107,24 @@ namespace syn
     {
         BEGIN_PROC_FUNC
             TunedOscillatorUnit::process_();
-            double formant_freq;
-            double cos_width;
-            int MAX_FMT_FREQ = 3000;
-            if (m_freq > MAX_FMT_FREQ)
+            double fmtFreq;
+            double width;
+            if (m_freq > fs()/8.0)
             {
-                formant_freq = m_freq;
-                cos_width = 1;
+                fmtFreq = m_freq;
+                width = 1;
             }
             else
             {
-                double fmt_pitch_norm = CLAMP<double>(READ_INPUT(iFmtMul) * param(pFmt).getDouble() + READ_INPUT(iFmtAdd), 0, 1);
-                formant_freq = pow(2.0, LERP<double>(log2(m_freq), log2(MAX_FMT_FREQ), fmt_pitch_norm));
-                cos_width = 1 + 8 * CLAMP<double>(READ_INPUT(iWidthMul) * param(pWidth).getDouble() + READ_INPUT(iWidthAdd), 0, 1);
+                fmtFreq = CLAMP<double>(READ_INPUT(iFmtMul) * (param(pFmt).getDouble() + READ_INPUT(iFmtAdd)), param(pFmt).getMin(), param(pFmt).getMax());
+                width = 1 + 6 * CLAMP<double>(READ_INPUT(iWidthMul) * (param(pWidth).getDouble() + READ_INPUT(iWidthAdd)), 0, 1);
             }
-
-            double formant_step = formant_freq / fs();
-            double formant_phase = m_phase * formant_step / m_phase_step;
-            formant_phase = WRAP(formant_phase, 1.0);
-            double cos_phase = CLAMP<double>(m_phase * cos_width, 0, 1);
-
-            double sinval = lut_sin_table().plerp(formant_phase + 0.5);
+            
+            double cos_phase = CLAMP<double>(m_phase * width, 0, 1);
             double cosval = 0.5 * (1 + lut_sin_table().plerp(cos_phase - 0.25));
-            double output = sinval * cosval * sqrt(cos_width);
+
+            double sinval = lut_sin_table().plerp(m_phase*fmtFreq/m_freq);
+            double output = sinval * cosval * sqrt(width);
             WRITE_OUTPUT(oOut, m_gain * output + m_bias);
         END_PROC_FUNC
     }

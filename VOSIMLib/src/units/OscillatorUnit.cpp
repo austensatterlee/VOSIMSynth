@@ -32,7 +32,8 @@ namespace syn
         m_period(1),
         m_freq(0.0),
         m_gain(0.0),
-        m_bias(0.0)
+        m_bias(0.0),
+        m_lastSync(0.0)
     {
         addOutput_(oOut, "out");
         addOutput_(oPhase, "ph");
@@ -41,6 +42,7 @@ namespace syn
         addParameter_(pUnipolar, UnitParameter("unipolar", false));
         addInput_(iGainMul, "g[x]", 1.0);
         addInput_(iPhaseAdd, "ph");
+        addInput_(iSync, "sync");
     }
 
     void OscillatorUnit::reset()
@@ -68,7 +70,14 @@ namespace syn
     }
 
     void OscillatorUnit::tickPhase_(double a_phaseOffset)
-    {
+    {        
+        // sync
+        if (m_lastSync > 0.5 && READ_INPUT(iSync) < 0.5)
+        {
+            reset();
+        }
+        m_lastSync = READ_INPUT(iSync);
+
         m_basePhase += m_phase_step;
         if (m_basePhase >= 1)
         {
@@ -162,21 +171,18 @@ namespace syn
     }
 
     LFOOscillatorUnit::LFOOscillatorUnit(const string& a_name) :
-        OscillatorUnit(a_name),
-        m_lastSync(0.0)
+        OscillatorUnit(a_name)
     {
         addOutput_(oQuadOut, "quad");
         addInput_(iFreqAdd, "freq");
         addInput_(iFreqMul, "freq[x]", 1.0);
-        addInput_(iSync, "sync");
+        param(pGain).setMax(1e6);
+        param(pGain).setControlType(UnitParameter::Unbounded);
         addParameter_(pBPMFreq, UnitParameter("rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM).setVisible(false));
         addParameter_(pFreq, UnitParameter("freq", 0.01, 100.0, 1.0, UnitParameter::EUnitsType::Freq));
         addParameter_(pWaveform, UnitParameter("waveform", WAVE_SHAPE_NAMES));
         addParameter_(pTempoSync, UnitParameter("tempo sync", false));
     }
-
-    LFOOscillatorUnit::LFOOscillatorUnit(const LFOOscillatorUnit& a_rhs) :
-        LFOOscillatorUnit(a_rhs.name()) { }
 
     void LFOOscillatorUnit::process_()
     {
@@ -190,12 +196,6 @@ namespace syn
         {
             m_freq = READ_INPUT(iFreqMul) * (param(pFreq).getDouble() + READ_INPUT(iFreqAdd));
         }
-        // sync
-        if (m_lastSync <= 0.0 && READ_INPUT(iSync) > 0.0)
-        {
-            reset();
-        }
-        m_lastSync = READ_INPUT(iSync);
         OscillatorUnit::process_();
         double output, quadoutput;
         WAVE_SHAPE shape = static_cast<WAVE_SHAPE>(param(pWaveform).getInt());

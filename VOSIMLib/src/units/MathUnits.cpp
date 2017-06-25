@@ -255,7 +255,7 @@ void syn::LerpUnit::process_()
         double inputNorm = INVLERP(aIn, bIn, input);
         double output = LERP(aOut, bOut, inputNorm);
         if (param(m_pClip).getBool())
-            output = CLAMP(output, aOut, bOut);
+            output = CLAMP(output, MIN(aOut, bOut), MAX(aOut, bOut));
         WRITE_OUTPUT(0, output);
     END_PROC_FUNC
 }

@@ -56,6 +56,7 @@ namespace syn
         {
             iGainMul = 0,
             iPhaseAdd,
+            iSync,
             NUM_INPUTS
         };
 
@@ -76,6 +77,7 @@ namespace syn
         double m_freq;
         double m_gain;
         double m_bias;
+        double m_lastSync;
     };
 
     class VOSIMLIB_API TunedOscillatorUnit : public OscillatorUnit
@@ -126,6 +128,7 @@ namespace syn
     class VOSIMLIB_API LFOOscillatorUnit : public OscillatorUnit
     {
         DERIVE_UNIT(LFOOscillatorUnit)
+
     public:
         enum Param
         {
@@ -140,7 +143,6 @@ namespace syn
         {
             iFreqAdd = OscillatorUnit::NUM_INPUTS,
             iFreqMul,
-            iSync,
             NUM_INPUTS
         };
 
@@ -152,13 +154,8 @@ namespace syn
 
         explicit LFOOscillatorUnit(const string& a_name);
 
-        explicit LFOOscillatorUnit(const LFOOscillatorUnit& a_rhs);
+        explicit LFOOscillatorUnit(const LFOOscillatorUnit& a_rhs) : LFOOscillatorUnit(a_rhs.name()) {}
 
-        explicit LFOOscillatorUnit(const BasicOscillatorUnit& a_rhs) : LFOOscillatorUnit(a_rhs.name()) {}
-
-    protected:
-
-        double m_lastSync;
     protected:
         void MSFASTCALL process_() GCCFASTCALL override;
         void onParamChange_(int a_paramId) override;

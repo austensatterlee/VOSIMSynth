@@ -63,10 +63,20 @@ namespace syn {
     class VOSIMLIB_API GateUnit : public Unit {
         DERIVE_UNIT(GateUnit)
     public:
+        enum Output
+        {
+            oGate = 0,
+            oTrig,
+            NUM_OUTPUTS
+        };
+
         explicit GateUnit(const string& a_name) :
             Unit(a_name),
-            m_queuedNoteOff(true) {
-            addOutput_("out");
+            m_queuedNoteOff(true),
+            m_triggerFired(false)
+        {
+            addOutput_(oGate, "gate");
+            addOutput_(oTrig, "trig");
         }
 
         GateUnit(const GateUnit& a_rhs) :
@@ -77,18 +87,29 @@ namespace syn {
     protected:
         void MSFASTCALL process_() GCCFASTCALL override {
             BEGIN_PROC_FUNC
-            if (m_queuedNoteOff) {
-                m_queuedNoteOff = false;
-                WRITE_OUTPUT(0, 0.0);
-                return;
+            // Trigger sends a 1 and then turns off.
+            if (isNoteOn()){
+                if (!m_triggerFired) {
+                    WRITE_OUTPUT(oTrig, 1.0);
+                    m_triggerFired = true;
+                }else {
+                    WRITE_OUTPUT(oTrig, 0.0);
+                }
             }
-            WRITE_OUTPUT(0, static_cast<double>(isNoteOn()));
+            // Gate sends a 0 first, then 1s until note off.
+            if (m_queuedNoteOff) {
+                WRITE_OUTPUT(oGate, 0.0);
+                m_queuedNoteOff = false;
+            }else{                
+                WRITE_OUTPUT(oGate, isNoteOn() ? 1.0 : 0.0);
+            }
             END_PROC_FUNC
         }
 
-        void onNoteOff_() override { m_queuedNoteOff = true; }
+        void onNoteOff_() override { m_queuedNoteOff = true; m_triggerFired = false; }
     private:
-        bool m_queuedNoteOff; ///< Indicates that the next output should be a note off signal.
+        bool m_queuedNoteOff;
+        bool m_triggerFired;
     };
 
     /**
