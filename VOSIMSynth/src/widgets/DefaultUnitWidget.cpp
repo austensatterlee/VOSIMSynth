@@ -26,7 +26,7 @@ synui::DefaultUnitWidget::DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceM
 
     // Create title
     m_titleLabel = new nanogui::Label(this, "", "sans-bold", 0);
-    m_titleLabel->setTooltip("Ctrl+click to edit title\nRight click to delete");
+    m_titleLabel->setTooltip("Dbl click to rename\nRight click to delete");
     m_titleLabel->setDraggable(false);
     m_titleLabel->setTextAlign(nanogui::Label::Alignment::Left);
     layout->setAnchor(m_titleLabel, Anchor{0,0,3,1,nanogui::Alignment::Middle});
@@ -63,7 +63,6 @@ synui::DefaultUnitWidget::DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceM
         int outputId = outputs.ids()[i];
         const string& outputName = outputs.getNameFromId(outputId);
         auto lbl = new nanogui::Label(this, outputName, "sans", 0);
-        //lbl->setTextAlign(nanogui::Label::Alignment::Right);
         layout->setAnchor(lbl, Anchor{2, 1 + i});
         lbl->setId(std::to_string(outputId));
         lbl->setTooltip(outputName);
@@ -312,7 +311,7 @@ void synui::DefaultUnitWidget::onGridChange_() {
         if (m_inputLabels.find(r) != m_inputLabels.end()) {
             m_inputLabels[r]->setFontSize(portRowFontSize);
             if (portRowFontSize < 12) {
-                m_inputLabels[r]->setCaption(inputs.getNameFromId(r).substr(0, 2));
+                m_inputLabels[r]->setCaption(inputs.getNameFromId(r));
                 m_inputLabels[r]->setFixedWidth(rowHeight);
                 m_inputLabels[r]->setFixedHeight(rowHeight);
             } else {
