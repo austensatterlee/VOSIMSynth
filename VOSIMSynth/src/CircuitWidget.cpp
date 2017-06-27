@@ -511,8 +511,10 @@ void synui::CircuitWidget::createInputOutputUnits_() {
     UnitWidget* inWidget = createUnitWidget(inputClassId, inputUnitId);
     UnitWidget* outWidget = createUnitWidget(outputClassId, outputUnitId);
     screen()->performLayout();
-    updateUnitPos(inWidget, {0.5 * inWidget->width(), height() * 0.5 - inWidget->height() * 0.5});
-    updateUnitPos(outWidget, {width() - 1.5 * outWidget->width(), height() * 0.5 - outWidget->height() * 0.5});
+    if(inWidget!=nullptr)
+        updateUnitPos(inWidget, {0.5 * inWidget->width(), height() * 0.5 - inWidget->height() * 0.5});
+    if(outWidget!=nullptr)
+        updateUnitPos(outWidget, {width() - 1.5 * outWidget->width(), height() * 0.5 - outWidget->height() * 0.5});
 }
 
 void synui::CircuitWidget::createUnit(syn::UnitTypeId a_classId) {
@@ -532,6 +534,8 @@ void synui::CircuitWidget::createUnit(syn::UnitTypeId a_classId) {
 }
 
 synui::UnitWidget* synui::CircuitWidget::createUnitWidget(syn::UnitTypeId a_classId, int a_unitId) {
+    if(m_unitWidgets.find(a_unitId)!=m_unitWidgets.end())
+        return nullptr;
     UnitWidget* widget;
     if (m_registeredUnitWidgets.find(a_classId) == m_registeredUnitWidgets.end())
         widget = new DefaultUnitWidget(this, m_vm, a_unitId);
