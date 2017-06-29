@@ -6,295 +6,12 @@
 #include "MainGUI.h"
 #include "UnitEditor.h"
 #include "ContextMenu.h"
-#include "Logger.h"
 #include <VoiceManager.h>
 #include <Command.h>
 #include <units/MathUnits.h>
 #include <unordered_set>
 #include <set>
-
-namespace synui {
-    class CircuitWire : public std::enable_shared_from_this<CircuitWire> {
-    public:
-
-        explicit CircuitWire(CircuitWidget* a_parentCircuit)
-            :
-            highlight(None),
-            m_parentCircuit(a_parentCircuit),
-            m_inputPort({-1,-1}),
-            m_outputPort({-1,-1}),
-            m_start({-1,-1}),
-            m_end({-1,-1}),
-            m_cost(0),
-            m_isFinal(false) { }
-
-        ~CircuitWire() { m_parentCircuit->m_grid.replaceValue({CircuitWidget::GridCell::Wire, this}, m_parentCircuit->m_grid.getEmptyValue()); }
-
-        string info() const {
-            if (!m_isFinal)
-                return "";
-
-            std::ostringstream os;
-            /// @DEBUG Show wire cost
-            os << "Cost: " << m_cost << std::endl;
-
-            // List current output value for this wire held by each active voice
-            vector<int> activeVoiceIndices = m_parentCircuit->m_vm->getActiveVoiceIndices();
-            for (int vind : activeVoiceIndices) {
-                const syn::Unit& unit = m_parentCircuit->m_vm->getUnit(m_outputPort.first, vind);
-                double value = unit.readOutput(m_outputPort.second, 0);
-                os << "Voice " << vind << ": " << std::setprecision(4) << value << std::endl;
-            }
-            return os.str();
-        }
-
-        void draw(NVGcontext* ctx) {
-            nvgSave(ctx);
-            nvgBeginPath(ctx);
-            nanogui::Color wireColor;
-            // If wire is incomplete (still being drawn), draw a "ghost"
-            if (m_inputPort.first < 0 || m_outputPort.first < 0) {
-                nvgStrokeWidth(ctx, 2.0f);
-                wireColor = nanogui::Color(1.0f, 0.0f, 0.0f, 1.0f);
-            } else {
-                nvgStrokeWidth(ctx, 1.5f);
-                switch (highlight) {
-                case Incoming:
-                    wireColor = nanogui::Color(0.45f, 0.45f, 1.00f, 0.55f);
-                    break;
-                case Outgoing:
-                    wireColor = nanogui::Color(0.25f, 1.0f, 0.25f, 0.55f);
-                    break;
-                case Selected:
-                    nvgStrokeWidth(ctx, 2.0f);
-                    wireColor = nanogui::Color(0.75f, 0.75f, 0.75f, 0.75f);
-                    break;
-                case None:
-                default:
-                    wireColor = nanogui::Color(0.85f, 0.20f, 0.10f, 0.65f);
-                }
-            }
-            nvgStrokeColor(ctx, wireColor);
-            nvgLineJoin(ctx, NVG_ROUND);
-
-            nvgMoveTo(ctx, m_start.x(), m_start.y());
-            if (m_path.empty())
-                nvgLineTo(ctx, m_end.x(), m_end.y());
-
-            int gs = m_parentCircuit->gridSpacing();
-            for (int i = 0; i < m_path.size(); i += 1) {
-                Grid2DPoint& currGridPt = m_path[i];
-                Grid2DPoint& nextGridPt = i + 1 < m_path.size() ? m_path[i + 1] : m_path.back();
-                Grid2DPoint& nextGridPt2 = i + 2 < m_path.size() ? m_path[i + 2] : m_path.back();
-                Grid2DPoint& nextGridPt3 = i + 3 < m_path.size() ? m_path[i + 3] : m_path.back();
-
-                Vector2i currPixelPt = i >= m_path.size() - 1 ? m_end : m_parentCircuit->m_grid.toPixel(currGridPt, gs);
-                nvgLineTo(ctx, currPixelPt.x(), currPixelPt.y());
-
-                if (m_parentCircuit->wireDrawStyle() == CircuitWidget::Curved) {
-                    Vector2i dCurrGridPt = nextGridPt - currGridPt;
-                    Vector2i dNextGridPt = nextGridPt2 - nextGridPt;
-                    Vector2i dNextGridPt2 = nextGridPt3 - nextGridPt2;
-                    // Draw a curve when the path changes direction.
-                    if (dNextGridPt.dot(dCurrGridPt) == 0) {
-                        Vector2i nextPixelPt = i + 1 >= m_path.size() - 1 ? m_end : m_parentCircuit->m_grid.toPixel(nextGridPt, gs);
-                        Vector2i nextPixelPt2 = i + 2 >= m_path.size() - 1 ? m_end : m_parentCircuit->m_grid.toPixel(nextGridPt2, gs);
-                        // Handle "S-curves" and corner turns.
-                        if (dNextGridPt2.dot(dNextGridPt) == 0) {
-                            Vector2i nextPixelPt3 = i + 3 >= m_path.size() - 1 ? m_end : m_parentCircuit->m_grid.toPixel(nextGridPt3, gs);
-                            nvgBezierTo(ctx, nextPixelPt.x(), nextPixelPt.y(), nextPixelPt2.x(), nextPixelPt2.y(), nextPixelPt3.x(), nextPixelPt3.y());
-                            i += 2;
-                        } else {
-                            nvgBezierTo(ctx, currPixelPt.x(), currPixelPt.y(), nextPixelPt.x(), nextPixelPt.y(), nextPixelPt2.x(), nextPixelPt2.y());
-                            i += 1;
-                        }
-                    }
-                }
-
-            }
-            nvgStroke(ctx);
-
-
-            //            nvgBeginPath(ctx);
-            //            nvgFillColor(ctx, nanogui::Color(0.0f,0.0f,0.0f,0.5f));
-            //            for (auto gridPt : m_crossings)
-            //            {                
-            //                Vector2i pixelPt = m_parentCircuit->m_grid.toPixel({gridPt.first, gridPt.second}, m_parentCircuit->getGridSpacing());      
-            //                nvgCircle(ctx, pixelPt.x(), pixelPt.y(), 1.0f);
-            //            }
-            //            nvgFill(ctx);
-
-            /* Draw arrow */
-            if (m_path.size() > 1) {
-                float noseSize = m_parentCircuit->gridSpacing() * 0.33;
-                float noseAngle = 45.0;
-
-                Vector2i pt = m_end;
-                Vector2i prevPt = m_parentCircuit->m_grid.toPixel(m_path[m_path.size() - 2], m_parentCircuit->gridSpacing());
-
-                Vector2f dir = (pt - prevPt).cast<float>();
-                dir.normalize();
-                float dangle = asin(dir[1]);
-
-                Vector2f headOffset = Vector2f{0, 1} * noseSize;
-                Vector2f noseOffset = Vector2f{noseSize / sin(2 * PI / 180.0 * noseAngle), 0};
-
-                nvgBeginPath(ctx);
-                nvgFillColor(ctx, wireColor);
-                nvgTranslate(ctx, pt.x(), pt.y());
-                nvgRotate(ctx, dangle);
-                nvgTranslate(ctx, -noseSize, 0);
-                nvgMoveTo(ctx, 0, 0);
-                nvgLineTo(ctx, headOffset.x(), headOffset.y());
-                nvgLineTo(ctx, noseOffset.x(), noseOffset.y());
-                nvgLineTo(ctx, headOffset.x(), -headOffset.y());
-                nvgClosePath(ctx);
-                nvgFill(ctx);
-            }
-            nvgRestore(ctx);
-        }
-
-        /**
-         * \brief Determine and update the start and end points of the wire.
-         * If both the input and output port have been set, then the start and end points are simply the
-         * location of those ports. If only one of them has been set, the location of that port is the start
-         * point, and the `a_endPt` argument is used to set the end point.
-         * \param a_endPt End point to use in the case that one of the ports has not been set.
-         */
-        void updateStartAndEndPositions(const Vector2i& a_endPt = {-1,-1}) {
-            // Determine start/end points
-            Vector2i startPos;
-            Vector2i endPos = m_end;
-            if (m_inputPort.first >= 0 && m_outputPort.first >= 0) {
-                m_isFinal = true;
-                auto inputWidget = m_parentCircuit->m_unitWidgets[m_inputPort.first];
-                auto outputWidget = m_parentCircuit->m_unitWidgets[m_outputPort.first];
-                Vector2i inputPos = inputWidget->getInputPortAbsPosition(m_inputPort.second) - m_parentCircuit->absolutePosition();
-                Vector2i outputPos = outputWidget->getOutputPortAbsPosition(m_outputPort.second) - m_parentCircuit->absolutePosition();
-                startPos = outputPos;
-                endPos = inputPos;
-            } else if (m_outputPort.first >= 0) {
-                auto outputWidget = m_parentCircuit->m_unitWidgets[m_outputPort.first];
-                startPos = outputWidget->getOutputPortAbsPosition(m_outputPort.second) - m_parentCircuit->absolutePosition();
-                endPos = a_endPt;
-            } else if (m_inputPort.first >= 0) {
-                auto inputWidget = m_parentCircuit->m_unitWidgets[m_inputPort.first];
-                startPos = inputWidget->getInputPortAbsPosition(m_inputPort.second) - m_parentCircuit->absolutePosition();
-                endPos = a_endPt;
-            }
-
-            m_start = startPos;
-            m_end = endPos;
-        }
-
-        /**
-         * \brief Weighting function used for pathfinding.
-         *
-         * Weights straight paths higher than jagged ones, and prefers crossing wires instead over going through units.
-         */
-        template <typename CellType>
-        struct weight_func {
-            int operator()(const Grid2D<CellType>& grid, const Grid2DPoint& prev, const Grid2DPoint& curr, const Grid2DPoint& next) const {
-                int score = 0;
-                // Weight jagged paths more than straight ones
-                if ((prev.array() > -1).all()) {
-                    if (((curr - prev).array() != (next - curr).array()).any())
-                        score += 5;
-                }
-
-                // Prefer empty over a wire, and prefer a wire over a unit.
-                switch (grid.get(next).state) {
-                case CircuitWidget::GridCell::Empty:
-                    score += 1;
-                    break;
-                case CircuitWidget::GridCell::Wire:
-                    score += 10;
-                    break;
-                case CircuitWidget::GridCell::Unit:
-                    score += 100;
-                    break;
-                default:
-                    score += 1;
-                    break;
-                }
-                return score;
-            }
-        };
-
-        /**
-         * \brief Refresh the wire's path.
-         */
-        void updatePath() {
-            // Update start and end positions
-            updateStartAndEndPositions(m_end);
-            auto startCell = m_parentCircuit->m_grid.fromPixel(m_start, m_parentCircuit->gridSpacing());
-            auto endCell = m_parentCircuit->m_grid.fromPixel(m_end, m_parentCircuit->gridSpacing());
-
-            // Remove from grid            
-            m_parentCircuit->m_grid.replaceValue({CircuitWidget::GridCell::Wire, this}, m_parentCircuit->m_grid.getEmptyValue());
-            m_crossings.clear();
-
-            // Find new shortest path between start and end cells
-            auto path = m_parentCircuit->m_grid.findPath<manhattan_distance, weight_func>(startCell, endCell, &m_cost);
-            m_path.resize(path.size());
-            copy(path.begin(), path.end(), m_path.begin());
-
-            // Update grid to reflect new location
-            for (auto cell : m_path) {
-                if (m_parentCircuit->m_grid.get(cell).state == CircuitWidget::GridCell::Wire)
-                    m_crossings.insert({cell.x(), cell.y()});
-                if (!m_parentCircuit->m_grid.isOccupied(cell))
-                    m_parentCircuit->m_grid.get(cell) = {CircuitWidget::GridCell::Wire, this};
-            }
-        }
-
-        float pathCost() const { return m_cost; }
-
-        void setInputPort(const CircuitWidget::Port& a_port) {
-            m_inputPort = a_port;
-            updateStartAndEndPositions();
-        }
-
-        void setOutputPort(const CircuitWidget::Port& a_port) {
-            m_outputPort = a_port;
-            updateStartAndEndPositions();
-        }
-
-        CircuitWidget::Port getInputPort() const { return m_inputPort; }
-        CircuitWidget::Port getOutputPort() const { return m_outputPort; }
-
-        operator json() const {
-            json j;
-            j["input"] = {m_inputPort.first, m_inputPort.second};
-            j["output"] = {m_outputPort.first, m_outputPort.second};
-            return j;
-        }
-
-        void load(const json& j) {
-            setInputPort({j["input"][0], j["input"][1]});
-            setOutputPort({j["output"][0], j["output"][1]});
-            updatePath();
-        }
-
-        enum HighlightStyle {
-            None = 0,
-            Incoming,
-            Outgoing,
-            Selected
-        } highlight;
-
-    private:
-        CircuitWidget* m_parentCircuit;
-        CircuitWidget::Port m_inputPort;
-        CircuitWidget::Port m_outputPort;
-        Vector2i m_start;
-        Vector2i m_end;
-        vector<Grid2DPoint> m_path;
-        std::set<std::pair<int, int>> m_crossings;
-        float m_cost;
-        bool m_isFinal;
-    };
-}
+#include "CircuitWire.h"
 
 synui::CircuitWidget::CircuitWidget(Widget* a_parent, MainWindow* a_mainWindow, UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm)
     : Widget(a_parent),
@@ -510,9 +227,9 @@ void synui::CircuitWidget::createInputOutputUnits_() {
     UnitWidget* inWidget = createUnitWidget(inputClassId, inputUnitId);
     UnitWidget* outWidget = createUnitWidget(outputClassId, outputUnitId);
     screen()->performLayout();
-    if(inWidget!=nullptr)
+    if (inWidget != nullptr)
         updateUnitPos(inWidget, {0.5 * inWidget->width(), height() * 0.5 - inWidget->height() * 0.5});
-    if(outWidget!=nullptr)
+    if (outWidget != nullptr)
         updateUnitPos(outWidget, {width() - 1.5 * outWidget->width(), height() * 0.5 - outWidget->height() * 0.5});
 }
 
@@ -533,7 +250,7 @@ void synui::CircuitWidget::createUnit(syn::UnitTypeId a_classId) {
 }
 
 synui::UnitWidget* synui::CircuitWidget::createUnitWidget(syn::UnitTypeId a_classId, int a_unitId) {
-    if(m_unitWidgets.find(a_unitId)!=m_unitWidgets.end())
+    if (m_unitWidgets.find(a_unitId) != m_unitWidgets.end())
         return nullptr;
     UnitWidget* widget;
     if (m_registeredUnitWidgets.find(a_classId) == m_registeredUnitWidgets.end())
@@ -953,7 +670,7 @@ bool synui::cwstate::DrawingWireState::mouseButtonEvent(CircuitWidget& cw, const
 bool synui::cwstate::CreatingUnitState::mouseButtonEvent(CircuitWidget& cw, const Eigen::Vector2i& p, int button, bool down, int modifiers) {
     if (button == GLFW_MOUSE_BUTTON_LEFT && down) {
         Vector2i a_pos = p - cw.position();
-        a_pos -= m_widget->size()/2;
+        a_pos -= m_widget->size() / 2;
         // Place the unit if the position is valid
         if (cw.checkUnitPos(m_widget, a_pos)) {
             m_widget->setVisible(true);
@@ -979,7 +696,7 @@ bool synui::cwstate::CreatingUnitState::mouseButtonEvent(CircuitWidget& cw, cons
 
 void synui::cwstate::CreatingUnitState::draw(CircuitWidget& cw, NVGcontext* ctx) {
     Vector2i mousePos = cw.screen()->mousePos() - cw.absolutePosition();
-    mousePos -= m_widget->size()/2;
+    mousePos -= m_widget->size() / 2;
     UnitWidget* w = m_widget;
     m_isValid = cw.checkUnitPos(m_widget, mousePos);
     nvgBeginPath(ctx);

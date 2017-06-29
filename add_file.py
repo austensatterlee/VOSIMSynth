@@ -1,3 +1,5 @@
+import re
+
 HEADER_TEMPLATE=r"""/*
 Copyright 2016, Austen Satterlee
 
@@ -41,9 +43,15 @@ PRAGMA_ONCE_TEMPLATE = r"""
 SOURCE_TEMPLATE="#include \"{filename:}.h\""
 
 def find_valid_directories(source_dir, include_dir):
+    sofar = []
     def _walker(ret_list, dirname, fnames):
         if (source_dir in fnames) and (include_dir in fnames):
             ret_list.append(dirname)
+        # m_dirname = re.sub(r'\binclude\b|\bsrc\b', '', dirname)
+        # if m_dirname in sofar:
+            # ret_list.append(dirname)
+        # else:
+            # sofar.append(m_dirname)
     valid_directories = []
     os.path.walk(".", _walker, valid_directories)
     return valid_directories
@@ -58,8 +66,8 @@ if __name__=="__main__":
     parser_auto_add = subparsers.add_parser("auto-add",
         help="Add source and include files to their respective directories. Automatically detect source and\
               include directories given a base directory.")
-    parser_auto_add.add_argument("--directory", "-d", type=str)
-    parser_auto_add.add_argument("--filename", "-n", type=str)
+    parser_auto_add.add_argument("directory", nargs='?', type=str, help="Directory that contains 'src' and 'include' dirs")
+    parser_auto_add.add_argument("filename", nargs='?', type=str, help="Name of the new files to add (without extension)")
     parser_auto_add.add_argument("--list", "-l", action="store_true", default=False, help="List valid directories and exit.")
     parser_auto_add.set_defaults(command="auto-add")
 
@@ -85,7 +93,7 @@ if __name__=="__main__":
             raise RuntimeError("\"filename\" argument must be specified")
 
         dir_contents = os.listdir(parsed.directory)
-        if (parsed.source_dir not in dir_contents) or (parsed.include_dir not in dir_contents):
+        if ('src' not in dir_contents) or ('include' not in dir_contents):
             raise RuntimeError("\"%s\" and \"%s\" directories not found"%(parsed.source_dir,parsed.include_dir))
 
         include_dir = os.path.join(parsed.directory,"include")
