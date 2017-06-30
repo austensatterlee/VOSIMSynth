@@ -33,10 +33,10 @@ void synui::CircuitWire::draw(NVGcontext* ctx) {
         nvgStrokeWidth(ctx, 1.5f);
         switch (highlight) {
         case Incoming:
-            wireColor = nanogui::Color(0.45f, 0.45f, 1.00f, 0.55f);
+            wireColor = nanogui::Color(0.45f, 0.45f, 1.00f, 0.6f);
             break;
         case Outgoing:
-            wireColor = nanogui::Color(0.25f, 1.0f, 0.25f, 0.55f);
+            wireColor = nanogui::Color(0.25f, 1.0f, 0.25f, 0.6f);
             break;
         case Selected:
             nvgStrokeWidth(ctx, 2.0f);
@@ -44,7 +44,7 @@ void synui::CircuitWire::draw(NVGcontext* ctx) {
             break;
         case None:
         default:
-            wireColor = nanogui::Color(0.85f, 0.20f, 0.10f, 0.45f);
+            wireColor = nanogui::Color(0.85f, 0.20f, 0.10f, 0.50f);
         }
     }
     nvgStrokeColor(ctx, wireColor);
@@ -65,7 +65,7 @@ void synui::CircuitWire::draw(NVGcontext* ctx) {
         nvgLineTo(ctx, currPixelPt.x(), currPixelPt.y());
 
         if (m_parentCircuit->wireDrawStyle() == CircuitWidget::Curved) {
-            const float curvature = 0.3;
+            const float curvature = 0.5;
             Eigen::Vector2i dCurrGridPt = nextGridPt - currGridPt;
             Eigen::Vector2i dNextGridPt = nextGridPt2 - nextGridPt;
             Eigen::Vector2i dNextGridPt2 = nextGridPt3 - nextGridPt2;
@@ -168,23 +168,21 @@ int synui::CircuitWire::weight_func<CellType>::operator()(const Grid2D<CellType>
     // Penalize jagged paths
     if ((prev.array() > -1).all()) {
         if (((curr - prev).array() != (next - curr).array()).any())
-            score += 5;
+            score += 1;
     }
     // Penalize following another wire's path
     if (grid.get(curr).state==CircuitWidget::GridCell::Wire && grid.get(next).state==CircuitWidget::GridCell::Wire)
-            score += 90;
+            score += 10;
 
     // Prefer empty over a wire, and prefer a wire over a unit.
     switch (grid.get(next).state) {
-    case CircuitWidget::GridCell::Empty:
-        score += 1;
-        break;
     case CircuitWidget::GridCell::Wire:
-        score += 10;
+        score += 5;
         break;
     case CircuitWidget::GridCell::Unit:
         score += 100;
         break;
+    case CircuitWidget::GridCell::Empty:
     default:
         score += 1;
         break;
