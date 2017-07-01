@@ -171,22 +171,17 @@ int synui::CircuitWire::weight_func<CellType>::operator()(const Grid2D<CellType>
             score += 1;
     }
     // Penalize following another wire's path
-    if (grid.get(curr).state==CircuitWidget::GridCell::Wire && grid.get(next).state==CircuitWidget::GridCell::Wire)
+    if (grid.get(curr).contains(CircuitWidget::GridCell::State::Wire) && grid.get(next).contains(CircuitWidget::GridCell::State::Wire))
             score += 10;
 
     // Prefer empty over a wire, and prefer a wire over a unit.
-    switch (grid.get(next).state) {
-    case CircuitWidget::GridCell::Wire:
+    const auto& cell = grid.get(next);
+    if(cell.contains(CircuitWidget::GridCell::State::Wire))
         score += 5;
-        break;
-    case CircuitWidget::GridCell::Unit:
+    else if(cell.contains(CircuitWidget::GridCell::State::Unit))
         score += 100;
-        break;
-    case CircuitWidget::GridCell::Empty:
-    default:
-        score += 1;
-        break;
-    }
+    else if(!cell)
+        score += 1;    
     return score;
 }
 
@@ -197,7 +192,9 @@ void synui::CircuitWire::updatePath() {
     auto endCell = m_parentCircuit->m_grid.fromPixel(m_end, m_parentCircuit->gridSpacing());
 
     // Remove from grid            
-    m_parentCircuit->m_grid.replaceValue({CircuitWidget::GridCell::Wire, this}, m_parentCircuit->m_grid.getEmptyValue());
+    m_parentCircuit->m_grid.map(
+        [&](CircuitWidget::GridCell& cell) { cell.remove({CircuitWidget::GridCell::State::Wire, this}); }
+    );
     m_crossings.clear();
 
     // Find new shortest path between start and end cells
@@ -207,10 +204,10 @@ void synui::CircuitWire::updatePath() {
 
     // Update grid to reflect new location
     for (auto cell : m_path) {
-        if (m_parentCircuit->m_grid.get(cell).state == CircuitWidget::GridCell::Wire)
+        if (m_parentCircuit->m_grid.get(cell).contains(CircuitWidget::GridCell::State::Wire))
             m_crossings.insert({cell.x(), cell.y()});
         if (!m_parentCircuit->m_grid.isOccupied(cell))
-            m_parentCircuit->m_grid.get(cell) = {CircuitWidget::GridCell::Wire, this};
+            m_parentCircuit->m_grid.get(cell).states.push_back({CircuitWidget::GridCell::State::Wire, this});
     }
 }
 

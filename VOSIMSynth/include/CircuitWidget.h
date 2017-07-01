@@ -63,23 +63,66 @@ namespace synui {
         typedef std::pair<int, int> Port;
 
         struct GridCell {
+            struct State {
+                enum StateType {
+                    Wire,
+                    Unit
+                } type;
+                void* ptr;
+
+                friend bool operator==(const State& a_lhs, const State& a_rhs) { return a_lhs.type==a_rhs.type && a_lhs.ptr==a_rhs.ptr; }
+                friend bool operator!=(const State& a_lhs, const State& a_rhs) { return !(a_lhs == a_rhs); }
+            };
+
             friend bool operator==(const GridCell& a_lhs, const GridCell& a_rhs) {
-                return a_lhs.state == a_rhs.state && (a_lhs.state == Empty || a_lhs.ptr == a_rhs.ptr);
+                if(a_lhs.states.size()!=a_rhs.states.size())
+                    return false;
+                for(int i=0; i<a_lhs.states.size(); i++) {
+                    auto& lhs_state = a_lhs.states[i];
+                    auto& rhs_state = a_rhs.states[i];
+                    if(lhs_state!=rhs_state)
+                        return false;
+                }
+                return true;
             }
 
             friend bool operator!=(const GridCell& a_lhs, const GridCell& a_rhs) { return !(a_lhs == a_rhs); }
 
             operator bool() const {
-                return state != Empty;
+                return !states.empty();
             }
 
-            enum {
-                Empty,
-                Wire,
-                Unit
-            } state;
+            bool contains (State::StateType a_stateType) const {
+                return std::any_of(states.begin(), states.end(), [&](auto state){ return state.type==a_stateType; });
+            }
 
-            void* ptr;
+            bool contains (void* a_ptr) const {
+                return std::any_of(states.begin(), states.end(), [&](auto state){ return state.ptr==a_ptr; });
+            }
+
+            bool contains (const State& a_state) const {
+                return std::any_of(states.begin(), states.end(), [&](auto state){ return state==a_state; });
+            }
+
+            auto find(State::StateType a_stateType) {
+                return std::find_if(states.begin(), states.end(), [&](auto state){ return state.type==a_stateType; });
+            }
+
+            auto find (void* a_ptr) {
+                return std::find_if(states.begin(), states.end(), [&](auto state){ return state.ptr==a_ptr; });
+            }
+
+            auto find (const State& a_state) {
+                return std::find_if(states.begin(), states.end(), [&](auto state){ return state==a_state; });
+            }
+
+            bool remove (const State& a_state) {
+                auto old_size = states.size();
+                states.erase(std::remove(states.begin(), states.end(), a_state), states.end());
+                return old_size!=states.size();           
+            }
+
+            std::vector<State> states;
         };
 
         enum WireDrawStyle {

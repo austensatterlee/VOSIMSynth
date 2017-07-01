@@ -44,7 +44,11 @@ namespace synui {
             m_cost(0),
             m_isFinal(false) { }
 
-        ~CircuitWire() { m_parentCircuit->m_grid.replaceValue({CircuitWidget::GridCell::Wire, this}, m_parentCircuit->m_grid.getEmptyValue()); }
+        ~CircuitWire() {
+            m_parentCircuit->m_grid.map(
+                [&](CircuitWidget::GridCell& cell){return cell.remove({CircuitWidget::GridCell::State::Wire, this}); }
+            );
+        }
 
         std::string info() const;
 

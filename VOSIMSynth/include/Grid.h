@@ -117,14 +117,16 @@ namespace synui
         }
 
         /**
-         * \brief Save the current state of the grid so that it can later be restored. Any previous backup is
-         * destroyed.
+         * \brief Save the current state of the grid so that it can later be restored. 
+         * 
+         * Note that any previous backup is destroyed.
          */
         void save() { m_gridBackup = m_grid; }
 
         /**
-         * \brief Restore the grid to its state at the time of the most recent call to save(). Should not be
-         * called unless save() has been called at least once.
+         * \brief Restore the grid to its state at the time of the most recent call to save(). 
+         * 
+         * Should not be called unless save() has been called at least once.
          */
         void restore() { m_grid = m_gridBackup; }
 
@@ -138,13 +140,22 @@ namespace synui
 
         /**
          * \brief Assign a value to a block of cells
-         * \param a_topLeft Top left point of the block
-         * \param a_bottomRight Bottom right point of the block
-         * \param a_value New value
+         * \returns False if no assignments occured.
+         * \see mapBlock
+         */
+        bool setBlock(const Grid2DPoint& a_topLeft, const Grid2DPoint& a_bottomRight, const CellType& a_value, bool requireUnoccupied = true){
+            return mapBlock(a_topLeft, a_bottomRight, [&a_value](const CellType&){ return a_value; });
+        }
+
+        /**
+         * \brief Map a function over a block of cells.
+         * \param a_topLeft Top left point of the block.
+         * \param a_bottomRight Bottom right point of the block.
+         * \param a_func Transform function.
          * \param requireUnoccupied Fail the operation if some of the cells are occupied.
          * \returns False if no assignments occured.
          */
-        bool setBlock(const Grid2DPoint& a_topLeft, const Grid2DPoint& a_bottomRight, const CellType& a_value, bool requireUnoccupied = true)
+        bool mapBlock(const Grid2DPoint& a_topLeft, const Grid2DPoint& a_bottomRight, const std::function<void(CellType&)>& a_func, bool requireUnoccupied = true)
         {
             int t = std::min(a_topLeft[0], a_bottomRight[0]);
             int b = std::max(a_topLeft[0], a_bottomRight[0]);
@@ -157,7 +168,11 @@ namespace synui
                 auto blk = m_grid.block(t, l, b - t, r - l);
                 if (!requireUnoccupied || (blk.array() == m_unoccupiedValue).all())
                 {
-                    blk.fill(a_value);
+                    for(int r=0;r<blk.rows();r++) {
+                        for(int c=0;blk.cols();c++) {
+                            a_func(blk(r,c));
+                        }
+                    }
                     return true;
                 }
             }
@@ -166,11 +181,21 @@ namespace synui
         }
 
         /**
-           * \brief Like setBlock(), but forces the operation to occur by changing a_topLeft and a_topRight to fit within the grid boundaries.
-           * \param requireUnoccupied Fail the operation if some of the cells are occupied.
-           * \return False if no assignments occured.
-           */
-        bool forceSetBlock(Grid2DPoint& a_topLeft, Grid2DPoint& a_bottomRight, const CellType& a_value, bool requireUnoccupied = true)
+         * \brief Like setBlock(), but forces the operation to occur by changing a_topLeft and a_topRight to fit within the grid boundaries.
+         * \param requireUnoccupied Fail the operation if some of the cells are occupied.
+         * \return False if no assignments occured.
+         * \see forceMapBlock
+         */
+        bool forceSetBlock(Grid2DPoint& a_topLeft, Grid2DPoint& a_bottomRight, const CellType& a_value, bool requireUnoccupied = true) {
+            return forceMapBlock(a_topLeft, a_bottomRight, [&a_value](const CellType&){ return a_value; });
+        }
+
+        /**
+         * \brief Like mapBlock(), but forces the operation to occur by changing a_topLeft and a_topRight to fit within the grid boundaries.
+         * \param requireUnoccupied Fail the operation if some of the cells are occupied.
+         * \return False if no assignments occured.
+         */
+        bool forceMapBlock(Grid2DPoint& a_topLeft, Grid2DPoint& a_bottomRight, const std::function<void(CellType&)>& a_func, bool requireUnoccupied = true)
         {
             int t = std::min(a_topLeft[0], a_bottomRight[0]);
             int b = std::max(a_topLeft[0], a_bottomRight[0]);
@@ -201,7 +226,11 @@ namespace synui
             auto blk = m_grid.block(t, l, b - t, r - l);
             if (!requireUnoccupied || (blk.array() == m_unoccupiedValue).all())
             {
-                blk.fill(a_value);
+                for(int r=0;r<blk.rows();r++) {
+                    for(int c=0;c<blk.cols();c++) {
+                        a_func(blk(r,c));
+                    }
+                }
                 a_topLeft = { t,l };
                 a_bottomRight = { b,r };
                 return true;
@@ -266,6 +295,17 @@ namespace synui
          * \param a_newValue New value.
          */
         void replaceValue(const CellType& a_value, const CellType& a_newValue) { m_grid = (m_grid.array() == a_value).select(a_newValue, m_grid); }
+
+        /**
+         * \brief Apply a function over all cells.
+         */
+        void map(std::function<void(CellType&)> a_func) {
+            for(int r=0;r<m_grid.rows();r++) {
+                for(int c=0;c<m_grid.cols();c++) {
+                    a_func(m_grid(r,c));
+                }
+            }
+        }
 
         bool isOccupied(const Grid2DPoint& a_pt) const { return m_grid(a_pt[0], a_pt[1]) != m_unoccupiedValue; }
         bool isOccupied(Grid2DIndex a_ind) const { return m_grid(a_ind) != m_unoccupiedValue; }

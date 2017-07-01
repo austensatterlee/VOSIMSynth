@@ -18,8 +18,8 @@ synui::CircuitWidget::CircuitWidget(Widget* a_parent, MainWindow* a_mainWindow, 
       m_window(a_mainWindow),
       m_unitEditorHost(a_unitEditorHost),
       m_vm(a_vm),
-      m_grid{{0,0}, GridCell{GridCell::Empty, nullptr}},
-      m_gridSpacing(18),
+      m_grid{{0,0}, GridCell{}},
+      m_gridSpacing(15),
       m_wireDrawStyle(Curved),
       m_state(new cwstate::IdleState()),
       m_uninitialized(true) {
@@ -60,11 +60,11 @@ void synui::CircuitWidget::draw(NVGcontext* ctx) {
 
         auto pt = m_grid.unravel_index(i);
         auto pixel = m_grid.toPixel(pt, m_gridSpacing);
-        if (m_grid.get(pt).state == GridCell::Empty) {
+        if (!m_grid.get(pt)) {
             nvgStrokeColor(ctx, nanogui::Color{70,255});
-        } else if (m_grid.get(pt).state == GridCell::Unit) {
+        } else if (m_grid.get(pt).contains(GridCell::State::Unit)) {
             nvgStrokeColor(ctx, nanogui::Color{10, 255});
-        } else if (m_grid.get(pt).state == GridCell::Wire) {
+        } else if (m_grid.get(pt).contains(GridCell::State::Wire)) {
             nvgStrokeColor(ctx, nanogui::Color{25,25,75,255});
         }
 
@@ -100,6 +100,7 @@ void synui::CircuitWidget::draw(NVGcontext* ctx) {
 
     /* Handle mouse hover drawing that should be displayed in front of the unit widgets */
     nvgSave(ctx);
+    nvgTranslate(ctx, mPos.x(), mPos.y());
     // Highlight unit widgets in the current selection
     if (m_unitSelection.size() > 1) {
         nanogui::Color selectedWidgetColor{1.0f,1.0f,0.0f,0.9f};
@@ -113,10 +114,7 @@ void synui::CircuitWidget::draw(NVGcontext* ctx) {
             nvgStroke(ctx);
         }
     }
-    nvgRestore(ctx);
 
-    nvgSave(ctx);
-    nvgTranslate(ctx, mPos.x(), mPos.y());
     m_state->draw(*this, ctx);
     nvgRestore(ctx);
 }
@@ -384,7 +382,7 @@ void synui::CircuitWidget::updateUnitPos(UnitWidget* a_unitWidget, const Vector2
     auto blk = m_grid.forceGetBlock(topLeftCell, bottomRightCell);;
 
     /* Erase unit from grid */
-    m_grid.replaceValue({GridCell::Unit, a_unitWidget}, m_grid.getEmptyValue());
+    m_grid.map([&](GridCell& cell) { cell.remove({GridCell::State::Unit, a_unitWidget});});
 
     /* Place the unit and reroute the wires */
     std::unordered_set<CircuitWire*> wires;
@@ -392,12 +390,14 @@ void synui::CircuitWidget::updateUnitPos(UnitWidget* a_unitWidget, const Vector2
     for (int r = 0; r < blk.rows(); r++) {
         for (int c = 0; c < blk.cols(); c++) {
             const GridCell& cellContents = blk(r, c);
-            if (cellContents.state == GridCell::Wire)
-                wires.insert(reinterpret_cast<CircuitWire*>(cellContents.ptr));
+            for (const auto& state : cellContents.states) {
+                if (state.type == GridCell::State::Wire)
+                    wires.insert(reinterpret_cast<CircuitWire*>(state.ptr));
+            }
         }
     }
     // Place the unit
-    m_grid.forceSetBlock(topLeftCell, bottomRightCell, {GridCell::Unit, a_unitWidget}, false);
+    m_grid.forceMapBlock(topLeftCell, bottomRightCell, [&](GridCell& cell) { cell.states.push_back({GridCell::State::Unit, a_unitWidget}); }, false);
     a_unitWidget->setPosition(m_grid.toPixel(topLeftCell, m_gridSpacing));
     // Reroute wires
     for (auto wire : wires)
@@ -419,7 +419,7 @@ bool synui::CircuitWidget::checkUnitPos(UnitWidget* a_unitWidget, const Vector2i
 
     // Check that the unit would not intersect any other units
     auto blk = m_grid.forceGetBlock(topLeftCell, bottomRightCell);
-    auto condition = [a_unitWidget](const GridCell& x) { return x.state != GridCell::Unit || x.ptr == a_unitWidget ? GridCell{GridCell::Empty, nullptr} : x; };
+    auto condition = [a_unitWidget](const GridCell& x) { return x.contains(GridCell::State::Unit) && !x.contains(a_unitWidget) ? x : GridCell{}; };
     return !blk.unaryExpr(condition).array().any();
 }
 
@@ -449,7 +449,7 @@ void synui::CircuitWidget::deleteUnitWidget(UnitWidget* widget) {
         m_unitSelection.erase(m_unitWidgets[unitId]);
 
     // Delete the unit widget
-    m_grid.replaceValue({GridCell::Unit, m_unitWidgets[unitId]}, m_grid.getEmptyValue());
+    m_grid.map([&](GridCell& cell) { cell.remove({GridCell::State::Unit, m_unitWidgets[unitId]});});
     removeChild(m_unitWidgets[unitId]);
     m_unitWidgets.erase(unitId);
 }
@@ -506,29 +506,34 @@ bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector
 
     const auto& cell = cw.grid().get(pt);
     // Reset the current selection if it does not contain the clicked unit widget.
-    if (cell.state == CircuitWidget::GridCell::Unit) {
-        UnitWidget* w = reinterpret_cast<UnitWidget*>(cell.ptr);
-        if (cw.unitSelection().find(w) == cw.unitSelection().end()) {
-            cw.unitSelection().clear();
+    for (const auto& s : cell.states) {
+        if (s.type == CircuitWidget::GridCell::State::Unit) {
+            UnitWidget* w = reinterpret_cast<UnitWidget*>(s.ptr);
+            if (cw.unitSelection().find(w) == cw.unitSelection().end()) {
+                cw.unitSelection().clear();
+                break;
+            }
         }
     }
 
     if (button == GLFW_MOUSE_BUTTON_LEFT && down) {
-        if (cw.grid().get(pt).state == CircuitWidget::GridCell::Unit) {
-            UnitWidget* uw = reinterpret_cast<UnitWidget*>(cw.grid().get(pt).ptr);
-            int unitId = uw->getUnitId();
-            bool isOutput = true;
-            int portId = uw->getOutputPort(mousePos - uw->position());
-            if (portId < 0) {
-                isOutput = false;
-                portId = uw->getInputPort(mousePos - uw->position());
-            }
-            if (portId >= 0) {
-                changeState(cw, *new DrawingWireState({unitId,portId}, isOutput));
+        for (const auto& s : cell.states) {
+            if (s.type == CircuitWidget::GridCell::State::Unit) {
+                UnitWidget* uw = reinterpret_cast<UnitWidget*>(s.ptr);
+                int unitId = uw->getUnitId();
+                bool isOutput = true;
+                int portId = uw->getOutputPort(mousePos - uw->position());
+                if (portId < 0) {
+                    isOutput = false;
+                    portId = uw->getInputPort(mousePos - uw->position());
+                }
+                if (portId >= 0) {
+                    changeState(cw, *new DrawingWireState({unitId,portId}, isOutput));
+                    return true;
+                }
+                changeState(cw, *new MovingUnitState());
                 return true;
             }
-            changeState(cw, *new MovingUnitState());
-            return true;
         }
         if (!captured) {
             changeState(cw, *new DrawingSelectionState());
@@ -547,20 +552,31 @@ bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector
     return true;
 }
 
-bool synui::cwstate::IdleState::mouseMotionEvent(CircuitWidget& cw, const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) {
-    Grid2DPoint cell = cw.grid().fromPixel(p, cw.gridSpacing());
-    if (cw.grid().contains(cell) && cw.grid().get(cell).state == CircuitWidget::GridCell::Wire) {
-        if (cw.grid().get(cell).ptr != m_highlightedWire.get()) {
-            if (m_highlightedWire) {
-                m_highlightedWire->highlight = CircuitWire::None;
-            }
-            m_wireHighlightTime = glfwGetTime();
-            m_highlightedWire = reinterpret_cast<CircuitWire*>(cw.grid().get(cell).ptr)->shared_from_this();
-            m_highlightedWire->highlight = CircuitWire::Selected;
-        }
-    } else if (m_highlightedWire) {
+bool synui::cwstate::IdleState::mouseMotionEvent(CircuitWidget& cw, const Vector2i& p, const Vector2i& rel, int button, int modifiers) {
+    // Remove old highlighted wire
+    if (m_highlightedWire) {
         m_highlightedWire->highlight = CircuitWire::None;
         m_highlightedWire = nullptr;
+    }
+
+    Grid2DPoint gridPt = cw.grid().fromPixel(p, cw.gridSpacing());
+    if (!cw.grid().contains(gridPt))
+        return true;
+
+    // Find new highlighted wire, if any
+    const auto& cell = cw.grid().get(gridPt);
+    for (const auto& s : cell.states) {
+        if (s.type == CircuitWidget::GridCell::State::Wire) {
+            if (s.ptr != m_highlightedWire.get()) {
+                if (m_highlightedWire) {
+                    m_highlightedWire->highlight = CircuitWire::None;
+                }
+                m_wireHighlightTime = glfwGetTime();
+                m_highlightedWire = reinterpret_cast<CircuitWire*>(s.ptr)->shared_from_this();
+                m_highlightedWire->highlight = CircuitWire::Selected;
+                break;
+            }
+        }
     }
     cw.Widget::mouseMotionEvent(p, rel, button, modifiers);
     return true;
@@ -586,7 +602,7 @@ void synui::cwstate::DrawingWireState::draw(CircuitWidget& cw, NVGcontext* ctx) 
     m_wire->draw(ctx);
     // Draw an overlay when dragging one wire onto another
     Grid2DPoint mousePt = cw.grid().fromPixel(mousePos, cw.gridSpacing());
-    if (cw.grid().get(mousePt).state == CircuitWidget::GridCell::Wire && m_startedFromOutput) {
+    if (cw.grid().get(mousePt).contains(CircuitWidget::GridCell::State::Wire) && m_startedFromOutput) {
         Vector2i fixedMousePos = cw.grid().toPixel(mousePt, cw.gridSpacing());
         nvgBeginPath(ctx);
         nvgStrokeColor(ctx, nanogui::Color(200, 0, 0, 200));
@@ -599,7 +615,7 @@ void synui::cwstate::DrawingWireState::draw(CircuitWidget& cw, NVGcontext* ctx) 
 }
 
 void synui::cwstate::DrawingWireState::enter(CircuitWidget& cw, State& oldState) {
-    Eigen::Vector2i mousePos = cw.screen()->mousePos() - cw.absolutePosition();
+    Vector2i mousePos = cw.screen()->mousePos() - cw.absolutePosition();
     m_wire = std::make_shared<CircuitWire>(&cw);
     m_wire->updateStartAndEndPositions(mousePos);
     if (m_startedFromOutput)
@@ -624,12 +640,13 @@ void synui::cwstate::DrawingWireState::exit(CircuitWidget& cw, State& newState) 
     }
 }
 
-bool synui::cwstate::DrawingWireState::mouseButtonEvent(CircuitWidget& cw, const Eigen::Vector2i& p, int button, bool down, int modifiers) {
+bool synui::cwstate::DrawingWireState::mouseButtonEvent(CircuitWidget& cw, const Vector2i& p, int button, bool down, int modifiers) {
     if (!down) {
         Vector2i mousePos = p - cw.position();
         Grid2DPoint mousePt = cw.grid().fromPixel(mousePos, cw.gridSpacing());
-        if (cw.grid().get(mousePt).state == CircuitWidget::GridCell::Unit) {
-            UnitWidget* unit = reinterpret_cast<UnitWidget*>(cw.grid().get(mousePt).ptr);
+        auto unitState = cw.grid().get(mousePt).find(CircuitWidget::GridCell::State::Unit);
+        if (unitState!=cw.grid().get(mousePt).states.end()) {
+            UnitWidget* unit = reinterpret_cast<UnitWidget*>(unitState->ptr);
             int unitId = unit->getUnitId();
             bool isOutput = true;
             int portId = unit->getOutputPort(mousePos - unit->position());
@@ -641,8 +658,10 @@ bool synui::cwstate::DrawingWireState::mouseButtonEvent(CircuitWidget& cw, const
             m_endedOnOutput = isOutput;
             changeState(cw, *new IdleState());
             return true;
-        } else if (cw.grid().get(mousePt).state == CircuitWidget::GridCell::Wire && m_startedFromOutput) {
-            CircuitWire* toWire = static_cast<CircuitWire*>(cw.grid().get(mousePt).ptr);
+        } 
+        auto wireState = cw.grid().get(mousePt).find(CircuitWidget::GridCell::State::Wire);
+        if (wireState!=cw.grid().get(mousePt).states.end() && m_startedFromOutput) {
+            CircuitWire* toWire = static_cast<CircuitWire*>(wireState->ptr);
             CircuitWire* fromWire = new CircuitWire(&cw);
             fromWire->setInputPort(m_wire->getInputPort());
             fromWire->setOutputPort(m_wire->getOutputPort());
@@ -667,7 +686,7 @@ bool synui::cwstate::DrawingWireState::mouseButtonEvent(CircuitWidget& cw, const
     return true;
 }
 
-bool synui::cwstate::CreatingUnitState::mouseButtonEvent(CircuitWidget& cw, const Eigen::Vector2i& p, int button, bool down, int modifiers) {
+bool synui::cwstate::CreatingUnitState::mouseButtonEvent(CircuitWidget& cw, const Vector2i& p, int button, bool down, int modifiers) {
     if (button == GLFW_MOUSE_BUTTON_LEFT && down) {
         Vector2i a_pos = p - cw.position();
         a_pos -= m_widget->size() / 2;
@@ -723,7 +742,7 @@ void synui::cwstate::CreatingUnitState::exit(CircuitWidget& cw, State& newState)
     }
 }
 
-bool synui::cwstate::MovingUnitState::mouseButtonEvent(CircuitWidget& cw, const Eigen::Vector2i& p, int button, bool down, int modifiers) {
+bool synui::cwstate::MovingUnitState::mouseButtonEvent(CircuitWidget& cw, const Vector2i& p, int button, bool down, int modifiers) {
     if (!down) {
         Vector2i mousePos = p - cw.position();
         Vector2i offset = mousePos - m_start;
@@ -751,7 +770,7 @@ bool synui::cwstate::MovingUnitState::mouseButtonEvent(CircuitWidget& cw, const 
     return true;
 }
 
-bool synui::cwstate::MovingUnitState::mouseMotionEvent(CircuitWidget& cw, const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) {
+bool synui::cwstate::MovingUnitState::mouseMotionEvent(CircuitWidget& cw, const Vector2i& p, const Vector2i& rel, int button, int modifiers) {
     Vector2i mousePos = p - cw.position();
     Vector2i offset = mousePos - m_start;
 
@@ -768,15 +787,17 @@ void synui::cwstate::MovingUnitState::enter(CircuitWidget& cw, State& oldState) 
     m_start = cw.screen()->mousePos() - cw.absolutePosition();
     auto cell = cw.grid().get(cw.grid().fromPixel(m_start, cw.gridSpacing()));
     // Reset the current selection if it does not contain the target unit widget.
-    if (cell.state == CircuitWidget::GridCell::Unit) {
-        UnitWidget* w = reinterpret_cast<UnitWidget*>(cell.ptr);
+    auto unitState = cell.find(CircuitWidget::GridCell::State::Unit);
+    if (unitState != cell.states.end()) {
+        UnitWidget* w = reinterpret_cast<UnitWidget*>(unitState->ptr);
         if (cw.unitSelection().find(w) == cw.unitSelection().end()) {
             cw.unitSelection().clear();
             cw.unitSelection().insert(w);
         }
     }
+    // Remove selected units from grid while they're being moved.
     for (auto& w : cw.unitSelection()) {
-        cw.grid().replaceValue({CircuitWidget::GridCell::Unit, w}, {CircuitWidget::GridCell::Empty, nullptr});
+        cw.grid().map([&](auto& cell){ cell.remove({CircuitWidget::GridCell::State::Unit, w}); });
         m_origPositions[w->getUnitId()] = w->position();
     }
 }
@@ -812,8 +833,9 @@ bool synui::cwstate::DrawingSelectionState::mouseMotionEvent(CircuitWidget& cw, 
     auto blk = cw.grid().forceGetBlock(pt0, pt1);
     for (int r = 0; r < blk.rows(); r++) {
         for (int c = 0; c < blk.cols(); c++) {
-            if (blk(r, c).state == CircuitWidget::GridCell::Unit)
-                cw.unitSelection().insert(reinterpret_cast<UnitWidget*>(blk(r, c).ptr));
+            auto unitState = blk(r, c).find(CircuitWidget::GridCell::State::Unit);
+            if (unitState!=blk(r, c).states.end())
+                cw.unitSelection().insert(reinterpret_cast<UnitWidget*>(unitState->ptr));
         }
     }
     cw.Widget::mouseMotionEvent(p, rel, button, modifiers);

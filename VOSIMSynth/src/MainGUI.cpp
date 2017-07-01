@@ -99,11 +99,14 @@ void synui::MainGUI::resize(int a_w, int a_h) {
     TRACE
     m_screen->resizeCallbackEvent(a_w, a_h);
     m_sidePanelL->setFixedHeight(m_screen->height());
+    m_screen->performLayout();
     m_sidePanelR->setPosition({m_sidePanelL->width(), m_buttonPanel->height()});
     m_sidePanelR->setFixedWidth(m_screen->width() - m_sidePanelR->absolutePosition().x());
-    m_circuitWidget->setFixedHeight(m_screen->height() - m_sidePanelR->absolutePosition().y());
-    m_circuitWidget->setFixedWidth(m_screen->width() - m_sidePanelR->absolutePosition().x());
+    m_sidePanelR->setFixedHeight(m_screen->height() - m_sidePanelR->absolutePosition().y());
+    m_screen->performLayout();
+    m_circuitWidget->setFixedHeight(m_sidePanelR->height() - m_circuitWidget->position().y());
     m_circuitWidget->resizeGrid(m_circuitWidget->gridSpacing());
+    m_screen->performLayout();
     m_buttonPanel->setPosition({m_sidePanelL->width(), 0});
     m_buttonPanel->setFixedWidth(m_sidePanelR->width());
     m_screen->performLayout();
@@ -375,7 +378,7 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     /* Create right pane. */
     m_sidePanelR = new EnhancedWindow(m_screen, "");
     m_sidePanelR->setIsBackgroundWindow(true);
-    m_sidePanelR->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 0));
+    m_sidePanelR->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 5, 0));
     m_sidePanelR->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
             nanogui::Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(nanogui::Color(0.9f, 1.0f));
             nanogui::Color shineColor = self->theme()->mBorderLight;
