@@ -238,7 +238,7 @@ void IPlugVST::AttachAppWindow(synui::MainWindow* a_vosimWindow) {
 
 void IPlugVST::ResizeGraphics(int w, int h)
 {
-    synui::MainWindow* vosimWindow = GetAppWindow();
+  synui::MainWindow* vosimWindow = GetAppWindow();
 
   if (vosimWindow)
   {

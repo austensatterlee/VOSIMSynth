@@ -87,7 +87,7 @@ endif()
 # Add tests target
 ##
 if(VOSIMPROJECT_BUILD_TESTS)
-    add_subdirectory(tests tests)
+    add_subdirectory(tests)
 endif()
 
 ##

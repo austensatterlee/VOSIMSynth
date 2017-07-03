@@ -123,7 +123,7 @@ target_link_libraries(${PROJECT_NAME}
   "$<$<CONFIG:Release>:${REL_LIBS}>"
   "$<$<NOT:$<CONFIG:Release>>:${DBG_LIBS}>"
   VOSIMLib
- ${ADDITIONAL_LIBRARIES}
+  ${ADDITIONAL_LIBRARIES}
   )
 
 if (WIN32)
@@ -131,4 +131,6 @@ if (WIN32)
   set_target_properties(${PROJECT_NAME} PROPERTIES prefix "")
 endif ()
 
-add_subdirectory(tests)
+if(VOSIMPROJECT_BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
