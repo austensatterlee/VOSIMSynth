@@ -144,7 +144,7 @@ namespace synui
          * \see mapBlock
          */
         bool setBlock(const Grid2DPoint& a_topLeft, const Grid2DPoint& a_bottomRight, const CellType& a_value, bool requireUnoccupied = true){
-            return mapBlock(a_topLeft, a_bottomRight, [&a_value](const CellType&){ return a_value; });
+            return mapBlock(a_topLeft, a_bottomRight, [&a_value](CellType& c){ c = a_value; }, requireUnoccupied);
         }
 
         /**
@@ -169,7 +169,7 @@ namespace synui
                 if (!requireUnoccupied || (blk.array() == m_unoccupiedValue).all())
                 {
                     for(int r=0;r<blk.rows();r++) {
-                        for(int c=0;blk.cols();c++) {
+                        for(int c=0;c<blk.cols();c++) {
                             a_func(blk(r,c));
                         }
                     }
@@ -187,7 +187,7 @@ namespace synui
          * \see forceMapBlock
          */
         bool forceSetBlock(Grid2DPoint& a_topLeft, Grid2DPoint& a_bottomRight, const CellType& a_value, bool requireUnoccupied = true) {
-            return forceMapBlock(a_topLeft, a_bottomRight, [&a_value](const CellType&){ return a_value; });
+            return forceMapBlock(a_topLeft, a_bottomRight, [&a_value](CellType& c){ c = a_value; }, requireUnoccupied);
         }
 
         /**
