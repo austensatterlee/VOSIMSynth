@@ -163,7 +163,6 @@ namespace syn
             cr.from_port = cr_j["from"][1];
             cr.to_port = cr_j["to"][1];
 
-            // Extract unit IDs
             cr.from_id = cr_j["from"][0];
             cr.to_id = cr_j["to"][0];
             bool success = connectInternal(cr.from_id, cr.from_port, cr.to_id, cr.to_port);

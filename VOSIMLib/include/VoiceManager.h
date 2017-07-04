@@ -122,14 +122,14 @@ namespace syn {
         Unit& getUnit(int a_id, int a_voiceId = -1);
         const Unit& getUnit(int a_id, int a_voiceId = -1) const;
 
-        Circuit* getPrototypeCircuit();
-        const Circuit* getPrototypeCircuit() const;
+        Circuit& getPrototypeCircuit();
+        const Circuit& getPrototypeCircuit() const;
 
         /**
          * Retrieve the specified voice circuit. Returns the prototype circuit if \p a_voiceId is negative.
          */
-        Circuit* getVoiceCircuit(int a_voiceId);
-        const Circuit* getVoiceCircuit(int a_voiceId) const;
+        Circuit& getVoiceCircuit(int a_voiceId);
+        const Circuit& getVoiceCircuit(int a_voiceId) const;
 
         void setPrototypeCircuit(const Circuit& a_circ);
 

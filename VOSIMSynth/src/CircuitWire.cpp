@@ -148,6 +148,14 @@ void synui::CircuitWire::updateStartAndEndPositions(const Eigen::Vector2i& a_end
         Eigen::Vector2i outputPos = outputWidget->getOutputPortAbsPosition(m_outputPort.second) - m_parentCircuit->absolutePosition();
         startPos = outputPos;
         endPos = inputPos;
+
+#ifndef NDEBUG
+        // Check that connection exists
+        const syn::Circuit& circ = m_parentCircuit->vm().getPrototypeCircuit();
+        syn::ConnectionRecord conn{getOutputPort().first, getOutputPort().second, getInputPort().first, getInputPort().second};
+        const vector<syn::ConnectionRecord>& connections = circ.getConnections();
+        assert(std::find(connections.begin(), connections.end(), conn) != connections.end());
+#endif
     } else if (m_outputPort.first >= 0) {
         auto outputWidget = m_parentCircuit->m_unitWidgets[m_outputPort.first];
         startPos = outputWidget->getOutputPortAbsPosition(m_outputPort.second) - m_parentCircuit->absolutePosition();

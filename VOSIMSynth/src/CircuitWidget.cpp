@@ -182,10 +182,10 @@ synui::CircuitWidget* synui::CircuitWidget::load(const json& j) {
 
     /* Load new unit widgets */
     const json& units = j["units"];
-    const syn::Circuit* circ = m_vm->getPrototypeCircuit();
+    const syn::Circuit& circ = m_vm->getPrototypeCircuit();
     for (json::const_iterator it = units.cbegin(); it != units.cend(); ++it) {
         int unitId = stoi(it.key());
-        syn::UnitTypeId classId = circ->getUnit(unitId).getClassIdentifier();
+        syn::UnitTypeId classId = circ.getUnit(unitId).getClassIdentifier();
         const json& unit = it.value();
         Vector2i pos{unit["x"].get<int>(), unit["y"].get<int>()};
         UnitWidget* widget = createUnitWidget(classId, unitId)->load(unit);
@@ -196,9 +196,9 @@ synui::CircuitWidget* synui::CircuitWidget::load(const json& j) {
     /* Load new wires */
     const json& wires = j["wires"];
     for (const json& w : wires) {
-        CircuitWire* newWire = new CircuitWire(this);
+        std::shared_ptr<CircuitWire> newWire = std::make_shared<CircuitWire>(this);
         newWire->load(w);
-        m_wires.push_back(std::shared_ptr<CircuitWire>(newWire));
+        m_wires.push_back(newWire);
     }
 
     _changeState(new cwstate::IdleState());
@@ -207,7 +207,7 @@ synui::CircuitWidget* synui::CircuitWidget::load(const json& j) {
 
 void synui::CircuitWidget::reset() {
     /* Clear the circuit widget of all wires and unit widgets */
-    while (!m_wires.empty()) { deleteWireWidget(m_wires.back().get()); }
+    while (!m_wires.empty()) { deleteWireWidget(m_wires.back()); }
     while (!m_unitWidgets.empty()) {
         auto it = m_unitWidgets.begin();
         deleteUnitWidget(it->second);
@@ -216,11 +216,11 @@ void synui::CircuitWidget::reset() {
 }
 
 void synui::CircuitWidget::createInputOutputUnits_() {
-    const syn::Circuit* circ = m_vm->getPrototypeCircuit();
-    int inputUnitId = circ->getInputUnitId();
-    syn::UnitTypeId inputClassId = circ->getUnit(inputUnitId).getClassIdentifier();
-    int outputUnitId = circ->getOutputUnitId();
-    syn::UnitTypeId outputClassId = circ->getUnit(outputUnitId).getClassIdentifier();
+    const syn::Circuit& circ = m_vm->getPrototypeCircuit();
+    int inputUnitId = circ.getInputUnitId();
+    syn::UnitTypeId inputClassId = circ.getUnit(inputUnitId).getClassIdentifier();
+    int outputUnitId = circ.getOutputUnitId();
+    syn::UnitTypeId outputClassId = circ.getUnit(outputUnitId).getClassIdentifier();
 
     UnitWidget* inWidget = createUnitWidget(inputClassId, inputUnitId);
     UnitWidget* outWidget = createUnitWidget(outputClassId, outputUnitId);
@@ -235,9 +235,9 @@ void synui::CircuitWidget::createUnit(syn::UnitTypeId a_classId) {
     auto unit = syn::UnitFactory::instance().createUnit(a_classId);
     auto f = [this, unit]() {
                 for (int i = 0; i < m_vm->getMaxVoices(); i++) {
-                    m_vm->getVoiceCircuit(i)->addUnit(unit->clone());
+                    m_vm->getVoiceCircuit(i).addUnit(unit->clone());
                 }
-                int unitId = m_vm->getPrototypeCircuit()->addUnit(unit);
+                int unitId = m_vm->getPrototypeCircuit().addUnit(unit);
                 // Queue return message
                 auto f = [this, unitId]() {
                             _changeState(new cwstate::CreatingUnitState(unitId));
@@ -275,7 +275,7 @@ synui::UnitWidget* synui::CircuitWidget::createUnitWidget(syn::UnitTypeId a_clas
 
 void synui::CircuitWidget::deleteUnit(int a_unitId) {
     // Disallow removing the input and output units.
-    if (a_unitId == m_vm->getPrototypeCircuit()->getInputUnitId() || a_unitId == m_vm->getPrototypeCircuit()->getOutputUnitId())
+    if (a_unitId == m_vm->getPrototypeCircuit().getInputUnitId() || a_unitId == m_vm->getPrototypeCircuit().getOutputUnitId())
         return;
 
     deleteUnitWidget(m_unitWidgets[a_unitId]);
@@ -283,9 +283,9 @@ void synui::CircuitWidget::deleteUnit(int a_unitId) {
     // Delete the unit from the circuit
     auto f = [this, a_unitId]() {
                 for (int i = 0; i < m_vm->getMaxVoices(); i++) {
-                    m_vm->getVoiceCircuit(i)->removeUnit(a_unitId);
+                    m_vm->getVoiceCircuit(i).removeUnit(a_unitId);
                 }
-                m_vm->getPrototypeCircuit()->removeUnit(a_unitId);
+                m_vm->getPrototypeCircuit().removeUnit(a_unitId);
             };
 
     syn::Command* msg = syn::MakeCommand(f);
@@ -298,7 +298,7 @@ void synui::CircuitWidget::deleteConnection(const Port& a_inputPort, const Port&
     for (int i = 0; i < m_wires.size(); i++) {
         auto wire = m_wires[i];
         if (wire->getInputPort() == a_inputPort && wire->getOutputPort() == a_outputPort) {
-            deleteWireWidget(wire.get());
+            deleteWireWidget(wire);
             foundWire = true;
             break;
         }
@@ -311,11 +311,11 @@ void synui::CircuitWidget::deleteConnection(const Port& a_inputPort, const Port&
     // Send message to RT thread to delete the connection
     auto f = [this, a_outputPort, a_inputPort]() {
                 for (int i = 0; i < m_vm->getMaxVoices(); i++) {
-                    syn::Circuit* circuit = m_vm->getVoiceCircuit(i);
-                    circuit->disconnectInternal(a_outputPort.first, a_outputPort.second, a_inputPort.first, a_inputPort.second);
+                    syn::Circuit& circuit = m_vm->getVoiceCircuit(i);
+                    circuit.disconnectInternal(a_outputPort.first, a_outputPort.second, a_inputPort.first, a_inputPort.second);
                 }
-                syn::Circuit* circuit = m_vm->getPrototypeCircuit();
-                circuit->disconnectInternal(a_outputPort.first, a_outputPort.second, a_inputPort.first, a_inputPort.second);
+                syn::Circuit& circuit = m_vm->getPrototypeCircuit();
+                circuit.disconnectInternal(a_outputPort.first, a_outputPort.second, a_inputPort.first, a_inputPort.second);
                 // Queue return message
                 auto f = [this, a_outputPort, a_inputPort]() {
                             UnitWidget* fromWidget = m_unitWidgets[a_outputPort.first];
@@ -332,11 +332,11 @@ void synui::CircuitWidget::createConnection(const Port& a_inputPort, const Port&
     // send the new connection request to the real-time thread
     auto f = [this, a_inputPort, a_outputPort]() {
                 for (int i = 0; i < m_vm->getMaxVoices(); i++) {
-                    syn::Circuit* circuit = m_vm->getVoiceCircuit(i);
-                    circuit->connectInternal(a_outputPort.first, a_outputPort.second, a_inputPort.first, a_inputPort.second);
+                    syn::Circuit& circuit = m_vm->getVoiceCircuit(i);
+                    circuit.connectInternal(a_outputPort.first, a_outputPort.second, a_inputPort.first, a_inputPort.second);
                 }
-                syn::Circuit* circuit = m_vm->getPrototypeCircuit();
-                circuit->connectInternal(a_outputPort.first, a_outputPort.second, a_inputPort.first, a_inputPort.second);
+                syn::Circuit& circuit = m_vm->getPrototypeCircuit();
+                circuit.connectInternal(a_outputPort.first, a_outputPort.second, a_inputPort.first, a_inputPort.second);
 
                 // Queue return message
                 auto f = [this, a_outputPort, a_inputPort]() {
@@ -353,16 +353,16 @@ void synui::CircuitWidget::createWireWidget(const Port& a_inputPort, const Port&
     for (int i = 0; i < m_wires.size(); i++) {
         auto wire = m_wires[i];
         if (wire->getInputPort() == a_inputPort) {
-            deleteWireWidget(wire.get());
+            deleteWireWidget(wire);
             i--;
         }
     }
 
-    CircuitWire* wire = new CircuitWire(this);
+    std::shared_ptr<CircuitWire> wire = std::make_shared<CircuitWire>(this);
     wire->setInputPort(a_inputPort);
     wire->setOutputPort(a_outputPort);
     wire->updatePath();
-    m_wires.push_back(std::shared_ptr<CircuitWire>(wire));
+    m_wires.push_back(wire);
 
     // Re-set the widget positions on the grid
     updateUnitPos(m_unitWidgets[a_inputPort.first], m_unitWidgets[a_inputPort.first]->position(), true);
@@ -385,14 +385,14 @@ void synui::CircuitWidget::updateUnitPos(UnitWidget* a_unitWidget, const Vector2
     m_grid.map([&](GridCell& cell) { cell.remove({GridCell::State::Unit, a_unitWidget});});
 
     /* Place the unit and reroute the wires */
-    std::unordered_set<CircuitWire*> wires;
+    std::unordered_set<std::shared_ptr<CircuitWire>> wires;
     // Record any wires we may be overwriting
     for (int r = 0; r < blk.rows(); r++) {
         for (int c = 0; c < blk.cols(); c++) {
             const GridCell& cellContents = blk(r, c);
             for (const auto& state : cellContents.states) {
                 if (state.type == GridCell::State::Wire)
-                    wires.insert(reinterpret_cast<CircuitWire*>(state.ptr));
+                    wires.insert(reinterpret_cast<CircuitWire*>(state.ptr)->shared_from_this());
             }
         }
     }
@@ -403,7 +403,7 @@ void synui::CircuitWidget::updateUnitPos(UnitWidget* a_unitWidget, const Vector2
     for (auto wire : wires)
         wire->updatePath();
     for (auto wire : m_wires) {
-        if (wires.find(wire.get()) != wires.end())
+        if (wires.find(wire) != wires.end())
             continue;
         if (wire->getInputPort().first == a_unitWidget->getUnitId() || wire->getOutputPort().first == a_unitWidget->getUnitId())
             wire->updatePath();
@@ -423,7 +423,7 @@ bool synui::CircuitWidget::checkUnitPos(UnitWidget* a_unitWidget, const Vector2i
     return !blk.unaryExpr(condition).array().any();
 }
 
-void synui::CircuitWidget::deleteWireWidget(CircuitWire* wire) {
+void synui::CircuitWidget::deleteWireWidget(std::shared_ptr<CircuitWire> wire) {
     if (!wire)
         return;
     m_wires.erase(find(m_wires.begin(), m_wires.end(), wire->shared_from_this()));
@@ -436,7 +436,7 @@ void synui::CircuitWidget::deleteUnitWidget(UnitWidget* widget) {
     for (int i = 0; i < m_wires.size(); i++) {
         auto wire = m_wires[i];
         if (wire->getInputPort().first == unitId || wire->getOutputPort().first == unitId) {
-            deleteWireWidget(wire.get());
+            deleteWireWidget(wire);
             i--;
         }
     }
@@ -454,13 +454,13 @@ void synui::CircuitWidget::deleteUnitWidget(UnitWidget* widget) {
     m_unitWidgets.erase(unitId);
 }
 
-void synui::CircuitWidget::createJunction(CircuitWire* a_toWire, CircuitWire* a_fromWire, const Vector2i& a_pos, syn::UnitTypeId a_classId) {
+void synui::CircuitWidget::createJunction(std::shared_ptr<CircuitWire> a_toWire, std::shared_ptr<CircuitWire> a_fromWire, const Vector2i& a_pos, syn::UnitTypeId a_classId) {
     auto unit = syn::UnitFactory::instance().createUnit(a_classId);
     auto f = [this, unit, a_toWire, a_fromWire, a_pos]() {
                 for (int i = 0; i < m_vm->getMaxVoices(); i++) {
-                    m_vm->getVoiceCircuit(i)->addUnit(unit->clone());
+                    m_vm->getVoiceCircuit(i).addUnit(unit->clone());
                 }
-                int unitId = m_vm->getPrototypeCircuit()->addUnit(unit);
+                int unitId = m_vm->getPrototypeCircuit().addUnit(unit);
                 // Queue return message
                 auto f = [this, unit, unitId, a_toWire, a_fromWire, a_pos]() {
                             UnitWidget* uw = createUnitWidget(unit->getClassIdentifier(), unitId);
@@ -661,8 +661,8 @@ bool synui::cwstate::DrawingWireState::mouseButtonEvent(CircuitWidget& cw, const
         } 
         auto wireState = cw.grid().get(mousePt).find(CircuitWidget::GridCell::State::Wire);
         if (wireState!=cw.grid().get(mousePt).states.end() && m_startedFromOutput) {
-            CircuitWire* toWire = static_cast<CircuitWire*>(wireState->ptr);
-            CircuitWire* fromWire = new CircuitWire(&cw);
+            std::shared_ptr<CircuitWire> toWire = static_cast<CircuitWire*>(wireState->ptr)->shared_from_this();
+            std::shared_ptr<CircuitWire> fromWire = std::make_shared<CircuitWire>(&cw);
             fromWire->setInputPort(m_wire->getInputPort());
             fromWire->setOutputPort(m_wire->getOutputPort());
             ContextMenu<int>* cm = new ContextMenu<int>(&cw, true, [&cw, fromWire, toWire, mousePos](const string& a_item, const int& a_value) {
@@ -797,7 +797,7 @@ void synui::cwstate::MovingUnitState::enter(CircuitWidget& cw, State& oldState) 
     }
     // Remove selected units from grid while they're being moved.
     for (auto& w : cw.unitSelection()) {
-        cw.grid().map([&](auto& cell){ cell.remove({CircuitWidget::GridCell::State::Unit, w}); });
+        cw.grid().map([&](auto& c){ c.remove({CircuitWidget::GridCell::State::Unit, w}); });
         m_origPositions[w->getUnitId()] = w->position();
     }
 }

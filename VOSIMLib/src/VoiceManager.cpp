@@ -353,22 +353,22 @@ namespace syn
         }
     }
 
-    Circuit* VoiceManager::getPrototypeCircuit() {
-        return &m_instrument;
+    Circuit& VoiceManager::getPrototypeCircuit() {
+        return m_instrument;
     }
 
-    const Circuit* VoiceManager::getPrototypeCircuit() const {
-        return &m_instrument;
+    const Circuit& VoiceManager::getPrototypeCircuit() const {
+        return m_instrument;
     }
 
-    Circuit* VoiceManager::getVoiceCircuit(int a_voiceId)
+    Circuit& VoiceManager::getVoiceCircuit(int a_voiceId)
     {
-        return a_voiceId<0 ? &m_instrument : &m_circuits[a_voiceId];
+        return a_voiceId<0 ? m_instrument : m_circuits[a_voiceId];
     }
 
-    const Circuit* VoiceManager::getVoiceCircuit(int a_voiceId) const
+    const Circuit& VoiceManager::getVoiceCircuit(int a_voiceId) const
     {
-        return a_voiceId<0 ? &m_instrument : &m_circuits[a_voiceId];
+        return a_voiceId<0 ? m_instrument : m_circuits[a_voiceId];
     }
 
     void VoiceManager::setPrototypeCircuit(const Circuit& a_circ) {

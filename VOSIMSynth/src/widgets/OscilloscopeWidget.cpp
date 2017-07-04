@@ -70,11 +70,11 @@ namespace synui {
     }
 
     void OscilloscopeWidget::draw(NVGcontext* ctx) {
-        auto circuit = m_vm->getPrototypeCircuit();
+        const auto& circuit = m_vm->getPrototypeCircuit();
         m_unitId = -1;
-        for (int i = 0; i < circuit->getNumUnits(); i++) {
-            int unitId = circuit->getUnitId(i);
-            auto unitClassId = circuit->getUnit(unitId).getClassIdentifier();
+        for (int i = 0; i < circuit.getNumUnits(); i++) {
+            int unitId = circuit.getUnitId(i);
+            auto unitClassId = circuit.getUnit(unitId).getClassIdentifier();
             if (unitClassId == OscilloscopeUnit::classIdentifier())
                 m_unitId = unitId;
         }

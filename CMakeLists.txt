@@ -64,9 +64,6 @@ optionenv(VOSIMPROJECT_TRACER_BUILD "Enable tracing?" FALSE)
 optionenv(VOSIMPROJECT_BUILD_TESTS "Build tests?" TRUE)
 optionenv(VOSIMPROJECT_BUILD_BENCHMARKS "Build benchmarks?" TRUE)
 
-if(VOSIMPROJECT_TRACER_BUILD)
-  add_definitions(-DTRACER_BUILD)
-endif()
 # Subproject directories
 set(VOSIMLIB_DIR ${CMAKE_SOURCE_DIR}/vosimlib)
 set(VOSIMSYNTH_DIR ${CMAKE_SOURCE_DIR}/vosimsynth)
@@ -124,6 +121,9 @@ endif()
 
 # configurations for all compilers
 add_compile_options("$<$<CONFIG:RelWithDebInfo>:-D_RELWITHDEBINFO>")
+if(VOSIMPROJECT_TRACER_BUILD)
+  add_definitions(-DTRACER_BUILD)
+endif()
 
 ##
 # Configure compiled dependencies 

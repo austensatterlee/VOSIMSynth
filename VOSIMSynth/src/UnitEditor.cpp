@@ -217,7 +217,7 @@ void synui::UnitEditor::setParamValue(int a_paramId, double a_val)
 {
     auto f = [this, a_paramId, a_val]() {
                 for (int i = -1; i < m_vm->getMaxVoices(); i++) {
-                    m_vm->getVoiceCircuit(i)->getUnit(m_unitId).param(a_paramId).set(a_val);
+                    m_vm->getVoiceCircuit(i).getUnit(m_unitId).param(a_paramId).set(a_val);
                 }
                 m_isDirty = true;
             };
@@ -228,7 +228,7 @@ void synui::UnitEditor::setParamNorm(int a_paramId, double a_normval)
 {
     auto f = [this, a_paramId, a_normval]() {
                 for (int i = -1; i < m_vm->getMaxVoices(); i++) {
-                    m_vm->getVoiceCircuit(i)->getUnit(m_unitId).param(a_paramId).setNorm(a_normval);
+                    m_vm->getVoiceCircuit(i).getUnit(m_unitId).param(a_paramId).setNorm(a_normval);
                 }
                 m_isDirty = true;
             };
@@ -239,7 +239,7 @@ void synui::UnitEditor::nudgeParam(int a_paramId, double a_logScale, double a_li
 {
     auto f = [this, a_paramId, a_logScale, a_linScale]() {
                 for (int i = -1; i < m_vm->getMaxVoices(); i++) {
-                    m_vm->getVoiceCircuit(i)->getUnit(m_unitId).param(a_paramId).nudge(a_logScale, a_linScale);
+                    m_vm->getVoiceCircuit(i).getUnit(m_unitId).param(a_paramId).nudge(a_logScale, a_linScale);
                 }
                 m_isDirty = true;
             };
@@ -250,7 +250,7 @@ void synui::UnitEditor::setParamFromString(int a_paramId, const string& a_str)
 {
     auto f = [this, a_paramId, a_str]() {
                 for (int i = -1; i < m_vm->getMaxVoices(); i++) {
-                    m_vm->getVoiceCircuit(i)->getUnit(m_unitId).param(a_paramId).setFromString(a_str);
+                    m_vm->getVoiceCircuit(i).getUnit(m_unitId).param(a_paramId).setFromString(a_str);
                 }
                 m_isDirty = true;
             };

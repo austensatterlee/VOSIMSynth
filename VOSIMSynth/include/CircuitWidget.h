@@ -216,7 +216,7 @@ namespace synui {
          * \brief Delete the given wire widget.
          * Note that this method only affects the GUI. The actual connection on the real-time thread is not affected.
          */
-        void deleteWireWidget(CircuitWire* wire);
+        void deleteWireWidget(std::shared_ptr<CircuitWire> wire);
 
         /**
          * \brief Sends a message to the real-time thread to create a new connection between two units.
@@ -228,7 +228,7 @@ namespace synui {
         /**
          * \brief Combine the two wires into a new unit.
          */
-        void createJunction(CircuitWire* a_toWire, CircuitWire* a_fromWire, const Eigen::Vector2i& a_pos, syn::UnitTypeId a_classId);
+        void createJunction(std::shared_ptr<CircuitWire> a_toWire, std::shared_ptr<CircuitWire> a_fromWire, const Eigen::Vector2i& a_pos, syn::UnitTypeId a_classId);
 
         /**
          * \brief Sends a request to the real-time thread to create a new unit.

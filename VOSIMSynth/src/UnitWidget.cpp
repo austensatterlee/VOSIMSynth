@@ -50,7 +50,7 @@ const syn::Unit& synui::UnitWidget::getUnit_() const { return m_vm->getUnit(m_un
 
 bool synui::UnitWidget::promptForDelete_()
 {
-    if (getUnitId() != m_vm->getPrototypeCircuit()->getInputUnitId() && getUnitId() != m_vm->getPrototypeCircuit()->getOutputUnitId())
+    if (getUnitId() != m_vm->getPrototypeCircuit().getInputUnitId() && getUnitId() != m_vm->getPrototypeCircuit().getOutputUnitId())
     {
         auto dlg = new nanogui::MessageDialog(screen(), nanogui::MessageDialog::Type::Question, "Confirm deleteion", "Delete " + getName() + "?", "Delete", "Cancel", true);
         dlg->setCallback([this](int x)
