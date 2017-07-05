@@ -39,14 +39,15 @@ namespace synui {
 
         Eigen::Vector2i getInputPortAbsPosition(int a_portId) override;
         Eigen::Vector2i getOutputPortAbsPosition(int a_portId) override;
-        int getInputPort(const Eigen::Vector2i& a_pos) override;
-        int getOutputPort(const Eigen::Vector2i& a_pos) override;
+        int getInputPort(const Eigen::Vector2i& p) override;
+        int getOutputPort(const Eigen::Vector2i& p) override;
 
         Eigen::Vector2i preferredSize(NVGcontext* ctx) const override;
 
         bool mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
 
         bool isHandleSelected(const Eigen::Vector2i& p) const;
+        bool isOutputSelected(const Eigen::Vector2i& p) const;
 
     protected:
         void onGridChange_() override {}

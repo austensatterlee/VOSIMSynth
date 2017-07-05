@@ -40,6 +40,11 @@ include_directories(${NANOGUI_EXTRA_INCS})
 include_directories(${LIBS_DIR}/nanogui/include)
 
 ##
+# Eigen
+##
+include_directories(${LIBS_DIR}/eigen)
+
+##
 # MKL
 ##
 if(MKL_FOUND)

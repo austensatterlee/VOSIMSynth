@@ -427,6 +427,17 @@ void synui::CircuitWidget::deleteWireWidget(std::shared_ptr<CircuitWire> wire) {
     if (!wire)
         return;
     m_wires.erase(find(m_wires.begin(), m_wires.end(), wire->shared_from_this()));
+    
+#ifndef NDEBUG
+    // Verify connections
+    for (auto w : m_wires) {
+        const syn::Circuit& circ = vm().getPrototypeCircuit();
+        syn::ConnectionRecord conn{w->getOutputPort().first, w->getOutputPort().second, w->getInputPort().first, w->getInputPort().second};
+        const vector<syn::ConnectionRecord>& connections = circ.getConnections();
+        assert(std::find(connections.begin(), connections.end(), conn) != connections.end());
+    }
+#endif
+
 }
 
 void synui::CircuitWidget::deleteUnitWidget(UnitWidget* widget) {
@@ -479,7 +490,17 @@ void synui::CircuitWidget::createJunction(std::shared_ptr<CircuitWire> a_toWire,
                             } else {
                                 deleteUnitWidget(uw);
                                 _changeState(new cwstate::CreatingUnitState(unitId, onSuccess));
+                            }                    
+
+                        #ifndef NDEBUG
+                            // Verify connections
+                            for (auto w : m_wires) {
+                                const syn::Circuit& circ = vm().getPrototypeCircuit();
+                                syn::ConnectionRecord conn{w->getOutputPort().first, w->getOutputPort().second, w->getInputPort().first, w->getInputPort().second};
+                                const vector<syn::ConnectionRecord>& connections = circ.getConnections();
+                                assert(std::find(connections.begin(), connections.end(), conn) != connections.end());
                             }
+                        #endif
                         };
                 m_window->queueExternalMessage(syn::MakeCommand(f));
             };

@@ -141,7 +141,6 @@ namespace synui
         MainWindow* m_window;
         nanogui::ref<nanogui::Screen> m_screen;
         syn::VoiceManager* m_vm;
-        syn::UnitFactory* m_uf;
 
         // Widgets
         EnhancedWindow* m_buttonPanel;

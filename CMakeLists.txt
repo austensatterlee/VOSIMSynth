@@ -124,6 +124,9 @@ add_compile_options("$<$<CONFIG:RelWithDebInfo>:-D_RELWITHDEBINFO>")
 if(VOSIMPROJECT_TRACER_BUILD)
   add_definitions(-DTRACER_BUILD)
 endif()
+if(VOSIMPROJECT_BUILD_TESTS)
+    enable_testing()
+endif()
 
 ##
 # Configure compiled dependencies 
@@ -202,10 +205,6 @@ endif()
 # JSON for Modern C++
 ##
 include_directories(${LIBS_DIR}/json)
-
-if(VOSIMPROJECT_BUILD_TESTS)
-    enable_testing()
-endif()
 
 ##
 # Add VOSIMLib

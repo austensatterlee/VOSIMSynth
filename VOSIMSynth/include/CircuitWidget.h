@@ -30,7 +30,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <nanogui/nanogui.h>
 #include <vosimlib/common_serial.h>
 #include <vosimlib/common.h>
-#include "../../libs/eigen/eigen/src/Core/util/ForwardDeclarations.h"
+#include <eigen/src/Core/util/ForwardDeclarations.h>
 
 namespace syn {
     class VoiceManager;

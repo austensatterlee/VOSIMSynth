@@ -107,15 +107,6 @@ bool VOSIMSynth::SerializeState(ByteChunk* pChunk) {
 
     // Store gui data
     j["gui"] = GetAppWindow()->operator json();
-    
-#ifndef NDEBUG
-    for(auto wireJson : j["gui"]["circuit"]["wires"]){
-        // Check that connection exists
-        syn::ConnectionRecord conn{wireJson["output"][0], wireJson["output"][1], wireJson["input"][0], wireJson["input"][1]};
-        const vector<syn::ConnectionRecord>& connections = circuit.getConnections();
-        assert(std::find(connections.begin(), connections.end(), conn) != connections.end());
-    }
-#endif
 
     ss << j;
     pChunk->PutStr(ss.str().c_str());

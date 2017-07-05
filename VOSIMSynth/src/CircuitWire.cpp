@@ -148,14 +148,6 @@ void synui::CircuitWire::updateStartAndEndPositions(const Eigen::Vector2i& a_end
         Eigen::Vector2i outputPos = outputWidget->getOutputPortAbsPosition(m_outputPort.second) - m_parentCircuit->absolutePosition();
         startPos = outputPos;
         endPos = inputPos;
-
-#ifndef NDEBUG
-        // Check that connection exists
-        const syn::Circuit& circ = m_parentCircuit->vm().getPrototypeCircuit();
-        syn::ConnectionRecord conn{getOutputPort().first, getOutputPort().second, getInputPort().first, getInputPort().second};
-        const vector<syn::ConnectionRecord>& connections = circ.getConnections();
-        assert(std::find(connections.begin(), connections.end(), conn) != connections.end());
-#endif
     } else if (m_outputPort.first >= 0) {
         auto outputWidget = m_parentCircuit->m_unitWidgets[m_outputPort.first];
         startPos = outputWidget->getOutputPortAbsPosition(m_outputPort.second) - m_parentCircuit->absolutePosition();
@@ -176,16 +168,16 @@ int synui::CircuitWire::weight_func<CellType>::operator()(const Grid2D<CellType>
     // Penalize jagged paths
     if ((prev.array() > -1).all()) {
         if (((curr - prev).array() != (next - curr).array()).any())
-            score += 1;
+            score += 12;
     }
     // Penalize following another wire's path
     if (grid.get(curr).contains(CircuitWidget::GridCell::State::Wire) && grid.get(next).contains(CircuitWidget::GridCell::State::Wire))
-            score += 10;
+            score += 50;
 
     // Prefer empty over a wire, and prefer a wire over a unit.
     const auto& cell = grid.get(next);
     if(cell.contains(CircuitWidget::GridCell::State::Wire))
-        score += 5;
+        score += 25;
     else if(cell.contains(CircuitWidget::GridCell::State::Unit))
         score += 100;
     else if(!cell)

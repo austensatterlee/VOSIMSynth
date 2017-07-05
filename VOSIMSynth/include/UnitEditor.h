@@ -51,7 +51,7 @@ namespace synui
               m_isDirty(true)
         {
             if (m_unitId >= 0)
-                _build();
+                UnitEditor::_build();
         }
 
         virtual ~UnitEditor() {}
@@ -83,7 +83,7 @@ namespace synui
 
         bool m_isDirty;
     private:
-        void _build();
+        virtual void _build();
     };
 
     class UnitEditorHost : public nanogui::StackedWidget

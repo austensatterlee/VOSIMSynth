@@ -10,22 +10,7 @@ synui::SummingUnitWidget::SummingUnitWidget(CircuitWidget* a_parent, syn::VoiceM
 
 Eigen::Vector2i synui::SummingUnitWidget::getInputPortAbsPosition(int a_portId)
 {
-    auto inputs = getUnit_().inputs();
-    const int* ids = inputs.ids();
-    bool isConnected = getUnit_().isConnected(a_portId);
-    int nConnected = 0;
-    int index = isConnected ? -1 : inputs.getIndexFromId(a_portId);
-    // Find the port's index, ignoring disconnected ports.
-    for(int i=0;i<getUnit_().numInputs();i++) {
-        if(getUnit_().isConnected(ids[i])){
-            if(a_portId==ids[i])
-                index = nConnected;
-            nConnected++;
-        }
-    }
-    float angle = DSP_PI*(0.5 + (nConnected - index)*(1.0f / (nConnected + 1)));
-    Vector2f pos = absolutePosition().cast<float>() + size().cast<float>()*0.5 + Vector2f{ cos(angle), -sin(angle) }.cwiseProduct(size().cast<float>())*0.5;
-    return pos.cast<int>();
+    return absolutePosition() + Vector2i{ 0, size().y()*0.5 };
 }
 
 Eigen::Vector2i synui::SummingUnitWidget::getOutputPortAbsPosition(int a_portId)
@@ -33,10 +18,9 @@ Eigen::Vector2i synui::SummingUnitWidget::getOutputPortAbsPosition(int a_portId)
     return absolutePosition() + Vector2i{ size().x(), size().y()*0.5 };
 }
 
-int synui::SummingUnitWidget::getInputPort(const Eigen::Vector2i& a_pos) {
-    bool isOutputSelected = a_pos.x() > size().x()*0.5 && !isHandleSelected(a_pos);
-    const syn::Unit& unit = getUnit_();
-    if(!isOutputSelected && !isHandleSelected(a_pos)){
+int synui::SummingUnitWidget::getInputPort(const Eigen::Vector2i& p) {
+    if(!isOutputSelected(p) && !isHandleSelected(p)){
+        const syn::Unit& unit = getUnit_();
         // Find a free input port
         for (int i = 0; i < unit.numInputs(); i++) {
             int inputId = unit.inputs().ids()[i];
@@ -47,9 +31,8 @@ int synui::SummingUnitWidget::getInputPort(const Eigen::Vector2i& a_pos) {
     }
     return -1;
 }
-int synui::SummingUnitWidget::getOutputPort(const Eigen::Vector2i& a_pos) {    
-    bool isOutputSelected = a_pos.x() > size().x()*0.5 && !isHandleSelected(a_pos);
-    if(isOutputSelected)
+int synui::SummingUnitWidget::getOutputPort(const Eigen::Vector2i& p) {    
+    if(isOutputSelected(p))
         return 0;
     return -1;
 }
@@ -60,6 +43,10 @@ bool synui::SummingUnitWidget::isHandleSelected(const Vector2i& p) const
     float handleRadius = m_handleRadiusRatio * size().x() * 0.5;
     float distFromCenter = (center - p.cast<float>()).norm();
     return distFromCenter <= handleRadius;
+}
+
+bool synui::SummingUnitWidget::isOutputSelected(const Eigen::Vector2i& p) const {
+    return p.x() > size().x()*0.5 && !isHandleSelected(p);
 }
 
 void synui::SummingUnitWidget::draw(NVGcontext* ctx)

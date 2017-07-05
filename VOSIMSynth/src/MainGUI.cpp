@@ -2,6 +2,7 @@
 #include "MainWindow.h"
 #include "VoiceManager.h"
 #include "CircuitWidget.h"
+#include "CircuitWire.h"
 #include "UnitEditor.h"
 #include "Logger.h"
 #include "OscilloscopeWidget.h"
@@ -48,11 +49,11 @@ namespace synui {
             auto openButton = new nanogui::Button(a_parent, text, icon);
             openButton->setFixedSize({20,20});
             openButton->setCallback([this, a_callback]() {
-                    setVisible(true);
-                    screen()->moveWindowToFront(this);
-                    if (a_callback)
-                        a_callback();
-                });
+            setVisible(true);
+            screen()->moveWindowToFront(this);
+            if (a_callback)
+                a_callback();
+        });
             return openButton;
         }
 
@@ -76,6 +77,14 @@ synui::MainGUI::operator json() const {
     json& settings = j["settings"] = json();
     settings = m_settingsFormHelper->operator json();
 
+#ifndef NDEBUG
+    // Check that connections exists
+    for (vector<std::shared_ptr<CircuitWire>>::value_type w : m_circuitWidget->wires()) {
+        syn::ConnectionRecord conn{w->getOutputPort().first, w->getOutputPort().second, w->getInputPort().first, w->getInputPort().second};
+        const vector<syn::ConnectionRecord>& connections = m_vm->getPrototypeCircuit().getConnections();
+        assert(std::find(connections.begin(), connections.end(), conn) != connections.end());
+    }
+#endif
     return j;
 }
 
@@ -114,9 +123,9 @@ void synui::MainGUI::resize(int a_w, int a_h) {
 
 void synui::MainGUI::setGLFWWindow(GLFWwindow* a_window) {
     TRACE
-
-    TRACEMSG("Initializing nanogui screen.")
-    m_screen->initialize(a_window, true);
+        
+    TRACEMSG("Initializing nanogui screen.");
+    m_screen->initialize(a_window, false);
     TRACEMSG("Finished initializing nanogui screen.");
 
     /* Setup event handlers. */
@@ -147,9 +156,9 @@ void synui::MainGUI::setGLFWWindow(GLFWwindow* a_window) {
     );
 
     auto resizeCallback = [](GLFWwindow* w, int width, int height) {
-                auto mainGui = static_cast<MainGUI*>(glfwGetWindowUserPointer(w));
-                mainGui->resize(width, height);
-            };
+        auto mainGui = static_cast<MainGUI*>(glfwGetWindowUserPointer(w));
+        mainGui->resize(width, height);
+    };
     glfwSetFramebufferSizeCallback(a_window, resizeCallback);
     glfwSetWindowSizeCallback(a_window, resizeCallback);
 }
@@ -175,12 +184,12 @@ void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget) {
             subbtn->setFontSize(14);
             // Close popup
             subbtn->setCallback([this, button, classId]() {
-                    this->m_circuitWidget->loadPrototype(classId);
-                    button->setPushed(false);
-                    m_screen->updateFocus(nullptr);
-                });
+            this->m_circuitWidget->loadPrototype(classId);
+            button->setPushed(false);
+            m_screen->updateFocus(nullptr);
+        });
         }
-        if(uf.getPrototypeNames(gname).size()==1)
+        if (uf.getPrototypeNames(gname).size() == 1)
             popup->setAnchorHeight(15);
     }
 }
@@ -197,67 +206,67 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
     helper->addGroup("Plugin Settings");
 
     helper->addSerializableVariable<int>("grid_spacing", "Grid spacing", [this](const int& s) {
-            m_circuitWidget->resizeGrid(s);
-            m_screen->performLayout();
-        }, [this]() {
-            int gs = m_circuitWidget->gridSpacing();
-            return gs;
-        });
+    m_circuitWidget->resizeGrid(s);
+    m_screen->performLayout();
+}, [this]() {
+    int gs = m_circuitWidget->gridSpacing();
+    return gs;
+});
 
     helper->addSerializableVariable<int>("window_width", "Window width", [this](const int& w) { m_window->resize(w, m_screen->height()); }, [this]() { return m_screen->width(); });
     helper->addSerializableVariable<int>("window_height", "Window height", [this](const int& h) { m_window->resize(m_screen->width(), h); }, [this]() { return m_screen->height(); });
     helper->addVariable<bool>("Curved Wires",
         [this](const bool& s) {
-            m_circuitWidget->setWireDrawStyle(static_cast<CircuitWidget::WireDrawStyle>(s));
-        }, [this]() {
-            return static_cast<bool>(m_circuitWidget->wireDrawStyle());
-        });
+    m_circuitWidget->setWireDrawStyle(static_cast<CircuitWidget::WireDrawStyle>(s));
+}, [this]() {
+    return static_cast<bool>(m_circuitWidget->wireDrawStyle());
+});
 
     helper->addVariable<int>("Internal buffer size",
         [this, helper](const int& size) {
-            auto f = [this, size, helper]() {
-                        m_vm->setInternalBufferSize(size);
-                            helper->refresh();
-                    };
-            m_vm->queueAction(syn::MakeCommand(f));
-        }, [this]() {
-            return m_vm->getInternalBufferSize();
-        });
+    auto f = [this, size, helper]() {
+        m_vm->setInternalBufferSize(size);
+        helper->refresh();
+    };
+    m_vm->queueAction(syn::MakeCommand(f));
+}, [this]() {
+    return m_vm->getInternalBufferSize();
+});
 
     helper->addSerializableVariable<int>("max_voices", "Max voices",
         [this, helper](const int& maxVoices) {
-            auto f = [this, maxVoices, helper]() {
-                        m_vm->setMaxVoices(maxVoices);
-                            helper->refresh();
-                    };
-            m_vm->queueAction(syn::MakeCommand(f));
-        }, [this]() {
-            return m_vm->getMaxVoices();
-        });
+    auto f = [this, maxVoices, helper]() {
+        m_vm->setMaxVoices(maxVoices);
+        helper->refresh();
+    };
+    m_vm->queueAction(syn::MakeCommand(f));
+}, [this]() {
+    return m_vm->getMaxVoices();
+});
 
     helper->addSerializableVariable<bool>("legato", "Legato",
         [this, helper](const bool& legato) {
-            auto f = [this, legato, helper]() {
-                        m_vm->setLegato(legato);
-                            helper->refresh();
-                    };
-            m_vm->queueAction(syn::MakeCommand(f));
-        }, [this]() {
-            return m_vm->getLegato();
-        });
+    auto f = [this, legato, helper]() {
+        m_vm->setLegato(legato);
+        helper->refresh();
+    };
+    m_vm->queueAction(syn::MakeCommand(f));
+}, [this]() {
+    return m_vm->getLegato();
+});
 
     helper->addVariable<syn::VoiceManager::VoiceStealingPolicy>("Voice Stealing",
         [this, helper](const syn::VoiceManager::VoiceStealingPolicy& policy) {
-            auto f = [this, policy, helper]() {
-                        m_vm->setVoiceStealingPolicy(policy);
-                            helper->refresh();
-                    };
-            m_vm->queueAction(syn::MakeCommand(f));
-        }, [this]() {
-            return m_vm->getVoiceStealingPolicy();
-        })->setItems({"Oldest", "Newest", "Highest", "Lowest"});
+    auto f = [this, policy, helper]() {
+        m_vm->setVoiceStealingPolicy(policy);
+        helper->refresh();
+    };
+    m_vm->queueAction(syn::MakeCommand(f));
+}, [this]() {
+    return m_vm->getVoiceStealingPolicy();
+})->setItems({"Oldest", "Newest", "Highest", "Lowest"});
 
-    
+
 #define ADD_FH_VAR(label, type, lvalue) helper->addVariable<type>(label, [this](const type& val){ lvalue = val; }, [this](){ return lvalue; });
     /* Spacing-related parameters */
     helper->addGroup("Spacing");
@@ -277,7 +286,7 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
     ADD_FH_VAR("Icon Color", nanogui::Color, m_screen->theme()->mIconColor)
     ADD_FH_VAR("Transparent", nanogui::Color, m_screen->theme()->mTransparent)
     ADD_FH_VAR("Text Color", nanogui::Color, m_screen->theme()->mTextColor)
-    ADD_FH_VAR("Text Color",  nanogui::Color, m_screen->theme()->mTextColorShadow)
+    ADD_FH_VAR("Text Color", nanogui::Color, m_screen->theme()->mTextColorShadow)
     ADD_FH_VAR("Disabled Text Color", nanogui::Color, m_screen->theme()->mDisabledTextColor)
 
     /* Button colors */
@@ -313,12 +322,12 @@ void synui::MainGUI::createLogViewer_(nanogui::Widget* a_widget) {
     a_widget->setLayout(layout);
 
     Logger::instance().addListener([a_widget]() {
-            const auto& log = Logger::instance().getLogs().back();
-            std::ostringstream value;
-            value << "[ " << log.first << "] " << log.second;
-            auto txt = new nanogui::Label(a_widget, value.str(), "sans", 12);
-            a_widget->screen()->performLayout();
-        });
+    const auto& log = Logger::instance().getLogs().back();
+    std::ostringstream value;
+    value << "[ " << log.first << "] " << log.second;
+    auto txt = new nanogui::Label(a_widget, value.str(), "sans", 12);
+    a_widget->screen()->performLayout();
+});
 }
 
 void synui::MainGUI::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
@@ -331,10 +340,10 @@ void synui::MainGUI::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
 
 synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     : m_window(a_window),
-      m_screen(nullptr),
-      m_vm(a_vm) {
+      m_screen(new nanogui::Screen()),
+      m_vm(a_vm) 
+{
     TRACE
-    m_screen = new nanogui::Screen();
     setGLFWWindow(m_window->getWindow());
 
     m_screen->theme()->mWindowDropShadowSize = 2;
@@ -346,20 +355,20 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     m_sidePanelL->setFixedHeight(m_screen->height());
     m_sidePanelL->setFixedWidth(200);
     m_sidePanelL->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
-            nanogui::Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(nanogui::Color(0.9f, 1.0f));
+    nanogui::Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(nanogui::Color(0.9f, 1.0f));
 
-            nvgSave(ctx);
+    nvgSave(ctx);
 
-            nvgTranslate(ctx, self->position().x(), self->position().y());
-            nvgBeginPath(ctx);
-            nvgRoundedRect(ctx, 0, 0, self->width(), self->height(), 1.0f);
-            nvgFillColor(ctx, fillColor);
-            nvgFill(ctx);
+    nvgTranslate(ctx, self->position().x(), self->position().y());
+    nvgBeginPath(ctx);
+    nvgRoundedRect(ctx, 0, 0, self->width(), self->height(), 1.0f);
+    nvgFillColor(ctx, fillColor);
+    nvgFill(ctx);
 
-            nvgRestore(ctx);
+    nvgRestore(ctx);
 
-            self->Widget::draw(ctx);
-        });
+    self->Widget::draw(ctx);
+});
 
     /* Create tab widget in left pane. */
     m_tabWidget = new nanogui::TabWidget(m_sidePanelL);
@@ -380,46 +389,46 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     m_sidePanelR->setIsBackgroundWindow(true);
     m_sidePanelR->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 5, 0));
     m_sidePanelR->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
-            nanogui::Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(nanogui::Color(0.9f, 1.0f));
-            nanogui::Color shineColor = self->theme()->mBorderLight;
-            nanogui::Color shadowColor = self->theme()->mBorderDark;
+    nanogui::Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(nanogui::Color(0.9f, 1.0f));
+    nanogui::Color shineColor = self->theme()->mBorderLight;
+    nanogui::Color shadowColor = self->theme()->mBorderDark;
 
-            nvgSave(ctx);
+    nvgSave(ctx);
 
-            nvgTranslate(ctx, self->position().x(), self->position().y());
-            nvgBeginPath(ctx);
-            nvgRoundedRect(ctx, 0, 0, self->width(), self->height(), 1.0f);
-            nvgFillColor(ctx, fillColor);
-            nvgFill(ctx);
+    nvgTranslate(ctx, self->position().x(), self->position().y());
+    nvgBeginPath(ctx);
+    nvgRoundedRect(ctx, 0, 0, self->width(), self->height(), 1.0f);
+    nvgFillColor(ctx, fillColor);
+    nvgFill(ctx);
 
-            nvgRestore(ctx);
+    nvgRestore(ctx);
 
-            self->Widget::draw(ctx);
+    self->Widget::draw(ctx);
 
-            nvgSave(ctx);
+    nvgSave(ctx);
 
 
-            nvgTranslate(ctx, self->position().x(), self->position().y());
-            nvgBeginPath(ctx);
-            nvgMoveTo(ctx, 1.25f, self->height());
-            nvgLineTo(ctx, 1.25f, 1.5f);
-            nvgLineTo(ctx, self->width(), 1.5f);
-            nvgStrokeColor(ctx, shineColor);
-            nvgStrokeWidth(ctx, 1.0f);
-            nvgLineJoin(ctx, NVG_ROUND);
-            nvgStroke(ctx);
+    nvgTranslate(ctx, self->position().x(), self->position().y());
+    nvgBeginPath(ctx);
+    nvgMoveTo(ctx, 1.25f, self->height());
+    nvgLineTo(ctx, 1.25f, 1.5f);
+    nvgLineTo(ctx, self->width(), 1.5f);
+    nvgStrokeColor(ctx, shineColor);
+    nvgStrokeWidth(ctx, 1.0f);
+    nvgLineJoin(ctx, NVG_ROUND);
+    nvgStroke(ctx);
 
-            nvgBeginPath(ctx);
-            nvgMoveTo(ctx, 0.75f, self->height());
-            nvgLineTo(ctx, 0.75f, 0.5f);
-            nvgLineTo(ctx, self->width(), 0.5f);
-            nvgStrokeColor(ctx, shadowColor);
-            nvgStrokeWidth(ctx, 1.0f);
-            nvgLineJoin(ctx, NVG_ROUND);
-            nvgStroke(ctx);
+    nvgBeginPath(ctx);
+    nvgMoveTo(ctx, 0.75f, self->height());
+    nvgLineTo(ctx, 0.75f, 0.5f);
+    nvgLineTo(ctx, self->width(), 0.5f);
+    nvgStrokeColor(ctx, shadowColor);
+    nvgStrokeWidth(ctx, 1.0f);
+    nvgLineJoin(ctx, NVG_ROUND);
+    nvgStroke(ctx);
 
-            nvgRestore(ctx);
-        });
+    nvgRestore(ctx);
+});
 
     /* Create circuit widget in right pane. */
     m_circuitWidget = new CircuitWidget(m_sidePanelR, m_window, m_unitEditorHost, a_vm);
@@ -428,20 +437,20 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     m_buttonPanel = new EnhancedWindow(m_screen, "");
     m_buttonPanel->setIsBackgroundWindow(true);
     m_buttonPanel->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
-            nanogui::Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(nanogui::Color(0.9f, 1.0f));
+    nanogui::Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(nanogui::Color(0.9f, 1.0f));
 
-            nvgSave(ctx);
+    nvgSave(ctx);
 
-            nvgTranslate(ctx, self->position().x(), self->position().y());
-            nvgBeginPath(ctx);
-            nvgRoundedRect(ctx, 0, 0, self->width(), self->height(), 1.0f);
-            nvgFillColor(ctx, fillColor);
-            nvgFill(ctx);
+    nvgTranslate(ctx, self->position().x(), self->position().y());
+    nvgBeginPath(ctx);
+    nvgRoundedRect(ctx, 0, 0, self->width(), self->height(), 1.0f);
+    nvgFillColor(ctx, fillColor);
+    nvgFill(ctx);
 
-            nvgRestore(ctx);
+    nvgRestore(ctx);
 
-            self->Widget::draw(ctx);
-        });
+    self->Widget::draw(ctx);
+});
     auto buttonPanelLayout = new nanogui::AdvancedGridLayout({}, {0}, 5);
     m_buttonPanel->setLayout(buttonPanelLayout);
     buttonPanelLayout->appendCol(0, 1.0);
@@ -458,11 +467,11 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     buttonPanelLayout->appendCol(0, 0);
 
     auto log_callback = [this]() {
-                m_screen->centerWindow(m_logViewer);
-            };
+        m_screen->centerWindow(m_logViewer);
+    };
     auto logviewer_button = m_logViewer->createOpenButton(m_buttonPanel, "", ENTYPO_TRAFFIC_CONE, log_callback);
     buttonPanelLayout->setAnchor(logviewer_button, nanogui::AdvancedGridLayout::Anchor{buttonPanelLayout->colCount() - 1,0});
-    
+
     /* Create oscilloscope viewer window. */
     m_oscViewer = new EnhancedWindow(m_screen, "Visualizers");
     m_oscViewer->setVisible(false);
@@ -474,8 +483,8 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     buttonPanelLayout->appendCol(0, 0);
 
     auto osc_viewer_callback = [this]() {
-                m_screen->centerWindow(m_oscViewer);
-            };
+        m_screen->centerWindow(m_oscViewer);
+    };
     auto osc_viewer_button = m_oscViewer->createOpenButton(m_buttonPanel, "", ENTYPO_AREA_GRAPH, osc_viewer_callback);
     buttonPanelLayout->setAnchor(osc_viewer_button, nanogui::AdvancedGridLayout::Anchor{buttonPanelLayout->colCount() - 1,0});
 
@@ -491,9 +500,9 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     /* Add a button for openning the settings editor window. */
     buttonPanelLayout->appendCol(0, 0);
     auto settings_callback = [this]() {
-                m_settingsFormHelper->refresh();
-                m_screen->centerWindow(m_settingsEditor);
-            };
+        m_settingsFormHelper->refresh();
+        m_screen->centerWindow(m_settingsEditor);
+    };
     auto settings_button = m_settingsEditor->createOpenButton(m_buttonPanel, "", ENTYPO_COG, settings_callback);
     buttonPanelLayout->setAnchor(settings_button, nanogui::AdvancedGridLayout::Anchor{buttonPanelLayout->colCount() - 1,0});
 
