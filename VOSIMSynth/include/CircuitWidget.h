@@ -27,10 +27,12 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 #include "Grid.h"
+#include "vosimsynth/Signal.h"
+#include "vosimlib/common_serial.h"
+#include "vosimlib/common.h"
+
 #include <nanogui/nanogui.h>
-#include <vosimlib/common_serial.h>
-#include <vosimlib/common.h>
-#include <eigen/src/Core/util/ForwardDeclarations.h>
+#include <eigen/Core>
 
 namespace syn {
     class VoiceManager;
@@ -266,6 +268,10 @@ namespace synui {
         struct DrawingWireState { } m_drawingWireState;
 
         std::vector<std::shared_ptr<CircuitWire>> m_wires;
+
+    public:
+        Signal<UnitWidget*> onAddUnit; ///< Sent after a unit has been created and placed. 
+        Signal<UnitWidget*> onRemoveUnit; ///< Sent just before a unit is removed.
     };
 
     namespace cwstate {

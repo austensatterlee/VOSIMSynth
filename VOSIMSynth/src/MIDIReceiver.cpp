@@ -51,16 +51,16 @@ namespace syn {
                 if (status == IMidiMsg::kNoteOn && velocity > 0) {
                     if (!m_keyStatus[noteNumber]) {
                         m_keyStatus[noteNumber] = true;
-                        m_vm->noteOn(noteNumber, velocity);
+                        m_vm.noteOn(noteNumber, velocity);
                     }
                 }
                 else {
                     m_keyStatus[noteNumber] = false;
-                    m_vm->noteOff(noteNumber, velocity);
+                    m_vm.noteOff(noteNumber, velocity);
                 }
             }
             else if (status == IMidiMsg::kControlChange) {
-                m_vm->sendControlChange(midiMessage->ControlChangeIdx(), midiMessage->ControlChange(midiMessage->ControlChangeIdx()));
+                m_vm.sendControlChange(midiMessage->ControlChangeIdx(), midiMessage->ControlChange(midiMessage->ControlChangeIdx()));
             }
             m_midiQueue.Remove();
         }

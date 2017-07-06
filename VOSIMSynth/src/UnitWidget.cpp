@@ -4,6 +4,7 @@
 #include "MainGUI.h"
 #include <Unit.h>
 #include <VoiceManager.h>
+#include <Command.h>
 
 synui::UnitWidget::UnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId) :
     Widget(a_parent),
@@ -28,6 +29,13 @@ const string& synui::UnitWidget::getName() const
 void synui::UnitWidget::setName(const string& a_name)
 {
     m_name = a_name;
+    auto f = [this]() {
+        for (int i = 0; i < m_vm->getMaxVoices(); i++) {
+            m_vm->getVoiceCircuit(i).getUnit(m_unitId).setName(m_name);
+        }
+        m_vm->getPrototypeCircuit().getUnit(m_unitId).setName(m_name);
+    };
+    m_vm->queueAction(syn::MakeCommand(f));
 }
 
 synui::UnitWidget::operator json() const

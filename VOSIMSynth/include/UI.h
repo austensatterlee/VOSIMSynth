@@ -30,11 +30,11 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "DSPMath.h"
 #include <eigen/Core>
 #include <nanogui/nanogui.h>
+#include <IPlug/Containers.h>
 #include <functional>
 #include <vector>
 #include <memory>
-#include <IPlug/Containers.h>
-#include "entypo.h"
+#include <entypo.h>
 
 namespace synui
 {

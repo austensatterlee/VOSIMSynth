@@ -28,20 +28,23 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <units/MemoryUnit.h>
 #include <units/MidiUnits.h>
 #include <units/StateVariableFilter.h>
-#include <units/WaveShapers.h>
-#include <MIDIReceiver.h>
-#include <VoiceManager.h>
 #include <UnitFactory.h>
 #include <tables.h>
 
 #include "MainWindow.h"
 #include "MainGUI.h"
 #include "CircuitWidget.h"
-#include "Widgets/SummingUnitWidget.h"
-#include "Widgets/MultiplyingUnitWidget.h"
+#include "widgets/SummingUnitWidget.h"
+#include "widgets/MultiplyingUnitWidget.h"
 #include "OscilloscopeWidget.h"
 
-VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo) : IPLUG_CTOR(0, 1, instanceInfo), m_tempo(0), m_tickCount(0) {
+VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
+    : IPLUG_CTOR(0, 1, instanceInfo),
+	  m_tempo(0),
+	  m_tickCount(0),
+	  m_voiceManager(),
+	  m_MIDIReceiver(m_voiceManager)
+{
     TRACE;
     makeInstrument();
     makeGraphics();
@@ -51,54 +54,45 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo) : IPLUG_CTOR(0, 1, instan
 }
 
 void VOSIMSynth::makeGraphics() {
-    syn::VoiceManager* vm = m_voiceManager;
+    syn::VoiceManager* vm = &m_voiceManager;
     synui::MainWindow* mainWindow = new synui::MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm](synui::MainWindow* a_win) { return new synui::MainGUI(a_win, vm); });
     mainWindow->setHInstance(gHInstance);
-    mainWindow->onResize.Connect(this, &VOSIMSynth::ResizeGraphics);
+    mainWindow->onResize.connect_member(this, &VOSIMSynth::ResizeGraphics);
     AttachAppWindow(mainWindow);
     registerUnitWidgets(*mainWindow->getGUI()->circuitWidget());
 }
 
 void VOSIMSynth::makeInstrument() {
     registerUnits();
-
-    m_voiceManager = new syn::VoiceManager();
-    m_voiceManager->setMaxVoices(8);
-
-    m_MIDIReceiver = new syn::MIDIReceiver(m_voiceManager);
-}
-
-VOSIMSynth::~VOSIMSynth() {
-    delete m_voiceManager;
-    delete m_MIDIReceiver;
+    m_voiceManager.setMaxVoices(8);
 }
 
 void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) {
     // Mutex is already locked for us.
 
     for (int s = 0; s < nFrames; s++) {
-        m_MIDIReceiver->advance();
+        m_MIDIReceiver.advance();
     }
 
     // If tempo has changed, notify instrument
     if (m_tempo != GetTempo()) {
         m_tempo = GetTempo();
-        m_voiceManager->setTempo(GetTempo());
+        m_voiceManager.setTempo(GetTempo());
     }
 
     // Process samples
-    m_voiceManager->tick(inputs[0], inputs[1], outputs[0], outputs[1]);
+    m_voiceManager.tick(inputs[0], inputs[1], outputs[0], outputs[1]);
 
-    m_MIDIReceiver->Flush(nFrames);
+    m_MIDIReceiver.Flush(nFrames);
     m_tickCount++;
 }
 
 void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg) {
-    m_MIDIReceiver->onMessageReceived(pMsg);
+    m_MIDIReceiver.onMessageReceived(pMsg);
 }
 
 bool VOSIMSynth::SerializeState(ByteChunk* pChunk) {
-    const syn::Circuit& circuit = m_voiceManager->getPrototypeCircuit();
+    const syn::Circuit& circuit = m_voiceManager.getPrototypeCircuit();
     std::stringstream ss;
     json j;
     // Store synthesizer data
@@ -130,12 +124,12 @@ int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
     // Reset gui
     GetAppWindow()->reset();
     // Load new circuit into voice manager
-    m_voiceManager->setPrototypeCircuit(*static_cast<const syn::Circuit*>(circuit));
+    m_voiceManager.setPrototypeCircuit(*static_cast<const syn::Circuit*>(circuit));
     // Inform new circuit of buffer size, sampling rate, etc...
     Reset();
     // Load gui
     GetAppWindow()->load(gui);
-    m_voiceManager->onIdle();
+    m_voiceManager.onIdle();
 
     startPos += ss.gcount();
     return startPos;
@@ -144,7 +138,7 @@ int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
 void VOSIMSynth::PresetsChangedByHost() {}
 
 void VOSIMSynth::OnIdle() {
-    m_voiceManager->onIdle();
+    m_voiceManager.onIdle();
 }
 
 void VOSIMSynth::OnActivate(bool active) {}
@@ -156,35 +150,34 @@ void VOSIMSynth::OnGUIClose() {}
 void VOSIMSynth::registerUnits()
 {
     syn::UnitFactory& uf = syn::UnitFactory::instance();
-    uf.addUnitPrototype<syn::StateVariableFilter>("Audio Filters", "svf");
-    uf.addUnitPrototype<syn::TrapStateVariableFilter>("Audio Filters", "tsvf");
-    uf.addUnitPrototype<syn::LadderFilterA>("Audio Filters", "ldrA");
-    uf.addUnitPrototype<syn::LadderFilterB>("Audio Filters", "ldrB");
+	uf.addUnitPrototype<syn::BasicOscillatorUnit>("Oscillators", "basic");
+	uf.addUnitPrototype<syn::VosimOscillator>("Oscillators", "vosim");
+	uf.addUnitPrototype<syn::FormantOscillator>("Oscillators", "formant");
 
-    uf.addUnitPrototype<syn::OnePoleLPUnit>("Mod Filters", "lag");
-    uf.addUnitPrototype<syn::FollowerUnit>("Mod Filters", "follow");
-    uf.addUnitPrototype<syn::DCRemoverUnit>("Mod Filters", "dc");
+	uf.addUnitPrototype<syn::ADSREnvelope>("Modulators", "ADSR");
+	uf.addUnitPrototype<syn::LFOOscillatorUnit>("Modulators", "LFO");
+
+    uf.addUnitPrototype<syn::StateVariableFilter>("Filters", "svf");
+    uf.addUnitPrototype<syn::TrapStateVariableFilter>("Filters", "tsvf");
+    uf.addUnitPrototype<syn::LadderFilterA>("Filters", "ldrA");
+    uf.addUnitPrototype<syn::LadderFilterB>("Filters", "ldrB");
+
+    uf.addUnitPrototype<syn::OnePoleLPUnit>("Filters", "lag");
+    uf.addUnitPrototype<syn::FollowerUnit>("Filters", "follow");
+    uf.addUnitPrototype<syn::DCRemoverUnit>("Filters", "dc");
     
     uf.addUnitPrototype<syn::SummerUnit>("Math", "sum");
     uf.addUnitPrototype<syn::GainUnit>("Math", "mul");
     uf.addUnitPrototype<syn::LerpUnit>("Math", "affine");
-    uf.addUnitPrototype<syn::TanhUnit>("Math", "tanh");
     uf.addUnitPrototype<syn::RectifierUnit>("Math", "rect");
+	uf.addUnitPrototype<syn::QuantizerUnit>("Math", "quantize");
+	uf.addUnitPrototype<syn::PanningUnit>("Math", "pan");
+	uf.addUnitPrototype<syn::SwitchUnit>("Math", "switch");
     uf.addUnitPrototype<syn::ConstantUnit>("Math", "const");
-
-    uf.addUnitPrototype<syn::BasicOscillatorUnit>("Oscillators", "basic");
-    uf.addUnitPrototype<syn::VosimOscillator>("Oscillators", "vosim");
-    uf.addUnitPrototype<syn::FormantOscillator>("Oscillators", "formant");
-
-    uf.addUnitPrototype<syn::ADSREnvelope>("Modulators", "ADSR");
-    uf.addUnitPrototype<syn::LFOOscillatorUnit>("Modulators", "LFO");
+    uf.addUnitPrototype<syn::TanhUnit>("Math", "tanh");
 
     uf.addUnitPrototype<syn::MemoryUnit>("Delays", "z^-1");
     uf.addUnitPrototype<syn::VariableMemoryUnit>("Delays", "z^-t");
-    
-    uf.addUnitPrototype<syn::PanningUnit>("Manipulators", "pan");
-    uf.addUnitPrototype<syn::SwitchUnit>("Manipulators", "switch");
-    uf.addUnitPrototype<syn::QuantizerUnit>("Manipulators", "quantize");
     
     uf.addUnitPrototype<syn::PitchToFreqUnit>("Converters", "p2f");
     uf.addUnitPrototype<syn::FreqToPitchUnit>("Converters", "f2p");
@@ -210,9 +203,9 @@ void VOSIMSynth::registerUnitWidgets(synui::CircuitWidget& a_cw)
 
 
 void VOSIMSynth::Reset() {
-    m_MIDIReceiver->Resize(GetBlockSize());
-    m_voiceManager->setBufferSize(GetBlockSize());
-    m_voiceManager->setFs(GetSampleRate());
+    m_MIDIReceiver.Resize(GetBlockSize());
+    m_voiceManager.setBufferSize(GetBlockSize());
+    m_voiceManager.setFs(GetSampleRate());
 }
 
 void VOSIMSynth::OnParamChange(int paramIdx) {}

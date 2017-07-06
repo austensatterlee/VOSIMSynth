@@ -22,17 +22,9 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include <IPlug/IPlug_include_in_plug_hdr.h>
 
-namespace synui {
-    class CircuitWidget;
-    class VOSIMComponent;
-}
-
-namespace syn {
-    class VoiceManager;
-    class MIDIReceiver;
-    class UnitFactory;
-}
-
+#include "CircuitWidget.h"
+#include <VoiceManager.h>
+#include <MIDIReceiver.h>
 
 class VOSIMSynth : public IPlug
 {
@@ -42,8 +34,6 @@ public:
     void makeGraphics();
 
     void makeInstrument();
-
-    ~VOSIMSynth();
 
     void Reset() override;
 
@@ -73,8 +63,8 @@ public:
     static void registerUnitWidgets(synui::CircuitWidget& a_cw);
 
 private:
-    syn::MIDIReceiver* m_MIDIReceiver;
-    syn::VoiceManager* m_voiceManager;
+	syn::VoiceManager m_voiceManager;
+    syn::MIDIReceiver m_MIDIReceiver;
 
     int m_tempo;
     unsigned m_tickCount;

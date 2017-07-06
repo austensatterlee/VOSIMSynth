@@ -247,7 +247,7 @@ bool synui::DefaultUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
     if (m_titleLabel && m_titleLabel->contains(mousePos)) {
         if (button == GLFW_MOUSE_BUTTON_LEFT && down) {
             // Open textbox on ctrl+click
-            if (dblClick) {
+            if (modifiers & GLFW_MOD_DOUBLE_CLICK) {
                 auto l = static_cast<nanogui::AdvancedGridLayout*>(layout());
                 l->removeAnchor(m_titleLabel);
                 l->setAnchor(m_titleTextBox, nanogui::AdvancedGridLayout::Anchor{0,0,3,1,nanogui::Alignment::Fill});

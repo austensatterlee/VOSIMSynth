@@ -33,24 +33,6 @@
 // make sure this is not the same as BUNDLE_MFR
 #define PLUG_MFR_ID 'Aust'
 
-// ProTools stuff
-
-#if (defined(AAX_API) || defined(RTAS_API)) && !defined(_PIDS_)
-#define _PIDS_
-const int PLUG_TYPE_IDS[2] = { 'EFN1', 'EFN2' };
-const int PLUG_TYPE_IDS_AS[2] = { 'EFA1', 'EFA2' }; // AudioSuite
-#endif
-
-#define PLUG_MFR_PT "Austen\nAusten\nAust"
-#define PLUG_NAME_PT "VOSIMSynth\nIPEF"
-#define PLUG_TYPE_PT "None"
-#define PLUG_DOES_AUDIOSUITE 1
-
-/* PLUG_TYPE_PT can be "None", "EQ", "Dynamics", "PitchShift", "Reverb", "Delay", "Modulation",
-"Harmonic" "NoiseReduction" "Dither" "SoundField" "Effect"
-instrument determined by PLUG _IS _INST
-*/
-
 #define PLUG_CHANNEL_IO "1-1 2-2"
 
 #define PLUG_LATENCY 0
@@ -62,10 +44,6 @@ instrument determined by PLUG _IS _INST
 
 #define PLUG_DOES_STATE_CHUNKS 1
 
-// Unique IDs for each image resource.
-
-// Image resource locations for this plug.
-
 // GUI default dimensions
 #define GUI_WIDTH 1000
 #define GUI_HEIGHT 700
@@ -74,16 +52,3 @@ instrument determined by PLUG _IS _INST
 #if defined(SA_API) && !defined(OS_IOS)
 #include "app_resource.h"
 #endif
-
-// vst3 stuff
-//#define MFR_URL ""
-//#define MFR_EMAIL ""
-
-/* "Fx|Analyzer"", "Fx|Delay", "Fx|Distortion", "Fx|Dynamics", "Fx|EQ", "Fx|Filter",
-"Fx", "Fx|Instrument", "Fx|InstrumentExternal", "Fx|Spatial", "Fx|Generator",
-"Fx|Mastering", "Fx|Modulation", "Fx|PitchShift", "Fx|Restoration", "Fx|Reverb",
-"Fx|Surround", "Fx|Tools", "Instrument", "Instrument|Drum", "Instrument|Sampler",
-"Instrument|Synth", "Instrument|Synth|Sampler", "Instrument|External", "Spatial",
-"Spatial|Fx", "OnlyRT", "OnlyOfflineProcess", "Mono", "Stereo",
-"Surround"
-*/

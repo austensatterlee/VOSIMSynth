@@ -1,11 +1,8 @@
 #ifndef __MIDIRECEIVER__
 #define __MIDIRECEIVER__
 
-#include "VOSIMSynth.h"
+#include <IPlug/IPlug_include_in_plug_hdr.h>
 #include <IPlug/IMidiQueue.h>
-
-struct IMidiMsg;
-
 
 namespace syn {
 
@@ -17,9 +14,10 @@ namespace syn {
     class MIDIReceiver
     {
     public:
-        explicit MIDIReceiver(VoiceManager* a_vm) :
-            m_offset(0),
-            m_vm(a_vm) {
+        explicit MIDIReceiver(VoiceManager& a_vm) 
+			: m_offset(0),
+              m_vm(a_vm) 
+		{
             for (int i = 0; i < s_keyCount; i++) {
                 m_keyStatus[i] = false;
             }
@@ -43,7 +41,7 @@ namespace syn {
         static const int s_keyCount = 128;
         bool m_keyStatus[s_keyCount]; // array of on/off for each key (index is note number)
         int m_offset;
-        VoiceManager* m_vm;
+        VoiceManager& m_vm;
     };
 }
 

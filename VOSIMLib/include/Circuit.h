@@ -132,7 +132,7 @@ namespace syn
         int getUnitId(int a_index) const { return m_units.getIdFromIndex(a_index); }
 
         int getNumUnits() const;
-        const auto& getUnits(const Unit& a_unit) const { return m_units; }
+        const auto& getUnits() const { return m_units; }
         Unit* const* getProcGraph() const;
 
         void notifyMidiControlChange(int a_cc, double a_value);

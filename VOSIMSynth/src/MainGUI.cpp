@@ -1,6 +1,7 @@
 #include "MainGUI.h"
 #include "MainWindow.h"
 #include "VoiceManager.h"
+#include "UnitWidget.h"
 #include "CircuitWidget.h"
 #include "CircuitWire.h"
 #include "UnitEditor.h"
@@ -47,13 +48,13 @@ namespace synui {
 
         nanogui::Button* createOpenButton(Widget* a_parent, const string& text = "", int icon = 0, std::function<void()> a_callback = nullptr) {
             auto openButton = new nanogui::Button(a_parent, text, icon);
-            openButton->setFixedSize({20,20});
+            openButton->setFixedSize({ 20,20 });
             openButton->setCallback([this, a_callback]() {
-            setVisible(true);
-            screen()->moveWindowToFront(this);
-            if (a_callback)
-                a_callback();
-        });
+                setVisible(!visible());
+                screen()->moveWindowToFront(this);
+                if (a_callback)
+                    a_callback();
+            });
             return openButton;
         }
 
@@ -332,10 +333,36 @@ void synui::MainGUI::createLogViewer_(nanogui::Widget* a_widget) {
 
 void synui::MainGUI::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
     TRACE
-    auto layout = new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 0);
-    a_widget->setLayout(layout);
+    auto oscPanel = a_widget->add<nanogui::Widget>();
+    oscPanel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
+    std::function<void(UnitWidget*)> addScope = [this, oscPanel](UnitWidget* w)
+    {
+        int unitId = w->getUnitId();
+        const syn::Circuit& circuit = m_vm->getPrototypeCircuit();
+        const syn::Unit& unit = circuit.getUnit(unitId);
+        if (unit.getClassIdentifier() == OscilloscopeUnit::classIdentifier()) {
+            oscPanel->add<OscilloscopeWidget>(m_vm, unitId);
+        }        
+        m_screen->performLayout();
+    };
 
-    a_widget->add<OscilloscopeWidget>(m_vm);
+    std::function<void(UnitWidget*)> removeScope = [this, oscPanel](UnitWidget* w) {
+        int unitId = w->getUnitId();
+        const syn::Circuit& circuit = m_vm->getPrototypeCircuit();
+        const syn::Unit& unit = circuit.getUnit(unitId);
+        if (unit.getClassIdentifier() == OscilloscopeUnit::classIdentifier()) {
+            for (const nanogui::Widget* child : oscPanel->children()) {
+                int wId = static_cast<const OscilloscopeWidget*>(child)->getUnitId();
+                if (wId == unitId) {
+                    oscPanel->removeChild(child);
+                    break;
+                }
+            }
+        }
+        m_screen->performLayout();
+    };
+    m_circuitWidget->onAddUnit.connect(addScope);
+    m_circuitWidget->onRemoveUnit.connect(removeScope);
 }
 
 synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
@@ -461,11 +488,10 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     auto logScrollPanel = new nanogui::VScrollPanel(m_logViewer);
     m_logViewer->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
     logScrollPanel->setFixedHeight(400);
+    logScrollPanel->setWidth(400);
     createLogViewer_(new nanogui::Widget(logScrollPanel));
-
     /* Add a button for openning the log viewer window. */
     buttonPanelLayout->appendCol(0, 0);
-
     auto log_callback = [this]() {
         m_screen->centerWindow(m_logViewer);
     };
@@ -475,13 +501,12 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     /* Create oscilloscope viewer window. */
     m_oscViewer = new EnhancedWindow(m_screen, "Visualizers");
     m_oscViewer->setVisible(false);
-    auto oscScrollPanel = new nanogui::VScrollPanel(m_oscViewer);
     m_oscViewer->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
-    createOscilloscopeViewer_(new nanogui::Widget(oscScrollPanel));
-
-    /* Add a button for openning the log viewer window. */
+    auto oscScrollPanel = m_oscViewer->add<nanogui::VScrollPanel>();
+    oscScrollPanel->setFixedHeight({ 400 });
+    createOscilloscopeViewer_(oscScrollPanel);
+    /* Add a button for openning the oscilloscope viewer window. */
     buttonPanelLayout->appendCol(0, 0);
-
     auto osc_viewer_callback = [this]() {
         m_screen->centerWindow(m_oscViewer);
     };

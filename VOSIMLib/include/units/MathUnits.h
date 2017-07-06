@@ -297,26 +297,32 @@ namespace syn {
             NUM_PARAMS
         };
 
-        explicit QuantizerUnit(const string& a_name) : Unit(a_name) {
-            addParameter_(0, UnitParameter("step", 0.0, 1e6, 1.0).setControlType(UnitParameter::Unbounded));
-            addInput_(iIn, "in");
-            addInput_(iStep, "step");
-            addOutput_(0, "out");
-        }
+        explicit QuantizerUnit(const string& a_name);
 
-        QuantizerUnit(const QuantizerUnit& a_rhs) : QuantizerUnit(a_rhs.name()) { }
+        QuantizerUnit(const QuantizerUnit& a_rhs) : QuantizerUnit(a_rhs.name()) {}
 
         void reset() override {};
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override {
-            BEGIN_PROC_FUNC
-            double in = READ_INPUT(iIn);
-            double quantStep = CLAMP(param(pStep).getDouble()+READ_INPUT(iStep), param(pStep).getMin(), param(pStep).getMax());
-            double out = quantStep>0 ? quantStep * std::floor(in/quantStep+0.5) : in;
-            WRITE_OUTPUT(0, out);
-            END_PROC_FUNC
-        }
+        void MSFASTCALL process_() GCCFASTCALL override;
+    };
+
+    /**
+     * Hyperbolic tangent unit
+     */
+    class VOSIMLIB_API TanhUnit : public Unit {
+        DERIVE_UNIT(TanhUnit)
+    public:
+        enum Param {
+            pSat = 0
+        };
+
+        explicit TanhUnit(const string& a_name);
+        TanhUnit(const TanhUnit& a_rhs);
+
+        void reset() override {};
+    protected:
+        void MSFASTCALL process_() GCCFASTCALL override;
     };
 }
 

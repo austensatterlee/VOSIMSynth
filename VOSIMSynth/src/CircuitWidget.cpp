@@ -6,12 +6,12 @@
 #include "MainGUI.h"
 #include "UnitEditor.h"
 #include "ContextMenu.h"
+#include "CircuitWire.h"
 #include <VoiceManager.h>
 #include <Command.h>
 #include <units/MathUnits.h>
 #include <unordered_set>
 #include <set>
-#include "CircuitWire.h"
 
 synui::CircuitWidget::CircuitWidget(Widget* a_parent, MainWindow* a_mainWindow, UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm)
     : Widget(a_parent),
@@ -22,7 +22,8 @@ synui::CircuitWidget::CircuitWidget(Widget* a_parent, MainWindow* a_mainWindow, 
       m_gridSpacing(15),
       m_wireDrawStyle(Curved),
       m_state(new cwstate::IdleState()),
-      m_uninitialized(true) {
+      m_uninitialized(true) 
+{
     registerUnitWidget<syn::InputUnit>([](CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new InputUnitWidget(parent, a_vm, unitId); });
     registerUnitWidget<syn::OutputUnit>([](CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new OutputUnitWidget(parent, a_vm, unitId); });
 }
@@ -277,7 +278,8 @@ void synui::CircuitWidget::deleteUnit(int a_unitId) {
     // Disallow removing the input and output units.
     if (a_unitId == m_vm->getPrototypeCircuit().getInputUnitId() || a_unitId == m_vm->getPrototypeCircuit().getOutputUnitId())
         return;
-
+    
+    this->onRemoveUnit(m_unitWidgets[a_unitId]);
     deleteUnitWidget(m_unitWidgets[a_unitId]);
 
     // Delete the unit from the circuit
@@ -285,11 +287,9 @@ void synui::CircuitWidget::deleteUnit(int a_unitId) {
                 for (int i = 0; i < m_vm->getMaxVoices(); i++) {
                     m_vm->getVoiceCircuit(i).removeUnit(a_unitId);
                 }
-                m_vm->getPrototypeCircuit().removeUnit(a_unitId);
+                m_vm->getPrototypeCircuit().removeUnit(a_unitId);          
             };
-
-    syn::Command* msg = syn::MakeCommand(f);
-    m_vm->queueAction(msg);
+    m_vm->queueAction(syn::MakeCommand(f));
 }
 
 void synui::CircuitWidget::deleteConnection(const Port& a_inputPort, const Port& a_outputPort) {
@@ -757,6 +757,7 @@ void synui::cwstate::CreatingUnitState::enter(CircuitWidget& cw, State& oldState
 
 void synui::cwstate::CreatingUnitState::exit(CircuitWidget& cw, State& newState) {
     if (m_isValid) {
+        cw.onAddUnit(m_widget);
         m_onSuccess();
     } else {
         m_onFailure();

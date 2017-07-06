@@ -259,3 +259,36 @@ void syn::LerpUnit::process_()
         WRITE_OUTPUT(0, output);
     END_PROC_FUNC
 }
+
+
+syn::TanhUnit::TanhUnit(const string& a_name) : Unit(a_name) {
+    addParameter_(pSat, UnitParameter("sat", 1.0, 10.0, 1.0));
+    addInput_("in");
+    addOutput_("out");
+}
+
+syn::TanhUnit::TanhUnit(const TanhUnit& a_rhs) : TanhUnit(a_rhs.name()) {}
+
+void syn::TanhUnit::process_() {
+    BEGIN_PROC_FUNC
+        double input = READ_INPUT(0);
+    double sat = param(pSat).getDouble();
+    WRITE_OUTPUT(0, fast_tanh_rat(input * sat) / fast_tanh_rat(sat));
+    END_PROC_FUNC
+}
+
+syn::QuantizerUnit::QuantizerUnit(const string& a_name) : Unit(a_name) {
+    addParameter_(0, UnitParameter("step", 0.0, 1e6, 1.0).setControlType(UnitParameter::Unbounded));
+    addInput_(iIn, "in");
+    addInput_(iStep, "step");
+    addOutput_(0, "out");
+}
+
+void syn::QuantizerUnit::process_() {
+    BEGIN_PROC_FUNC
+        double in = READ_INPUT(iIn);
+    double quantStep = CLAMP(param(pStep).getDouble() + READ_INPUT(iStep), param(pStep).getMin(), param(pStep).getMax());
+    double out = quantStep>0 ? quantStep * std::floor(in / quantStep + 0.5) : in;
+    WRITE_OUTPUT(0, out);
+    END_PROC_FUNC
+}

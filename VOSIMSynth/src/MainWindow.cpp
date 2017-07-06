@@ -1,7 +1,7 @@
 #include "MainWindow.h"
 #include "MainGUI.h"
-#include <Command.h>
 
+#include <Command.h>
 #include <GLFW/glfw3.h>
 #include <IPlug/Log.h>
 

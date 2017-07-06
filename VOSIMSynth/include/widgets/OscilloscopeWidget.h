@@ -64,7 +64,6 @@ namespace synui {
 
     private:
         friend class OscilloscopeWidget;
-        OscilloscopeWidget* m_widget;
         int m_bufferIndex;
         int m_bufferSize;
         int m_numBuffers;
@@ -83,19 +82,21 @@ namespace synui {
     class OscilloscopeWidget : public nanogui::Graph {
         friend class OscilloscopeUnit;
     public:
-        OscilloscopeWidget(Widget* a_parent, syn::VoiceManager* a_vm)
-            : Graph(a_parent, "Scope"),
+        OscilloscopeWidget(Widget* a_parent, syn::VoiceManager* a_vm, int a_unitId)
+            : Graph(a_parent, a_vm->getPrototypeCircuit().getUnit(a_unitId).name()),
               m_vm(a_vm),
-              m_unitId(-1),
+              m_unitId(a_unitId),
               m_yMin(-1.0),
               m_yMax(1.0),
-              m_autoAdjustSpeed(60.0)
-        {
-            setFixedSize({400,400});
-        }
+              m_autoAdjustSpeed(60.0) {}
 
         void draw(NVGcontext* ctx) override;
         void drawGrid(NVGcontext* ctx);
+
+
+        Eigen::Vector2i OscilloscopeWidget::preferredSize(NVGcontext *) const override {
+            return Eigen::Vector2i(400, 150);
+        }
 
         /**
          * Smoothly update the y-axis viewing limits according to the auto adjust speed. Should be called
@@ -112,6 +113,9 @@ namespace synui {
          * Transform a screen point to a signal point.
          */
         float fromScreen(float a_yScreen);
+
+        int getUnitId() const { return m_unitId; }
+        int setUnitId(int a_id) { m_unitId = a_id; }
 
     protected:
         syn::VoiceManager* m_vm;

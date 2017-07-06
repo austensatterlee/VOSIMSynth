@@ -43,10 +43,10 @@ Copyright 2016, Austen Satterlee
 #endif
 
 #include "UI.h"
+#include "vosimsynth/Signal.h"
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/lockfree/policies.hpp>
 #include <json/json.hpp>
-#include <gallant/Signal.h>
 
 #define MAX_GUI_MSG_QUEUE_SIZE 64
 
@@ -99,7 +99,7 @@ namespace synui
         /// Reset the GUI to its initial state
         void reset();
 
-        Gallant::Signal2<int, int> onResize;
+        Signal<int, int> onResize;
 
 #ifdef _WIN32
         HINSTANCE m_HInstance;

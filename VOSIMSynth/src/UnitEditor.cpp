@@ -10,7 +10,7 @@ void synui::UnitEditor::_build()
 
     using Anchor = nanogui::AdvancedGridLayout::Anchor;
 
-    for (int i = 0; i < childCount(); i++) { removeChild(i); }
+    while (childCount()>0) { removeChild(0); }
 
     auto newLayout = new nanogui::AdvancedGridLayout({ 10, 0, 10, 0 }, {});
     newLayout->setMargin(5);
