@@ -18,14 +18,13 @@ include_directories(${LIBS_DIR}/eigen)
 ##
 # Boost
 ##
-set(Boost_NO_BOOST_CMAKE True)
 set(Boost_DETAILED_FAILURE_MSG True)
 set(Boost_USE_STATIC_LIBS   ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME ON)
-find_package(Boost COMPONENTS thread log REQUIRED)
-get_property( BLUB TARGET Boost::thread PROPERTY IMPORTED_LOCATION_RELEASE)
-set_property( TARGET Boost::thread PROPERTY IMPORTED_LOCATION_RELWITHDEBINFO ${BLUB} )
+find_package(Boost REQUIRED)
+# get_property( BLUB TARGET Boost::thread PROPERTY IMPORTED_LOCATION_RELEASE)
+# set_property( TARGET Boost::thread PROPERTY IMPORTED_LOCATION_RELWITHDEBINFO ${BLUB} )
 include_directories(${Boost_INCLUDE_DIRS})
 
 ##
@@ -78,7 +77,7 @@ else()
   set_target_properties(VOSIMLib PROPERTIES MINSIZEREL_POSTFIX -s)
   set_target_properties(VOSIMLib PROPERTIES RELWITHDEBINFO_POSTFIX -s)
 endif()
-target_link_libraries(VOSIMLib ${Boost_LIBRARIES} ${ADDITIONAL_LIBRARIES})
+target_link_libraries(VOSIMLib ${ADDITIONAL_LIBRARIES})
 if(WIN32)
   target_compile_definitions(VOSIMLib PRIVATE -DWIN32_LEAN_AND_MEAN)
 endif()

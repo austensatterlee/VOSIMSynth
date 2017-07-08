@@ -227,7 +227,7 @@ namespace syn {
     }
 
     bool UnitParameter::setFromString(const string& a_str) {
-        if (getType() != Enum) {
+        if (getType() != Enum && getType() != Bool ) {
             try {
                 size_t num_digits;
                 double value = stod(a_str, &num_digits);

@@ -172,7 +172,7 @@ int synui::CircuitWire::weight_func<CellType>::operator()(const Grid2D<CellType>
     }
     // Penalize following another wire's path
     if (grid.get(curr).contains(CircuitWidget::GridCell::State::Wire) && grid.get(next).contains(CircuitWidget::GridCell::State::Wire))
-            score += 25;
+            score += 50;
 
     // Prefer empty over a wire, and prefer a wire over a unit.
     const auto& cell = grid.get(next);

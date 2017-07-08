@@ -16,7 +16,6 @@ set(VOSIMSYNTH_STANDALONE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/standalone)
 ##
 # Boost
 ##
-set(Boost_NO_BOOST_CMAKE True)
 set(Boost_DETAILED_FAILURE_MSG True)
 set(Boost_USE_STATIC_LIBS   ON)
 set(Boost_USE_MULTITHREADED ON)
@@ -51,25 +50,6 @@ endif()
 # VOSIMLib
 ##
 include_directories(${VOSIMLIB_DIR}/include)
-
-##
-# Compile resources into C code to be compiled into the exe
-##
-add_executable(vosimsynth_bin2c ${VOSIMSYNTH_RESOURCES}/bin2c.c)
-set(RES_BIN vosimsynth_resources.cpp vosimsynth_resources.h)
-set(bin2c_cmdline ${RES_BIN})
-file(GLOB_RECURSE resources ${VOSIMSYNTH_RESOURCES} *.ttf *.png)
-
-foreach(file ${resources})
-  list(APPEND bin2c_cmdline ${file})
-endforeach()
-
-##
-# Run bin2c on resource files
-##
-add_custom_command(OUTPUT ${RES_BIN} COMMAND vosimsynth_bin2c ARGS ${bin2c_cmdline} DEPENDS vosimsynth_bin2c ${resources} COMMENT "Running vosimsynth_bin2c" PRE_BUILD VERBATIM)
-list(APPEND RESOURCE_FILES ${CMAKE_CURRENT_BINARY_DIR}/vosimsynth_resources.cpp ${CMAKE_CURRENT_BINARY_DIR}/vosimsynth_resources.h)
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 ##
 # Collect VOSIMSynth sources

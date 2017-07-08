@@ -271,6 +271,9 @@ synui::UnitWidget* synui::CircuitWidget::createUnitWidget(syn::UnitTypeId a_clas
         fix[1] ? fix[1] : pref[1]
     ));
     widget->performLayout(screen()->nvgContext());
+
+    onAddUnit(widget);
+
     return widget;
 }
 
@@ -279,7 +282,6 @@ void synui::CircuitWidget::deleteUnit(int a_unitId) {
     if (a_unitId == m_vm->getPrototypeCircuit().getInputUnitId() || a_unitId == m_vm->getPrototypeCircuit().getOutputUnitId())
         return;
     
-    this->onRemoveUnit(m_unitWidgets[a_unitId]);
     deleteUnitWidget(m_unitWidgets[a_unitId]);
 
     // Delete the unit from the circuit
@@ -442,6 +444,8 @@ void synui::CircuitWidget::deleteWireWidget(std::shared_ptr<CircuitWire> wire) {
 
 void synui::CircuitWidget::deleteUnitWidget(UnitWidget* widget) {
     int unitId = widget->getUnitId();
+    
+    this->onRemoveUnit(m_unitWidgets[unitId]);
 
     // Delete the wire widgets connected to this unit
     for (int i = 0; i < m_wires.size(); i++) {
@@ -521,8 +525,8 @@ bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector
     Vector2i mousePos = p - cw.position();
     Grid2DPoint pt = cw.grid().fromPixel(mousePos, cw.gridSpacing());
     if (!cw.grid().contains(pt)) {
-        pt[0] = syn::CLAMP<int>(pt[0], 0, cw.grid().getShape()[0]);
-        pt[1] = syn::CLAMP<int>(pt[1], 0, cw.grid().getShape()[1]);
+        pt[0] = syn::CLAMP<int>(pt[0], 0, cw.grid().getShape()[0]-1);
+        pt[1] = syn::CLAMP<int>(pt[1], 0, cw.grid().getShape()[1]-1);
     }
 
     const auto& cell = cw.grid().get(pt);
@@ -757,7 +761,6 @@ void synui::cwstate::CreatingUnitState::enter(CircuitWidget& cw, State& oldState
 
 void synui::cwstate::CreatingUnitState::exit(CircuitWidget& cw, State& newState) {
     if (m_isValid) {
-        cw.onAddUnit(m_widget);
         m_onSuccess();
     } else {
         m_onFailure();

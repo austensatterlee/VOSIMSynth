@@ -246,7 +246,7 @@ bool synui::DefaultUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
     // Check if title was clicked
     if (m_titleLabel && m_titleLabel->contains(mousePos)) {
         if (button == GLFW_MOUSE_BUTTON_LEFT && down) {
-            // Open textbox on ctrl+click
+            // Open textbox on dbl click
             if (modifiers & GLFW_MOD_DOUBLE_CLICK) {
                 auto l = static_cast<nanogui::AdvancedGridLayout*>(layout());
                 l->removeAnchor(m_titleLabel);

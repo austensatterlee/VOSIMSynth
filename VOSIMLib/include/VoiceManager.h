@@ -41,7 +41,7 @@ namespace syn {
 
     class VOSIMLIB_API VoiceManager {
     public:
-        enum VoiceStealingPolicy {
+        enum VoiceStealPolicy {
             Oldest = 0,
             Newest,
             Lowest,
@@ -133,8 +133,8 @@ namespace syn {
 
         void setPrototypeCircuit(const Circuit& a_circ);
 
-        VoiceStealingPolicy getVoiceStealingPolicy() const { return m_voiceStealingPolicy; }
-        void setVoiceStealingPolicy(VoiceStealingPolicy a_newPolicy) { m_voiceStealingPolicy = a_newPolicy; }
+        VoiceStealPolicy getVoiceStealPolicy() const { return m_voiceStealingPolicy; }
+        void setVoiceStealPolicy(VoiceStealPolicy a_newPolicy) { m_voiceStealingPolicy = a_newPolicy; }
         
         bool getLegato() const { return m_legato; }
         void setLegato(bool a_newLegato) { m_legato = a_newLegato; }
@@ -169,7 +169,7 @@ namespace syn {
         VoiceIndexList m_releasedVoices; ///< list of voices that are active but have been sent a note off signal
         Circuit m_instrument;
 
-        VoiceStealingPolicy m_voiceStealingPolicy; ///< Determines which voices are replaced when all of them are active
+        VoiceStealPolicy m_voiceStealingPolicy; ///< Determines which voices are replaced when all of them are active
 
         bool m_legato; ///< When true, voices get reset upon activation only if they are in the "note off" state.
     };

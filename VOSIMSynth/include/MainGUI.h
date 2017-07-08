@@ -118,8 +118,6 @@ namespace synui
         
         void setGLFWWindow(GLFWwindow* a_window);
 
-        nanogui::Screen* getScreen() { return m_screen.get(); }
-
         void show();
         void hide();
         void draw();
@@ -134,7 +132,6 @@ namespace synui
     protected:
         void createUnitSelector_(nanogui::Widget* a_widget);
         void createSettingsEditor_(nanogui::Widget* a_widget, SerializableFormHelper* a_fh);
-        void createLogViewer_(nanogui::Widget * a_widget);
         void createOscilloscopeViewer_(nanogui::Widget* a_widget);
 
     private:
