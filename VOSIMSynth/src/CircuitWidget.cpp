@@ -520,6 +520,7 @@ void synui::CircuitWidget::_changeState(cwstate::State* a_state) {
 }
 
 bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector2i& p, int button, bool down, int modifiers) {
+    m_clickedWidget = nullptr;
     bool captured = cw.Widget::mouseButtonEvent(p, button, down, modifiers);
 
     Vector2i mousePos = p - cw.position();
@@ -556,7 +557,7 @@ bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector
                     changeState(cw, *new DrawingWireState({unitId,portId}, isOutput));
                     return true;
                 }
-                changeState(cw, *new MovingUnitState());
+                m_clickedWidget = uw;
                 return true;
             }
         }
@@ -603,6 +604,11 @@ bool synui::cwstate::IdleState::mouseMotionEvent(CircuitWidget& cw, const Vector
             }
         }
     }
+
+    if (m_clickedWidget) {
+        changeState(cw, *new MovingUnitState());
+    }
+
     cw.Widget::mouseMotionEvent(p, rel, button, modifiers);
     return true;
 }

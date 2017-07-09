@@ -7,8 +7,8 @@
 #include <string>
 
 synui::DefaultUnitWidget::DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId)
-    : UnitWidget(a_parent, a_vm, a_unitId),
-      m_lastClickTime(0) {
+    : UnitWidget(a_parent, a_vm, a_unitId)
+{
     const syn::Unit& unit = getUnit_();
 
     const auto& inputs = unit.inputs();
@@ -187,7 +187,6 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx) {
 void synui::DefaultUnitWidget::setName(const string& a_name) {
     UnitWidget::setName(a_name);
     m_titleLabel->setCaption(a_name);
-    m_titleTextBox->setValue(a_name);
 }
 
 Eigen::Vector2i synui::DefaultUnitWidget::getInputPortAbsPosition(int a_portId) {
@@ -236,12 +235,6 @@ bool synui::DefaultUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
         return true;
 
     Vector2i mousePos = p - position();
-    bool dblClick = false;
-    if (down) {
-        double clickTime = glfwGetTime() - m_lastClickTime;
-        m_lastClickTime = glfwGetTime();
-        dblClick = clickTime < 0.25;
-    }
 
     // Check if title was clicked
     if (m_titleLabel && m_titleLabel->contains(mousePos)) {
@@ -256,7 +249,7 @@ bool synui::DefaultUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
                 m_titleTextBox->setFixedSize({width(), m_titleLabel->height()});
                 m_titleTextBox->setFontSize(m_titleLabel->fontSize());
                 m_titleTextBox->setVisible(true);
-                m_titleTextBox->setEditable(true);
+                m_titleTextBox->requestFocus();
                 m_titleLabel->setVisible(false);
                 screen()->performLayout();
                 return true;

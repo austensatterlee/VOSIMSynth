@@ -292,10 +292,12 @@ namespace synui {
         class IdleState : public State {
             std::shared_ptr<CircuitWire> m_highlightedWire;
             double m_wireHighlightTime;
+            UnitWidget* m_clickedWidget;
         public:
             IdleState()
                 : m_highlightedWire(nullptr),
-                  m_wireHighlightTime(0) {}
+                  m_wireHighlightTime(0),
+                  m_clickedWidget(nullptr) {}
 
             bool mouseButtonEvent(CircuitWidget& cw, const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
             bool mouseMotionEvent(CircuitWidget& cw, const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override;
