@@ -52,8 +52,6 @@ namespace synui {
         std::map<int, nanogui::Label*> m_outputLabels;
         std::map<int, nanogui::Label*> m_emptyInputLabels;
         std::map<int, nanogui::Label*> m_emptyOutputLabels;
-
-        double m_lastClickTime;
     };
 
     class InputUnitWidget : public DefaultUnitWidget
