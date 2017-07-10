@@ -150,8 +150,13 @@ namespace syn
             if (id == inputUnitIndex || id == outputUnitIndex)
                 continue;
             const json unitJson = j["units"][it.key()];
-            bool success = addUnit(Unit::fromJSON(unitJson), id);
-            assert(success);
+            Unit* unit = Unit::fromJSON(unitJson);
+            // Abort load if unable to create unit.
+            if (!unit)
+                return nullptr;
+            bool success = addUnit(unit, id);
+            if (!success)
+                return nullptr;
         }
 
         /* Load connection records */
@@ -166,7 +171,9 @@ namespace syn
             cr.from_id = cr_j["from"][0];
             cr.to_id = cr_j["to"][0];
             bool success = connectInternal(cr.from_id, cr.from_port, cr.to_id, cr.to_port);
-            assert(success);
+            // Abort load if not able to create connection.
+            if (!success)
+                return nullptr;
         }
         return this;
     }
@@ -223,7 +230,7 @@ namespace syn
     }
 
     bool Circuit::removeUnit(int a_id) {
-        if (a_id < 0)
+        if (!m_units.containsId(a_id))
             return false;
         Unit* unit = m_units[a_id];
         // Don't allow deletion of input or output unit
@@ -247,6 +254,8 @@ namespace syn
     }
 
     bool Circuit::connectInternal(int a_fromId, int a_fromOutputPort, int a_toId, int a_toInputPort) {
+        if (!m_units.containsId(a_fromId) || !m_units.containsId(a_toId))
+            return false;
         Unit* fromUnit = m_units[a_fromId];
         Unit* toUnit = m_units[a_toId];
 
@@ -271,7 +280,7 @@ namespace syn
         toUnit->connectInput(a_toInputPort, &fromUnit->readOutput(a_fromOutputPort, 0));
 
         // record the connection upon success
-        m_connectionRecords.push_back({a_fromId, a_fromOutputPort, a_toId,a_toInputPort});
+        m_connectionRecords.push_back({a_fromId, a_fromOutputPort, a_toId, a_toInputPort});
         _recomputeGraph();
         return true;
     }
@@ -292,7 +301,7 @@ namespace syn
         return disconnectInternal(fromId, a_fromOutputPort, toId, a_toInputPort);
     }
 
-    const vector<ConnectionRecord>& Circuit::getConnections() const { return m_connectionRecords; };
+    const vector<ConnectionRecord>& Circuit::getConnections() const { return m_connectionRecords; }
 
     void Circuit::_recomputeGraph()
     {

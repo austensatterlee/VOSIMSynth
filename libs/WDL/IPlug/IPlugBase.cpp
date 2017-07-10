@@ -1235,7 +1235,9 @@ bool IPlugBase::LoadProgramFromFXP(WDL_String* fileName)
         chunkSize = WDL_bswap_if_le(chunkSize);
 
         GetIPlugVerFromChunk(&pgm, &pos);
-        UnserializeState(&pgm, pos);
+        bool success = UnserializeState(&pgm, pos)>0;
+        if (!success)
+            return false;
         ModifyCurrentPreset(prgName);
         RestorePreset(GetCurrentPresetIdx());
         InformHostOfProgramChange();

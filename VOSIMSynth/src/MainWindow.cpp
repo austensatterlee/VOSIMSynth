@@ -178,6 +178,7 @@ void synui::MainWindow::_runLoop()
 
 synui::MainWindow::operator json()
 {
+    TRACE;
     if (m_gui)
     {
         m_guiState = m_gui->operator json();

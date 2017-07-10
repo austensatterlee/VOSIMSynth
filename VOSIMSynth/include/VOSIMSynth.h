@@ -32,32 +32,14 @@ public:
     explicit VOSIMSynth(IPlugInstanceInfo instanceInfo);
 
     void makeGraphics();
-
     void makeInstrument();
-
     void Reset() override;
-
-    void OnParamChange(int paramIdx) override;
-
     void ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames) override;
-
     void ProcessMidiMsg(IMidiMsg* pMsg) override;
-
     bool SerializeState(ByteChunk* pChunk) override;
-
     int UnserializeState(ByteChunk* pChunk, int startPos) override;
-
-    void PresetsChangedByHost() override;
-
     void OnIdle() override;
-
-    void OnActivate(bool active) override;
-
     int getTickCount() const { return m_tickCount; }
-
-    void OnGUIOpen() override;
-
-    void OnGUIClose() override;
 
     static void registerUnits();
     static void registerUnitWidgets(synui::CircuitWidget& a_cw);

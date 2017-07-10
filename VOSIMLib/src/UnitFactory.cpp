@@ -60,12 +60,8 @@ syn::Unit* syn::UnitFactory::createUnit_(int a_protoNum, const string& a_name) {
 
 syn::Unit* syn::UnitFactory::createUnit(syn::UnitTypeId a_classIdentifier, const string& a_name) {
     int protonum = getPrototypeIdx_(a_classIdentifier);
-    if (protonum < 0){
-        // Maybe they gave us an old 32bit class ID?
-        protonum = getPrototypeIdx_((uint32_t)a_classIdentifier);
-        if(protonum < 0)
-            return nullptr;
-    }
+    if (protonum < 0)
+        return nullptr;
     return createUnit_(protonum, a_name);
 }
 
@@ -109,14 +105,6 @@ int syn::UnitFactory::getPrototypeIdx_(const string& a_name) const {
 int syn::UnitFactory::getPrototypeIdx_(syn::UnitTypeId a_classId) const {
     if (m_class_identifiers.find(a_classId) != m_class_identifiers.end()) {
         return m_class_identifiers.at(a_classId);
-    }
-    return -1;
-}
-
-int syn::UnitFactory::getPrototypeIdx_(uint32_t a_classId) const {
-    for(auto id_mapping : m_class_identifiers) {
-        if((uint32_t)id_mapping.first==a_classId)
-            return id_mapping.second;
     }
     return -1;
 }

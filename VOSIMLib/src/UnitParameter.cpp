@@ -322,7 +322,7 @@ namespace syn {
         for (const json& k : j["display_texts"]) { m_displayTexts.push_back(DisplayText{k}); }
         m_min = j["min"];
         m_max = j["max"];
-        return * this;
+        return *this;
     }
 
     UnitParameter::operator json() const {

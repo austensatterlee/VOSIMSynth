@@ -249,6 +249,8 @@ namespace syn
         UnitTypeId class_id = j["class_id"].get<UnitTypeId>();
         std::string name = j["name"].get<std::string>();
         Unit* unit = UnitFactory::instance().createUnit(class_id, name);
+        if (!unit)
+            return nullptr;
 
         // Load saved parameters into the new unit
         json params = j["parameters"];

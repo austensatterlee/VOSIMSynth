@@ -509,3 +509,7 @@ void synui::MainGUI::hide() {
 void synui::MainGUI::draw() {
     m_screen->drawAll();
 }
+
+void synui::MainGUI::alert(const std::string& a_title, const std::string& a_msg, nanogui::MessageDialog::Type a_type) {
+    auto dlg = new nanogui::MessageDialog(m_screen, a_type, a_title, a_msg);
+}

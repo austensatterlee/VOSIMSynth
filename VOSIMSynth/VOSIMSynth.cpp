@@ -40,10 +40,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
     : IPLUG_CTOR(0, 1, instanceInfo),
-	  m_tempo(0),
-	  m_tickCount(0),
 	  m_voiceManager(),
-	  m_MIDIReceiver(m_voiceManager)
+	  m_MIDIReceiver(m_voiceManager),
+	  m_tempo(0),
+	  m_tickCount(0)
 {
     TRACE;
     makeInstrument();
@@ -54,6 +54,7 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 }
 
 void VOSIMSynth::makeGraphics() {
+    TRACE;
     syn::VoiceManager* vm = &m_voiceManager;
     synui::MainWindow* mainWindow = new synui::MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm](synui::MainWindow* a_win) { return new synui::MainGUI(a_win, vm); });
     mainWindow->setHInstance(gHInstance);
@@ -63,6 +64,7 @@ void VOSIMSynth::makeGraphics() {
 }
 
 void VOSIMSynth::makeInstrument() {
+    TRACE;
     registerUnits();
     m_voiceManager.setMaxVoices(8);
 }
@@ -92,6 +94,7 @@ void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg) {
 }
 
 bool VOSIMSynth::SerializeState(ByteChunk* pChunk) {
+    TRACE
     const syn::Circuit& circuit = m_voiceManager.getPrototypeCircuit();
     std::stringstream ss;
     json j;
@@ -108,47 +111,51 @@ bool VOSIMSynth::SerializeState(ByteChunk* pChunk) {
 }
 
 int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
+    TRACE
     syn::UnitFactory::instance().resetBuildCounts();
-
     string input;
     startPos = pChunk->Get(&input, startPos);
     std::stringstream ss{ input };
-    json j; ss >> j;
 
-    // Main JSON components
-    const json& synth = j["synth"];
-    const json& gui = j["gui"];
+    try {
+        json j; ss >> j;
 
-    syn::Unit* circuit = syn::Unit::fromJSON(synth["circuit"]);
+        // Main JSON components
+        const json& synth = j["synth"];
+        const json& gui = j["gui"];
 
-    // Reset gui
-    GetAppWindow()->reset();
-    // Load new circuit into voice manager
-    m_voiceManager.setPrototypeCircuit(*static_cast<const syn::Circuit*>(circuit));
-    // Inform new circuit of buffer size, sampling rate, etc...
-    Reset();
-    // Load gui
-    GetAppWindow()->load(gui);
-    m_voiceManager.onIdle();
+        syn::Unit* circuit = syn::Unit::fromJSON(synth["circuit"]);
+        if (!circuit) {
+            throw std::runtime_error("Error loading circuit.");
+        }
 
-    startPos += ss.gcount();
-    return startPos;
+        // Reset gui
+        GetAppWindow()->reset();
+        // Load new circuit into voice manager
+        m_voiceManager.setPrototypeCircuit(*static_cast<const syn::Circuit*>(circuit));
+        // Inform new circuit of buffer size, sampling rate, etc...
+        Reset();
+        // Load gui
+        GetAppWindow()->load(gui);
+        m_voiceManager.onIdle();
+        startPos += ss.gcount();
+        return startPos;
+    } catch (const std::exception& e) {
+        std::ostringstream alertmsg;
+        alertmsg << "Unable to load preset!" << std::endl;
+        alertmsg << e.what();
+        GetAppWindow()->getGUI()->alert("Error", alertmsg.str(), nanogui::MessageDialog::Type::Warning);
+        return -1;
+    }
 }
-
-void VOSIMSynth::PresetsChangedByHost() {}
 
 void VOSIMSynth::OnIdle() {
     m_voiceManager.onIdle();
 }
 
-void VOSIMSynth::OnActivate(bool active) {}
-
-void VOSIMSynth::OnGUIOpen() {}
-
-void VOSIMSynth::OnGUIClose() {}
-
 void VOSIMSynth::registerUnits()
 {
+    TRACE
     syn::UnitFactory& uf = syn::UnitFactory::instance();
 	uf.addUnitPrototype<syn::BasicOscillatorUnit>("Oscillators", "basic");
 	uf.addUnitPrototype<syn::VosimOscillator>("Oscillators", "vosim");
@@ -167,7 +174,7 @@ void VOSIMSynth::registerUnits()
     uf.addUnitPrototype<syn::DCRemoverUnit>("Filters", "dc");
     
     uf.addUnitPrototype<syn::SummerUnit>("Math", "sum");
-    uf.addUnitPrototype<syn::GainUnit>("Math", "mul");
+    uf.addUnitPrototype<syn::GainUnit>("Math", "gain");
     uf.addUnitPrototype<syn::LerpUnit>("Math", "affine");
     uf.addUnitPrototype<syn::RectifierUnit>("Math", "rect");
 	uf.addUnitPrototype<syn::QuantizerUnit>("Math", "quantize");
@@ -197,15 +204,15 @@ void VOSIMSynth::registerUnits()
 
 void VOSIMSynth::registerUnitWidgets(synui::CircuitWidget& a_cw)
 {
+    TRACE
     a_cw.registerUnitWidget<syn::SummerUnit>([](synui::CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new synui::SummingUnitWidget(parent, a_vm, unitId); });
     a_cw.registerUnitWidget<syn::GainUnit>([](synui::CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new synui::MultiplyingUnitWidget(parent, a_vm, unitId); });
 }
 
 
 void VOSIMSynth::Reset() {
+    TRACE
     m_MIDIReceiver.Resize(GetBlockSize());
     m_voiceManager.setBufferSize(GetBlockSize());
     m_voiceManager.setFs(GetSampleRate());
 }
-
-void VOSIMSynth::OnParamChange(int paramIdx) {}

@@ -29,6 +29,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include <vosimlib/common_serial.h>
 #include <nanogui/formhelper.h>
+#include <nanogui/messagedialog.h>
 #include <map>
 #include <memory>
 
@@ -54,6 +55,7 @@ namespace synui
     class UnitEditorHost;
     class MainWindow;
     class CircuitWidget;
+    using DlgType = nanogui::MessageDialog::Type;
 
     class SerializableFormHelper : public nanogui::FormHelper
     {
@@ -121,6 +123,7 @@ namespace synui
         void show();
         void hide();
         void draw();
+        void alert(const std::string& a_title, const std::string& a_msg, DlgType a_type=DlgType::Information);
 
         operator json() const;
         MainGUI* load(const json& j);
