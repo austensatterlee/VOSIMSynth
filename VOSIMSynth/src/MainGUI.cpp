@@ -5,12 +5,12 @@
 #include "CircuitWidget.h"
 #include "UnitEditor.h"
 #include "OscilloscopeWidget.h"
+#include "Logging.h"
 
 #include <Command.h>
 #include <UnitFactory.h>
 #include <nanogui/nanogui.h>
 #include <nanogui/theme.h>
-#include <IPlug/Log.h>
 
 namespace synui {
     class EnhancedWindow : public nanogui::Window {
@@ -70,7 +70,7 @@ namespace synui {
 }
 
 synui::MainGUI::operator json() const {
-    TRACE
+    TIME_TRACE
     json j;
     j["circuit"] = m_circuitWidget->operator json();
     json& settings = j["settings"] = json();
@@ -79,7 +79,7 @@ synui::MainGUI::operator json() const {
 }
 
 synui::MainGUI* synui::MainGUI::load(const json& j) {
-    TRACE
+    TIME_TRACE
     const json& settings = j.value("settings", json());
     if (!settings.empty()) {
         m_settingsFormHelper->load(settings);
@@ -89,13 +89,13 @@ synui::MainGUI* synui::MainGUI::load(const json& j) {
 }
 
 void synui::MainGUI::reset() {
-    TRACE
+    TIME_TRACE
     m_unitEditorHost->reset();
     m_circuitWidget->reset();
 }
 
 void synui::MainGUI::resize(int a_w, int a_h) {
-    TRACE
+    TIME_TRACE
     m_screen->resizeCallbackEvent(a_w, a_h);
     m_sidePanelL->setFixedHeight(m_screen->height());
     m_screen->performLayout();
@@ -112,7 +112,7 @@ void synui::MainGUI::resize(int a_w, int a_h) {
 }
 
 void synui::MainGUI::setGLFWWindow(GLFWwindow* a_window) {
-    TRACE
+    TIME_TRACE
         
     TRACEMSG("Initializing nanogui screen.");
     m_screen->initialize(a_window, false);
@@ -154,7 +154,7 @@ void synui::MainGUI::setGLFWWindow(GLFWwindow* a_window) {
 }
 
 void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget) {
-    TRACE
+    TIME_TRACE
     nanogui::BoxLayout* layout = new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 3, 3);
     a_widget->setLayout(layout);
 
@@ -186,7 +186,7 @@ void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget) {
 }
 
 void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, SerializableFormHelper* a_fh) {
-    TRACE
+    TIME_TRACE
     auto layout = new nanogui::AdvancedGridLayout({ 10, 0, 10, 0 }, {});
     layout->setMargin(10);
     layout->setColStretch(2, 1);
@@ -305,7 +305,7 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
 }
 
 void synui::MainGUI::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
-    TRACE
+    TIME_TRACE
     auto oscPanel = a_widget->add<nanogui::Widget>();
     oscPanel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
     std::function<void(UnitWidget*)> addScope = [this, oscPanel](UnitWidget* w)
@@ -343,7 +343,7 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
       m_screen(new nanogui::Screen()),
       m_vm(a_vm) 
 {
-    TRACE
+    TIME_TRACE
     setGLFWWindow(m_window->getWindow());
 
     m_screen->theme()->mWindowDropShadowSize = 2;
@@ -492,17 +492,17 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
 }
 
 synui::MainGUI::~MainGUI() {
-    TRACE
+    TIME_TRACE
 }
 
 void synui::MainGUI::show() {
-    TRACE
+    TIME_TRACE
     m_screen->setVisible(true);
     m_screen->performLayout();
 }
 
 void synui::MainGUI::hide() {
-    TRACE
+    TIME_TRACE
     m_screen->setVisible(false);
 }
 

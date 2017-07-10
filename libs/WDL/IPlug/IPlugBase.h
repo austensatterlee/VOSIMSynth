@@ -25,8 +25,6 @@ namespace synui {
 
 class IPlugBase
 {
-
-    // Changes made by Austen (4/11)
 private:
     synui::MainWindow* m_appWindow;
 protected:
@@ -37,7 +35,6 @@ public:
     synui::MainWindow* GetAppWindow() const {
         return m_appWindow;
     }
-    // End changes made by Austen (4/11)
 public:
   // Use IPLUG_CTOR instead of calling directly (defined in IPlug_include_in_plug_src.h).
   IPlugBase(int nParams,

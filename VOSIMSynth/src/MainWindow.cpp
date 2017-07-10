@@ -1,9 +1,9 @@
 #include "MainWindow.h"
 #include "MainGUI.h"
+#include "Logging.h"
 
 #include <Command.h>
 #include <GLFW/glfw3.h>
-#include <IPlug/Log.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -18,7 +18,7 @@ static const char* wndClassName = "VOSIMWndClass";
 
 void synui::MainWindow::_OpenWindowImplem(HWND a_system_window)
 {
-    TRACE
+    TIME_TRACE
     if (nWndClassReg++ == 0) {
         WNDCLASS wndClass = { NULL, drawFunc, 0, 0, m_HInstance, 0, NULL, 0, 0, wndClassName };
         RegisterClass(&wndClass);
@@ -36,7 +36,7 @@ void synui::MainWindow::_OpenWindowImplem(HWND a_system_window)
 
 void synui::MainWindow::_CloseWindowImplem()
 {
-    TRACE
+    TIME_TRACE
     SetWindowLongW(glfwGetWin32Window(m_window), GWL_STYLE, GetWindowLongW(glfwGetWin32Window(m_window), GWL_STYLE) & ~WS_CHILD);
 
     DestroyWindow(m_timerWindow);
@@ -87,7 +87,7 @@ synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiCon
     m_guiInternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE),
     m_guiExternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE)
 {
-    TRACE
+    TIME_TRACE
     auto error_callback = [](int error, const char* description)
             {
                 TRACEMSG(description);
@@ -109,7 +109,7 @@ synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiCon
 
 synui::MainWindow::~MainWindow()
 {
-    TRACE
+    TIME_TRACE
     if(m_gui)
     {
         delete m_gui; m_gui = nullptr;
@@ -121,7 +121,7 @@ synui::MainWindow::~MainWindow()
 
 void synui::MainWindow::_createGLFWWindow()
 {
-    TRACE
+    TIME_TRACE
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
@@ -178,7 +178,7 @@ void synui::MainWindow::_runLoop()
 
 synui::MainWindow::operator json()
 {
-    TRACE;
+    TIME_TRACE;
     if (m_gui)
     {
         m_guiState = m_gui->operator json();
@@ -188,7 +188,7 @@ synui::MainWindow::operator json()
 
 void synui::MainWindow::load(const json& j)
 {
-    TRACE
+    TIME_TRACE
     m_guiState = j;
     if (m_gui)
         m_gui->load(j);
@@ -196,7 +196,7 @@ void synui::MainWindow::load(const json& j)
 
 void synui::MainWindow::reset()
 {
-    TRACE
+    TIME_TRACE
     if (m_gui)
         m_gui->reset();
 }
@@ -234,7 +234,7 @@ bool synui::MainWindow::queueExternalMessage(syn::Command* a_msg) {
 
 bool synui::MainWindow::OpenWindow(HWND a_system_window)
 {
-    TRACE
+    TIME_TRACE
     if (!m_isOpen) {
         _createGLFWWindow();
         m_gui->show();
@@ -246,7 +246,7 @@ bool synui::MainWindow::OpenWindow(HWND a_system_window)
 
 void synui::MainWindow::CloseWindow()
 {
-    TRACE
+    TIME_TRACE
     if (m_isOpen) {
         glfwDestroyWindow(m_window);
         _CloseWindowImplem();
@@ -256,7 +256,7 @@ void synui::MainWindow::CloseWindow()
 
 void synui::MainWindow::resize(int w, int h)
 {
-    TRACE
+    TIME_TRACE
     w = syn::MAX(w, 800);
     h = syn::MAX(h, 600);
     glfwSetWindowSize(m_window, w, h);
