@@ -1,6 +1,3 @@
-Clone the libraries in this directory according to the readme in each
-sub-folder.
-
 Additional required libraries (not in this directory):
 - **Boost Headers**
   - *http://www.boost.org/users/download/*
