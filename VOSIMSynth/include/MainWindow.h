@@ -64,6 +64,10 @@ namespace synui
     class MainWindow;
     class MainGUI;
 
+    /**
+     * Handles creation and management of the system window, and provides an
+     * interface for safely sending commands to the GUI from another thread.
+     */
     class MainWindow
     {
     public:

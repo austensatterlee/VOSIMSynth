@@ -1,9 +1,22 @@
 # VOSIMSynth
 [![Build status](https://ci.appveyor.com/api/projects/status/49ghy4v5wbkmi0ot?svg=true)](https://ci.appveyor.com/project/austensatterlee/vosimsynth)
 
-In short, VOSIMSynth is a modular audio synthesizer that compiles to a VST instrument.
+VOSIMSynth is a modular audio synthesizer.
 
-Basically, you place these so-called "Units" onto a grid, and then connect them together with wires:
+**It's *irresponsibly* modular.**
+
+It allows you to construct and modify the signal flow graph however you want.
+
+Basically, you place these so-called "Units" onto a grid and then connect their various inputs and outputs
+together with wires.
+
+Units come in many shapes and forms, including oscillators, envelopes, LFOs, variable-rate delays, filters, basic
+arithmetic units, and signal visualization units.
+
+When you want to hear one of your units, just connect it to the designated "Output" unit to direct the signal
+to one of the output channels. You can also bring in external audio signals through one of the input channels.
+The wires coming from the input channel are just like every wire, so they may be used as modulation sources if
+you so desire.
 
 <img src="https://raw.github.com/austensatterlee/VOSIMSynth/newgraphics/screenshots/VOSIMProject_1.png"
 width=800>
@@ -17,14 +30,13 @@ by a MIDI noteOff event. Business as usual. However, an arbitrary signal can be 
 "trigger" input in order to override that behavior. This allows envelopes to be triggered and released by
 LFO's, MIDI CC values, other envelopes, or any other signal you feel like using.
 
-## Components
+## Signal Flow Library
 The VOSIMLib directory contains the core code for creating the processing
 graph and executing DSP code. It may be compiled independently and used in
 other projects to quickly create processing graphs that may be edited
 during run-time.
 
-The VOSIMSynth directory contains the application/VST code, including the GUI
-library.
+The VOSIMSynth directory contains the application/VST code, including the GUI.
 
 ## Compatibility
 Due to a small chunk of platform-specific GUI code, VOSIMSynth is only compatible with Windows, at least for
@@ -61,24 +73,23 @@ VOSIMSynth uses CMake to generate build scripts. It has been tested with Visual 
 Studio 2017.
 
 For example, to generate the x86 project files for Visual Studio 2015 inside a folder named "_build32":
-```
+```cmd
 mkdir _build32 
 cd _build32
 cmake .. -G "Visual Studio 14 2015"
 ```
 
 To configure the build (e.g. to set up the directories your dependencies live in), run 
-```
+```cmd
 cmake-gui .
 ``` 
 
 You can also pre-configure the build using environment variables.
 
-After successfully generating the project files, you may open the solution using Visual Studio and work normally, ignoring CMake ever existed,
+After successfully generating the project files, you may open the solution using Visual Studio and work
+normally, ignoring CMake ever existed,
 
-**OR**
-
-You may build from the command line:
-```
+Alternatively, build directly from the command line:
+```cmd
 cmake --build . --config Release
 ```

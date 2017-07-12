@@ -112,6 +112,9 @@ namespace synui
         std::map<std::string, std::function<void(const json&)> > m_setterSerializers;
     };
 
+    /**
+     * Handles the logic of creating the GUI and gluing the components toegether.
+     */
     class MainGUI
     {
     public:
@@ -145,7 +148,6 @@ namespace synui
         // Widgets
         EnhancedWindow* m_buttonPanel;
         EnhancedWindow* m_settingsEditor; std::shared_ptr<SerializableFormHelper> m_settingsFormHelper;
-        EnhancedWindow* m_logViewer;
         EnhancedWindow* m_oscViewer;
 
         EnhancedWindow* m_sidePanelL;

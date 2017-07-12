@@ -201,13 +201,17 @@ namespace syn {
     }
 
     double UnitParameter::getNorm() const {
+        return getNorm(m_value);
+    }
+
+    double UnitParameter::getNorm(double a_value) const {
         switch (m_unitsType) {
-            case Freq:
-            case Decibal:
-                return (log10(m_value) - m_logMin) / m_logRange;
-            case None:
-            default:
-                return (m_value - m_min) / (m_max - m_min);
+        case Freq:
+        case Decibal:
+            return (log10(a_value) - m_logMin) / m_logRange;
+        case None:
+        default:
+            return (a_value - m_min) / (m_max - m_min);
         }
     }
 

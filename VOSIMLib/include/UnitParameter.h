@@ -161,6 +161,7 @@ namespace syn
          * Get the parameter value as a number in the range (0,1)
          */
         double getNorm() const;
+        double getNorm(double a_value) const;
         string getValueString() const;
         string getUnitsString() const;
         const vector<DisplayText>& getDisplayTexts() const;

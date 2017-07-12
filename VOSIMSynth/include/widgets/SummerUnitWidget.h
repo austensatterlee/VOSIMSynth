@@ -17,23 +17,14 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
- *  \file SummingUnitWidget.h
- *  \brief
- *  \details
- *  \author Austen Satterlee
- *  \date 04/2017
- */
-
 #pragma once
 #include "UnitWidget.h"
 
 namespace synui {
-    class SummingUnitWidget : public UnitWidget
-    {
+    class SummerUnitWidget : public UnitWidget {
 
     public:
-        SummingUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId);
+        SummerUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId);
 
         void draw(NVGcontext* ctx) override;
 

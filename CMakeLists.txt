@@ -62,7 +62,7 @@ optionenv(EIGEN_USE_MKL "Should eigen use MKL as its backend?" TRUE)
 optionenv(VOSIMPROJECT_USE_AVX2 "Compile with AVX2 optimizations?" FALSE)
 optionenv(VOSIMPROJECT_TRACER_BUILD "Enable tracing?" FALSE)
 optionenv(VOSIMPROJECT_BUILD_TESTS "Build tests?" TRUE)
-optionenv(VOSIMPROJECT_BUILD_BENCHMARKS "Build benchmarks?" TRUE)
+optionenv(VOSIMPROJECT_BUILD_BENCHMARKS "Build benchmarks?" FALSE)
 
 # Subproject directories
 set(VOSIMLIB_DIR ${CMAKE_SOURCE_DIR}/vosimlib)
@@ -92,7 +92,7 @@ if(MSVC)
   # /fp:fast Floating point model       /Qpar Enable parallel code gen
   # /Oy Omit frame pointers             /GT Fiber-safe optimizations
   list(APPEND MSVC_REL  /Ox  /Ob2  /Oi  /Ot  /Oy  /fp:fast  /fp:except-  /Qpar  /GT  /GL)
-  list(APPEND MSVC_RDEB /Ox  /Ob0  /Oi  /Ot  /Oy-  /fp:fast  /fp:except-  /Qpar  /GT  /GL)
+  list(APPEND MSVC_RDEB /Ox  /Ob0  /Oi  /Ot  /Oy-  /fp:fast  /fp:except-  /Qpar  /GT /GL)
 
   if(VOSIMPROJECT_USE_AVX2)
     list(APPEND MSVC_REL /arch:AVX2)
@@ -156,11 +156,10 @@ add_subdirectory(${LIBS_DIR}/pybind11)
 # nanogui
 ##
 # Disable building extras we won't need (pure C++ project)
-setenv(NANOGUI_BUILD_EXAMPLE OFF CACHE BOOL " " FORCE)
-setenv(NANOGUI_BUILD_PYTHON  OFF CACHE BOOL " " FORCE)
-setenv(NANOGUI_INSTALL       OFF CACHE BOOL " " FORCE)
-setenv(NANOGUI_BUILD_SHARED  OFF CACHE BOOL " " FORCE)
-setenv(NANOGUI_BUILD_SHARED  OFF CACHE BOOL " " FORCE)
+set(NANOGUI_BUILD_EXAMPLE OFF CACHE BOOL "" FORCE)
+set(NANOGUI_BUILD_PYTHON  OFF CACHE BOOL "" FORCE)
+set(NANOGUI_INSTALL       OFF CACHE BOOL " " FORCE)
+set(NANOGUI_BUILD_SHARED  OFF CACHE BOOL " " FORCE)
 
 # Add the configurations from nanogui
 add_subdirectory(${LIBS_DIR}/nanogui)

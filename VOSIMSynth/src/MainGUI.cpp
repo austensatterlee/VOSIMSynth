@@ -5,12 +5,15 @@
 #include "CircuitWidget.h"
 #include "UnitEditor.h"
 #include "OscilloscopeWidget.h"
+#include "VOSIMTheme.h"
 
 #include <Command.h>
 #include <UnitFactory.h>
 #include <nanogui/nanogui.h>
 #include <nanogui/theme.h>
 #include <IPlug/Log.h>
+
+using Color = nanogui::Color;
 
 namespace synui {
     class EnhancedWindow : public nanogui::Window {
@@ -116,6 +119,7 @@ void synui::MainGUI::setGLFWWindow(GLFWwindow* a_window) {
         
     TRACEMSG("Initializing nanogui screen.");
     m_screen->initialize(a_window, false);
+    m_screen->setTheme(new VOSIMTheme(m_screen->nvgContext()));
     TRACEMSG("Finished initializing nanogui screen.");
 
     /* Setup event handlers. */
@@ -254,8 +258,14 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
         return m_vm->getVoiceStealPolicy();
     })->setItems({ "Oldest", "Newest", "Highest", "Lowest" });
 
-
 #define ADD_FH_VAR(label, type, lvalue) helper->addVariable<type>(label, [this](const type& val){ lvalue = val; }, [this](){ return lvalue; })
+    /* VOSIMSynth-related parameters */
+    helper->addGroup("UI");
+    ADD_FH_VAR("Sum/bgColor", Color, m_screen->theme()->prop("/SummerUnitWidget/bgColor"));
+    ADD_FH_VAR("Sum/fgColor", Color, m_screen->theme()->prop("/SummerUnitWidget/fgColor"));
+    ADD_FH_VAR("Gain/bgColor", Color, m_screen->theme()->prop("/GainUnitWidget/bgColor"));
+    ADD_FH_VAR("Gain/fgColor", Color, m_screen->theme()->prop("/GainUnitWidget/fgColor"));
+
     /* Spacing-related parameters */
     helper->addGroup("Spacing");
     ADD_FH_VAR("Standard Font Size", int, m_screen->theme()->mStandardFontSize);
@@ -267,39 +277,39 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
 
     /* Generic colors */
     helper->addGroup("Global Colors");
-    ADD_FH_VAR("Border Dark", nanogui::Color, m_screen->theme()->mBorderDark);
-    ADD_FH_VAR("Border Light", nanogui::Color, m_screen->theme()->mBorderLight);
-    ADD_FH_VAR("Border Medium", nanogui::Color, m_screen->theme()->mBorderMedium);
-    ADD_FH_VAR("Drop Shadow", nanogui::Color, m_screen->theme()->mDropShadow);
-    ADD_FH_VAR("Icon Color", nanogui::Color, m_screen->theme()->mIconColor);
-    ADD_FH_VAR("Transparent", nanogui::Color, m_screen->theme()->mTransparent);
-    ADD_FH_VAR("Text Color", nanogui::Color, m_screen->theme()->mTextColor);
-    ADD_FH_VAR("Text Color", nanogui::Color, m_screen->theme()->mTextColorShadow);
-    ADD_FH_VAR("Disabled Text Color", nanogui::Color, m_screen->theme()->mDisabledTextColor);
+    ADD_FH_VAR("Border Dark", Color, m_screen->theme()->mBorderDark);
+    ADD_FH_VAR("Border Light", Color, m_screen->theme()->mBorderLight);
+    ADD_FH_VAR("Border Medium", Color, m_screen->theme()->mBorderMedium);
+    ADD_FH_VAR("Drop Shadow", Color, m_screen->theme()->mDropShadow);
+    ADD_FH_VAR("Icon Color", Color, m_screen->theme()->mIconColor);
+    ADD_FH_VAR("Transparent", Color, m_screen->theme()->mTransparent);
+    ADD_FH_VAR("Text Color", Color, m_screen->theme()->mTextColor);
+    ADD_FH_VAR("Text Color", Color, m_screen->theme()->mTextColorShadow);
+    ADD_FH_VAR("Disabled Text Color", Color, m_screen->theme()->mDisabledTextColor);
 
     /* Button colors */
     helper->addGroup("Button Colors");
-    ADD_FH_VAR("Button Top (Unfocused)", nanogui::Color, m_screen->theme()->mButtonGradientTopUnfocused);
-    ADD_FH_VAR("Button Bot (Unfocused)", nanogui::Color, m_screen->theme()->mButtonGradientBotUnfocused);
-    ADD_FH_VAR("Button Top (Focused)", nanogui::Color, m_screen->theme()->mButtonGradientTopFocused);
-    ADD_FH_VAR("Button Bot (Focused)", nanogui::Color, m_screen->theme()->mButtonGradientBotFocused);
-    ADD_FH_VAR("Button Top (Pushed)", nanogui::Color, m_screen->theme()->mButtonGradientTopPushed);
-    ADD_FH_VAR("Button Bot (Pushed)", nanogui::Color, m_screen->theme()->mButtonGradientBotPushed);
+    ADD_FH_VAR("Button Top (Unfocused)", Color, m_screen->theme()->mButtonGradientTopUnfocused);
+    ADD_FH_VAR("Button Bot (Unfocused)", Color, m_screen->theme()->mButtonGradientBotUnfocused);
+    ADD_FH_VAR("Button Top (Focused)", Color, m_screen->theme()->mButtonGradientTopFocused);
+    ADD_FH_VAR("Button Bot (Focused)", Color, m_screen->theme()->mButtonGradientBotFocused);
+    ADD_FH_VAR("Button Top (Pushed)", Color, m_screen->theme()->mButtonGradientTopPushed);
+    ADD_FH_VAR("Button Bot (Pushed)", Color, m_screen->theme()->mButtonGradientBotPushed);
 
     /* Window colors */
     helper->addGroup("Window Colors");
-    ADD_FH_VAR("Window Fill (Unfocused)", nanogui::Color, m_screen->theme()->mWindowFillUnfocused);
-    ADD_FH_VAR("Window Title (Unfocused)", nanogui::Color, m_screen->theme()->mWindowTitleUnfocused);
-    ADD_FH_VAR("Window Fill (Focused)", nanogui::Color, m_screen->theme()->mWindowFillFocused);
-    ADD_FH_VAR("Window Title (Focused)", nanogui::Color, m_screen->theme()->mWindowTitleFocused);
+    ADD_FH_VAR("Window Fill (Unfocused)", Color, m_screen->theme()->mWindowFillUnfocused);
+    ADD_FH_VAR("Window Title (Unfocused)", Color, m_screen->theme()->mWindowTitleUnfocused);
+    ADD_FH_VAR("Window Fill (Focused)", Color, m_screen->theme()->mWindowFillFocused);
+    ADD_FH_VAR("Window Title (Focused)", Color, m_screen->theme()->mWindowTitleFocused);
 
-    ADD_FH_VAR("Window Header Top", nanogui::Color, m_screen->theme()->mWindowHeaderGradientTop);
-    ADD_FH_VAR("Window Header Bot", nanogui::Color, m_screen->theme()->mWindowHeaderGradientBot);
-    ADD_FH_VAR("Window Header Sep Top", nanogui::Color, m_screen->theme()->mWindowHeaderSepTop);
-    ADD_FH_VAR("Window Header Sep Bot", nanogui::Color, m_screen->theme()->mWindowHeaderSepBot);
+    ADD_FH_VAR("Window Header Top", Color, m_screen->theme()->mWindowHeaderGradientTop);
+    ADD_FH_VAR("Window Header Bot", Color, m_screen->theme()->mWindowHeaderGradientBot);
+    ADD_FH_VAR("Window Header Sep Top", Color, m_screen->theme()->mWindowHeaderSepTop);
+    ADD_FH_VAR("Window Header Sep Bot", Color, m_screen->theme()->mWindowHeaderSepBot);
 
-    ADD_FH_VAR("Window Popup", nanogui::Color, m_screen->theme()->mWindowPopup);
-    ADD_FH_VAR("Window Popup Transparent", nanogui::Color, m_screen->theme()->mWindowPopupTransparent);
+    ADD_FH_VAR("Window Popup", Color, m_screen->theme()->mWindowPopup);
+    ADD_FH_VAR("Window Popup Transparent", Color, m_screen->theme()->mWindowPopupTransparent);
 
 #undef ADD_FH_VAR
 }
@@ -346,8 +356,6 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     TRACE
     setGLFWWindow(m_window->getWindow());
 
-    m_screen->theme()->mWindowDropShadowSize = 2;
-
     /* Create left pane. */
     m_sidePanelL = new EnhancedWindow(m_screen, "");
     m_sidePanelL->setIsBackgroundWindow(true);
@@ -355,7 +363,7 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     m_sidePanelL->setFixedHeight(m_screen->height());
     m_sidePanelL->setFixedWidth(200);
     m_sidePanelL->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
-        nanogui::Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(nanogui::Color(0.9f, 1.0f));
+        Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(Color(0.9f, 1.0f));
 
         nvgSave(ctx);
 
@@ -387,11 +395,11 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     /* Create right pane. */
     m_sidePanelR = new EnhancedWindow(m_screen, "");
     m_sidePanelR->setIsBackgroundWindow(true);
-    m_sidePanelR->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 5, 0));
+    m_sidePanelR->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 0));
     m_sidePanelR->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
-    nanogui::Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(nanogui::Color(0.9f, 1.0f));
-    nanogui::Color shineColor = self->theme()->mBorderLight;
-    nanogui::Color shadowColor = self->theme()->mBorderDark;
+    Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(Color(0.9f, 1.0f));
+    Color shineColor = self->theme()->mBorderLight;
+    Color shadowColor = self->theme()->mBorderDark;
 
     nvgSave(ctx);
 
@@ -437,7 +445,7 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     m_buttonPanel = new EnhancedWindow(m_screen, "");
     m_buttonPanel->setIsBackgroundWindow(true);
     m_buttonPanel->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
-    nanogui::Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(nanogui::Color(0.9f, 1.0f));
+    Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(Color(0.9f, 1.0f));
 
     nvgSave(ctx);
 

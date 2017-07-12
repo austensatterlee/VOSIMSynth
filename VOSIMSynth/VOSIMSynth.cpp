@@ -34,8 +34,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "MainWindow.h"
 #include "MainGUI.h"
 #include "CircuitWidget.h"
-#include "widgets/SummingUnitWidget.h"
-#include "widgets/MultiplyingUnitWidget.h"
+#include "widgets/SummerUnitWidget.h"
+#include "widgets/GainUnitWidget.h"
 #include "OscilloscopeWidget.h"
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
@@ -205,8 +205,8 @@ void VOSIMSynth::registerUnits()
 void VOSIMSynth::registerUnitWidgets(synui::CircuitWidget& a_cw)
 {
     TRACE
-    a_cw.registerUnitWidget<syn::SummerUnit>([](synui::CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new synui::SummingUnitWidget(parent, a_vm, unitId); });
-    a_cw.registerUnitWidget<syn::GainUnit>([](synui::CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new synui::MultiplyingUnitWidget(parent, a_vm, unitId); });
+    a_cw.registerUnitWidget<syn::SummerUnit>([](synui::CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new synui::SummerUnitWidget(parent, a_vm, unitId); });
+    a_cw.registerUnitWidget<syn::GainUnit>([](synui::CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new synui::GainUnitWidget(parent, a_vm, unitId); });
 }
 
 

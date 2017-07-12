@@ -1,15 +1,17 @@
-#include "MultiplyingUnitWidget.h"
+#include "GainUnitWidget.h"
 #include "CircuitWidget.h"
 #include "UI.h"
 #include <Unit.h>
 
-synui::MultiplyingUnitWidget::MultiplyingUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId)
-    : SummingUnitWidget(a_parent, a_vm, a_unitId)
+using Color = nanogui::Color;
+
+synui::GainUnitWidget::GainUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId)
+    : SummerUnitWidget(a_parent, a_vm, a_unitId)
 {
     
 }
 
-void synui::MultiplyingUnitWidget::draw(NVGcontext* ctx)
+void synui::GainUnitWidget::draw(NVGcontext* ctx)
 {
     Vector2i mousePos = screen()->mousePos() - absolutePosition();
     float handleRadius = m_handleRadiusRatio*size().x()*0.5;
@@ -18,14 +20,14 @@ void synui::MultiplyingUnitWidget::draw(NVGcontext* ctx)
     nvgSave(ctx);
 
     nvgTranslate(ctx, mPos.x(), mPos.y());
-    nanogui::Color bgColor = nanogui::Color(127, 32, 11, 255);
-    nanogui::Color bgHighlightColor(25, 50);
-    nanogui::Color handleColor(32, 33, 68, 255);
-    nanogui::Color handleStrokeColor(0,55);
-    nanogui::Color handleHighlightColor(225, 178);
-    nanogui::Color plusColor(255, 255, 235, 255);
-    nanogui::Color oColor(187, 193, 29, 255);
-    nanogui::Color iColor(19, 80, 130, 255);
+    Color bgColor = theme()->get("/GainUnitWidget/bgColor", Color{127, 32, 11, 255});
+    Color handleColor = theme()->get("/GainUnitWidget/fgColor", Color{32, 33, 68, 255});
+    Color bgHighlightColor(25, 50);
+    Color handleStrokeColor(0,55);
+    Color handleHighlightColor(225, 178);
+    Color plusColor(255, 255, 235, 255);
+    Color oColor(187, 193, 29, 255);
+    Color iColor(19, 80, 130, 255);
 
     nvgBeginPath(ctx);
     nvgEllipse(ctx, size().x() * 0.5, size().y() * 0.5, size().x() * 0.5, size().y() * 0.5);    

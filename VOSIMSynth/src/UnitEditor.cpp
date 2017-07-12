@@ -153,7 +153,7 @@ void synui::UnitEditor::_build()
             nanogui::Slider* s = paramControlType == syn::UnitParameter::Bounded ? new nanogui::Slider(control) : nullptr;
             
             if (s) {
-                s->setDefaultValue(param.getNorm());
+                s->setDefaultValue(param.getNorm(param.getDefaultValue()));
                 s->setRange({ 0.0,1.0 });
 
                 auto s_setter = [this, paramId](float f)
