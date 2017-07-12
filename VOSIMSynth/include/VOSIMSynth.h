@@ -22,9 +22,12 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include <IPlug/IPlug_include_in_plug_hdr.h>
 
-#include "CircuitWidget.h"
 #include <VoiceManager.h>
 #include <MIDIReceiver.h>
+
+namespace synui {
+    class CircuitWidget;
+}
 
 class VOSIMSynth : public IPlug
 {
