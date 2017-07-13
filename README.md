@@ -1,40 +1,47 @@
 # VOSIMSynth
 [![Build status](https://ci.appveyor.com/api/projects/status/49ghy4v5wbkmi0ot?svg=true)](https://ci.appveyor.com/project/austensatterlee/vosimsynth)
 
-VOSIMSynth is a modular audio synthesizer.
+VOSIMSynth is a fully modular audio synthesizer with a focus on speed, audio quality, and ease of use.
 
-**It's *irresponsibly* modular.**
-
-It allows you to construct and modify the signal flow graph however you want.
-
-Basically, you place these so-called "Units" onto a grid and then connect their various inputs and outputs
-together with wires.
-
-Units come in many shapes and forms, including oscillators, envelopes, LFOs, variable-rate delays, filters, basic
-arithmetic units, and signal visualization units.
-
-When you want to hear one of your units, just connect it to the designated "Output" unit to direct the signal
-to one of the output channels. You can also bring in external audio signals through one of the input channels.
-The wires coming from the input channel are just like every wire, so they may be used as modulation sources if
-you so desire.
-
+<p align="center">
 <img src="https://raw.github.com/austensatterlee/VOSIMSynth/newgraphics/screenshots/VOSIMProject_1.png"
 width=800>
+</p>
 
 ## Design Goals
+- **Speed**. The real-time audio code includes very few dynamic memory allocations (including usage of STL
+  containers), and no dynamic memory allocations in the hot path. Communication with the GUI even uses lock-free
+  queues to minimize the chance of latency spikes. Benchmarking code is included for many of the real-time
+  audio components.
+- **Audio Quality**. Band-limited waveforms are generated during compilation and are resampled on-the-fly
+  using massively oversampled sinc kernels to preserve fidelity at different pitches. To keep things speedy,
+  the waveforms are first resampled to each octave during initialization. When playing a note, the waveform
+  closest in size is used for further resampling to minimize convolution length.
+- **Flexibility**. Any output may be connected to any input. Even feedback loops are permissible as long as a
+  unit delay is inserted somewhere in the loop. 
+- **Extensibility**. New units can be easily created by deriving from the Unit class. Macros are used to achieve
+  a certain degree of reflection to automate things like voice cloning and serialization.
+
+## GUI Features
+- **Automatic wire routing**. Wires route themselves to their destination with the objective of minimizing
+  their length and avoiding overlap with other wires.
+- **Style customization**. The styling of most GUI components may be customized in the settings menu.
+- **Resizable**. The GUI generated with vector graphics, and so the window may be freely resized.
+
 VOSIMSynth's UI strives to make the common use case simple (and default), while allowing flexibility to those
 who want to delve into the details. 
 
-For example, by default an envelope's attack phase is triggered by a MIDI noteOn event, an their release phase
-by a MIDI noteOff event. Business as usual. However, an arbitrary signal can be hooked up to the envelope's
-"trigger" input in order to override that behavior. This allows envelopes to be triggered and released by
+For example, by default an envelope's attack phase is triggered by a MIDI noteOn event, and their release
+phase by a MIDI noteOff event. However, an arbitrary signal can be hooked up to the envelope's "gate" input in
+order to override that behavior. The envelope will automatically detect rising and falling edges of the gate
+signal in order to trigger attack and release phases. This allows envelopes to be triggered and released by
 LFO's, MIDI CC values, other envelopes, or any other signal you feel like using.
 
-## Signal Flow Library
-The VOSIMLib directory contains the core code for creating the processing
-graph and executing DSP code. It may be compiled independently and used in
-other projects to quickly create processing graphs that may be edited
-during run-time.
+## Directory Structure
+The VOSIMLib directory contains the core code for the real-time audio thread. It creates and maintains the
+signal flow graph and contains all of the DSP code for each unit. It has no dependency on the VOSIMSynth
+directory, so it may be compiled independently and used in other projects to quickly create processing graphs
+that may be edited during run-time.
 
 The VOSIMSynth directory contains the application/VST code, including the GUI.
 
