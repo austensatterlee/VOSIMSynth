@@ -31,5 +31,7 @@ namespace synui {
             mProperties["/GainUnitWidget/bgColor"_json_pointer] = nanogui::Color(127, 32, 11, 255);
             mProperties["/GainUnitWidget/fgColor"_json_pointer] = nanogui::Color(32, 33, 68, 255);
         }
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     };
 }

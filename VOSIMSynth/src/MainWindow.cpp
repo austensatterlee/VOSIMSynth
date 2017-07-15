@@ -93,16 +93,13 @@ synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiCon
                 TRACEMSG(description);
                 puts(description);
             };
-    glfwSetErrorCallback(error_callback);
+    glfwSetErrorCallback(error_callback);  
     // Create GLFW window
-    if (!(nGlfwClassReg++) && !glfwInit())
-    {
+    if (!(nGlfwClassReg++) && !glfwInit()) {
         TRACEMSG("Failed to init GLFW.");
         throw "Failed to init GLFW.";
-    }
-    else
-    {
-        TRACEMSG("Successfully initialized GLFW.");        
+    } else {
+        TRACEMSG("Successfully initialized GLFW.");
     }
     _createGLFWWindow();
 }
@@ -121,7 +118,13 @@ synui::MainWindow::~MainWindow()
 
 void synui::MainWindow::_createGLFWWindow()
 {
-    TIME_TRACE
+    TIME_TRACE 
+    
+    if (!glfwInit()) {
+        TRACEMSG("Failed to init GLFW.");
+        throw "Failed to init GLFW.";
+    }
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 
@@ -149,7 +152,7 @@ void synui::MainWindow::_createGLFWWindow()
     }
 
     glfwMakeContextCurrent(m_window);
-    glfwSwapInterval(1);
+    glfwSwapInterval(0);
     glfwSwapBuffers(m_window);
 
     // Construct GUI object
@@ -166,8 +169,6 @@ void synui::MainWindow::_createGLFWWindow()
 #endif
 
     resize(m_size.x(), m_size.y());
-
-    glfwMakeContextCurrent(nullptr);
 }
 
 void synui::MainWindow::_runLoop()

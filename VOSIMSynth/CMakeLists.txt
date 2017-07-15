@@ -51,18 +51,45 @@ endif()
 ##
 include_directories(${VOSIMLIB_DIR}/include)
 
+# Run simple cmake converter to put font files into the data segment
+
+# Glob up resource files
+file(GLOB resources "${CMAKE_CURRENT_SOURCE_DIR}/resources/*.ttf")
+
+# Concatenate resource files into a comma separated string
+string (REGEX REPLACE "([^\\]|^);" "\\1," resources_string "${resources}")
+string (REGEX REPLACE "[\\](.)" "\\1" resources_string "${resources_string}")
+
+# Create command line for running bin2c cmake script
+set(bin2c_cmdline
+  -DOUTPUT_C=vosimsynth_resources.cpp
+  -DOUTPUT_H=vosimsynth_resources.h
+  "-DINPUT_FILES=${resources_string}"
+  -P "${CMAKE_CURRENT_SOURCE_DIR}/resources/bin2c.cmake")
+
+# Run bin2c on resource files
+add_custom_command(
+  OUTPUT vosimsynth_resources.cpp vosimsynth_resources.h
+  COMMAND ${CMAKE_COMMAND} ARGS ${bin2c_cmdline}
+  DEPENDS ${resources}
+  COMMENT "Running bin2c"
+  PRE_BUILD VERBATIM)
+
+# Needed to include generated files
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 ##
 # Collect VOSIMSynth sources
 ##
 file(GLOB PROJECT_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 file(GLOB PROJECT_WIDGET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/widgets/*.cpp)
 set(PROJECT_SRCS ${PROJECT_SRCS};${CMAKE_CURRENT_SOURCE_DIR}/vosimsynth.cpp)
-file(GLOB PROJECT_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h ${CMAKE_CURRENT_SOURCE_DIR}/include/vosimsynth/*.h)
+file(GLOB PROJECT_HDRS 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vosimsynth/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/resource.h)
 file(GLOB PROJECT_WIDGET_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/include/widgets/*.h)
 set(VOSIMSYNTH_PROJECT_FILES ${PROJECT_SRCS};${PROJECT_HDRS};${PROJECT_WIDGET_SRCS};${PROJECT_WIDGET_HDRS})
-
-list(APPEND RESOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/vosimsynth.rc ${CMAKE_CURRENT_SOURCE_DIR}/include/resource.h)
-set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/vosimsynth.rc LANGUAGE RC)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/widgets)
