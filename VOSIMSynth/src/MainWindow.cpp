@@ -119,11 +119,6 @@ synui::MainWindow::~MainWindow()
 void synui::MainWindow::_createGLFWWindow()
 {
     TIME_TRACE 
-    
-    if (!glfwInit()) {
-        TRACEMSG("Failed to init GLFW.");
-        throw "Failed to init GLFW.";
-    }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
@@ -152,7 +147,7 @@ void synui::MainWindow::_createGLFWWindow()
     }
 
     glfwMakeContextCurrent(m_window);
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
     glfwSwapBuffers(m_window);
 
     // Construct GUI object

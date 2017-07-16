@@ -82,7 +82,7 @@ if(MSVC)
   add_definitions(-D_ENABLE_ATOMIC_ALIGNMENT_FIX)
 
   # Runtime library, exceptions, parallel compilation
-  set(MSVC_REL /EHsc /MT /MP)
+  set(MSVC_REL /EHsc /MT /MP /Z7)
   set(MSVC_RDEB /EHsc /MT /MP /Z7)
   set(MSVC_DEB /EHsc /MTd /MP /ZI)
   # /Ox Full opt                        /Ob2 Any suitable inline function expansion
@@ -111,8 +111,8 @@ if(MSVC)
   # /OPT:REF remove code that is never referenced
   # /OPT:ICF perform identical COMDAT folding
   set(CMAKE_STATIC_LINKER_FLAGS_RELEASE "/LTCG")
-  set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
-  set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
+  set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "/DEBUG /LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
+  set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/DEBUG /LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
 
   set(CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO "/LTCG")
   set(CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO "/DEBUG /LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")

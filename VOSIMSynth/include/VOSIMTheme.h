@@ -22,15 +22,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace synui {    
     class VOSIMTheme : public nanogui::Theme {
+        using json = nlohmann::json;
     public:
-        VOSIMTheme(NVGcontext* ctx)
-            : Theme(ctx) 
-        {
-            mProperties["/SummerUnitWidget/bgColor"_json_pointer] = nanogui::Color(140, 73, 191, 255);
-            mProperties["/SummerUnitWidget/fgColor"_json_pointer] = nanogui::Color(3, 88, 88, 255);
-            mProperties["/GainUnitWidget/bgColor"_json_pointer] = nanogui::Color(127, 32, 11, 255);
-            mProperties["/GainUnitWidget/fgColor"_json_pointer] = nanogui::Color(32, 33, 68, 255);
-        }
+        VOSIMTheme(NVGcontext* ctx);
+        VOSIMTheme(NVGcontext *ctx, const json& j);
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     };

@@ -5,8 +5,7 @@
 
 void synui::UnitEditor::_build()
 {
-    int controlFontSize = 13;
-    int titleFontSize = 20;
+    int titleFontSize = 24;
 
     using Anchor = nanogui::AdvancedGridLayout::Anchor;
 
@@ -49,8 +48,6 @@ void synui::UnitEditor::_build()
 
             nanogui::CheckBox* cb = new nanogui::CheckBox(this, "", setter);
 
-            cb->setFontSize(controlFontSize);
-
             auto getter = [this, cb, paramId]()
             {
                 auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(paramId);
@@ -76,7 +73,6 @@ void synui::UnitEditor::_build()
             std::transform(options.begin(), options.end(), items.begin(), [](const syn::UnitParameter::DisplayText& dt) { return dt.m_text; });
 
             nanogui::ComboBox* cb = new nanogui::ComboBox(this, items);
-            cb->setFontSize(controlFontSize);
 
             auto setter = [this, cb, paramId](int val) { setParamFromString(paramId, cb->items()[val]); };
             auto getter = [this, cb, paramId]()

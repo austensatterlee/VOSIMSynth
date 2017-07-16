@@ -12,6 +12,7 @@
 #include <UnitFactory.h>
 #include <nanogui/nanogui.h>
 #include <nanogui/theme.h>
+#include <fstream>
 
 using Color = nanogui::Color;
 
@@ -168,7 +169,7 @@ void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget) {
     const syn::UnitFactory& uf = syn::UnitFactory::instance();
     for (auto gname : uf.getGroupNames()) {
         nanogui::PopupButton* button = new nanogui::PopupButton(a_widget, gname);
-        button->setFontSize(button->theme()->mButtonFontSize);
+        button->setFontSize(button->theme()->prop("/button/text-size"));
         nanogui::Popup* popup = button->popup();
         popup->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 2, 2));
         button->setCallback([this, popup]()
@@ -178,7 +179,7 @@ void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget) {
         for (auto pname : uf.getPrototypeNames(gname)) {
             nanogui::Button* subbtn = new nanogui::Button(popup, pname);
             syn::UnitTypeId classId = uf.getClassId(gname, pname);
-            subbtn->setFontSize(subbtn->theme()->mButtonFontSize-2);
+            subbtn->setFontSize(subbtn->theme()->get<int>("/button/text-size")-2);
             // Close popup and place selected unit
             subbtn->setCallback([this, button, classId]() {
                 this->m_circuitWidget->loadPrototype(classId);
@@ -258,9 +259,11 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
         return m_vm->getVoiceStealPolicy();
     })->setItems({ "Oldest", "Newest", "Highest", "Lowest" });
 
+
 #define ADD_FH_VAR(label, type, lvalue) helper->addVariable<type>(label, [this](const type& val){ lvalue = val; }, [this](){ return lvalue; })
-    /* VOSIMSynth-related parameters */
     helper->addGroup("UI");
+
+    /* VOSIMSynth-related parameters */
     ADD_FH_VAR("Sum/bgColor", Color, m_screen->theme()->prop("/SummerUnitWidget/bgColor"));
     ADD_FH_VAR("Sum/fgColor", Color, m_screen->theme()->prop("/SummerUnitWidget/fgColor"));
     ADD_FH_VAR("Gain/bgColor", Color, m_screen->theme()->prop("/GainUnitWidget/bgColor"));
@@ -268,49 +271,85 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
 
     /* Spacing-related parameters */
     helper->addGroup("Spacing");
-    ADD_FH_VAR("Standard Font Size", int, m_screen->theme()->mStandardFontSize);
-    ADD_FH_VAR("Button Font Size", int, m_screen->theme()->mButtonFontSize);
-    ADD_FH_VAR("Text Box Font Size", int, m_screen->theme()->mTextBoxFontSize);
-    ADD_FH_VAR("Window Corner Radius", int, m_screen->theme()->mWindowCornerRadius);
-    ADD_FH_VAR("Window Drop Shadow Size", int, m_screen->theme()->mWindowDropShadowSize);
-    ADD_FH_VAR("Button Corner Radius", int, m_screen->theme()->mButtonCornerRadius);
+    ADD_FH_VAR("Standard Font Size", int, m_screen->theme()->prop("/text-size"));
+    ADD_FH_VAR("Button Font Size", int, m_screen->theme()->prop("/button/text-size"));
+    ADD_FH_VAR("Text Box Font Size", int, m_screen->theme()->prop("/textbox/text-size"));
+    ADD_FH_VAR("Window Corner Radius", int, m_screen->theme()->prop("/window/corner-radius"));
+    ADD_FH_VAR("Window Drop Shadow Size", int, m_screen->theme()->prop("/window/shadow-size"));
+    ADD_FH_VAR("Button Corner Radius", int, m_screen->theme()->prop("/button/corner-radius"));
 
     /* Generic colors */
     helper->addGroup("Global Colors");
-    ADD_FH_VAR("Border Dark", Color, m_screen->theme()->mBorderDark);
-    ADD_FH_VAR("Border Light", Color, m_screen->theme()->mBorderLight);
-    ADD_FH_VAR("Border Medium", Color, m_screen->theme()->mBorderMedium);
-    ADD_FH_VAR("Drop Shadow", Color, m_screen->theme()->mDropShadow);
-    ADD_FH_VAR("Icon Color", Color, m_screen->theme()->mIconColor);
-    ADD_FH_VAR("Transparent", Color, m_screen->theme()->mTransparent);
-    ADD_FH_VAR("Text Color", Color, m_screen->theme()->mTextColor);
-    ADD_FH_VAR("Text Color", Color, m_screen->theme()->mTextColorShadow);
-    ADD_FH_VAR("Disabled Text Color", Color, m_screen->theme()->mDisabledTextColor);
+    ADD_FH_VAR("Border Dark", Color, m_screen->theme()->prop("/border/dark"));
+    ADD_FH_VAR("Border Light", Color, m_screen->theme()->prop("/border/light"));
+    ADD_FH_VAR("Border Medium", Color, m_screen->theme()->prop("/border/medium"));
+    ADD_FH_VAR("Drop Shadow", Color, m_screen->theme()->prop("/shadow"));
+    ADD_FH_VAR("Icon Color", Color, m_screen->theme()->prop("/icon-color"));
+    ADD_FH_VAR("Transparent", Color, m_screen->theme()->prop("/transparent"));
+    ADD_FH_VAR("Text Color", Color, m_screen->theme()->prop("/text-color"));
+    ADD_FH_VAR("Text Shadow", Color, m_screen->theme()->prop("/text-shadow"));
+    ADD_FH_VAR("Disabled Text Color", Color, m_screen->theme()->prop("/disabled-text-color"));
 
     /* Button colors */
     helper->addGroup("Button Colors");
-    ADD_FH_VAR("Button Top (Unfocused)", Color, m_screen->theme()->mButtonGradientTopUnfocused);
-    ADD_FH_VAR("Button Bot (Unfocused)", Color, m_screen->theme()->mButtonGradientBotUnfocused);
-    ADD_FH_VAR("Button Top (Focused)", Color, m_screen->theme()->mButtonGradientTopFocused);
-    ADD_FH_VAR("Button Bot (Focused)", Color, m_screen->theme()->mButtonGradientBotFocused);
-    ADD_FH_VAR("Button Top (Pushed)", Color, m_screen->theme()->mButtonGradientTopPushed);
-    ADD_FH_VAR("Button Bot (Pushed)", Color, m_screen->theme()->mButtonGradientBotPushed);
+    ADD_FH_VAR("Button Top (Unfocused)", Color, m_screen->theme()->prop("/button/unfocused/grad-top"));
+    ADD_FH_VAR("Button Bot (Unfocused)", Color, m_screen->theme()->prop("/button/unfocused/grad-bot"));
+    ADD_FH_VAR("Button Top (Focused)", Color, m_screen->theme()->prop("/button/focused/grad-top"));
+    ADD_FH_VAR("Button Bot (Focused)", Color, m_screen->theme()->prop("/button/focused/grad-bot"));
+    ADD_FH_VAR("Button Top (Pushed)", Color, m_screen->theme()->prop("/button/pushed/grad-top"));
+    ADD_FH_VAR("Button Bot (Pushed)", Color, m_screen->theme()->prop("/button/pushed/grad-bot"));
 
     /* Window colors */
     helper->addGroup("Window Colors");
-    ADD_FH_VAR("Window Fill (Unfocused)", Color, m_screen->theme()->mWindowFillUnfocused);
-    ADD_FH_VAR("Window Title (Unfocused)", Color, m_screen->theme()->mWindowTitleUnfocused);
-    ADD_FH_VAR("Window Fill (Focused)", Color, m_screen->theme()->mWindowFillFocused);
-    ADD_FH_VAR("Window Title (Focused)", Color, m_screen->theme()->mWindowTitleFocused);
+    ADD_FH_VAR("Window Fill (Unfocused)", Color, m_screen->theme()->prop("/window/unfocused/fill"));
+    ADD_FH_VAR("Window Title (Unfocused)", Color, m_screen->theme()->prop("/window/unfocused/title"));
+    ADD_FH_VAR("Window Fill (Focused)", Color, m_screen->theme()->prop("/window/focused/fill"));
+    ADD_FH_VAR("Window Title (Focused)", Color, m_screen->theme()->prop("/window/focused/title"));
 
-    ADD_FH_VAR("Window Header Top", Color, m_screen->theme()->mWindowHeaderGradientTop);
-    ADD_FH_VAR("Window Header Bot", Color, m_screen->theme()->mWindowHeaderGradientBot);
-    ADD_FH_VAR("Window Header Sep Top", Color, m_screen->theme()->mWindowHeaderSepTop);
-    ADD_FH_VAR("Window Header Sep Bot", Color, m_screen->theme()->mWindowHeaderSepBot);
+    ADD_FH_VAR("Window Header Top", Color, m_screen->theme()->prop("/window/header/grad-top"));
+    ADD_FH_VAR("Window Header Bot", Color, m_screen->theme()->prop("/window/header/grad-bot"));
+    ADD_FH_VAR("Window Header Sep Top", Color, m_screen->theme()->prop("/window/header/sep-top"));
+    ADD_FH_VAR("Window Header Sep Bot", Color, m_screen->theme()->prop("/window/header/sep-bot"));
 
-    ADD_FH_VAR("Window Popup", Color, m_screen->theme()->mWindowPopup);
-    ADD_FH_VAR("Window Popup Transparent", Color, m_screen->theme()->mWindowPopupTransparent);
+    ADD_FH_VAR("Window Popup", Color, m_screen->theme()->prop("/popup/fill"));
+    ADD_FH_VAR("Window Popup Transparent", Color, m_screen->theme()->prop("/popup/transparent"));
 
+    helper->addButton("Save Theme", [this]() {
+        std::string filepath = nanogui::file_dialog({ { "json", "VOSIMSynth theme" } }, true);
+        if (filepath.empty())
+            return;
+        json theme = m_screen->theme()->operator json();
+        std::ofstream outfile;
+        outfile.open(filepath, std::ios::trunc);
+        if (outfile.is_open()) {
+            outfile << std::setw(4) << theme;
+            outfile.close();
+        } else {
+            std::ostringstream oss;
+            oss << "Unable to open \"" << filepath << "\" for writing.";
+            alert("Error", oss.str(), nanogui::MessageDialog::Type::Warning);
+        }
+    });
+
+    helper->addButton("Load Theme", [this, helper]() {
+        std::string filepath = nanogui::file_dialog({ { "json", "VOSIMSynth theme" } }, false);
+        if (filepath.empty())
+            return;
+        std::ifstream infile;
+        infile.open(filepath);
+        if (infile.is_open()) {
+            json theme;
+            infile >> theme;
+            m_screen->setTheme(new VOSIMTheme(m_screen->nvgContext(), theme));
+            m_screen->performLayout();
+            helper->refresh();
+            infile.close();
+        } else {
+            std::ostringstream oss;
+            oss << "Unable to open \"" << filepath << "\" for reading.";
+            alert("Error", oss.str(), nanogui::MessageDialog::Type::Warning);
+        }
+    });
 #undef ADD_FH_VAR
 }
 
@@ -363,7 +402,7 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     m_sidePanelL->setFixedHeight(m_screen->height());
     m_sidePanelL->setFixedWidth(200);
     m_sidePanelL->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
-        Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(Color(0.9f, 1.0f));
+        Color fillColor = self->theme()->get<Color>("/window/unfocused/fill").cwiseProduct(Color(0.9f, 1.0f));
 
         nvgSave(ctx);
 
@@ -397,9 +436,9 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     m_sidePanelR->setIsBackgroundWindow(true);
     m_sidePanelR->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 0));
     m_sidePanelR->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
-    Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(Color(0.9f, 1.0f));
-    Color shineColor = self->theme()->mBorderLight;
-    Color shadowColor = self->theme()->mBorderDark;
+    Color fillColor = self->theme()->get<Color>("/window/unfocused/fill").cwiseProduct(Color(0.9f, 1.0f));
+    Color shineColor = self->theme()->prop("/border/light");
+    Color shadowColor = self->theme()->prop("/border/dark");
 
     nvgSave(ctx);
 
@@ -445,7 +484,7 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     m_buttonPanel = new EnhancedWindow(m_screen, "");
     m_buttonPanel->setIsBackgroundWindow(true);
     m_buttonPanel->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
-    Color fillColor = self->theme()->mWindowFillUnfocused.cwiseProduct(Color(0.9f, 1.0f));
+    Color fillColor = self->theme()->get<Color>("/window/unfocused/fill").cwiseProduct(Color(0.9f, 1.0f));
 
     nvgSave(ctx);
 
