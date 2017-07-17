@@ -2,6 +2,7 @@
 #include "CircuitWidget.h"
 #include "UI.h"
 #include <Unit.h>
+#include <nanogui/theme.h>
 
 using Color = nanogui::Color;
 

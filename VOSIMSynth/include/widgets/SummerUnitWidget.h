@@ -19,6 +19,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 #include "UnitWidget.h"
+#include <nanogui/screen.h>
 
 namespace synui {
     class SummerUnitWidget : public UnitWidget {

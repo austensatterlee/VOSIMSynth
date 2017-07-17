@@ -17,22 +17,13 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
- *  \file ContextMenu.h
- *  \brief
- *  \details
- *  \author Austen Satterlee
- *  \date 01/2017
- */
-
 #pragma once
 #include "nanogui/nanogui.h"
 
-namespace synui
-{
+namespace synui {
     template <typename T>
-    class ContextMenu : public nanogui::Widget
-    {
+    class ContextMenu : public nanogui::Widget {
+        using Color = nanogui::Color;
     public:
         typedef std::function<void(const string&, const T&)> ItemSelectCallback;
 
@@ -42,22 +33,20 @@ namespace synui
               m_disposable(a_disposable),
               m_activated(false)
         {
-            m_gridLayout = new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Fill, 0, 0);
+            m_gridLayout = new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Fill, 2, 1);
             setLayout(m_gridLayout);
         }
 
-        void activate()
-        {
+        void activate() {
             m_activated = true;
             setVisible(true);
             requestFocus();
         }
 
-        void deactivate()
-        {
+        void deactivate() {
             m_activated = false;
             setVisible(false);
-            if(m_disposable)
+            if (m_disposable)
                 _dispose();
         }
 
@@ -75,10 +64,14 @@ namespace synui
 
         bool mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers) override;
         void draw(NVGcontext* ctx) override;
+        bool focusEvent(bool focused) override;
+
     protected:
         std::pair<string, T>& getMenuItem_(const string& a_name);
+
     private:
         void _dispose();
+
     private:
         ItemSelectCallback m_callback;
         vector<std::pair<string, T>> m_menuItems;
@@ -89,22 +82,20 @@ namespace synui
     };
 
     template <typename T>
-    void ContextMenu<T>::addMenuItem(const string& a_name, const T& a_value)
-    {
+    void ContextMenu<T>::addMenuItem(const string& a_name, const T& a_value) {
         if (m_itemMap.find(a_name) != m_itemMap.end())
             removeMenuItem(a_name);
         auto p = std::make_pair(a_name, a_value);
         m_menuItems.push_back(p);
         m_itemMap[a_name] = new nanogui::Label(this, a_name);
-        m_itemMap[a_name]->setHeight(m_itemMap[a_name]->fontSize()*1.5);
+        m_itemMap[a_name]->setShowShadow(true);
+        m_itemMap[a_name]->setHeight(m_itemMap[a_name]->fontSize() * 1.5);
     }
 
     template <typename T>
-    void ContextMenu<T>::removeMenuItem(const string& a_name)
-    {
+    void ContextMenu<T>::removeMenuItem(const string& a_name) {
         int index = -1;
-        for (auto& p : m_menuItems)
-        {
+        for (auto& p : m_menuItems) {
             index++;
             if (p.first == a_name)
                 break;
@@ -115,8 +106,7 @@ namespace synui
     }
 
     template <typename T>
-    void ContextMenu<T>::removeMenuItem(int a_index)
-    {
+    void ContextMenu<T>::removeMenuItem(int a_index) {
         auto& item = m_menuItems[a_index];
         removeChild(m_itemMap[item.first]);
         m_itemMap.erase(item.first);
@@ -124,16 +114,12 @@ namespace synui
     }
 
     template <typename T>
-    bool ContextMenu<T>::mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers)
-    {
-        if(!down){
+    bool ContextMenu<T>::mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers) {
+        if (!down) {
             Vector2i mousePos = p - mPos;
-            for (const auto& w : m_itemMap)
-            {
-                if (w.second->contains(mousePos))
-                {
-                    if (m_callback)
-                    {
+            for (const auto& w : m_itemMap) {
+                if (w.second->contains(mousePos)) {
+                    if (m_callback) {
                         const auto& item = getMenuItem_(w.first);
                         m_callback(item.first, item.second);
                     }
@@ -146,44 +132,42 @@ namespace synui
     }
 
     template <typename T>
-    void ContextMenu<T>::draw(NVGcontext* ctx)
-    {
-        if(m_activated && !focused()){
-            deactivate();
-            return;
-        }
+    void ContextMenu<T>::draw(NVGcontext* ctx) {
         nvgSave(ctx);
         nvgResetScissor(ctx);
         nvgTranslate(ctx, mPos.x(), mPos.y());
-        
-        /* Draw outline */
-        nanogui::Color outlineColor{0.7f, 0.7f};
-        nvgBeginPath(ctx);
-        nvgRect(ctx, 0, 0, mSize.x(), mSize.y());
-        nvgStrokeColor(ctx, outlineColor);
-        nvgStroke(ctx);
+
+        /* Draw shadow */
+        int dr = 3;
+        drawRectShadow(ctx, 0, 0, mSize.x(), mSize.y(), 0, dr, 1, mTheme->get<Color>("/shadow"), mTheme->get<Color>("/transparent"));
 
         /* Draw background */
-        nanogui::Color bgColor{0.0f, 0.9f};
+        Color bgColor = theme()->get<Color>("/button/unfocused/grad-top", {0.3f, 0.9f});
         nvgBeginPath(ctx);
         nvgRect(ctx, 0, 0, mSize.x(), mSize.y());
         nvgFillColor(ctx, bgColor);
         nvgFill(ctx);
 
-        /* Draw separators */
+        Color highlightColor = theme()->get<Color>("/button/focused/grad-top", {0.15f, 1.0f});
+        for (const auto& w : m_itemMap) {
+            /* Draw outline */
+            nvgBeginPath(ctx);
+            nvgStrokeWidth(ctx, 1.0f);
+            nvgRect(ctx, 0.5f, w.second->position().y() + 1.5f, mSize.x() - 1, w.second->height() - 2);
+            nvgStrokeColor(ctx, mTheme->get<Color>("/border/light"));
+            nvgStroke(ctx);
 
-        /* Highlight selected item */
-        nanogui::Color highlightColor(0.15f, 1.0f);
-        Vector2i mousePos = screen()->mousePos() - absolutePosition();
-        for (const auto& w : m_itemMap)
-        {
-            if (w.second->contains(mousePos))
-            {
+            nvgBeginPath(ctx);
+            nvgRect(ctx, 0.5f, w.second->position().y() + 0.5f, mSize.x() - 1, w.second->height() - 2);
+            nvgStrokeColor(ctx, mTheme->get<Color>("/border/dark"));
+            nvgStroke(ctx);
+
+            /* Highlight selected item */
+            if (w.second->mouseFocus()) {
                 nvgBeginPath(ctx);
-                nvgRect(ctx, w.second->position().x(), w.second->position().y(), w.second->width(), w.second->height());
+                nvgRect(ctx, 1, w.second->position().y() + 1, width() - 2, w.second->height() - 2);
                 nvgFillColor(ctx, highlightColor);
                 nvgFill(ctx);
-                break;
             }
         }
 
@@ -193,11 +177,17 @@ namespace synui
     }
 
     template <typename T>
-    std::pair<string, T>& ContextMenu<T>::getMenuItem_(const string& a_name)
-    {
+    bool ContextMenu<T>::focusEvent(bool a_focused) {
+        Widget::focusEvent(a_focused);
+        if (!a_focused && m_activated && m_disposable)
+            deactivate();
+        return true;
+    }
+
+    template <typename T>
+    std::pair<string, T>& ContextMenu<T>::getMenuItem_(const string& a_name) {
         int index = -1;
-        for (auto& p : m_menuItems)
-        {
+        for (auto& p : m_menuItems) {
             index++;
             if (p.first == a_name)
                 return p;
@@ -206,8 +196,8 @@ namespace synui
     }
 
     template <typename T>
-    void ContextMenu<T>::_dispose()
-    {
-        parent()->removeChild(this);
+    void ContextMenu<T>::_dispose() {
+        if (parent())
+            parent()->removeChild(this);
     }
 }

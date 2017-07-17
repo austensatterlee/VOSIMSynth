@@ -2,6 +2,10 @@
 #include "UI.h"
 #include <VoiceManager.h>
 #include <Command.h>
+#include <nanogui/layout.h>
+#include <nanogui/formhelper.h>
+#include <nanogui/slider.h>
+#include <nanogui/tabwidget.h>
 
 void synui::UnitEditor::_build()
 {

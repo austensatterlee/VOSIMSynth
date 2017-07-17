@@ -33,32 +33,28 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <map>
 #include <memory>
 
-namespace nanogui
-{
+namespace nanogui {
     class Window;
     class Widget;
     class Screen;
     class TabWidget;
 }
 
-namespace syn
-{
+namespace syn {
     class VoiceManager;
     class UnitFactory;
 }
 
 struct GLFWwindow;
 
-namespace synui
-{
+namespace synui {
     class EnhancedWindow;
     class UnitEditorHost;
     class MainWindow;
     class CircuitWidget;
     using DlgType = nanogui::MessageDialog::Type;
 
-    class SerializableFormHelper : public nanogui::FormHelper
-    {
+    class SerializableFormHelper : public nanogui::FormHelper {
     public:
         SerializableFormHelper(nanogui::Screen* screen)
             : FormHelper(screen) {}
@@ -69,16 +65,14 @@ namespace synui
          * \param name A name that will be used to serialize this variable. Will (ideally) never change.
          * \param label The label for this variable that will be displayed in the gui.
          */
-        template <typename Type> 
-        nanogui::detail::FormWidget<Type>* addSerializableVariable(const std::string &name, const std::string &label, const std::function<void(const Type &)> &setter, const std::function<Type()> &getter, bool editable = true)
-        {
-            auto ret = FormHelper::addVariable(label, setter, getter, editable);
-            auto getterSerializer = [getter]()->json{
+        template <typename Type>
+        nanogui::detail::FormWidget<Type>* addSerializableVariable(const std::string& name, const std::string& label, const std::function<void(const Type&)>& setter, const std::function<Type()>& getter, bool editable = true) {
+            auto ret = FormHelper::addVariable<Type>(label, setter, getter, editable);
+            auto getterSerializer = [getter]()-> json {
                 json j = getter();
                 return j;
             };
-            auto setterSerializer = [setter](const json& j)
-            {
+            auto setterSerializer = [setter](const json& j) {
                 setter(j.get<Type>());
             };
             m_getterSerializers[name] = getterSerializer;
@@ -86,52 +80,52 @@ namespace synui
             return ret;
         }
 
-        operator json() const
-        {
+        template <typename Type>
+        nanogui::detail::FormWidget<Type>* addSerializableVariable(const std::string& label, const std::function<void(const Type&)>& setter, const std::function<Type()>& getter, bool editable = true) {
+            return addSerializableVariable<Type>(label, label, setter, getter, editable);
+        }
+
+        operator json() const {
             json j;
-            for(auto& g : m_getterSerializers)
-            {
+            for (auto& g : m_getterSerializers) {
                 j[g.first] = g.second();
             }
             return j;
         }
 
-        SerializableFormHelper* load(const json& j)
-        {
-            for(auto& s : m_setterSerializers)
-            {
+        SerializableFormHelper* load(const json& j) {
+            for (auto& s : m_setterSerializers) {
                 const json& curr = j.value(s.first, json());
-                if(!curr.empty())
+                if (!curr.empty())
                     s.second(curr);
             }
             return this;
         }
 
     protected:
-        std::map<std::string, std::function<json()> > m_getterSerializers;
-        std::map<std::string, std::function<void(const json&)> > m_setterSerializers;
+        std::map<std::string, std::function<json()>> m_getterSerializers;
+        std::map<std::string, std::function<void(const json&)>> m_setterSerializers;
     };
 
     /**
      * Handles the logic of creating the GUI and gluing the components toegether.
      */
-    class MainGUI
-    {
+    class MainGUI {
     public:
         MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm);
         ~MainGUI();
-        
+
         void setGLFWWindow(GLFWwindow* a_window);
 
         void show();
         void hide();
         void draw();
-        void alert(const std::string& a_title, const std::string& a_msg, DlgType a_type=DlgType::Information);
+        void alert(const std::string& a_title, const std::string& a_msg, DlgType a_type = DlgType::Information);
 
         operator json() const;
         MainGUI* load(const json& j);
 
-        void reset(); 
+        void reset();
         void resize(int a_w, int a_h);
 
         CircuitWidget* circuitWidget() const { return m_circuitWidget; }
@@ -147,7 +141,8 @@ namespace synui
 
         // Widgets
         EnhancedWindow* m_buttonPanel;
-        EnhancedWindow* m_settingsEditor; std::shared_ptr<SerializableFormHelper> m_settingsFormHelper;
+        EnhancedWindow* m_settingsEditor;
+        std::shared_ptr<SerializableFormHelper> m_settingsFormHelper;
         EnhancedWindow* m_oscViewer;
 
         EnhancedWindow* m_sidePanelL;

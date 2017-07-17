@@ -7,6 +7,7 @@
 #include "OscilloscopeWidget.h"
 #include "Logging.h"
 #include "VOSIMTheme.h"
+#include "entypo.h"
 
 #include <Command.h>
 #include <UnitFactory.h>
@@ -79,15 +80,26 @@ synui::MainGUI::operator json() const {
     j["circuit"] = m_circuitWidget->operator json();
     json& settings = j["settings"] = json();
     settings = m_settingsFormHelper->operator json();
+    json& theme = j["theme"] = json();
+    theme = m_screen->theme()->operator json();
     return j;
 }
 
 synui::MainGUI* synui::MainGUI::load(const json& j) {
     TIME_TRACE
+    // Load settings
     const json& settings = j.value("settings", json());
     if (!settings.empty()) {
         m_settingsFormHelper->load(settings);
     }
+
+    // Load theme
+    const json& theme = j.value("theme", json());
+    if (!theme.empty()) {
+        m_screen->setTheme(new VOSIMTheme(m_screen->nvgContext(), theme));
+    }
+
+    // Load circuit
     m_circuitWidget->load(j["circuit"]);
     return this;
 }

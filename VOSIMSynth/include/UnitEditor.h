@@ -26,9 +26,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
-#include <nanogui/nanogui.h>
-#include <nanogui/stackedwidget.h>
 #include "Unit.h"
+#include <nanogui/stackedwidget.h>
 
 namespace syn
 {

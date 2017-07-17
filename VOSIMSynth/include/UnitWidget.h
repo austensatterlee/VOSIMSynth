@@ -18,9 +18,9 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #pragma once
-#include <nanogui/nanogui.h>
-#include <vosimlib/common.h>
-#include <vosimlib/common_serial.h>
+#include "vosimsynth/common.h"
+#include <Unit.h>
+#include <nanogui/widget.h>
 
 namespace syn {
     class VoiceManager;

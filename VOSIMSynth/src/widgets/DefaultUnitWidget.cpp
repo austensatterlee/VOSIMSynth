@@ -3,12 +3,16 @@
 #include "UI.h"
 #include <DSPMath.h>
 #include <Unit.h>
+#include <nanogui/screen.h>
+#include <nanogui/layout.h>
+#include <nanogui/label.h>
+#include <nanogui/textbox.h>
 #include <vector>
 #include <string>
+#include <GLFW/glfw3.h>
 
 synui::DefaultUnitWidget::DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId)
-    : UnitWidget(a_parent, a_vm, a_unitId)
-{
+    : UnitWidget(a_parent, a_vm, a_unitId) {
     const syn::Unit& unit = getUnit_();
 
     const auto& inputs = unit.inputs();
@@ -33,19 +37,20 @@ synui::DefaultUnitWidget::DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceM
     m_titleTextBox = new nanogui::TextBox(this, "");
     m_titleTextBox->setEditable(true);
     m_titleTextBox->setVisible(false);
+    m_titleTextBox->setAlignment(nanogui::TextBox::Alignment::Center);
     m_titleTextBox->setCallback([this, layout](const string& a_str) {
-            if (a_str.empty())
-                return false;
-            setName(a_str);
-            layout->removeAnchor(m_titleTextBox);
-            layout->setAnchor(m_titleLabel, Anchor{0,0,3,1,nanogui::Alignment::Middle});
-            m_titleLabel->setVisible(true);
-            m_titleTextBox->setVisible(false);
-            onGridChange_();
-            screen()->performLayout();
-            m_parentCircuit->updateUnitPos(this, position(), true);
-            return true;
-        });
+        if (a_str.empty())
+            return false;
+        setName(a_str);
+        layout->removeAnchor(m_titleTextBox);
+        layout->setAnchor(m_titleLabel, Anchor{0,0,3,1,nanogui::Alignment::Middle});
+        m_titleLabel->setVisible(true);
+        m_titleTextBox->setVisible(false);
+        onGridChange_();
+        screen()->performLayout();
+        m_parentCircuit->updateUnitPos(this, position(), true);
+        return true;
+    });
 
     // Create input port labels
     for (int i = 0; i < inputs.size(); i++) {
@@ -107,17 +112,17 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx) {
     // Draw divisions
     int i = 0;
     auto drawDivisions = [&](const map<int, nanogui::Label*>& lbls, const nanogui::Color& c1, const nanogui::Color& c2) {
-                for (auto lbl : lbls) {
-                    nvgBeginPath(ctx);
-                    if (i % 2 == 0)
-                        nvgFillColor(ctx, c1);
-                    else
-                        nvgFillColor(ctx, c2);
-                    nvgRect(ctx, lbl.second->position().x(), lbl.second->position().y(), lbl.second->width(), lbl.second->height());
-                    nvgFill(ctx);
-                    i++;
-                }
-            };
+        for (auto lbl : lbls) {
+            nvgBeginPath(ctx);
+            if (i % 2 == 0)
+                nvgFillColor(ctx, c1);
+            else
+                nvgFillColor(ctx, c2);
+            nvgRect(ctx, lbl.second->position().x(), lbl.second->position().y(), lbl.second->width(), lbl.second->height());
+            nvgFill(ctx);
+            i++;
+        }
+    };
 
     nanogui::Color oColor(0.24f, 0.16f, 0.09f, 1.0f);
     nanogui::Color oColor2 = nanogui::Color(1.26f, 1.0f).cwiseProduct(oColor);
@@ -199,7 +204,7 @@ Eigen::Vector2i synui::DefaultUnitWidget::getOutputPortAbsPosition(int a_portId)
     return port->absolutePosition() + Vector2f{port->width(), port->height() * 0.5}.cast<int>();
 }
 
-int synui::DefaultUnitWidget::getInputPort(const Eigen::Vector2i& a_pos) {    
+int synui::DefaultUnitWidget::getInputPort(const Eigen::Vector2i& a_pos) {
     int i = 0;
     for (auto inputLabel : m_inputLabels) {
         if (inputLabel.second->contains(a_pos)) {
@@ -245,7 +250,6 @@ bool synui::DefaultUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
                 l->removeAnchor(m_titleLabel);
                 l->setAnchor(m_titleTextBox, nanogui::AdvancedGridLayout::Anchor{0,0,3,1,nanogui::Alignment::Fill});
                 m_titleTextBox->setValue(m_titleLabel->caption());
-                m_titleTextBox->setPosition(position());
                 m_titleTextBox->setFixedSize({width(), m_titleLabel->height()});
                 m_titleTextBox->setFontSize(m_titleLabel->fontSize());
                 m_titleTextBox->setVisible(true);

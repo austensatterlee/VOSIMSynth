@@ -28,13 +28,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #ifndef __UI__
 #define __UI__
 #include "DSPMath.h"
+#include "VOSIMSynth/common.h"
+#include <nanogui/common.h>
 #include <eigen/Core>
-#include <nanogui/nanogui.h>
-#include <IPlug/Containers.h>
 #include <functional>
-#include <vector>
-#include <memory>
-#include <entypo.h>
 
 namespace synui
 {
@@ -83,15 +80,15 @@ namespace synui
      */
     inline int firstNonzero(const std::string& a_num)
     {
-        int decimal_pos = a_num.find_first_of(".");
+        size_t decimal_pos = a_num.find_first_of(".");
         if (decimal_pos == std::string::npos)
             decimal_pos = a_num.size()-1;
-        int nonzero_pos = a_num.find_first_not_of("0");
+        size_t nonzero_pos = a_num.find_first_not_of("0");
         if(nonzero_pos == std::string::npos)
             return 0;
         decimal_pos = a_num.size()-1 - decimal_pos;
         nonzero_pos = a_num.size()-1 - nonzero_pos;
-        return nonzero_pos-decimal_pos;
+        return static_cast<int>(nonzero_pos-decimal_pos);
     }
 
     /// Determine whether an icon ID is a texture loaded via nvgImageIcon
