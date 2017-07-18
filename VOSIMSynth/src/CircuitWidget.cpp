@@ -256,7 +256,7 @@ synui::UnitWidget* synui::CircuitWidget::createUnitWidget(syn::UnitTypeId a_clas
         widget = new DefaultUnitWidget(this, m_vm, a_unitId);
     else
         widget = m_registeredUnitWidgets[a_classId](this, m_vm, a_unitId);
-    widget->setName(syn::UnitFactory::instance().getFactoryPrototype(a_classId)->name);
+    widget->setName(syn::UnitFactory::instance().getPrototypeName(a_classId));
     widget->setEditorCallback([&](syn::UnitTypeId classId, int unitId) {
             if (m_unitEditorHost->selectedIndex() >= 0)
                 m_unitWidgets[m_unitEditorHost->getActiveUnitId()]->setHighlighted(false);
@@ -494,20 +494,41 @@ void synui::CircuitWidget::createJunction(std::shared_ptr<CircuitWire> a_toWire,
                             } else {
                                 deleteUnitWidget(uw);
                                 _changeState(new cwstate::CreatingUnitState(unitId, onSuccess));
-                            }                    
-
-                        #ifndef NDEBUG
-                            // Verify connections
-                            for (auto w : m_wires) {
-                                const syn::Circuit& circ = vm().getPrototypeCircuit();
-                                syn::ConnectionRecord conn{w->getOutputPort().first, w->getOutputPort().second, w->getInputPort().first, w->getInputPort().second};
-                                const vector<syn::ConnectionRecord>& connections = circ.getConnections();
-                                assert(std::find(connections.begin(), connections.end(), conn) != connections.end());
-                            }
-                        #endif
+                            }    
                         };
                 m_window->queueExternalMessage(syn::MakeCommand(f));
             };
+    m_window->queueExternalMessage(syn::MakeCommand(f));
+}
+
+void synui::CircuitWidget::spliceWire(std::shared_ptr<CircuitWire> a_wire, const Eigen::Vector2i& a_pos, syn::UnitTypeId a_classId) {
+    auto unit = syn::UnitFactory::instance().createUnit(a_classId);
+    auto f = [this, unit, a_wire, a_pos]() {
+        for (int i = 0; i < m_vm->getMaxVoices(); i++) {
+            m_vm->getVoiceCircuit(i).addUnit(unit->clone());
+        }
+        int unitId = m_vm->getPrototypeCircuit().addUnit(unit);
+        // Queue return message
+        auto f = [this, unit, unitId, a_wire, a_pos]() {
+            UnitWidget* uw = createUnitWidget(unit->getClassIdentifier(), unitId);
+            Vector2i pos = a_pos - Vector2i::Ones() * gridSpacing();
+            auto onSuccess = [this, unitId, a_wire]() {
+                // Connect wires to the new unit.
+                createConnection({ unitId, 0 }, a_wire->getOutputPort());
+                // Connect the new unit to the original wire's destination
+                createConnection(a_wire->getInputPort(), { unitId,0 });
+            };
+            if (checkUnitPos(uw, pos)) {
+                updateUnitPos(uw, pos);
+                uw->triggerEditorCallback();
+                onSuccess();
+            } else {
+                deleteUnitWidget(uw);
+                _changeState(new cwstate::CreatingUnitState(unitId, onSuccess));
+            }
+        };
+        m_window->queueExternalMessage(syn::MakeCommand(f));
+    };
     m_window->queueExternalMessage(syn::MakeCommand(f));
 }
 
@@ -569,7 +590,26 @@ bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector
 
     if (m_highlightedWire) {
         if (button == GLFW_MOUSE_BUTTON_RIGHT && !down) {
-            cw.deleteConnection(m_highlightedWire->getInputPort(), m_highlightedWire->getOutputPort());
+            auto cm = new ContextMenu(&cw, true);
+            auto insert_cm = cm->addSubMenu("Insert");
+
+            std::shared_ptr<CircuitWire> wire = m_highlightedWire;
+            cm->addMenuItem("Delete", [&cw, wire]()
+            {
+                cw.deleteConnection(wire->getInputPort(), wire->getOutputPort());
+            });
+
+            const auto& uf = syn::UnitFactory::instance();
+            insert_cm->addMenuItem(uf.getPrototypeName(syn::SummerUnit::classIdentifier()), [&cw, wire, mousePos]()
+            {
+                cw.spliceWire(wire, mousePos, syn::SummerUnit::classIdentifier());
+            });
+            insert_cm->addMenuItem(uf.getPrototypeName(syn::GainUnit::classIdentifier()), [&cw, wire, mousePos]() {
+                cw.spliceWire(wire, mousePos, syn::GainUnit::classIdentifier());
+            });
+
+            cm->activate(mousePos);
+            
             m_highlightedWire = nullptr;
             return true;
         }
@@ -696,18 +736,13 @@ bool synui::cwstate::DrawingWireState::mouseButtonEvent(CircuitWidget& cw, const
             std::shared_ptr<CircuitWire> fromWire = std::make_shared<CircuitWire>(&cw);
             fromWire->setInputPort(m_wire->getInputPort());
             fromWire->setOutputPort(m_wire->getOutputPort());
-            ContextMenu<int>* cm = new ContextMenu<int>(&cw, true, [&cw, fromWire, toWire, mousePos](const string& a_item, const int& a_value) {
-                    if (a_value == 0) {
-                        cw.createJunction(toWire, fromWire, mousePos, syn::SummerUnit::classIdentifier());
-                    } else if (a_value == 1) {
-                        cw.createJunction(toWire, fromWire, mousePos, syn::GainUnit::classIdentifier());
-                    }
-                });
-            cm->addMenuItem("Sum", 0);
-            cm->addMenuItem("Mul", 1);
-            cm->activate();
-            cw.performLayout(cw.screen()->nvgContext());
-            cm->setPosition(mousePos - Vector2i{cm->width() * 0.5,0});
+
+            // Create context menu
+            ContextMenu* cm = new ContextMenu(&cw, true);
+            const auto& uf = syn::UnitFactory::instance();
+            cm->addMenuItem(uf.getPrototypeName(syn::SummerUnit::classIdentifier()), [&cw, toWire, fromWire, mousePos]() {cw.createJunction(toWire, fromWire, mousePos, syn::SummerUnit::classIdentifier()); });
+            cm->addMenuItem(uf.getPrototypeName(syn::GainUnit::classIdentifier()), [&cw, toWire, fromWire, mousePos]() {cw.createJunction(toWire, fromWire, mousePos, syn::GainUnit::classIdentifier()); });
+            cm->activate(mousePos);
         }
         m_endedOnOutput = m_startedFromOutput;
         m_endPort = {-1, -1};

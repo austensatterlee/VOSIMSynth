@@ -67,13 +67,16 @@ namespace syn
 
         std::vector<std::string> getPrototypeNames() const;
 
-        const FactoryPrototype* getFactoryPrototype(UnitTypeId a_classIdentifier) const;
+        std::string getPrototypeName(UnitTypeId a_classIdentifier) const;
 
         Unit* createUnit(UnitTypeId a_classIdentifier, const std::string& a_name = "");
 
+        /**
+         * Generate a name for the given unit type by appending the build count to the prototype's name.
+         */
         std::string generateUnitName(UnitTypeId a_classIdentifier) const;
 
-        bool hasClassId(UnitTypeId a_classIdentifier) const;
+        bool hasPrototype(UnitTypeId a_classIdentifier) const;
 
         /**
          * \returns -1 on failure.
@@ -83,16 +86,8 @@ namespace syn
         void resetBuildCounts();
 
     protected:
-        int getPrototypeIdx_(const std::string& a_name) const;
-
-        int getPrototypeIdx_(UnitTypeId a_classId) const;
-        
-        /**
-         * Fallback for finding prototypes by 32-bit id (instead of UnitTypeId). Probably not very safe.         
-         */
-        int getPrototypeIdx_(uint32_t a_classId) const;
-
-        Unit* createUnit_(int a_protoNum, const std::string& a_name);
+        FactoryPrototype& getPrototype(UnitTypeId a_classIdentifier);
+        const FactoryPrototype& getPrototype(UnitTypeId a_classIdentifier) const;
 
     private:
         std::vector<FactoryPrototype> m_prototypes;
@@ -108,7 +103,7 @@ namespace syn
         if (m_class_identifiers.find(prototype.classIdentifier) != m_class_identifiers.end())
             return;
         m_prototypes.push_back(prototype);
-        m_class_identifiers[prototype.classIdentifier] = (int)m_prototypes.size() - 1;
+        m_class_identifiers[prototype.classIdentifier] = static_cast<int>(m_prototypes.size()) - 1;
 
         // Add group
         if (std::find(m_group_names.begin(), m_group_names.end(), a_group_name) != m_group_names.end())

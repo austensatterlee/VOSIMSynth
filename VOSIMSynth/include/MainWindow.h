@@ -47,7 +47,11 @@ Copyright 2016, Austen Satterlee
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/lockfree/policies.hpp>
 #include <json/json.hpp>
+
+#ifdef _WIN32
+#define NOMINMAX
 #include <windows.h>
+#endif
 
 #define MAX_GUI_MSG_QUEUE_SIZE 64
 

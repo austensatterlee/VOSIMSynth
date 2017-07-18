@@ -2,7 +2,7 @@
 #include "Unit.h"
 #include "DSPMath.h"
 
-syn::UnitFactory::FactoryPrototype::FactoryPrototype(std::string a_group_name, syn::Unit* a_unit, size_t a_class_size)
+syn::UnitFactory::FactoryPrototype::FactoryPrototype(string a_group_name, Unit* a_unit, size_t a_class_size)
     : classIdentifier(a_unit->getClassIdentifier()),
       group_name(a_group_name),
       name(a_unit->name()),
@@ -40,38 +40,35 @@ vector<string> syn::UnitFactory::getPrototypeNames() const {
     return names;
 }
 
-const syn::UnitFactory::FactoryPrototype* syn::UnitFactory::getFactoryPrototype(UnitTypeId a_classIdentifier) const {
-    for (const FactoryPrototype& prototype : m_prototypes) {
-        if (prototype.classIdentifier == a_classIdentifier)
-            return& prototype;
-    }
-    return nullptr;
+string syn::UnitFactory::getPrototypeName(UnitTypeId a_classIdentifier) const {
+    if(!hasPrototype(a_classIdentifier))
+        return "";
+    return getPrototype(a_classIdentifier).name;
 }
 
-syn::Unit* syn::UnitFactory::createUnit_(int a_protoNum, const string& a_name) {
-    Unit* unit = m_prototypes[a_protoNum].prototype->clone();
+syn::Unit* syn::UnitFactory::createUnit(UnitTypeId a_classIdentifier, const string& a_name) {
+    if (!hasPrototype(a_classIdentifier))
+        return nullptr;
+    FactoryPrototype& p = getPrototype(a_classIdentifier);
+    Unit* unit = p.prototype->clone();
+    p.build_count++;
     // Generate default name
-    if(a_name.empty())
+    if (a_name.empty())
         unit->_setName(generateUnitName(unit->getClassIdentifier()));
     else
         unit->_setName(a_name);
     return unit;
 }
 
-syn::Unit* syn::UnitFactory::createUnit(syn::UnitTypeId a_classIdentifier, const string& a_name) {
-    int protonum = getPrototypeIdx_(a_classIdentifier);
-    if (protonum < 0)
-        return nullptr;
-    return createUnit_(protonum, a_name);
-}
-
-std::string syn::UnitFactory::generateUnitName(syn::UnitTypeId a_classIdentifier) const
+string syn::UnitFactory::generateUnitName(UnitTypeId a_classIdentifier) const
 {
-    const FactoryPrototype* p = getFactoryPrototype(a_classIdentifier);
-    return p->name+std::to_string(p->build_count);
+    if (!hasPrototype(a_classIdentifier))
+        return "";
+    const FactoryPrototype& p = getPrototype(a_classIdentifier);
+    return p.name+std::to_string(p.build_count);
 }
 
-bool syn::UnitFactory::hasClassId(syn::UnitTypeId a_classIdentifier) const {
+bool syn::UnitFactory::hasPrototype(UnitTypeId a_classIdentifier) const {
     bool result = m_class_identifiers.find(a_classIdentifier) != m_class_identifiers.end();
     return result;
 }
@@ -91,20 +88,14 @@ void syn::UnitFactory::resetBuildCounts() {
     }
 }
 
-int syn::UnitFactory::getPrototypeIdx_(const string& a_name) const {
-    int i = 0;
-    for (const FactoryPrototype& prototype : m_prototypes) {
-        if (prototype.name == a_name) {
-            return i;
-        }
-        i++;
-    }
-    return -1;
+syn::UnitFactory::FactoryPrototype& syn::UnitFactory::getPrototype(UnitTypeId a_classIdentifier) {
+    return const_cast<FactoryPrototype&>(static_cast<const UnitFactory*>(this)->getPrototype(a_classIdentifier));
 }
 
-int syn::UnitFactory::getPrototypeIdx_(syn::UnitTypeId a_classId) const {
-    if (m_class_identifiers.find(a_classId) != m_class_identifiers.end()) {
-        return m_class_identifiers.at(a_classId);
+const syn::UnitFactory::FactoryPrototype& syn::UnitFactory::getPrototype(UnitTypeId a_classIdentifier) const {
+    for (const FactoryPrototype& prototype : m_prototypes) {
+        if (prototype.classIdentifier == a_classIdentifier)
+            return prototype;
     }
-    return -1;
+    throw std::runtime_error("Prototype not found.");
 }

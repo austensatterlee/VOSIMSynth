@@ -19,185 +19,85 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 #include "nanogui/nanogui.h"
+#include "UI.h"
 
 namespace synui {
-    template <typename T>
     class ContextMenu : public nanogui::Widget {
         using Color = nanogui::Color;
     public:
-        typedef std::function<void(const string&, const T&)> ItemSelectCallback;
 
-        ContextMenu(Widget* a_parent, bool a_disposable, ItemSelectCallback a_callback = nullptr)
+        ContextMenu(Widget* a_parent, bool a_disposable)
             : Widget(a_parent),
-              m_callback(a_callback),
+              m_highlightedSubmenu(nullptr),
               m_disposable(a_disposable),
               m_activated(false)
         {
-            m_gridLayout = new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Fill, 2, 1);
-            setLayout(m_gridLayout);
+            m_itemContainer = new Widget(this);
+            m_itemContainer->setPosition({ 10,0 });
+            auto itemLayout = new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Fill, 1, 0);
+            m_itemContainer->setLayout(itemLayout);
+            setVisible(false);
         }
 
-        void activate() {
+        Vector2i preferredSize(NVGcontext* ctx) const override { 
+            Vector2i base = m_itemContainer->position() + m_itemContainer->preferredSize(ctx);
+            if (m_highlightedSubmenu) {
+                base = base.cwiseMax(m_highlightedSubmenu->position() + m_highlightedSubmenu->size());
+            }           
+            return base;
+        }
+
+        void activate(const Vector2i& a_pos) {
             m_activated = true;
             setVisible(true);
+            setPosition(a_pos);
             requestFocus();
+            screen()->performLayout();
         }
 
         void deactivate() {
             m_activated = false;
             setVisible(false);
+            screen()->performLayout();
             if (m_disposable)
                 _dispose();
         }
 
         /**
-         * \brief Add an item to the menu
-         * If the item already exists, it will be removed and re-inserted.
-         * \param a_name The display text of the item
-         * \param a_value The associated value of the item
+         * Add an item to the menu.
+         * 
+         * \param a_name The display text of the item.
          */
-        void addMenuItem(const string& a_name, const T& a_value);
-        void removeMenuItem(const string& a_name);
-        void removeMenuItem(int a_index);
-        void setCallback(ItemSelectCallback a_callback) { m_callback = a_callback; }
-        ItemSelectCallback getCallback() const { return m_callback; }
+        void addMenuItem(const std::string& a_name, const std::function<void()>& a_cb);
 
+        /**
+         * Add a submenu to the menu.
+         *
+         * \param a_name The display text of the item.
+         * \returns nullptr if a submenu or item already exists under the given name.
+         */
+        ContextMenu* addSubMenu(const std::string& a_name);
+
+        bool mouseEnterEvent(const Vector2i& p, bool enter) override;
+        bool mouseMotionEvent(const Vector2i& p, const Vector2i& rel, int button, int modifiers) override;
         bool mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers) override;
         void draw(NVGcontext* ctx) override;
         bool focusEvent(bool focused) override;
 
     protected:
-        std::pair<string, T>& getMenuItem_(const string& a_name);
+        bool isSubMenu_(const std::string& a_name);
 
     private:
         void _dispose();
 
     private:
-        ItemSelectCallback m_callback;
-        vector<std::pair<string, T>> m_menuItems;
-        std::unordered_map<string, nanogui::Label*> m_itemMap;
-        nanogui::GridLayout* m_gridLayout;
+        Widget* m_itemContainer;
+        std::vector<std::string> m_menu;
+        std::unordered_map<std::string, std::function<void()>> m_items;
+        std::unordered_map<std::string, ContextMenu*> m_submenus;
+        std::unordered_map<std::string, nanogui::Widget*> m_labels;
+        ContextMenu* m_highlightedSubmenu;
         bool m_disposable;
         bool m_activated;
-    };
-
-    template <typename T>
-    void ContextMenu<T>::addMenuItem(const string& a_name, const T& a_value) {
-        if (m_itemMap.find(a_name) != m_itemMap.end())
-            removeMenuItem(a_name);
-        auto p = std::make_pair(a_name, a_value);
-        m_menuItems.push_back(p);
-        m_itemMap[a_name] = new nanogui::Label(this, a_name);
-        m_itemMap[a_name]->setShowShadow(true);
-        m_itemMap[a_name]->setHeight(m_itemMap[a_name]->fontSize() * 1.5);
-    }
-
-    template <typename T>
-    void ContextMenu<T>::removeMenuItem(const string& a_name) {
-        int index = -1;
-        for (auto& p : m_menuItems) {
-            index++;
-            if (p.first == a_name)
-                break;
-        }
-        if (index == -1)
-            return;
-        removeMenuItem(index);
-    }
-
-    template <typename T>
-    void ContextMenu<T>::removeMenuItem(int a_index) {
-        auto& item = m_menuItems[a_index];
-        removeChild(m_itemMap[item.first]);
-        m_itemMap.erase(item.first);
-        m_menuItems.erase(m_menuItems.begin() + a_index);
-    }
-
-    template <typename T>
-    bool ContextMenu<T>::mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers) {
-        if (!down) {
-            Vector2i mousePos = p - mPos;
-            for (const auto& w : m_itemMap) {
-                if (w.second->contains(mousePos)) {
-                    if (m_callback) {
-                        const auto& item = getMenuItem_(w.first);
-                        m_callback(item.first, item.second);
-                    }
-                    deactivate();
-                    return true;
-                }
-            }
-        }
-        return true;
-    }
-
-    template <typename T>
-    void ContextMenu<T>::draw(NVGcontext* ctx) {
-        nvgSave(ctx);
-        nvgResetScissor(ctx);
-        nvgTranslate(ctx, mPos.x(), mPos.y());
-
-        /* Draw shadow */
-        int dr = 3;
-        drawRectShadow(ctx, 0, 0, mSize.x(), mSize.y(), 0, dr, 1, mTheme->get<Color>("/shadow"), mTheme->get<Color>("/transparent"));
-
-        /* Draw background */
-        Color bgColor = theme()->get<Color>("/button/unfocused/grad-top", {0.3f, 0.9f});
-        nvgBeginPath(ctx);
-        nvgRect(ctx, 0, 0, mSize.x(), mSize.y());
-        nvgFillColor(ctx, bgColor);
-        nvgFill(ctx);
-
-        Color highlightColor = theme()->get<Color>("/button/focused/grad-top", {0.15f, 1.0f});
-        for (const auto& w : m_itemMap) {
-            /* Draw outline */
-            nvgBeginPath(ctx);
-            nvgStrokeWidth(ctx, 1.0f);
-            nvgRect(ctx, 0.5f, w.second->position().y() + 1.5f, mSize.x() - 1, w.second->height() - 2);
-            nvgStrokeColor(ctx, mTheme->get<Color>("/border/light"));
-            nvgStroke(ctx);
-
-            nvgBeginPath(ctx);
-            nvgRect(ctx, 0.5f, w.second->position().y() + 0.5f, mSize.x() - 1, w.second->height() - 2);
-            nvgStrokeColor(ctx, mTheme->get<Color>("/border/dark"));
-            nvgStroke(ctx);
-
-            /* Highlight selected item */
-            if (w.second->mouseFocus()) {
-                nvgBeginPath(ctx);
-                nvgRect(ctx, 1, w.second->position().y() + 1, width() - 2, w.second->height() - 2);
-                nvgFillColor(ctx, highlightColor);
-                nvgFill(ctx);
-            }
-        }
-
-        nvgRestore(ctx);
-
-        Widget::draw(ctx);
-    }
-
-    template <typename T>
-    bool ContextMenu<T>::focusEvent(bool a_focused) {
-        Widget::focusEvent(a_focused);
-        if (!a_focused && m_activated && m_disposable)
-            deactivate();
-        return true;
-    }
-
-    template <typename T>
-    std::pair<string, T>& ContextMenu<T>::getMenuItem_(const string& a_name) {
-        int index = -1;
-        for (auto& p : m_menuItems) {
-            index++;
-            if (p.first == a_name)
-                return p;
-        }
-        throw std::runtime_error("Item does not exist");
-    }
-
-    template <typename T>
-    void ContextMenu<T>::_dispose() {
-        if (parent())
-            parent()->removeChild(this);
-    }
+    };    
 }

@@ -7,7 +7,6 @@
 #include "OscilloscopeWidget.h"
 #include "Logging.h"
 #include "VOSIMTheme.h"
-#include "entypo.h"
 
 #include <Command.h>
 #include <UnitFactory.h>
@@ -26,7 +25,7 @@ namespace synui {
             : Window(a_parent, a_title) {
             if (!a_title.empty()) {
                 // Close button
-                auto settings_close_button = new nanogui::Button(buttonPanel(), "", ENTYPO_CROSS);
+                auto settings_close_button = new nanogui::Button(buttonPanel(), "", ENTYPO_ICON_CROSS);
                 settings_close_button->setFixedWidth(18);
                 settings_close_button->setCallback([this]() { setVisible(false); });
             }
@@ -526,7 +525,7 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     auto osc_viewer_callback = [this]() {
         m_screen->centerWindow(m_oscViewer);
     };
-    auto osc_viewer_button = m_oscViewer->createOpenButton(m_buttonPanel, "", ENTYPO_AREA_GRAPH, osc_viewer_callback);
+    auto osc_viewer_button = m_oscViewer->createOpenButton(m_buttonPanel, "", ENTYPO_ICON_AREA_GRAPH, osc_viewer_callback);
     buttonPanelLayout->setAnchor(osc_viewer_button, nanogui::AdvancedGridLayout::Anchor{buttonPanelLayout->colCount() - 1,0});
 
     /* Create the settings editor window. */
@@ -544,7 +543,7 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
         m_settingsFormHelper->refresh();
         m_screen->centerWindow(m_settingsEditor);
     };
-    auto settings_button = m_settingsEditor->createOpenButton(m_buttonPanel, "", ENTYPO_COG, settings_callback);
+    auto settings_button = m_settingsEditor->createOpenButton(m_buttonPanel, "", ENTYPO_ICON_COG, settings_callback);
     buttonPanelLayout->setAnchor(settings_button, nanogui::AdvancedGridLayout::Anchor{buttonPanelLayout->colCount() - 1,0});
 
     m_screen->performLayout();

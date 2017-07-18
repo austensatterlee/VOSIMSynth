@@ -231,6 +231,11 @@ namespace synui {
         void createJunction(std::shared_ptr<CircuitWire> a_toWire, std::shared_ptr<CircuitWire> a_fromWire, const Eigen::Vector2i& a_pos, syn::UnitTypeId a_classId);
 
         /**
+        * \brief Insert a unit into a wire's path.
+        */
+        void spliceWire(std::shared_ptr<CircuitWire> a_wire, const Eigen::Vector2i& a_pos, syn::UnitTypeId a_classId);
+
+        /**
          * \brief Sends a request to the real-time thread to create a new unit.
          * \param a_classId Class id of the type of the unit to create.
          */
