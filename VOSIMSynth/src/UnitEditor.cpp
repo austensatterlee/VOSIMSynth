@@ -1,4 +1,4 @@
-#include "vosimsynth/UnitEditor.h"
+#include "vosimsynth/widgets/UnitEditor.h"
 #include "vosimsynth/UI.h"
 #include <VoiceManager.h>
 #include <Command.h>

@@ -31,10 +31,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <tables.h>
 #include "vosimsynth/MainWindow.h"
 #include "vosimsynth/MainGUI.h"
-#include "vosimsynth/CircuitWidget.h"
-#include "widgets/SummerUnitWidget.h"
-#include "widgets/GainUnitWidget.h"
-#include "widgets/OscilloscopeWidget.h"
+#include "vosimsynth/widgets/CircuitWidget.h"
+#include "vosimsynth/widgets/SummerUnitWidget.h"
+#include "vosimsynth/widgets/GainUnitWidget.h"
+#include "vosimsynth/widgets/OscilloscopeWidget.h"
 #include "vosimsynth/Logging.h"
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)

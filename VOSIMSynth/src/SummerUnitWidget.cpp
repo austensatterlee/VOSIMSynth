@@ -1,5 +1,5 @@
-#include "widgets/SummerUnitWidget.h"
-#include "vosimsynth/CircuitWidget.h"
+#include "vosimsynth/widgets/SummerUnitWidget.h"
+#include "vosimsynth/widgets/CircuitWidget.h"
 #include "vosimsynth/UI.h"
 #include <Unit.h>
 #include <nanogui/theme.h>

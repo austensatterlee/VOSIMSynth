@@ -18,7 +18,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #pragma once
-#include "SummerUnitWidget.h"
+#include "vosimsynth/widgets/SummerUnitWidget.h"
 
 namespace synui {
 

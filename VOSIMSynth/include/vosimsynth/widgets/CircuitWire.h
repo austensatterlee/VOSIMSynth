@@ -26,7 +26,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
-#include "vosimsynth/CircuitWidget.h"
+#include "vosimsynth/widgets/CircuitWidget.h"
 #include <set>
 
 namespace synui {

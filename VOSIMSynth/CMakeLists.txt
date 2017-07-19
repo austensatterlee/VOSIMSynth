@@ -78,12 +78,11 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 # Collect VOSIMSynth sources
 ##
 file(GLOB PROJECT_SRCS vosimsynth_resources.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
-file(GLOB PROJECT_WIDGET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/widgets/*.cpp)
 file(GLOB PROJECT_HDRS 
     ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/vosimsynth/*.h)
 file(GLOB PROJECT_WIDGET_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/include/widgets/*.h)
-set(VOSIMSYNTH_PROJECT_FILES ${PROJECT_SRCS};${PROJECT_HDRS};${PROJECT_WIDGET_SRCS};${PROJECT_WIDGET_HDRS})
+set(VOSIMSYNTH_PROJECT_FILES ${PROJECT_SRCS};${PROJECT_HDRS};${PROJECT_WIDGET_HDRS})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
@@ -96,10 +95,8 @@ add_definitions(${VOSIMSYNTH_DEFS})
 
 # add source groups ("filters" for MSVC)
 source_group(VOSIMSynth/include/widgets FILES ${PROJECT_WIDGET_HDRS}/)
-source_group(VOSIMSynth/include/vosimsynth FILES ${CMAKE_CURRENT_SOURCE_DIR})
-source_group(VOSIMSynth/include FILES ${PROJECT_HDRS})
+source_group(VOSIMSynth/include/vosimsynth FILES ${PROJECT_HDRS})
 source_group(VOSIMSynth/src FILES ${PROJECT_SRCS})
-source_group(VOSIMSynth/src/widgets FILES ${PROJECT_WIDGET_SRCS})
 source_group(Resources FILES ${RESOURCE_FILES})
 source_group(WDL FILES ${WDL_FILES})
 source_group(IPlug FILES ${IPLUG_FILES})

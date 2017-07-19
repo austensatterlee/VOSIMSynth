@@ -1,5 +1,5 @@
-#include "widgets/DefaultUnitWidget.h"
-#include "vosimsynth/CircuitWidget.h"
+#include "vosimsynth/widgets/DefaultUnitWidget.h"
+#include "vosimsynth/widgets/CircuitWidget.h"
 #include "vosimsynth/UI.h"
 #include <DSPMath.h>
 #include <Unit.h>

@@ -48,8 +48,8 @@ if __name__=="__main__":
     oldincludes = []
     newincludes = []
     if os.path.isfile(args.source):
-        oldincludes.update(os.path.basename(args.source))
-        newincludes.update(os.path.relpath(args.target, args.include_directory))
+        oldincludes.append(os.path.basename(args.source))
+        newincludes.append(os.path.relpath(args.target, args.include_directory))
         if not args.update_only:
             if args.dry:
                 print "Moving {} -> {}".format(args.source, args.target)
@@ -76,6 +76,9 @@ if __name__=="__main__":
 
     # Update include directives in dependencies
     for fn in args.dependencies:
+        if not os.path.isfile(fn):
+            print "Dependency file '{}' does not exist...skipping".format(fn)
+            continue
         if args.dry:
             print "Modifying {}".format(fn)
         else:

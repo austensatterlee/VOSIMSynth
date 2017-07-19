@@ -1,5 +1,5 @@
-#include "vosimsynth/UnitWidget.h"
-#include "vosimsynth/CircuitWidget.h"
+#include "vosimsynth/widgets/UnitWidget.h"
+#include "vosimsynth/widgets/CircuitWidget.h"
 #include "vosimsynth/MainWindow.h"
 #include "vosimsynth/MainGUI.h"
 #include <Unit.h>

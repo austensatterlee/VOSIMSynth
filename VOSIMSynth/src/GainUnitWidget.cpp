@@ -1,5 +1,5 @@
-#include "widgets/GainUnitWidget.h"
-#include "vosimsynth/CircuitWidget.h"
+#include "vosimsynth/widgets/GainUnitWidget.h"
+#include "vosimsynth/widgets/CircuitWidget.h"
 #include "vosimsynth/UI.h"
 #include <Unit.h>
 #include <nanogui/theme.h>
