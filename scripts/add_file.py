@@ -60,7 +60,7 @@ if __name__=="__main__":
               include directories given a base directory.")
     parser_auto_add.add_argument("directory", nargs='?', type=str, help="Directory that contains 'src' and 'include' dirs")
     parser_auto_add.add_argument("filename", nargs='?', type=str, help="Name of the new files to add (without extension)")
-    parser_auto_add.add_argument("--list", "-l", action="store_true", default=False, help="List valid directories and exit.")
+    parser_auto_add.add_argument("--list", "-l", action="store_true", help="List valid directories and exit.")
     parser_auto_add.set_defaults(command="auto-add")
 
     parser_add = subparsers.add_parser("add",  help="Add source and include files to the specified directories.")
@@ -69,8 +69,8 @@ if __name__=="__main__":
     parser_add.add_argument("filename",type=str)
     parser_add.set_defaults(command="add")
 
-    parser.add_argument("-f", "--force", action="store_true", default=False, help="Overwrite when adding.")
-    parser.add_argument("--guard",choices=["pragma","ifndef"],default="pragma",help="Use either #ifndef\
+    parser.add_argument("-f", "--force", action="store_true", help="Overwrite when adding.")
+    parser.add_argument("--guard",choices=["pragma","ifndef"], default="pragma", help="Use either #ifndef\
             guards or #pragma once (default: pragma).")
 
     parsed = parser.parse_args()

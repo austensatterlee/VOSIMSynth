@@ -9,10 +9,6 @@ endif()
 
 set(ADDITIONAL_LIBRARIES "")
 
-set(VOSIMSYNTH_RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources)
-set(VOSIMSYNTH_STANDALONE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/standalone)
-
-
 ##
 # Boost
 ##
@@ -81,25 +77,21 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 ##
 # Collect VOSIMSynth sources
 ##
-file(GLOB PROJECT_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
+file(GLOB PROJECT_SRCS vosimsynth_resources.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 file(GLOB PROJECT_WIDGET_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/widgets/*.cpp)
-set(PROJECT_SRCS ${PROJECT_SRCS};${CMAKE_CURRENT_SOURCE_DIR}/vosimsynth.cpp)
 file(GLOB PROJECT_HDRS 
     ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vosimsynth/*.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/resource.h)
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/vosimsynth/*.h)
 file(GLOB PROJECT_WIDGET_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/include/widgets/*.h)
 set(VOSIMSYNTH_PROJECT_FILES ${PROJECT_SRCS};${PROJECT_HDRS};${PROJECT_WIDGET_SRCS};${PROJECT_WIDGET_HDRS})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/widgets)
 
 # Add standalone project
 if(NOT ${VOSIMSYNTH_BUILD_VST})
-    add_subdirectory(${VOSIMSYNTH_STANDALONE_DIR} standalone)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/standalone standalone)
 endif()
 
-add_definitions()
 add_definitions(${VOSIMSYNTH_DEFS})
 
 # add source groups ("filters" for MSVC)

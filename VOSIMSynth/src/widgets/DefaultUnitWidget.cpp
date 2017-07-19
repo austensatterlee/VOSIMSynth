@@ -1,4 +1,4 @@
-#include "DefaultUnitWidget.h"
+#include "widgets/DefaultUnitWidget.h"
 #include "CircuitWidget.h"
 #include "UI.h"
 #include <DSPMath.h>

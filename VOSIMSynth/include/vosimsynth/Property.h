@@ -46,13 +46,13 @@ namespace synui {
 		Property(const Property<T>& to_copy)
 			: value_(to_copy.value_) {}
 
-		Property(Property<T>&& to_copy)
-			: value_(std::move(to_copy.value_)) {}
+		Property(Property<T>&& to_copy) noexcept
+		    : value_(std::move(to_copy.value_)) {}
 
 		// returns a Signal which is fired when the internal value
 		// has been changed. The new value is passed as parameter.
 		const Signal<T>& on_change() const {
-			return on_change_;
+			return onChange;
 		}
 
 		// sets the Property to a new value.
@@ -60,7 +60,7 @@ namespace synui {
 		void set(const T& value) {
 			if (value != value_) {
 				value_ = value;
-				on_change_.emit(value_);
+                onChange.emit(value_);
 			}
 		}
 
@@ -70,7 +70,7 @@ namespace synui {
 		// if there are any Properties connected to this Property,
 		// they won't be notified of any further changes
 		void disconnect_auditors() {
-			on_change_.disconnect_all();
+            onChange.disconnect_all();
 		}
 
 		// returns the value of this Property
@@ -87,7 +87,7 @@ namespace synui {
 
 	// specialization for built-in default contructors
 	template<> inline Property<double>::Property()
-		: value_(0.0) {}
+        : value_(0.0) {}
 
 	template<> inline Property<float>::Property()
 		: value_(0.f) {}

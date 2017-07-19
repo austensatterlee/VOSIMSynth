@@ -41,7 +41,6 @@ void synui::UnitEditor::_build()
         const string& paramName = param.getName();
         syn::UnitParameter::EParamType paramType = param.getType();
         syn::UnitParameter::EControlType paramControlType = param.getControlType();
-        const string& paramUnits = param.getUnitsString();
         switch (paramType)
         {
         case syn::UnitParameter::Null:

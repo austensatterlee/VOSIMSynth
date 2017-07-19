@@ -64,7 +64,7 @@ namespace synui
 
     /**
      * \brief A 2-dimensional grid, on which path-finding and other operations may be performed.
-     * \tparam T Type of object to be stored at each grid cell.
+     * \tparam CellType Type of object to be stored at each grid cell.
      */
     template <typename CellType>
     class Grid2D
@@ -168,9 +168,9 @@ namespace synui
                 auto blk = m_grid.block(t, l, b - t, r - l);
                 if (!requireUnoccupied || (blk.array() == m_unoccupiedValue).all())
                 {
-                    for(int r=0;r<blk.rows();r++) {
-                        for(int c=0;c<blk.cols();c++) {
-                            a_func(blk(r,c));
+                    for(int row=0;row<blk.rows();row++) {
+                        for(int col=0;col<blk.cols();col++) {
+                            a_func(blk(row,col));
                         }
                     }
                     return true;

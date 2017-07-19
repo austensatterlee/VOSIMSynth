@@ -1,4 +1,4 @@
-#include "SummerUnitWidget.h"
+#include "widgets/SummerUnitWidget.h"
 #include "CircuitWidget.h"
 #include "UI.h"
 #include <Unit.h>

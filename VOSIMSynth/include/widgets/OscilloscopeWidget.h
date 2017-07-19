@@ -115,7 +115,7 @@ namespace synui {
         float fromScreen(float a_yScreen);
 
         int getUnitId() const { return m_unitId; }
-        int setUnitId(int a_id) { m_unitId = a_id; }
+        void setUnitId(int a_id) { m_unitId = a_id; }
 
     protected:
         syn::VoiceManager* m_vm;

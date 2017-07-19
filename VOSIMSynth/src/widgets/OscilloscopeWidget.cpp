@@ -1,4 +1,4 @@
-#include "OscilloscopeWidget.h"
+#include "widgets/OscilloscopeWidget.h"
 #include "DSPMath.h"
 #include <nanovg.h>
 #include <nanogui/screen.h>

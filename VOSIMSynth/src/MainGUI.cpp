@@ -4,7 +4,7 @@
 #include "UnitWidget.h"
 #include "CircuitWidget.h"
 #include "UnitEditor.h"
-#include "OscilloscopeWidget.h"
+#include "widgets/OscilloscopeWidget.h"
 #include "Logging.h"
 #include "VOSIMTheme.h"
 
@@ -520,7 +520,7 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     auto oscScrollPanel = m_oscViewer->add<nanogui::VScrollPanel>();
     oscScrollPanel->setFixedHeight({ 400 });
     createOscilloscopeViewer_(oscScrollPanel);
-    /* Add a button for openning the oscilloscope viewer window. */
+    /* Add a button for opening the oscilloscope viewer window. */
     buttonPanelLayout->appendCol(0, 0);
     auto osc_viewer_callback = [this]() {
         m_screen->centerWindow(m_oscViewer);
@@ -569,5 +569,5 @@ void synui::MainGUI::draw() {
 }
 
 void synui::MainGUI::alert(const std::string& a_title, const std::string& a_msg, nanogui::MessageDialog::Type a_type) {
-    auto dlg = new nanogui::MessageDialog(m_screen, a_type, a_title, a_msg);
+    new nanogui::MessageDialog(m_screen, a_type, a_title, a_msg);
 }

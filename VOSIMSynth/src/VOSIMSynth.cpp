@@ -36,7 +36,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "CircuitWidget.h"
 #include "widgets/SummerUnitWidget.h"
 #include "widgets/GainUnitWidget.h"
-#include "OscilloscopeWidget.h"
+#include "widgets/OscilloscopeWidget.h"
 #include "Logging.h"
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
