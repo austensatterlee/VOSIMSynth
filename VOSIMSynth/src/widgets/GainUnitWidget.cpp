@@ -1,6 +1,6 @@
 #include "widgets/GainUnitWidget.h"
-#include "CircuitWidget.h"
-#include "UI.h"
+#include "vosimsynth/CircuitWidget.h"
+#include "vosimsynth/UI.h"
 #include <Unit.h>
 #include <nanogui/theme.h>
 

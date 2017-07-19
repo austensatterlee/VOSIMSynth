@@ -1,4 +1,4 @@
-#include "Logging.h"
+#include "vosimsynth/Logging.h"
 #include <sstream>
 
 synui::TimingTracer::~TimingTracer() {

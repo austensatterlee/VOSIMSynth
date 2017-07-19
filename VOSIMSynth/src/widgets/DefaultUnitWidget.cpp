@@ -1,6 +1,6 @@
 #include "widgets/DefaultUnitWidget.h"
-#include "CircuitWidget.h"
-#include "UI.h"
+#include "vosimsynth/CircuitWidget.h"
+#include "vosimsynth/UI.h"
 #include <DSPMath.h>
 #include <Unit.h>
 #include <nanogui/screen.h>

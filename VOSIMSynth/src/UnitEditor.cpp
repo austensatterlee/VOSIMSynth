@@ -1,5 +1,5 @@
-#include "UnitEditor.h"
-#include "UI.h"
+#include "vosimsynth/UnitEditor.h"
+#include "vosimsynth/UI.h"
 #include <VoiceManager.h>
 #include <Command.h>
 #include <nanogui/layout.h>

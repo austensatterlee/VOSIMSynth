@@ -18,7 +18,6 @@ Copyright 2016, Austen Satterlee
 */
 
 #pragma once
-
 #include "vosimsynth/Signal.h"
 #include <iostream>
 

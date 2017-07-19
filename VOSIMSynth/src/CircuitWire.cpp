@@ -1,7 +1,7 @@
-#include "CircuitWire.h"
+#include "vosimsynth/CircuitWire.h"
 #include "VoiceManager.h"
 #include "DSPMath.h"
-#include "UnitWidget.h"
+#include "vosimsynth/UnitWidget.h"
 
 std::string synui::CircuitWire::info() const {
     if (!m_isFinal)

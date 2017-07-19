@@ -1,6 +1,6 @@
 #include "widgets/SummerUnitWidget.h"
-#include "CircuitWidget.h"
-#include "UI.h"
+#include "vosimsynth/CircuitWidget.h"
+#include "vosimsynth/UI.h"
 #include <Unit.h>
 #include <nanogui/theme.h>
 #include <GLFW/glfw3.h>

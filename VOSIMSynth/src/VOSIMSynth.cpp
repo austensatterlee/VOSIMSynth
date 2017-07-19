@@ -16,8 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
-
-#include "VOSIMSynth.h"
+#include "vosimsynth/VOSIMSynth.h"
 #include <IPlug/IPlug_include_in_plug_src.h>
 
 #include <units/OscillatorUnit.h>
@@ -30,14 +29,13 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <units/StateVariableFilter.h>
 #include <UnitFactory.h>
 #include <tables.h>
-
-#include "MainWindow.h"
-#include "MainGUI.h"
-#include "CircuitWidget.h"
+#include "vosimsynth/MainWindow.h"
+#include "vosimsynth/MainGUI.h"
+#include "vosimsynth/CircuitWidget.h"
 #include "widgets/SummerUnitWidget.h"
 #include "widgets/GainUnitWidget.h"
 #include "widgets/OscilloscopeWidget.h"
-#include "Logging.h"
+#include "vosimsynth/Logging.h"
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
     : IPLUG_CTOR(0, 1, instanceInfo),

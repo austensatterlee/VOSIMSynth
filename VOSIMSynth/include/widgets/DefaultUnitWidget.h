@@ -26,7 +26,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
-#include "UnitWidget.h"
+#include "vosimsynth/UnitWidget.h"
 
 namespace synui {
     class DefaultUnitWidget : public UnitWidget

@@ -1,12 +1,12 @@
-#include "MainGUI.h"
-#include "MainWindow.h"
+#include "vosimsynth/MainGUI.h"
+#include "vosimsynth/MainWindow.h"
 #include "VoiceManager.h"
-#include "UnitWidget.h"
-#include "CircuitWidget.h"
-#include "UnitEditor.h"
+#include "vosimsynth/UnitWidget.h"
+#include "vosimsynth/CircuitWidget.h"
+#include "vosimsynth/UnitEditor.h"
 #include "widgets/OscilloscopeWidget.h"
-#include "Logging.h"
-#include "VOSIMTheme.h"
+#include "vosimsynth/Logging.h"
+#include "vosimsynth/VOSIMTheme.h"
 
 #include <Command.h>
 #include <UnitFactory.h>

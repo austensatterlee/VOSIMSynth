@@ -1,6 +1,6 @@
-#include "MainWindow.h"
-#include "MainGUI.h"
-#include "Logging.h"
+#include "vosimsynth/MainWindow.h"
+#include "vosimsynth/MainGUI.h"
+#include "vosimsynth/Logging.h"
 
 #include <Command.h>
 #include <GLFW/glfw3.h>

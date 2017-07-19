@@ -1,7 +1,7 @@
-#include "UnitWidget.h"
-#include "CircuitWidget.h"
-#include "MainWindow.h"
-#include "MainGUI.h"
+#include "vosimsynth/UnitWidget.h"
+#include "vosimsynth/CircuitWidget.h"
+#include "vosimsynth/MainWindow.h"
+#include "vosimsynth/MainGUI.h"
 #include <Unit.h>
 #include <VoiceManager.h>
 #include <Command.h>

@@ -19,7 +19,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 #include "nanogui/nanogui.h"
-#include "UI.h"
+#include "vosimsynth/UI.h"
 
 namespace synui {
     class ContextMenu : public nanogui::Widget {

@@ -1,5 +1,5 @@
 #include "Tests.h"
-#include "Grid.h"
+#include "vosimsynth/Grid.h"
 
 using Point = synui::Grid2DPoint;
 using Index = synui::Grid2DIndex;

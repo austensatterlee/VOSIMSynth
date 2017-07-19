@@ -1,4 +1,4 @@
-#include "VOSIMTheme.h"
+#include "vosimsynth/VOSIMTheme.h"
 
 synui::VOSIMTheme::VOSIMTheme(NVGcontext* ctx)
     : Theme(ctx) {

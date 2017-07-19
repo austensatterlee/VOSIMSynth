@@ -16,8 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
-
-#include "MIDIReceiver.h"
+#include "vosimsynth/MIDIReceiver.h"
 #include "VoiceManager.h"
 #include <IPlug/IPlugStructs.h>
 

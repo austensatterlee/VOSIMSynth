@@ -26,7 +26,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
-#include "Grid.h"
+#include "vosimsynth/Grid.h"
 #include "vosimsynth/Signal.h"
 #include <Unit.h>
 #include <nanogui/widget.h>

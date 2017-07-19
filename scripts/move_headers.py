@@ -15,8 +15,9 @@ def update_includes(srctxt, oldincl, newincl):
     offset = 0
     inclregex0 = re.compile("^\\s*#include\\s+([\"'])(.*?)\\b{}\\1\\s*?$".format(re.escape(oldincl)), re.MULTILINE)
     inclregex1 = re.compile("^\\s*#include\\s+<(.*?)\\b{}>\\s*?$".format(re.escape(oldincl)), re.MULTILINE)
-    srctxt = inclregex0.sub("#include \"%s\""%newincl, srctxt)
-    srctxt = inclregex1.sub("#include <%s>"%newincl, srctxt)
+    srctxt, count = inclregex0.subn("#include \"%s\""%newincl, srctxt, count=1)
+    if not count:
+        srctxt, count = inclregex1.subn("#include <%s>"%newincl, srctxt, count=1)
     return srctxt
 
 if __name__=="__main__":

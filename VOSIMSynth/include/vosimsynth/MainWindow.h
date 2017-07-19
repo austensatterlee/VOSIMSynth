@@ -41,8 +41,7 @@ Copyright 2016, Austen Satterlee
         #define GL_GLEXT_PROTOTYPES
     #endif
 #endif
-
-#include "UI.h"
+#include "vosimsynth/UI.h"
 #include "vosimsynth/Signal.h"
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/lockfree/policies.hpp>
