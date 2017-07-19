@@ -7,9 +7,9 @@
 #include "vosimsynth/widgets/UnitEditor.h"
 #include "vosimsynth/widgets/ContextMenu.h"
 #include "vosimsynth/widgets/CircuitWire.h"
-#include <VoiceManager.h>
-#include <Command.h>
-#include <units/MathUnits.h>
+#include <vosimlib/VoiceManager.h>
+#include <vosimlib/Command.h>
+#include <vosimlib/units/MathUnits.h>
 #include <unordered_set>
 #include <set>
 

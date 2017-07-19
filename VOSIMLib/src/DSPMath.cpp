@@ -24,9 +24,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  * \author Austen Satterlee
  * \date March 6, 2016
  */
-
-#include "DSPMath.h"
-#include "tables.h"
+#include "vosimlib/DSPMath.h"
+#include "vosimlib/tables.h"
 #include <cmath>
 
 double syn::pitchToFreq(double pitch) {

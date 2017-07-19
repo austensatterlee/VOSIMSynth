@@ -1,8 +1,8 @@
 #include "vosimsynth/widgets/DefaultUnitWidget.h"
 #include "vosimsynth/widgets/CircuitWidget.h"
 #include "vosimsynth/UI.h"
-#include <DSPMath.h>
-#include <Unit.h>
+#include <vosimlib/DSPMath.h>
+#include <vosimlib/Unit.h>
 #include <nanogui/screen.h>
 #include <nanogui/layout.h>
 #include <nanogui/label.h>

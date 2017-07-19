@@ -29,10 +29,9 @@
 #define __TABLES__
 
 #define DO_LERP_FOR_SINC true
-
 #include "vosimlib/common.h"
-#include "DSPMath.h"
-#include "lut_tables.h"
+#include "vosimlib/DSPMath.h"
+#include "vosimlib/lut_tables.h"
 #include <vector>
 
 namespace syn {

@@ -27,7 +27,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __DSPMATH__
 #define __DSPMATH__
-
 #include "vosimlib/common.h"
 #include <regex>
 

@@ -21,8 +21,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define __VOSIMSYNTH__
 
 #include <IPlug/IPlug_include_in_plug_hdr.h>
-
-#include <VoiceManager.h>
+#include <vosimlib/VoiceManager.h>
 #include <vosimsynth/MIDIReceiver.h>
 
 namespace synui {
@@ -48,7 +47,7 @@ public:
     static void registerUnitWidgets(synui::CircuitWidget& a_cw);
 
 private:
-	syn::VoiceManager m_voiceManager;
+    syn::VoiceManager m_voiceManager;
     syn::MIDIReceiver m_MIDIReceiver;
 
     int m_tempo;

@@ -1,5 +1,5 @@
-#include "units/MidiUnits.h"
-#include "DSPMath.h"
+#include "vosimlib/units/MidiUnits.h"
+#include "vosimlib/DSPMath.h"
 
 void syn::MidiNoteUnit::process_()
 {

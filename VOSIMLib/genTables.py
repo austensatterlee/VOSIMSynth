@@ -5,7 +5,7 @@ import re
 import os, sys
 
 LUT_TABLEDATA_FILE = "src/table_data.cpp"
-LUT_TABLEHDR_FILE = "include/lut_tables.h"
+LUT_TABLEHDR_FILE = "include/vosimlib/lut_tables.h"
 LUT_TABLESRC_FILE = "src/lut_tables.cpp"
 
 def RealCepstrum(n, signal):

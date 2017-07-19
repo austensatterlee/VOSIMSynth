@@ -1,5 +1,5 @@
-#include "units/MathUnits.h"
-#include "DSPMath.h"
+#include "vosimlib/units/MathUnits.h"
+#include "vosimlib/DSPMath.h"
 
 syn::MovingAverage::MovingAverage() :
     m_windowSize(1),

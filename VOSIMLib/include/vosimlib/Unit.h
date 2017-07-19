@@ -19,12 +19,11 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __UNIT__
 #define __UNIT__
-
 #include "vosimlib/common_serial.h"
 #include "vosimlib/common.h"
-#include "StrMap.h"
-#include "UnitParameter.h"
-#include "UnitFactory.h"
+#include "vosimlib/StrMap.h"
+#include "vosimlib/UnitParameter.h"
+#include "vosimlib/UnitFactory.h"
 
 #include <eigen/Core>
 

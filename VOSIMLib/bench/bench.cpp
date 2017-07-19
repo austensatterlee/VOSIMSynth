@@ -1,14 +1,13 @@
 #define NONIUS_RUNNER
 #include <nonius/nonius.h++>
-
-#include "tables.h"
-#include "DSPMath.h"
-#include "IntMap.h"
-#include "Unit.h"
-#include "Circuit.h"
-#include "units/StateVariableFilter.h"
-#include "units/OscillatorUnit.h"
-#include "units/MidiUnits.h"
+#include "vosimlib/tables.h"
+#include "vosimlib/DSPMath.h"
+#include "vosimlib/IntMap.h"
+#include "vosimlib/Unit.h"
+#include "vosimlib/Circuit.h"
+#include "vosimlib/units/StateVariableFilter.h"
+#include "vosimlib/units/OscillatorUnit.h"
+#include "vosimlib/units/MidiUnits.h"
 
 #include <array>
 #include <algorithm>

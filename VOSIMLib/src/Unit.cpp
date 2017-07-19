@@ -16,9 +16,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
-
-#include "Unit.h"
-#include "DSPMath.h"
+#include "vosimlib/Unit.h"
+#include "vosimlib/DSPMath.h"
 
 using std::hash;
 

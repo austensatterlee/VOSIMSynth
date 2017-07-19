@@ -78,10 +78,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 # Collect VOSIMSynth sources
 ##
 file(GLOB PROJECT_SRCS vosimsynth_resources.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
-file(GLOB PROJECT_HDRS 
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/vosimsynth/*.h)
-file(GLOB PROJECT_WIDGET_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/include/widgets/*.h)
+file(GLOB PROJECT_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/include/vosimsynth/*.h)
+file(GLOB PROJECT_WIDGET_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/include/vosimsynth/widgets/*.h)
 set(VOSIMSYNTH_PROJECT_FILES ${PROJECT_SRCS};${PROJECT_HDRS};${PROJECT_WIDGET_HDRS})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)

@@ -1,10 +1,10 @@
-#include "Unit.h"
-#include "Circuit.h"
-#include "units/StateVariableFilter.h"
-#include "units/OscillatorUnit.h"
-#include "units/VosimOscillator.h"
-#include "units/ADSREnvelope.h"
-#include "tables.h"
+#include "vosimlib/Unit.h"
+#include "vosimlib/Circuit.h"
+#include "vosimlib/units/StateVariableFilter.h"
+#include "vosimlib/units/OscillatorUnit.h"
+#include "vosimlib/units/VosimOscillator.h"
+#include "vosimlib/units/ADSREnvelope.h"
+#include "vosimlib/tables.h"
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
 #include <pybind11/numpy.h>

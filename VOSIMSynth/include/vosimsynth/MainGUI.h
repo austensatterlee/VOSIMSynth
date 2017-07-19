@@ -26,7 +26,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
-
 #include <vosimlib/common_serial.h>
 #include <nanogui/formhelper.h>
 #include <nanogui/messagedialog.h>

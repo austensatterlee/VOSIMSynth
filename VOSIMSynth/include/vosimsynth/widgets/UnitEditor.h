@@ -26,7 +26,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
-#include "Unit.h"
+#include <vosimlib/Unit.h>
 #include <nanogui/stackedwidget.h>
 
 namespace syn

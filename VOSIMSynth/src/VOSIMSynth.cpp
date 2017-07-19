@@ -18,17 +18,16 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 #include "vosimsynth/VOSIMSynth.h"
 #include <IPlug/IPlug_include_in_plug_src.h>
-
-#include <units/OscillatorUnit.h>
-#include <units/VosimOscillator.h>
-#include <units/ADSREnvelope.h>
-#include <units/Follower.h>
-#include <units/MathUnits.h>
-#include <units/MemoryUnit.h>
-#include <units/MidiUnits.h>
-#include <units/StateVariableFilter.h>
-#include <UnitFactory.h>
-#include <tables.h>
+#include <vosimlib/units/OscillatorUnit.h>
+#include <vosimlib/units/VosimOscillator.h>
+#include <vosimlib/units/ADSREnvelope.h>
+#include <vosimlib/units/Follower.h>
+#include <vosimlib/units/MathUnits.h>
+#include <vosimlib/units/MemoryUnit.h>
+#include <vosimlib/units/MidiUnits.h>
+#include <vosimlib/units/StateVariableFilter.h>
+#include <vosimlib/UnitFactory.h>
+#include <vosimlib/tables.h>
 #include "vosimsynth/MainWindow.h"
 #include "vosimsynth/MainGUI.h"
 #include "vosimsynth/widgets/CircuitWidget.h"
@@ -39,10 +38,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
     : IPLUG_CTOR(0, 1, instanceInfo),
-	  m_voiceManager(),
-	  m_MIDIReceiver(m_voiceManager),
-	  m_tempo(0),
-	  m_tickCount(0)
+      m_voiceManager(),
+      m_MIDIReceiver(m_voiceManager),
+      m_tempo(0),
+      m_tickCount(0)
 {
     TIME_TRACE;
     makeInstrument();
@@ -156,12 +155,12 @@ void VOSIMSynth::registerUnits()
 {
     TIME_TRACE
     syn::UnitFactory& uf = syn::UnitFactory::instance();
-	uf.addUnitPrototype<syn::BasicOscillatorUnit>("Oscillators", "basic");
-	uf.addUnitPrototype<syn::VosimOscillator>("Oscillators", "vosim");
-	uf.addUnitPrototype<syn::FormantOscillator>("Oscillators", "formant");
+    uf.addUnitPrototype<syn::BasicOscillatorUnit>("Oscillators", "basic");
+    uf.addUnitPrototype<syn::VosimOscillator>("Oscillators", "vosim");
+    uf.addUnitPrototype<syn::FormantOscillator>("Oscillators", "formant");
 
-	uf.addUnitPrototype<syn::ADSREnvelope>("Modulators", "ADSR");
-	uf.addUnitPrototype<syn::LFOOscillatorUnit>("Modulators", "LFO");
+    uf.addUnitPrototype<syn::ADSREnvelope>("Modulators", "ADSR");
+    uf.addUnitPrototype<syn::LFOOscillatorUnit>("Modulators", "LFO");
 
     uf.addUnitPrototype<syn::StateVariableFilter>("Filters", "svf");
     uf.addUnitPrototype<syn::TrapStateVariableFilter>("Filters", "tsvf");
@@ -176,9 +175,9 @@ void VOSIMSynth::registerUnits()
     uf.addUnitPrototype<syn::GainUnit>("Math", "gain");
     uf.addUnitPrototype<syn::LerpUnit>("Math", "affine");
     uf.addUnitPrototype<syn::RectifierUnit>("Math", "rect");
-	uf.addUnitPrototype<syn::QuantizerUnit>("Math", "quantize");
-	uf.addUnitPrototype<syn::PanningUnit>("Math", "pan");
-	uf.addUnitPrototype<syn::SwitchUnit>("Math", "switch");
+    uf.addUnitPrototype<syn::QuantizerUnit>("Math", "quantize");
+    uf.addUnitPrototype<syn::PanningUnit>("Math", "pan");
+    uf.addUnitPrototype<syn::SwitchUnit>("Math", "switch");
     uf.addUnitPrototype<syn::ConstantUnit>("Math", "const");
     uf.addUnitPrototype<syn::TanhUnit>("Math", "tanh");
 

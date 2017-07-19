@@ -1,6 +1,6 @@
 #include "vosimsynth/widgets/CircuitWire.h"
-#include "VoiceManager.h"
-#include "DSPMath.h"
+#include <vosimlib/VoiceManager.h>
+#include <vosimlib/DSPMath.h>
 #include "vosimsynth/widgets/UnitWidget.h"
 
 std::string synui::CircuitWire::info() const {

@@ -19,9 +19,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __Circuit__
 #define __Circuit__
-
-#include "Unit.h"
-#include "IntMap.h"
+#include "vosimlib/Unit.h"
+#include "vosimlib/IntMap.h"
 #include <vector>
 #include <list>
 

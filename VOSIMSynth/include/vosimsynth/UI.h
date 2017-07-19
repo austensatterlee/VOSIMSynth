@@ -27,8 +27,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __UI__
 #define __UI__
-#include "DSPMath.h"
 #include "vosimsynth/common.h"
+#include <vosimlib/DSPMath.h>
 #include <nanogui/common.h>
 #include <eigen/Core>
 #include <functional>

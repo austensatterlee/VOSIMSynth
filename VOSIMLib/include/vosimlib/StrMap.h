@@ -18,8 +18,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #pragma once
-
-#include "IntMap.h"
+#include "vosimlib/IntMap.h"
 
 namespace syn {
 

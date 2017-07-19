@@ -16,11 +16,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
-
-#include "UnitParameter.h"
-#include <DSPMath.h>
+#include "vosimlib/UnitParameter.h"
+#include <vosimlib/DSPMath.h>
 #include <string>
-#include <Unit.h>
+#include <vosimlib/Unit.h>
 
 namespace syn {
     UnitParameter::UnitParameter()

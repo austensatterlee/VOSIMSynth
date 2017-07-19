@@ -1,4 +1,4 @@
-#include "MemoryPool.h"
+#include "vosimlib/MemoryPool.h"
 
 syn::MemoryPool::Chunk::~Chunk() {
     if (next)

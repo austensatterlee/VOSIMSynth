@@ -1,5 +1,5 @@
-#include "tables.h"
-#include "lut_tables.h"
+#include "vosimlib/tables.h"
+#include "vosimlib/lut_tables.h"
 
 namespace syn {
     /*::lut_defs::*/

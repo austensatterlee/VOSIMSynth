@@ -19,7 +19,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 #include "vosimsynth/common.h"
-#include <Unit.h>
+#include <vosimlib/Unit.h>
 #include <nanogui/widget.h>
 
 namespace syn {

@@ -38,7 +38,7 @@ endif()
 ##
 # Generate wavetables
 ##
-set(GENTABLES_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/table_data.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/lut_tables.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/lut_tables.h)
+set(GENTABLES_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/table_data.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/lut_tables.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/vosimlib/lut_tables.h)
 set(GENTABLES_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/genTables.py)
 add_custom_command(OUTPUT ${GENTABLES_OUTPUT} COMMAND python 
     ARGS ${CMAKE_CURRENT_SOURCE_DIR}/genTables.py --verbose 
@@ -48,9 +48,9 @@ add_custom_command(OUTPUT ${GENTABLES_OUTPUT} COMMAND python
 ##
 # VOSIMLib source files
 ##
-file(GLOB VOSIMLIB_HDRS include/*.h include/lut_tables.h include/vosimlib/*.h)
+file(GLOB VOSIMLIB_HDRS include/vosimlib/*.h include/vosimlib/lut_tables.h)
 file(GLOB VOSIMLIB_SRCS src/*.cpp src/table_data.cpp src/lut_tables.cpp)
-file(GLOB VOSIMLIB_UNIT_HDRS include/units/*.h)
+file(GLOB VOSIMLIB_UNIT_HDRS include/vosimlib/units/*.h)
 file(GLOB VOSIMLIB_UNIT_SRCS src/units/*.cpp)
 file(GLOB VOSIMLIB_PYTHON_SRCS python/*.cpp)
 set(VOSIMLIB_FILES ${VOSIMLIB_HDRS};${VOSIMLIB_UNIT_HDRS})
@@ -58,8 +58,8 @@ set(VOSIMLIB_FILES ${VOSIMLIB_FILES};${VOSIMLIB_SRCS};${VOSIMLIB_UNIT_SRCS})
 
 source_group(VOSIMLib/src FILES ${VOSIMLIB_SRCS})
 source_group(VOSIMLib/include FILES ${VOSIMLIB_HDRS})
-source_group(VOSIMLib/src/units FILES ${VOSIMLIB_UNIT_SRCS})
-source_group(VOSIMLib/include/units FILES ${VOSIMLIB_UNIT_HDRS})
+source_group(VOSIMLib/units/src FILES ${VOSIMLIB_UNIT_SRCS})
+source_group(VOSIMLib/units/include FILES ${VOSIMLIB_UNIT_HDRS})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_definitions(${VOSIMLIB_DEFS})

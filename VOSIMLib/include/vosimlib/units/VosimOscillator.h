@@ -19,8 +19,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __VOSIMOSCILLATOR__
 #define __VOSIMOSCILLATOR__
-
-#include "units/OscillatorUnit.h"
+#include "vosimlib/units/OscillatorUnit.h"
 
 namespace syn
 {

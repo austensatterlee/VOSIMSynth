@@ -1,6 +1,6 @@
-#include "UnitFactory.h"
-#include "Unit.h"
-#include "DSPMath.h"
+#include "vosimlib/UnitFactory.h"
+#include "vosimlib/Unit.h"
+#include "vosimlib/DSPMath.h"
 
 syn::UnitFactory::FactoryPrototype::FactoryPrototype(string a_group_name, Unit* a_unit, size_t a_class_size)
     : classIdentifier(a_unit->getClassIdentifier()),

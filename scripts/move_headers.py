@@ -70,7 +70,9 @@ if __name__=="__main__":
                     print "Moving {} -> {}".format(oldpath, newpath)
                 else:
                     os.renames(oldpath, newpath)
-            args.dependencies.append(newpath)
+                    args.dependencies.append(newpath)
+            elif os.path.isfile(newpath):
+                args.dependencies.append(newpath)
     else:
         raise ValueError("{} does not exist!".format(args.source))
 

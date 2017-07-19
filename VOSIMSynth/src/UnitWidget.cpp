@@ -2,9 +2,9 @@
 #include "vosimsynth/widgets/CircuitWidget.h"
 #include "vosimsynth/MainWindow.h"
 #include "vosimsynth/MainGUI.h"
-#include <Unit.h>
-#include <VoiceManager.h>
-#include <Command.h>
+#include <vosimlib/Unit.h>
+#include <vosimlib/VoiceManager.h>
+#include <vosimlib/Command.h>
 
 synui::UnitWidget::UnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId) :
     Widget(a_parent),

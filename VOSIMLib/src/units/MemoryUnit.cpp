@@ -24,9 +24,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  * \author Austen Satterlee
  * \date March 6, 2016
  */
-
-#include "units/MemoryUnit.h"
-#include "DSPMath.h"
+#include "vosimlib/units/MemoryUnit.h"
+#include "vosimlib/DSPMath.h"
 
 namespace syn
 {

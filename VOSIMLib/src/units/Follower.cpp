@@ -16,8 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
-
-#include "units/Follower.h"
+#include "vosimlib/units/Follower.h"
 
 syn::FollowerUnit::FollowerUnit(const string& a_name) :
     Unit(a_name),

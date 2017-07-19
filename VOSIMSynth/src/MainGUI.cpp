@@ -1,15 +1,14 @@
 #include "vosimsynth/MainGUI.h"
 #include "vosimsynth/MainWindow.h"
-#include "VoiceManager.h"
+#include <vosimlib/VoiceManager.h>
 #include "vosimsynth/widgets/UnitWidget.h"
 #include "vosimsynth/widgets/CircuitWidget.h"
 #include "vosimsynth/widgets/UnitEditor.h"
 #include "vosimsynth/widgets/OscilloscopeWidget.h"
 #include "vosimsynth/Logging.h"
 #include "vosimsynth/VOSIMTheme.h"
-
-#include <Command.h>
-#include <UnitFactory.h>
+#include <vosimlib/Command.h>
+#include <vosimlib/UnitFactory.h>
 #include <nanogui/nanogui.h>
 #include <nanogui/theme.h>
 #include <fstream>

@@ -19,9 +19,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __VOICEMANAGER__
 #define __VOICEMANAGER__
-
-#include "Circuit.h"
-#include "Unit.h"
+#include "vosimlib/Circuit.h"
+#include "vosimlib/Unit.h"
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/lockfree/policies.hpp>
 #include <boost/circular_buffer.hpp>
@@ -103,8 +102,8 @@ namespace syn {
         void setMaxVoices(int a_newMax);
 
         vector<int> getActiveVoiceIndices() const;
-		vector<int> getReleasedVoiceIndices() const;
-		vector<int> getIdleVoiceIndices() const;
+        vector<int> getReleasedVoiceIndices() const;
+        vector<int> getIdleVoiceIndices() const;
 
         int getMaxVoices() const;
 

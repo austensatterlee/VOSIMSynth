@@ -26,8 +26,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
-#include "Unit.h"
-#include "VoiceManager.h"
+#include <vosimlib/Unit.h>
+#include <vosimlib/VoiceManager.h>
 #include <nanogui/graph.h>
 
 namespace synui {

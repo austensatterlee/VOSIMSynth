@@ -19,7 +19,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __UNITPARAMETER__
 #define __UNITPARAMETER__
-
 #include "vosimlib/common_serial.h"
 #include "vosimlib/common.h"
 #include <vector>

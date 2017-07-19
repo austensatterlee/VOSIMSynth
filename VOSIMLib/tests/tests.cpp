@@ -1,13 +1,12 @@
 #include "tests.h"
-
-#include <Unit.h>
-#include <Circuit.h>
-#include <DSPMath.h>
-#include <units/StateVariableFilter.h>
-#include <units/OscillatorUnit.h>
-#include <units/MemoryUnit.h>
-#include <units/MathUnits.h>
-#include <VoiceManager.h>
+#include <vosimlib/Unit.h>
+#include <vosimlib/Circuit.h>
+#include <vosimlib/DSPMath.h>
+#include <vosimlib/units/StateVariableFilter.h>
+#include <vosimlib/units/OscillatorUnit.h>
+#include <vosimlib/units/MemoryUnit.h>
+#include <vosimlib/units/MathUnits.h>
+#include <vosimlib/VoiceManager.h>
 #include <vosimlib/common_serial.h>
 
 #include <sstream>

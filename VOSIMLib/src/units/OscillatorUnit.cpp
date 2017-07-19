@@ -16,10 +16,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
-
-#include "units/OscillatorUnit.h"
-#include "DSPMath.h"
-#include "tables.h"
+#include "vosimlib/units/OscillatorUnit.h"
+#include "vosimlib/DSPMath.h"
+#include "vosimlib/tables.h"
 
 namespace syn
 {

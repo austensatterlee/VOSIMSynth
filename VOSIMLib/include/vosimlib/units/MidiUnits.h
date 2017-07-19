@@ -7,9 +7,8 @@
  */
 #ifndef __MIDIUNITS__
 #define __MIDIUNITS__
-
-#include "Unit.h"
-#include "Circuit.h"
+#include "vosimlib/Unit.h"
+#include "vosimlib/Circuit.h"
 
 namespace syn {
     /**

@@ -1,5 +1,5 @@
 #include "vosimsynth/widgets/OscilloscopeWidget.h"
-#include "DSPMath.h"
+#include <vosimlib/DSPMath.h>
 #include <nanovg.h>
 #include <nanogui/screen.h>
 
@@ -149,46 +149,46 @@ namespace synui {
         nvgTranslate(ctx, mPos.x(), mPos.y());
         nanogui::Color tickColor{nvgHSL(0.19f, 1.0f, 0.5f)}; tickColor.w() = 0.9f;
         nanogui::Color tickLabelColor{nvgHSL(0.19f, 0.7f, 0.5f)}; tickColor.w() = 0.25f;
-		nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-		nvgFontSize(ctx, 12.0f);
-		nvgStrokeColor(ctx, tickColor);
-		nvgFillColor(ctx, tickLabelColor);
-		nvgBeginPath(ctx);
+        nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+        nvgFontSize(ctx, 12.0f);
+        nvgStrokeColor(ctx, tickColor);
+        nvgFillColor(ctx, tickLabelColor);
+        nvgBeginPath(ctx);
 
-		// Zero Y tick
+        // Zero Y tick
         double zeroPxY = toScreen(0.0);
-		nvgMoveTo(ctx, 0.0f, zeroPxY);
-		nvgLineTo(ctx, size().x(), zeroPxY);
+        nvgMoveTo(ctx, 0.0f, zeroPxY);
+        nvgLineTo(ctx, size().x(), zeroPxY);
 
-		// Other Y ticks
-		const int numYTicks = 10;
-		const float yTickStep = (m_yMax-m_yMin)/numYTicks;
+        // Other Y ticks
+        const int numYTicks = 10;
+        const float yTickStep = (m_yMax-m_yMin)/numYTicks;
         const float tickSize = 10.0f;
-		double yTick = +yTickStep;
-		std::ostringstream oss;
+        double yTick = +yTickStep;
+        std::ostringstream oss;
         oss << std::setprecision(4);
         // Positive ticks
-		while (yTick <= m_yMax) {
-			float px = toScreen(yTick);
-			nvgMoveTo(ctx, 0.0f, px);
-			nvgLineTo(ctx, tickSize, px);
+        while (yTick <= m_yMax) {
+            float px = toScreen(yTick);
+            nvgMoveTo(ctx, 0.0f, px);
+            nvgLineTo(ctx, tickSize, px);
             oss << yTick;
-			nvgText(ctx, 0.0f, px, oss.str().c_str(), nullptr);
+            nvgText(ctx, 0.0f, px, oss.str().c_str(), nullptr);
             oss.seekp(0);
-			yTick += yTickStep;
-		}
+            yTick += yTickStep;
+        }
         // Negative ticks
-		yTick = -yTickStep;
+        yTick = -yTickStep;
         while (yTick >= m_yMin) {
-			float px = toScreen(yTick);
-			nvgMoveTo(ctx, 0.0f, px);
-			nvgLineTo(ctx, tickSize, px);
+            float px = toScreen(yTick);
+            nvgMoveTo(ctx, 0.0f, px);
+            nvgLineTo(ctx, tickSize, px);
             oss << yTick;
-			nvgText(ctx, 0.0f, px, oss.str().c_str(), nullptr);
+            nvgText(ctx, 0.0f, px, oss.str().c_str(), nullptr);
             oss.seekp(0);
-			yTick -= yTickStep;
-		}
-		nvgStroke(ctx);
+            yTick -= yTickStep;
+        }
+        nvgStroke(ctx);
         nvgRestore(ctx);
     }
 

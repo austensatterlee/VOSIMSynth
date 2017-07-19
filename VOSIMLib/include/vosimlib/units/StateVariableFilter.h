@@ -26,8 +26,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 #ifndef __STATEVARIABLEFILTER__
 #define __STATEVARIABLEFILTER__
-
-#include "Unit.h"
+#include "vosimlib/Unit.h"
 
 namespace syn
 {

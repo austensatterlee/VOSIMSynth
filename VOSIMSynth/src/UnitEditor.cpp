@@ -1,7 +1,7 @@
 #include "vosimsynth/widgets/UnitEditor.h"
 #include "vosimsynth/UI.h"
-#include <VoiceManager.h>
-#include <Command.h>
+#include <vosimlib/VoiceManager.h>
+#include <vosimlib/Command.h>
 #include <nanogui/layout.h>
 #include <nanogui/formhelper.h>
 #include <nanogui/slider.h>

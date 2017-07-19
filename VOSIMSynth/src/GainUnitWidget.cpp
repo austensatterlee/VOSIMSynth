@@ -1,7 +1,7 @@
 #include "vosimsynth/widgets/GainUnitWidget.h"
 #include "vosimsynth/widgets/CircuitWidget.h"
 #include "vosimsynth/UI.h"
-#include <Unit.h>
+#include <vosimlib/Unit.h>
 #include <nanogui/theme.h>
 
 using Color = nanogui::Color;

@@ -27,10 +27,9 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef __MATHUNITS__
 #define __MATHUNITS__
-
-#include "Unit.h"
-#include "units/MemoryUnit.h"
-#include "DSPMath.h"
+#include "vosimlib/Unit.h"
+#include "vosimlib/units/MemoryUnit.h"
+#include "vosimlib/DSPMath.h"
 
 namespace syn {
     const vector<string> scale_selections = {"1","10","1E2","1E3","1E4"};

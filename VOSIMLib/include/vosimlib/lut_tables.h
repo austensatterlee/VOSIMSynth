@@ -1,5 +1,4 @@
 #pragma once
-
 #include "vosimlib/common.h"
 
 /*::macro_defs::*/
