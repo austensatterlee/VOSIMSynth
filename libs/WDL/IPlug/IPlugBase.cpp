@@ -4,7 +4,7 @@
 #include <time.h>
 #include "../wdlendian.h"
 #include "../base64encdec.h"
-#include "MainWindow.h"
+#include "vosimsynth/MainWindow.h"
 
 #ifndef VstInt32
   #ifdef WIN32

@@ -583,7 +583,6 @@ bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector
                 return true;
             }
         }
-        return true;        
     }
 
     if (m_highlightedWire) {
@@ -613,6 +612,10 @@ bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector
         }
     }
 
+    if(button == GLFW_MOUSE_BUTTON_LEFT && down) {
+        changeState(cw, *new DrawingSelectionState());
+    }
+
     return true;
 }
 
@@ -622,6 +625,9 @@ bool synui::cwstate::IdleState::mouseMotionEvent(CircuitWidget& cw, const Vector
         m_highlightedWire->highlight = CircuitWire::None;
         m_highlightedWire = nullptr;
     }
+
+    if (cw.Widget::mouseMotionEvent(p, rel, button, modifiers))
+        return true;
 
     Grid2DPoint gridPt = cw.grid().fromPixel(p, cw.gridSpacing());
     if (!cw.grid().contains(gridPt))
@@ -647,8 +653,6 @@ bool synui::cwstate::IdleState::mouseMotionEvent(CircuitWidget& cw, const Vector
         changeState(cw, *new MovingUnitState());
         return true;
     }
-
-    cw.Widget::mouseMotionEvent(p, rel, button, modifiers);
     return true;
 }
 
