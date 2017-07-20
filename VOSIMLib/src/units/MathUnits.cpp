@@ -1,5 +1,4 @@
 #include "vosimlib/units/MathUnits.h"
-#include "vosimlib/DSPMath.h"
 
 syn::MovingAverage::MovingAverage() :
     m_windowSize(1),
@@ -106,8 +105,9 @@ syn::SummerUnit::SummerUnit(const string& a_name) :
     Unit(a_name),
     m_pBias(addParameter_(UnitParameter("bias", -1E6, 1E6, 0.0, UnitParameter::None, 2).setControlType(UnitParameter::Unbounded)))
 {
-    addInput_("1");
-    addInput_("2");
+    for (int i = 0; i < MAX_OUTPUTS; i++) {
+        addInput_(std::to_string(i), 0.0);
+    }
     addOutput_("out");
 }
 
@@ -145,8 +145,9 @@ syn::GainUnit::GainUnit(const string& a_name) :
     Unit(a_name),
     m_pGain(addParameter_(UnitParameter("gain", -1E6, 1E6, 1.0, UnitParameter::None, 2).setControlType(UnitParameter::Unbounded)))
 {
-    addInput_("1", 1.0);
-    addInput_("2", 1.0);
+    for (int i = 0; i < MAX_OUTPUTS; i++) {
+        addInput_(std::to_string(i), 1.0);
+    }
     addOutput_("out");
 }
 
