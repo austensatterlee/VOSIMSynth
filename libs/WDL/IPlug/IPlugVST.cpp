@@ -1,5 +1,5 @@
 #include "IPlugVST.h"
-#include "MainWindow.h"
+#include <vosimsynth/MainWindow.h>
 #include <stdio.h>
 
 const int VST_VERSION = 2400;

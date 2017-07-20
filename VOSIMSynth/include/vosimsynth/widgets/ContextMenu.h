@@ -23,9 +23,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace synui {
     class ContextMenu : public nanogui::Widget {
-        using Color = nanogui::Color;
     public:
-
         ContextMenu(Widget* a_parent, bool a_disposable)
             : Widget(a_parent),
               m_highlightedSubmenu(nullptr),
@@ -33,7 +31,7 @@ namespace synui {
               m_activated(false)
         {
             m_itemContainer = new Widget(this);
-            m_itemContainer->setPosition({ 10,0 });
+            m_itemContainer->setPosition({0,0});
             auto itemLayout = new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Fill, 1, 0);
             m_itemContainer->setLayout(itemLayout);
             setVisible(false);

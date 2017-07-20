@@ -5,7 +5,7 @@
 #include <nanogui/theme.h>
 #include <GLFW/glfw3.h>
 
-using Color = nanogui::Color;
+using nanogui::Color;
 
 synui::SummerUnitWidget::SummerUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId)
     : UnitWidget(a_parent, a_vm, a_unitId),
@@ -136,7 +136,7 @@ bool synui::SummerUnitWidget::mouseButtonEvent(const Vector2i& p, int button, bo
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
         if (down) {
             triggerEditorCallback();
-            return true;
+            return false;
         }
     } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
         if (isHandleSelected(mousePos) && down) {

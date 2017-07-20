@@ -13,7 +13,7 @@
 #include <nanogui/theme.h>
 #include <fstream>
 
-using Color = nanogui::Color;
+using nanogui::Color;
 
 namespace synui {
     class EnhancedWindow : public nanogui::Window {
@@ -76,27 +76,17 @@ synui::MainGUI::operator json() const {
     TIME_TRACE
     json j;
     j["circuit"] = m_circuitWidget->operator json();
-    json& settings = j["settings"] = json();
-    settings = m_settingsFormHelper->operator json();
-    json& theme = j["theme"] = json();
-    theme = m_screen->theme()->operator json();
+    j["settings"] = m_settingsFormHelper->operator json();
+    j["theme"] = m_screen->theme()->operator json();
     return j;
 }
 
 synui::MainGUI* synui::MainGUI::load(const json& j) {
     TIME_TRACE
-    // Load settings
-    const json& settings = j.value("settings", json());
-    if (!settings.empty()) {
-        m_settingsFormHelper->load(settings);
-    }
-
     // Load theme
-    const json& theme = j.value("theme", json());
-    if (!theme.empty()) {
-        m_screen->setTheme(new VOSIMTheme(m_screen->nvgContext(), theme));
-    }
-
+    m_screen->theme()->update(j["theme"]);
+    // Load settings
+    m_settingsFormHelper->load(j["settings"]);
     // Load circuit
     m_circuitWidget->load(j["circuit"]);
     return this;
@@ -271,13 +261,28 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
 
 
 #define ADD_FH_VAR(label, type, lvalue) helper->addVariable<type>(label, [this](const type& val){ lvalue = val; }, [this](){ return lvalue; })
-    helper->addGroup("UI");
+    helper->addGroup("Units");
 
     /* VOSIMSynth-related parameters */
     ADD_FH_VAR("Sum/bgColor", Color, m_screen->theme()->prop("/SummerUnitWidget/bgColor"));
     ADD_FH_VAR("Sum/fgColor", Color, m_screen->theme()->prop("/SummerUnitWidget/fgColor"));
     ADD_FH_VAR("Gain/bgColor", Color, m_screen->theme()->prop("/GainUnitWidget/bgColor"));
-    ADD_FH_VAR("Gain/fgColor", Color, m_screen->theme()->prop("/GainUnitWidget/fgColor"));
+    ADD_FH_VAR("Gain/fgColor", Color, m_screen->theme()->prop("/GainUnitWidget/fgColor")); 
+
+    ADD_FH_VAR("DefaultUnitWidget/bgColor", Color, m_screen->theme()->prop("/DefaultUnitWidget/bgColor"));
+    ADD_FH_VAR("DefaultUnitWidget/title/bgColor", Color, m_screen->theme()->prop("/DefaultUnitWidget/title/bgColor"));
+    ADD_FH_VAR("DefaultUnitWidget/output/bg-color", Color, m_screen->theme()->prop("/DefaultUnitWidget/output/bg-color"));
+    ADD_FH_VAR("DefaultUnitWidget/input/bg-color", Color, m_screen->theme()->prop("/DefaultUnitWidget/input/bg-color"));
+    ADD_FH_VAR("DefaultUnitWidget/focused/shadow-size", float, m_screen->theme()->prop("/DefaultUnitWidget/focused/shadow-size"));
+    ADD_FH_VAR("DefaultUnitWidget/focused/shadow-feather", float, m_screen->theme()->prop("/DefaultUnitWidget/focused/shadow-feather"));
+    ADD_FH_VAR("DefaultUnitWidget/focused/shadow-color", Color, m_screen->theme()->prop("/DefaultUnitWidget/focused/shadow-color"));
+    ADD_FH_VAR("DefaultUnitWidget/hovered/shadow-size", float, m_screen->theme()->prop("/DefaultUnitWidget/hovered/shadow-size"));
+    ADD_FH_VAR("DefaultUnitWidget/hovered/shadow-feather", float, m_screen->theme()->prop("/DefaultUnitWidget/hovered/shadow-feather"));
+    ADD_FH_VAR("DefaultUnitWidget/hovered/shadow-color", Color, m_screen->theme()->prop("/DefaultUnitWidget/hovered/shadow-color"));
+
+    ADD_FH_VAR("ContextMenu/text-size", int, m_screen->theme()->prop("/ContextMenu/text-size"));
+    ADD_FH_VAR("ContextMenu/bgColor", Color, m_screen->theme()->prop("/ContextMenu/bgColor"));
+    ADD_FH_VAR("ContextMenu/hoverColor", Color, m_screen->theme()->prop("/ContextMenu/hoverColor"));
 
     /* Spacing-related parameters */
     helper->addGroup("Spacing");
@@ -333,7 +338,6 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
         outfile.open(filepath, std::ios::trunc);
         if (outfile.is_open()) {
             outfile << std::setw(4) << theme;
-            outfile.close();
         } else {
             std::ostringstream oss;
             oss << "Unable to open \"" << filepath << "\" for writing.";
@@ -348,12 +352,18 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
         std::ifstream infile;
         infile.open(filepath);
         if (infile.is_open()) {
-            json theme;
-            infile >> theme;
-            m_screen->setTheme(new VOSIMTheme(m_screen->nvgContext(), theme));
-            m_screen->performLayout();
-            helper->refresh();
-            infile.close();
+            try {
+                json newtheme;
+                infile >> newtheme;
+                m_screen->theme()->update(newtheme);
+                m_screen->performLayout();
+                helper->refresh();
+            } catch (const std::exception& e) {
+                std::ostringstream alertmsg;
+                alertmsg << "Unable to load preset!" << std::endl;
+                alertmsg << e.what();
+                alert("Error", alertmsg.str(), nanogui::MessageDialog::Type::Warning);
+            }
         } else {
             std::ostringstream oss;
             oss << "Unable to open \"" << filepath << "\" for reading.";

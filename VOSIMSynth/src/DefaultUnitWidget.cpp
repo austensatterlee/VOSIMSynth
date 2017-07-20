@@ -1,6 +1,7 @@
 #include "vosimsynth/widgets/DefaultUnitWidget.h"
 #include "vosimsynth/widgets/CircuitWidget.h"
 #include "vosimsynth/UI.h"
+#include "vosimsynth/VOSIMTheme.h"
 #include <vosimlib/DSPMath.h>
 #include <vosimlib/Unit.h>
 #include <nanogui/screen.h>
@@ -10,6 +11,8 @@
 #include <vector>
 #include <string>
 #include <GLFW/glfw3.h>
+
+using nanogui::Color;
 
 synui::DefaultUnitWidget::DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId)
     : UnitWidget(a_parent, a_vm, a_unitId) {
@@ -96,14 +99,14 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx) {
     nvgTranslate(ctx, mPos.x(), mPos.y());
 
     // Draw background
-    nanogui::Color bgColor = nanogui::Color(0.3f, 0.9f);
+    Color bgColor = theme()->get<Color>("/DefaultUnitWidget/bgColor", {0.3f, 0.9f});
     nvgBeginPath(ctx);
     nvgRect(ctx, 0, 0, mSize.x(), mSize.y());
     nvgFillColor(ctx, bgColor);
     nvgFill(ctx);
 
     // Draw title background
-    nanogui::Color titleBgColor = nanogui::Color(0.325f, 1.0f);
+    Color titleBgColor = theme()->get<Color>("/DefaultUnitWidget/title/bgColor", {0.325f, 1.0f});
     nvgBeginPath(ctx);
     nvgRect(ctx, 0, 0, width(), m_titleLabel->height() - 1.5f);
     nvgFillColor(ctx, titleBgColor);
@@ -111,7 +114,7 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx) {
 
     // Draw divisions
     int i = 0;
-    auto drawDivisions = [&](const map<int, nanogui::Label*>& lbls, const nanogui::Color& c1, const nanogui::Color& c2) {
+    auto drawDivisions = [&](const map<int, nanogui::Label*>& lbls, const Color& c1, const Color& c2) {
         for (auto lbl : lbls) {
             nvgBeginPath(ctx);
             if (i % 2 == 0)
@@ -124,30 +127,40 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx) {
         }
     };
 
-    nanogui::Color oColor(0.24f, 0.16f, 0.09f, 1.0f);
-    nanogui::Color oColor2 = nanogui::Color(1.26f, 1.0f).cwiseProduct(oColor);
-    nanogui::Color iColor(0.09f, 0.16f, 0.24f, 1.0f);
-    nanogui::Color iColor2 = nanogui::Color(1.26f, 1.0f).cwiseProduct(iColor);
+    Color oColor = theme()->get<Color>("/DefaultUnitWidget/output/bg-color", {0.24f, 0.16f, 0.09f, 1.0f});
+    Color oColor2 = Color(1.26f, 1.0f).cwiseProduct(oColor);
+    Color iColor = theme()->get<Color>("/DefaultUnitWidget/input/bg-color", {0.09f, 0.16f, 0.24f, 1.0f});
+    Color iColor2 = Color(1.26f, 1.0f).cwiseProduct(iColor);
     drawDivisions(m_inputLabels, iColor, iColor2);
     i = 0;
     drawDivisions(m_outputLabels, oColor, oColor2);
 
     /* Draw highlight if enabled. */
     if (highlighted()) {
-        drawRectShadow(ctx, 0, 0, width(), height(), 1.0f, 15.0f, 0.5f, {0.32f, 0.9f, 0.9f, 0.9f}, {0.0f, 0.0f});
+        drawRectShadow(ctx, 0, 0, width(), height(),
+            1.0f,
+            theme()->get("/DefaultUnitWidget/focused/shadow-size", 15.0f),
+            theme()->get("/DefaultUnitWidget/focused/shadow-feather", 0.5f),
+            theme()->get<Color>("/DefaultUnitWidget/focused/shadow-color", {0.32f, 0.9f, 0.9f, 0.9f}),
+            {0.0f, 0.0f});
     }
 
     /* Handle mouse movements */
     Vector2i mousePos = screen()->mousePos() - absolutePosition();
     if (contains(mousePos + position())) {
         // Highlight on mouse over
-        drawRectShadow(ctx, 0, 0, width(), height(), 1.0f, 5.0f, 0.46f, {0.8f, 0.5f}, {0.0f, 0.0f});
+        drawRectShadow(ctx, 0, 0, width(), height(),
+            1.0f,
+            theme()->get("/DefaultUnitWidget/hovered/shadow-size", 5.0f),
+            theme()->get("/DefaultUnitWidget/hovered/shadow-feather", 0.46f),
+            theme()->get<Color>("/DefaultUnitWidget/hovered/shadow-color", {0.8f, 0.5f}),
+            {0.0f, 0.0f});
 
         if (mousePos.y() < m_titleLabel->height()) {
             // Highlight title
             nvgBeginPath(ctx);
             nvgRect(ctx, 0.0f, 0.0f, width(), m_titleLabel->height());
-            nvgFillColor(ctx, nanogui::Color(1.0f, 0.05f));
+            nvgFillColor(ctx, Color(1.0f, 0.05f));
             nvgFill(ctx);
         } else {
             // Highlight ports
@@ -157,7 +170,7 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx) {
                     const Vector2i& size = p.second->size();
                     nvgBeginPath(ctx);
                     nvgRect(ctx, pos.x(), pos.y(), size.x(), size.y());
-                    nvgFillColor(ctx, nanogui::Color(1.0f, 0.05f));
+                    nvgFillColor(ctx, Color(1.0f, 0.05f));
                     nvgFill(ctx);
                     break;
                 }
@@ -169,7 +182,7 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx) {
                     const Vector2i& size = p.second->size();
                     nvgBeginPath(ctx);
                     nvgRect(ctx, pos.x(), pos.y(), size.x(), size.y());
-                    nvgFillColor(ctx, nanogui::Color(1.0f, 0.05f));
+                    nvgFillColor(ctx, Color(1.0f, 0.05f));
                     nvgFill(ctx);
                     break;
                 }
@@ -180,7 +193,7 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx) {
     // Draw outline
     nvgBeginPath(ctx);
     nvgRect(ctx, 0, 0, mSize.x(), mSize.y());
-    nvgStrokeColor(ctx, nanogui::Color(0.0f, 0.9f));
+    nvgStrokeColor(ctx, Color(0.0f, 0.9f));
     nvgStrokeWidth(ctx, 1.0f);
     nvgStroke(ctx);
 
@@ -204,7 +217,7 @@ Eigen::Vector2i synui::DefaultUnitWidget::getOutputPortAbsPosition(int a_portId)
     return port->absolutePosition() + Vector2f{port->width(), port->height() * 0.5}.cast<int>();
 }
 
-int synui::DefaultUnitWidget::getInputPort(const Eigen::Vector2i& a_pos) {
+int synui::DefaultUnitWidget::getInputPort(const Vector2i& a_pos) {
     int i = 0;
     for (auto inputLabel : m_inputLabels) {
         if (inputLabel.second->contains(a_pos)) {
@@ -215,7 +228,7 @@ int synui::DefaultUnitWidget::getInputPort(const Eigen::Vector2i& a_pos) {
     return -1;
 }
 
-int synui::DefaultUnitWidget::getOutputPort(const Eigen::Vector2i& a_pos) {
+int synui::DefaultUnitWidget::getOutputPort(const Vector2i& a_pos) {
     int i = 0;
     for (auto outputLabel : m_outputLabels) {
         if (outputLabel.second->contains(a_pos)) {
@@ -275,11 +288,11 @@ bool synui::DefaultUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
         if (down) {
             // Open unit editor if mouse click is not captured above.
             triggerEditorCallback();
-            return true;
+            return false;
         }
     }
 
-    return true;
+    return false;
 }
 
 void synui::DefaultUnitWidget::onGridChange_() {

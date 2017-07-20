@@ -19,8 +19,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 #include "vosimsynth/common.h"
+#include "vosimsynth/Signal.h"
 #include <vosimlib/Unit.h>
 #include <nanogui/widget.h>
+#include "CircuitWidget.h"
 
 namespace syn {
     class VoiceManager;

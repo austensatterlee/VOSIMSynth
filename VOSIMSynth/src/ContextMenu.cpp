@@ -1,4 +1,7 @@
 #include "vosimsynth/widgets/ContextMenu.h"
+
+using nanogui::Color;
+
 namespace synui {
     void ContextMenu::addMenuItem(const std::string& a_name, const std::function<void()>& a_value) {
         m_items[a_name] = a_value;

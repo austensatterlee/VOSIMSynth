@@ -22,10 +22,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace synui {    
     class VOSIMTheme : public nanogui::Theme {
-        using json = nlohmann::json;
     public:
         VOSIMTheme(NVGcontext* ctx);
-        VOSIMTheme(NVGcontext *ctx, const json& j);
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     };

@@ -542,7 +542,8 @@ void synui::CircuitWidget::_changeState(cwstate::State* a_state) {
 
 bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector2i& p, int button, bool down, int modifiers) {
     m_clickedWidget = nullptr;
-    bool captured = cw.Widget::mouseButtonEvent(p, button, down, modifiers);
+    if (cw.Widget::mouseButtonEvent(p, button, down, modifiers))
+        return true;
 
     Vector2i mousePos = p - cw.position();
     Grid2DPoint pt = cw.grid().fromPixel(mousePos, cw.gridSpacing());
@@ -582,10 +583,8 @@ bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector
                 return true;
             }
         }
-        if (!captured) {
-            changeState(cw, *new DrawingSelectionState());
-            return true;
-        }
+        changeState(cw, *new DrawingSelectionState());
+        return true;        
     }
 
     if (m_highlightedWire) {

@@ -4,7 +4,7 @@
 #include <vosimlib/Unit.h>
 #include <nanogui/theme.h>
 
-using Color = nanogui::Color;
+using nanogui::Color;
 
 synui::GainUnitWidget::GainUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId)
     : SummerUnitWidget(a_parent, a_vm, a_unitId)

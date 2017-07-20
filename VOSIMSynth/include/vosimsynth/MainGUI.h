@@ -94,7 +94,7 @@ namespace synui {
 
         SerializableFormHelper* load(const json& j) {
             for (auto& s : m_setterSerializers) {
-                const json& curr = j.value(s.first, json());
+                const json& curr = j[s.first];
                 if (!curr.empty())
                     s.second(curr);
             }
