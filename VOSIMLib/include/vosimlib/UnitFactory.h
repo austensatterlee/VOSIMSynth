@@ -55,8 +55,10 @@ namespace syn
         ~UnitFactory();
 
         /**
-         * \brief Register a prototype unit with the factory. Prototype deletion will be taken care of upon
-         * factory destruction.
+         * \brief Register a Unit subclass with the factory.
+         * \tparam T The type to be registered
+         * \param a_group_name A tag used to loosely associate similar types. Used to group types together in the GUI.
+         * \param a_unit_name A unique name that can be used to select this prototype. Also used to represent this type in the GUI.
          */
         template <typename T, typename = std::enable_if_t<std::is_base_of<Unit, T>::value>>
         void addUnitPrototype(const std::string& a_group_name, const std::string& a_unit_name);
@@ -79,6 +81,10 @@ namespace syn
         bool hasPrototype(UnitTypeId a_classIdentifier) const;
 
         /**
+         * Retrieve a registered class id from a prototype name.
+         * \sa getPrototypeName
+         * \sa getPrototypeNames
+         * \sa addUnitPrototype
          * \returns -1 on failure.
          */
         UnitTypeId getClassId(const std::string& a_groupName, const std::string& a_protoName) const;

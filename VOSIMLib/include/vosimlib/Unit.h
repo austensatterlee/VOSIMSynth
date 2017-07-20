@@ -34,9 +34,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define DERIVE_UNIT(TYPE) \
     Unit *_clone() const override {return new TYPE(*this);} \
 public: \
-    string getClassName() const override {return #TYPE;} \
-    static string className() { return #TYPE; } \
-    static syn::UnitTypeId classIdentifier() { std::hash<string> hash_fn; return static_cast<syn::UnitTypeId>(hash_fn(#TYPE)); } \
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW \
+    const string& getClassName() const override {return TYPE::className();} \
+    static const string& className() { static const std::string class_name = #TYPE; return class_name; } \
+    static const syn::UnitTypeId& classIdentifier() { static const std::hash<string> hash_fn; static const syn::UnitTypeId id = static_cast<syn::UnitTypeId>(hash_fn(#TYPE)); return id; } \
     TYPE() : TYPE("") {} \
 private:
 
@@ -332,7 +333,7 @@ namespace syn
         }
 
         /// \returns A unique string that identifies the derived class.
-        virtual inline string getClassName() const = 0;
+        virtual const string& getClassName() const = 0;
 
     protected:
         virtual void onParamChange_(int a_paramId) {};
@@ -346,6 +347,8 @@ namespace syn
         virtual void onNoteOff_() {};
 
         virtual void onMidiControlChange_(int a_cc, double a_value) {};
+
+        virtual void onPitchBendChange_(double a_value) {};
 
         virtual void onInputConnection_(int a_inputPort) {};
 

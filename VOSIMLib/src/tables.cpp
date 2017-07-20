@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 #include "vosimlib/tables.h"
-#include "vosimlib/DSPMath.h"
 #include <math.h>
 
 namespace syn

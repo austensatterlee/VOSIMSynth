@@ -65,8 +65,8 @@ public:
         PYBIND11_OVERLOAD_PURE(void, Base, process_, );
     }
 
-    std::string getClassName() const override {
-        PYBIND11_OVERLOAD_PURE(std::string, Base, getClassName, );
+    const std::string& getClassName() const override {
+        PYBIND11_OVERLOAD_PURE(const std::string&, Base, getClassName, );
     }
 
     syn::Unit* _clone() const override {
