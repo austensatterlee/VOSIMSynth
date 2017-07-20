@@ -583,7 +583,6 @@ bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector
                 return true;
             }
         }
-        changeState(cw, *new DrawingSelectionState());
         return true;        
     }
 
@@ -646,6 +645,7 @@ bool synui::cwstate::IdleState::mouseMotionEvent(CircuitWidget& cw, const Vector
 
     if (m_clickedWidget) {
         changeState(cw, *new MovingUnitState());
+        return true;
     }
 
     cw.Widget::mouseMotionEvent(p, rel, button, modifiers);
