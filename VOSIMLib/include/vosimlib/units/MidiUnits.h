@@ -29,7 +29,7 @@ namespace syn {
         void reset() override {};
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
     };
 
     /**
@@ -49,7 +49,7 @@ namespace syn {
         void reset() override {};
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override {
+        void process_() override {
             BEGIN_PROC_FUNC
             WRITE_OUTPUT(0, velocity() * 0.0078125);
             END_PROC_FUNC
@@ -84,7 +84,7 @@ namespace syn {
         void reset() override { m_queuedNoteOff = true; }
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override {
+        void process_() override {
             BEGIN_PROC_FUNC
             // Trigger sends a 1 and then turns off.
             if (isNoteOn()){
@@ -131,7 +131,7 @@ namespace syn {
         void reset() override {};
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override {
+        void process_() override {
             BEGIN_PROC_FUNC
             WRITE_OUTPUT(0, m_value); // divide by 128
             END_PROC_FUNC
@@ -173,7 +173,7 @@ namespace syn {
 
         void reset() override {};
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override {
+        void process_() override {
             BEGIN_PROC_FUNC
             WRITE_OUTPUT(0, parent() ? parent()->getVoiceIndex() : 0.0);
             END_PROC_FUNC

@@ -5,7 +5,6 @@
 #include <vosimlib/units/StateVariableFilter.h>
 #include <vosimlib/units/OscillatorUnit.h>
 #include <vosimlib/units/MemoryUnit.h>
-#include <vosimlib/units/MathUnits.h>
 #include <vosimlib/VoiceManager.h>
 #include <vosimlib/common_serial.h>
 
@@ -200,80 +199,5 @@ TEST_CASE("IntMap access by index", "[IntMap]") {
 }
 
 TEST_CASE("GainUnit automatic input port creation & removal", "[GainUnit]") {
-    syn::GainUnit g;
-    double dummyInputSrc = 0.5;
-    const int* inputIds = g.inputs().ids();
 
-    REQUIRE(g.numInputs() == 2);
-    REQUIRE(inputIds[0] == 0);
-    REQUIRE(inputIds[1] == 1);
-    REQUIRE(!g.isConnected(0));
-    REQUIRE(!g.isConnected(1));
-
-    SECTION("Connect both initial inputs ports") {
-        g.connectInput(0, &dummyInputSrc);
-
-        REQUIRE(g.numInputs() == 2);
-        REQUIRE(inputIds[0] == 0);
-        REQUIRE(inputIds[1] == 1);
-        REQUIRE(g.isConnected(0));
-        REQUIRE(!g.isConnected(1));
-
-        g.connectInput(1, &dummyInputSrc);
-
-        REQUIRE(g.numInputs() == 3);
-        REQUIRE(inputIds[0] == 0);
-        REQUIRE(inputIds[1] == 1);
-        REQUIRE(inputIds[2] == 2);
-        REQUIRE(g.isConnected(0));
-        REQUIRE(g.isConnected(1));
-        REQUIRE(!g.isConnected(2));
-
-        SECTION("Disconnect port 0"){
-
-            g.disconnectInput(0);
-
-            REQUIRE(g.numInputs() == 3);
-            REQUIRE(inputIds[0] == 0);
-            REQUIRE(inputIds[1] == 1);
-            REQUIRE(inputIds[2] == 2);
-            REQUIRE(!g.isConnected(0));
-            REQUIRE(g.isConnected(1));
-            REQUIRE(!g.isConnected(2));
-
-            SECTION("Connect port 2"){
-                g.connectInput(2, &dummyInputSrc);
-
-                REQUIRE(g.numInputs() == 3);
-                REQUIRE(inputIds[0] == 0);
-                REQUIRE(inputIds[1] == 1);
-                REQUIRE(inputIds[2] == 2);
-                REQUIRE(!g.isConnected(0));
-                REQUIRE(g.isConnected(1));
-                REQUIRE(g.isConnected(2));
-            }
-
-            SECTION("Disconnect port 1 then connect port 2") {                
-                g.disconnectInput(1);
-
-                REQUIRE(g.numInputs() == 3);
-                REQUIRE(inputIds[0] == 0);
-                REQUIRE(inputIds[1] == 1);
-                REQUIRE(inputIds[2] == 2);
-                REQUIRE(!g.isConnected(0));
-                REQUIRE(!g.isConnected(1));
-                REQUIRE(!g.isConnected(2));
-
-                g.connectInput(2, &dummyInputSrc);
-                
-                REQUIRE(g.numInputs() == 3);
-                REQUIRE(inputIds[0] == 0);
-                REQUIRE(inputIds[1] == 1);
-                REQUIRE(inputIds[2] == 2);
-                REQUIRE(!g.isConnected(0));
-                REQUIRE(!g.isConnected(1));
-                REQUIRE(g.isConnected(2));
-            }
-        }
-    }
 }

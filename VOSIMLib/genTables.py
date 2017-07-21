@@ -697,8 +697,8 @@ namespace {}{{
     # Add tags if the file is empty
     if not old_code:
         old_code=\
-"""#include "tables.h"
-#include "lut_tables.h"
+"""#include "vosimlib/tables.h"
+#include "vosimlib/lut_tables.h"
 
 namespace {} {{
     /*::lut_defs::*/

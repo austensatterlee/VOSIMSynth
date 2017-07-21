@@ -44,8 +44,8 @@ namespace syn {
          * Retrieve an item by name.
          * \returns A reference to the item
          */
-        T& MSFASTCALL operator[](const string& a_name) GCCFASTCALL;
-        const T& MSFASTCALL operator[](const string& a_name) GCCFASTCALL const;
+        T& operator[](const string& a_name) ;
+        const T& operator[](const string& a_name) const;
 
         /**
          * Add a named item to the container.

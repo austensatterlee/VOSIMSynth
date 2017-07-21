@@ -61,7 +61,7 @@ public:
         PYBIND11_OVERLOAD_PURE(void, Base, reset, );
     }
 
-    void MSFASTCALL process_() GCCFASTCALL override {
+    void process_() override {
         PYBIND11_OVERLOAD_PURE(void, Base, process_, );
     }
 

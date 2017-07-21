@@ -82,7 +82,7 @@ namespace syn {
 
     protected:
         void onParamChange_(int a_paramId) override;
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
         void onNoteOn_() override;
 
     private:
@@ -124,7 +124,7 @@ namespace syn {
 
     protected:
         void onParamChange_(int a_paramId) override;
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
         void onNoteOn_() override;
     private:
         NSampleDelay m_delay;

@@ -84,7 +84,7 @@ if(MSVC)
   # Runtime library, exceptions, parallel compilation
   set(MSVC_REL /EHsc /MT /MP /Z7)
   set(MSVC_RDEB /EHsc /MT /MP /Z7)
-  set(MSVC_DEB /EHsc /MTd /MP /ZI)
+  set(MSVC_DEB /EHsc /MTd /MP /Z7)
   # /Ox Full opt                        /Ob2 Any suitable inline function expansion
   #                                     /Ob0 Disable inlining
   # /Oi Enable intrinsics               /Ot Favor fast code

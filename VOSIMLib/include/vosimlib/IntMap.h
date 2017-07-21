@@ -271,15 +271,15 @@ namespace syn {
          * Retrieve the item with the specified id.
          * \returns A reference to the item
          */
-        T& MSFASTCALL operator[](int a_id) GCCFASTCALL;
-        const T& MSFASTCALL operator[](int a_id) GCCFASTCALL const;
+        T& operator[](int a_id) ;
+        const T& operator[](int a_id) const;
         
         /**
          * Retrieve the item at the specified index.
          * \returns A reference to the item
          */
-        T& MSFASTCALL getByIndex(int a_index) GCCFASTCALL;
-        const T& MSFASTCALL getByIndex(int a_index) GCCFASTCALL const;
+        T& getByIndex(int a_index) ;
+        const T& getByIndex(int a_index) const;
 
         /**
          * Find the id of the specified item.
@@ -354,13 +354,13 @@ namespace syn {
     }
 
     template <typename T, int MAXSIZE>
-    T& MSFASTCALL IntMap<T, MAXSIZE>::operator[](int a_id) GCCFASTCALL
+    T& IntMap<T, MAXSIZE>::operator[](int a_id) 
     {
         return m_data[a_id];
     }
 
     template <typename T, int MAXSIZE>
-    const T& MSFASTCALL IntMap<T, MAXSIZE>::operator[](int a_id) const GCCFASTCALL
+    const T& IntMap<T, MAXSIZE>::operator[](int a_id) const 
     {
         return m_data[a_id];
     }

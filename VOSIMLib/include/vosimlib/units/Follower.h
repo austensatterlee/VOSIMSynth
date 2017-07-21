@@ -42,7 +42,7 @@ namespace syn
         FollowerUnit(const FollowerUnit& a_rhs);
         void reset() override;
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
         void onNoteOn_() override;
     private:
         double m_w;

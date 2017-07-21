@@ -64,9 +64,9 @@ namespace syn
         void reset() override;
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
-        virtual void MSFASTCALL tickPhase_(double a_phaseOffset) GCCFASTCALL;
-        virtual void MSFASTCALL updatePhaseStep_() GCCFASTCALL;
+        void process_() override;
+        virtual void tickPhase_(double a_phaseOffset) ;
+        virtual void updatePhaseStep_() ;
 
     protected:
         double m_basePhase;
@@ -100,8 +100,8 @@ namespace syn
         explicit TunedOscillatorUnit(const TunedOscillatorUnit& a_rhs);
 
     protected:
-        void MSFASTCALL process_() override GCCFASTCALL;
-        void MSFASTCALL updatePhaseStep_() override GCCFASTCALL;
+        void process_() override ;
+        void updatePhaseStep_() override ;
         void onNoteOn_() override;
     protected:
         double m_pitch;
@@ -121,7 +121,7 @@ namespace syn
         explicit BasicOscillatorUnit(const BasicOscillatorUnit& a_rhs);
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
     };
 
     class VOSIMLIB_API LFOOscillatorUnit : public OscillatorUnit
@@ -156,7 +156,7 @@ namespace syn
         explicit LFOOscillatorUnit(const LFOOscillatorUnit& a_rhs) : LFOOscillatorUnit(a_rhs.name()) {}
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
         void onParamChange_(int a_paramId) override;
     };
 }

@@ -66,7 +66,7 @@ namespace syn {
         void reset() override;
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
         void onNoteOn_() override;
 
     private:
@@ -88,7 +88,7 @@ namespace syn {
         void reset() override {};
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
 
     private:
         int m_pRectType;
@@ -107,7 +107,7 @@ namespace syn {
         void reset() override {};
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
         void onInputConnection_(int a_inputPort) override;
     private:
         int m_pBias;
@@ -126,7 +126,7 @@ namespace syn {
         void reset() override {};
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
         void onInputConnection_(int a_inputPort) override;
     private:
         int m_pGain;
@@ -145,7 +145,7 @@ namespace syn {
         void reset() override {};
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
     };
 
     /**
@@ -161,7 +161,7 @@ namespace syn {
         void reset() override {};
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
 
     protected:
         int m_pBalance1, m_pBalance2;
@@ -180,7 +180,7 @@ namespace syn {
         void reset() override {};
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
 
     private:
         int m_pMinInput, m_pMaxInput;
@@ -207,7 +207,7 @@ namespace syn {
         void reset() override {};
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override {
+        void process_() override {
             BEGIN_PROC_FUNC
             WRITE_OUTPUT(0, pitchToFreq(READ_INPUT(0)));
             END_PROC_FUNC
@@ -233,7 +233,7 @@ namespace syn {
         void reset() override {};
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override {
+        void process_() override {
             BEGIN_PROC_FUNC
             WRITE_OUTPUT(0, samplesToPitch(freqToSamples(READ_INPUT(0), fs()), fs()));
             END_PROC_FUNC
@@ -264,7 +264,7 @@ namespace syn {
         void reset() override {};
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override {
+        void process_() override {
             BEGIN_PROC_FUNC
             double comp = READ_INPUT(2);
             double ctrl = READ_INPUT(3);
@@ -303,7 +303,7 @@ namespace syn {
         void reset() override {};
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
     };
 
     /**
@@ -321,7 +321,7 @@ namespace syn {
 
         void reset() override {};
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
     };
 }
 

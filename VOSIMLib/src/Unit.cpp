@@ -110,11 +110,6 @@ namespace syn
 
     const StrMap<UnitParameter, MAX_PARAMS>& Unit::parameters() const { return m_parameters; }
 
-    void Unit::tick()
-    {
-        process_();
-    }
-
     void Unit::tick(const Eigen::Array<double, -1, -1, Eigen::RowMajor>& a_inputs, Eigen::Array<double, -1, -1, Eigen::RowMajor>& a_outputs)
     {
         const double* oldSources[MAX_INPUTS];

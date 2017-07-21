@@ -54,7 +54,7 @@ namespace syn {
         ADSREnvelope(const ADSREnvelope& a_rhs);
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
         bool isGateRising() const;
         bool isGateFalling() const;
         void onNoteOn_() override;

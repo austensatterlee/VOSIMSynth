@@ -57,7 +57,7 @@ namespace synui {
 
     protected:
         void onParamChange_(int a_paramId) override;
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
 
     private:
         void _sync();

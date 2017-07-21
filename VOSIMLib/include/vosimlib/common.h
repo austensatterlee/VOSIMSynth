@@ -48,7 +48,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #if defined(_MSC_VER)
 #define MSFASTCALL __fastcall
-#define GCCFASTCALL 
+#define GCCFASTCALL
 #elif defined(__GNUC__)
 #define MSFASTCALL
 #define GCCFASTCALL __attribute__((fastcall))

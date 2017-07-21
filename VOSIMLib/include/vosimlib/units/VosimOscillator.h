@@ -48,8 +48,8 @@ namespace syn
         VosimOscillator(const VosimOscillator& a_rhs);
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
-        void MSFASTCALL updatePhaseStep_() GCCFASTCALL override;
+        void process_() override;
+        void updatePhaseStep_() override;
 
     private:
         double m_pulse_step, m_pulse_tune;
@@ -82,7 +82,7 @@ namespace syn
         FormantOscillator(const FormantOscillator& a_rhs);
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
     };
 }
 #endif

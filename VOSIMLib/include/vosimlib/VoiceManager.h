@@ -64,7 +64,7 @@ namespace syn {
             setInternalBufferSize(m_internalBufferSize);
         }
 
-        void MSFASTCALL tick(const double* a_left_input, const double* a_right_input, double* a_left_output, double* a_right_output) GCCFASTCALL;
+        void tick(const double* a_left_input, const double* a_right_input, double* a_left_output, double* a_right_output) ;
 
         /**
          * Safely queue a function to be called on the real-time thread in between samples.

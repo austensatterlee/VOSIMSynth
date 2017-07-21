@@ -46,7 +46,7 @@ namespace syn
 
     protected:
 
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
         void onNoteOn_() override;
 
         int m_pFc, m_pRes;
@@ -71,7 +71,7 @@ namespace syn
 
         virtual void reset() override;
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
 
     protected:
         double m_prevInput;
@@ -131,7 +131,7 @@ namespace syn
         virtual void reset() override;;
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
         void onNoteOn_() override;
     private:
         OnePoleLP implem;
@@ -174,7 +174,7 @@ namespace syn
         LadderFilterA(const LadderFilterA& a_rhs) : LadderFilterA(a_rhs.name()) {};
         void reset() override;
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
     protected:
         const double VT = 0.312;
         std::array<double, 5> m_V;
@@ -190,7 +190,7 @@ namespace syn
         LadderFilterB(const LadderFilterB& a_rhs) : LadderFilterB(a_rhs.name()) {};
         void reset() override;
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
     protected:
         typedef Eigen::Matrix<double, 1, 5> Vector5d;
         OnePoleLP m_LP[4];

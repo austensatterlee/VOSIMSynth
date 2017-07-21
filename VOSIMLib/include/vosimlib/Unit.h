@@ -144,7 +144,7 @@ namespace syn
      *        }
      *        
      *  protected:
-     *        void MSFASTCALL process_() override {
+     *        void process_() override {
      *          BEGIN_PROC_FUNC
      *          // ...compute output sample...
      *          END_PROC_FUNC
@@ -169,7 +169,7 @@ namespace syn
         /**
          * Processes as many samples as required to fill the internal buffer (see Unit::getBufferSize and Unit::setBufferSize).
          */
-        inline void MSFASTCALL tick() GCCFASTCALL;
+        void tick() { process_(); }
 
         /**
          * Processes as many samples to fill the specified output buffer. 
@@ -181,7 +181,7 @@ namespace syn
          * \param a_inputs Input buffer.
          * \param a_outputs Output buffer.
          */
-        void MSFASTCALL tick(const dynamic_buffer_t& a_inputs, dynamic_buffer_t& a_outputs) GCCFASTCALL;
+        void tick(const dynamic_buffer_t& a_inputs, dynamic_buffer_t& a_outputs);
 
         /**
          * Notify the unit of a sample rate change
@@ -357,7 +357,7 @@ namespace syn
         template <typename ID>
         void writeOutput_(const ID& a_id, int a_offset, const double& a_val);
 
-        virtual void MSFASTCALL process_() GCCFASTCALL = 0;
+        virtual void process_() = 0;
 
         int addInput_(const string& a_name, double a_default = 0.0);
         bool addInput_(int a_id, const string& a_name, double a_default = 0.0);

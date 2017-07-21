@@ -66,7 +66,7 @@ namespace syn
         void reset() override {};
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override
+        void process_() override
         {
             BEGIN_PROC_FUNC
             for (int i = 0; i < numInputs(); i++)
@@ -175,7 +175,7 @@ namespace syn
         void reset() override;
 
     protected:
-        void MSFASTCALL process_() GCCFASTCALL override;
+        void process_() override;
 
         void onFsChange_() override;
 
