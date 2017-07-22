@@ -264,13 +264,15 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
     helper->addGroup("Units");
 
     /* VOSIMSynth-related parameters */
-    ADD_FH_VAR("Sum/bgColor", Color, m_screen->theme()->prop("/SummerUnitWidget/bgColor"));
-    ADD_FH_VAR("Sum/fgColor", Color, m_screen->theme()->prop("/SummerUnitWidget/fgColor"));
-    ADD_FH_VAR("Gain/bgColor", Color, m_screen->theme()->prop("/GainUnitWidget/bgColor"));
-    ADD_FH_VAR("Gain/fgColor", Color, m_screen->theme()->prop("/GainUnitWidget/fgColor")); 
+    ADD_FH_VAR("CircuitWidget/bg-color", Color, m_screen->theme()->prop("/CircuitWidget/bg-color"));
 
-    ADD_FH_VAR("DefaultUnitWidget/bgColor", Color, m_screen->theme()->prop("/DefaultUnitWidget/bgColor"));
-    ADD_FH_VAR("DefaultUnitWidget/title/bgColor", Color, m_screen->theme()->prop("/DefaultUnitWidget/title/bgColor"));
+    ADD_FH_VAR("Sum/bg-color", Color, m_screen->theme()->prop("/SummerUnitWidget/bg-color"));
+    ADD_FH_VAR("Sum/fg-color", Color, m_screen->theme()->prop("/SummerUnitWidget/fg-color"));
+    ADD_FH_VAR("Gain/bg-color", Color, m_screen->theme()->prop("/GainUnitWidget/bg-color"));
+    ADD_FH_VAR("Gain/fg-color", Color, m_screen->theme()->prop("/GainUnitWidget/fg-color")); 
+
+    ADD_FH_VAR("DefaultUnitWidget/bg-color", Color, m_screen->theme()->prop("/DefaultUnitWidget/bg-color"));
+    ADD_FH_VAR("DefaultUnitWidget/title/bg-color", Color, m_screen->theme()->prop("/DefaultUnitWidget/title/bg-color"));
     ADD_FH_VAR("DefaultUnitWidget/output/bg-color", Color, m_screen->theme()->prop("/DefaultUnitWidget/output/bg-color"));
     ADD_FH_VAR("DefaultUnitWidget/input/bg-color", Color, m_screen->theme()->prop("/DefaultUnitWidget/input/bg-color"));
     ADD_FH_VAR("DefaultUnitWidget/focused/shadow-size", float, m_screen->theme()->prop("/DefaultUnitWidget/focused/shadow-size"));
@@ -281,8 +283,9 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
     ADD_FH_VAR("DefaultUnitWidget/hovered/shadow-color", Color, m_screen->theme()->prop("/DefaultUnitWidget/hovered/shadow-color"));
 
     ADD_FH_VAR("ContextMenu/text-size", int, m_screen->theme()->prop("/ContextMenu/text-size"));
-    ADD_FH_VAR("ContextMenu/bgColor", Color, m_screen->theme()->prop("/ContextMenu/bgColor"));
-    ADD_FH_VAR("ContextMenu/hoverColor", Color, m_screen->theme()->prop("/ContextMenu/hoverColor"));
+    ADD_FH_VAR("ContextMenu/bg-color", Color, m_screen->theme()->prop("/ContextMenu/bg-color"));
+    ADD_FH_VAR("ContextMenu/margin-color", Color, m_screen->theme()->prop("/ContextMenu/margin-color"));
+    ADD_FH_VAR("ContextMenu/hover-color", Color, m_screen->theme()->prop("/ContextMenu/hover-color"));
 
     /* Spacing-related parameters */
     helper->addGroup("Spacing");

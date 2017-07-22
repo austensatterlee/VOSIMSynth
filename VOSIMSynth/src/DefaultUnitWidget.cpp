@@ -99,14 +99,14 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx) {
     nvgTranslate(ctx, mPos.x(), mPos.y());
 
     // Draw background
-    Color bgColor = theme()->get<Color>("/DefaultUnitWidget/bgColor", {0.3f, 0.9f});
+    Color bgColor = theme()->get<Color>("/DefaultUnitWidget/bg-color", {0.3f, 0.9f});
     nvgBeginPath(ctx);
     nvgRect(ctx, 0, 0, mSize.x(), mSize.y());
     nvgFillColor(ctx, bgColor);
     nvgFill(ctx);
 
     // Draw title background
-    Color titleBgColor = theme()->get<Color>("/DefaultUnitWidget/title/bgColor", {0.325f, 1.0f});
+    Color titleBgColor = theme()->get<Color>("/DefaultUnitWidget/title/bg-color", {0.325f, 1.0f});
     nvgBeginPath(ctx);
     nvgRect(ctx, 0, 0, width(), m_titleLabel->height() - 1.5f);
     nvgFillColor(ctx, titleBgColor);

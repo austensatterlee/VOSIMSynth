@@ -1,35 +1,85 @@
 #include "vosimsynth/widgets/ContextMenu.h"
 
 using nanogui::Color;
+using Anchor = nanogui::AdvancedGridLayout::Anchor;
 
 namespace synui {
-    void ContextMenu::addMenuItem(const std::string& a_name, const std::function<void()>& a_value) {
+    ContextMenu::ContextMenu(Widget* a_parent, bool a_disposable)
+        : Widget(a_parent),
+          m_highlightedSubmenu(nullptr),
+          m_disposable(a_disposable),
+          m_activated(false) 
+    {
+        m_itemContainer = new Widget(this);
+        m_itemContainer->setPosition({0,0});
+        m_itemLayout = new nanogui::AdvancedGridLayout({0,0,0}, {}, 2);
+        m_itemContainer->setLayout(m_itemLayout);
+        setVisible(false);
+    }
+
+    void ContextMenu::activate(const Vector2i& a_pos) {
+        m_activated = true;
+        setVisible(true);
+        setPosition(a_pos);
+        requestFocus();
+        screen()->performLayout();
+    }
+
+    void ContextMenu::deactivate() {
+        m_activated = false;
+        setVisible(false);
+        screen()->performLayout();
+        if (m_disposable)
+            _dispose();
+    }
+
+    void ContextMenu::addMenuItem(const std::string& a_name, const std::function<void()>& a_value, int a_icon) {
         m_items[a_name] = a_value;
-        m_menu.push_back(a_name);
         auto lbl = new nanogui::Label(m_itemContainer, a_name);
         m_labels[a_name] = lbl;
         lbl->setShowShadow(true);
         lbl->setFontSize(theme()->get("/ContextMenu/text-size", 20));
-        lbl->setHeight(m_labels[a_name]->fontSize() * 2);        
+        lbl->setHeight(lbl->fontSize() * 2);
+        m_itemLayout->appendRow(0);
+        m_itemLayout->setAnchor(lbl, Anchor{1,m_itemLayout->rowCount() - 1, 1, 1});
+        if (a_icon > 0) {
+            auto iconLbl = new nanogui::Label(m_itemContainer, nanogui::utf8(a_icon).data(), "icons");
+            iconLbl->setFontSize(theme()->get("/ContextMenu/text-size", 20));
+            iconLbl->setHeight(iconLbl->fontSize() * 2);
+            m_itemLayout->setAnchor(iconLbl, Anchor{ 0,m_itemLayout->rowCount() - 1,1,1 });
+        }
     }
 
-    ContextMenu* ContextMenu::addSubMenu(const std::string& a_name) {
-        if (find(m_menu.begin(), m_menu.end(), a_name) != m_menu.end())
-            return nullptr;        
-        m_menu.push_back(a_name);
+    ContextMenu* ContextMenu::addSubMenu(const std::string& a_name, int a_icon) {
         m_submenus[a_name] = new ContextMenu(this, true);
-        auto w = m_labels[a_name] = new nanogui::Widget(m_itemContainer);
-        w->setLayout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 2));
-        auto lbl1 = new nanogui::Label(w, a_name);
-        auto lbl2 = new nanogui::Label(w, nanogui::utf8(ENTYPO_ICON_CHEVRON_THIN_RIGHT).data(), "icons");
+        auto lbl1 = new nanogui::Label(m_itemContainer, a_name);
+        auto lbl2 = new nanogui::Label(m_itemContainer, nanogui::utf8(ENTYPO_ICON_CHEVRON_THIN_RIGHT).data(), "icons");
+        m_labels[a_name] = lbl1;
         lbl1->setShowShadow(true);
         lbl1->setFontSize(theme()->get("/ContextMenu/text-size", 20));
-        lbl1->setHeight(m_labels[a_name]->fontSize() * 2);
+        lbl1->setHeight(lbl1->fontSize() * 2);
         lbl2->setTextAlign(nanogui::Label::Alignment::Right);
         lbl2->setShowShadow(true);
         lbl2->setFontSize(theme()->get("/ContextMenu/text-size", 20));
-        lbl2->setHeight(m_labels[a_name]->fontSize() * 2);
+        lbl2->setHeight(lbl2->fontSize() * 2);
+        m_itemLayout->appendRow(0);
+        m_itemLayout->setAnchor(lbl1, Anchor{1,m_itemLayout->rowCount() - 1, 1, 1});
+        m_itemLayout->setAnchor(lbl2, Anchor{2,m_itemLayout->rowCount() - 1, 1, 1});
+        if (a_icon > 0) {
+            auto iconLbl = new nanogui::Label(m_itemContainer, nanogui::utf8(a_icon).data(), "icons");
+            iconLbl->setFontSize(theme()->get("/ContextMenu/text-size", 20));
+            iconLbl->setHeight(iconLbl->fontSize() * 2);
+            m_itemLayout->setAnchor(iconLbl, Anchor{ 0,m_itemLayout->rowCount() - 1,1,1 });
+        }        
         return m_submenus[a_name];
+    }
+
+    Vector2i ContextMenu::preferredSize(NVGcontext* ctx) const {
+        Vector2i base = m_itemContainer->position() + m_itemContainer->preferredSize(ctx);
+        if (m_highlightedSubmenu) {
+            base = base.cwiseMax(m_highlightedSubmenu->position() + m_highlightedSubmenu->size());
+        }
+        return base;
     }
 
     bool ContextMenu::mouseEnterEvent(const Vector2i& p, bool enter) {
@@ -42,9 +92,10 @@ namespace synui {
     }
 
     bool ContextMenu::mouseMotionEvent(const Vector2i& p, const Vector2i& rel, int button, int modifiers) {
+        Vector2i mousePos = p - mPos;
         for (const auto& w : m_labels) {
             // Deactivate old highlighted submenu, activate new submenu
-            if (w.second->mouseFocus()) {
+            if (isRowSelected_(w.first, mousePos)) {
                 // Deactivate current submenu unless we are still hovering over it.
                 if (m_highlightedSubmenu) {
                     if (!(isSubMenu_(w.first) && m_submenus[w.first] == m_highlightedSubmenu)) {
@@ -55,6 +106,7 @@ namespace synui {
                 if (isSubMenu_(w.first)) {
                     m_highlightedSubmenu = m_submenus[w.first];
                     m_highlightedSubmenu->activate(m_itemContainer->position() + Vector2i{ m_itemContainer->width()-1, m_labels[w.first]->position().y()+1 });
+                    break;
                 }
             }
         }
@@ -63,10 +115,10 @@ namespace synui {
     }
 
     bool ContextMenu::mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers) {
+        Vector2i mousePos = p - mPos;
         if (!down) {
-            Vector2i mousePos = p - mPos;
             for (const auto& w : m_labels) {
-                if (w.second->contains(mousePos) && !isSubMenu_(w.first)) {
+                if (isRowSelected_(w.first, mousePos) && !isSubMenu_(w.first)) {
                     if (m_items[w.first]) {
                         m_items[w.first]();
                     }
@@ -99,11 +151,21 @@ namespace synui {
         drawRectShadow(ctx, 0, 0, w, h, 0, dr, 1, mTheme->get<Color>("/shadow"), mTheme->get<Color>("/transparent"));
 
         /* Draw background */
-        Color bgColor = theme()->get<Color>("/ContextMenu/bgColor", { 0.3f, 0.9f });
+        Color bgColor = theme()->get<Color>("/ContextMenu/bg-color", { 0.3f, 0.9f });
         nvgBeginPath(ctx);
         nvgRect(ctx, 0, 0, w, h);
         nvgFillColor(ctx, bgColor);
         nvgFill(ctx);
+
+        /* Draw margin background */
+        if (!m_labels.empty()) {
+            auto lbl = m_labels.begin()->second;
+            Color marginColor = theme()->get<Color>("/ContextMenu/margin-color", { 0.2f, 0.9f });
+            nvgBeginPath(ctx);
+            nvgRect(ctx, 0, 0, lbl->position().x()-1, h);
+            nvgFillColor(ctx, marginColor);
+            nvgFill(ctx);
+        }
 
         /* Draw outline */
         nvgBeginPath(ctx);
@@ -117,7 +179,7 @@ namespace synui {
         nvgStrokeColor(ctx, mTheme->get<Color>("/border/dark"));
         nvgStroke(ctx);
 
-        Color highlightColor = theme()->get<Color>("/ContextMenu/hoverColor", { 0.15f, 1.0f });
+        Color highlightColor = theme()->get<Color>("/ContextMenu/hover-color", { 0.15f, 1.0f });
         for (const auto& pair : m_labels) {
             auto lbl = pair.second;
 
@@ -145,6 +207,17 @@ namespace synui {
 
     bool ContextMenu::isSubMenu_(const std::string& a_name) {
         return m_submenus.find(a_name) != m_submenus.end();
+    }
+
+    bool ContextMenu::isRowSelected_(const std::string& a_name, const Vector2i& p) const {
+        if (m_labels.find(a_name) == m_labels.end())
+            return false;
+        auto w = m_labels.at(a_name);
+        int lblLeft = m_itemContainer->position().x();
+        int lblRight = m_itemContainer->position().x() + m_itemContainer->width();
+        int lblTop = m_itemContainer->position().y() + w->position().y();
+        int lblBot = m_itemContainer->position().y() + w->position().y() + w->height();
+        return p.y() >= lblTop && p.y() < lblBot && p.x() >= lblLeft && p.x() < lblRight;
     }
 
     void ContextMenu::_dispose() {

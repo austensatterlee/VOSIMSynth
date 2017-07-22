@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.3)
 project(VOSIMLib)
 
 optionenv(VOSIMLIB_SHARED "Build as a shared library?" FALSE)
-optionenv(VOSIMLIB_PYTHON "Build python library?" TRUE)
 
 if(VOSIMLIB_SHARED)
   list(APPEND VOSIMLIB_DEFS -DVOSIMLIB_SHARED)
@@ -99,7 +98,9 @@ endif()
 ##
 # Add pybind11 target
 ##
-if(VOSIMLIB_PYTHON)
+
+optionenv(VOSIMLIB_BUILD_PYTHON "Build python library?" TRUE)
+if(VOSIMLIB_BUILD_PYTHON)
     pybind11_add_module(pyVOSIMLib ${VOSIMLIB_PYTHON_SRCS})
     target_link_libraries(pyVOSIMLib PRIVATE VOSIMLib)
 endif()

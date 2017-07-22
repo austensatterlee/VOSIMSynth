@@ -21,8 +21,8 @@ void synui::GainUnitWidget::draw(NVGcontext* ctx)
     nvgSave(ctx);
 
     nvgTranslate(ctx, mPos.x(), mPos.y());
-    Color bgColor = theme()->get("/GainUnitWidget/bgColor", Color{127, 32, 11, 255});
-    Color handleColor = theme()->get("/GainUnitWidget/fgColor", Color{32, 33, 68, 255});
+    Color bgColor = theme()->get("/GainUnitWidget/bg-color", Color{127, 32, 11, 255});
+    Color handleColor = theme()->get("/GainUnitWidget/fg-color", Color{32, 33, 68, 255});
     Color bgHighlightColor(25, 50);
     Color handleStrokeColor(0,55);
     Color handleHighlightColor(225, 178);

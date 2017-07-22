@@ -24,58 +24,50 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 namespace synui {
     class ContextMenu : public nanogui::Widget {
     public:
-        ContextMenu(Widget* a_parent, bool a_disposable)
-            : Widget(a_parent),
-              m_highlightedSubmenu(nullptr),
-              m_disposable(a_disposable),
-              m_activated(false)
-        {
-            m_itemContainer = new Widget(this);
-            m_itemContainer->setPosition({0,0});
-            auto itemLayout = new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Fill, 1, 0);
-            m_itemContainer->setLayout(itemLayout);
-            setVisible(false);
-        }
-
-        Vector2i preferredSize(NVGcontext* ctx) const override { 
-            Vector2i base = m_itemContainer->position() + m_itemContainer->preferredSize(ctx);
-            if (m_highlightedSubmenu) {
-                base = base.cwiseMax(m_highlightedSubmenu->position() + m_highlightedSubmenu->size());
-            }           
-            return base;
-        }
-
-        void activate(const Vector2i& a_pos) {
-            m_activated = true;
-            setVisible(true);
-            setPosition(a_pos);
-            requestFocus();
-            screen()->performLayout();
-        }
-
-        void deactivate() {
-            m_activated = false;
-            setVisible(false);
-            screen()->performLayout();
-            if (m_disposable)
-                _dispose();
-        }
+        /**
+         * \brief Construct a new ContextMenu.
+         * \param a_parent Parent widget.
+         * \param a_disposable When true, the context menu will be destroyed upon deactivation.
+         */
+        ContextMenu(Widget* a_parent, bool a_disposable);
 
         /**
-         * Add an item to the menu.
+         * \brief Activate the context menu at the given position.
          * 
-         * \param a_name The display text of the item.
+         * Make the context menu visible. When an item is clicked, the context menu will be deactivated.
+         * 
+         * \param a_pos The desired position of the top left corner of the context menu, relative to the parent.
          */
-        void addMenuItem(const std::string& a_name, const std::function<void()>& a_cb);
+        void activate(const Vector2i& a_pos);
+
+        /**
+         * \brief Deactivate the context menu.
+         * 
+         * This method is called automatically after an item is clicked. If the
+         * context menu is disposable, it will be removed from its parent and
+         * destroyed.
+         */
+        void deactivate();
+
+
+        /**
+         * \brief Add an item to the menu. The callback is called when the item is clicked.
+         * \param a_name Name of the item. The name is displayed in the context menu.
+         * \param a_cb Callback to be executed when the item is clicked.
+         * \param a_icon Optional icon to display to the left of the label.
+         */
+        void addMenuItem(const std::string& a_name, const std::function<void()>& a_cb, int a_icon=0);
 
         /**
          * Add a submenu to the menu.
          *
          * \param a_name The display text of the item.
          * \returns nullptr if a submenu or item already exists under the given name.
+         * \param a_icon Optional icon to display to the left of the label.
          */
-        ContextMenu* addSubMenu(const std::string& a_name);
+        ContextMenu* addSubMenu(const std::string& a_name, int a_icon = 0);
 
+        Vector2i preferredSize(NVGcontext* ctx) const override;
         bool mouseEnterEvent(const Vector2i& p, bool enter) override;
         bool mouseMotionEvent(const Vector2i& p, const Vector2i& rel, int button, int modifiers) override;
         bool mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers) override;
@@ -83,14 +75,24 @@ namespace synui {
         bool focusEvent(bool focused) override;
 
     protected:
+        /**
+         * \brief Determine if an item opens a new context menu.
+         * \param a_name Name of the item.
+         */
         bool isSubMenu_(const std::string& a_name);
+        /**
+         * \brief Determine if a row contains the point `p`.
+         * \param a_name Name of the item that is on the desired row.
+         * \param p Point relative to self.
+         */
+        bool isRowSelected_(const std::string& a_name, const Vector2i& p) const;
 
     private:
         void _dispose();
 
     private:
         Widget* m_itemContainer;
-        std::vector<std::string> m_menu;
+        nanogui::AdvancedGridLayout* m_itemLayout;
         std::unordered_map<std::string, std::function<void()>> m_items;
         std::unordered_map<std::string, ContextMenu*> m_submenus;
         std::unordered_map<std::string, nanogui::Widget*> m_labels;

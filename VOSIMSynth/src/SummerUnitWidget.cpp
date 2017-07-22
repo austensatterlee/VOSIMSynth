@@ -58,8 +58,8 @@ void synui::SummerUnitWidget::draw(NVGcontext* ctx) {
     nvgSave(ctx);
 
     nvgTranslate(ctx, mPos.x(), mPos.y());
-    Color bgColor = theme()->get("/SummerUnitWidget/bgColor", Color{ 140, 73, 191, 255 });
-    Color handleColor = theme()->get("/SummerUnitWidget/fgColor", Color{ 3, 88, 88, 255 });
+    Color bgColor = theme()->get("/SummerUnitWidget/bg-color", Color{ 140, 73, 191, 255 });
+    Color handleColor = theme()->get("/SummerUnitWidget/fg-color", Color{ 3, 88, 88, 255 });
     Color bgHighlightColor(25, 50);
     Color handleStrokeColor(0, 97);
     Color handleHighlightColor(225, 178);

@@ -49,7 +49,7 @@ void synui::CircuitWidget::draw(NVGcontext* ctx) {
 
     /* Draw background */
     nvgBeginPath(ctx);
-    nanogui::Color backgroundColor(30, 255);
+    nanogui::Color backgroundColor = theme()->get<nanogui::Color>("/CircuitWidget/bg-color", {30, 255});
     nvgRect(ctx, 0, 0, mSize.x(), mSize.y());
     nvgFillColor(ctx, backgroundColor);
     nvgFill(ctx);
@@ -594,7 +594,7 @@ bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector
             cm->addMenuItem("Delete", [&cw, wire]()
             {
                 cw.deleteConnection(wire->getInputPort(), wire->getOutputPort());
-            });
+            }, ENTYPO_ICON_TRASH);
 
             const auto& uf = syn::UnitFactory::instance();
             insert_cm->addMenuItem(uf.getPrototypeName(syn::SummerUnit::classIdentifier()), [&cw, wire, mousePos]()

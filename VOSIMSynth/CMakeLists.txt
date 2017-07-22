@@ -3,6 +3,10 @@ project(VOSIMSynth)
 
 option(VOSIMSYNTH_BUILD_VST "Build as a VST?" TRUE)
 
+if(MSVC)
+  add_compile_options("$<$<CONFIG:Debug>:/bigobj>")
+endif()
+
 if(VOSIMSYNTH_BUILD_VST)
   list(APPEND VOSIMSYNTH_DEFS -DVST_API -DDLL_BUILD -DVST_FORCE_DEPRECATED -DVOSIMSYNTH_SHARED)
 endif()

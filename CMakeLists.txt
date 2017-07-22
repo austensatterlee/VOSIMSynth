@@ -38,10 +38,10 @@ set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 #  Source/library directory options
-setenv(PYTHON_EXECUTABLE_32 "C:/Python27_32/python.exe" CACHE PATH "")
-setenv(PYTHON_EXECUTABLE_64 "C:/Python27/python.exe" CACHE PATH "")
 setenv(LIBS_DIR ${CMAKE_SOURCE_DIR}/libs CACHE PATH "")
 
+setenv(PYTHON_EXECUTABLE_32 "C:/Python27_32/python.exe" CACHE PATH "")
+setenv(PYTHON_EXECUTABLE_64 "C:/Python27/python.exe" CACHE PATH "")
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
   set(ARCH 64)
   set(LIBS_DIR_SYS "C:/Program Files")
@@ -148,11 +148,6 @@ if(NOT FFTS_RELEASE_LIBRARY STREQUAL "FFTS_RELEASE_LIBRARY-NOTFOUND" AND NOT FFT
 endif()
 
 ##
-# pybind11
-##
-add_subdirectory(${LIBS_DIR}/pybind11)
-
-##
 # nanogui
 ##
 # Disable building extras we won't need (pure C++ project)
@@ -204,6 +199,10 @@ endif()
 # JSON for Modern C++
 ##
 include_directories(${LIBS_DIR}/json)
+
+##
+# pybind11
+add_subdirectory(${LIBS_DIR}/pybind11)
 
 ##
 # Add VOSIMLib
