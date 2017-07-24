@@ -61,7 +61,6 @@ namespace synui {
 
         void setDrawCallback(DrawFunc f) { m_drawCallback = f; }
         DrawFunc getDrawCallback() const { return m_drawCallback; }
-
     private:
         DrawFunc m_drawCallback;
     };
@@ -208,7 +207,7 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget) {
 
     helper->addSerializableVariable<int>("grid_spacing", "Grid spacing", [this](const int& s) {
         m_circuitWidget->resizeGrid(s);
-        m_screen->performLayout();
+        m_circuitWidget->performLayout(m_screen->nvgContext());
     }, [this]() {
         int gs = m_circuitWidget->gridSpacing();
         return gs;
