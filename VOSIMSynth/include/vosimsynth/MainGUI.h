@@ -130,7 +130,8 @@ namespace synui {
         CircuitWidget* circuitWidget() const { return m_circuitWidget; }
     protected:
         void createUnitSelector_(nanogui::Widget* a_widget);
-        void createSettingsEditor_(nanogui::Widget* a_widget, SerializableFormHelper* a_fh);
+        void createSettingsEditor_(nanogui::Widget* a_widget);
+        void createThemeEditor_(nanogui::Widget* a_widget);
         void createOscilloscopeViewer_(nanogui::Widget* a_widget);
 
     private:
@@ -138,11 +139,12 @@ namespace synui {
         nanogui::ref<nanogui::Screen> m_screen;
         syn::VoiceManager* m_vm;
 
+        // Forms
+        std::shared_ptr<SerializableFormHelper> m_settingsFormHelper;
+        std::shared_ptr<SerializableFormHelper> m_themeFormHelper;
+
         // Widgets
         EnhancedWindow* m_buttonPanel;
-        EnhancedWindow* m_settingsEditor;
-        std::shared_ptr<SerializableFormHelper> m_settingsFormHelper;
-        EnhancedWindow* m_oscViewer;
 
         EnhancedWindow* m_sidePanelL;
         nanogui::TabWidget* m_tabWidget;

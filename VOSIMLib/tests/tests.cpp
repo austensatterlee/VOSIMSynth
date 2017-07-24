@@ -198,6 +198,5 @@ TEST_CASE("IntMap access by index", "[IntMap]") {
     REQUIRE(nc.empty());
 }
 
-TEST_CASE("GainUnit automatic input port creation & removal", "[GainUnit]") {
-
+TEST_CASE("Circuit", "[Circuit]") {
 }

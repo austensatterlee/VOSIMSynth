@@ -51,7 +51,7 @@ namespace synui {
     }
 
     ContextMenu* ContextMenu::addSubMenu(const std::string& a_name, int a_icon) {
-        m_submenus[a_name] = new ContextMenu(this, true);
+        m_submenus[a_name] = new ContextMenu(this, false);
         auto lbl1 = new nanogui::Label(m_itemContainer, a_name);
         auto lbl2 = new nanogui::Label(m_itemContainer, nanogui::utf8(ENTYPO_ICON_CHEVRON_THIN_RIGHT).data(), "icons");
         m_labels[a_name] = lbl1;
@@ -119,10 +119,11 @@ namespace synui {
         if (!down) {
             for (const auto& w : m_labels) {
                 if (isRowSelected_(w.first, mousePos) && !isSubMenu_(w.first)) {
-                    if (m_items[w.first]) {
-                        m_items[w.first]();
-                    }
+                    std::function<void()> cb = m_items[w.first];
                     deactivate();
+                    if (cb) {
+                        cb();
+                    }
                     return true;
                 }
             }

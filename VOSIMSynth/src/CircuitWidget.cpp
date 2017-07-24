@@ -672,20 +672,22 @@ void synui::cwstate::IdleState::draw(CircuitWidget& cw, NVGcontext* ctx) {
 
 void synui::cwstate::DrawingWireState::draw(CircuitWidget& cw, NVGcontext* ctx) {
     Vector2i mousePos = cw.screen()->mousePos() - cw.absolutePosition();
-    m_wire->updateStartAndEndPositions(mousePos);
-    m_wire->draw(ctx);
-    // Draw an overlay when dragging one wire onto another
     Grid2DPoint mousePt = cw.grid().fromPixel(mousePos, cw.gridSpacing());
-    if (cw.grid().get(mousePt).contains(CircuitWidget::GridCell::State::Wire) && m_startedFromOutput) {
-        Vector2i fixedMousePos = cw.grid().toPixel(mousePt, cw.gridSpacing());
-        nvgBeginPath(ctx);
-        nvgStrokeColor(ctx, nanogui::Color(200, 0, 0, 200));
-        nvgMoveTo(ctx, fixedMousePos.x() - cw.gridSpacing() * 0.5, fixedMousePos.y() - cw.gridSpacing() * 0.5);
-        nvgLineTo(ctx, fixedMousePos.x() + cw.gridSpacing() * 0.5, fixedMousePos.y() + cw.gridSpacing() * 0.5);
-        nvgMoveTo(ctx, fixedMousePos.x() + cw.gridSpacing() * 0.5, fixedMousePos.y() - cw.gridSpacing() * 0.5);
-        nvgLineTo(ctx, fixedMousePos.x() - cw.gridSpacing() * 0.5, fixedMousePos.y() + cw.gridSpacing() * 0.5);
-        nvgStroke(ctx);
+    if (cw.grid().contains(mousePt)) {
+        m_wire->updateStartAndEndPositions(mousePos);
+        // Draw an overlay when dragging one wire onto another
+        if (cw.grid().get(mousePt).contains(CircuitWidget::GridCell::State::Wire) && m_startedFromOutput) {
+            Vector2i fixedMousePos = cw.grid().toPixel(mousePt, cw.gridSpacing());
+            nvgBeginPath(ctx);
+            nvgStrokeColor(ctx, nanogui::Color(200, 0, 0, 200));
+            nvgMoveTo(ctx, fixedMousePos.x() - cw.gridSpacing() * 0.5, fixedMousePos.y() - cw.gridSpacing() * 0.5);
+            nvgLineTo(ctx, fixedMousePos.x() + cw.gridSpacing() * 0.5, fixedMousePos.y() + cw.gridSpacing() * 0.5);
+            nvgMoveTo(ctx, fixedMousePos.x() + cw.gridSpacing() * 0.5, fixedMousePos.y() - cw.gridSpacing() * 0.5);
+            nvgLineTo(ctx, fixedMousePos.x() - cw.gridSpacing() * 0.5, fixedMousePos.y() + cw.gridSpacing() * 0.5);
+            nvgStroke(ctx);
+        }
     }
+    m_wire->draw(ctx);
 }
 
 void synui::cwstate::DrawingWireState::enter(CircuitWidget& cw, State& oldState) {

@@ -62,11 +62,6 @@ namespace synui {
         void setDrawCallback(DrawFunc f) { m_drawCallback = f; }
         DrawFunc getDrawCallback() const { return m_drawCallback; }
 
-        bool mouseMotionEvent(const Vector2i& p, const Vector2i& rel, int button, int modifiers) override {
-            Widget::mouseMotionEvent(p, rel, button, modifiers);
-            return true;
-        }
-        ;
     private:
         DrawFunc m_drawCallback;
     };
@@ -190,13 +185,13 @@ void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget) {
     }
 }
 
-void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, SerializableFormHelper* a_fh) {
+void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget) {
     TIME_TRACE
     auto layout = new nanogui::AdvancedGridLayout({ 10, 0, 10, 0 }, {});
     layout->setMargin(10);
     layout->setColStretch(2, 1);
     a_widget->setLayout(layout);
-    SerializableFormHelper* helper = a_fh;
+    SerializableFormHelper* helper = m_settingsFormHelper.get();
     helper->setWidget(a_widget);
 
     helper->addGroup("Plugin Settings");
@@ -258,19 +253,30 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
     }, [this]() {
         return m_vm->getVoiceStealPolicy();
     })->setItems({ "Oldest", "Newest", "Highest", "Lowest" });
+}
 
+void synui::MainGUI::createThemeEditor_(nanogui::Widget* a_widget) {
+    TIME_TRACE
+    auto layout = new nanogui::AdvancedGridLayout({ 10, 0, 10, 0 }, {});
+    layout->setMargin(10);
+    layout->setColStretch(2, 1);
+    a_widget->setLayout(layout);
+    SerializableFormHelper* helper = m_themeFormHelper.get();
 
+    helper->setWidget(a_widget);
 #define ADD_FH_VAR(label, type, lvalue) helper->addVariable<type>(label, [this](const type& val){ lvalue = val; }, [this](){ return lvalue; })
-    helper->addGroup("Units");
 
-    /* VOSIMSynth-related parameters */
+    helper->addGroup("CircuitWidget");
     ADD_FH_VAR("CircuitWidget/bg-color", Color, m_screen->theme()->prop("/CircuitWidget/bg-color"));
 
+    helper->addGroup("Sum");
     ADD_FH_VAR("Sum/bg-color", Color, m_screen->theme()->prop("/SummerUnitWidget/bg-color"));
     ADD_FH_VAR("Sum/fg-color", Color, m_screen->theme()->prop("/SummerUnitWidget/fg-color"));
+    helper->addGroup("Gain");
     ADD_FH_VAR("Gain/bg-color", Color, m_screen->theme()->prop("/GainUnitWidget/bg-color"));
-    ADD_FH_VAR("Gain/fg-color", Color, m_screen->theme()->prop("/GainUnitWidget/fg-color")); 
+    ADD_FH_VAR("Gain/fg-color", Color, m_screen->theme()->prop("/GainUnitWidget/fg-color"));
 
+    helper->addGroup("DefaultUnitWidget");
     ADD_FH_VAR("DefaultUnitWidget/bg-color", Color, m_screen->theme()->prop("/DefaultUnitWidget/bg-color"));
     ADD_FH_VAR("DefaultUnitWidget/title/bg-color", Color, m_screen->theme()->prop("/DefaultUnitWidget/title/bg-color"));
     ADD_FH_VAR("DefaultUnitWidget/output/bg-color", Color, m_screen->theme()->prop("/DefaultUnitWidget/output/bg-color"));
@@ -282,6 +288,7 @@ void synui::MainGUI::createSettingsEditor_(nanogui::Widget* a_widget, Serializab
     ADD_FH_VAR("DefaultUnitWidget/hovered/shadow-feather", float, m_screen->theme()->prop("/DefaultUnitWidget/hovered/shadow-feather"));
     ADD_FH_VAR("DefaultUnitWidget/hovered/shadow-color", Color, m_screen->theme()->prop("/DefaultUnitWidget/hovered/shadow-color"));
 
+    helper->addGroup("ContextMenu");
     ADD_FH_VAR("ContextMenu/text-size", int, m_screen->theme()->prop("/ContextMenu/text-size"));
     ADD_FH_VAR("ContextMenu/bg-color", Color, m_screen->theme()->prop("/ContextMenu/bg-color"));
     ADD_FH_VAR("ContextMenu/margin-color", Color, m_screen->theme()->prop("/ContextMenu/margin-color"));
@@ -459,46 +466,46 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     m_sidePanelR->setIsBackgroundWindow(true);
     m_sidePanelR->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 0));
     m_sidePanelR->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
-    Color fillColor = self->theme()->get<Color>("/window/unfocused/fill").cwiseProduct(Color(0.9f, 1.0f));
-    Color shineColor = self->theme()->prop("/border/light");
-    Color shadowColor = self->theme()->prop("/border/dark");
+        Color fillColor = self->theme()->get<Color>("/window/unfocused/fill").cwiseProduct(Color(0.9f, 1.0f));
+        Color shineColor = self->theme()->prop("/border/light");
+        Color shadowColor = self->theme()->prop("/border/dark");
 
-    nvgSave(ctx);
+        nvgSave(ctx);
 
-    nvgTranslate(ctx, self->position().x(), self->position().y());
-    nvgBeginPath(ctx);
-    nvgRoundedRect(ctx, 0, 0, self->width(), self->height(), 1.0f);
-    nvgFillColor(ctx, fillColor);
-    nvgFill(ctx);
+        nvgTranslate(ctx, self->position().x(), self->position().y());
+        nvgBeginPath(ctx);
+        nvgRoundedRect(ctx, 0, 0, self->width(), self->height(), 1.0f);
+        nvgFillColor(ctx, fillColor);
+        nvgFill(ctx);
 
-    nvgRestore(ctx);
+        nvgRestore(ctx);
 
-    self->Widget::draw(ctx);
+        self->Widget::draw(ctx);
 
-    nvgSave(ctx);
+        nvgSave(ctx);
 
 
-    nvgTranslate(ctx, self->position().x(), self->position().y());
-    nvgBeginPath(ctx);
-    nvgMoveTo(ctx, 1.25f, self->height());
-    nvgLineTo(ctx, 1.25f, 1.5f);
-    nvgLineTo(ctx, self->width(), 1.5f);
-    nvgStrokeColor(ctx, shineColor);
-    nvgStrokeWidth(ctx, 1.0f);
-    nvgLineJoin(ctx, NVG_ROUND);
-    nvgStroke(ctx);
+        nvgTranslate(ctx, self->position().x(), self->position().y());
+        nvgBeginPath(ctx);
+        nvgMoveTo(ctx, 1.25f, self->height());
+        nvgLineTo(ctx, 1.25f, 1.5f);
+        nvgLineTo(ctx, self->width(), 1.5f);
+        nvgStrokeColor(ctx, shineColor);
+        nvgStrokeWidth(ctx, 1.0f);
+        nvgLineJoin(ctx, NVG_ROUND);
+        nvgStroke(ctx);
 
-    nvgBeginPath(ctx);
-    nvgMoveTo(ctx, 0.75f, self->height());
-    nvgLineTo(ctx, 0.75f, 0.5f);
-    nvgLineTo(ctx, self->width(), 0.5f);
-    nvgStrokeColor(ctx, shadowColor);
-    nvgStrokeWidth(ctx, 1.0f);
-    nvgLineJoin(ctx, NVG_ROUND);
-    nvgStroke(ctx);
+        nvgBeginPath(ctx);
+        nvgMoveTo(ctx, 0.75f, self->height());
+        nvgLineTo(ctx, 0.75f, 0.5f);
+        nvgLineTo(ctx, self->width(), 0.5f);
+        nvgStrokeColor(ctx, shadowColor);
+        nvgStrokeWidth(ctx, 1.0f);
+        nvgLineJoin(ctx, NVG_ROUND);
+        nvgStroke(ctx);
 
-    nvgRestore(ctx);
-});
+        nvgRestore(ctx);
+    });
 
     /* Create circuit widget in right pane. */
     m_circuitWidget = new CircuitWidget(m_sidePanelR, m_window, m_unitEditorHost, a_vm);
@@ -507,56 +514,72 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     m_buttonPanel = new EnhancedWindow(m_screen, "");
     m_buttonPanel->setIsBackgroundWindow(true);
     m_buttonPanel->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
-    Color fillColor = self->theme()->get<Color>("/window/unfocused/fill").cwiseProduct(Color(0.9f, 1.0f));
+        Color fillColor = self->theme()->get<Color>("/window/unfocused/fill").cwiseProduct(Color(0.9f, 1.0f));
 
-    nvgSave(ctx);
+        nvgSave(ctx);
 
-    nvgTranslate(ctx, self->position().x(), self->position().y());
-    nvgBeginPath(ctx);
-    nvgRoundedRect(ctx, 0, 0, self->width(), self->height(), 1.0f);
-    nvgFillColor(ctx, fillColor);
-    nvgFill(ctx);
+        nvgTranslate(ctx, self->position().x(), self->position().y());
+        nvgBeginPath(ctx);
+        nvgRoundedRect(ctx, 0, 0, self->width(), self->height(), 1.0f);
+        nvgFillColor(ctx, fillColor);
+        nvgFill(ctx);
 
-    nvgRestore(ctx);
+        nvgRestore(ctx);
 
-    self->Widget::draw(ctx);
-});
+        self->Widget::draw(ctx);
+    });
     auto buttonPanelLayout = new nanogui::AdvancedGridLayout({}, {0}, 5);
     m_buttonPanel->setLayout(buttonPanelLayout);
     buttonPanelLayout->appendCol(0, 1.0);   
 
     /* Create oscilloscope viewer window. */
-    m_oscViewer = new EnhancedWindow(m_screen, "Visualizers");
-    m_oscViewer->setVisible(false);
-    m_oscViewer->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
-    auto oscScrollPanel = m_oscViewer->add<nanogui::VScrollPanel>();
-    oscScrollPanel->setFixedHeight({ 400 });
+    auto oscViewer = new EnhancedWindow(m_screen, "Visualizers");
+    oscViewer->setVisible(false);
+    oscViewer->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
+    auto oscScrollPanel = oscViewer->add<nanogui::VScrollPanel>();
+    oscScrollPanel->setMaxHeight({ 400 });
     createOscilloscopeViewer_(oscScrollPanel);
     /* Add a button for opening the oscilloscope viewer window. */
     buttonPanelLayout->appendCol(0, 0);
-    auto osc_viewer_callback = [this]() {
-        m_screen->centerWindow(m_oscViewer);
+    auto osc_viewer_callback = [this, oscViewer]() {
+        m_screen->centerWindow(oscViewer);
     };
-    auto osc_viewer_button = m_oscViewer->createOpenButton(m_buttonPanel, "", ENTYPO_ICON_AREA_GRAPH, osc_viewer_callback);
+    auto osc_viewer_button = oscViewer->createOpenButton(m_buttonPanel, "", ENTYPO_ICON_AREA_GRAPH, osc_viewer_callback);
     buttonPanelLayout->setAnchor(osc_viewer_button, nanogui::AdvancedGridLayout::Anchor{buttonPanelLayout->colCount() - 1,0});
 
     /* Create the settings editor window. */
-    m_settingsEditor = new EnhancedWindow(m_screen, "Settings");
-    m_settingsEditor->setVisible(false);
-    auto settingsScrollPanel = new nanogui::VScrollPanel(m_settingsEditor);
-    settingsScrollPanel->setFixedHeight(400);
-    m_settingsEditor->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
+    auto settingsEditor = new EnhancedWindow(m_screen, "Settings");
+    settingsEditor->setVisible(false);
+    auto settingsScrollPanel = new nanogui::VScrollPanel(settingsEditor);
+    settingsScrollPanel->setMaxHeight(400);
+    settingsEditor->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
     m_settingsFormHelper = std::make_shared<SerializableFormHelper>(m_screen);
-    createSettingsEditor_(new nanogui::Widget(settingsScrollPanel), m_settingsFormHelper.get());
-
+    createSettingsEditor_(new nanogui::Widget(settingsScrollPanel));
     /* Add a button for openning the settings editor window. */
     buttonPanelLayout->appendCol(0, 0);
-    auto settings_callback = [this]() {
+    auto settings_callback = [this, settingsEditor]() {
         m_settingsFormHelper->refresh();
-        m_screen->centerWindow(m_settingsEditor);
+        m_screen->centerWindow(settingsEditor);
     };
-    auto settings_button = m_settingsEditor->createOpenButton(m_buttonPanel, "", ENTYPO_ICON_COG, settings_callback);
+    auto settings_button = settingsEditor->createOpenButton(m_buttonPanel, "", ENTYPO_ICON_COG, settings_callback);
     buttonPanelLayout->setAnchor(settings_button, nanogui::AdvancedGridLayout::Anchor{buttonPanelLayout->colCount() - 1,0});
+
+    /* Create the theme editor window. */
+    auto themeEditor = new EnhancedWindow(m_screen, "Theme");
+    themeEditor->setVisible(false);
+    auto themeScrollPanel = new nanogui::VScrollPanel(themeEditor);
+    themeScrollPanel->setMaxHeight(400);
+    themeEditor->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
+    m_themeFormHelper = std::make_shared<SerializableFormHelper>(m_screen);
+    createThemeEditor_(new nanogui::Widget(themeScrollPanel));
+    /* Add a button for openning the settings editor window. */
+    buttonPanelLayout->appendCol(0, 0);
+    auto theme_callback = [this, themeEditor]() {
+        m_themeFormHelper->refresh();
+        m_screen->centerWindow(themeEditor);
+    };
+    auto theme_button = themeEditor->createOpenButton(m_buttonPanel, "", ENTYPO_ICON_PALETTE, theme_callback);
+    buttonPanelLayout->setAnchor(theme_button, nanogui::AdvancedGridLayout::Anchor{ buttonPanelLayout->colCount() - 1,0 });
 
     m_screen->performLayout();
 }
