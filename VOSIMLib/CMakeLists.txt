@@ -98,9 +98,9 @@ endif()
 ##
 # Add pybind11 target
 ##
-
 optionenv(VOSIMLIB_BUILD_PYTHON "Build python library?" TRUE)
 if(VOSIMLIB_BUILD_PYTHON)
+    add_subdirectory(libs/pybind11)
     pybind11_add_module(pyVOSIMLib ${VOSIMLIB_PYTHON_SRCS})
     target_link_libraries(pyVOSIMLib PRIVATE VOSIMLib)
 endif()

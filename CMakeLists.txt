@@ -201,10 +201,6 @@ endif()
 include_directories(${LIBS_DIR}/json)
 
 ##
-# pybind11
-add_subdirectory(${LIBS_DIR}/pybind11)
-
-##
 # Add VOSIMLib
 ##
 add_subdirectory(${VOSIMLIB_DIR} VOSIMLib)
