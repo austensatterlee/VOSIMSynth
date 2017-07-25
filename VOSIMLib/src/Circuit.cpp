@@ -218,6 +218,8 @@ namespace syn
         a_unit->setTempo(tempo());
         a_unit->setBufferSize(getBufferSize());
         a_unit->m_midiData = m_midiData;
+        for (auto param : a_unit->m_parameters)
+            a_unit->notifyParameterChanged(param.getId());
         _recomputeGraph();
         return true;
     }

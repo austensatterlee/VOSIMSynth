@@ -28,11 +28,12 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 #include <vosimlib/Unit.h>
 #include <vosimlib/VoiceManager.h>
-#include <nanogui/graph.h>
+#include <vosimlib/CircularView.h>
+#include <nanogui/widget.h>
+
+#define MAX_SCOPE_BUFFER_SIZE 960000
 
 namespace synui {
-    class OscilloscopeWidget;
-
     /**
      * Collects input samples into a buffer to be displayed by an OscilloscopeWidget.
      */
@@ -41,6 +42,7 @@ namespace synui {
     public:
         enum Parameter {
             pBufferSize,
+            pIsPeriodic,
             pNumPeriods
         };
 
@@ -51,76 +53,110 @@ namespace synui {
             OscilloscopeUnit(a_rhs.name()) {}
 
         int getNumBuffers() const;
-        Eigen::Map<const Eigen::VectorXf> OscilloscopeUnit::getBuffer(int a_bufIndex) const;
+        syn::CircularView<double> OscilloscopeUnit::getBuffer(int a_bufIndex) const;
 
-        void reset() override {};
+        void reset() override;
 
     protected:
         void onParamChange_(int a_paramId) override;
+        void onNoteOn_() override;
         void process_() override;
 
     private:
-        void _sync();
+        void _processPeriodic();
+        void _processNonPeriodic();
+        void _syncPeriodic();
+        void _syncNonPeriodic();
 
     private:
-        friend class OscilloscopeWidget;
-        int m_bufferIndex;
+        int m_readIndex;
+        int m_writeIndex;
         int m_bufferSize;
         int m_numBuffers;
         int m_iPhase;
 
-        vector<Eigen::VectorXf> m_buffers;
+        vector<Eigen::VectorXd> m_buffers;
 
         double m_lastPhase;
-        int m_lastSync;
+        int m_samplesSinceLastSync;
         int m_syncCount;
     };
 
     /**
      * Displays the contents of an OscilloscopeUnit on a graph.
      */
-    class OscilloscopeWidget : public nanogui::Graph {
+    class OscilloscopeWidget : public nanogui::Widget {
         friend class OscilloscopeUnit;
+        using Color = nanogui::Color;
     public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
         OscilloscopeWidget(Widget* a_parent, syn::VoiceManager* a_vm, int a_unitId)
-            : Graph(a_parent, a_vm->getPrototypeCircuit().getUnit(a_unitId).name()),
+            : Widget(a_parent),
               m_vm(a_vm),
               m_unitId(a_unitId),
               m_yMin(-1.0),
               m_yMax(1.0),
-              m_autoAdjustSpeed(60.0) {}
+              m_autoAdjustSpeed(60.0),
+              m_values(),
+              m_leftMargin(20),
+              m_bottomMargin(20) {}
 
         void draw(NVGcontext* ctx) override;
         void drawGrid(NVGcontext* ctx);
 
+        Eigen::Vector2i OscilloscopeWidget::preferredSize(NVGcontext *) const override { return Eigen::Vector2i(400, 150); }
 
-        Eigen::Vector2i OscilloscopeWidget::preferredSize(NVGcontext *) const override {
-            return Eigen::Vector2i(400, 150);
-        }
+        const string &caption() const { return m_caption; }
+        void setCaption(const string &caption) { m_caption = caption; }
 
-        /**
-         * Smoothly update the y-axis viewing limits according to the auto adjust speed. Should be called
-         * every time the buffer is updated.
-         */
-        void updateYBounds(float a_yMin, float a_yMax);
+        const string &header() const { return m_header; }
+        void setHeader(const string &header) { m_header = header; }
 
-        /**
-         * Transform a signal point to a screen point.
-         */
-        float toScreen(float a_yPt);
-        
-        /**
-         * Transform a screen point to a signal point.
-         */
-        float fromScreen(float a_yScreen);
+        const string &footer() const { return m_footer; }
+        void setFooter(const string &footer) { m_footer = footer; }
+
+        const Color &backgroundColor() const { return m_bgColor; }
+        void setBackgroundColor(const Color &backgroundColor) { m_bgColor = backgroundColor; }
+
+        const Color &foregroundColor() const { return m_fgColor; }
+        void setForegroundColor(const Color &foregroundColor) { m_fgColor = foregroundColor; }
+
+        const Color &textColor() const { return m_textColor; }
+        void setTextColor(const Color &textColor) { m_textColor = textColor; }
+
+        syn::CircularView<double> values() const { return m_values; }
+        void setValues(const syn::CircularView<double>& values) { m_values = values; }
 
         int getUnitId() const { return m_unitId; }
         void setUnitId(int a_id) { m_unitId = a_id; }
 
     protected:
+        /**
+         * Smoothly update the y-axis viewing limits according to the auto adjust speed. Should be called
+         * every time the buffer is updated.
+         */
+        void updateYBounds_(float a_yMin, float a_yMax);
+
+        /**
+         * Transform a signal point to a screen point.
+         */
+        float toScreen_(float a_yPt);
+        
+        /**
+         * Transform a screen point to a signal point.
+         */
+        float fromScreen_(float a_yScreen);
+
+    protected:
         syn::VoiceManager* m_vm;
         int m_unitId;
-        float m_yMin, m_yMax;
-        float m_autoAdjustSpeed;
+        double m_yMin, m_yMax;
+        double m_autoAdjustSpeed;
+        syn::CircularView<double> m_values;
+
+        int m_leftMargin, m_bottomMargin;
+        string m_caption, m_header, m_footer;
+        nanogui::Color m_bgColor, m_fgColor, m_textColor;
     };
 }
