@@ -78,11 +78,13 @@ synui::MainGUI::operator json() const {
 synui::MainGUI* synui::MainGUI::load(const json& j) {
     TIME_TRACE
     // Load theme
-    m_screen->theme()->update(j["theme"]);
+    if(j.find("theme")!=j.end())
+        m_screen->theme()->update(j.at("theme"));
     // Load settings
-    m_settingsFormHelper->load(j["settings"]);
+    if (j.find("settings") != j.end())
+        m_settingsFormHelper->load(j.at("settings"));
     // Load circuit
-    m_circuitWidget->load(j["circuit"]);
+    m_circuitWidget->load(j.at("circuit"));
     return this;
 }
 
