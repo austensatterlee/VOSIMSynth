@@ -33,6 +33,7 @@
 #include "vosimlib/DSPMath.h"
 #include "vosimlib/lut_tables.h"
 #include <vector>
+#include <cassert>
 
 namespace syn {
 
@@ -64,13 +65,11 @@ namespace syn {
 
             int intPart = index;
             double fracPart = index - intPart;
+            assert(intPart <= size - 1);
             if (intPart < size - 1) {
                 return m_data[intPart] + (m_data[intPart + 1] - m_data[intPart]) * fracPart;
             }
-            if (intPart == size - 1) {
-                return m_data[intPart];
-            }
-            throw "Phase out of bounds.";
+            return m_data[intPart];
         }
 
         double operator[](int index) const {

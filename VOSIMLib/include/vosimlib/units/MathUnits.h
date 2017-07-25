@@ -108,7 +108,6 @@ namespace syn {
 
     protected:
         void process_() override;
-        void onInputConnection_(int a_inputPort) override;
     private:
         int m_pBias;
     };
@@ -127,7 +126,6 @@ namespace syn {
 
     protected:
         void process_() override;
-        void onInputConnection_(int a_inputPort) override;
     private:
         int m_pGain;
     };

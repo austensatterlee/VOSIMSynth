@@ -119,26 +119,12 @@ void syn::SummerUnit::process_()
     BEGIN_PROC_FUNC
         double output = param(m_pBias).getDouble();
         for (int i = 0; i < numInputs(); i++) {
-            output += READ_INPUT(inputs().ids()[i]);
+            int id = inputs().ids()[i];
+            if (isConnected(id))
+                output += READ_INPUT(id);
         }
         WRITE_OUTPUT(0, output);
     END_PROC_FUNC
-}
-
-void syn::SummerUnit::onInputConnection_(int a_inputPort)
-{
-    // Create a new input if the current ones are all in use.
-    int numConnectedInputs = 0;
-    for(int  i=0;i<numInputs();i++)
-    {
-        if (inputSource(inputs().ids()[i])!=nullptr)
-            numConnectedInputs++;
-    }
-    if(numConnectedInputs==numInputs() && numInputs()<8)
-    {
-        int nextId = inputs().getUnusedId();
-        addInput_(nextId, std::to_string(nextId+1), 0.0);
-    }
 }
 
 syn::GainUnit::GainUnit(const string& a_name) :
@@ -157,28 +143,14 @@ syn::GainUnit::GainUnit(const GainUnit& a_rhs) :
 void syn::GainUnit::process_()
 {
     BEGIN_PROC_FUNC
-    double output = param(m_pGain).getDouble();    
-    for (int i = 0; i < numInputs(); i++) {
-        output *= READ_INPUT(inputs().ids()[i]);
-    }
-    WRITE_OUTPUT(0, output);
+        double output = param(m_pGain).getDouble();
+        for (int i = 0; i < numInputs(); i++) {
+            int id = inputs().ids()[i];
+            if (isConnected(id))
+                output *= READ_INPUT(id);
+        }
+        WRITE_OUTPUT(0, output);
     END_PROC_FUNC
-}
-
-void syn::GainUnit::onInputConnection_(int a_inputPort)
-{
-     // Create a new input if the current ones are all in use.
-    int numConnectedInputs = 0;
-    for(int  i=0;i<numInputs();i++)
-    {
-        if (inputSource(inputs().ids()[i])!=nullptr)
-            numConnectedInputs++;
-    }
-    if(numConnectedInputs==numInputs() && numInputs()<8)
-    {
-        int nextId = inputs().getUnusedId();
-        addInput_(nextId, std::to_string(nextId+1), 1.0);
-    }
 }
 
 syn::ConstantUnit::ConstantUnit(const string& a_name) :

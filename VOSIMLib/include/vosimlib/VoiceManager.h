@@ -99,6 +99,8 @@ namespace syn {
 
         void sendControlChange(int a_cc, double a_newvalue);
 
+        void sendPitchWheelChange(double a_newvalue);
+
         void setMaxVoices(int a_newMax);
 
         vector<int> getActiveVoiceIndices() const;

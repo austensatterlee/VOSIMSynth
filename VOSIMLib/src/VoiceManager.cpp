@@ -119,6 +119,14 @@ namespace syn
         m_instrument.notifyMidiControlChange(a_cc, a_value);
     }
 
+    void VoiceManager::sendPitchWheelChange(double a_value) {
+        // Send pitch wheel change to all voices
+        for (int i = 0; i < m_circuits.size(); i++) {
+            m_circuits[i].notifyPitchWheelChange(a_value);
+        }
+        m_instrument.notifyPitchWheelChange(a_value);
+    }
+
     void VoiceManager::setMaxVoices(int a_newMax) {
         if (a_newMax < 1)
             a_newMax = 1;

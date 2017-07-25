@@ -348,7 +348,7 @@ namespace syn
 
         virtual void onMidiControlChange_(int a_cc, double a_value) {};
 
-        virtual void onPitchBendChange_(double a_value) {};
+        virtual void onPitchWheelChange_(double a_value) {};
 
         virtual void onInputConnection_(int a_inputPort) {};
 

@@ -426,6 +426,8 @@ namespace syn
 
     void Circuit::notifyMidiControlChange(int a_cc, double a_value) { onMidiControlChange_(a_cc, a_value); }
 
+    void Circuit::notifyPitchWheelChange(double a_value) { onPitchWheelChange_(a_value); }
+
     void Circuit::setBufferSize(int a_bufferSize)
     {
         Unit::setBufferSize(a_bufferSize);

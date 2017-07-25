@@ -61,6 +61,9 @@ namespace syn {
             else if (status == IMidiMsg::kControlChange) {
                 m_vm.sendControlChange(midiMessage->ControlChangeIdx(), midiMessage->ControlChange(midiMessage->ControlChangeIdx()));
             }
+            else if (status == IMidiMsg::kPitchWheel) {
+                m_vm.sendPitchWheelChange(midiMessage->PitchWheel());
+            }
             m_midiQueue.Remove();
         }
         m_offset++;

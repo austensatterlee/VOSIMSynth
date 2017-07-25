@@ -135,6 +135,7 @@ namespace syn
         Unit* const* getProcGraph() const;
 
         void notifyMidiControlChange(int a_cc, double a_value);
+        void notifyPitchWheelChange(double a_value);
 
         void setBufferSize(int a_bufferSize) override;
 
