@@ -185,8 +185,10 @@ void synui::MainWindow::load(const json& j)
 {
     TIME_TRACE
     m_guiState = j;
-    if (m_gui)
+    if (m_gui) {
         m_gui->load(j);
+        m_guiState = m_gui->operator json();
+    }
 }
 
 void synui::MainWindow::reset()
