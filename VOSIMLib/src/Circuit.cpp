@@ -392,6 +392,11 @@ namespace syn
         for (int i = 0; i < m_units.size(); i++) { m_units[unitIndices[i]]->onMidiControlChange_(a_cc, a_value); }
     }
 
+    void Circuit::onPitchWheelChange_(double a_value) {
+        const int* unitIndices = m_units.ids();
+        for (int i = 0; i < m_units.size(); i++) { m_units[unitIndices[i]]->onPitchWheelChange_(a_value); }
+    }
+
     void Circuit::onInputConnection_(int a_inputPort) { m_inputUnit->connectInput(a_inputPort, &readInput(a_inputPort, 0)); }
 
     void Circuit::onInputDisconnection_(int a_inputPort) { m_inputUnit->disconnectInput(a_inputPort); }

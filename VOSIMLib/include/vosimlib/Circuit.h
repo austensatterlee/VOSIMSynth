@@ -188,6 +188,8 @@ namespace syn
 
         void onMidiControlChange_(int a_cc, double a_value) override;
 
+        void onPitchWheelChange_(double a_value) override;
+
         void onInputConnection_(int a_inputPort) override;
 
         void onInputDisconnection_(int a_inputPort) override;

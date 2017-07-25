@@ -24,7 +24,7 @@ namespace syn {
     void MIDIReceiver::onMessageReceived(IMidiMsg* midiMessage) {
         IMidiMsg::EStatusMsg status = midiMessage->StatusMsg();
         // We're only interested in Note On/Off messages (not CC, pitch, etc.)
-        if (status == IMidiMsg::kControlChange || status == IMidiMsg::kNoteOn || status == IMidiMsg::kNoteOff)
+        if (status == IMidiMsg::kControlChange || status == IMidiMsg::kNoteOn || status == IMidiMsg::kNoteOff || status == IMidiMsg::kPitchWheel)
             m_midiQueue.Add(midiMessage);
     }
 

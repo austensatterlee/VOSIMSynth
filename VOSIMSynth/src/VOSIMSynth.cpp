@@ -157,25 +157,25 @@ void VOSIMSynth::registerUnits()
     syn::UnitFactory& uf = syn::UnitFactory::instance();
     uf.addUnitPrototype<syn::BasicOscillatorUnit>("Oscillators", "basic");
     uf.addUnitPrototype<syn::VosimOscillator>("Oscillators", "vosim");
-    uf.addUnitPrototype<syn::FormantOscillator>("Oscillators", "formant");
+    uf.addUnitPrototype<syn::FormantOscillator>("Oscillators", "fmt");
 
     uf.addUnitPrototype<syn::ADSREnvelope>("Modulators", "ADSR");
     uf.addUnitPrototype<syn::LFOOscillatorUnit>("Modulators", "LFO");
 
-    uf.addUnitPrototype<syn::StateVariableFilter>("Filters", "svf");
-    uf.addUnitPrototype<syn::TrapStateVariableFilter>("Filters", "tsvf");
-    uf.addUnitPrototype<syn::LadderFilterA>("Filters", "ldrA");
-    uf.addUnitPrototype<syn::LadderFilterB>("Filters", "ldrB");
+    uf.addUnitPrototype<syn::StateVariableFilter>("Filters", "SVF");
+    uf.addUnitPrototype<syn::TrapStateVariableFilter>("Filters", "TSVF");
+    uf.addUnitPrototype<syn::LadderFilterA>("Filters", "LdrA");
+    uf.addUnitPrototype<syn::LadderFilterB>("Filters", "LdrB");
 
     uf.addUnitPrototype<syn::OnePoleLPUnit>("Filters", "lag");
     uf.addUnitPrototype<syn::FollowerUnit>("Filters", "follow");
-    uf.addUnitPrototype<syn::DCRemoverUnit>("Filters", "dc");
+    uf.addUnitPrototype<syn::DCRemoverUnit>("Filters", "DC");
     
     uf.addUnitPrototype<syn::SummerUnit>("Math", "sum");
     uf.addUnitPrototype<syn::GainUnit>("Math", "gain");
     uf.addUnitPrototype<syn::LerpUnit>("Math", "affine");
     uf.addUnitPrototype<syn::RectifierUnit>("Math", "rect");
-    uf.addUnitPrototype<syn::QuantizerUnit>("Math", "quantize");
+    uf.addUnitPrototype<syn::QuantizerUnit>("Math", "quant");
     uf.addUnitPrototype<syn::PanningUnit>("Math", "pan");
     uf.addUnitPrototype<syn::SwitchUnit>("Math", "switch");
     uf.addUnitPrototype<syn::ConstantUnit>("Math", "const");
@@ -193,7 +193,7 @@ void VOSIMSynth::registerUnits()
     uf.addUnitPrototype<syn::MidiCCUnit>("MIDI", "CC");
     uf.addUnitPrototype<syn::VoiceIndexUnit>("MIDI", "voice");
     
-    uf.addUnitPrototype<synui::OscilloscopeUnit>("Visualizers", "osc");
+    uf.addUnitPrototype<synui::OscilloscopeUnit>("Visualizers", "scope");
 
     uf.addUnitPrototype<syn::Circuit>("", "circuit");
     uf.addUnitPrototype<syn::InputUnit>("", "in");
