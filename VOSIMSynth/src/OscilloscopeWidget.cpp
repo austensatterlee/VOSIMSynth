@@ -1,4 +1,5 @@
 #include "vosimsynth/widgets/OscilloscopeWidget.h"
+#include "vosimsynth/VOSIMTheme.h"
 #include <vosimlib/DSPMath.h>
 #include <nanovg.h>
 #include <nanogui/screen.h>
@@ -7,12 +8,15 @@ namespace synui {
     OscilloscopeUnit::OscilloscopeUnit(const string& a_name)
         :
         Unit(a_name),
-        m_bufferIndex(0),
+        m_readIndex(0),
+        m_writeIndex(0),
         m_numBuffers(1),
         m_lastPhase(0.0),
-        m_lastSync(0),
-        m_syncCount(0) {
-        addParameter_(pBufferSize, syn::UnitParameter("buffer size", 2, 96000, 256));
+        m_samplesSinceLastSync(0),
+        m_syncCount(0) 
+    {
+        addParameter_(pBufferSize, syn::UnitParameter("buffer size", 2, MAX_SCOPE_BUFFER_SIZE, 256, syn::UnitParameter::Samples));
+        addParameter_(pIsPeriodic, syn::UnitParameter("periodic", true));
         addParameter_(pNumPeriods, syn::UnitParameter("periods", 1, 16, 1));
         m_bufferSize = param(pBufferSize).getInt();
         m_buffers.resize(m_numBuffers);
@@ -21,51 +25,107 @@ namespace synui {
             m_buffers[i].resize(param(pBufferSize).getMax());
             m_buffers[i].fill(0.0f);
         }
-        m_iPhase = addInput_("ph");        
+        m_iPhase = addInput_("sync");
     }
 
     int OscilloscopeUnit::getNumBuffers() const {
         return m_buffers.size();
     }
 
-    Eigen::Map<const Eigen::VectorXf> OscilloscopeUnit::getBuffer(int a_bufIndex) const {        
-        int bufSize = inputSource(a_bufIndex) ? m_bufferSize : 1;
-        Eigen::Map<const Eigen::VectorXf> bufView(m_buffers[a_bufIndex].data(), bufSize);
-        return bufView;
+    syn::CircularView<double> OscilloscopeUnit::getBuffer(int a_bufIndex) const {        
+        return { m_buffers[a_bufIndex].data(), (int)m_buffers[a_bufIndex].size(), m_bufferSize, m_readIndex };
+    }
+
+    void OscilloscopeUnit::reset() {
+        m_writeIndex = 0;
+        m_samplesSinceLastSync = 0;
+        m_lastPhase = 0.0;
+        m_syncCount = 0;
+        for (int i = 0; i < m_numBuffers; i++) {
+            m_buffers[i].fill(0.0f);
+        }
     }
 
     void OscilloscopeUnit::onParamChange_(int a_paramId) {
-        if (a_paramId == pBufferSize) {
+        switch (a_paramId) {
+        case pBufferSize:
+        {
             int newBufferSize = param(pBufferSize).getInt();
-            m_bufferIndex = syn::WRAP(m_bufferIndex, newBufferSize);
+            m_writeIndex = syn::WRAP(m_writeIndex, newBufferSize);
             m_bufferSize = newBufferSize;
+            break;
         }
+        case pIsPeriodic:
+        {
+            param(pNumPeriods).setVisible(param(pIsPeriodic).getBool());
+            break;
+        }
+        default: break;
+        }
+    }
+
+    void OscilloscopeUnit::onNoteOn_() {
+        if (!param(pIsPeriodic).getBool() && !isConnected(m_iPhase))
+            _syncNonPeriodic();
     }
 
     void OscilloscopeUnit::process_() {
         BEGIN_PROC_FUNC
-        double phase = READ_INPUT(m_iPhase);
-        if (phase - m_lastPhase < -0.5) {
-            _sync();
-        }
-        m_lastSync++;
-        m_lastPhase = phase;
-        for (int i = 0; i < m_buffers.size(); i++) {
-            m_buffers[i][m_bufferIndex] = READ_INPUT(i);
-        }
-        m_bufferIndex = syn::WRAP(m_bufferIndex + 1, m_bufferSize);
+            // Read data into buffers and increment buffer pointer
+            for (int i = 0; i < m_buffers.size(); i++) {
+                m_buffers[i][m_writeIndex] = READ_INPUT(i);
+            }
+            if (param(pIsPeriodic).getBool())
+                _processPeriodic();
+            else
+                _processNonPeriodic();
         END_PROC_FUNC
     }
 
-
-    void OscilloscopeUnit::_sync() {
-        m_syncCount++;
-        if (m_syncCount >= param(pNumPeriods).getInt()) {
-            setParam(pBufferSize, m_lastSync);
-            m_bufferIndex = 0;
-            m_lastSync = 0;
-            m_syncCount = 0;
+    void OscilloscopeUnit::_processPeriodic() {
+        double phase = READ_INPUT(m_iPhase);
+        // sync on phase reset
+        if (phase - m_lastPhase < -0.5) {
+            _syncPeriodic();
         }
+        m_samplesSinceLastSync++;
+        m_lastPhase = phase;
+        m_readIndex = 0;
+        m_writeIndex = syn::WRAP<int>(m_writeIndex + 1, m_bufferSize);
+    }
+
+    void OscilloscopeUnit::_processNonPeriodic() {        
+        double phase = READ_INPUT(m_iPhase);
+        // sync on falling edge
+        if (phase - m_lastPhase < -0.5) {
+            _syncNonPeriodic();
+        }
+        m_lastPhase = phase;
+        m_readIndex = syn::WRAP<int>(m_writeIndex + 1 - m_bufferSize, MAX_SCOPE_BUFFER_SIZE);
+        m_writeIndex = syn::WRAP<int>(m_writeIndex + 1, MAX_SCOPE_BUFFER_SIZE);
+    }
+
+    void OscilloscopeUnit::_syncPeriodic() {
+        m_syncCount++;
+        int numPeriods = param(pNumPeriods).getInt();
+        if (m_syncCount >= numPeriods) {
+            double bufSize = m_samplesSinceLastSync;
+            double period = m_samplesSinceLastSync * (1.0 / numPeriods);
+            // Try to force number of periods so that buffer size is in range.
+            while (bufSize > param(pBufferSize).getMax() && numPeriods>1) {
+                bufSize -= period;
+                numPeriods--;
+            }
+            setParam(pBufferSize, bufSize);
+            setParam(pNumPeriods, numPeriods);
+            m_samplesSinceLastSync = 0;
+            m_syncCount = 0;
+            m_writeIndex = 0;
+        }
+    }
+
+    void OscilloscopeUnit::_syncNonPeriodic() {
+        m_writeIndex = 0;
     }
 
     void OscilloscopeWidget::draw(NVGcontext* ctx) {
@@ -74,12 +134,14 @@ namespace synui {
         if (unitClassId == OscilloscopeUnit::classIdentifier()) {
             const OscilloscopeUnit* unit = static_cast<const OscilloscopeUnit*>(&m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()));
             this->setCaption(unit->name());
-            Eigen::Map<const Eigen::VectorXf> bufView = unit->getBuffer(0);
-            setValues(bufView);
-            updateYBounds(mValues.minCoeff(), mValues.maxCoeff());
+            setValues(unit->getBuffer(0));
+            std::pair<int, int> argMinMax = m_values.argMinMax();
+            double yMin = m_values[argMinMax.first];
+            double yMax = m_values[argMinMax.second];
+            updateYBounds_(yMin, yMax);
 
             std::ostringstream oss;
-            oss << std::setprecision(4) << "ylim: (" << m_yMin << ", " << m_yMax << ")";
+            oss << std::setprecision(4) << "ylim: (" << yMin << ", " << yMax << ")";
             setFooter(oss.str());
         }
 
@@ -90,51 +152,52 @@ namespace synui {
         nvgTranslate(ctx, mPos.x(), mPos.y());
         nvgBeginPath(ctx);
         nvgRect(ctx, 0.0f, 0.0f, mSize.x(), mSize.y());
-        nvgFillColor(ctx, mBackgroundColor);
+        nvgFillColor(ctx, m_bgColor);
         nvgFill(ctx);
 
-        if (mValues.size() < 2){
+        if (m_values.size() < 2){
             nvgRestore(ctx);
             return;
         }
 
         nvgBeginPath(ctx);
-        for (size_t i = 0; i < (size_t)mValues.size(); i++) {
-            float value = mValues[i];
-            float vx = i * mSize.x() / (float)(mValues.size() - 1);
-            float vy = (1 - syn::INVLERP(m_yMin, m_yMax, value)) * mSize.y();
+        for (int i = 0; i < m_values.size(); i++) {
+            double value = m_values[i];
+            double vx = m_leftMargin + i * (mSize.x()-m_leftMargin) / static_cast<double>(m_values.size() - 1);
+            double vy = toScreen_(value);
             if(i==0)
                 nvgMoveTo(ctx, vx, vy);
             else
                 nvgLineTo(ctx, vx, vy);
         }
-
-        nvgStrokeColor(ctx, nanogui::Color(100, 255));
-        nvgStroke(ctx);
-        nvgStrokeColor(ctx, mForegroundColor);
+        nvgStrokeColor(ctx, m_fgColor);
         nvgStroke(ctx);
 
         nvgFontFace(ctx, "sans");
 
-        if (!mCaption.empty()) {
+        m_bgColor = theme()->get<Color>("/OscilloscopeWidget/bg-color", {20, 128});
+        m_fgColor = theme()->get<Color>("/OscilloscopeWidget/fg-color", {255, 192, 0, 128});
+        m_textColor = theme()->get<Color>("/OscilloscopeWidget/text-color", {240, 192});
+
+        if (!m_caption.empty()) {
             nvgFontSize(ctx, 14.0f);
             nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-            nvgFillColor(ctx, mTextColor);
-            nvgText(ctx, 3, 1, mCaption.c_str(), nullptr);
+            nvgFillColor(ctx, m_textColor);
+            nvgText(ctx, 3, 1, m_caption.c_str(), nullptr);
         }
 
-        if (!mHeader.empty()) {
+        if (!m_header.empty()) {
             nvgFontSize(ctx, 18.0f);
             nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
-            nvgFillColor(ctx, mTextColor);
-            nvgText(ctx, mSize.x() - 3, 1, mHeader.c_str(), nullptr);
+            nvgFillColor(ctx, m_textColor);
+            nvgText(ctx, mSize.x() - 3, 1, m_header.c_str(), nullptr);
         }
 
-        if (!mFooter.empty()) {
+        if (!m_footer.empty()) {
             nvgFontSize(ctx, 15.0f);
             nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_BOTTOM);
-            nvgFillColor(ctx, mTextColor);
-            nvgText(ctx, mSize.x() - 3, mSize.y() - 1, mFooter.c_str(), nullptr);
+            nvgFillColor(ctx, m_textColor);
+            nvgText(ctx, mSize.x() - 3, mSize.y() - 1, m_footer.c_str(), nullptr);
         }
 
         nvgBeginPath(ctx);
@@ -156,20 +219,20 @@ namespace synui {
         nvgBeginPath(ctx);
 
         // Zero Y tick
-        double zeroPxY = toScreen(0.0);
+        double zeroPxY = toScreen_(0.0);
         nvgMoveTo(ctx, 0.0f, zeroPxY);
         nvgLineTo(ctx, size().x(), zeroPxY);
 
         // Other Y ticks
         const int numYTicks = 10;
         const float yTickStep = (m_yMax-m_yMin)/numYTicks;
-        const float tickSize = 10.0f;
+        const float tickSize = m_leftMargin+2;
         double yTick = +yTickStep;
         std::ostringstream oss;
         oss << std::setprecision(4);
         // Positive ticks
         while (yTick <= m_yMax) {
-            float px = toScreen(yTick);
+            float px = toScreen_(yTick);
             nvgMoveTo(ctx, 0.0f, px);
             nvgLineTo(ctx, tickSize, px);
             oss << yTick;
@@ -180,7 +243,7 @@ namespace synui {
         // Negative ticks
         yTick = -yTickStep;
         while (yTick >= m_yMin) {
-            float px = toScreen(yTick);
+            float px = toScreen_(yTick);
             nvgMoveTo(ctx, 0.0f, px);
             nvgLineTo(ctx, tickSize, px);
             oss << yTick;
@@ -192,7 +255,7 @@ namespace synui {
         nvgRestore(ctx);
     }
 
-    void OscilloscopeWidget::updateYBounds(float a_yMin, float a_yMax) {
+    void OscilloscopeWidget::updateYBounds_(float a_yMin, float a_yMax) {
         double lo = a_yMin, hi = a_yMax;
         bool isextremanan = isnan(lo) || isnan(hi);
         if (isextremanan) {
@@ -207,11 +270,11 @@ namespace synui {
         m_yMax = m_yMax + coeff * (maxSetPoint - m_yMax);
     }
 
-    float OscilloscopeWidget::toScreen(float a_yPt) {
-        return syn::LERP<float>(mSize.y(), 0, syn::INVLERP<float>(m_yMin, m_yMax, a_yPt));
+    float OscilloscopeWidget::toScreen_(float a_yPt) {
+        return syn::LERP<float>(mSize.y()-m_bottomMargin, 0, syn::INVLERP<float>(m_yMin, m_yMax, a_yPt));
     }
 
-    float OscilloscopeWidget::fromScreen(float a_yScreen) {        
-        return syn::LERP<float>(m_yMin, m_yMax, syn::INVLERP<float>(mSize.y(), 0, a_yScreen));
+    float OscilloscopeWidget::fromScreen_(float a_yScreen) {        
+        return syn::LERP<float>(m_yMin, m_yMax, syn::INVLERP<float>(mSize.y()-m_bottomMargin, 0, a_yScreen));
     }
 }

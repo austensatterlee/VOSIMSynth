@@ -181,11 +181,12 @@ namespace synui {
         nvgStroke(ctx);
 
         Color highlightColor = theme()->get<Color>("/ContextMenu/hover-color", { 0.15f, 1.0f });
+        Vector2i mousePos = screen()->mousePos() - absolutePosition();
         for (const auto& pair : m_labels) {
             auto lbl = pair.second;
 
             /* Highlight selected item and/or currently active submenu */
-            if (lbl->mouseFocus() || (isSubMenu_(pair.first) && m_submenus[pair.first]==m_highlightedSubmenu)) {
+            if (isRowSelected_(pair.first, mousePos) || (isSubMenu_(pair.first) && m_submenus[pair.first]==m_highlightedSubmenu)) {
                 nvgBeginPath(ctx);
                 nvgRect(ctx, 1, lbl->position().y() + 1, w - 2, lbl->height() - 2);
                 nvgFillColor(ctx, highlightColor);
