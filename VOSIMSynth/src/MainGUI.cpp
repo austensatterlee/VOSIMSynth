@@ -178,7 +178,7 @@ void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget) {
             subbtn->setFontSize(subbtn->theme()->get<int>("/button/text-size")-2);
             // Close popup and place selected unit
             subbtn->setCallback([this, button, classId]() {
-                this->m_circuitWidget->loadPrototype(classId);
+                this->m_circuitWidget->createUnit(classId);
                 button->setPushed(false);
                 m_screen->updateFocus(nullptr);
             });
@@ -265,8 +265,8 @@ void synui::MainGUI::createThemeEditor_(nanogui::Widget* a_widget) {
     SerializableFormHelper* helper = m_themeFormHelper.get();
 
     helper->setWidget(a_widget);
-#define ADD_FH_VAR(label, type, lvalue) helper->addVariable<type>(label, [this](const type& val){ lvalue = val; }, [this](){ return lvalue; })
 
+#define ADD_FH_VAR(label, type, lvalue) helper->addVariable<type>(label, [this](const type& val){ lvalue = val; }, [this](){ return lvalue; })
     helper->addGroup("CircuitWidget");
     ADD_FH_VAR("CircuitWidget/bg-color", Color, m_screen->theme()->prop("/CircuitWidget/bg-color"));
 
@@ -288,6 +288,13 @@ void synui::MainGUI::createThemeEditor_(nanogui::Widget* a_widget) {
     ADD_FH_VAR("DefaultUnitWidget/hovered/shadow-size", float, m_screen->theme()->prop("/DefaultUnitWidget/hovered/shadow-size"));
     ADD_FH_VAR("DefaultUnitWidget/hovered/shadow-feather", float, m_screen->theme()->prop("/DefaultUnitWidget/hovered/shadow-feather"));
     ADD_FH_VAR("DefaultUnitWidget/hovered/shadow-color", Color, m_screen->theme()->prop("/DefaultUnitWidget/hovered/shadow-color"));
+
+    helper->addGroup("OscilloscopeWidget"); 
+    ADD_FH_VAR("OscilloscopeWidget/bg-color", Color, m_screen->theme()->prop("/OscilloscopeWidget/bg-color"));
+    ADD_FH_VAR("OscilloscopeWidget/fg-color", Color, m_screen->theme()->prop("/OscilloscopeWidget/fg-color"));
+    ADD_FH_VAR("OscilloscopeWidget/text-color", Color, m_screen->theme()->prop("/OscilloscopeWidget/text-color"));
+    ADD_FH_VAR("OscilloscopeWidget/tick-color", Color, m_screen->theme()->prop("/OscilloscopeWidget/tick-color"));
+    ADD_FH_VAR("OscilloscopeWidget/tick-label-color", Color, m_screen->theme()->prop("/OscilloscopeWidget/tick-label-color"));
 
     helper->addGroup("ContextMenu");
     ADD_FH_VAR("ContextMenu/text-size", int, m_screen->theme()->prop("/ContextMenu/text-size"));
@@ -387,7 +394,7 @@ void synui::MainGUI::createThemeEditor_(nanogui::Widget* a_widget) {
 void synui::MainGUI::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
     TIME_TRACE
     auto oscPanel = a_widget->add<nanogui::Widget>();
-    oscPanel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
+    oscPanel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 2, 3));
     std::function<void(UnitWidget*)> addScope = [this, oscPanel](UnitWidget* w)
     {
         int unitId = w->getUnitId();
@@ -545,7 +552,7 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     auto osc_viewer_callback = [this, oscViewer]() {
         m_screen->centerWindow(oscViewer);
     };
-    auto osc_viewer_button = oscViewer->createOpenButton(m_buttonPanel, "", ENTYPO_ICON_AREA_GRAPH, osc_viewer_callback);
+    auto osc_viewer_button = oscViewer->createOpenButton(m_buttonPanel, "", ENTYPO_ICON_LINE_GRAPH, osc_viewer_callback);
     buttonPanelLayout->setAnchor(osc_viewer_button, nanogui::AdvancedGridLayout::Anchor{buttonPanelLayout->colCount() - 1,0});
 
     /* Create the settings editor window. */

@@ -264,7 +264,7 @@ bool synui::DefaultUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
                 l->setAnchor(m_titleTextBox, nanogui::AdvancedGridLayout::Anchor{0,0,3,1,nanogui::Alignment::Fill});
                 m_titleTextBox->setValue(m_titleLabel->caption());
                 m_titleTextBox->setFixedSize({width(), m_titleLabel->height()});
-                m_titleTextBox->setFontSize(m_titleLabel->fontSize());
+                m_titleTextBox->setFontSize(m_titleLabel->fontSize()-2);
                 m_titleTextBox->setVisible(true);
                 m_titleTextBox->requestFocus();
                 m_titleLabel->setVisible(false);

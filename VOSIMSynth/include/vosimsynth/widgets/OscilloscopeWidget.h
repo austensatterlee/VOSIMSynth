@@ -42,7 +42,6 @@ namespace synui {
     public:
         enum Parameter {
             pBufferSize,
-            pIsPeriodic,
             pNumPeriods
         };
 
@@ -59,14 +58,14 @@ namespace synui {
 
     protected:
         void onParamChange_(int a_paramId) override;
-        void onNoteOn_() override;
+        void onInputConnection_(int a_inputPort) override;
+        void onInputDisconnection_(int a_inputPort) override;
         void process_() override;
 
     private:
         void _processPeriodic();
         void _processNonPeriodic();
-        void _syncPeriodic();
-        void _syncNonPeriodic();
+        void _sync();
 
     private:
         int m_readIndex;
@@ -99,13 +98,14 @@ namespace synui {
               m_yMax(1.0),
               m_autoAdjustSpeed(60.0),
               m_values(),
-              m_leftMargin(20),
-              m_bottomMargin(20) {}
+              m_leftMargin(30),
+              m_bottomMargin(20),
+              m_topMargin(20) {}
 
         void draw(NVGcontext* ctx) override;
         void drawGrid(NVGcontext* ctx);
 
-        Eigen::Vector2i OscilloscopeWidget::preferredSize(NVGcontext *) const override { return Eigen::Vector2i(400, 150); }
+        Eigen::Vector2i OscilloscopeWidget::preferredSize(NVGcontext *) const override { return Eigen::Vector2i(400, 200); }
 
         const string &caption() const { return m_caption; }
         void setCaption(const string &caption) { m_caption = caption; }
@@ -155,7 +155,7 @@ namespace synui {
         double m_autoAdjustSpeed;
         syn::CircularView<double> m_values;
 
-        int m_leftMargin, m_bottomMargin;
+        int m_leftMargin, m_bottomMargin, m_topMargin;
         string m_caption, m_header, m_footer;
         nanogui::Color m_bgColor, m_fgColor, m_textColor;
     };
