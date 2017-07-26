@@ -164,8 +164,8 @@ void VOSIMSynth::registerUnits()
 
     uf.addUnitPrototype<syn::StateVariableFilter>("Filters", "SVF");
     uf.addUnitPrototype<syn::TrapStateVariableFilter>("Filters", "TSVF");
-    uf.addUnitPrototype<syn::LadderFilterA>("Filters", "LdrA");
-    uf.addUnitPrototype<syn::LadderFilterB>("Filters", "LdrB");
+    uf.addUnitPrototype<syn::LadderFilterA>("Filters", "ldrA");
+    uf.addUnitPrototype<syn::LadderFilterB>("Filters", "ldrB");
 
     uf.addUnitPrototype<syn::OnePoleLPUnit>("Filters", "lag");
     uf.addUnitPrototype<syn::FollowerUnit>("Filters", "follow");

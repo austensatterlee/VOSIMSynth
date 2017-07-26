@@ -145,14 +145,6 @@ namespace synui {
         void draw(NVGcontext* ctx) override;
 
         /**
-         * \brief Construct a new syn::Unit and its corresponding synui::UnitWidget, and prepare to place the
-         * synui::UnitWidget somewhere on the grid. The widget will be placed on the grid with the next left
-         * click on a valid location.
-         * \param a_unitPrototype The prototype name of the unit to create. Corresponds to a name registered with the syn::UnitFactory.
-         */
-        void loadPrototype(syn::UnitTypeId a_unitPrototype);
-
-        /**
          * \brief Snaps the pixel coordinate to one that lies on the grid.
          */
         Eigen::Vector2i fixToGrid(const Eigen::Vector2i& a_pixelLocation) const;
@@ -231,12 +223,12 @@ namespace synui {
         void createJunction(std::shared_ptr<CircuitWire> a_toWire, std::shared_ptr<CircuitWire> a_fromWire, const Eigen::Vector2i& a_pos, syn::UnitTypeId a_classId);
 
         /**
-        * \brief Insert a unit into a wire's path.
-        */
+         * \brief Insert a unit into a wire's path.
+         */
         void spliceWire(std::shared_ptr<CircuitWire> a_wire, const Eigen::Vector2i& a_pos, syn::UnitTypeId a_classId);
 
         /**
-         * \brief Sends a request to the real-time thread to create a new unit.
+         * \brief Construct a new Unit object of the specified variety, then set the state to CreatingUnitState.
          * \param a_classId Class id of the type of the unit to create.
          */
         void createUnit(syn::UnitTypeId a_classId);

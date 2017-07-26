@@ -120,8 +120,6 @@ void synui::CircuitWidget::draw(NVGcontext* ctx) {
     nvgRestore(ctx);
 }
 
-void synui::CircuitWidget::loadPrototype(syn::UnitTypeId a_classId) { createUnit(a_classId); }
-
 Eigen::Vector2i synui::CircuitWidget::fixToGrid(const Vector2i& a_pixelLocation) const { return m_grid.toPixel(m_grid.fromPixel(a_pixelLocation, m_gridSpacing), m_gridSpacing); }
 
 void synui::CircuitWidget::performLayout(NVGcontext* ctx) {
@@ -256,7 +254,7 @@ synui::UnitWidget* synui::CircuitWidget::createUnitWidget(syn::UnitTypeId a_clas
         widget = new DefaultUnitWidget(this, m_vm, a_unitId);
     else
         widget = m_registeredUnitWidgets[a_classId](this, m_vm, a_unitId);
-    widget->setName(syn::UnitFactory::instance().getPrototypeName(a_classId));
+    widget->setName(syn::UnitFactory::instance().generateUnitName(a_classId));
     widget->setEditorCallback([&](syn::UnitTypeId classId, int unitId) {
             if (m_unitEditorHost->selectedIndex() >= 0)
                 m_unitWidgets[m_unitEditorHost->getActiveUnitId()]->setHighlighted(false);
@@ -588,13 +586,14 @@ bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector
     if (m_highlightedWire) {
         if (button == GLFW_MOUSE_BUTTON_RIGHT && !down) {
             auto cm = new ContextMenu(&cw, true);
-            auto insert_cm = cm->addSubMenu("Insert");
 
             std::shared_ptr<CircuitWire> wire = m_highlightedWire;
             cm->addMenuItem("Delete", [&cw, wire]()
             {
                 cw.deleteConnection(wire->getInputPort(), wire->getOutputPort());
-            }, ENTYPO_ICON_TRASH);
+            }, ENTYPO_ICON_CROSS);
+
+            auto insert_cm = cm->addSubMenu("Insert");
 
             const auto& uf = syn::UnitFactory::instance();
             insert_cm->addMenuItem(uf.getPrototypeName(syn::SummerUnit::classIdentifier()), [&cw, wire, mousePos]()
@@ -607,7 +606,6 @@ bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector
 
             cm->activate(mousePos);
             
-            m_highlightedWire = nullptr;
             return true;
         }
     }

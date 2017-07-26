@@ -10,6 +10,7 @@
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 #include <string>
+#include <vosimlib/units/MathUnits.h>
 
 namespace py = pybind11;
 
@@ -47,6 +48,10 @@ public:
 
     void onMidiControlChange_(int a_cc, double a_value) override {
         PYBIND11_OVERLOAD(void, Base, onMidiControlChange_, a_cc, a_value);
+    }
+
+    void onPitchWheelChange_(double a_value) override {
+        PYBIND11_OVERLOAD(void, Base, onPitchWheelChange_, a_value);
     }
 
     void onInputConnection_(int a_inputPort) override {
@@ -132,8 +137,8 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
         .def("noteOff", &syn::Unit::noteOff)
         .def_property_readonly("vel", &syn::Unit::velocity)
 
-        .def("set_param", &syn::Unit::setParam<std::string, double>)
-        .def("set_param_norm", [](syn::Unit& self, const std::string& a_paramName, double a_value) {
+        .def("set", &syn::Unit::setParam<std::string, double>)
+        .def("setNorm", [](syn::Unit& self, const std::string& a_paramName, double a_value) {
                 return self.param(a_paramName).setNorm(a_value);
             })
         .def_property_readonly("params", [](const syn::Unit& self) {
@@ -206,10 +211,10 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
     svf.def(py::init<const std::string&>(), "State variable filter");
 
     py::class_<syn::TrapStateVariableFilter, PyUnit<syn::TrapStateVariableFilter>>(m, "TSVF", svf)
-            .def(py::init<const std::string&>(), "State variable filter ('Zero feedback delay' version)");
+            .def(py::init<const std::string&>(), "State variable filter (TPT version)");
 
     py::class_<syn::OnePoleLPUnit, PyUnit<syn::OnePoleLPUnit>>(m, "OnePoleLP", unit)
-            .def(py::init<const std::string&>(), "One pole low pass filter ('Zero feedback delay' verion)");
+            .def(py::init<const std::string&>(), "One pole low pass filter (TPT verion)");
 
     py::class_<syn::LadderFilterA, PyUnit<syn::LadderFilterA>>(m, "LdrA", unit)
             .def(py::init<const std::string&>(), "Ladder filter (type A)");
@@ -217,21 +222,29 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
     py::class_<syn::LadderFilterB, PyUnit<syn::LadderFilterB>>(m, "LdrB", unit)
             .def(py::init<const std::string&>(), "Ladder filter (type B)");
 
-
-    py::class_<syn::BasicOscillatorUnit, PyUnit<syn::BasicOscillatorUnit>>(m, "BasicOsc", unit)
-            .def(py::init<const std::string&>());
+    py::class_<syn::BasicOscillatorUnit, PyUnit<syn::BasicOscillatorUnit>>(m, "osc", unit)
+            .def(py::init<const std::string&>(), "Basic band-limited waveform oscillator");
 
     py::class_<syn::LFOOscillatorUnit, PyUnit<syn::LFOOscillatorUnit>>(m, "LFO", unit)
             .def(py::init<const std::string&>());
 
-    py::class_<syn::VosimOscillator, PyUnit<syn::VosimOscillator>>(m, "VosimOsc", unit)
+    py::class_<syn::VosimOscillator, PyUnit<syn::VosimOscillator>>(m, "vosim", unit)
+            .def(py::init<const std::string&>(), "VOSIM oscillator");
+
+    py::class_<syn::FormantOscillator, PyUnit<syn::FormantOscillator>>(m, "fmt", unit)
+            .def(py::init<const std::string&>(), "Formant oscillator");
+
+    py::class_<syn::ADSREnvelope, PyUnit<syn::ADSREnvelope>>(m, "ADSR", unit)
             .def(py::init<const std::string&>());
 
-    py::class_<syn::FormantOscillator, PyUnit<syn::FormantOscillator>>(m, "FmtOsc", unit)
-            .def(py::init<const std::string&>());
+    py::class_<syn::DCRemoverUnit, PyUnit<syn::DCRemoverUnit>>(m, "DC", unit)
+        .def(py::init<const std::string&>(), "DC killer");
 
-    py::class_<syn::ADSREnvelope, PyUnit<syn::ADSREnvelope>>(m, "ADSREnvelope", unit)
-            .def(py::init<const std::string&>());
+    py::class_<syn::MemoryUnit, PyUnit<syn::MemoryUnit>>(m, "delay1", unit)
+        .def(py::init<const std::string&>(), "single sample delay");
+
+    py::class_<syn::VariableMemoryUnit, PyUnit<syn::VariableMemoryUnit>>(m, "delayN", unit)
+        .def(py::init<const std::string&>(), "multi-sample fractional delay");
 
 
     py::class_<syn::NormalTable, PyLUT<syn::NormalTable>> normalLut(m, "NormalTable");
