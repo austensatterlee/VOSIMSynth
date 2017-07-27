@@ -3,7 +3,6 @@
 #include "vosimsynth/UI.h"
 #include <vosimlib/Unit.h>
 #include <nanogui/theme.h>
-#include <GLFW/glfw3.h>
 
 using nanogui::Color;
 

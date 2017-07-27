@@ -1,8 +1,8 @@
 #include "vosimsynth/MainWindow.h"
 #include "vosimsynth/MainGUI.h"
 #include "vosimsynth/Logging.h"
+#include "vosimsynth/common.h"
 #include <vosimlib/Command.h>
-#include <GLFW/glfw3.h>
 
 #ifdef _WIN32
 #include <windows.h>

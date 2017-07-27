@@ -31,6 +31,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <vosimlib/Unit.h>
 #include <nanogui/widget.h>
 #include <eigen/Core>
+#include "vosimsynth/UI.h"
 
 namespace syn {
     class VoiceManager;
@@ -286,12 +287,13 @@ namespace synui {
 
         class IdleState : public State {
             std::shared_ptr<CircuitWire> m_highlightedWire;
-            double m_wireHighlightTime;
+            std::shared_ptr<CircuitWire> m_lastHighlightedWire;
             UnitWidget* m_clickedWidget;
+            Tooltip m_tooltip;
         public:
             IdleState()
                 : m_highlightedWire(nullptr),
-                  m_wireHighlightTime(0),
+                  m_lastHighlightedWire(nullptr),
                   m_clickedWidget(nullptr) {}
 
             bool mouseButtonEvent(CircuitWidget& cw, const Eigen::Vector2i& p, int button, bool down, int modifiers) override;

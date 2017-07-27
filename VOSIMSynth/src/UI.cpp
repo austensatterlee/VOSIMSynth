@@ -36,27 +36,28 @@ namespace synui
         nvgRestore(ctx);
     }
 
-    void drawTooltip(NVGcontext* a_ctx, const Vector2i& a_pos, const std::string& a_str, double elapsed)
+    void drawTooltip(NVGcontext* a_ctx, const Vector2i& a_pos, const std::string& a_str, float alpha, float a_fontSize, const std::string& a_font)
     {
         int tooltipWidth = 150;
 
         float bounds[4];
-        nvgFontFace(a_ctx, "sans");
-        nvgFontSize(a_ctx, 15.0f);
+        nvgSave(a_ctx);
+        nvgTranslate(a_ctx, a_pos.x(), a_pos.y()+20);        
+        nvgFontFace(a_ctx, a_font.c_str());
+        nvgFontSize(a_ctx, a_fontSize);
         nvgTextAlign(a_ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
         nvgTextLineHeight(a_ctx, 1.1f);
-        Vector2i pos = a_pos;
 
-        nvgTextBoxBounds(a_ctx, pos.x(), pos.y(), tooltipWidth*1.0f, a_str.c_str(), nullptr, bounds);
+        nvgTextBoxBounds(a_ctx, 0, 0, tooltipWidth*1.0f, a_str.c_str(), nullptr, bounds);
         int h = (bounds[2] - bounds[0]) / 2;
         if (h > tooltipWidth / 2)
         {
             nvgTextAlign(a_ctx, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
-            nvgTextBoxBounds(a_ctx, pos.x(), pos.y(), tooltipWidth*1.0f, a_str.c_str(), nullptr, bounds);
+            nvgTextBoxBounds(a_ctx, 0, 0, tooltipWidth*1.0f, a_str.c_str(), nullptr, bounds);
 
             h = (bounds[2] - bounds[0]) / 2;
         }
-        nvgGlobalAlpha(a_ctx, std::min<float>(1.0f, 2 * (elapsed - 0.5f)) * 0.8f);
+        nvgGlobalAlpha(a_ctx, std::min(1.0f, alpha));
 
         nvgBeginPath(a_ctx);
         nvgFillColor(a_ctx, nanogui::Color(0, 255));
@@ -70,6 +71,42 @@ namespace synui
 
         nvgFillColor(a_ctx, nanogui::Color(255, 255));
         nvgFontBlur(a_ctx, 0.0f);
-        nvgTextBox(a_ctx, pos.x() - h, pos.y(), tooltipWidth, a_str.c_str(), nullptr);
+        nvgTextBox(a_ctx, -h, 0, tooltipWidth, a_str.c_str(), nullptr);
+        nvgRestore(a_ctx);
+    }
+
+    Tooltip::Tooltip(float a_delay, float a_fadeIn, float a_fadeOut)
+        : m_isActive(false),
+          m_lastSwitchTime(0),
+          m_delay(a_delay),
+          m_fadeIn(a_fadeIn),
+          m_fadeOut(a_fadeOut),
+          m_font("sans") {}
+
+    void Tooltip::activate(const Eigen::Vector2i& a_pos) {
+        m_pos = a_pos;
+        if (m_isActive)
+            return;
+        m_isActive = true;
+        m_lastSwitchTime = glfwGetTime();
+    }
+
+    void Tooltip::deactivate() {
+        if (!m_isActive)
+            return;
+        m_isActive = false;
+        m_lastSwitchTime = glfwGetTime();
+    }
+
+    bool Tooltip::isActive() const { return m_isActive; }
+
+    void Tooltip::draw(NVGcontext* a_nvg, const std::string& a_str) const {
+        float alpha = glfwGetTime() - m_lastSwitchTime;
+        if (m_isActive)
+            alpha = (alpha - m_delay) / m_fadeIn;
+        else
+            alpha = 1.0 - alpha / m_fadeOut;
+        if (alpha > 0)
+            drawTooltip(a_nvg, m_pos, a_str, alpha, 15, m_font);
     }
 }

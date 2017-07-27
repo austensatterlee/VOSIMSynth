@@ -8,11 +8,10 @@ std::string synui::CircuitWire::info() const {
         return "";
 
     std::ostringstream os;
-    /// @DEBUG Show wire cost
-    os << "Cost: " << m_cost << std::endl;
 
     // List current output value for this wire held by each active voice
     std::vector<int> activeVoiceIndices = m_parentCircuit->m_vm->getActiveVoiceIndices();
+    std::sort(activeVoiceIndices.begin(), activeVoiceIndices.end());
     for (int vind : activeVoiceIndices) {
         const syn::Unit& unit = m_parentCircuit->m_vm->getUnit(m_outputPort.first, vind);
         double value = unit.readOutput(m_outputPort.second, 0);

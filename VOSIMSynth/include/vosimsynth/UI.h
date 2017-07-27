@@ -90,16 +90,6 @@ namespace synui
         nonzero_pos = a_num.size()-1 - nonzero_pos;
         return static_cast<int>(nonzero_pos-decimal_pos);
     }
-
-    /// Determine whether an icon ID is a texture loaded via nvgImageIcon
-    inline bool nvgIsImageIcon(int value) {
-        return value < 1024;
-    }
-
-    /// Determine whether an icon ID is a font-based icon (e.g. from the entypo.ttf font)
-    inline bool nvgIsFontIcon(int value) {
-        return value >= 1024;
-    }
     
     /**
      * \brief Draw a shadow around a rectangular area.
@@ -112,6 +102,30 @@ namespace synui
     void drawRectShadow(NVGcontext* ctx, float x, float y, float w, float h, float r = 1.0f, float s = 5.0f, float f=1.0f, const nanogui::Color& a_shadowColor = {0.0f, 0.5f}, const nanogui::Color& a_transparentColor = {0.0f, 1.0f});
     void drawRadialShadow(NVGcontext* ctx, float x, float y, float r, float s, float f, const nanogui::Color& a_shadowColor = {0.0f, 0.5f}, const nanogui::Color& a_transparentColor = {0.0f, 1.0f});
 
-    void drawTooltip(NVGcontext* a_ctx, const Vector2i& a_pos, const std::string& a_str, double elapsed);
+    void drawTooltip(NVGcontext* a_ctx, const Vector2i& a_pos, const std::string& a_str, float alpha, float a_fontSize = 15.0f, const std::string& a_font = "sans");
+
+
+
+    class Tooltip {
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    public:
+        Tooltip(float a_delay = 0.25f, float a_fadeIn = 1.0f, float a_fadeOut = 0.5f);
+
+        void setFont(const std::string& a_font) { m_font = a_font; }
+        const std::string& font(const std::string& a_font) const { return m_font; }
+
+        void activate(const Vector2i& a_pos);
+        void deactivate();
+        bool isActive() const;
+        void draw(NVGcontext* a_nvg, const std::string& a_str) const;
+
+    private:
+        bool m_isActive;
+        float m_lastSwitchTime;
+        float m_delay;
+        float m_fadeIn, m_fadeOut;
+        std::string m_font;
+        Vector2i m_pos;
+    };
 }
 #endif

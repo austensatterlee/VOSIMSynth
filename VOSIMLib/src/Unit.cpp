@@ -26,11 +26,11 @@ namespace syn
     Unit::Unit() : Unit("") {}
 
     Unit::Unit(const std::string& a_name) :
+        m_currentBufferOffset(0),
         m_name{a_name},
         m_parent{nullptr},
         m_audioConfig{44.1e3, 120, 1},
-        m_midiData{},
-        m_currentBufferOffset(0) {}
+        m_midiData{} {}
 
     void Unit::setName(const string& a_name) { m_name = a_name; }
 

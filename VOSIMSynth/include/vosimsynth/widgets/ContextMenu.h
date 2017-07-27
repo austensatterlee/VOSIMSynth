@@ -18,8 +18,9 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #pragma once
-#include "nanogui/nanogui.h"
 #include "vosimsynth/UI.h"
+#include <nanogui/widget.h>
+#include <unordered_map>
 
 namespace synui {
     class ContextMenu : public nanogui::Widget {
@@ -95,7 +96,7 @@ namespace synui {
         nanogui::AdvancedGridLayout* m_itemLayout;
         std::unordered_map<std::string, std::function<void()>> m_items;
         std::unordered_map<std::string, ContextMenu*> m_submenus;
-        std::unordered_map<std::string, nanogui::Widget*> m_labels;
+        std::unordered_map<std::string, Widget*> m_labels;
         ContextMenu* m_highlightedSubmenu;
         bool m_disposable;
         bool m_activated;

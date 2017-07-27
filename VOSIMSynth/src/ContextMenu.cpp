@@ -1,4 +1,9 @@
 #include "vosimsynth/widgets/ContextMenu.h"
+#include "vosimsynth/VOSIMTheme.h"
+#include <nanogui/layout.h>
+#include <nanogui/screen.h>
+#include <nanogui/label.h>
+#include <nanogui/entypo.h>
 
 using nanogui::Color;
 using Anchor = nanogui::AdvancedGridLayout::Anchor;

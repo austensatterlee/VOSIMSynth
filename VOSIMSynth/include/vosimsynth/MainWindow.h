@@ -28,19 +28,6 @@ Copyright 2016, Austen Satterlee
 #ifndef __MAINWINDOW__
 #define __MAINWINDOW__
 
-#if defined(NANOGUI_GLAD)
-    #if defined(NANOGUI_SHARED) && !defined(GLAD_GLAPI_EXPORT)
-        #define GLAD_GLAPI_EXPORT
-    #endif
-
-    #include <glad/glad.h>
-#else
-    #if defined(__APPLE__)
-        #define GLFW_INCLUDE_GLCOREARB
-    #else
-        #define GL_GLEXT_PROTOTYPES
-    #endif
-#endif
 #include "vosimsynth/UI.h"
 #include "vosimsynth/Signal.h"
 #include <boost/lockfree/spsc_queue.hpp>

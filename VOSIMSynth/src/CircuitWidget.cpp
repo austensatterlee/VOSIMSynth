@@ -1,12 +1,13 @@
-#include "vosimsynth/widgets/CircuitWidget.h"
-#include "vosimsynth/UI.h"
 #include "vosimsynth/MainWindow.h"
+#include "vosimsynth/UI.h"
+#include "vosimsynth/widgets/CircuitWidget.h"
 #include "vosimsynth/widgets/UnitWidget.h"
 #include "vosimsynth/widgets/DefaultUnitWidget.h"
 #include "vosimsynth/MainGUI.h"
 #include "vosimsynth/widgets/UnitEditor.h"
 #include "vosimsynth/widgets/ContextMenu.h"
 #include "vosimsynth/widgets/CircuitWire.h"
+#include "vosimsynth/VOSIMTheme.h"
 #include <vosimlib/VoiceManager.h>
 #include <vosimlib/Command.h>
 #include <vosimlib/units/MathUnits.h>
@@ -618,33 +619,42 @@ bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector
 }
 
 bool synui::cwstate::IdleState::mouseMotionEvent(CircuitWidget& cw, const Vector2i& p, const Vector2i& rel, int button, int modifiers) {
-    // Remove old highlighted wire
-    if (m_highlightedWire) {
-        m_highlightedWire->highlight = CircuitWire::None;
-        m_highlightedWire = nullptr;
-    }
+    Vector2i mousePos = p - cw.position();
 
     if (cw.Widget::mouseMotionEvent(p, rel, button, modifiers))
         return true;
 
-    Grid2DPoint gridPt = cw.grid().fromPixel(p, cw.gridSpacing());
+    Grid2DPoint gridPt = cw.grid().fromPixel(mousePos, cw.gridSpacing());
     if (!cw.grid().contains(gridPt))
         return true;
 
     // Find new highlighted wire, if any
     const auto& cell = cw.grid().get(gridPt);
+    bool wireFound = false;
     for (const auto& s : cell.states) {
         if (s.type == CircuitWidget::GridCell::State::Wire) {
+            wireFound = true;
             if (s.ptr != m_highlightedWire.get()) {
                 if (m_highlightedWire) {
+                    m_tooltip.deactivate();
                     m_highlightedWire->highlight = CircuitWire::None;
+                    m_highlightedWire = nullptr;
                 }
-                m_wireHighlightTime = glfwGetTime();
                 m_highlightedWire = reinterpret_cast<CircuitWire*>(s.ptr)->shared_from_this();
                 m_highlightedWire->highlight = CircuitWire::Selected;
+                m_lastHighlightedWire = m_highlightedWire;
                 break;
             }
         }
+    }
+    // Remove old highlighted wire
+    if (!wireFound && m_highlightedWire) {
+        m_tooltip.deactivate();
+        m_highlightedWire->highlight = CircuitWire::None;
+        m_highlightedWire = nullptr;
+    } else if (wireFound) {
+        m_tooltip.activate(mousePos);
+        m_tooltip.setFont("mono");
     }
 
     if (m_clickedWidget) {
@@ -657,13 +667,8 @@ bool synui::cwstate::IdleState::mouseMotionEvent(CircuitWidget& cw, const Vector
 void synui::cwstate::IdleState::draw(CircuitWidget& cw, NVGcontext* ctx) {
     Vector2i mousePos = cw.screen()->mousePos() - cw.absolutePosition();
     if (cw.contains(mousePos)) {
-        double elapsed = glfwGetTime() - m_wireHighlightTime;
-        if (m_highlightedWire) {
-            if (elapsed > 0.15) {
-                nvgSave(ctx);
-                drawTooltip(ctx, {mousePos.x(),mousePos.y() + 25}, m_highlightedWire->info(), elapsed);
-                nvgRestore(ctx);
-            }
+        if (m_lastHighlightedWire) {
+            m_tooltip.draw(ctx, m_lastHighlightedWire->info());
         }
     }
 }
@@ -885,7 +890,7 @@ bool synui::cwstate::DrawingSelectionState::mouseButtonEvent(CircuitWidget& cw, 
 
 bool synui::cwstate::DrawingSelectionState::mouseMotionEvent(CircuitWidget& cw, const Vector2i& p, const Vector2i& rel, int button, int modifiers) {
     cw.unitSelection().clear();
-    m_endPos = cw.screen()->mousePos() - cw.absolutePosition();
+    m_endPos = p - cw.position();
     Grid2DPoint pt0 = cw.grid().fromPixel(m_startPos, cw.gridSpacing());
     Grid2DPoint pt1 = cw.grid().fromPixel(m_endPos, cw.gridSpacing());
 

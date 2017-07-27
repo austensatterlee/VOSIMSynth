@@ -18,6 +18,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #pragma once
+#include <GLFW/glfw3.h>
 
 #if defined(VOSIMSYNTH_SHARED)
     #if defined(_WIN32)
