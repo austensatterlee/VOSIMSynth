@@ -145,7 +145,7 @@ namespace syn {
     protected:
         void process_() override {
             BEGIN_PROC_FUNC
-            WRITE_OUTPUT(0, parent() ? parent()->getVoiceIndex()+1 : 0.0);
+            WRITE_OUTPUT(0, parent() ? parent()->getVoiceIndex() : 0.0);
             END_PROC_FUNC
         }
     };

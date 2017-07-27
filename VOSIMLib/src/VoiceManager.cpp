@@ -158,7 +158,7 @@ namespace syn
         for(int i=0;i<a_newMax;i++)
         {
             m_circuits[i] = Circuit(m_instrument);
-            m_circuits[i].setVoiceIndex(static_cast<double>(i)/a_newMax);
+            m_circuits[i].setVoiceIndex(static_cast<double>(i)/(a_newMax-1));
             m_idleVoices.push_back(i);
         }
     }
