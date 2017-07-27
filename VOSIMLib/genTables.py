@@ -4,9 +4,10 @@ from scipy import signal as ss
 import re
 import os, sys
 
-LUT_TABLEDATA_FILE = "src/table_data.cpp"
-LUT_TABLEHDR_FILE = "include/vosimlib/lut_tables.h"
-LUT_TABLESRC_FILE = "src/lut_tables.cpp"
+script_dir = os.path.realpath(os.path.dirname(__file__))
+LUT_TABLEDATA_FILE = os.path.join(script_dir, "src/table_data.cpp")
+LUT_TABLEHDR_FILE = os.path.join(script_dir, "include/vosimlib/lut_tables.h")
+LUT_TABLESRC_FILE = os.path.join(script_dir, "src/lut_tables.cpp")
 
 def RealCepstrum(n, signal):
     freq = fft.fft(signal)
@@ -653,9 +654,8 @@ def main(pargs):
         print "Writing new {}...".format(os.path.realpath(LUT_TABLEHDR_FILE))
     if clean:
         old_code = ""
-
     # Add tags if the file is empty
-    if not old_code:
+    if not old_code: 
         old_code=\
 """#pragma once
 
@@ -665,9 +665,6 @@ def main(pargs):
 /*::/macro_defs::*/
 
 namespace {}{{
-    /*::table_decl::*/
-    /*::/table_decl::*/
-
     /*::lut_decl::*/
     /*::/lut_decl::*/
 }}
@@ -676,7 +673,6 @@ namespace {}{{
     class_fwd_decls = "\n".join(["class {};".format(cls) for cls in key_order.keys()])
     new_code = RewriteAutomatedSection(old_code, 'lut_decl', class_fwd_decls + "\n\n" + tableobjfuncs_decl)
     new_code = RewriteAutomatedSection(new_code, 'macro_defs', macrodefine_code)
-    new_code = RewriteAutomatedSection(new_code, 'table_decl', tabledata_decl)
     with open(LUT_TABLEHDR_FILE, 'w') as fp:
         fp.write(new_code)
 
@@ -693,7 +689,6 @@ namespace {}{{
         print "Writing new {}...".format(os.path.realpath(LUT_TABLESRC_FILE))
     if clean:
         old_code=""
-
     # Add tags if the file is empty
     if not old_code:
         old_code=\
@@ -701,12 +696,16 @@ namespace {}{{
 #include "vosimlib/lut_tables.h"
 
 namespace {} {{
+    /*::table_decl::*/
+    /*::/table_decl::*/
+
     /*::lut_defs::*/
     /*::/lut_defs::*/
 }}
 """.format(NAMESPACE)
 
     new_code = RewriteAutomatedSection(old_code, 'lut_defs', tableobjfuncs_def)
+    new_code = RewriteAutomatedSection(new_code, 'table_decl', tabledata_decl)
     with open(LUT_TABLESRC_FILE, 'w') as fp:
         fp.write(new_code)
 
