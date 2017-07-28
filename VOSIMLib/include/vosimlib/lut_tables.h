@@ -6,16 +6,6 @@
 /*::/macro_defs::*/
 
 namespace syn{
-    /*::table_decl::*/
-    extern double BLIMP_TABLE_OFFLINE[];
-    extern double BLIMP_TABLE_ONLINE[];
-    extern double PITCH_TABLE[];
-    extern double BL_SAW_TABLE[];
-    extern double BL_SQUARE_TABLE[];
-    extern double BL_TRI_TABLE[];
-    extern double SIN_TABLE[];
-    /*::/table_decl::*/
-
     /*::lut_decl::*/
     class AffineTable;
     class ResampledTable;

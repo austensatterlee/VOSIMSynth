@@ -2,6 +2,16 @@
 #include "vosimlib/lut_tables.h"
 
 namespace syn {
+    /*::table_decl::*/
+    extern double BLIMP_TABLE_OFFLINE[];
+    extern double BLIMP_TABLE_ONLINE[];
+    extern double PITCH_TABLE[];
+    extern double BL_SAW_TABLE[];
+    extern double BL_SQUARE_TABLE[];
+    extern double BL_TRI_TABLE[];
+    extern double SIN_TABLE[];
+    /*::/table_decl::*/
+
     /*::lut_defs::*/
     BlimpTable& lut_blimp_table_offline() { static BlimpTable table(BLIMP_TABLE_OFFLINE, 130112, 127, 2048); return table; }
     BlimpTable& lut_blimp_table_online() { static BlimpTable table(BLIMP_TABLE_ONLINE, 11270, 11, 2048); return table; }
