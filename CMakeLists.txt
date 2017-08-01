@@ -63,6 +63,8 @@ optionenv(VOSIMPROJECT_USE_AVX2 "Compile with AVX2 optimizations?" FALSE)
 optionenv(VOSIMPROJECT_TRACER_BUILD "Enable tracing?" FALSE)
 optionenv(VOSIMPROJECT_BUILD_TESTS "Build tests?" TRUE)
 optionenv(VOSIMPROJECT_BUILD_BENCHMARKS "Build benchmarks?" FALSE)
+setenv(VOSIMSYNTH_GL_VERSION 3.3 CACHE STRING "Version of OpenGL to use when creating GUI." )
+set_property(CACHE VOSIMSYNTH_GL_VERSION PROPERTY STRINGS 3.3 3.1)
 
 # Subproject directories
 set(VOSIMLIB_DIR ${CMAKE_SOURCE_DIR}/vosimlib)
@@ -156,9 +158,21 @@ set(NANOGUI_BUILD_PYTHON  OFF CACHE BOOL "" FORCE)
 set(NANOGUI_INSTALL       OFF CACHE BOOL " " FORCE)
 set(NANOGUI_BUILD_SHARED  OFF CACHE BOOL " " FORCE)
 
+# Parse and set the requested OpenGL version.
+string(REPLACE "." ";" VOSIMSYNTH_GL_VERSION ${VOSIMSYNTH_GL_VERSION})
+list(GET VOSIMSYNTH_GL_VERSION 0 VOSIMSYNTH_GL_VERSION_MAJOR)
+list(GET VOSIMSYNTH_GL_VERSION 1 VOSIMSYNTH_GL_VERSION_MINOR)
+add_definitions(-DGL_VERSION_MAJOR=${VOSIMSYNTH_GL_VERSION_MAJOR})
+add_definitions(-DGL_VERSION_MINOR=${VOSIMSYNTH_GL_VERSION_MINOR})
+if(VOSIMSYNTH_GL_VERSION_MAJOR EQUAL 3)
+  add_definitions(-DNANOVG_GL3_IMPLEMENTATION)
+elseif(VOSIMSYNTH_GL_VERSION_MINOR EQUAL 3)
+  add_definitions(-DNANOVG_GL2_IMPLEMENTATION)
+else()
+  message(FATAL_ERROR "Use OpenGL version 2 or 3 (VOSIMSYNTH_GL_VERSION_MAJOR is set to ${VOSIMSYNTH_GL_VERSION_MAJOR}, must be set to either 2 or 3).")
+endif()
 # Add the configurations from nanogui
 add_subdirectory(${LIBS_DIR}/nanogui)
-
 # For reliability of parallel build, make the NanoGUI targets dependencies
 set_property(TARGET glfw nanogui PROPERTY FOLDER "dependencies")
 

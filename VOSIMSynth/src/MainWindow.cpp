@@ -4,6 +4,13 @@
 #include "vosimsynth/common.h"
 #include <vosimlib/Command.h>
 
+#if !defined(GL_VERSION_MAJOR)
+#define GL_VERSION_MAJOR 3
+#endif
+#if !defined(GL_VERSION_MINOR)
+#define GL_VERSION_MINOR 3
+#endif
+
 #ifdef _WIN32
 #include <windows.h>
 #include <winuser.h>
@@ -119,8 +126,8 @@ void synui::MainWindow::_createGLFWWindow()
 {
     TIME_TRACE 
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, GL_VERSION_MAJOR);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, GL_VERSION_MINOR);
 
     glfwWindowHint(GLFW_SAMPLES, 0);
     glfwWindowHint(GLFW_RED_BITS, 8);
@@ -134,8 +141,15 @@ void synui::MainWindow::_createGLFWWindow()
     glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
+#if !defined(NDEBUG)
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+#endif
+
+    if(m_window) {
+        glfwDestroyWindow(m_window);
+    }
     m_window = glfwCreateWindow(m_size.x(), m_size.y(), "VOSIMSynth", nullptr, nullptr);
-    if (m_window == nullptr) {
+    if (!m_window) {
         glfwTerminate();
         TRACEMSG("Failed to create GLFW window.");
         throw "Failed to create GLFW window.";
