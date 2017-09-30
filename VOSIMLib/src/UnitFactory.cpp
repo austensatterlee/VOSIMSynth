@@ -65,7 +65,7 @@ string syn::UnitFactory::generateUnitName(UnitTypeId a_classIdentifier) const
     if (!hasPrototype(a_classIdentifier))
         return "";
     const FactoryPrototype& p = getPrototype(a_classIdentifier);
-    return p.name+std::to_string(p.build_count);
+    return p.name;
 }
 
 bool syn::UnitFactory::hasPrototype(UnitTypeId a_classIdentifier) const {

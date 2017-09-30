@@ -106,7 +106,8 @@ namespace syn
         if (m_voiceMap.find(a_noteNumber) != m_voiceMap.end()) {
             for (int vind : m_voiceMap[a_noteNumber]) {
                 m_circuits[vind].noteOff(a_noteNumber, a_velocity);
-                m_releasedVoices.push_back(vind);
+                if(std::find(m_releasedVoices.begin(), m_releasedVoices.end(), vind)==m_releasedVoices.end())
+                    m_releasedVoices.push_back(vind);
             }
         }
     }
