@@ -45,7 +45,7 @@ synui::UnitWidget::operator json() const {
 
 synui::UnitWidget* synui::UnitWidget::load(const json& j) {
     if (j.find("name") != j.end())
-        m_name = j["name"].get<string>();
+        setName(j["name"].get<string>());
     return this;
 }
 
