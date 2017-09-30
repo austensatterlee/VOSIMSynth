@@ -23,7 +23,7 @@ synui::CircuitWidget::CircuitWidget(Widget* a_parent, MainWindow* a_mainWindow, 
       m_gridSpacing(15),
       m_wireDrawStyle(Curved),
       m_state(new cwstate::IdleState()),
-      m_uninitialized(true) 
+      m_uninitialized(true)
 {
     registerUnitWidget<syn::InputUnit>([](CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new InputUnitWidget(parent, a_vm, unitId); });
     registerUnitWidget<syn::OutputUnit>([](CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new OutputUnitWidget(parent, a_vm, unitId); });
@@ -190,7 +190,6 @@ synui::CircuitWidget* synui::CircuitWidget::load(const json& j) {
         Vector2i pos{unit["x"].get<int>(), unit["y"].get<int>()};
         UnitWidget* widget = createUnitWidget(classId, unitId)->load(unit);
         updateUnitPos(widget, pos);
-        m_unitWidgets[unitId] = widget;
     }
 
     /* Load new wires */
@@ -224,7 +223,6 @@ void synui::CircuitWidget::createInputOutputUnits_() {
 
     UnitWidget* inWidget = createUnitWidget(inputClassId, inputUnitId);
     UnitWidget* outWidget = createUnitWidget(outputClassId, outputUnitId);
-    screen()->performLayout();
     if (inWidget != nullptr)
         updateUnitPos(inWidget, {0.5 * inWidget->width(), height() * 0.5 - inWidget->height() * 0.5});
     if (outWidget != nullptr)
@@ -269,10 +267,7 @@ synui::UnitWidget* synui::CircuitWidget::createUnitWidget(syn::UnitTypeId a_clas
         fix[0] ? fix[0] : pref[0],
         fix[1] ? fix[1] : pref[1]
     ));
-    widget->performLayout(screen()->nvgContext());
-
     onAddUnit(widget);
-
     return widget;
 }
 
@@ -280,7 +275,7 @@ void synui::CircuitWidget::deleteUnit(int a_unitId) {
     // Disallow removing the input and output units.
     if (a_unitId == m_vm->getPrototypeCircuit().getInputUnitId() || a_unitId == m_vm->getPrototypeCircuit().getOutputUnitId())
         return;
-    
+
     deleteUnitWidget(m_unitWidgets[a_unitId]);
 
     // Delete the unit from the circuit
@@ -288,7 +283,7 @@ void synui::CircuitWidget::deleteUnit(int a_unitId) {
                 for (int i = 0; i < m_vm->getMaxVoices(); i++) {
                     m_vm->getVoiceCircuit(i).removeUnit(a_unitId);
                 }
-                m_vm->getPrototypeCircuit().removeUnit(a_unitId);          
+                m_vm->getPrototypeCircuit().removeUnit(a_unitId);
             };
     m_vm->queueAction(syn::MakeCommand(f));
 }
@@ -428,7 +423,7 @@ void synui::CircuitWidget::deleteWireWidget(std::shared_ptr<CircuitWire> wire) {
     if (!wire)
         return;
     m_wires.erase(find(m_wires.begin(), m_wires.end(), wire->shared_from_this()));
-    
+
 #ifndef NDEBUG
     // Verify connections
     for (auto w : m_wires) {
@@ -443,7 +438,7 @@ void synui::CircuitWidget::deleteWireWidget(std::shared_ptr<CircuitWire> wire) {
 
 void synui::CircuitWidget::deleteUnitWidget(UnitWidget* widget) {
     int unitId = widget->getUnitId();
-    
+
     this->onRemoveUnit(m_unitWidgets[unitId]);
 
     // Delete the wire widgets connected to this unit
@@ -493,7 +488,7 @@ void synui::CircuitWidget::createJunction(std::shared_ptr<CircuitWire> a_toWire,
                             } else {
                                 deleteUnitWidget(uw);
                                 _changeState(new cwstate::CreatingUnitState(unitId, onSuccess));
-                            }    
+                            }
                         };
                 m_window->queueExternalMessage(syn::MakeCommand(f));
             };
@@ -606,7 +601,7 @@ bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector
             });
 
             cm->activate(mousePos);
-            
+
             return true;
         }
     }
@@ -665,10 +660,11 @@ bool synui::cwstate::IdleState::mouseMotionEvent(CircuitWidget& cw, const Vector
 }
 
 void synui::cwstate::IdleState::draw(CircuitWidget& cw, NVGcontext* ctx) {
-    Vector2i mousePos = cw.screen()->mousePos() - cw.absolutePosition();
-    if (cw.contains(mousePos)) {
-        if (m_lastHighlightedWire) {
-            m_tooltip.draw(ctx, m_lastHighlightedWire->info());
+    if (m_lastHighlightedWire) {
+        if (find(cw.wires().begin(), cw.wires().end(), m_lastHighlightedWire) != cw.wires().end()) {
+            string info = m_lastHighlightedWire->info();
+            if (!info.empty())
+                m_tooltip.draw(ctx, m_lastHighlightedWire->info());
         }
     }
 }
@@ -737,7 +733,7 @@ bool synui::cwstate::DrawingWireState::mouseButtonEvent(CircuitWidget& cw, const
             m_endedOnOutput = isOutput;
             changeState(cw, *new IdleState());
             return true;
-        } 
+        }
         auto wireState = cw.grid().get(mousePt).find(CircuitWidget::GridCell::State::Wire);
         if (wireState!=cw.grid().get(mousePt).states.end() && m_startedFromOutput) {
             std::shared_ptr<CircuitWire> toWire = static_cast<CircuitWire*>(wireState->ptr)->shared_from_this();
