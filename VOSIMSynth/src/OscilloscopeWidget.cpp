@@ -11,16 +11,18 @@ namespace synui {
         m_readIndex(0),
         m_writeIndex(0),
         m_numBuffers(1),
+        m_decimationFactor(8),
+        m_subsampleCounter(0),
         m_lastPhase(0.0),
         m_samplesSinceLastSync(0),
         m_syncCount(0) {
-        addParameter_(pBufferSize, syn::UnitParameter("buffer size", 2, MAX_SCOPE_BUFFER_SIZE, 44100, syn::UnitParameter::Samples));
+        addParameter_(pBufferSize, syn::UnitParameter("buffer size", 3 * m_decimationFactor, MAX_SCOPE_BUFFER_SIZE * m_decimationFactor, MAX_SCOPE_BUFFER_SIZE * m_decimationFactor, syn::UnitParameter::Samples));
         addParameter_(pNumPeriods, syn::UnitParameter("periods", 1, 16, 1).setVisible(false));
-        m_bufferSize = param(pBufferSize).getInt();
+        m_bufferSize = param(pBufferSize).getInt() / m_decimationFactor;
         m_buffers.resize(m_numBuffers);
         for (int i = 0; i < m_numBuffers; i++) {
             addInput_("in" + std::to_string(i));
-            m_buffers[i].resize(param(pBufferSize).getMax());
+            m_buffers[i].resize(param(pBufferSize).getMax() / m_decimationFactor);
             m_buffers[i].fill(0.0f);
         }
         m_iPhase = addInput_("sync");
@@ -40,6 +42,7 @@ namespace synui {
         m_samplesSinceLastSync = 0;
         m_lastPhase = 0.0;
         m_syncCount = 0;
+        m_subsampleCounter = 0;
         for (int i = 0; i < m_numBuffers; i++) {
             m_buffers[i].fill(0.0f);
         }
@@ -49,7 +52,7 @@ namespace synui {
         switch (a_paramId) {
         case pBufferSize:
         {
-            int newBufferSize = param(pBufferSize).getInt();
+            int newBufferSize = param(pBufferSize).getInt() / m_decimationFactor;
             m_writeIndex = syn::WRAP(m_writeIndex, newBufferSize);
             m_bufferSize = newBufferSize;
             break;
@@ -76,10 +79,16 @@ namespace synui {
 
     void OscilloscopeUnit::process_() {
         BEGIN_PROC_FUNC
-            // Read data into buffers and increment buffer pointer
+            int savedCounter = m_subsampleCounter;
+            m_subsampleCounter = syn::WRAP(m_subsampleCounter + 1, m_decimationFactor);
+            if (savedCounter)
+                continue; 
+        
+            // Read data into buffers
             for (int i = 0; i < m_buffers.size(); i++) {
                 m_buffers[i][m_writeIndex] = READ_INPUT(i);
             }
+            // Increment counters
             if (isConnected(m_iPhase))
                 _processPeriodic();
             else
@@ -115,7 +124,7 @@ namespace synui {
                 bufSize -= period;
                 numPeriods--;
             }
-            setParam(pBufferSize, bufSize);
+            setParam(pBufferSize, bufSize * m_decimationFactor);
             setParam(pNumPeriods, numPeriods);
             m_samplesSinceLastSync = 0;
             m_syncCount = 0;
@@ -129,7 +138,7 @@ namespace synui {
         if (unitClassId != OscilloscopeUnit::classIdentifier())
             return;
 
-        const OscilloscopeUnit* unit = static_cast<const OscilloscopeUnit*>(&m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()));
+        const OscilloscopeUnit* unit = static_cast<const OscilloscopeUnit*>(&m_vm->getUnit(m_unitId, m_vm->getNewestVoiceID()));
         this->setCaption(unit->name());
         setValues(unit->getBuffer(0));
         std::pair<int, int> argMinMax = m_values.argMinMax();
@@ -173,7 +182,7 @@ namespace synui {
             nvgBeginPath(ctx);
             for (int i = 0; i < m_values.size(); i++) {
                 double value = m_values[i];
-                double vx = m_leftMargin + i * (mSize.x() - m_leftMargin) / static_cast<double>(m_values.size() - 1);
+                double vx = m_sideMargin + i * (mSize.x() - m_sideMargin) / static_cast<double>(m_values.size() - 1);
                 double vy = toScreen_(value);
                 if (i == 0)
                     nvgMoveTo(ctx, vx, vy);
@@ -183,7 +192,7 @@ namespace synui {
             nvgStrokeColor(ctx, m_fgColor);
             nvgStroke(ctx);
 
-            nvgFontFace(ctx, "mono");
+            nvgFontFace(ctx, "sans");
             if (!m_caption.empty()) {
                 nvgFontSize(ctx, 18.0f);
                 nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
@@ -192,14 +201,14 @@ namespace synui {
             }
 
             if (!m_header.empty()) {
-                nvgFontSize(ctx, 14.0f);
+                nvgFontSize(ctx, 12.0f);
                 nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
                 nvgFillColor(ctx, m_textColor);
                 nvgText(ctx, mSize.x() - 3, 1, m_header.c_str(), nullptr);
             }
 
             if (!m_footer.empty()) {
-                nvgFontSize(ctx, 14.0f);
+                nvgFontSize(ctx, 12.0f);
                 nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_BOTTOM);
                 nvgFillColor(ctx, m_textColor);
                 nvgText(ctx, mSize.x() - 3, mSize.y() - 1, m_footer.c_str(), nullptr);
@@ -209,36 +218,24 @@ namespace synui {
     }
 
     void OscilloscopeWidget::drawGrid(NVGcontext* ctx) {
+        const OscilloscopeUnit* unit = static_cast<const OscilloscopeUnit*>(&m_vm->getUnit(m_unitId));
+
         nvgSave(ctx);
         nanogui::Color tickColor = theme()->get<Color>("/OscilloscopeWidget/tick-color", {0.86f, 1.0f, 0.0f, 1.00f});
         nanogui::Color tickLabelColor = theme()->get<Color>("/OscilloscopeWidget/tick-label-color", {0.752f, 0.85f, 0.15f, 1.00f});
         nvgFontFace(ctx, "mono");
-        nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
-        nvgFontSize(ctx, 14.0f);
+        nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
+        nvgFontSize(ctx, 12.0f);
         nvgStrokeColor(ctx, tickColor);
         nvgFillColor(ctx, tickLabelColor);
-
-        // X ticks
-        const int numXTicks = 4;
-        const double xMax = m_values.size();
-        const double xTickStep = 1.0 / numXTicks;
-        const double xTickSize = height() - m_bottomMargin - m_topMargin;
-        const float xTickStartY = m_topMargin;
-        double xTick = 0.0;
-        while(xTick <= 1.0) {
-            float px = m_leftMargin + xTick * (width() - m_leftMargin);
-            nvgBeginPath(ctx);
-            nvgMoveTo(ctx, px, xTickStartY);
-            nvgLineTo(ctx, px, xTickStartY + xTickSize);
-            nvgStroke(ctx);
-            xTick += xTickStep;
-        }
-
+        
+        const float yTickStartX = m_sideMargin - 5;
+        const double yTickSize = width() - yTickStartX;
         // Zero Y tick
         double zeroPxY = toScreen_(0.0);
         nvgBeginPath(ctx);
-        nvgMoveTo(ctx, m_leftMargin - 7, zeroPxY);
-        nvgLineTo(ctx, size().x() - m_leftMargin + 7, zeroPxY);
+        nvgMoveTo(ctx, yTickStartX, zeroPxY);
+        nvgLineTo(ctx, yTickStartX + yTickSize, zeroPxY);
         nvgStroke(ctx);
         // Other Y ticks
         const int numYTicks = 2;
@@ -255,8 +252,6 @@ namespace synui {
             yTickPosStart = m_yMin;
             yTickNegStart = m_yMin-1;
         }
-        const double yTickSize = width() - m_leftMargin + 5;
-        const float yTickStartX = m_leftMargin - 5;
         // Positive ticks
         if (abs(toScreen_(yTickPosStart) - toScreen_(m_yMax)) >= 16.0) {
             double yTick = yTickPosStart;
@@ -270,7 +265,7 @@ namespace synui {
                 oss << std::setprecision(2);
                 oss << yTick;
                 nvgBeginPath(ctx);
-                nvgText(ctx, 0.0f, px, oss.str().c_str(), nullptr);
+                nvgText(ctx, yTickStartX, px, oss.str().c_str(), nullptr);
                 nvgFill(ctx);
                 yTick += yTickPosStep;
             }
@@ -281,17 +276,43 @@ namespace synui {
             while (yTick >= m_yMin) {
                 float px = toScreen_(yTick);
                 nvgBeginPath(ctx);
-                nvgMoveTo(ctx, 0.0f, px);
-                nvgLineTo(ctx, yTickSize, px);
+                nvgMoveTo(ctx, yTickStartX, px);
+                nvgLineTo(ctx, yTickStartX + yTickSize, px);
                 nvgStroke(ctx);
                 std::ostringstream oss;
                 oss << std::setprecision(2);
                 oss << yTick;
                 nvgBeginPath(ctx);
-                nvgText(ctx, 0.0f, px, oss.str().c_str(), nullptr);
+                nvgText(ctx, yTickStartX, px, oss.str().c_str(), nullptr);
                 nvgFill(ctx);
                 yTick += yTickNegStep;
             }
+        }
+
+        // X ticks
+        nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
+        nvgFontSize(ctx, 12.0f);
+        const int numXTicks = 4;
+        const double xMax = m_values.size();
+        const double xTickStep = 1.0 / numXTicks;
+        const double xTickSize = height() - m_bottomMargin - m_topMargin;
+        const float xTickStartY = m_topMargin;
+        double xTick = 0.0;
+        while (xTick <= 1.0) {
+            float px = m_sideMargin + xTick * (width() - m_sideMargin);
+            nvgBeginPath(ctx);
+            nvgMoveTo(ctx, px, xTickStartY);
+            nvgLineTo(ctx, px, xTickStartY + xTickSize);
+            nvgStroke(ctx);
+
+            std::ostringstream oss;
+            int nsample = xTick * xMax * unit->getDecimationFactor();
+            oss << nsample;
+            nvgBeginPath(ctx);
+            nvgText(ctx, px, xTickStartY + xTickSize, oss.str().c_str(), nullptr);
+            nvgFill(ctx);
+
+            xTick += xTickStep;
         }
         nvgRestore(ctx);
     }

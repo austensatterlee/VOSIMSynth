@@ -109,10 +109,10 @@ namespace syn {
 
         int getMaxVoices() const;
 
-        int getLowestVoiceIndex(bool a_preferReleased=false) const;
-        int getNewestVoiceIndex(bool a_preferReleased=false) const;
-        int getOldestVoiceIndex(bool a_preferReleased=false) const;
-        int getHighestVoiceIndex(bool a_preferReleased=false) const;
+        int getLowestVoiceID(bool a_preferReleased=false) const;
+        int getNewestVoiceID(bool a_preferReleased=false) const;
+        int getOldestVoiceID(bool a_preferReleased=false) const;
+        int getHighestVoiceID(bool a_preferReleased=false) const;
 
         void onIdle();
 

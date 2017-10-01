@@ -53,7 +53,7 @@ void synui::UnitEditor::_build()
 
             auto getter = [this, cb, paramId]()
             {
-                auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(paramId);
+                auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceID()).param(paramId);
                 bool value = param.getBool();
                 bool visible = param.isVisible();
                 if (cb->checked() != value || cb->visible() != visible)
@@ -80,7 +80,7 @@ void synui::UnitEditor::_build()
             auto setter = [this, cb, paramId](int val) { setParamFromString(paramId, cb->items()[val]); };
             auto getter = [this, cb, paramId]()
             {
-                auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(paramId);
+                auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceID()).param(paramId);
                 int value = param.getInt();
                 bool visible = param.isVisible();
                 if (cb->selectedIndex() != value || cb->visible() != visible)
@@ -111,7 +111,7 @@ void synui::UnitEditor::_build()
 
             auto getter = [this, ib, paramId]()
             {
-                auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(paramId);
+                auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceID()).param(paramId);
                 int value = param.getInt();
                 bool visible = param.isVisible();
                 if (ib->value() != value || ib->visible() != visible)
@@ -165,7 +165,7 @@ void synui::UnitEditor::_build()
             /* Create getter function */
             auto getter = [this, control, s, fb, paramId]()
             {
-                auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceIndex()).param(paramId);
+                auto param = m_vm->getUnit(m_unitId, m_vm->getNewestVoiceID()).param(paramId);
                 string text = param.getValueString();
                 double norm = param.getNorm();
                 bool visible = param.isVisible();

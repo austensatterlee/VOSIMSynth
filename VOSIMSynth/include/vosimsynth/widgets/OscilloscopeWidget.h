@@ -31,7 +31,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <vosimlib/CircularView.h>
 #include <nanogui/widget.h>
 
-#define MAX_SCOPE_BUFFER_SIZE 960000
+#define MAX_SCOPE_BUFFER_SIZE 96000
 
 namespace synui {
     /**
@@ -53,6 +53,7 @@ namespace synui {
 
         int getNumBuffers() const;
         syn::CircularView<double> OscilloscopeUnit::getBuffer(int a_bufIndex) const;
+        int getDecimationFactor() const { return m_decimationFactor; }
 
         void reset() override;
 
@@ -72,13 +73,13 @@ namespace synui {
         int m_writeIndex;
         int m_bufferSize;
         int m_numBuffers;
-        int m_iPhase;
-
-        vector<Eigen::VectorXd> m_buffers;
-
+        int m_decimationFactor;
+        int m_subsampleCounter;
         double m_lastPhase;
         int m_samplesSinceLastSync;
         int m_syncCount;
+        vector<Eigen::VectorXd> m_buffers;
+        int m_iPhase;
     };
 
     /**
@@ -98,7 +99,7 @@ namespace synui {
               m_yMax(1.0),
               m_autoAdjustSpeed(60.0),
               m_values(),
-              m_leftMargin(30),
+              m_sideMargin(30),
               m_bottomMargin(20),
               m_topMargin(20) {}
 
@@ -155,7 +156,7 @@ namespace synui {
         double m_autoAdjustSpeed;
         syn::CircularView<double> m_values;
 
-        int m_leftMargin, m_bottomMargin, m_topMargin;
+        int m_sideMargin, m_bottomMargin, m_topMargin;
         string m_caption, m_header, m_footer;
         nanogui::Color m_bgColor, m_fgColor, m_textColor;
     };
