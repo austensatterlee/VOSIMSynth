@@ -78,19 +78,19 @@ namespace syn
         switch(m_voiceStealingPolicy)
         {
         case Oldest:
-            vind = getOldestVoiceIndex(true);
+            vind = getOldestVoiceID(true);
             break;
         case Newest:
-            vind = getNewestVoiceIndex(true);
+            vind = getNewestVoiceID(true);
             break;
         case Lowest:
-            vind = getLowestVoiceIndex(true);
+            vind = getLowestVoiceID(true);
             break;
         case Highest:
-            vind = getHighestVoiceIndex(true);
+            vind = getHighestVoiceID(true);
             break;
         default:
-            vind = getOldestVoiceIndex(true);
+            vind = getOldestVoiceID(true);
             break;
         }
         _makeIdle(vind);
@@ -159,7 +159,7 @@ namespace syn
         for(int i=0;i<a_newMax;i++)
         {
             m_circuits[i] = Circuit(m_instrument);
-            m_circuits[i].setVoiceIndex(static_cast<double>(i)/(a_newMax-1));
+            m_circuits[i].setVoiceIndex(i>1 ? static_cast<double>(i)/(a_newMax-1) : 1.0);
             m_idleVoices.push_back(i);
         }
     }
@@ -229,7 +229,7 @@ namespace syn
         m_tickCount += m_bufferSize;
     }
 
-    int VoiceManager::getLowestVoiceIndex(bool a_preferReleased) const {
+    int VoiceManager::getLowestVoiceID(bool a_preferReleased) const {
         if (!m_releasedVoices.empty() && a_preferReleased) {
             bool first = true;
             int minNote = 0;
@@ -257,7 +257,7 @@ namespace syn
         return -1;
     }
 
-    int VoiceManager::getNewestVoiceIndex(bool a_preferReleased) const {
+    int VoiceManager::getNewestVoiceID(bool a_preferReleased) const {
         if (!m_releasedVoices.empty() && a_preferReleased) {
             bool first = true;
             int maxIndex = 0;
@@ -281,7 +281,7 @@ namespace syn
         return -1;
     }
 
-    int VoiceManager::getOldestVoiceIndex(bool a_preferReleased) const {
+    int VoiceManager::getOldestVoiceID(bool a_preferReleased) const {
         if (!m_releasedVoices.empty() && a_preferReleased) {
             bool first = true;
             int minIndex = 0;
@@ -305,7 +305,7 @@ namespace syn
         return -1;
     }
 
-    int VoiceManager::getHighestVoiceIndex(bool a_preferReleased) const {
+    int VoiceManager::getHighestVoiceID(bool a_preferReleased) const {
         if (!m_releasedVoices.empty() && a_preferReleased) {
             bool first = true;
             int maxNote = 0;
