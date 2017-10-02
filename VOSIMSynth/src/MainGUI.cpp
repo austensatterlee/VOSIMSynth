@@ -545,7 +545,7 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     oscViewer->setVisible(false);
     oscViewer->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
     auto oscScrollPanel = oscViewer->add<nanogui::VScrollPanel>();
-    oscScrollPanel->setMaxHeight({ 600 });
+    oscScrollPanel->setMaxHeight(450);
     createOscilloscopeViewer_(oscScrollPanel);
     /* Add a button for opening the oscilloscope viewer window. */
     buttonPanelLayout->appendCol(0, 0);

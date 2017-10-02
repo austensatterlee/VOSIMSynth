@@ -259,7 +259,6 @@ void synui::MainWindow::CloseWindow()
 {
     TIME_TRACE
     if (m_isOpen) {
-        glfwDestroyWindow(m_window);
         _CloseWindowImplem();
         m_isOpen = false;
     }
