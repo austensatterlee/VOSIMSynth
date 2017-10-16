@@ -125,6 +125,7 @@ namespace syn {
         m_min = a_new_min;
         m_logMin = log10(a_new_min);
         m_logRange = log10(m_max) - m_logMin;
+        set(m_value);
     }
 
     double UnitParameter::getMax() const { return m_max; }
@@ -132,6 +133,7 @@ namespace syn {
     void UnitParameter::setMax(double a_new_max) {
         m_max = a_new_max;
         m_logRange = log10(m_max) - m_logMin;
+        set(m_value);
     }
 
     double UnitParameter::getDefaultValue() const { return m_defaultValue; }

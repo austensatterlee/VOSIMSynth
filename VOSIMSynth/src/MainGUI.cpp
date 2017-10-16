@@ -163,7 +163,7 @@ void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget) {
     unitSelectorTitle->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 2, 10));
 
     const syn::UnitFactory& uf = syn::UnitFactory::instance();
-    for (auto gname : uf.getGroupNames()) {
+    for (const auto& gname : uf.getGroupNames()) {
         nanogui::PopupButton* button = new nanogui::PopupButton(a_widget, gname);
         button->setFontSize(button->theme()->prop("/button/text-size"));
         nanogui::Popup* popup = button->popup();
@@ -172,7 +172,7 @@ void synui::MainGUI::createUnitSelector_(nanogui::Widget* a_widget) {
         {
             m_screen->moveWindowToFront(popup);
         });
-        for (auto pname : uf.getPrototypeNames(gname)) {
+        for (const auto& pname : uf.getPrototypeNames(gname)) {
             nanogui::Button* subbtn = new nanogui::Button(popup, pname);
             syn::UnitTypeId classId = uf.getClassId(gname, pname);
             subbtn->setFontSize(subbtn->theme()->get<int>("/button/text-size")-2);
@@ -318,9 +318,7 @@ void synui::MainGUI::createThemeEditor_(nanogui::Widget* a_widget) {
     ADD_FH_VAR("Border Medium", Color, m_screen->theme()->prop("/border/medium"));
     ADD_FH_VAR("Drop Shadow", Color, m_screen->theme()->prop("/shadow"));
     ADD_FH_VAR("Icon Color", Color, m_screen->theme()->prop("/icon-color"));
-    ADD_FH_VAR("Transparent", Color, m_screen->theme()->prop("/transparent"));
     ADD_FH_VAR("Text Color", Color, m_screen->theme()->prop("/text-color"));
-    ADD_FH_VAR("Text Shadow", Color, m_screen->theme()->prop("/text-shadow"));
     ADD_FH_VAR("Disabled Text Color", Color, m_screen->theme()->prop("/disabled-text-color"));
 
     /* Button colors */
@@ -345,7 +343,6 @@ void synui::MainGUI::createThemeEditor_(nanogui::Widget* a_widget) {
     ADD_FH_VAR("Window Header Sep Bot", Color, m_screen->theme()->prop("/window/header/sep-bot"));
 
     ADD_FH_VAR("Window Popup", Color, m_screen->theme()->prop("/popup/fill"));
-    ADD_FH_VAR("Window Popup Transparent", Color, m_screen->theme()->prop("/popup/transparent"));
 
     helper->addButton("Save Theme", [this]() {
         std::string filepath = nanogui::file_dialog({ { "json", "VOSIMSynth theme" } }, true);
@@ -395,7 +392,17 @@ void synui::MainGUI::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
     TIME_TRACE
     auto oscPanel = a_widget->add<nanogui::Widget>();
     oscPanel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 2, 3));
-    std::function<void(UnitWidget*)> addScope = [this, oscPanel](UnitWidget* w)
+    // Add message that displays when no scopes exist
+    auto lblPanel = oscPanel->add<nanogui::Widget>();
+    lblPanel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle));
+    lblPanel->setFixedHeight(200);
+    lblPanel->setVisibleIf([oscPanel]() { return oscPanel->children().size() == 1; });
+    auto lbl = lblPanel->add<nanogui::Label>("No oscilloscopes found.\nBuild one in the circuit to see it here.", "sans-bold", 36);
+    lbl->setFixedWidth(400);
+    lbl->setHorizAlign(nanogui::Label::HAlign::Center);
+
+
+    const std::function<void(UnitWidget*)> addScope = [this, oscPanel](UnitWidget* w)
     {
         int unitId = w->getUnitId();
         const syn::Circuit& circuit = m_vm->getPrototypeCircuit();
@@ -406,7 +413,7 @@ void synui::MainGUI::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
         m_screen->performLayout();
     };
 
-    std::function<void(UnitWidget*)> removeScope = [this, oscPanel](UnitWidget* w) {
+    const std::function<void(UnitWidget*)> removeScope = [this, oscPanel](UnitWidget* w) {
         int unitId = w->getUnitId();
         const syn::Circuit& circuit = m_vm->getPrototypeCircuit();
         const syn::Unit& unit = circuit.getUnit(unitId);
@@ -487,11 +494,8 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
         nvgFill(ctx);
 
         nvgRestore(ctx);
-
         self->Widget::draw(ctx);
-
         nvgSave(ctx);
-
 
         nvgTranslate(ctx, self->position().x(), self->position().y());
         nvgBeginPath(ctx);
@@ -563,7 +567,7 @@ synui::MainGUI::MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm)
     settingsEditor->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
     m_settingsFormHelper = std::make_shared<SerializableFormHelper>(m_screen);
     createSettingsEditor_(new nanogui::Widget(settingsScrollPanel));
-    /* Add a button for openning the settings editor window. */
+    /* Add a button for opening the settings editor window. */
     buttonPanelLayout->appendCol(0, 0);
     auto settings_callback = [this, settingsEditor]() {
         m_settingsFormHelper->refresh();

@@ -32,9 +32,8 @@ synui::DefaultUnitWidget::DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceM
 
     // Create title
     m_titleLabel = new nanogui::Label(this, "", "sans-bold", 0);
-    m_titleLabel->setTooltip("Dbl click to rename\nRight click to delete");
+    m_titleLabel->setTooltip("Rename: double click\nDelete: right click");
     m_titleLabel->setDraggable(false);
-    m_titleLabel->setTextAlign(nanogui::Label::Alignment::Left);
     layout->setAnchor(m_titleLabel, Anchor{0,0,3,1,nanogui::Alignment::Middle});
     m_titleTextBox = new nanogui::TextBox(this, "");
     m_titleTextBox->setEditable(true);

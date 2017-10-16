@@ -23,12 +23,11 @@ void synui::UnitEditor::_build()
 
     nanogui::FormHelper* helper = new nanogui::FormHelper(nullptr);
     helper->setWidget(this);
+    helper->setFixedSize({ 0,20 });
 
     /* Add title */
     auto titleLbl = new nanogui::Label(this, m_vm->getUnit(m_unitId).name(), "sans-bold", titleFontSize);
-    titleLbl->setTextAlign(nanogui::Label::Alignment::Center);
     helper->addWidget("", titleLbl);
-
 
     /* Add parameter controls */
     const syn::Unit& unit = m_vm->getUnit(m_unitId);

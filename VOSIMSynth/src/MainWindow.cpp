@@ -126,24 +126,18 @@ void synui::MainWindow::_createGLFWWindow()
 {
     TIME_TRACE 
 
+#if defined(GL_VERSION_MAJOR)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, GL_VERSION_MAJOR);
+#endif
+#if defined(GL_VERSION_MINOR)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, GL_VERSION_MINOR);
-
-    glfwWindowHint(GLFW_SAMPLES, 0);
-    glfwWindowHint(GLFW_RED_BITS, 8);
-    glfwWindowHint(GLFW_GREEN_BITS, 8);
-    glfwWindowHint(GLFW_BLUE_BITS, 8);
-    glfwWindowHint(GLFW_ALPHA_BITS, 8);
-    glfwWindowHint(GLFW_STENCIL_BITS, 8);
-    glfwWindowHint(GLFW_DEPTH_BITS, 24);
-
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-
+#endif
 #if !defined(NDEBUG)
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 #endif
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);   
 
     if(m_window) {
         glfwDestroyWindow(m_window);

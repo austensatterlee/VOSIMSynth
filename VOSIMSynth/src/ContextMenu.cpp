@@ -6,6 +6,7 @@
 #include <nanogui/entypo.h>
 
 using nanogui::Color;
+using nanogui::Label;
 using Anchor = nanogui::AdvancedGridLayout::Anchor;
 
 namespace synui {
@@ -40,7 +41,7 @@ namespace synui {
 
     void ContextMenu::addMenuItem(const std::string& a_name, const std::function<void()>& a_value, int a_icon) {
         m_items[a_name] = a_value;
-        auto lbl = new nanogui::Label(m_itemContainer, a_name);
+        auto lbl = new Label(m_itemContainer, a_name);
         m_labels[a_name] = lbl;
         lbl->setShowShadow(true);
         lbl->setFontSize(theme()->get("/ContextMenu/text-size", 20));
@@ -48,7 +49,7 @@ namespace synui {
         m_itemLayout->appendRow(0);
         m_itemLayout->setAnchor(lbl, Anchor{1,m_itemLayout->rowCount() - 1, 1, 1});
         if (a_icon > 0) {
-            auto iconLbl = new nanogui::Label(m_itemContainer, nanogui::utf8(a_icon).data(), "icons");
+            auto iconLbl = new Label(m_itemContainer, nanogui::utf8(a_icon).data(), "icons");
             iconLbl->setFontSize(theme()->get("/ContextMenu/text-size", 20));
             iconLbl->setHeight(iconLbl->fontSize() * 2);
             m_itemLayout->setAnchor(iconLbl, Anchor{ 0,m_itemLayout->rowCount() - 1,1,1 });
@@ -57,13 +58,13 @@ namespace synui {
 
     ContextMenu* ContextMenu::addSubMenu(const std::string& a_name, int a_icon) {
         m_submenus[a_name] = new ContextMenu(this, false);
-        auto lbl1 = new nanogui::Label(m_itemContainer, a_name);
-        auto lbl2 = new nanogui::Label(m_itemContainer, nanogui::utf8(ENTYPO_ICON_CHEVRON_THIN_RIGHT).data(), "icons");
+        auto lbl1 = new Label(m_itemContainer, a_name);
+        auto lbl2 = new Label(m_itemContainer, nanogui::utf8(ENTYPO_ICON_CHEVRON_THIN_RIGHT).data(), "icons");
         m_labels[a_name] = lbl1;
         lbl1->setShowShadow(true);
         lbl1->setFontSize(theme()->get("/ContextMenu/text-size", 20));
         lbl1->setHeight(lbl1->fontSize() * 2);
-        lbl2->setTextAlign(nanogui::Label::Alignment::Right);
+        lbl2->setHorizAlign(Label::HAlign::Right);
         lbl2->setShowShadow(true);
         lbl2->setFontSize(theme()->get("/ContextMenu/text-size", 20));
         lbl2->setHeight(lbl2->fontSize() * 2);
@@ -71,7 +72,7 @@ namespace synui {
         m_itemLayout->setAnchor(lbl1, Anchor{1,m_itemLayout->rowCount() - 1, 1, 1});
         m_itemLayout->setAnchor(lbl2, Anchor{2,m_itemLayout->rowCount() - 1, 1, 1});
         if (a_icon > 0) {
-            auto iconLbl = new nanogui::Label(m_itemContainer, nanogui::utf8(a_icon).data(), "icons");
+            auto iconLbl = new Label(m_itemContainer, nanogui::utf8(a_icon).data(), "icons");
             iconLbl->setFontSize(theme()->get("/ContextMenu/text-size", 20));
             iconLbl->setHeight(iconLbl->fontSize() * 2);
             m_itemLayout->setAnchor(iconLbl, Anchor{ 0,m_itemLayout->rowCount() - 1,1,1 });

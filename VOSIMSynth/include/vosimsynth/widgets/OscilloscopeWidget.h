@@ -31,8 +31,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <vosimlib/CircularView.h>
 #include <nanogui/widget.h>
 
-#define MAX_SCOPE_BUFFER_SIZE 96000
-
 namespace synui {
     /**
      * Collects input samples into a buffer to be displayed by an OscilloscopeWidget.
@@ -41,7 +39,7 @@ namespace synui {
         DERIVE_UNIT(OscilloscopeUnit)
     public:
         enum Parameter {
-            pBufferSize,
+            pBufSize,
             pNumPeriods
         };
 
@@ -53,7 +51,7 @@ namespace synui {
 
         int getNumBuffers() const;
         syn::CircularView<double> OscilloscopeUnit::getBuffer(int a_bufIndex) const;
-        int getDecimationFactor() const { return m_decimationFactor; }
+        int getDecimationFactor() const { return m_subPeriod; }
 
         void reset() override;
 
@@ -71,10 +69,10 @@ namespace synui {
     private:
         int m_readIndex;
         int m_writeIndex;
-        int m_bufferSize;
+        int m_bufSize;
         int m_numBuffers;
-        int m_decimationFactor;
-        int m_subsampleCounter;
+        int m_subPeriod;
+        int m_subCount;
         double m_lastPhase;
         int m_samplesSinceLastSync;
         int m_syncCount;
@@ -99,8 +97,8 @@ namespace synui {
               m_yMax(1.0),
               m_autoAdjustSpeed(60.0),
               m_values(),
-              m_sideMargin(30),
-              m_bottomMargin(20),
+              m_sideMargin(50),
+              m_bottomMargin(40),
               m_topMargin(20) {}
 
         void draw(NVGcontext* ctx) override;
