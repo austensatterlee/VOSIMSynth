@@ -397,7 +397,7 @@ void synui::MainGUI::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
     lblPanel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle));
     lblPanel->setFixedHeight(200);
     lblPanel->setVisibleIf([oscPanel]() { return oscPanel->children().size() == 1; });
-    auto lbl = lblPanel->add<nanogui::Label>("No oscilloscopes found.\nBuild one in the circuit to see it here.", "sans-bold", 36);
+    auto lbl = lblPanel->add<nanogui::Label>("No oscilloscopes found.\nBuild one in the circuit to see it here.", "sans-bold", 24);
     lbl->setFixedWidth(400);
     lbl->setHorizAlign(nanogui::Label::HAlign::Center);
 

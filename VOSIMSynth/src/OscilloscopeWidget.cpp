@@ -64,7 +64,6 @@ namespace synui {
         {
             m_subPeriod = param(pBufSize).getInt() / MAX_BUF + 1;
             m_bufSize = param(pBufSize).getInt() / m_subPeriod;
-            m_writeIndex = syn::WRAP(m_writeIndex, m_bufSize);
             break;
         }
         default:
@@ -126,7 +125,7 @@ namespace synui {
         int numPeriods = param(pNumPeriods).getInt();
         if (m_syncCount >= numPeriods) {
             double bufSize = m_samplesSinceLastSync;
-            double period = m_samplesSinceLastSync * (1.0 / numPeriods);
+            const double period = m_samplesSinceLastSync * (1.0 / numPeriods);
             // Try to force number of periods so that buffer size is in range.
             while (bufSize > param(pBufSize).getMax() && numPeriods > 1) {
                 bufSize -= period;
@@ -150,14 +149,14 @@ namespace synui {
             m_vm->getNewestVoiceID()));
         this->setCaption(unit->name());
         setValues(unit->getBuffer(0));
-        std::pair<int, int> argMinMax = m_values.argMinMax();
-        double yMin = m_values[argMinMax.first];
-        double yMax = m_values[argMinMax.second];
+        const std::pair<int, int> argMinMax = m_values.argMinMax();
+        const double yMin = m_values[argMinMax.first];
+        const double yMax = m_values[argMinMax.second];
         updateYBounds_(yMin, yMax);
 
         {
             std::ostringstream oss;
-            oss << " max: " << std::setprecision(2) << yMax;
+            oss << "max: " << std::setprecision(2) << yMax;
             setHeader(oss.str());
         }
         {
@@ -197,9 +196,9 @@ namespace synui {
 
             nvgBeginPath(ctx);
             for (int i = 0; i < m_values.size(); i++) {
-                double value = m_values[i];
-                double vx = m_sideMargin + i * (width() - 2*m_sideMargin) / static_cast<double>(m_values.size() - 1);
-                double vy = toScreen_(value);
+                const double value = m_values[i];
+                const double vx = m_sideMargin + i * (width() - 2*m_sideMargin) / static_cast<double>(m_values.size() - 1);
+                const double vy = toScreen_(value);
                 if (i == 0)
                     nvgMoveTo(ctx, vx, vy);
                 else
@@ -227,7 +226,8 @@ namespace synui {
     }
 
     void OscilloscopeWidget::drawGrid(NVGcontext* ctx) {
-        const OscilloscopeUnit* unit = static_cast<const OscilloscopeUnit*>(&m_vm->getUnit(m_unitId));
+        const OscilloscopeUnit* unit = static_cast<const OscilloscopeUnit*>(&m_vm->getUnit(m_unitId,
+            m_vm->getNewestVoiceID()));
 
         nvgSave(ctx);
         const nanogui::Color tickColor = theme()->get<Color>("/OscilloscopeWidget/tick-color",
@@ -239,7 +239,7 @@ namespace synui {
         nvgFontSize(ctx, 12.0f);
         nvgStrokeColor(ctx, tickColor);
         nvgFillColor(ctx, tickLabelColor);
-        nvgStrokeWidth(ctx, 1.0f);
+        nvgStrokeWidth(ctx, 2.0f);
 
         const float yTickStartX = m_sideMargin - 5;
         const double yTickSize = (width() - m_sideMargin) - yTickStartX;
@@ -304,7 +304,7 @@ namespace synui {
         // X ticks
         nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
         const int numXTicks = 4;
-        const double xMax = m_values.size();
+        const double xMax = m_values.size() * unit->getDecimationFactor();
         const double xTickStep = 1.0 / numXTicks;
         const double xTickSize = height() - m_bottomMargin - m_topMargin;
         const float xTickStartY = m_topMargin;
@@ -316,7 +316,7 @@ namespace synui {
             nvgLineTo(ctx, px, xTickStartY + xTickSize);
             nvgStroke(ctx);
 
-            const int nsample = xTick * xMax * unit->getDecimationFactor();
+            const int nsample = xTick * xMax;
             std::ostringstream oss;
             oss << std::setprecision(2);
             oss << nsample;
