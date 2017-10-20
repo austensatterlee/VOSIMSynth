@@ -50,8 +50,7 @@ using boost::lockfree::capacity;
 
 struct GLFWwindow;
 
-namespace synui
-{
+namespace synui {
     class MainWindow;
     class MainGUI;
 
@@ -59,12 +58,11 @@ namespace synui
      * Handles creation and management of the system window, and provides an
      * interface for safely sending commands to the GUI from another thread.
      */
-    class MainWindow
-    {
+    class MainWindow {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        typedef std::function<MainGUI*(MainWindow*)> GUIConstructor; 
+        typedef std::function<MainGUI*(MainWindow*)> GUIConstructor;
 
     public:
         MainWindow(int a_width, int a_height, GUIConstructor a_guiConstructor);
@@ -74,7 +72,7 @@ namespace synui
         bool isOpen() const { return m_isOpen; }
         Vector2i getSize() const { return m_size; }
         MainGUI* getGUI() const { return m_gui; }
-        
+
         /// Open the system window
         bool OpenWindow(HWND a_system_window);
         /// Close the system window (the GUI is preserved)
@@ -97,20 +95,23 @@ namespace synui
         Signal<int, int> onResize;
 
 #ifdef _WIN32
-        HINSTANCE m_HInstance;
-        UINT m_timerId;
         void setHInstance(HINSTANCE a_newHInstance) { m_HInstance = a_newHInstance; }
-        HINSTANCE getHInstance() const { return m_HInstance; }
-        static VOID CALLBACK _TimerProc(HWND hwnd, UINT message, UINT idTimer, DWORD dwTime);
-        void _OpenWindowImplem(HWND a_system_window);
-        void _CloseWindowImplem();
 #endif
     private:
-        void _createGLFWWindow();        
+#ifdef _WIN32
+        static VOID CALLBACK _timerProc(HWND hwnd, UINT message, UINT idTimer, DWORD dwTime);
+        void _openWindowImplem(HWND a_systemWindow);
+        void _closeWindowImplem();
+#endif
+        void _createGlfwWindow();
         void _runLoop();
         void _flushMessageQueues();
 
     private:
+#ifdef _WIN32
+        HINSTANCE m_HInstance;
+        UINT m_timerId;
+#endif
         GLFWwindow* m_window;
         Vector2i m_size;
         bool m_isOpen;

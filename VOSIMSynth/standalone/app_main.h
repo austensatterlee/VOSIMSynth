@@ -95,7 +95,7 @@ struct AppState
   }
 };
 
-extern WDL_DLGRET MainDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+extern WDL_DLGRET MainWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 extern WDL_DLGRET PreferencesDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 extern HINSTANCE gHINST;
 extern HWND gHWND;

@@ -164,7 +164,12 @@ namespace syn
 
         explicit Unit(const string& a_name);
 
-        virtual ~Unit() {}
+        virtual ~Unit();
+
+        const string& name() const { return m_name; }
+        void setName(const string& a_name);
+
+        UnitTypeId getClassIdentifier() const;
 
         /**
          * Processes as many samples as required to fill the internal buffer (see Unit::getBufferSize and Unit::setBufferSize).
@@ -309,11 +314,6 @@ namespace syn
         */
         bool disconnectInput(int a_toInputPort);
 
-        const string& name() const;
-        void setName(const string& a_name);
-
-        UnitTypeId getClassIdentifier() const;
-
         /**
          * Copies this unit into newly allocated memory (the caller is responsible for releasing the memory).
          * Connections to other units are not preserved in the clone.
@@ -375,8 +375,6 @@ namespace syn
 
     private:
         void _setParent(Circuit* a_new_parent);
-
-        void _setName(const string& a_name);
 
         virtual Unit* _clone() const = 0;
 

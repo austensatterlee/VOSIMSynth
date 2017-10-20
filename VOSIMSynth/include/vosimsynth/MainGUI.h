@@ -26,7 +26,6 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
-#include <vosimlib/common_serial.h>
 #include <nanogui/formhelper.h>
 #include <nanogui/messagedialog.h>
 #include <map>
@@ -67,11 +66,11 @@ namespace synui {
         template <typename Type>
         nanogui::detail::FormWidget<Type>* addSerializableVariable(const std::string& name, const std::string& label, const std::function<void(const Type&)>& setter, const std::function<Type()>& getter, bool editable = true) {
             auto ret = FormHelper::addVariable<Type>(label, setter, getter, editable);
-            auto getterSerializer = [getter]()-> json {
-                json j = getter();
+            auto getterSerializer = [getter]() {
+                nlohmann::json j = getter();
                 return j;
             };
-            auto setterSerializer = [setter](const json& j) {
+            auto setterSerializer = [setter](const nlohmann::json& j) {
                 setter(j.get<Type>());
             };
             m_getterSerializers[name] = getterSerializer;
@@ -84,17 +83,17 @@ namespace synui {
             return addSerializableVariable<Type>(label, label, setter, getter, editable);
         }
 
-        operator json() const {
-            json j;
+        operator nlohmann::json() const {
+            nlohmann::json j;
             for (auto& g : m_getterSerializers) {
                 j[g.first] = g.second();
             }
             return j;
         }
 
-        SerializableFormHelper* load(const json& j) {
+        SerializableFormHelper* load(const nlohmann::json& j) {
             for (auto& s : m_setterSerializers) {
-                const json& curr = j[s.first];
+                const nlohmann::json& curr = j[s.first];
                 if (!curr.empty())
                     s.second(curr);
             }
@@ -102,8 +101,8 @@ namespace synui {
         }
 
     protected:
-        std::map<std::string, std::function<json()>> m_getterSerializers;
-        std::map<std::string, std::function<void(const json&)>> m_setterSerializers;
+        std::map<std::string, std::function<nlohmann::json()>> m_getterSerializers;
+        std::map<std::string, std::function<void(const nlohmann::json&)>> m_setterSerializers;
     };
 
     /**
@@ -121,11 +120,11 @@ namespace synui {
         void draw();
         void alert(const std::string& a_title, const std::string& a_msg, DlgType a_type = DlgType::Information);
 
-        operator json() const;
-        MainGUI* load(const json& j);
+        operator nlohmann::json() const;
+        MainGUI* load(const nlohmann::json& j);
 
         void reset();
-        void resize(int a_w, int a_h);
+        void resize(const Eigen::Vector2i& a_size);
 
         CircuitWidget* circuitWidget() const { return m_circuitWidget; }
     protected:

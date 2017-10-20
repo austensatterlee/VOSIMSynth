@@ -135,7 +135,7 @@ void synui::CircuitWidget::performLayout(NVGcontext* ctx) {
         w.second->setSize({0,0});
     }
     Widget::performLayout(ctx);
-    for (auto w : m_unitWidgets) {
+    for (const auto w : m_unitWidgets) {
         if (!w.second->visible())
             continue;
         if ((oldSizes[w.first].array() != w.second->size().array()).any())
@@ -148,16 +148,14 @@ void synui::CircuitWidget::resizeGrid(int a_newGridSpacing) {
     const int minSpacing = 10;
     // Require at least 20 rows and 20 columns (enforced only after first draw)
     const int maxSpacing = m_uninitialized ? a_newGridSpacing : syn::MIN(size().x(), size().y()) / 20;
-    a_newGridSpacing = syn::MAX(a_newGridSpacing, minSpacing);
     a_newGridSpacing = syn::MIN(a_newGridSpacing, maxSpacing);
+    a_newGridSpacing = syn::MAX(a_newGridSpacing, minSpacing);
     Vector2i newGridShape = m_grid.fromPixel(size(), a_newGridSpacing);
 
     if (m_gridSpacing == a_newGridSpacing && (newGridShape.array() == m_grid.getShape().array()).all())
         return;
     m_gridSpacing = a_newGridSpacing;
     m_grid.resize(newGridShape);
-
-    screen()->performLayout();
 
     for (auto unit : m_unitWidgets)
         updateUnitPos(unit.second, unit.second->position(), true);
@@ -167,9 +165,9 @@ synui::CircuitWidget::operator json() const {
     json j;
     j["grid_spacing"] = m_gridSpacing;
     json& wires = j["wires"] = json();
-    for (auto w : m_wires) { wires.push_back(w->operator json()); }
+    for (const auto w : m_wires) { wires.push_back(w->operator json()); }
     json& units = j["units"] = json();
-    for (auto u : m_unitWidgets) { units[std::to_string(u.first)] = u.second->operator json(); }
+    for (const auto u : m_unitWidgets) { units[std::to_string(u.first)] = u.second->operator json(); }
     return j;
 }
 
@@ -183,9 +181,9 @@ synui::CircuitWidget* synui::CircuitWidget::load(const json& j) {
     /* Load new unit widgets */
     const json& units = j["units"];
     const syn::Circuit& circ = m_vm->getPrototypeCircuit();
-    for (json::const_iterator it = units.cbegin(); it != units.cend(); ++it) {
-        int unitId = stoi(it.key());
-        syn::UnitTypeId classId = circ.getUnit(unitId).getClassIdentifier();
+    for (auto it = units.cbegin(); it != units.cend(); ++it) {
+        const int unitId = stoi(it.key());
+        const syn::UnitTypeId classId = circ.getUnit(unitId).getClassIdentifier();
         const json& unit = it.value();
         Vector2i pos{unit["x"].get<int>(), unit["y"].get<int>()};
         UnitWidget* widget = createUnitWidget(classId, unitId)->load(unit);
@@ -208,7 +206,7 @@ void synui::CircuitWidget::reset() {
     /* Clear the circuit widget of all wires and unit widgets */
     while (!m_wires.empty()) { deleteWireWidget(m_wires.back()); }
     while (!m_unitWidgets.empty()) {
-        auto it = m_unitWidgets.begin();
+        const auto it = m_unitWidgets.begin();
         deleteUnitWidget(it->second);
     }
     m_grid.getBlock({0,0}, m_grid.getShape()).fill(m_grid.getEmptyValue());
@@ -388,7 +386,7 @@ void synui::CircuitWidget::updateUnitPos(UnitWidget* a_unitWidget, const Vector2
             const GridCell& cellContents = blk(r, c);
             for (const auto& state : cellContents.states) {
                 if (state.type == GridCell::State::Wire)
-                    wires.insert(reinterpret_cast<CircuitWire*>(state.ptr)->shared_from_this());
+                    wires.insert(static_cast<CircuitWire*>(state.ptr)->shared_from_this());
             }
         }
     }
@@ -550,7 +548,7 @@ bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector
     // Reset the current selection if it does not contain the clicked unit widget.
     for (const auto& s : cell.states) {
         if (s.type == CircuitWidget::GridCell::State::Unit) {
-            UnitWidget* w = reinterpret_cast<UnitWidget*>(s.ptr);
+            UnitWidget* w = static_cast<UnitWidget*>(s.ptr);
             if (cw.unitSelection().find(w) == cw.unitSelection().end()) {
                 cw.unitSelection().clear();
                 break;
@@ -561,7 +559,7 @@ bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector
     if (button == GLFW_MOUSE_BUTTON_LEFT && down) {
         for (const auto& s : cell.states) {
             if (s.type == CircuitWidget::GridCell::State::Unit) {
-                UnitWidget* uw = reinterpret_cast<UnitWidget*>(s.ptr);
+                UnitWidget* uw = static_cast<UnitWidget*>(s.ptr);
                 int unitId = uw->getUnitId();
                 bool isOutput = true;
                 int portId = uw->getOutputPort(mousePos - uw->position());
@@ -635,7 +633,7 @@ bool synui::cwstate::IdleState::mouseMotionEvent(CircuitWidget& cw, const Vector
                     m_highlightedWire->highlight = CircuitWire::None;
                     m_highlightedWire = nullptr;
                 }
-                m_highlightedWire = reinterpret_cast<CircuitWire*>(s.ptr)->shared_from_this();
+                m_highlightedWire = static_cast<CircuitWire*>(s.ptr)->shared_from_this();
                 m_highlightedWire->highlight = CircuitWire::Selected;
                 m_lastHighlightedWire = m_highlightedWire;
                 break;
@@ -721,7 +719,7 @@ bool synui::cwstate::DrawingWireState::mouseButtonEvent(CircuitWidget& cw, const
         Grid2DPoint mousePt = cw.grid().fromPixel(mousePos, cw.gridSpacing());
         auto unitState = cw.grid().get(mousePt).find(CircuitWidget::GridCell::State::Unit);
         if (unitState!=cw.grid().get(mousePt).states.end()) {
-            UnitWidget* unit = reinterpret_cast<UnitWidget*>(unitState->ptr);
+            UnitWidget* unit = static_cast<UnitWidget*>(unitState->ptr);
             int unitId = unit->getUnitId();
             bool isOutput = true;
             int portId = unit->getOutputPort(mousePos - unit->position());
@@ -729,7 +727,7 @@ bool synui::cwstate::DrawingWireState::mouseButtonEvent(CircuitWidget& cw, const
                 isOutput = false;
                 portId = unit->getInputPort(mousePos - unit->position());
             }
-            m_endPort = {unitId, portId};
+            m_endPort = std::make_pair(unitId, portId);
             m_endedOnOutput = isOutput;
             changeState(cw, *new IdleState());
             return true;
@@ -859,7 +857,7 @@ void synui::cwstate::MovingUnitState::enter(CircuitWidget& cw, State& oldState) 
     // Reset the current selection if it does not contain the target unit widget.
     auto unitState = cell.find(CircuitWidget::GridCell::State::Unit);
     if (unitState != cell.states.end()) {
-        UnitWidget* w = reinterpret_cast<UnitWidget*>(unitState->ptr);
+        UnitWidget* w = static_cast<UnitWidget*>(unitState->ptr);
         if (cw.unitSelection().find(w) == cw.unitSelection().end()) {
             cw.unitSelection().clear();
             cw.unitSelection().insert(w);
@@ -905,7 +903,7 @@ bool synui::cwstate::DrawingSelectionState::mouseMotionEvent(CircuitWidget& cw, 
         for (int c = 0; c < blk.cols(); c++) {
             auto unitState = blk(r, c).find(CircuitWidget::GridCell::State::Unit);
             if (unitState!=blk(r, c).states.end())
-                cw.unitSelection().insert(reinterpret_cast<UnitWidget*>(unitState->ptr));
+                cw.unitSelection().insert(static_cast<UnitWidget*>(unitState->ptr));
         }
     }
     cw.Widget::mouseMotionEvent(p, rel, button, modifiers);

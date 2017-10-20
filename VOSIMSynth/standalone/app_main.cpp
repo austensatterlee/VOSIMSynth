@@ -431,7 +431,7 @@ bool InitialiseAudio(unsigned int inId,
   gIOVS = iovs; // gIOVS may get changed by stream
   gSigVS = atoi(gState->mAudioSigVS); // This is done here so that it changes when the callback is stopped
 
-  DBGMSG("\ntrying to start audio stream @ %i sr, %i iovs, %i sigvs\nindev = %i:%s\noutdev = %i:%s\n", sr, iovs, gSigVS, inId, GetAudioDeviceName(inId).c_str(), outId, GetAudioDeviceName(outId).c_str());
+  DBGMSG("\n%s:%d> trying to start audio stream @ %i sr, %i iovs, %i sigvs\nindev = %i:%s\noutdev = %i:%s\n", __FILE__, __LINE__, sr, iovs, gSigVS, inId, GetAudioDeviceName(inId).c_str(), outId, GetAudioDeviceName(outId).c_str());
 
   RtAudio::StreamOptions options;
   options.flags = RTAUDIO_NONINTERLEAVED;
@@ -671,6 +671,54 @@ void Cleanup()
 }
 
 #ifdef OS_WIN
+
+BOOL InitApplication(HINSTANCE hinstance) {
+    WNDCLASSEX wcx;
+
+    // Fill in the window class structure with parameters 
+    // that describe the main window. 
+    wcx.cbSize = sizeof(wcx); // size of structure 
+    wcx.style = CS_HREDRAW | CS_VREDRAW; // redraw if size changes 
+    wcx.lpfnWndProc = MainWndProc; // points to window procedure 
+    wcx.cbClsExtra = 0; // no extra class memory 
+    wcx.cbWndExtra = 0; // no extra window memory 
+    wcx.hInstance = hinstance; // handle to instance 
+    wcx.hIcon = LoadIcon(NULL, IDI_APPLICATION); // predefined app. icon 
+    wcx.hCursor = LoadCursor(NULL, IDC_ARROW); // predefined arrow 
+    wcx.hbrBackground = HBRUSH(GetStockObject(WHITE_BRUSH)); // white background brush 
+    wcx.lpszMenuName = MAKEINTRESOURCE(IDR_MENU1);
+    wcx.lpszClassName = "MainWClass"; // name of window class 
+    wcx.hIconSm = HICON(LoadImage(hinstance, // small class icon 
+        MAKEINTRESOURCE(IDI_ICON1),
+        IMAGE_ICON,
+        GetSystemMetrics(SM_CXSMICON),
+        GetSystemMetrics(SM_CYSMICON),
+        LR_DEFAULTCOLOR));
+
+    // Register the window class.
+    return RegisterClassEx(&wcx);
+}
+
+BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) {
+
+    // Save the application-instance handle. 
+
+    gHINST = hInstance;
+
+    // Create the main window. 
+
+    HWND hwnd = CreateWindow("MainWClass", PLUG_NAME, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, GUI_WIDTH, GUI_HEIGHT, NULL, NULL, hInstance, NULL);
+
+    if (!hwnd)
+        return FALSE;
+
+    // Show the window and send a WM_PAINT message to the window 
+    // procedure. 
+    ShowWindow(hwnd, nCmdShow);
+    UpdateWindow(hwnd);
+    return TRUE;
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdParam, int nShowCmd)
 {
   // first check to make sure this is the only instance running
@@ -758,9 +806,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
       UpdateINI(); // will write file if doesn't exist
     }
 
-    Init();
+    Init();    
 
-    CreateDialog(gHINST,MAKEINTRESOURCE(IDD_DIALOG_MAIN),GetDesktopWindow(),MainDlgProc);
+    if (!InitApplication(hInstance))
+        return FALSE;
+
+    if (!InitInstance(hInstance, nShowCmd))
+        return FALSE;
 
     for(;;)
     {

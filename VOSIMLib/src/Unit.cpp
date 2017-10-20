@@ -32,6 +32,8 @@ namespace syn
         m_audioConfig{44.1e3, 120, 1},
         m_midiData{} {}
 
+    Unit::~Unit() {}
+
     void Unit::setName(const string& a_name) { m_name = a_name; }
 
     UnitTypeId Unit::getClassIdentifier() const
@@ -97,10 +99,6 @@ namespace syn
     int Unit::numInputs() const { return static_cast<int>(m_inputPorts.size()); }
 
     int Unit::numOutputs() const { return static_cast<int>(m_outputPorts.size()); }
-
-    const string& Unit::name() const { return m_name; }
-
-    void Unit::_setName(const string& a_name) { m_name = a_name; }
 
     bool Unit::isActive() const { return m_midiData.isNoteOn; }
 

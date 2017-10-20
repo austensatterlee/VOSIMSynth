@@ -54,9 +54,9 @@ syn::Unit* syn::UnitFactory::createUnit(UnitTypeId a_classIdentifier, const stri
     p.build_count++;
     // Generate default name
     if (a_name.empty())
-        unit->_setName(generateUnitName(unit->getClassIdentifier()));
+        unit->setName(generateUnitName(unit->getClassIdentifier()));
     else
-        unit->_setName(a_name);
+        unit->setName(a_name);
     return unit;
 }
 
