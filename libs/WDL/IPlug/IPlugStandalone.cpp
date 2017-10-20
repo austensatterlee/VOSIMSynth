@@ -1,5 +1,5 @@
 #include "IPlugStandalone.h"
-#include "MainWindow.h"
+#include "vosimsynth/MainWindow.h"
 #ifndef OS_IOS
   extern HWND gHWND;
 #endif

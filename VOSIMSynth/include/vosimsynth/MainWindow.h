@@ -98,10 +98,10 @@ namespace synui
 
 #ifdef _WIN32
         HINSTANCE m_HInstance;
-        HWND m_timerWindow;
+        UINT m_timerId;
         void setHInstance(HINSTANCE a_newHInstance) { m_HInstance = a_newHInstance; }
         HINSTANCE getHInstance() const { return m_HInstance; }
-        static LRESULT CALLBACK drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam);
+        static VOID CALLBACK _TimerProc(HWND hwnd, UINT message, UINT idTimer, DWORD dwTime);
         void _OpenWindowImplem(HWND a_system_window);
         void _CloseWindowImplem();
 #endif

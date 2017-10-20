@@ -1,7 +1,7 @@
 #ifndef _IPLUGAPP_APP_MAIN_H_
 #define _IPLUGAPP_APP_MAIN_H_
 
-#include "IPlugOSDetect.h"
+#include "IPlug/IPlugOSDetect.h"
 
 /*
 
@@ -44,7 +44,7 @@
 #include <string>
 #include <vector>
 
-#include "VOSIMSynth.h" // change this to match your iplug plugin .h file
+#include "vosimsynth/VOSIMSynth.h" // change this to match your iplug plugin .h file
 
 typedef unsigned short UInt16;
 

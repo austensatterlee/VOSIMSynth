@@ -96,7 +96,7 @@ void synui::MainGUI::reset() {
 
 void synui::MainGUI::resize(int a_w, int a_h) {
     TIME_TRACE
-    m_screen->resizeCallbackEvent(a_w, a_h);
+    m_screen->resizeEvent({ a_w, a_h });
     m_sidePanelL->setFixedHeight(m_screen->height());
     m_screen->performLayout();
     m_sidePanelR->setPosition({m_sidePanelL->width(), m_buttonPanel->height()});
@@ -120,35 +120,32 @@ void synui::MainGUI::setGLFWWindow(GLFWwindow* a_window) {
     TRACEMSG("Finished initializing nanogui screen.");
 
     /* Setup event handlers. */
-    glfwSetWindowUserPointer(a_window, this);// Set user pointer so we can access ourselves inside the event handlers
-
     glfwSetCursorPosCallback(a_window,
-        [](GLFWwindow* w, double x, double y) { static_cast<MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->cursorPosCallbackEvent(x, y); }
+        [](GLFWwindow* w, double x, double y) { reinterpret_cast<MainWindow*>(glfwGetWindowUserPointer(w))->getGUI()->m_screen->cursorPosCallbackEvent(x, y); }
     );
 
     glfwSetMouseButtonCallback(a_window,
-        [](GLFWwindow* w, int button, int action, int modifiers) { static_cast<MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->mouseButtonCallbackEvent(button, action, modifiers); }
+        [](GLFWwindow* w, int button, int action, int modifiers) { reinterpret_cast<MainWindow*>(glfwGetWindowUserPointer(w))->getGUI()->m_screen->mouseButtonCallbackEvent(button, action, modifiers); }
     );
 
     glfwSetKeyCallback(a_window,
-        [](GLFWwindow* w, int key, int scancode, int action, int mods) { static_cast<MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->keyCallbackEvent(key, scancode, action, mods); }
+        [](GLFWwindow* w, int key, int scancode, int action, int mods) { reinterpret_cast<MainWindow*>(glfwGetWindowUserPointer(w))->getGUI()->m_screen->keyCallbackEvent(key, scancode, action, mods); }
     );
 
     glfwSetCharCallback(a_window,
-        [](GLFWwindow* w, unsigned int codepoint) { static_cast<MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->charCallbackEvent(codepoint); }
+        [](GLFWwindow* w, unsigned int codepoint) { reinterpret_cast<MainWindow*>(glfwGetWindowUserPointer(w))->getGUI()->m_screen->charCallbackEvent(codepoint); }
     );
 
     glfwSetDropCallback(a_window,
-        [](GLFWwindow* w, int count, const char** filenames) { static_cast<MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->dropCallbackEvent(count, filenames); }
+        [](GLFWwindow* w, int count, const char** filenames) { reinterpret_cast<MainWindow*>(glfwGetWindowUserPointer(w))->getGUI()->m_screen->dropCallbackEvent(count, filenames); }
     );
 
     glfwSetScrollCallback(a_window,
-        [](GLFWwindow* w, double x, double y) { static_cast<MainGUI*>(glfwGetWindowUserPointer(w))->m_screen->scrollCallbackEvent(x, y); }
+        [](GLFWwindow* w, double x, double y) { reinterpret_cast<MainWindow*>(glfwGetWindowUserPointer(w))->getGUI()->m_screen->scrollCallbackEvent(x, y); }
     );
 
     auto resizeCallback = [](GLFWwindow* w, int width, int height) {
-        auto mainGui = static_cast<MainGUI*>(glfwGetWindowUserPointer(w));
-        mainGui->resize(width, height);
+        reinterpret_cast<MainWindow*>(glfwGetWindowUserPointer(w))->getGUI()->m_screen->resizeEvent({ width, height });
     };
     glfwSetFramebufferSizeCallback(a_window, resizeCallback);
     glfwSetWindowSizeCallback(a_window, resizeCallback);

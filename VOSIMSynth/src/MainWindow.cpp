@@ -3,6 +3,9 @@
 #include "vosimsynth/Logging.h"
 #include "vosimsynth/common.h"
 #include <vosimlib/Command.h>
+#include <winuser.h>
+#include <winuser.h>
+#include <winuser.h>
 
 #if !defined(GL_VERSION_MAJOR)
 #define GL_VERSION_MAJOR 3
@@ -25,66 +28,40 @@ static const char* wndClassName = "VOSIMWndClass";
 void synui::MainWindow::_OpenWindowImplem(HWND a_system_window)
 {
     TIME_TRACE
-    if (nWndClassReg++ == 0) {
-        WNDCLASS wndClass = { NULL, drawFunc, 0, 0, m_HInstance, 0, NULL, 0, 0, wndClassName };
-        RegisterClass(&wndClass);
-    }
 
-    SetWindowLongW(glfwGetWin32Window(m_window), GWL_STYLE, GetWindowLongW(glfwGetWin32Window(m_window), GWL_STYLE) | WS_CHILD);
-    SetParent(glfwGetWin32Window(m_window), a_system_window);
+    HWND hwnd = glfwGetWin32Window(m_window);
+    SetParent(hwnd, a_system_window);
+    SetWindowLongPtr(hwnd, GWL_STYLE, GetWindowLongPtr(hwnd, GWL_STYLE) | WS_POPUP | WS_CHILD);
+    SetWindowLongPtr(hwnd, GWL_EXSTYLE, GetWindowLongPtr(hwnd, GWL_EXSTYLE) & ~WS_EX_APPWINDOW);
+    SetWindowPos(hwnd, a_system_window, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 
-    m_timerWindow = CreateWindow(wndClassName, "VOSIMTimerWindow", NULL, 0, 0, 0, 0, NULL, NULL, m_HInstance, this);
-
-    if (!m_timerWindow && --nWndClassReg == 0) {
-        UnregisterClass(wndClassName, m_HInstance);
+    m_timerId = SetTimer(hwnd, NULL, 1000/120, reinterpret_cast<TIMERPROC>(_TimerProc)); // timer callback 
+    if (!m_timerId) {
+        TRACEMSG("No timer is available");
+        throw "No timer is available";
     }
 }
 
 void synui::MainWindow::_CloseWindowImplem()
 {
     TIME_TRACE
-    SetWindowLongW(glfwGetWin32Window(m_window), GWL_STYLE, GetWindowLongW(glfwGetWin32Window(m_window), GWL_STYLE) & ~WS_CHILD);
-
-    DestroyWindow(m_timerWindow);
-    m_timerWindow = nullptr;
-
-    if (--nWndClassReg == 0) {
-        UnregisterClass(wndClassName, m_HInstance);
+    if (m_timerId) {
+        HWND hwnd = glfwGetWin32Window(m_window);
+        KillTimer(hwnd, m_timerId);
+        m_timerId = NULL;
     }
 }
 
-LRESULT CALLBACK synui::MainWindow::drawFunc(HWND Handle, UINT Message, WPARAM WParam, LPARAM LParam)
+VOID CALLBACK synui::MainWindow::_TimerProc(HWND hwnd, UINT message, UINT idTimer, DWORD dwTime)
 {
-    if (Message == WM_CREATE) {
-        LPCREATESTRUCT lpcs = (LPCREATESTRUCT)LParam;
-        SetWindowLongPtr(Handle, GWLP_USERDATA, (LPARAM)(lpcs->lpCreateParams));
-
-        int mSec = int(1000.0 / 120.0);
-        SetTimer(Handle, NULL, mSec, NULL);
-
-        return 0;
-    }
-
-    MainWindow *_this = reinterpret_cast<MainWindow*>(GetWindowLongPtr(Handle, GWLP_USERDATA));
-    if (!_this || !_this->isOpen())
-        return DefWindowProc(Handle, Message, WParam, LParam);
-
-    switch (Message) {
-    case WM_TIMER:
-    {
-        _this->_runLoop();
-    }
-    break;
-    default:
-        return DefWindowProc(Handle, Message, WParam, LParam);
-    } // windows message handler
-    return NULL;
+    GLFWwindow* window = reinterpret_cast<GLFWwindow*>(GetPropW(hwnd, L"GLFW"));
+    MainWindow* _this = reinterpret_cast<MainWindow*>(glfwGetWindowUserPointer(window));
+    _this->_runLoop();
 }
 #endif
 
 synui::MainWindow::MainWindow(int a_width, int a_height, GUIConstructor a_guiConstructor) :
     m_HInstance(nullptr),
-    m_timerWindow(nullptr),
     m_window(nullptr),
     m_size(a_width, a_height), 
     m_isOpen(false),
@@ -132,12 +109,12 @@ void synui::MainWindow::_createGLFWWindow()
 #if defined(GL_VERSION_MINOR)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, GL_VERSION_MINOR);
 #endif
-#if !defined(NDEBUG)
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
-#endif
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);   
+//#if !defined(NDEBUG)
+//    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+//#endif
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
     if(m_window) {
         glfwDestroyWindow(m_window);
@@ -153,6 +130,7 @@ void synui::MainWindow::_createGLFWWindow()
         TRACEMSG("Successfully created GLFW window.");
     }
 
+    glfwSetWindowUserPointer(m_window, this);
     glfwMakeContextCurrent(m_window);
     glfwSwapInterval(1);
     glfwSwapBuffers(m_window);
@@ -244,6 +222,7 @@ bool synui::MainWindow::OpenWindow(HWND a_system_window)
         _createGLFWWindow();
         m_gui->show();
         _OpenWindowImplem(a_system_window);
+        glfwFocusWindow(m_window);
         m_isOpen = true;
     }
     return true;

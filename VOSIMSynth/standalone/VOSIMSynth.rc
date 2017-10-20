@@ -1,4 +1,4 @@
-#include "resource.h"
+#include "vosimsynth/resource.h"
 
 IDI_ICON1 ICON DISCARDABLE "resources/VOSIMSynth.ico"
 

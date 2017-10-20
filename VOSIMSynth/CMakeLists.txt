@@ -1,15 +1,13 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
 project(VOSIMSynth)
 
-option(VOSIMSYNTH_BUILD_VST "Build as a VST?" TRUE)
+option(VOSIMSYNTH_BUILD_STANDALONE "Build standalone executable?" FALSE)
 
 if(MSVC)
   add_compile_options("$<$<CONFIG:Debug>:/bigobj>")
 endif()
 
-if(VOSIMSYNTH_BUILD_VST)
-  list(APPEND VOSIMSYNTH_DEFS -DVST_API -DDLL_BUILD -DVST_FORCE_DEPRECATED -DVOSIMSYNTH_SHARED)
-endif()
+list(APPEND VOSIMSYNTH_DEFS -DVST_API -DDLL_BUILD -DVST_FORCE_DEPRECATED -DVOSIMSYNTH_SHARED)
 
 set(ADDITIONAL_LIBRARIES "")
 
@@ -22,16 +20,6 @@ set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME ON)
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
-
-##
-# nanogui
-##
-list(APPEND ADDITIONAL_LIBRARIES nanogui ${NANOGUI_EXTRA_LIBS})
-add_definitions(${NANOGUI_EXTRA_DEFS})
-# # Remove eigen from nanogui's includes, since we have our own
-# string(REGEX REPLACE "(;?)[^;]*eigen[^;]*(;?)" "\\1\\2" NANOGUI_EXTRA_INCS "${NANOGUI_EXTRA_INCS}")
-include_directories(${NANOGUI_EXTRA_INCS})
-include_directories(${LIBS_DIR}/nanogui/include)
 
 ##
 # Eigen
@@ -85,37 +73,28 @@ file(GLOB PROJECT_SRCS vosimsynth_resources.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/
 file(GLOB PROJECT_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/include/vosimsynth/*.h)
 file(GLOB PROJECT_WIDGET_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/include/vosimsynth/widgets/*.h)
 set(VOSIMSYNTH_PROJECT_FILES ${PROJECT_SRCS};${PROJECT_HDRS};${PROJECT_WIDGET_HDRS})
+SET(ALL_VOSIMSYNTH_FILES ${VOSIMSYNTH_PROJECT_FILES} ${RESOURCE_FILES} ${WDL_FILES} ${IPLUG_FILES})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-# Add standalone project
-if(NOT ${VOSIMSYNTH_BUILD_VST})
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/standalone standalone)
-endif()
-
-add_definitions(${VOSIMSYNTH_DEFS})
-
 # add source groups ("filters" for MSVC)
-source_group(VOSIMSynth/include/widgets FILES ${PROJECT_WIDGET_HDRS}/)
+source_group(VOSIMSynth/include/widgets FILES ${PROJECT_WIDGET_HDRS})
 source_group(VOSIMSynth/include/vosimsynth FILES ${PROJECT_HDRS})
 source_group(VOSIMSynth/src FILES ${PROJECT_SRCS})
 source_group(Resources FILES ${RESOURCE_FILES})
 source_group(WDL FILES ${WDL_FILES})
 source_group(IPlug FILES ${IPLUG_FILES})
 
-SET(ALL_VOSIMSYNTH_FILES ${VOSIMSYNTH_PROJECT_FILES} ${RESOURCE_FILES} ${WDL_FILES} ${IPLUG_FILES})
-
-if(VOSIMSYNTH_BUILD_VST)
-  add_library(${PROJECT_NAME} SHARED ${ALL_VOSIMSYNTH_FILES})
-  set_target_properties(${PROJECT_NAME} PROPERTIES DEBUG_POSTFIX -d)
-  set_target_properties(${PROJECT_NAME} PROPERTIES RELWITHDEBINFO_POSTFIX -rdb)
-else()
-  add_library(${PROJECT_NAME} STATIC ${ALL_VOSIMSYNTH_FILES})
-  set_target_properties(${PROJECT_NAME} PROPERTIES DEBUG_POSTFIX -s-d)
-  set_target_properties(${PROJECT_NAME} PROPERTIES RELEASE_POSTFIX -s)
-  set_target_properties(${PROJECT_NAME} PROPERTIES MINSIZEREL_POSTFIX -s)
-  set_target_properties(${PROJECT_NAME} PROPERTIES RELWITHDEBINFO_POSTFIX -s)
+# Add standalone project
+if(VOSIMSYNTH_BUILD_STANDALONE)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/standalone standalone)
 endif()
+
+add_definitions(${VOSIMSYNTH_DEFS})
+
+add_library(${PROJECT_NAME} SHARED ${ALL_VOSIMSYNTH_FILES})
+set_target_properties(${PROJECT_NAME} PROPERTIES DEBUG_POSTFIX -d)
+set_target_properties(${PROJECT_NAME} PROPERTIES RELWITHDEBINFO_POSTFIX -rdb)
 
 list(REMOVE_DUPLICATES ADDITIONAL_LIBRARIES)
 target_link_libraries(${PROJECT_NAME}

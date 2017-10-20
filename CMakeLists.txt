@@ -149,33 +149,6 @@ if(NOT FFTS_RELEASE_LIBRARY STREQUAL "FFTS_RELEASE_LIBRARY-NOTFOUND" AND NOT FFT
     list(APPEND REL_LIBS ${FFTS_RELEASE_LIBRARY})
 endif()
 
-##
-# nanogui
-##
-# Disable building extras we won't need (pure C++ project)
-set(NANOGUI_BUILD_EXAMPLE OFF CACHE BOOL "" FORCE)
-set(NANOGUI_BUILD_PYTHON  OFF CACHE BOOL "" FORCE)
-set(NANOGUI_INSTALL       OFF CACHE BOOL " " FORCE)
-set(NANOGUI_BUILD_SHARED  OFF CACHE BOOL " " FORCE)
-
-# Parse and set the requested OpenGL version.
-string(REPLACE "." ";" VOSIMSYNTH_GL_VERSION ${VOSIMSYNTH_GL_VERSION})
-list(GET VOSIMSYNTH_GL_VERSION 0 VOSIMSYNTH_GL_VERSION_MAJOR)
-list(GET VOSIMSYNTH_GL_VERSION 1 VOSIMSYNTH_GL_VERSION_MINOR)
-add_definitions(-DGL_VERSION_MAJOR=${VOSIMSYNTH_GL_VERSION_MAJOR})
-add_definitions(-DGL_VERSION_MINOR=${VOSIMSYNTH_GL_VERSION_MINOR})
-if(VOSIMSYNTH_GL_VERSION_MAJOR EQUAL 3)
-  add_definitions(-DNANOVG_GL3_IMPLEMENTATION)
-elseif(VOSIMSYNTH_GL_VERSION_MINOR EQUAL 3)
-  add_definitions(-DNANOVG_GL2_IMPLEMENTATION)
-else()
-  message(FATAL_ERROR "Use OpenGL version 2 or 3 (VOSIMSYNTH_GL_VERSION_MAJOR is set to ${VOSIMSYNTH_GL_VERSION_MAJOR}, must be set to either 2 or 3).")
-endif()
-# Add the configurations from nanogui
-add_subdirectory(${LIBS_DIR}/nanogui)
-# For reliability of parallel build, make the NanoGUI targets dependencies
-set_property(TARGET glfw nanogui PROPERTY FOLDER "dependencies")
-
 #################################
 # Configure include directories #
 #################################
@@ -218,6 +191,41 @@ include_directories(${LIBS_DIR}/json)
 # Add VOSIMLib
 ##
 add_subdirectory(${VOSIMLIB_DIR} VOSIMLib)
+
+##
+# nanogui
+##
+
+# Parse and set the requested OpenGL version.
+string(REPLACE "." ";" VOSIMSYNTH_GL_VERSION ${VOSIMSYNTH_GL_VERSION})
+list(GET VOSIMSYNTH_GL_VERSION 0 VOSIMSYNTH_GL_VERSION_MAJOR)
+list(GET VOSIMSYNTH_GL_VERSION 1 VOSIMSYNTH_GL_VERSION_MINOR)
+add_definitions(-DGL_VERSION_MAJOR=${VOSIMSYNTH_GL_VERSION_MAJOR})
+add_definitions(-DGL_VERSION_MINOR=${VOSIMSYNTH_GL_VERSION_MINOR})
+if(VOSIMSYNTH_GL_VERSION_MAJOR EQUAL 3)
+  add_definitions(-DNANOVG_GL3_IMPLEMENTATION)
+elseif(VOSIMSYNTH_GL_VERSION_MAJOR EQUAL 2)
+  add_definitions(-DNANOVG_GL2_IMPLEMENTATION)
+else()
+  message(FATAL_ERROR "Use OpenGL version 2 or 3 (VOSIMSYNTH_GL_VERSION_MAJOR is set to ${VOSIMSYNTH_GL_VERSION_MAJOR}, must be set to either 2 or 3).")
+endif()
+
+# Disable building extras we won't need (pure C++ project)
+set(NANOGUI_BUILD_EXAMPLE OFF CACHE BOOL "" FORCE)
+set(NANOGUI_BUILD_PYTHON  OFF CACHE BOOL "" FORCE)
+set(NANOGUI_INSTALL       OFF CACHE BOOL " " FORCE)
+set(NANOGUI_BUILD_SHARED  OFF CACHE BOOL " " FORCE)
+
+# add_definitions(-DFONS_USE_FREETYPE)
+# Add the configurations from nanogui
+add_subdirectory(${LIBS_DIR}/nanogui)
+# For reliability of parallel build, make the NanoGUI targets dependencies
+set_property(TARGET glfw nanogui PROPERTY FOLDER "dependencies")
+
+add_definitions(${NANOGUI_EXTRA_DEFS})
+link_libraries(nanogui ${NANOGUI_EXTRA_LIBS})
+include_directories(${NANOGUI_EXTRA_INCS})
+include_directories(${LIBS_DIR}/nanogui/include)
 
 ##
 # Add VOSIMSynth

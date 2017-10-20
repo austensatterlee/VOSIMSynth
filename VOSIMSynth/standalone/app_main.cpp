@@ -1,5 +1,5 @@
 #include "app_main.h"
-#include <MainWindow.h>
+#include "vosimsynth/MainWindow.h"
 
 #ifdef OS_WIN
   #include <windows.h>
@@ -608,6 +608,7 @@ extern bool AttachGUI()
   if (pGraphics)
   {
 #ifdef OS_WIN
+    pGraphics->setHInstance(gHINST);
     if (!pGraphics->OpenWindow(gHWND))
       pGraphics=0;
 #else // Cocoa OSX
