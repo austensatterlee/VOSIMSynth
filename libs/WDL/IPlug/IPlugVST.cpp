@@ -1,6 +1,7 @@
 #include "IPlugVST.h"
-#include <vosimsynth/MainWindow.h>
+#include <vosimsynth/MainGui.h>
 #include <stdio.h>
+#include "vosimsynth/resource.h"
 
 const int VST_VERSION = 2400;
 
@@ -213,14 +214,14 @@ EHost IPlugVST::GetHost()
   return host;
 }
 
-void IPlugVST::AttachAppWindow(synui::MainWindow* a_vosimWindow) {
-      if (a_vosimWindow)
+void IPlugVST::AttachAppWindow(synui::MainGui* a_window) {
+      if (a_window)
       {
-        IPlugBase::AttachAppWindow(a_vosimWindow);
+        IPlugBase::AttachAppWindow(a_window);
         mAEffect.flags |= effFlagsHasEditor;
         mEditRect.left = mEditRect.top = 0;
-        mEditRect.right = static_cast<VstInt16>(a_vosimWindow->getSize()[0]);
-        mEditRect.bottom = static_cast<VstInt16>(a_vosimWindow->getSize()[1]);
+        mEditRect.right = static_cast<VstInt16>(a_window->getWidth());
+        mEditRect.bottom = static_cast<VstInt16>(a_window->getHeight());
       }
 }
 
@@ -238,13 +239,13 @@ void IPlugVST::AttachAppWindow(synui::MainWindow* a_vosimWindow) {
 
 void IPlugVST::ResizeGraphics(int w, int h)
 {
-  synui::MainWindow* vosimWindow = GetAppWindow();
+  synui::ChildWindow* vosimWindow = GetAppWindow();
 
   if (vosimWindow)
   {
     mEditRect.left = mEditRect.top = 0;
-    mEditRect.right = (VstInt16)vosimWindow->getSize()[0];
-    mEditRect.bottom = (VstInt16)vosimWindow->getSize()[1];
+    mEditRect.right = (VstInt16)vosimWindow->getWidth();
+    mEditRect.bottom = (VstInt16)vosimWindow->getHeight();
 
     OnWindowResize();
   }
@@ -481,13 +482,13 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
     }
     case effEditOpen:
     {
-       synui::MainWindow* pGraphics = _this->GetAppWindow();
+       synui::ChildWindow* pGraphics = _this->GetAppWindow();
       
       if (pGraphics)
       {
           bool newWindowSuccess;
 #ifdef _WIN32
-          newWindowSuccess = pGraphics->OpenWindow((HWND)ptr);
+          newWindowSuccess = pGraphics->openWindow((HWND)ptr);
           if (!newWindowSuccess) pGraphics = 0;
 #else   // OSX, check if we are in a Cocoa VST host
 #if defined(__LP64__)
@@ -518,7 +519,7 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
       if (_this->GetAppWindow())
       {
         _this->OnGUIClose();
-        _this->GetAppWindow()->CloseWindow();
+        _this->GetAppWindow()->closeWindow();
         return 1;
       }
       return 0;

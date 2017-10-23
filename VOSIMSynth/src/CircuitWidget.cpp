@@ -1,4 +1,4 @@
-#include "vosimsynth/MainWindow.h"
+#include "vosimsynth/ChildWindow.h"
 #include "vosimsynth/UI.h"
 #include "vosimsynth/widgets/CircuitWidget.h"
 #include "vosimsynth/widgets/UnitWidget.h"
@@ -14,7 +14,7 @@
 #include <unordered_set>
 #include <set>
 
-synui::CircuitWidget::CircuitWidget(Widget* a_parent, MainWindow* a_mainWindow, UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm)
+synui::CircuitWidget::CircuitWidget(Widget* a_parent, ChildWindow* a_mainWindow, UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm)
     : Widget(a_parent),
       m_window(a_mainWindow),
       m_unitEditorHost(a_unitEditorHost),

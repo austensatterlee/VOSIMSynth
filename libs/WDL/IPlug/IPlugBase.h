@@ -20,19 +20,19 @@
 // All version ints are stored as 0xVVVVRRMM: V = version, R = revision, M = minor revision.
 
 namespace synui {
-    class MainWindow;
+    class MainGui;
 }
 
 class IPlugBase
 {
 private:
-    synui::MainWindow* m_appWindow;
+    synui::MainGui* m_appWindow;
 protected:
-    virtual void AttachAppWindow(synui::MainWindow* a_appWindow) {
+    virtual void AttachAppWindow(synui::MainGui* a_appWindow) {
         m_appWindow = a_appWindow;
     }
 public:
-    synui::MainWindow* GetAppWindow() const {
+    synui::MainGui* GetAppWindow() const {
         return m_appWindow;
     }
 public:

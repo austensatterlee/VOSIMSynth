@@ -13,8 +13,7 @@ struct IPlugInstanceInfo
 class IPlugVST : public IPlugBase
 {
 protected:
-	// Added by Austen 4/11
-	void AttachAppWindow(synui::MainWindow* a_vosimWindow) override;
+	void AttachAppWindow(synui::MainGui* a_window) override;
 public:
 	IPlugVST(IPlugInstanceInfo instanceInfo,
 	         int nParams,

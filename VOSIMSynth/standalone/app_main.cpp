@@ -1,5 +1,5 @@
 #include "app_main.h"
-#include "vosimsynth/MainWindow.h"
+#include "vosimsynth/MainGui.h"
 
 #ifdef OS_WIN
   #include <windows.h>
@@ -603,16 +603,15 @@ bool ChooseMidiOutput(const char* pPortName)
 
 extern bool AttachGUI()
 {
-  synui::MainWindow* pGraphics = gPluginInstance->GetAppWindow();
+  synui::MainGui* pGraphics = gPluginInstance->GetAppWindow();
 
   if (pGraphics)
   {
 #ifdef OS_WIN
-    pGraphics->setHInstance(gHINST);
-    if (!pGraphics->OpenWindow(gHWND))
+    if (!pGraphics->openWindow(gHWND))
       pGraphics=0;
 #else // Cocoa OSX
-    if (!pGraphics->OpenWindow(gHWND))
+    if (!pGraphics->openWindow(gHWND))
       pGraphics=0;
 #endif
     if (pGraphics)

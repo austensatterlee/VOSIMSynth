@@ -78,9 +78,9 @@ SET(ALL_VOSIMSYNTH_FILES ${VOSIMSYNTH_PROJECT_FILES} ${RESOURCE_FILES} ${WDL_FIL
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # add source groups ("filters" for MSVC)
-source_group(VOSIMSynth/include/widgets FILES ${PROJECT_WIDGET_HDRS})
-source_group(VOSIMSynth/include/vosimsynth FILES ${PROJECT_HDRS})
-source_group(VOSIMSynth/src FILES ${PROJECT_SRCS})
+source_group(include/vosimsynth/widgets FILES ${PROJECT_WIDGET_HDRS})
+source_group(include/vosimsynth FILES ${PROJECT_HDRS})
+source_group(src FILES ${PROJECT_SRCS})
 source_group(Resources FILES ${RESOURCE_FILES})
 source_group(WDL FILES ${WDL_FILES})
 source_group(IPlug FILES ${IPLUG_FILES})

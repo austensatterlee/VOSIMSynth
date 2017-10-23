@@ -28,7 +28,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <vosimlib/units/StateVariableFilter.h>
 #include <vosimlib/UnitFactory.h>
 #include <vosimlib/tables.h>
-#include "vosimsynth/MainWindow.h"
+#include "vosimsynth/ChildWindow.h"
 #include "vosimsynth/MainGUI.h"
 #include "vosimsynth/widgets/CircuitWidget.h"
 #include "vosimsynth/widgets/SummerUnitWidget.h"
@@ -53,12 +53,10 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 
 void VOSIMSynth::makeGraphics() {
     TIME_TRACE;
-    syn::VoiceManager* vm = &m_voiceManager;
-    synui::MainWindow* mainWindow = new synui::MainWindow(GUI_WIDTH, GUI_HEIGHT, [vm](synui::MainWindow* a_win) { return new synui::MainGUI(a_win, vm); });
-    mainWindow->setHInstance(gHInstance);
-    mainWindow->onResize.connect_member(this, &VOSIMSynth::ResizeGraphics);
-    AttachAppWindow(mainWindow);
-    registerUnitWidgets(*mainWindow->getGUI()->circuitWidget());
+    synui::MainGui* gui = new synui::MainGui(&m_voiceManager, GUI_WIDTH, GUI_HEIGHT);
+    gui->onResize.connect_member(this, &VOSIMSynth::ResizeGraphics);
+    AttachAppWindow(gui);
+    registerUnitWidgets(*gui->circuitWidget());
 }
 
 void VOSIMSynth::makeInstrument() {
@@ -142,7 +140,7 @@ int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
         std::ostringstream alertmsg;
         alertmsg << "Unable to load preset!" << std::endl;
         alertmsg << e.what();
-        GetAppWindow()->getGUI()->alert("Error", alertmsg.str(), nanogui::MessageDialog::Type::Warning);
+        GetAppWindow()->alert("Error", alertmsg.str(), nanogui::MessageDialog::Type::Warning);
         return -1;
     }
 }

@@ -1,5 +1,5 @@
 #include "IPlugStandalone.h"
-#include "vosimsynth/MainWindow.h"
+#include "vosimsynth/MainGui.h"
 #ifndef OS_IOS
   extern HWND gHWND;
 #endif
@@ -54,7 +54,7 @@ IPlugStandalone::IPlugStandalone(IPlugInstanceInfo instanceInfo,
 void IPlugStandalone::ResizeGraphics(int w, int h)
 {
   #ifndef OS_IOS
-  synui::MainWindow* pGraphics = GetAppWindow();
+  synui::MainGui* pGraphics = GetAppWindow();
   if (pGraphics)
   {
     #ifdef OS_OSX
@@ -63,6 +63,7 @@ void IPlugStandalone::ResizeGraphics(int w, int h)
     GetWindowRect(gHWND, &r);
     SetWindowPos(gHWND, 0, r.left, r.bottom - pGraphics->Height() - TITLEBAR_BODGE, pGraphics->Width(), pGraphics->Height() + TITLEBAR_BODGE, 0);
     #endif
+    pGraphics->resize(w, h);
     OnWindowResize();
   }
   #endif

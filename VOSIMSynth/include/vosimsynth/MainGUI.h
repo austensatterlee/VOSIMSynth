@@ -26,10 +26,13 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
-#include <nanogui/formhelper.h>
+#include "ChildWindow.h"
+#include "Signal.h"
+#include "SerializableFormHelper.h"
 #include <nanogui/messagedialog.h>
-#include <map>
 #include <memory>
+
+#define MAX_GUI_MSG_QUEUE_SIZE 64
 
 namespace nanogui {
     class Window;
@@ -48,85 +51,32 @@ struct GLFWwindow;
 namespace synui {
     class EnhancedWindow;
     class UnitEditorHost;
-    class MainWindow;
+    class ChildWindow;
     class CircuitWidget;
-    using DlgType = nanogui::MessageDialog::Type;
-
-    class SerializableFormHelper : public nanogui::FormHelper {
-    public:
-        SerializableFormHelper(nanogui::Screen* screen)
-            : FormHelper(screen) {}
-
-        /**
-         * \brief Adds a variable that will be automatically serialized by this classes ::load and ::operator json methods.
-         * 
-         * \param name A name that will be used to serialize this variable. Will (ideally) never change.
-         * \param label The label for this variable that will be displayed in the gui.
-         */
-        template <typename Type>
-        nanogui::detail::FormWidget<Type>* addSerializableVariable(const std::string& name, const std::string& label, const std::function<void(const Type&)>& setter, const std::function<Type()>& getter, bool editable = true) {
-            auto ret = FormHelper::addVariable<Type>(label, setter, getter, editable);
-            auto getterSerializer = [getter]() {
-                nlohmann::json j = getter();
-                return j;
-            };
-            auto setterSerializer = [setter](const nlohmann::json& j) {
-                setter(j.get<Type>());
-            };
-            m_getterSerializers[name] = getterSerializer;
-            m_setterSerializers[name] = setterSerializer;
-            return ret;
-        }
-
-        template <typename Type>
-        nanogui::detail::FormWidget<Type>* addSerializableVariable(const std::string& label, const std::function<void(const Type&)>& setter, const std::function<Type()>& getter, bool editable = true) {
-            return addSerializableVariable<Type>(label, label, setter, getter, editable);
-        }
-
-        operator nlohmann::json() const {
-            nlohmann::json j;
-            for (auto& g : m_getterSerializers) {
-                j[g.first] = g.second();
-            }
-            return j;
-        }
-
-        SerializableFormHelper* load(const nlohmann::json& j) {
-            for (auto& s : m_setterSerializers) {
-                const nlohmann::json& curr = j[s.first];
-                if (!curr.empty())
-                    s.second(curr);
-            }
-            return this;
-        }
-
-    protected:
-        std::map<std::string, std::function<nlohmann::json()>> m_getterSerializers;
-        std::map<std::string, std::function<void(const nlohmann::json&)>> m_setterSerializers;
-    };
+    using DlgType = nanogui::MessageDialog::Type;    
 
     /**
      * Handles the logic of creating the GUI and gluing the components toegether.
      */
-    class MainGUI {
+    class MainGui : public ChildWindow {
     public:
-        MainGUI(MainWindow* a_window, syn::VoiceManager* a_vm);
-        ~MainGUI();
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    public:
+        MainGui(syn::VoiceManager* a_vm, int a_width, int a_height);
+        ~MainGui();
 
-        void setGLFWWindow(GLFWwindow* a_window);
-
-        void show();
-        void hide();
-        void draw();
+        /// Create a temporary message box
         void alert(const std::string& a_title, const std::string& a_msg, DlgType a_type = DlgType::Information);
 
         operator nlohmann::json() const;
-        MainGUI* load(const nlohmann::json& j);
+        MainGui* load(const nlohmann::json& j);
 
+        /// Reset the GUI to its initial state
         void reset();
-        void resize(const Eigen::Vector2i& a_size);
 
         CircuitWidget* circuitWidget() const { return m_circuitWidget; }
+
+        Signal<int, int> onResize;
     protected:
         void createUnitSelector_(nanogui::Widget* a_widget);
         void createSettingsEditor_(nanogui::Widget* a_widget);
@@ -134,7 +84,16 @@ namespace synui {
         void createOscilloscopeViewer_(nanogui::Widget* a_widget);
 
     private:
-        MainWindow* m_window;
+        void _onCreateWindow();
+        void _runLoop() override;
+        /// Initialize the GUI components
+        void _rebuild();
+        /// Recompute the GUI layout
+        void _onResize();
+        void _onOpen() override;
+        void _onClose() override;
+
+    private:
         nanogui::ref<nanogui::Screen> m_screen;
         syn::VoiceManager* m_vm;
 
