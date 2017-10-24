@@ -1,211 +1,140 @@
-# - Try to find the Intel Math Kernel Library
-#   Forked from: https://github.com/openmeeg/openmeeg/blob/master/macros/FindMKL.cmake
-# Once done this will define
 #
-# MKL_FOUND - system has MKL
-# MKL_ROOT_DIR - path to the MKL base directory
-# MKL_INCLUDE_DIR - the MKL include directory
-# MKL_LIBRARIES - MKL libraries
+# The script to detect Intel(R) Math Kernel Library (MKL)
+# installation/package
 #
-# There are few sets of libraries:
-# Array indexes modes:
-# LP - 32 bit indexes of arrays
-# ILP - 64 bit indexes of arrays
-# Threading:
-# SEQUENTIAL - no threading
-# INTEL - Intel threading library
-# GNU - GNU threading library
-# MPI support
-# NOMPI - no MPI support
-# INTEL - Intel MPI library
-# OPEN - Open MPI library
-# SGI - SGI MPT Library
+# Parameters:
+# MKL_WITH_TBB
+#
+# On return this will define:
+#
+# HAVE_MKL          - True if Intel MKL found
+# MKL_ROOT_DIR      - root of MKL installation
+# MKL_INCLUDE_DIRS  - MKL include folder
+# MKL_LIBRARIES     - MKL libraries that are used by OpenCV
+#
 
-# linux
-if(UNIX AND NOT APPLE)
-    if(${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64")
-        set(MKL_ARCH_DIR "em64t")
-    else()
-        set(MKL_ARCH_DIR "32")
+macro (mkl_find_lib VAR NAME DIRS)
+    find_path(${VAR} ${NAME} ${DIRS} NO_DEFAULT_PATH)
+    set(${VAR} ${${VAR}}/${NAME})
+    unset(${VAR} CACHE)
+endmacro()
+
+macro(mkl_fail)
+    set(HAVE_MKL OFF)
+    set(MKL_ROOT_DIR "${MKL_ROOT_DIR}" CACHE PATH "Path to MKL directory")
+    return()
+endmacro()
+
+macro(get_mkl_version VERSION_FILE)
+    # read MKL version info from file
+    file(STRINGS ${VERSION_FILE} STR1 REGEX "__INTEL_MKL__")
+    file(STRINGS ${VERSION_FILE} STR2 REGEX "__INTEL_MKL_MINOR__")
+    file(STRINGS ${VERSION_FILE} STR3 REGEX "__INTEL_MKL_UPDATE__")
+    #file(STRINGS ${VERSION_FILE} STR4 REGEX "INTEL_MKL_VERSION")
+
+    # extract info and assign to variables
+    string(REGEX MATCHALL "[0-9]+" MKL_VERSION_MAJOR ${STR1})
+    string(REGEX MATCHALL "[0-9]+" MKL_VERSION_MINOR ${STR2})
+    string(REGEX MATCHALL "[0-9]+" MKL_VERSION_UPDATE ${STR3})
+    set(MKL_VERSION_STR "${MKL_VERSION_MAJOR}.${MKL_VERSION_MINOR}.${MKL_VERSION_UPDATE}" CACHE STRING "MKL version" FORCE)
+endmacro()
+
+
+if(NOT DEFINED MKL_USE_MULTITHREAD)
+    option(MKL_WITH_TBB "Use MKL with TBB multithreading" OFF)#ON IF WITH_TBB)
+    option(MKL_WITH_OPENMP "Use MKL with OpenMP multithreading" OFF)#ON IF WITH_OPENMP)
+endif()
+
+#check current MKL_ROOT_DIR
+if(NOT MKL_ROOT_DIR OR NOT EXISTS "${MKL_ROOT_DIR}/include/mkl.h")
+    set(mkl_root_paths "${MKL_ROOT_DIR}")
+    if(DEFINED ENV{MKLROOT})
+        list(APPEND mkl_root_paths "$ENV{MKLROOT}")
     endif()
-endif()
 
-# macos
-if(APPLE)
-    set(MKL_ARCH_DIR "em64t")
-endif()
-
-IF(FORCE_BUILD_32BITS)
-    set(MKL_ARCH_DIR "32")
-ENDIF()
-
-if (WIN32)
-    if(${CMAKE_SIZEOF_VOID_P} EQUAL 8)
-        set(MKL_ARCH_DIR "intel64")
-    else()
-        set(MKL_ARCH_DIR "ia32")
+    if(WITH_MKL AND NOT mkl_root_paths)
+      if(WIN32)
+        set(ProgramFilesx86 "ProgramFiles(x86)")
+        list(APPEND mkl_root_paths $ENV{${ProgramFilesx86}}/IntelSWTools/compilers_and_libraries/windows/mkl)
+      endif()
+      if(UNIX)
+        list(APPEND mkl_root_paths "/opt/intel/mkl")
+      endif()
     endif()
+
+    find_path(MKL_ROOT_DIR include/mkl.h PATHS ${mkl_root_paths})
 endif()
 
-set (MKL_THREAD_VARIANTS SEQUENTIAL GNUTHREAD INTELTHREAD)
-set (MKL_MODE_VARIANTS ILP LP)
-set (MKL_MPI_VARIANTS NOMPI INTELMPI OPENMPI SGIMPT)
+set(MKL_INCLUDE_DIRS "${MKL_ROOT_DIR}/include" CACHE PATH "Path to MKL include directory")
 
-find_path(MKL_ROOT_DIR
-    include/mkl_cblas.h
-    PATHS
-    $ENV{MKL_DIR}
-    ${MKL_DIR}
-    /opt/intel/mkl/*/
-    /opt/intel/cmkl/*/
-    /Library/Frameworks/Intel_MKL.framework/Versions/Current/lib/universal
-    "Program Files (x86)/Intel/ComposerXE-2011/mkl"
+if(NOT MKL_ROOT_DIR
+    OR NOT EXISTS "${MKL_ROOT_DIR}"
+    OR NOT EXISTS "${MKL_INCLUDE_DIRS}"
+    OR NOT EXISTS "${MKL_INCLUDE_DIRS}/mkl_version.h"
 )
+    mkl_fail()
+endif()
 
-find_path(MKL_INCLUDE_DIR
-  mkl_cblas.h
-  PATHS
-    ${MKL_ROOT_DIR}/include
-    ${INCLUDE_INSTALL_DIR}
-)
+get_mkl_version(${MKL_INCLUDE_DIRS}/mkl_version.h)
 
+#determine arch
+if(CMAKE_CXX_SIZEOF_DATA_PTR EQUAL 8)
+    set(MKL_X64 1)
+    set(MKL_ARCH "intel64")
 
-find_path(MKL_FFTW_INCLUDE_DIR
-  fftw3.h
-  PATH_SUFFIXES fftw
-  PATHS
-    ${MKL_ROOT_DIR}/include
-    ${INCLUDE_INSTALL_DIR}
-  NO_DEFAULT_PATH
-)
-
-find_library(MKL_CORE_LIBRARY
-  mkl_core
-  PATHS
-    ${MKL_ROOT_DIR}/lib/${MKL_ARCH_DIR}
-    ${MKL_ROOT_DIR}/lib/
-)
-
-# Threading libraries
-find_library(MKL_SEQUENTIAL_LIBRARY
-  mkl_sequential
-  PATHS
-    ${MKL_ROOT_DIR}/lib/${MKL_ARCH_DIR}
-    ${MKL_ROOT_DIR}/lib/
-)
-
-find_library(MKL_INTELTHREAD_LIBRARY
-  mkl_intel_thread
-  PATHS
-    ${MKL_ROOT_DIR}/lib/${MKL_ARCH_DIR}
-    ${MKL_ROOT_DIR}/lib/
-)
-
-find_library(MKL_GNUTHREAD_LIBRARY
-  mkl_gnu_thread
-  PATHS
-    ${MKL_ROOT_DIR}/lib/${MKL_ARCH_DIR}
-    ${MKL_ROOT_DIR}/lib/
-)
-
-# Intel Libraries
-IF("${MKL_ARCH_DIR}" STREQUAL "32")
-    find_library(MKL_LP_LIBRARY
-      mkl_intel
-      PATHS
-        ${MKL_ROOT_DIR}/lib/${MKL_ARCH_DIR}
-        ${MKL_ROOT_DIR}/lib/
-    )
-
-    find_library(MKL_ILP_LIBRARY
-      mkl_intel
-      PATHS
-        ${MKL_ROOT_DIR}/lib/${MKL_ARCH_DIR}
-        ${MKL_ROOT_DIR}/lib/
-    )
+    include(CheckTypeSize)
+    CHECK_TYPE_SIZE(int _sizeof_int)
+    if (_sizeof_int EQUAL 4)
+        set(MKL_ARCH_SUFFIX "lp64")
+    else()
+        set(MKL_ARCH_SUFFIX "ilp64")
+    endif()
 else()
-    find_library(MKL_LP_LIBRARY
-      mkl_intel_lp64
-      PATHS
-        ${MKL_ROOT_DIR}/lib/${MKL_ARCH_DIR}
-        ${MKL_ROOT_DIR}/lib/
-    )
+    set(MKL_ARCH "ia32")
+    set(MKL_ARCH_SUFFIX "c")
+endif()
 
-    find_library(MKL_ILP_LIBRARY
-      mkl_intel_ilp64
-      PATHS
-        ${MKL_ROOT_DIR}/lib/${MKL_ARCH_DIR}
-        ${MKL_ROOT_DIR}/lib/
-    )
-ENDIF()
+if(${MKL_VERSION_STR} VERSION_GREATER "11.3.0" OR ${MKL_VERSION_STR} VERSION_EQUAL "11.3.0")
+    set(mkl_lib_find_paths
+        ${MKL_ROOT_DIR}/lib
+        ${MKL_ROOT_DIR}/lib/${MKL_ARCH} ${MKL_ROOT_DIR}/../tbb/lib/${MKL_ARCH})
 
+    set(mkl_lib_list "mkl_intel_${MKL_ARCH_SUFFIX}")
 
-# Lapack
-find_library(MKL_LAPACK_LIBRARY
-  mkl_lapack
-  PATHS
-    ${MKL_ROOT_DIR}/lib/${MKL_ARCH_DIR}
-    ${MKL_ROOT_DIR}/lib/
-)
-
-IF(NOT MKL_LAPACK_LIBRARY)
-    find_library(MKL_LAPACK_LIBRARY
-      mkl_lapack95_lp64
-      PATHS
-        ${MKL_ROOT_DIR}/lib/${MKL_ARCH_DIR}
-        ${MKL_ROOT_DIR}/lib/
-    )
-ENDIF()
-
-# iomp5
-IF("${MKL_ARCH_DIR}" STREQUAL "32")
-    IF(UNIX AND NOT APPLE)
-        find_library(MKL_IOMP5_LIBRARY
-          iomp5
-          PATHS
-            ${MKL_ROOT_DIR}/../lib/ia32
-        )
-    ELSE()
-        SET(MKL_IOMP5_LIBRARY "") # no need for mac
-    ENDIF()
-else()
-    IF(UNIX AND NOT APPLE)
-        find_library(MKL_IOMP5_LIBRARY
-          iomp5
-          PATHS
-            ${MKL_ROOT_DIR}/../lib/intel64
-        )
-    ELSE()
-        SET(MKL_IOMP5_LIBRARY "") # no need for mac
-    ENDIF()
-ENDIF()
-
-# dbgmsg(MKL_GNUTHREAD_LIBRARY)
-# dbgmsg(MKL_INTELTHREAD_LIBRARY)
-# dbgmsg(MKL_SEQUENTIAL_LIBRARY)
-# dbgmsg(MKL_CORE_LIBRARY)
-# dbgmsg(MKL_FFTW_INCLUDE_DIR)
-# dbgmsg(MKL_INCLUDE_DIR)
-# dbgmsg(MKL_LP_LIBRARY)
-# dbgmsg(MKL_ILP_LIBRARY)
-
-foreach (MODEVAR ${MKL_MODE_VARIANTS})
-    foreach (THREADVAR ${MKL_THREAD_VARIANTS})
-        if (MKL_CORE_LIBRARY AND MKL_${MODEVAR}_LIBRARY AND MKL_${THREADVAR}_LIBRARY)
-            set(MKL_${MODEVAR}_${THREADVAR}_LIBRARIES
-                ${MKL_${MODEVAR}_LIBRARY} ${MKL_${THREADVAR}_LIBRARY} ${MKL_CORE_LIBRARY}
-                $<$<NOT:$<STREQUAL:${MKL_LAPACK_LIBRARY},MKL_LAPACK_LIBRARY-NOTFOUND>>:${MKL_LAPACK_LIBRARY}> ${MKL_IOMP5_LIBRARY})
-            # message("${MODEVAR} ${THREADVAR} ${MKL_${MODEVAR}_${THREADVAR}_LIBRARIES}") # for debug
+    if(MKL_WITH_TBB)
+        list(APPEND mkl_lib_list mkl_tbb_thread tbb)
+    elseif(MKL_WITH_OPENMP)
+        if(MSVC)
+            list(APPEND mkl_lib_list mkl_intel_thread libiomp5md)
+        else()
+            list(APPEND mkl_lib_list mkl_gnu_thread)
         endif()
-    endforeach()
+    else()
+        list(APPEND mkl_lib_list mkl_sequential)
+    endif()
+
+    list(APPEND mkl_lib_list mkl_core)
+else()
+    message(STATUS "MKL version ${MKL_VERSION_STR} is not supported")
+    mkl_fail()
+endif()
+
+set(MKL_LIBRARIES "")
+foreach(lib ${mkl_lib_list})
+    find_library(${lib} ${lib} ${mkl_lib_find_paths})
+    mark_as_advanced(${lib})
+    if(NOT ${lib})
+        mkl_fail()
+    endif()
+    list(APPEND MKL_LIBRARIES ${${lib}})
 endforeach()
 
-set(MKL_LIBRARIES ${MKL_${MKL_INTEGER_MODE}_${MKL_THREADING_MODE}_LIBRARIES})
-
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(MKL DEFAULT_MSG MKL_INCLUDE_DIR MKL_LIBRARIES)
-
-mark_as_advanced(MKL_INCLUDE_DIR MKL_LIBRARIES
-    MKL_CORE_LIBRARY MKL_LP_LIBRARY MKL_ILP_LIBRARY
-    MKL_SEQUENTIAL_LIBRARY MKL_INTELTHREAD_LIBRARY MKL_GNUTHREAD_LIBRARY
-)
+message(STATUS "Found MKL ${MKL_VERSION_STR} at: ${MKL_ROOT_DIR}")
+set(HAVE_MKL ON)
+set(MKL_ROOT_DIR "${MKL_ROOT_DIR}" CACHE PATH "Path to MKL directory")
+set(MKL_INCLUDE_DIRS "${MKL_INCLUDE_DIRS}" CACHE PATH "Path to MKL include directory")
+set(MKL_LIBRARIES "${MKL_LIBRARIES}" CACHE STRING "MKL libarries")
+if(UNIX AND NOT MKL_LIBRARIES_DONT_HACK)
+    #it's ugly but helps to avoid cyclic lib problem
+    set(MKL_LIBRARIES ${MKL_LIBRARIES} ${MKL_LIBRARIES} ${MKL_LIBRARIES} "-lpthread" "-lm" "-ldl")
+endif()

@@ -27,14 +27,6 @@ include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${LIBS_DIR}/eigen)
 
 ##
-# MKL
-##
-if(MKL_FOUND)
-    list(APPEND ADDITIONAL_LIBRARIES ${MKL_LIBRARIES})
-    include_directories(${MKL_INCLUDE_DIR})
-endif()
-
-##
 # VOSIMLib
 ##
 include_directories(${VOSIMLIB_DIR}/include)

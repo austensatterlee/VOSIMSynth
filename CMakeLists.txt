@@ -175,11 +175,13 @@ set(IPLUG_FILES
 ##
 # MKL
 ##
-set(MKL_INTEGER_MODE LP)
-set(MKL_THREADING_MODE INTELTHREAD)
 find_package(MKL)
-if(EIGEN_USE_MKL AND MKL_FOUND)
-  add_definitions(-DEIGEN_USE_MKL_ALL)
+if(HAVE_MKL)
+    list(APPEND ADDITIONAL_LIBRARIES ${MKL_LIBRARIES})
+    include_directories(${MKL_INCLUDE_DIRs})
+    if(EIGEN_USE_MKL)
+      add_definitions(-DEIGEN_USE_MKL_ALL)
+    endif()
 endif()
 
 ##

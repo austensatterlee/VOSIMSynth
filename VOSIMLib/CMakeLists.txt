@@ -27,14 +27,6 @@ find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
 ##
-# MKL
-##
-if(MKL_FOUND)
-    list(APPEND ADDITIONAL_LIBRARIES ${MKL_LIBRARIES})
-    include_directories(${MKL_INCLUDE_DIR})
-endif()
-
-##
 # Generate wavetables
 ##
 set(GENTABLES_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/table_data.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/lut_tables.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/vosimlib/lut_tables.h)
