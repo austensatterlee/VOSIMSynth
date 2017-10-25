@@ -133,8 +133,8 @@ void synui::MainGui::createSettingsEditor_(nanogui::Widget* a_widget) {
         return gs;
     });
 
-    helper->addSerializableVariable<int>("window_width", "Window width", [this](const int& w) { resize(w, m_screen->height()); }, [this]() { return m_screen->width(); });
-    helper->addSerializableVariable<int>("window_height", "Window height", [this](const int& h) { resize(m_screen->width(), h); }, [this]() { return m_screen->height(); });
+    helper->addSerializableVariable<int>("window_width", "Window width", [this](const int& w) { glfwSetWindowSize(getGlfwWindow_(), w, getHeight()); }, [this]() { return getWidth(); });
+    helper->addSerializableVariable<int>("window_height", "Window height", [this](const int& h) { glfwSetWindowSize(getGlfwWindow_(), getWidth(), h); }, [this]() { return getHeight(); });
 
     helper->addVariable<bool>("Curved Wires", [this](const bool& s) {
         m_circuitWidget->setWireDrawStyle(static_cast<CircuitWidget::WireDrawStyle>(s));
@@ -279,7 +279,7 @@ void synui::MainGui::createThemeEditor_(nanogui::Widget* a_widget) {
     });
 
     helper->addButton("Load Theme", [this, helper]() {
-        std::string filepath = nanogui::file_dialog({ { "json", "VOSIMSynth theme" } }, false);
+        string filepath = nanogui::file_dialog({ { "json", "VOSIMSynth theme" } }, false);
         if (filepath.empty())
             return;
         std::ifstream infile;
@@ -372,9 +372,7 @@ void synui::MainGui::_onCreateWindow() {
         [](GLFWwindow* w, int button, int action, int modifiers)
         {
             auto gui = static_cast<MainGui*>(glfwGetWindowUserPointer(w));
-            gui->m_screen->mouseButtonCallbackEvent(button, action,
-                modifiers);
-            glfwFocusWindow(gui->getGlfwWindow_());
+            gui->m_screen->mouseButtonCallbackEvent(button, action, modifiers);
         }
     );
 
@@ -409,8 +407,12 @@ void synui::MainGui::_onCreateWindow() {
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* w, int width, int height)
     {
         auto gui = static_cast<MainGui*>(glfwGetWindowUserPointer(w));
-        gui->m_screen->resizeCallbackEvent(width, height);
-        gui->_onResize();
+        if (width < gui->m_minWidth || height < gui->m_minHeight) {
+            glfwSetWindowSize(w, std::max(width, gui->m_minWidth), std::max(height, gui->m_minHeight));
+        } else {
+            gui->m_screen->resizeCallbackEvent(width, height);
+            gui->_onResize();
+        }
     });
 
     _rebuild();
@@ -579,10 +581,12 @@ void synui::MainGui::_rebuild() {
     m_screen->performLayout();
 }
 
-synui::MainGui::MainGui(syn::VoiceManager* a_vm, int a_width, int a_height)
+synui::MainGui::MainGui(syn::VoiceManager* a_vm, int a_width, int a_height, int a_minWidth, int a_minHeight)
     : ChildWindow(a_width, a_height),
       m_screen(new nanogui::Screen()),
       m_vm(a_vm),
+      m_minWidth(a_minWidth),
+      m_minHeight(a_minHeight),
       m_buttonPanel(nullptr),
       m_sidePanelL(nullptr),
       m_tabWidget(nullptr),

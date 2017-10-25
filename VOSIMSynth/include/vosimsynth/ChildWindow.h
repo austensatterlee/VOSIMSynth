@@ -46,14 +46,12 @@ namespace synui {
         bool openWindow(SystemHandle a_systemWindow);
         /// Close the system window (the GUI is preserved)
         void closeWindow();
-        /// Resize both the child and parent window
-        void resize(int a_width, int a_height);
         /// Queue a task (to be called only from the real-time thread)
         bool queueExternalMessage(syn::Command* a_msg);
         /// Queue a task (to be called only from the GUI thread)
         bool queueInternalMessage(syn::Command* a_msg);
-        int getHeight() const;
         int getWidth() const;
+        int getHeight() const;
 
     protected:
         GLFWwindow* getGlfwWindow_() const { return m_window; };
@@ -64,8 +62,6 @@ namespace synui {
         void _openWindowImplem(SystemHandle a_systemWindow);
         void _closeWindowImplem();
         void _createGlfwWindow(int a_width, int a_height);
-        void _resizeSelf(int a_width, int a_height);
-        void _resizeParent(int a_width, int a_height);
         void _flushMessageQueues();
         /// Called on every tick from the OS timer
         virtual void _runLoop() = 0;
@@ -74,7 +70,7 @@ namespace synui {
 
     private:
 #ifdef _WIN32
-        UINT m_timerId;
+        const UINT_PTR m_timerId = 1;
 #endif
         GLFWwindow* m_window;
         bool m_isOpen;

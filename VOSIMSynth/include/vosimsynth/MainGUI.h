@@ -62,7 +62,7 @@ namespace synui {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     public:
-        MainGui(syn::VoiceManager* a_vm, int a_width, int a_height);
+        MainGui(syn::VoiceManager* a_vm, int a_width, int a_height, int a_minWidth = 0, int a_minHeight = 0);
         ~MainGui();
 
         /// Create a temporary message box
@@ -94,6 +94,7 @@ namespace synui {
         void _onClose() override;
 
     private:
+        int m_minWidth, m_minHeight;
         nanogui::ref<nanogui::Screen> m_screen;
         syn::VoiceManager* m_vm;
 

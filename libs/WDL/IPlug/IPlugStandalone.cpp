@@ -63,8 +63,12 @@ void IPlugStandalone::ResizeGraphics(int w, int h)
     GetWindowRect(gHWND, &r);
     SetWindowPos(gHWND, 0, r.left, r.bottom - pGraphics->Height() - TITLEBAR_BODGE, pGraphics->Width(), pGraphics->Height() + TITLEBAR_BODGE, 0);
     #endif
-    pGraphics->resize(w, h);
+    #ifdef _WIN32
+    RECT rect = {0, 0, w, h};
+    AdjustWindowRectEx(&rect, GetWindowLongPtr(gHWND, GWL_STYLE), TRUE, GetWindowLongPtr(gHWND, GWL_EXSTYLE));
+    SetWindowPos(gHWND, HWND_TOP, 0, 0, rect.right - rect.left, rect.bottom - rect.top, SWP_NOMOVE);
     OnWindowResize();
+    #endif
   }
   #endif
 }

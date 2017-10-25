@@ -482,8 +482,15 @@ void ClientResize(HWND hWnd, int nWidth, int nHeight) {
 
 BOOL CALLBACK ResizeChildProc(HWND hwndChild, LPARAM lParam) {
     LPRECT rcParent = LPRECT(lParam);
-    MoveWindow(hwndChild, 0, 0, rcParent->right, rcParent->bottom, TRUE);
-    ShowWindow(hwndChild, SW_SHOW);
+    RECT rcClient;
+    GetWindowRect(hwndChild, &rcClient);
+    int cW = rcClient.right - rcClient.left;
+    int cH = rcClient.bottom - rcClient.top;
+    int pW = rcParent->right - rcParent->left;
+    int pH = rcParent->bottom - rcParent->top;
+    if (cW != pW || cH != pH) {
+        SetWindowPos(hwndChild, HWND_TOP, 0, 0, pW, pH, SWP_NOMOVE);
+    }
     return TRUE;
 }
 

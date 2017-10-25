@@ -53,7 +53,7 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 
 void VOSIMSynth::makeGraphics() {
     TIME_TRACE;
-    synui::MainGui* gui = new synui::MainGui(&m_voiceManager, GUI_WIDTH, GUI_HEIGHT);
+    synui::MainGui* gui = new synui::MainGui(&m_voiceManager, GUI_WIDTH, GUI_HEIGHT, 800, 600);
     gui->onResize.connect_member(this, &VOSIMSynth::ResizeGraphics);
     AttachAppWindow(gui);
     registerUnitWidgets(*gui->circuitWidget());

@@ -24,8 +24,10 @@ static int g_nGlfwClassReg = 0;
 VOID CALLBACK synui::ChildWindow::_timerProc(HWND a_hwnd, UINT /*message*/, UINT /*idTimer*/, DWORD /*dwTime*/) {
     GLFWwindow* window = static_cast<GLFWwindow*>(GetPropW(a_hwnd, L"GLFW"));
     ChildWindow* _this = static_cast<ChildWindow*>(glfwGetWindowUserPointer(window));
-    _this->_flushMessageQueues();
-    _this->_runLoop();
+    if (_this->m_isOpen) {
+        _this->_flushMessageQueues();
+        _this->_runLoop();
+    }
 }
 
 void synui::ChildWindow::_openWindowImplem(HWND a_system_window) {
@@ -35,10 +37,10 @@ void synui::ChildWindow::_openWindowImplem(HWND a_system_window) {
     SetWindowLongPtr(hwnd, GWL_STYLE, GetWindowLongPtr(hwnd, GWL_STYLE) | WS_POPUP | WS_CHILD);
     SetParent(hwnd, a_system_window);
     // Try to force the window to update
-    SetWindowPos(hwnd, a_system_window, 0, 0, 0, 0, SWP_NOSIZE);
+    SetWindowPos(hwnd, a_system_window, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
-    m_timerId = SetTimer(hwnd, NULL, 1000 / 120, reinterpret_cast<TIMERPROC>(_timerProc)); // timer callback 
-    if (!m_timerId) {
+    UINT_PTR success = SetTimer(hwnd, m_timerId, 1000 / 120, reinterpret_cast<TIMERPROC>(_timerProc)); // timer callback 
+    if (!success) {
         TRACEMSG("Unable to create timer!");
         throw "Unable to create timer!";
     }
@@ -46,11 +48,11 @@ void synui::ChildWindow::_openWindowImplem(HWND a_system_window) {
 
 void synui::ChildWindow::_closeWindowImplem() {
     TIME_TRACE
-    if (m_timerId) {
-        HWND hwnd = glfwGetWin32Window(m_window);
-        KillTimer(hwnd, m_timerId);
-        m_timerId = NULL;
-    }
+    HWND hwnd = glfwGetWin32Window(m_window);
+    SetParent(hwnd, NULL);
+    SetWindowLongPtr(hwnd, GWL_STYLE, GetWindowLongPtr(hwnd, GWL_STYLE) & ~WS_CHILD);
+    SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+    KillTimer(hwnd, m_timerId);    
 }
 #endif // _WIN32
 
@@ -92,7 +94,7 @@ void synui::ChildWindow::_createGlfwWindow(int a_width, int a_height) {
 #if defined(GL_VERSION_MINOR)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, GL_VERSION_MINOR);
 #endif
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
@@ -124,10 +126,10 @@ void synui::ChildWindow::_createGlfwWindow(int a_width, int a_height) {
 bool synui::ChildWindow::openWindow(HWND a_systemWindow) {
     TIME_TRACE
     if (!m_isOpen) {
+        m_isOpen = true;
         _openWindowImplem(a_systemWindow);
         glfwShowWindow(m_window);
         glfwFocusWindow(m_window);
-        m_isOpen = true;
         _onOpen();
     }
     return true;
@@ -137,16 +139,11 @@ bool synui::ChildWindow::openWindow(HWND a_systemWindow) {
 void synui::ChildWindow::closeWindow() {
     TIME_TRACE
     if (m_isOpen) {
+        m_isOpen = false;
         _closeWindowImplem();
         glfwHideWindow(m_window);
-        m_isOpen = false;
         _onClose();
     }
-}
-
-void synui::ChildWindow::resize(int a_width, int a_height) {
-    _resizeParent(a_width, a_height);
-    _resizeSelf(a_width, a_height);
 }
 
 bool synui::ChildWindow::queueExternalMessage(syn::Command* a_msg) {
@@ -167,36 +164,17 @@ bool synui::ChildWindow::queueInternalMessage(syn::Command* a_msg) {
     return true;
 }
 
-int synui::ChildWindow::getHeight() const {
+int synui::ChildWindow::getWidth() const {
     int width;
     glfwGetWindowSize(m_window, &width, nullptr);
     return width;
 }
 
-int synui::ChildWindow::getWidth() const {
+int synui::ChildWindow::getHeight() const {
     int height;
     glfwGetWindowSize(m_window, nullptr, &height);
     return height;
 }
-
-
-void synui::ChildWindow::_resizeSelf(int a_width, int a_height) {
-    glfwSetWindowSize(m_window, a_width, a_height);
-}
-
-#if defined(_WIN32)
-void synui::ChildWindow::_resizeParent(int a_width, int a_height) {
-    RECT rcClient, rcWindow;
-    POINT ptDiff;
-    HWND hwnd = glfwGetWin32Window(m_window);
-    HWND parent = GetAncestor(hwnd, GA_PARENT);
-    GetClientRect(parent, &rcClient);
-    GetWindowRect(parent, &rcWindow);
-    ptDiff.x = (rcWindow.right - rcWindow.left) - rcClient.right;
-    ptDiff.y = (rcWindow.bottom - rcWindow.top) - rcClient.bottom;
-    SetWindowPos(parent, HWND_TOP, 0, 0, a_width + ptDiff.x, a_height + ptDiff.y, SWP_NOMOVE);
-}
-#endif
 
 void synui::ChildWindow::_flushMessageQueues() {
     syn::Command* msg;
