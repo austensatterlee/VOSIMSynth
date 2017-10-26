@@ -11,6 +11,7 @@
 #include <vosimlib/VoiceManager.h>
 #include <vosimlib/Command.h>
 #include <vosimlib/units/MathUnits.h>
+#include <GLFW/glfw3.h>
 #include <unordered_set>
 #include <set>
 

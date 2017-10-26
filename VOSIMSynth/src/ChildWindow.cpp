@@ -3,7 +3,7 @@
 #include "vosimsynth/Logging.h"
 #include "vosimsynth/common.h"
 #include <vosimlib/Command.h>
-#include <winuser.h>
+#include <GLFW/glfw3.h>
 
 #if !defined(GL_VERSION_MAJOR)
 #define GL_VERSION_MAJOR 3
@@ -14,7 +14,6 @@
 
 #if defined(_WIN32)
 #include <windows.h>
-#include <winuser.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #define GLFW_EXPOSE_NATIVE_WGL
 #include <GLFW/glfw3native.h>

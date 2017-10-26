@@ -53,75 +53,87 @@ if __name__=="__main__":
     import argparse as ap
     import os,sys,datetime
     parser = ap.ArgumentParser(formatter_class=ap.ArgumentDefaultsHelpFormatter)
-    subparsers = parser.add_subparsers()
+    parser.add_argument("-n", "--dry-run", action="store_true",
+            help="Don't perform any actions, just print would be done")
+    parser.add_argument("-f", "--force", action="store_true",
+            help="Overwrite existing files")
+    parser.add_argument("--guard",choices=["pragma","ifndef"], default="pragma",
+            help="Choose the type of header guard to use")
+
+    subparsers = parser.add_subparsers(title="commands")
 
     parser_auto_add = subparsers.add_parser("auto-add",
         help="Add source and include files to their respective directories. Automatically detect source and\
-              include directories given a base directory.")
+              include directories given a base directory")
     parser_auto_add.add_argument("directory", nargs='?', type=str, help="Directory that contains 'src' and 'include' dirs")
-    parser_auto_add.add_argument("filename", nargs='?', type=str, help="Name of the new files to add (without extension)")
-    parser_auto_add.add_argument("--list", "-l", action="store_true", help="List valid directories and exit.")
+    parser_auto_add.add_argument("filenames", nargs='*', type=str, help="Name of the new files to add (without extension)")
+    parser_auto_add.add_argument("--list", "-l", action="store_true", help="List valid directories and exit")
     parser_auto_add.set_defaults(command="auto-add")
 
-    parser_add = subparsers.add_parser("add",  help="Add source and include files to the specified directories.")
+    parser_add = subparsers.add_parser("add", help="Add source and include files to the specified directories")
     parser_add.add_argument("source_dir", type=str)
     parser_add.add_argument("include_dir", type=str)
-    parser_add.add_argument("filename",type=str)
+    parser_add.add_argument("filenames", nargs='+', type=str)
     parser_add.set_defaults(command="add")
-
-    parser.add_argument("-f", "--force", action="store_true", help="Overwrite when adding.")
-    parser.add_argument("--guard",choices=["pragma","ifndef"], default="pragma", help="Use either #ifndef\
-            guards or #pragma once (default: pragma).")
 
     parsed = parser.parse_args()
 
     if parsed.command=="auto-add":
         if parsed.list:
             print '\n'.join( find_valid_directories('src', 'include') )
-            sys.exit()
-        if parsed.directory is None:
-            raise RuntimeError("\"directory\" argument must be specified")
-        if parsed.filename is None:
-            raise RuntimeError("\"filename\" argument must be specified")
+            sys.exit(1)
+        if not parsed.directory:
+            sys.stderr.write("ERROR: Please provide a directory\n")
+            sys.exit(1)
+        if not parsed.filenames:
+            sys.stderr.write("ERROR: Please provide at least one filename\n")
+            sys.exit(1)
 
-        dir_contents = os.listdir(parsed.directory)
+        directory = os.path.normpath(parsed.directory)
+        dir_contents = os.listdir(directory)
         if ('src' not in dir_contents) or ('include' not in dir_contents):
-            raise RuntimeError("\"%s\" and \"%s\" directories not found"%(parsed.source_dir,parsed.include_dir))
+            raise RuntimeError("'%s' and '%s' directories not found" % (parsed.source_dir,parsed.include_dir))
 
-        include_dir = os.path.join(parsed.directory,"include")
-        src_dir = os.path.join(parsed.directory,"src")
+        include_dir = os.path.join(directory,"include")
+        src_dir = os.path.join(directory,"src")
 
     if parsed.command=="add":
-        if not os.path.exists(parsed.source_dir):
-            raise RuntimeError("Source directory \"{}\" does not exist".format(parsed.source_dir))
-        if not os.path.exists(parsed.include_dir):
-            raise RuntimeError("Include directory \"{}\" does not exist".format(parsed.include_dir))
+        include_dir = os.path.normpath(parsed.include_dir)
+        src_dir = os.path.normpath(parsed.source_dir)
 
-        include_dir = parsed.include_dir
-        src_dir = parsed.source_dir
+    # Check that directories exist
+    if not os.path.exists(src_dir):
+        sys.stderr.write("ERROR: Source directory '%s' does not exist\n" % source_dir)
+        sys.exit(1)
+    if not os.path.exists(include_dir):
+        sys.stderr.write("ERROR: Include directory '%s' does not exist\n" % include_dir)
+        sys.exit(1)
 
+    for filename in parsed.filenames:
+        include_fname = os.path.join(include_dir, filename+".h")
+        src_fname = os.path.join(src_dir, filename+".cpp")
 
-    include_fname = os.path.join(include_dir, parsed.filename+".h")
-    src_fname = os.path.join(src_dir, parsed.filename+".cpp")
+        if not parsed.force and (os.path.exists(include_fname) or os.path.exists(src_fname)):
+            sys.stderr.write("ERROR: '%s' or '%s' already exists!\n" % (include_fname,src_fname))
+            sys.exit(1)
 
-    if not parsed.force and (os.path.exists(include_fname) or os.path.exists(src_fname)):
-        raise RuntimeError("\"%s\" or \"%s\" already exists!"%(include_fname,src_fname))
+        guard_str = PRAGMA_ONCE_TEMPLATE if parsed.guard=="pragma" else IFNDEF_TEMPLATE.format(guardname=filename.toupper())
+        include_contents = HEADER_TEMPLATE.format(
+            filename=filename,
+            guard=guard_str,
+            date=datetime.date.today().strftime("%m/%Y")
+            )
 
-    guard_str = PRAGMA_ONCE_TEMPLATE if parsed.guard=="pragma" else IFNDEF_TEMPLATE.format(guardname=parsed.filename.toupper())
-    include_contents = HEADER_TEMPLATE.format(
-        filename=parsed.filename,
-        guard=guard_str,
-        date=datetime.date.today().strftime("%m/%Y")
-        )
+        src_contents = SOURCE_TEMPLATE.format(filename=filename)
 
-    src_contents = SOURCE_TEMPLATE.format(filename=parsed.filename)
-
-    with open(include_fname,"w") as fp:
-        fp.write(include_contents)
+        if not parsed.dry_run:
+            with open(include_fname,"w") as fp:
+                fp.write(include_contents)
         sys.stdout.write("Added header file to {}\n".format(include_fname))
 
-    with open(src_fname,"w") as fp:
-        fp.write(src_contents)
+        if not parsed.dry_run:
+            with open(src_fname,"w") as fp:
+                fp.write(src_contents)
         sys.stdout.write("Added source file to {}\n".format(src_fname))
 
     sys.exit()

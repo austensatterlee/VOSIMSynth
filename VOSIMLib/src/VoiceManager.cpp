@@ -334,7 +334,7 @@ namespace syn
     }
 
     int VoiceManager::getMaxVoices() const {
-        return m_circuits.size();
+        return int(m_circuits.size());
     }
 
     void VoiceManager::onIdle() {
@@ -381,7 +381,7 @@ namespace syn
 
     void VoiceManager::setPrototypeCircuit(const Circuit& a_circ) {
         m_instrument = Circuit{ a_circ };
-        setMaxVoices(m_circuits.size());
+        setMaxVoices(int(m_circuits.size()));
     }
 
     Unit& VoiceManager::getUnit(int a_id, int a_voiceInd) {

@@ -84,12 +84,12 @@ endif()
 
 add_definitions(${VOSIMSYNTH_DEFS})
 
-add_library(${PROJECT_NAME} SHARED ${ALL_VOSIMSYNTH_FILES})
-set_target_properties(${PROJECT_NAME} PROPERTIES DEBUG_POSTFIX -d)
-set_target_properties(${PROJECT_NAME} PROPERTIES RELWITHDEBINFO_POSTFIX -rdb)
+add_library(VOSIMSynth SHARED ${ALL_VOSIMSYNTH_FILES})
+set_target_properties(VOSIMSynth PROPERTIES DEBUG_POSTFIX -d)
+set_target_properties(VOSIMSynth PROPERTIES RELWITHDEBINFO_POSTFIX -rdb)
 
 list(REMOVE_DUPLICATES ADDITIONAL_LIBRARIES)
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(VOSIMSynth
   "$<$<CONFIG:Release>:${REL_LIBS}>"
   "$<$<NOT:$<CONFIG:Release>>:${DBG_LIBS}>"
   VOSIMLib
@@ -97,8 +97,8 @@ target_link_libraries(${PROJECT_NAME}
   )
 
 if (WIN32)
-  target_link_libraries(${PROJECT_NAME} comctl32 wininet)
-  set_target_properties(${PROJECT_NAME} PROPERTIES prefix "")
+  set_target_properties(VOSIMSynth PROPERTIES prefix "")
+  target_compile_definitions(VOSIMSynth PRIVATE -DWIN32_LEAN_AND_MEAN)
 endif ()
 
 if(VOSIMPROJECT_BUILD_TESTS)

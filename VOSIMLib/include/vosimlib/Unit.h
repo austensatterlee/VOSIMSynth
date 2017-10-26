@@ -27,6 +27,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #include <eigen/Core>
 
+
 #define MAX_PARAMS 16
 #define MAX_INPUTS 8
 #define MAX_OUTPUTS 8

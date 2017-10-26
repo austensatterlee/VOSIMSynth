@@ -19,20 +19,21 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#if defined(VOSIMSYNTH_SHARED)
-    #if defined(_WIN32)
-        // Windows compilers need specific (and different) keywords for export and import
-        #if defined(VOSIMSynth_EXPORTS)
-            #define VOSIMSYNTH_API __declspec(dllexport)
-        #else
-            #define VOSIMSYNTH_API __declspec(dllimport)
-        #endif
-    #elif defined(VOSIMSynth_EXPORTS) // Linux, FreeBSD, Mac OS X
-        #define VOSIMSYNTH_API __attribute__ ((__visibility__ ("default")))
-    #else
-        #define VOSIMSYNTH_API
-    #endif
-#else
-    // Static build doesn't need import/export macros
-    #define VOSIMSYNTH_API
-#endif
+#include <nanogui/glcanvas.h>
+
+namespace synui {
+    class ScopeGL : public nanogui::GLCanvas {
+    public:
+        ScopeGL(Widget* parent);
+
+        virtual ~ScopeGL();
+
+        void setValues(const Eigen::MatrixXf& a_values);
+
+        void drawGL() override;
+
+    private:
+        nanogui::GLShader m_shader;
+        Eigen::MatrixXf m_values;
+    };
+}

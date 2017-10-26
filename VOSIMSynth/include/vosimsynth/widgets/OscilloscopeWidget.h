@@ -26,6 +26,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
+#include "ScopeGL.h"
 #include <vosimlib/Unit.h>
 #include <vosimlib/VoiceManager.h>
 #include <vosimlib/CircularView.h>
@@ -99,7 +100,9 @@ namespace synui {
               m_values(),
               m_sideMargin(50),
               m_bottomMargin(40),
-              m_topMargin(20) {}
+              m_topMargin(20) {
+            m_scopegl = new ScopeGL(this);
+        }
 
         void draw(NVGcontext* ctx) override;
         void drawGrid(NVGcontext* ctx);
@@ -153,6 +156,7 @@ namespace synui {
         double m_yMin, m_yMax;
         double m_autoAdjustSpeed;
         syn::CircularView<double> m_values;
+        ScopeGL* m_scopegl;
 
         int m_sideMargin, m_bottomMargin, m_topMargin;
         string m_caption, m_header, m_footer;

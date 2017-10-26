@@ -10,6 +10,7 @@
 #include <nanogui/textbox.h>
 #include <vector>
 #include <string>
+#include <GLFW/glfw3.h>
 
 using nanogui::Color;
 

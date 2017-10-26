@@ -1,4 +1,5 @@
 #include "vosimsynth/UI.h"
+#include <GLFW/glfw3.h>
 
 namespace synui
 {

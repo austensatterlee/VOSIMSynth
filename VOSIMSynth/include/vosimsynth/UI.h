@@ -109,7 +109,7 @@ namespace synui
     class Tooltip {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     public:
-        Tooltip(float a_delay = 0.25f, float a_fadeIn = 1.0f, float a_fadeOut = 0.5f);
+        Tooltip(float a_delay = 0.25f, float a_fadeIn = 0.1f, float a_fadeOut = 0.25f);
 
         void setFont(const std::string& a_font) { m_font = a_font; }
         const std::string& font(const std::string& a_font) const { return m_font; }

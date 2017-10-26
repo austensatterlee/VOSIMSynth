@@ -69,9 +69,6 @@ else()
   set_target_properties(VOSIMLib PROPERTIES RELWITHDEBINFO_POSTFIX -s)
 endif()
 target_link_libraries(VOSIMLib ${ADDITIONAL_LIBRARIES})
-if(WIN32)
-  target_compile_definitions(VOSIMLib PRIVATE -DWIN32_LEAN_AND_MEAN)
-endif()
 
 ##
 # Add tests target
