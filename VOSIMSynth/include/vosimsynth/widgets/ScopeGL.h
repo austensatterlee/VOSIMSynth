@@ -28,12 +28,15 @@ namespace synui {
 
         virtual ~ScopeGL();
 
-        void setValues(const Eigen::MatrixXf& a_values);
+        void setValues(const Eigen::MatrixXf& a_values) { m_values = a_values; }
+
+        void setColor(const nanogui::Color& a_color) { m_color = a_color; }
 
         void drawGL() override;
 
     private:
         nanogui::GLShader m_shader;
         Eigen::MatrixXf m_values;
+        nanogui::Color m_color;
     };
 }

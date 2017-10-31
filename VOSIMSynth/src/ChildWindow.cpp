@@ -96,6 +96,7 @@ void synui::ChildWindow::_createGlfwWindow(int a_width, int a_height) {
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
     if (m_window) {
         glfwDestroyWindow(m_window);

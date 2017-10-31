@@ -165,24 +165,18 @@ namespace synui {
             setFooter(oss.str());
         }
 
-        Widget::draw(ctx);
-
         m_bgColor = theme()->get<Color>("/OscilloscopeWidget/bg-color", {20, 128});
         m_fgColor = theme()->get<Color>("/OscilloscopeWidget/fg-color", {255, 192, 0, 128});
         m_textColor = theme()->get<Color>("/OscilloscopeWidget/text-color", {240, 192});
-        nvgSave(ctx);
-        nvgTranslate(ctx, mPos.x(), mPos.y());
-        nvgBeginPath(ctx);
-        nvgRect(ctx, 0.0f, 0.0f, mSize.x(), mSize.y());
-        nvgFillColor(ctx, m_bgColor);
-        nvgFill(ctx);
+        m_scopegl->setBackgroundColor(m_bgColor);
+        m_scopegl->setColor(m_fgColor);
 
         if (!m_caption.empty()) {
             nvgFontFace(ctx, "sans-bold");
             nvgFontSize(ctx, 18.0f);
             nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
             nvgFillColor(ctx, m_textColor);
-            nvgText(ctx, width() / 2, 1, m_caption.c_str(), nullptr);
+            nvgText(ctx, mPos.x() + width() / 2, mPos.y() + 1, m_caption.c_str(), nullptr);
         }
 
         if (m_values.size() < 2) {
@@ -190,39 +184,35 @@ namespace synui {
             nvgFontSize(ctx, 16.0f);
             nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
             nvgFillColor(ctx, m_textColor);
-            nvgTextBox(ctx, 0, height() / 2, width(), "[disconnected]", nullptr);
+            nvgTextBox(ctx, mPos.x(), mPos.y() + height() / 2, width(), "[disconnected]", nullptr);
         } else {
-            drawGrid(ctx);
 
-            nvgBeginPath(ctx);
-            for (int i = 0; i < m_values.size(); i++) {
-                const double value = m_values[i];
-                const double vx = m_sideMargin + i * (width() - 2*m_sideMargin) / static_cast<double>(m_values.size() - 1);
-                const double vy = toScreen_(value);
-                if (i == 0)
-                    nvgMoveTo(ctx, vx, vy);
-                else
-                    nvgLineTo(ctx, vx, vy);
+            Eigen::Matrix2Xf flatValues(2, m_values.size());
+            for(int i=0;i<m_values.size();i++) {
+                flatValues(0, i) = i*2.0 / (m_values.size() - 1) - 1.0;
+                flatValues(1, i) = syn::INVLERP(m_yMin, m_yMax, m_values[i])*2.0 - 1.0;
             }
-            nvgStrokeColor(ctx, m_fgColor);
-            nvgStroke(ctx);
+            m_scopegl->setValues(flatValues);
+
+            Widget::draw(ctx);
+
+            drawGrid(ctx);
 
             nvgFontFace(ctx, "sans");
             if (!m_header.empty()) {
                 nvgFontSize(ctx, 12.0f);
                 nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
                 nvgFillColor(ctx, m_textColor);
-                nvgText(ctx, mSize.x() - 3, 1, m_header.c_str(), nullptr);
+                nvgText(ctx, mPos.x() + mSize.x() - 3, mPos.y() + 1, m_header.c_str(), nullptr);
             }
 
             if (!m_footer.empty()) {
                 nvgFontSize(ctx, 12.0f);
                 nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_BOTTOM);
                 nvgFillColor(ctx, m_textColor);
-                nvgText(ctx, mSize.x() - 3, mSize.y() - 1, m_footer.c_str(), nullptr);
+                nvgText(ctx, mPos.x() + mSize.x() - 3, mPos.y() + mSize.y() - 1, m_footer.c_str(), nullptr);
             }
         }
-        nvgRestore(ctx);
     }
 
     void OscilloscopeWidget::drawGrid(NVGcontext* ctx) {
@@ -230,6 +220,7 @@ namespace synui {
             m_vm->getNewestVoiceID()));
 
         nvgSave(ctx);
+        nvgTranslate(ctx, mPos.x(), mPos.y());
         const nanogui::Color tickColor = theme()->get<Color>("/OscilloscopeWidget/tick-color",
             {0.86f, 1.0f, 0.0f, 1.00f});
         const nanogui::Color tickLabelColor = theme()->get<Color>("/OscilloscopeWidget/tick-label-color",
@@ -249,7 +240,7 @@ namespace synui {
         nvgMoveTo(ctx, yTickStartX, zeroPxY);
         nvgLineTo(ctx, yTickStartX + yTickSize, zeroPxY);
         nvgStroke(ctx);
-        // Other Y ticks
+        // Y ticks
         const int numYTicks = 2;
         double yTickPosStep, yTickNegStep;
         double yTickPosStart, yTickNegStart;
@@ -329,6 +320,12 @@ namespace synui {
         nvgRestore(ctx);
     }
 
+    void OscilloscopeWidget::performLayout(NVGcontext* ctx) {
+        Widget::performLayout(ctx);
+        m_scopegl->setPosition({ m_sideMargin, m_topMargin });
+        m_scopegl->setSize({ width()-m_sideMargin*2, height()-m_topMargin-m_bottomMargin });
+    }
+
     void OscilloscopeWidget::updateYBounds_(float a_yMin, float a_yMax) {
         double lo = a_yMin, hi = a_yMax;
         const bool isextremanan = isnan(lo) || isnan(hi);
@@ -345,12 +342,12 @@ namespace synui {
     }
 
     float OscilloscopeWidget::toScreen_(float a_yPt) {
-        return syn::LERP<float>(mSize.y() - m_bottomMargin - m_topMargin, m_topMargin,
+        return syn::LERP<float>(mSize.y() - m_bottomMargin, m_topMargin,
             syn::INVLERP<float>(m_yMin, m_yMax, a_yPt));
     }
 
     float OscilloscopeWidget::fromScreen_(float a_yScreen) {
         return syn::LERP<float>(m_yMin, m_yMax,
-            syn::INVLERP<float>(mSize.y() - m_bottomMargin - m_topMargin, m_topMargin, a_yScreen));
+            syn::INVLERP<float>(mSize.y() - m_bottomMargin, m_topMargin, a_yScreen));
     }
 }

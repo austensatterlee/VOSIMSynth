@@ -39,7 +39,7 @@ namespace syn
      */
     template <typename T>
     T LERP(const T& pt1, const T& pt2, const T& frac) {
-        return (pt2 - pt1)*frac + pt1;
+        return pt2 * frac + pt1 * (1 - frac);
     }
 
     /**

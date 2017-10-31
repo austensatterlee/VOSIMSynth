@@ -108,6 +108,7 @@ namespace synui {
         void drawGrid(NVGcontext* ctx);
 
         Eigen::Vector2i OscilloscopeWidget::preferredSize(NVGcontext *) const override { return Eigen::Vector2i(400, 200); }
+        void performLayout(NVGcontext* ctx) override;
 
         const string &caption() const { return m_caption; }
         void setCaption(const string &caption) { m_caption = caption; }
@@ -117,15 +118,6 @@ namespace synui {
 
         const string &footer() const { return m_footer; }
         void setFooter(const string &footer) { m_footer = footer; }
-
-        const Color &backgroundColor() const { return m_bgColor; }
-        void setBackgroundColor(const Color &backgroundColor) { m_bgColor = backgroundColor; }
-
-        const Color &foregroundColor() const { return m_fgColor; }
-        void setForegroundColor(const Color &foregroundColor) { m_fgColor = foregroundColor; }
-
-        const Color &textColor() const { return m_textColor; }
-        void setTextColor(const Color &textColor) { m_textColor = textColor; }
 
         syn::CircularView<double> values() const { return m_values; }
         void setValues(const syn::CircularView<double>& values) { m_values = values; }
