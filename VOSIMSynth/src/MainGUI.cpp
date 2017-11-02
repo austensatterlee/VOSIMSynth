@@ -136,11 +136,17 @@ void synui::MainGui::createSettingsEditor_(nanogui::Widget* a_widget) {
     helper->addSerializableVariable<int>("window_width", "Window width", [this](const int& w) { glfwSetWindowSize(getGlfwWindow_(), w, getHeight()); }, [this]() { return getWidth(); });
     helper->addSerializableVariable<int>("window_height", "Window height", [this](const int& h) { glfwSetWindowSize(getGlfwWindow_(), getWidth(), h); }, [this]() { return getHeight(); });
 
-    helper->addVariable<bool>("Curved Wires", [this](const bool& s) {
-        m_circuitWidget->setWireDrawStyle(static_cast<CircuitWidget::WireDrawStyle>(s));
+    helper->addVariable<CircuitWidget::GridDrawStyle>("Grid Style", [this](const CircuitWidget::GridDrawStyle& s) {
+        m_circuitWidget->setGridDrawStyle(s);
     }, [this]() {
-        return static_cast<bool>(m_circuitWidget->wireDrawStyle());
-    });
+        return m_circuitWidget->gridDrawStyle();
+    })->setItems({"Hidden", "Points", "Lines"});
+
+    helper->addVariable<CircuitWidget::WireDrawStyle>("Wire Style", [this](const CircuitWidget::WireDrawStyle& s) {
+        m_circuitWidget->setWireDrawStyle(s);
+    }, [this]() {
+        return m_circuitWidget->wireDrawStyle();
+    })->setItems({"Straight", "Curved"});
 
     helper->addVariable<int>("Internal buffer size", [this, helper](const int& size) {
         auto f = [this, size, helper]() {
@@ -327,8 +333,8 @@ void synui::MainGui::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
         const syn::Unit& unit = circuit.getUnit(unitId);
         if (unit.getClassIdentifier() == OscilloscopeUnit::classIdentifier()) {
             oscPanel->add<OscilloscopeWidget>(m_vm, unitId);
+            m_screen->performLayout();
         }        
-        m_screen->performLayout();
     };
 
     const std::function<void(UnitWidget*)> removeScope = [this, oscPanel](UnitWidget* w) {
@@ -340,11 +346,11 @@ void synui::MainGui::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
                 int wId = static_cast<const OscilloscopeWidget*>(child)->getUnitId();
                 if (wId == unitId) {
                     oscPanel->removeChild(child);
+                    m_screen->performLayout();
                     break;
                 }
             }
         }
-        m_screen->performLayout();
     };
     m_circuitWidget->onAddUnit.connect(addScope);
     m_circuitWidget->onRemoveUnit.connect(removeScope);

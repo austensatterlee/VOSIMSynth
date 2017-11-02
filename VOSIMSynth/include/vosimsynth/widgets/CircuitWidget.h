@@ -126,9 +126,15 @@ namespace synui {
             std::vector<State> states;
         };
 
-        enum WireDrawStyle {
+        enum class WireDrawStyle {
             Straight = 0,
             Curved
+        };
+
+        enum class GridDrawStyle {
+            Hidden,
+            Points,
+            Lines
         };
 
         /**
@@ -161,6 +167,9 @@ namespace synui {
 
         WireDrawStyle wireDrawStyle() const { return m_wireDrawStyle; }
         void setWireDrawStyle(WireDrawStyle a_newStyle) { m_wireDrawStyle = a_newStyle; }
+
+        GridDrawStyle gridDrawStyle() const { return m_gridDrawStyle; }
+        void setGridDrawStyle(GridDrawStyle a_newStyle) { m_gridDrawStyle = a_newStyle; }
 
         template <typename UnitType>
         void registerUnitWidget(UnitWidgetConstructor a_func) { m_registeredUnitWidgets[UnitType("").getClassIdentifier()] = a_func; }
@@ -255,6 +264,7 @@ namespace synui {
         Grid2D<GridCell> m_grid;
         int m_gridSpacing;
         WireDrawStyle m_wireDrawStyle;
+        GridDrawStyle m_gridDrawStyle;
         std::unordered_set<UnitWidget*> m_unitSelection;
         std::unique_ptr<cwstate::State> m_state;
         bool m_uninitialized;
@@ -301,7 +311,7 @@ namespace synui {
 
             void draw(CircuitWidget& cw, NVGcontext* ctx) override;
             void enter(CircuitWidget& cw, State& oldState) override {}
-            void exit(CircuitWidget& cw, State& newState) override {}
+            void exit(CircuitWidget& cw, State& newState) override { m_tooltip.deactivate(); }
         };
 
         /**

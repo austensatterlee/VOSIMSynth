@@ -63,7 +63,7 @@ void synui::CircuitWire::draw(NVGcontext* ctx) {
         Eigen::Vector2i currPixelPt = i >= m_path.size() - 1 ? m_end : m_parentCircuit->m_grid.toPixel(currGridPt, gs);
         nvgLineTo(ctx, currPixelPt.x(), currPixelPt.y());
 
-        if (m_parentCircuit->wireDrawStyle() == CircuitWidget::Curved) {
+        if (m_parentCircuit->wireDrawStyle() == CircuitWidget::WireDrawStyle::Curved) {
             const float curvature = 0.5;
             Eigen::Vector2i dCurrGridPt = nextGridPt - currGridPt;
             Eigen::Vector2i dNextGridPt = nextGridPt2 - nextGridPt;
