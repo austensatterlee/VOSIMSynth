@@ -348,7 +348,7 @@ namespace synui {
          * \brief Converts a pixel coordinate (x,y) into a grid coordinate (row,col).
          */
         Grid2DPoint fromPixel(const Vector2i& a_pixel, int pixelsPerCell) const {
-            Vector2f point{
+            Eigen::Vector2f point{
                 round(a_pixel[1] * 1.0f / pixelsPerCell - 0.5f), round(a_pixel[0] * 1.0f / pixelsPerCell - 0.5f)
             };
             return point.cast<int>();

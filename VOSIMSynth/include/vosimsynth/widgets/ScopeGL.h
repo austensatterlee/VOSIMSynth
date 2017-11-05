@@ -32,6 +32,8 @@ namespace synui {
 
         void setColor(const nanogui::Color& a_color) { m_color = a_color; }
 
+        void draw(NVGcontext* ctx) override;
+
         void drawGL() override;
 
     private:

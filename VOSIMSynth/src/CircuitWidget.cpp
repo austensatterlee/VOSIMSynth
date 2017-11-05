@@ -61,7 +61,7 @@ void synui::CircuitWidget::draw(NVGcontext* ctx) {
     if (m_gridDrawStyle == GridDrawStyle::Points) {
         for (int i = 0; i < m_grid.getSize(); i++) {
             float ptSize = m_gridSpacing * 0.5f;
-            const float strokeWidth = 1.0f;
+            const float strokeWidth = 2.0f;
 
             auto pt = m_grid.unravel_index(i);
             auto pixel = m_grid.toPixel(pt, m_gridSpacing);
@@ -133,10 +133,6 @@ void synui::CircuitWidget::performLayout(NVGcontext* ctx) {
         if (!w.second->visible())
             continue;
         oldSizes[w.first] = w.second->size();
-        // update layout
-        w.second->onGridChange_();
-        // reset size so it doesn't affect next layout computation
-        w.second->setSize({0,0});
     }
     Widget::performLayout(ctx);
     for (const auto w : m_unitWidgets) {
@@ -263,13 +259,9 @@ synui::UnitWidget* synui::CircuitWidget::createUnitWidget(syn::UnitTypeId a_clas
             m_unitWidgets[unitId]->setHighlighted(true);
         });
     m_unitWidgets[a_unitId] = widget;
-    // Update the widget's size
-    Vector2i pref = widget->preferredSize(screen()->nvgContext()), fix = widget->fixedSize();
-    widget->setSize(Vector2i(
-        fix[0] ? fix[0] : pref[0],
-        fix[1] ? fix[1] : pref[1]
-    ));
     onAddUnit(widget);
+    // Update the widget's layout
+    performLayout(screen()->nvgContext());
     return widget;
 }
 
@@ -844,6 +836,7 @@ bool synui::cwstate::MovingUnitState::mouseButtonEvent(CircuitWidget& cw, const 
             else
                 cw.updateUnitPos(w, oldPos, true);
         }
+        cw.performLayout(cw.screen()->nvgContext());
         changeState(cw, *new IdleState());
     }
     return true;

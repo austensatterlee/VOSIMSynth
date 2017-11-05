@@ -32,4 +32,8 @@ synui::VOSIMTheme::VOSIMTheme(NVGcontext* ctx)
     prop("/ContextMenu/bg-color") = Color(0.3f, 0.9f);
     prop("/ContextMenu/hover-color") = Color(0.15f, 1.0f);
     prop("/ContextMenu/margin-color") = Color(0.2f, 0.9f);
+
+    bool loadedFonts = true;
+    if (!loadedFonts)
+        throw std::runtime_error("Could not load fonts!");
 }

@@ -20,10 +20,20 @@ synui::ScopeGL::ScopeGL(Widget* parent)
     }
     )";
     m_shader.init("simple_shader", vs, fs);
+    setDrawBackground(false);
 }
 
 synui::ScopeGL::~ScopeGL() {
     m_shader.free();
+}
+
+void synui::ScopeGL::draw(NVGcontext* ctx) {
+    // Draw scope background
+    nvgBeginPath(ctx);
+    nvgFillColor(ctx, backgroundColor());
+    nvgRect(ctx, mPos.x(), mPos.y(), width(), height());
+    nvgFill(ctx);
+    GLCanvas::draw(ctx);
 }
 
 void synui::ScopeGL::drawGL() {

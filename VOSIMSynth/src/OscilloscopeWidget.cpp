@@ -165,11 +165,11 @@ namespace synui {
             setFooter(oss.str());
         }
 
-        m_bgColor = theme()->get<Color>("/OscilloscopeWidget/bg-color", {20, 128});
-        m_fgColor = theme()->get<Color>("/OscilloscopeWidget/fg-color", {255, 192, 0, 128});
+        m_bgColor = theme()->get<Color>("/OscilloscopeWidget/bg-color", {10, 255});
+        m_fgColor = theme()->get<Color>("/OscilloscopeWidget/fg-color", {255, 192, 0, 64});
         m_textColor = theme()->get<Color>("/OscilloscopeWidget/text-color", {240, 192});
         m_scopegl->setBackgroundColor(m_bgColor);
-        m_scopegl->setColor(m_fgColor);
+        m_scopegl->setColor(m_fgColor);       
 
         if (!m_caption.empty()) {
             nvgFontFace(ctx, "sans-bold");

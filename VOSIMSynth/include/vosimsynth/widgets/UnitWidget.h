@@ -77,8 +77,6 @@ namespace synui {
         void setHighlighted(bool highlighted) { m_highlighted = highlighted; }
 
     protected:
-        /// Update layout configuration based on parent circuit's grid spacing.
-        virtual void onGridChange_() = 0;
         const syn::Unit& getUnit_() const;
         bool promptForDelete_();
 

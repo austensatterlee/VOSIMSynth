@@ -21,35 +21,22 @@ synui::DefaultUnitWidget::DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceM
     const auto& inputs = unit.inputs();
     const auto& outputs = unit.outputs();
 
-    ////
-    // Setup grid layout
-    vector<int> rowSizes(syn::MAX(inputs.size(), outputs.size()) + 1, 0);
-    vector<int> colSizes{0, 0, 0};
-    // Create layout
-    auto layout = new nanogui::AdvancedGridLayout(colSizes, rowSizes);
-    layout->setColStretch(1, 1.0f);
-    using Anchor = nanogui::AdvancedGridLayout::Anchor;
-    setLayout(layout);
-
     // Create title
-    m_titleLabel = new nanogui::Label(this, "", "sans-bold", 0);
-    m_titleLabel->setTooltip("Rename: double click\nDelete: right click");
+    m_titleLabel = new nanogui::Label(this, "", "sans-bold");
+    m_titleLabel->setTooltip(unit.getClassName());
     m_titleLabel->setDraggable(false);
-    layout->setAnchor(m_titleLabel, Anchor{0,0,3,1,nanogui::Alignment::Middle});
+    m_titleLabel->setPosition({ 1, 0 });
+
     m_titleTextBox = new nanogui::TextBox(this, "");
     m_titleTextBox->setEditable(true);
     m_titleTextBox->setVisible(false);
     m_titleTextBox->setAlignment(nanogui::TextBox::Alignment::Center);
-    m_titleTextBox->setCallback([this, layout](const string& a_str) {
+    m_titleTextBox->setCallback([this](const string& a_str) {
         if (a_str.empty())
             return false;
         setName(a_str);
-        layout->removeAnchor(m_titleTextBox);
-        layout->setAnchor(m_titleLabel, Anchor{0,0,3,1,nanogui::Alignment::Middle});
         m_titleLabel->setVisible(true);
         m_titleTextBox->setVisible(false);
-        onGridChange_();
-        screen()->performLayout();
         m_parentCircuit->updateUnitPos(this, position(), true);
         return true;
     });
@@ -58,8 +45,7 @@ synui::DefaultUnitWidget::DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceM
     for (int i = 0; i < inputs.size(); i++) {
         int inputId = inputs.ids()[i];
         const string& inputName = inputs.getNameFromId(inputId);
-        auto lbl = new nanogui::Label(this, inputName, "sans", 0);
-        layout->setAnchor(lbl, Anchor{0, 1 + i});
+        auto lbl = new nanogui::Label(this, inputName, "sans");
         lbl->setId(std::to_string(inputId));
         lbl->setTooltip(inputName);
         lbl->setDraggable(false);
@@ -69,26 +55,12 @@ synui::DefaultUnitWidget::DefaultUnitWidget(CircuitWidget* a_parent, syn::VoiceM
     for (int i = 0; i < outputs.size(); i++) {
         int outputId = outputs.ids()[i];
         const string& outputName = outputs.getNameFromId(outputId);
-        auto lbl = new nanogui::Label(this, outputName, "sans", 0);
-        layout->setAnchor(lbl, Anchor{2, 1 + i});
+        auto lbl = new nanogui::Label(this, outputName, "sans");
         lbl->setId(std::to_string(outputId));
         lbl->setTooltip(outputName);
         lbl->setDraggable(false);
         m_outputLabels[outputId] = lbl;
     }
-    // Fill empty rows with empty labels (for aesthetics)
-    for (int i = inputs.size(); i < rowSizes.size() - 1; i++) {
-        auto lbl = new nanogui::Label(this, "", "sans", 0);
-        layout->setAnchor(lbl, Anchor{0, i + 1});
-        m_emptyInputLabels[i] = lbl;
-    }
-    for (int i = outputs.size(); i < rowSizes.size() - 1; i++) {
-        auto lbl = new nanogui::Label(this, "", "sans", 0);
-        layout->setAnchor(lbl, Anchor{2, i + 1});
-        m_emptyOutputLabels[i] = lbl;
-    }
-
-    DefaultUnitWidget::onGridChange_();
 }
 
 void synui::DefaultUnitWidget::draw(NVGcontext* ctx) {
@@ -107,20 +79,20 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx) {
     // Draw title background
     Color titleBgColor = theme()->get<Color>("/DefaultUnitWidget/title/bg-color", {0.325f, 1.0f});
     nvgBeginPath(ctx);
-    nvgRect(ctx, 0, 0, width(), m_titleLabel->height() - 1.5f);
+    nvgRect(ctx, 0, 0, width(), m_titleLabel->height());
     nvgFillColor(ctx, titleBgColor);
     nvgFill(ctx);
 
     // Draw divisions
-    int i = 0;
-    auto drawDivisions = [&](const map<int, nanogui::Label*>& lbls, const Color& c1, const Color& c2) {
-        for (auto lbl : lbls) {
+    auto drawDivisions = [ctx](const map<int, nanogui::Label*>& lbls, const Color& c1, const Color& c2) {
+        int i = 0;
+        for (auto& kv : lbls) {
             nvgBeginPath(ctx);
             if (i % 2 == 0)
                 nvgFillColor(ctx, c1);
             else
                 nvgFillColor(ctx, c2);
-            nvgRect(ctx, lbl.second->position().x(), lbl.second->position().y(), lbl.second->width(), lbl.second->height());
+            nvgRect(ctx, kv.second->position().x(), kv.second->position().y(), kv.second->width(), kv.second->height());
             nvgFill(ctx);
             i++;
         }
@@ -131,17 +103,16 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx) {
     Color iColor = theme()->get<Color>("/DefaultUnitWidget/input/bg-color", {0.09f, 0.16f, 0.24f, 1.0f});
     Color iColor2 = Color(1.26f, 1.0f).cwiseProduct(iColor);
     drawDivisions(m_inputLabels, iColor, iColor2);
-    i = 0;
     drawDivisions(m_outputLabels, oColor, oColor2);
 
     /* Draw highlight if enabled. */
     if (highlighted()) {
-        drawRectShadow(ctx, 0, 0, width(), height(),
-            1.0f,
+        drawRectShadow(ctx, 0, 0, width(), height(), 1.0f,
             theme()->get("/DefaultUnitWidget/focused/shadow-size", 15.0f),
             theme()->get("/DefaultUnitWidget/focused/shadow-feather", 0.5f),
             theme()->get<Color>("/DefaultUnitWidget/focused/shadow-color", {0.32f, 0.9f, 0.9f, 0.9f}),
-            {0.0f, 0.0f});
+            {0.0f, 0.0f}
+        );
     }
 
     /* Handle mouse movements */
@@ -163,10 +134,10 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx) {
             nvgFill(ctx);
         } else {
             // Highlight ports
-            for (auto& p : m_inputLabels) {
-                if (p.second->contains(mousePos)) {
-                    const Vector2i& pos = p.second->position();
-                    const Vector2i& size = p.second->size();
+            for (auto& kv : m_inputLabels) {
+                if (kv.second->contains(mousePos)) {
+                    const Vector2i& pos = kv.second->position();
+                    const Vector2i& size = kv.second->size();
                     nvgBeginPath(ctx);
                     nvgRect(ctx, pos.x(), pos.y(), size.x(), size.y());
                     nvgFillColor(ctx, Color(1.0f, 0.05f));
@@ -175,10 +146,10 @@ void synui::DefaultUnitWidget::draw(NVGcontext* ctx) {
                 }
             }
 
-            for (auto& p : m_outputLabels) {
-                if (p.second->contains(mousePos)) {
-                    const Vector2i& pos = p.second->position();
-                    const Vector2i& size = p.second->size();
+            for (auto& kv : m_outputLabels) {
+                if (kv.second->contains(mousePos)) {
+                    const Vector2i& pos = kv.second->position();
+                    const Vector2i& size = kv.second->size();
                     nvgBeginPath(ctx);
                     nvgRect(ctx, pos.x(), pos.y(), size.x(), size.y());
                     nvgFillColor(ctx, Color(1.0f, 0.05f));
@@ -207,19 +178,19 @@ void synui::DefaultUnitWidget::setName(const string& a_name) {
 }
 
 Eigen::Vector2i synui::DefaultUnitWidget::getInputPortAbsPosition(int a_portId) {
-    auto& port = m_inputLabels[a_portId];
-    return port->absolutePosition() + Vector2f{0, port->height() * 0.5}.cast<int>();
+    auto& lbl = m_inputLabels[a_portId];
+    return lbl->absolutePosition() + Vector2f{0, lbl->height() * 0.5}.cast<int>();
 }
 
 Eigen::Vector2i synui::DefaultUnitWidget::getOutputPortAbsPosition(int a_portId) {
-    auto& port = m_outputLabels[a_portId];
-    return port->absolutePosition() + Vector2f{port->width(), port->height() * 0.5}.cast<int>();
+    auto& lbl = m_outputLabels[a_portId];
+    return lbl->absolutePosition() + Vector2f{lbl->width(), lbl->height() * 0.5}.cast<int>();
 }
 
 int synui::DefaultUnitWidget::getInputPort(const Vector2i& a_pos) {
     int i = 0;
-    for (auto inputLabel : m_inputLabels) {
-        if (inputLabel.second->contains(a_pos)) {
+    for (auto& kv : m_inputLabels) {
+        if (kv.second->contains(a_pos)) {
             return i;
         }
         i++;
@@ -229,8 +200,8 @@ int synui::DefaultUnitWidget::getInputPort(const Vector2i& a_pos) {
 
 int synui::DefaultUnitWidget::getOutputPort(const Vector2i& a_pos) {
     int i = 0;
-    for (auto outputLabel : m_outputLabels) {
-        if (outputLabel.second->contains(a_pos)) {
+    for (auto& kv : m_outputLabels) {
+        if (kv.second->contains(a_pos)) {
             return i;
         }
         i++;
@@ -238,12 +209,66 @@ int synui::DefaultUnitWidget::getOutputPort(const Vector2i& a_pos) {
     return -1;
 }
 
+void synui::DefaultUnitWidget::performLayout(NVGcontext* ctx) {
+    auto getMaxWidth = [](const auto& a_widgetMap)
+    {
+        int w = 0;
+        for (const auto& kv : a_widgetMap) {
+            w = std::max(w, kv.second->width());
+        }
+        return w;
+    };
+    Widget::performLayout(ctx);
+
+    const int portHeight = fontSize();
+    const int portTop = m_parentCircuit->fixToGrid({ 0,m_titleLabel->preferredSize(ctx).y() }).y();
+    const int inWidth = getMaxWidth(m_inputLabels);
+    const int outWidth = getMaxWidth(m_outputLabels);
+
+    int y = portTop;
+    for (auto& kv : m_inputLabels) {
+        auto lbl = kv.second;
+        y = m_parentCircuit->fixToGrid({ 0, y }).y();
+        lbl->setPosition({ 0, y });
+        lbl->setSize({inWidth, portHeight});
+        y += portHeight;
+    }
+
+    y = portTop;
+    for (auto& kv : m_outputLabels) {
+        auto lbl = kv.second;
+        y = m_parentCircuit->fixToGrid({ 0, y }).y();
+        lbl->setPosition({ width() - outWidth, y });
+        lbl->setSize({outWidth, portHeight});
+        y += portHeight;
+    }
+}
+
 Eigen::Vector2i synui::DefaultUnitWidget::preferredSize(NVGcontext* ctx) const {
-    // Snap size to grid
-    Vector2f pref_size = Widget::preferredSize(ctx).cast<float>();
-    Vector2f fixed_size = (pref_size / m_parentCircuit->gridSpacing()).unaryExpr([](float a) { return ceil(a); });
-    fixed_size *= m_parentCircuit->gridSpacing();
-    return fixed_size.cast<int>();
+    auto getMaxWidth = [ctx](const auto& a_widgetMap)
+    {
+        int w = 0;
+        for (const auto& kv : a_widgetMap) {
+            w = std::max(w, kv.second->preferredSize(ctx).x());
+        }
+        return w;
+    };
+    const int gridSpacing = m_parentCircuit->gridSpacing();
+    const int portHeight = fontSize();
+    const int portTop = m_parentCircuit->fixToGrid({0,m_titleLabel->preferredSize(ctx).y()}).y();
+//    const int portTop = (std::floorf(m_titleLabel->preferredSize(ctx).y() * 1.0f / gridSpacing) + 0.5f) * gridSpacing;
+    int bottom = portTop;
+    for (int i = 0; i < int(std::max(m_inputLabels.size(), m_outputLabels.size())); i++) {
+        bottom = m_parentCircuit->fixToGrid({0,bottom}).y();
+        bottom += portHeight;
+    }
+    const int inWidth = getMaxWidth(m_inputLabels);
+    const int outWidth = getMaxWidth(m_outputLabels);
+    const int right = std::max(m_titleLabel->preferredSize(ctx).x(), inWidth + outWidth);
+
+    const int totalHeight = std::ceilf(bottom * 1.0f / gridSpacing) * gridSpacing;
+    const int totalWidth = std::ceilf(right * 1.0f / gridSpacing) * gridSpacing;
+    return {totalWidth, totalHeight};
 }
 
 bool synui::DefaultUnitWidget::mouseButtonEvent(const Vector2i& p, int button, bool down, int modifiers) {
@@ -258,9 +283,6 @@ bool synui::DefaultUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
         if (button == GLFW_MOUSE_BUTTON_LEFT && down) {
             // Open textbox on dbl click
             if (modifiers & GLFW_MOD_DOUBLE_CLICK) {
-                auto l = static_cast<nanogui::AdvancedGridLayout*>(layout());
-                l->removeAnchor(m_titleLabel);
-                l->setAnchor(m_titleTextBox, nanogui::AdvancedGridLayout::Anchor{0,0,3,1,nanogui::Alignment::Fill});
                 m_titleTextBox->setValue(m_titleLabel->caption());
                 m_titleTextBox->setFixedSize({width(), m_titleLabel->height()});
                 m_titleTextBox->setFontSize(m_titleLabel->fontSize()-2);
@@ -294,62 +316,9 @@ bool synui::DefaultUnitWidget::mouseButtonEvent(const Vector2i& p, int button, b
     return false;
 }
 
-void synui::DefaultUnitWidget::onGridChange_() {
-    auto l = static_cast<nanogui::AdvancedGridLayout*>(layout());
-
-    int rowHeight = m_parentCircuit->gridSpacing();
-
-    // Special sizing for title label (so grid point will be centered relative to port labels)
-    if (m_titleLabel) {
-        int titleRowSize = rowHeight * 1.5;
-        while (titleRowSize < 8)
-            titleRowSize += rowHeight;
-        int titleRowFontSize = titleRowSize > 12 ? titleRowSize - 2 : titleRowSize;
-        l->setRowSize(0, titleRowSize);
-        m_titleLabel->setFontSize(titleRowFontSize);
-    }
-    int portRowSize = m_parentCircuit->gridSpacing();
-    int portRowFontSize = portRowSize;
-
-
-    const syn::Unit& unit = getUnit_();
-    const auto& inputs = unit.inputs();
-    const auto& outputs = unit.outputs();
-    // Apply new row size to port rows
-    for (int r = 0; r < l->rowCount() - 1; r++) {
-        if (m_inputLabels.find(r) != m_inputLabels.end()) {
-            m_inputLabels[r]->setFontSize(portRowFontSize);
-            if (portRowFontSize < 12) {
-                m_inputLabels[r]->setCaption(inputs.getNameFromId(r));
-                m_inputLabels[r]->setFixedWidth(rowHeight);
-                m_inputLabels[r]->setFixedHeight(rowHeight);
-            } else {
-                m_inputLabels[r]->setCaption(inputs.getNameFromId(r));
-                m_inputLabels[r]->setFixedWidth(0);
-                m_inputLabels[r]->setFixedHeight(0);
-            }
-        }
-        if (m_outputLabels.find(r) != m_outputLabels.end()) {
-            m_outputLabels[r]->setFontSize(portRowFontSize);
-            if (portRowFontSize < 12) {
-                m_outputLabels[r]->setCaption(outputs.getNameFromId(r).substr(0, 2));
-                m_outputLabels[r]->setFixedWidth(rowHeight);
-                m_outputLabels[r]->setFixedHeight(rowHeight);
-            } else {
-                m_outputLabels[r]->setCaption(outputs.getNameFromId(r));
-                m_outputLabels[r]->setFixedWidth(0);
-                m_outputLabels[r]->setFixedHeight(0);
-            }
-        }
-        l->setRowSize(r + 1, rowHeight);
-    }
-}
-
 synui::InputUnitWidget::InputUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId)
     : DefaultUnitWidget(a_parent, a_vm, a_unitId) {
     for (auto lbl : m_inputLabels) {
-        auto l = static_cast<nanogui::AdvancedGridLayout*>(layout());
-        l->removeAnchor(lbl.second);
         removeChild(lbl.second);
     }
     m_inputLabels.clear();
@@ -358,8 +327,6 @@ synui::InputUnitWidget::InputUnitWidget(CircuitWidget* a_parent, syn::VoiceManag
 synui::OutputUnitWidget::OutputUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId)
     : DefaultUnitWidget(a_parent, a_vm, a_unitId) {
     for (auto lbl : m_outputLabels) {
-        auto l = static_cast<nanogui::AdvancedGridLayout*>(layout());
-        l->removeAnchor(lbl.second);
         removeChild(lbl.second);
     }
     m_outputLabels.clear();

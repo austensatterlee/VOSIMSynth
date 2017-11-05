@@ -42,9 +42,6 @@ namespace synui {
         bool isOutputSelected(const Eigen::Vector2i& p) const;
 
     protected:
-        void onGridChange_() override {}
-
-    protected:
         float m_handleRadiusRatio;
     };
 }
