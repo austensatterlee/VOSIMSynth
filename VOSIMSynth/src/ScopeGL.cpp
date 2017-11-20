@@ -37,9 +37,11 @@ void synui::ScopeGL::draw(NVGcontext* ctx) {
 }
 
 void synui::ScopeGL::drawGL() {
-    m_shader.bind();
-    m_shader.uploadAttrib("position", m_values);
-    m_shader.setUniform("lineColor", m_color);
     glLineWidth(1.5f);
-    m_shader.drawArray(GL_LINE_STRIP, 0, m_values.cols());
+    m_shader.bind();
+    for (int i = 0; i < m_values.size(); i++) {
+        m_shader.uploadAttrib("position", m_values[i]);
+        m_shader.setUniform("lineColor", m_color[i]);
+        m_shader.drawArray(GL_LINE_STRIP, 0, m_values[i].cols());
+    }
 }

@@ -13,7 +13,6 @@ _*.*
 *.bk
 *.swp
 
-inject_license.py
 changelist.txt
 todo.txt
 

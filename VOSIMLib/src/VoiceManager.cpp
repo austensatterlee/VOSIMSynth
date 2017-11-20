@@ -246,7 +246,7 @@ namespace syn
             }
             return minVInd;
         }
-        else if (m_activeVoices.size() > 0) 
+        else if (!m_activeVoices.empty())
         {
             for (auto it = m_voiceMap.crbegin(); it != m_voiceMap.crend(); ++it) {
                 if (!it->second.empty() && m_circuits[it->second.front()].isActive()) {
@@ -325,7 +325,7 @@ namespace syn
         else if (!m_activeVoices.empty())
         {
             for (auto it = m_voiceMap.cbegin(); it != m_voiceMap.cend(); ++it) {
-                if (!it->second.empty()) {
+                if (!it->second.empty() && m_circuits[it->second.front()].isActive()) {
                     return it->second.front();
                 }
             }

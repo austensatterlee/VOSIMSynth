@@ -49,11 +49,6 @@ namespace syn
         m_basePhase = 0.0;
     }
 
-    /******************************
-    * Oscillator methods
-    *
-    ******************************/
-
     void OscillatorUnit::updatePhaseStep_()
     {
         if (m_freq)

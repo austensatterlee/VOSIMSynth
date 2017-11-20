@@ -18,7 +18,7 @@ namespace synui {
           m_readIndex(0),
           m_writeIndex(0),
           m_bufSize(MAX_BUF * MAX_SUBP),
-          m_numBuffers(1),
+          m_numBuffers(2),
           m_subPeriod(MAX_SUBP),
           m_subCount(0),
           m_lastPhase(0.0),
@@ -36,14 +36,10 @@ namespace synui {
         m_iPhase = addInput_("sync");
     }
 
-    int OscilloscopeUnit::getNumBuffers() const {
-        return m_buffers.size();
-    }
-
-    syn::CircularView<double> OscilloscopeUnit::getBuffer(int a_bufIndex) const {
+    syn::CircularView<double> OscilloscopeUnit::getScopeBuffer(int a_bufIndex) const {
         int viewSize = isConnected(a_bufIndex) ? m_bufSize : 0;
         return syn::CircularView<double>{
-            m_buffers[a_bufIndex].data(), (int)m_buffers[a_bufIndex].size(), viewSize, m_readIndex
+            m_buffers[a_bufIndex].data(), int(m_buffers[a_bufIndex].size()), viewSize, m_readIndex
         };
     }
 
@@ -56,6 +52,14 @@ namespace synui {
         for (int i = 0; i < m_numBuffers; i++) {
             m_buffers[i].fill(0.0f);
         }
+    }
+
+    bool OscilloscopeUnit::isActive() const {
+        for (int i = 0; i < m_numBuffers; i++) {
+            if (isConnected(i))
+                return true;
+        }
+        return false;
     }
 
     void OscilloscopeUnit::onParamChange_(int a_paramId) {
@@ -148,28 +152,11 @@ namespace synui {
         const OscilloscopeUnit* unit = static_cast<const OscilloscopeUnit*>(&m_vm->getUnit(m_unitId,
             m_vm->getNewestVoiceID()));
         this->setCaption(unit->name());
-        setValues(unit->getBuffer(0));
-        const std::pair<int, int> argMinMax = m_values.argMinMax();
-        const double yMin = m_values[argMinMax.first];
-        const double yMax = m_values[argMinMax.second];
-        updateYBounds_(yMin, yMax);
-
-        {
-            std::ostringstream oss;
-            oss << "max: " << std::setprecision(2) << yMax;
-            setHeader(oss.str());
-        }
-        {
-            std::ostringstream oss;
-            oss << "min: " << std::setprecision(2) << yMin;
-            setFooter(oss.str());
-        }
 
         m_bgColor = theme()->get<Color>("/OscilloscopeWidget/bg-color", {10, 255});
         m_fgColor = theme()->get<Color>("/OscilloscopeWidget/fg-color", {255, 192, 0, 64});
         m_textColor = theme()->get<Color>("/OscilloscopeWidget/text-color", {240, 192});
         m_scopegl->setBackgroundColor(m_bgColor);
-        m_scopegl->setColor(m_fgColor);       
 
         if (!m_caption.empty()) {
             nvgFontFace(ctx, "sans-bold");
@@ -179,20 +166,45 @@ namespace synui {
             nvgText(ctx, mPos.x() + width() / 2, mPos.y() + 1, m_caption.c_str(), nullptr);
         }
 
-        if (m_values.size() < 2) {
+        if (!unit->isActive()) {
             nvgFontFace(ctx, "mono");
             nvgFontSize(ctx, 16.0f);
             nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
             nvgFillColor(ctx, m_textColor);
             nvgTextBox(ctx, mPos.x(), mPos.y() + height() / 2, width(), "[disconnected]", nullptr);
         } else {
-
-            Eigen::Matrix2Xf flatValues(2, m_values.size());
-            for(int i=0;i<m_values.size();i++) {
-                flatValues(0, i) = i*2.0 / (m_values.size() - 1) - 1.0;
-                flatValues(1, i) = syn::INVLERP(m_yMin, m_yMax, m_values[i])*2.0 - 1.0;
+            // Update min/max values
+            double yMin = 0, yMax = 0;
+            int numBuffers = unit->getNumScopeBuffers();
+            for (int i = 0; i < numBuffers; i++) {
+                syn::CircularView<double> buf = unit->getScopeBuffer(i);
+                const std::pair<int, int> argMinMax = buf.argMinMax();
+                if(i==0) {
+                    yMin = buf[argMinMax.first];
+                    yMax = buf[argMinMax.second];
+                } else {
+                    yMin = std::min(buf[argMinMax.first], yMin);
+                    yMax = std::max(buf[argMinMax.second], yMax);
+                }
             }
-            m_scopegl->setValues(flatValues);
+            updateYBounds_(yMin, yMax);
+
+            // Send buffer information to ScopeGL
+            m_scopegl->setNumBuffers(numBuffers);
+            for (int i = 0; i < numBuffers; i++) {
+                syn::CircularView<double> buf = unit->getScopeBuffer(i);
+                auto currFgColor = m_fgColor.toHSLA();
+                currFgColor(0) += i * 1.0 / numBuffers;
+                currFgColor = nanogui::Color::fromHSLA(currFgColor);
+                m_scopegl->setColor(i, currFgColor);
+                // Unroll CircularView into a flat buffer
+                Eigen::Matrix2Xf flatValues(2, buf.size());
+                for (int j = 0; j < buf.size(); j++) {
+                    flatValues(0, j) = j*2.0 / (buf.size() - 1) - 1.0;
+                    flatValues(1, j) = syn::INVLERP(m_yMin, m_yMax, buf[j])*2.0 - 1.0;
+                }
+                m_scopegl->setValues(i, flatValues);
+            }
 
             Widget::draw(ctx);
 
@@ -295,7 +307,7 @@ namespace synui {
         // X ticks
         nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
         const int numXTicks = 4;
-        const double xMax = m_values.size() * unit->getDecimationFactor();
+        const double xMax = unit->getScopeBufferSize() * unit->getDecimationFactor();
         const double xTickStep = 1.0 / numXTicks;
         const double xTickSize = height() - m_bottomMargin - m_topMargin;
         const float xTickStartY = m_topMargin;
@@ -339,6 +351,18 @@ namespace synui {
         const double coeff = m_autoAdjustSpeed / (2 * DSP_PI * screen()->fps());
         m_yMin = m_yMin + coeff * (minSetPoint - m_yMin);
         m_yMax = m_yMax + coeff * (maxSetPoint - m_yMax);
+
+        // Update header and footer with min/max info
+        {
+            std::ostringstream oss;
+            oss << "max: " << std::setprecision(2) << m_yMax;
+            setHeader(oss.str());
+        }
+        {
+            std::ostringstream oss;
+            oss << "min: " << std::setprecision(2) << m_yMin;
+            setFooter(oss.str());
+        }
     }
 
     float OscilloscopeWidget::toScreen_(float a_yPt) {

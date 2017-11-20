@@ -86,6 +86,7 @@ void VOSIMSynth::ProcessDoubleReplacing(double** inputs, double** outputs, int n
 }
 
 void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg) {
+    IPlug::ProcessMidiMsg(pMsg);
     m_MIDIReceiver.onMessageReceived(pMsg);
 }
 

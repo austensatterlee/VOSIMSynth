@@ -28,9 +28,12 @@ namespace synui {
 
         virtual ~ScopeGL();
 
-        void setValues(const Eigen::MatrixXf& a_values) { m_values = a_values; }
+        void setNumBuffers(int a_numBuffers) { m_values.resize(a_numBuffers); m_color.resize(a_numBuffers); }
+        int numBuffers() const { return m_values.size(); }
 
-        void setColor(const nanogui::Color& a_color) { m_color = a_color; }
+        void setValues(int a_buffer, const Eigen::MatrixXf& a_values) { m_values[a_buffer] = a_values; }
+
+        void setColor(int a_buffer, const nanogui::Color& a_color) { m_color[a_buffer] = a_color; }
 
         void draw(NVGcontext* ctx) override;
 
@@ -38,7 +41,7 @@ namespace synui {
 
     private:
         nanogui::GLShader m_shader;
-        Eigen::MatrixXf m_values;
-        nanogui::Color m_color;
+        std::vector<Eigen::MatrixXf> m_values;
+        std::vector<nanogui::Color> m_color;
     };
 }

@@ -235,9 +235,11 @@ namespace syn
         int velocity() const;
 
         /**
-         * This method is used to determine the lifespan of a voice.
-         * By default, this method returns true when a note is on and false otherwise.
-         * It should be overriden to suite the unit's specific needs.
+         * Determines whether or not this unit should be ticked.
+         *
+         * Default implementation returns true when a note is on and false
+         * otherwise.  Override if the unit should be ticked before note on or
+         * after note off events (e.g. an envelope).
          */
         virtual bool isActive() const;
 

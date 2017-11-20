@@ -47,14 +47,15 @@ namespace synui {
         explicit OscilloscopeUnit(const string& a_name);
 
         OscilloscopeUnit(const OscilloscopeUnit& a_rhs)
-            :
-            OscilloscopeUnit(a_rhs.name()) {}
+            : OscilloscopeUnit(a_rhs.name()) {}
 
-        int getNumBuffers() const;
-        syn::CircularView<double> OscilloscopeUnit::getBuffer(int a_bufIndex) const;
+        int getNumScopeBuffers() const { return m_buffers.size(); }
+        syn::CircularView<double> getScopeBuffer(int a_bufIndex) const;
+        int getScopeBufferSize() const { return m_bufSize; }
         int getDecimationFactor() const { return m_subPeriod; }
 
         void reset() override;
+        bool isActive() const override;
 
     protected:
         void onParamChange_(int a_paramId) override;
@@ -97,7 +98,6 @@ namespace synui {
               m_yMin(-1.0),
               m_yMax(1.0),
               m_autoAdjustSpeed(60.0),
-              m_values(),
               m_sideMargin(50),
               m_bottomMargin(40),
               m_topMargin(20) {
@@ -118,9 +118,6 @@ namespace synui {
 
         const string &footer() const { return m_footer; }
         void setFooter(const string &footer) { m_footer = footer; }
-
-        syn::CircularView<double> values() const { return m_values; }
-        void setValues(const syn::CircularView<double>& values) { m_values = values; }
 
         int getUnitId() const { return m_unitId; }
         void setUnitId(int a_id) { m_unitId = a_id; }
@@ -147,7 +144,6 @@ namespace synui {
         int m_unitId;
         double m_yMin, m_yMax;
         double m_autoAdjustSpeed;
-        syn::CircularView<double> m_values;
         ScopeGL* m_scopegl;
 
         int m_sideMargin, m_bottomMargin, m_topMargin;

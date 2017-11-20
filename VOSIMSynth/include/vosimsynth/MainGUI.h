@@ -51,7 +51,6 @@ struct GLFWwindow;
 namespace synui {
     class EnhancedWindow;
     class UnitEditorHost;
-    class ChildWindow;
     class CircuitWidget;
     using DlgType = nanogui::MessageDialog::Type;    
 

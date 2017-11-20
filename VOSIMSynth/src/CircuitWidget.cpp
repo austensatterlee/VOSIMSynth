@@ -52,25 +52,28 @@ void synui::CircuitWidget::draw(NVGcontext* ctx) {
 
     /* Draw background */
     nvgBeginPath(ctx);
-    nanogui::Color backgroundColor = theme()->get<nanogui::Color>("/CircuitWidget/bg-color", {30, 255});
+    nanogui::Color backgroundColor = theme()->get<nanogui::Color>("/CircuitWidget/bg-color", {0, 255});
+    nanogui::Color gridColor = backgroundColor.contrastingColor(); gridColor.a() = 20 / 255.f;
     nvgRect(ctx, 0, 0, mSize.x(), mSize.y());
     nvgFillColor(ctx, backgroundColor);
     nvgFill(ctx);
 
     /* Draw grid */
+    const float strokeWidth = 2.0f;
     if (m_gridDrawStyle == GridDrawStyle::Points) {
+        nvgStrokeWidth(ctx, strokeWidth);
+        nvgLineCap(ctx, NVG_ROUND);
         for (int i = 0; i < m_grid.getSize(); i++) {
-            float ptSize = m_gridSpacing * 0.5f;
-            const float strokeWidth = 2.0f;
+            const float ptSize = m_gridSpacing * 0.25f;
 
             auto pt = m_grid.unravel_index(i);
             auto pixel = m_grid.toPixel(pt, m_gridSpacing);
             if (!m_grid.get(pt)) {
-                nvgStrokeColor(ctx, nanogui::Color{ 70,255 });
+                nvgStrokeColor(ctx, gridColor);
             } else if (m_grid.get(pt).contains(GridCell::State::Unit)) {
-                nvgStrokeColor(ctx, nanogui::Color{ 10, 255 });
+                nvgStrokeColor(ctx, nanogui::Color{10, 255});
             } else if (m_grid.get(pt).contains(GridCell::State::Wire)) {
-                nvgStrokeColor(ctx, nanogui::Color{ 25,25,75,255 });
+                nvgStrokeColor(ctx, nanogui::Color{25,25,75,255});
             }
 
             nvgBeginPath(ctx);
@@ -78,7 +81,26 @@ void synui::CircuitWidget::draw(NVGcontext* ctx) {
             nvgLineTo(ctx, pixel.x() + ptSize * 0.5f, pixel.y());
             nvgMoveTo(ctx, pixel.x(), pixel.y() - ptSize * 0.5f);
             nvgLineTo(ctx, pixel.x(), pixel.y() + ptSize * 0.5f);
-            nvgStrokeWidth(ctx, strokeWidth);
+            nvgStroke(ctx);
+        }
+    } else if (m_gridDrawStyle == GridDrawStyle::Lines) {
+        int nCols = m_grid.getShape().y(), nRows = m_grid.getShape().x();
+        nvgStrokeColor(ctx, gridColor);
+        nvgStrokeWidth(ctx, strokeWidth);
+        for (int r = 0; r < nRows; r++) {
+            Eigen::Vector2i px0 = m_grid.toPixel({r, 0}, m_gridSpacing);
+            Eigen::Vector2i px1 = m_grid.toPixel({r, nCols - 1}, m_gridSpacing);
+            nvgBeginPath(ctx);
+            nvgMoveTo(ctx, px0.x(), px0.y());
+            nvgLineTo(ctx, px1.x(), px1.y());
+            nvgStroke(ctx);
+        }
+        for (int c = 0; c < nCols; c++) {
+            Eigen::Vector2i px0 = m_grid.toPixel({0, c}, m_gridSpacing);
+            Eigen::Vector2i px1 = m_grid.toPixel({nRows - 1, c}, m_gridSpacing);
+            nvgBeginPath(ctx);
+            nvgMoveTo(ctx, px0.x(), px0.y());
+            nvgLineTo(ctx, px1.x(), px1.y());
             nvgStroke(ctx);
         }
     }
