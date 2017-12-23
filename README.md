@@ -15,10 +15,9 @@ width=800>
   audio components.
 - **Audio Quality**. Band-limited waveforms are generated during compilation and are resampled on-the-fly
   using massively oversampled sinc kernels to preserve fidelity at different pitches. To keep things speedy,
-  the waveforms are first resampled to each octave during initialization. When playing a note, the waveform
-  closest in size is used for further resampling to minimize convolution length.
+  the waveforms are first resampled to each octave during initialization. When playing a note, the waveform closest in size is used for further resampling to minimize convolution length.
 - **Flexibility**. Any output may be connected to any input. Even feedback loops are permissible as long as a
-  unit delay is inserted somewhere in the loop. 
+  the unit delay is inserted somewhere in the loop. 
 - **Extensibility**. New units can be easily created by deriving from the Unit class. Macros are used to achieve
   a certain degree of reflection to automate things like voice cloning and serialization.
 
@@ -28,13 +27,13 @@ width=800>
 - **Style customization**. The styling of most GUI components may be customized in the settings menu.
 - **Resizable**. The GUI generated with vector graphics, and so the window may be freely resized.
 
-VOSIMSynth's UI strives to make the common use case simple (and default), while allowing flexibility to those
+VOSIMSynth's UI strives to make the common use case simple (and default) while allowing flexibility to those
 who want to delve into the details. 
 
-For example, by default an envelope's attack phase is triggered by a MIDI noteOn event, and their release
+For example, by default, an envelope's attack phase is triggered by a MIDI noteOn event, and their release
 phase by a MIDI noteOff event. However, an arbitrary signal can be hooked up to the envelope's "gate" input in
 order to override that behavior. The envelope will automatically detect rising and falling edges of the gate
-signal in order to trigger attack and release phases. This allows envelopes to be triggered and released by
+signal in order to trigger an attack and release phases. This allows envelopes to be triggered and released by
 LFO's, MIDI CC values, other envelopes, or any other signal you feel like using.
 
 ## Directory Structure
