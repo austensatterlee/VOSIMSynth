@@ -54,14 +54,6 @@ namespace synui {
         }
     }
 
-    bool OscilloscopeUnit::isActive() const {
-        for (int i = 0; i < m_numBuffers; i++) {
-            if (isConnected(i))
-                return true;
-        }
-        return false;
-    }
-
     void OscilloscopeUnit::onParamChange_(int a_paramId) {
         switch (a_paramId) {
         case pBufSize:
@@ -166,65 +158,58 @@ namespace synui {
             nvgText(ctx, mPos.x() + width() / 2, mPos.y() + 1, m_caption.c_str(), nullptr);
         }
 
-        if (!unit->isActive()) {
-            nvgFontFace(ctx, "mono");
-            nvgFontSize(ctx, 16.0f);
-            nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-            nvgFillColor(ctx, m_textColor);
-            nvgTextBox(ctx, mPos.x(), mPos.y() + height() / 2, width(), "[disconnected]", nullptr);
-        } else {
-            // Update min/max values
-            double yMin = 0, yMax = 0;
-            int numBuffers = unit->getNumScopeBuffers();
-            for (int i = 0; i < numBuffers; i++) {
-                syn::CircularView<double> buf = unit->getScopeBuffer(i);
-                const std::pair<int, int> argMinMax = buf.argMinMax();
-                if(i==0) {
-                    yMin = buf[argMinMax.first];
-                    yMax = buf[argMinMax.second];
-                } else {
-                    yMin = std::min(buf[argMinMax.first], yMin);
-                    yMax = std::max(buf[argMinMax.second], yMax);
-                }
-            }
-            updateYBounds_(yMin, yMax);
-
-            // Send buffer information to ScopeGL
-            m_scopegl->setNumBuffers(numBuffers);
-            for (int i = 0; i < numBuffers; i++) {
-                syn::CircularView<double> buf = unit->getScopeBuffer(i);
-                auto currFgColor = m_fgColor.toHSLA();
-                currFgColor(0) += i * 1.0 / numBuffers;
-                currFgColor = nanogui::Color::fromHSLA(currFgColor);
-                m_scopegl->setColor(i, currFgColor);
-                // Unroll CircularView into a flat buffer
-                Eigen::Matrix2Xf flatValues(2, buf.size());
-                for (int j = 0; j < buf.size(); j++) {
-                    flatValues(0, j) = j*2.0 / (buf.size() - 1) - 1.0;
-                    flatValues(1, j) = syn::INVLERP(m_yMin, m_yMax, buf[j])*2.0 - 1.0;
-                }
-                m_scopegl->setValues(i, flatValues);
-            }
-
-            Widget::draw(ctx);
-
-            drawGrid(ctx);
-
-            nvgFontFace(ctx, "sans");
-            if (!m_header.empty()) {
-                nvgFontSize(ctx, 12.0f);
-                nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
-                nvgFillColor(ctx, m_textColor);
-                nvgText(ctx, mPos.x() + mSize.x() - 3, mPos.y() + 1, m_header.c_str(), nullptr);
-            }
-
-            if (!m_footer.empty()) {
-                nvgFontSize(ctx, 12.0f);
-                nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_BOTTOM);
-                nvgFillColor(ctx, m_textColor);
-                nvgText(ctx, mPos.x() + mSize.x() - 3, mPos.y() + mSize.y() - 1, m_footer.c_str(), nullptr);
+        // Update min/max values
+        double yMin = 0, yMax = 0;
+        int numBuffers = unit->getNumScopeBuffers();
+        for (int i = 0; i < numBuffers; i++) {
+            syn::CircularView<double> buf = unit->getScopeBuffer(i);
+            const std::pair<int, int> argMinMax = buf.argMinMax();
+            if(i==0) {
+                yMin = buf[argMinMax.first];
+                yMax = buf[argMinMax.second];
+            } else {
+                yMin = std::min(buf[argMinMax.first], yMin);
+                yMax = std::max(buf[argMinMax.second], yMax);
             }
         }
+        updateYBounds_(yMin, yMax);
+
+        // Send buffer information to ScopeGL
+        m_scopegl->setNumBuffers(numBuffers);
+        for (int i = 0; i < numBuffers; i++) {
+            syn::CircularView<double> buf = unit->getScopeBuffer(i);
+            auto currFgColor = m_fgColor.toHSLA();
+            currFgColor(0) += i * 1.0 / numBuffers;
+            currFgColor = nanogui::Color::fromHSLA(currFgColor);
+            m_scopegl->setColor(i, currFgColor);
+            // Unroll CircularView into a flat buffer
+            Eigen::Matrix2Xf flatValues(2, buf.size());
+            for (int j = 0; j < buf.size(); j++) {
+                flatValues(0, j) = j*2.0 / (buf.size() - 1) - 1.0;
+                flatValues(1, j) = syn::INVLERP(m_yMin, m_yMax, buf[j])*2.0 - 1.0;
+            }
+            m_scopegl->setValues(i, flatValues);
+        }
+
+        Widget::draw(ctx);
+
+        drawGrid(ctx);
+
+        nvgFontFace(ctx, "sans");
+        if (!m_header.empty()) {
+            nvgFontSize(ctx, 12.0f);
+            nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
+            nvgFillColor(ctx, m_textColor);
+            nvgText(ctx, mPos.x() + mSize.x() - 3, mPos.y() + 1, m_header.c_str(), nullptr);
+        }
+
+        if (!m_footer.empty()) {
+            nvgFontSize(ctx, 12.0f);
+            nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_BOTTOM);
+            nvgFillColor(ctx, m_textColor);
+            nvgText(ctx, mPos.x() + mSize.x() - 3, mPos.y() + mSize.y() - 1, m_footer.c_str(), nullptr);
+        }
+        
     }
 
     void OscilloscopeWidget::drawGrid(NVGcontext* ctx) {
@@ -276,12 +261,19 @@ namespace synui {
                 nvgMoveTo(ctx, yTickStartX, px);
                 nvgLineTo(ctx, yTickStartX + yTickSize, px);
                 nvgStroke(ctx);
-                std::ostringstream oss;
-                oss << std::setprecision(2);
-                oss << yTick;
-                nvgBeginPath(ctx);
-                nvgText(ctx, yTickStartX, px, oss.str().c_str(), nullptr);
-                nvgFill(ctx);
+
+                // Try to find a precision that allows the text to fit inside the screen
+                for (int i = 4; i >= 0; i--) {
+                    std::ostringstream oss;
+                    oss << std::setprecision(i);
+                    oss << yTick;
+                    float txtWidth = nvgTextBounds(ctx, yTickStartX, px, oss.str().c_str(), nullptr, nullptr);
+                    if (i == 0 || txtWidth < yTickStartX-2) {
+                        nvgText(ctx, yTickStartX-2, px, oss.str().c_str(), nullptr);
+                        break;
+                    }
+                }
+
                 yTick += yTickPosStep;
             }
         }
@@ -294,22 +286,28 @@ namespace synui {
                 nvgMoveTo(ctx, yTickStartX, px);
                 nvgLineTo(ctx, yTickStartX + yTickSize, px);
                 nvgStroke(ctx);
-                std::ostringstream oss;
-                oss << std::setprecision(2);
-                oss << yTick;
-                nvgBeginPath(ctx);
-                nvgText(ctx, yTickStartX, px, oss.str().c_str(), nullptr);
-                nvgFill(ctx);
+
+                for (int i = 4; i >= 0; i--) {
+                    std::ostringstream oss;
+                    oss << std::setprecision(i);
+                    oss << yTick;
+                    float txtWidth = nvgTextBounds(ctx, yTickStartX, px, oss.str().c_str(), nullptr, nullptr);
+                    if (i == 0 || txtWidth < yTickStartX-2) {
+                        nvgText(ctx, yTickStartX-2, px, oss.str().c_str(), nullptr);
+                        break;
+                    }
+                }
+
                 yTick += yTickNegStep;
             }
         }
 
         // X ticks
-        nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
+        nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
         const int numXTicks = 4;
         const double xMax = unit->getScopeBufferSize() * unit->getDecimationFactor();
         const double xTickStep = 1.0 / numXTicks;
-        const double xTickSize = height() - m_bottomMargin - m_topMargin;
+        const double xTickSize = height() - m_bottomMargin - m_topMargin + 5;
         const float xTickStartY = m_topMargin;
         double xTick = 0.0;
         while (xTick <= 1.0) {
@@ -319,13 +317,17 @@ namespace synui {
             nvgLineTo(ctx, px, xTickStartY + xTickSize);
             nvgStroke(ctx);
 
-            const int nsample = xTick * xMax;
-            std::ostringstream oss;
-            oss << std::setprecision(2);
-            oss << nsample;
-            nvgBeginPath(ctx);
-            nvgText(ctx, px, xTickStartY + xTickSize, oss.str().c_str(), nullptr);
-            nvgFill(ctx);
+            const float time = xTick * xMax * 1.0/unit->fs();
+            for (int i = 4; i >= 0; i--) {
+                std::ostringstream oss;
+                oss << std::setprecision(i);
+                oss << time;
+                float txtWidth = nvgTextBounds(ctx, yTickStartX, px, oss.str().c_str(), nullptr, nullptr);
+                if (i==0 || txtWidth < xTickStep*(width() - 2 * m_sideMargin)) {
+                    nvgText(ctx, px, xTickStartY + xTickSize + 2, oss.str().c_str(), nullptr);
+                    break;
+                }
+            }
 
             xTick += xTickStep;
         }
@@ -355,12 +357,12 @@ namespace synui {
         // Update header and footer with min/max info
         {
             std::ostringstream oss;
-            oss << "max: " << std::setprecision(2) << m_yMax;
+            oss << "max: " << std::setprecision(2) << hi;
             setHeader(oss.str());
         }
         {
             std::ostringstream oss;
-            oss << "min: " << std::setprecision(2) << m_yMin;
+            oss << "min: " << std::setprecision(2) << lo;
             setFooter(oss.str());
         }
     }

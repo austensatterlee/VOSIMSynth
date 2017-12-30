@@ -23,15 +23,16 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 namespace syn
 {
-    enum WAVE_SHAPE
-    {
-        SAW_WAVE = 0,
-        SINE_WAVE,
-        TRI_WAVE,
-        SQUARE_WAVE
-    };
+    namespace {
+        enum WaveShape {
+            SAW_WAVE = 0,
+            SINE_WAVE,
+            TRI_WAVE,
+            SQUARE_WAVE
+        };
 
-    const vector<string> WAVE_SHAPE_NAMES{ "Saw", "Sine", "Tri", "Square" };
+        const vector<string> wave_shape_names{ "Saw", "Sine", "Tri", "Square" };
+    }
 
     class VOSIMLIB_API OscillatorUnit : public Unit
     {

@@ -224,6 +224,9 @@ namespace syn
          */
         void notifyParameterChanged(int a_id);
 
+        /**
+         * Return the unit's sampling frequency
+         */
         double fs() const;
 
         double tempo() const;

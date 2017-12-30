@@ -55,7 +55,6 @@ namespace synui {
         int getDecimationFactor() const { return m_subPeriod; }
 
         void reset() override;
-        bool isActive() const override;
 
     protected:
         void onParamChange_(int a_paramId) override;

@@ -113,17 +113,19 @@ void synui::MainGui::createSettingsEditor_(nanogui::Widget* a_widget) {
     SerializableFormHelper* helper = m_settingsFormHelper.get();
     helper->setWidget(a_widget);
 
-    helper->addGroup("Plugin Settings");
-
-    helper->addSerializableVariable<int>("max_voices", "Max voices", [this, helper](const int& maxVoices) {
-        auto f = [this, maxVoices, helper]() {
-            m_vm->setMaxVoices(maxVoices);
-            helper->refresh();
-        };
-        m_vm->queueAction(syn::MakeCommand(f));
+    helper->addGroup("Display Settings");
+    helper->addVariable<bool>("Show FPS", m_showFps);
+    helper->addVariable<CircuitWidget::GridDrawStyle>("Grid Style", [this](const CircuitWidget::GridDrawStyle& s) {
+        m_circuitWidget->setGridDrawStyle(s);
     }, [this]() {
-        return m_vm->getMaxVoices();
-    });
+        return m_circuitWidget->gridDrawStyle();
+    })->setItems({ "Hidden", "Points", "Lines" });
+
+    helper->addVariable<CircuitWidget::WireDrawStyle>("Wire Style", [this](const CircuitWidget::WireDrawStyle& s) {
+        m_circuitWidget->setWireDrawStyle(s);
+    }, [this]() {
+        return m_circuitWidget->wireDrawStyle();
+    })->setItems({ "Straight", "Curved" });
 
     helper->addSerializableVariable<int>("grid_spacing", "Grid spacing", [this](const int& s) {
         m_circuitWidget->resizeGrid(s);
@@ -136,18 +138,18 @@ void synui::MainGui::createSettingsEditor_(nanogui::Widget* a_widget) {
     helper->addSerializableVariable<int>("window_width", "Window width", [this](const int& w) { glfwSetWindowSize(getGlfwWindow_(), w, getHeight()); }, [this]() { return getWidth(); });
     helper->addSerializableVariable<int>("window_height", "Window height", [this](const int& h) { glfwSetWindowSize(getGlfwWindow_(), getWidth(), h); }, [this]() { return getHeight(); });
 
-    helper->addVariable<CircuitWidget::GridDrawStyle>("Grid Style", [this](const CircuitWidget::GridDrawStyle& s) {
-        m_circuitWidget->setGridDrawStyle(s);
-    }, [this]() {
-        return m_circuitWidget->gridDrawStyle();
-    })->setItems({"Hidden", "Points", "Lines"});
+    helper->addGroup("Plugin Settings");
 
-    helper->addVariable<CircuitWidget::WireDrawStyle>("Wire Style", [this](const CircuitWidget::WireDrawStyle& s) {
-        m_circuitWidget->setWireDrawStyle(s);
+    helper->addSerializableVariable<int>("max_voices", "Max voices", [this, helper](const int& maxVoices) {
+        auto f = [this, maxVoices, helper]() {
+            m_vm->setMaxVoices(maxVoices);
+            helper->refresh();
+        };
+        m_vm->queueAction(syn::MakeCommand(f));
     }, [this]() {
-        return m_circuitWidget->wireDrawStyle();
-    })->setItems({"Straight", "Curved"});
-
+        return m_vm->getMaxVoices();
+    }); 
+    
     helper->addVariable<int>("Internal buffer size", [this, helper](const int& size) {
         auto f = [this, size, helper]() {
             m_vm->setInternalBufferSize(size);
@@ -516,7 +518,7 @@ void synui::MainGui::_rebuild() {
     /* Create button panel */
     m_buttonPanel = new EnhancedWindow(m_screen, "");
     m_buttonPanel->setIsBackgroundWindow(true);
-    m_buttonPanel->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
+    m_buttonPanel->setDrawCallback([this](EnhancedWindow* self, NVGcontext* ctx) {
         Color fillColor = self->theme()->get<Color>("/window/unfocused/fill").cwiseProduct(Color(0.9f, 1.0f));
 
         nvgSave(ctx);
@@ -526,10 +528,28 @@ void synui::MainGui::_rebuild() {
         nvgRoundedRect(ctx, 0, 0, self->width(), self->height(), 1.0f);
         nvgFillColor(ctx, fillColor);
         nvgFill(ctx);
-
         nvgRestore(ctx);
 
         self->Widget::draw(ctx);
+
+        if (this->m_showFps) {
+            nvgFontFace(ctx, "mono");
+            nvgFontSize(ctx, 14);
+            nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+
+            std::ostringstream fpsString;
+            fpsString << "FPS: " << std::setprecision(2) << m_screen->fps();
+
+            nvgBeginPath(ctx);
+            float bounds[4];
+            nvgTextBounds(ctx, m_screen->size().x() / 2, 10, fpsString.str().c_str(), nullptr, bounds);
+            nvgFillColor(ctx, nanogui::Color(0.0f, 0.0f, 0.0f, 0.6f));
+            nvgRect(ctx, bounds[0] - 3, bounds[1] - 3, bounds[2] - bounds[0] + 6, bounds[3] - bounds[1] + 6);
+            nvgFill(ctx);
+
+            nvgFillColor(ctx, nanogui::Color(1.0f, 1.0f, 0.0f, 1.0f));
+            nvgText(ctx, m_screen->size().x() / 2, 10, fpsString.str().c_str(), nullptr);
+        }
     });
     auto buttonPanelLayout = new nanogui::AdvancedGridLayout({}, { 0 }, 5);
     m_buttonPanel->setLayout(buttonPanelLayout);
@@ -589,10 +609,11 @@ void synui::MainGui::_rebuild() {
 
 synui::MainGui::MainGui(syn::VoiceManager* a_vm, int a_width, int a_height, int a_minWidth, int a_minHeight)
     : ChildWindow(a_width, a_height),
-      m_screen(new nanogui::Screen()),
-      m_vm(a_vm),
       m_minWidth(a_minWidth),
       m_minHeight(a_minHeight),
+      m_showFps(false),
+      m_screen(new nanogui::Screen()),
+      m_vm(a_vm),
       m_buttonPanel(nullptr),
       m_sidePanelL(nullptr),
       m_tabWidget(nullptr),

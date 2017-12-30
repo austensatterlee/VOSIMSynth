@@ -17,15 +17,7 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
- * \file units/MemoryUnit.h
- * \brief
- * \details
- * \author Austen Satterlee
- * \date March 6, 2016
- */
-#ifndef __MEMORYUNIT__
-#define __MEMORYUNIT__
+#pragma once
 #include "vosimlib/Unit.h"
 
 namespace syn {
@@ -132,4 +124,3 @@ namespace syn {
         double m_lastOutput;
     };
 }
-#endif

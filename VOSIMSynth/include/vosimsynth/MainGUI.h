@@ -94,6 +94,7 @@ namespace synui {
 
     private:
         int m_minWidth, m_minHeight;
+        bool m_showFps;
         nanogui::ref<nanogui::Screen> m_screen;
         syn::VoiceManager* m_vm;
 
