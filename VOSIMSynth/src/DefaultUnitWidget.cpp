@@ -219,6 +219,7 @@ void synui::DefaultUnitWidget::performLayout(NVGcontext* ctx) {
         return w;
     };
     Widget::performLayout(ctx);
+    m_titleLabel->setWidth(width());
 
     const int portHeight = fontSize();
     const int portTop = m_parentCircuit->fixToGrid({ 0,m_titleLabel->preferredSize(ctx).y() }).y();

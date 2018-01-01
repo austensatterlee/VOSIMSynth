@@ -30,7 +30,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "vosimlib/common.h"
 #include <regex>
 
-#define DSP_PI 3.14159265358979323846264338327950288
+#define SYN_PI 3.14159265358979323846264338327950288
 
 namespace syn
 {

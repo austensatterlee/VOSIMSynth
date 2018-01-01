@@ -76,7 +76,7 @@ namespace synui {
         int m_subCount;
         double m_lastPhase;
         int m_samplesSinceLastSync;
-        int m_syncCount;
+        int m_syncCount;        
         vector<Eigen::VectorXd> m_buffers;
         int m_iPhase;
     };

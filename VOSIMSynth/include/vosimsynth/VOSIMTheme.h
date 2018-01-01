@@ -24,7 +24,5 @@ namespace synui {
     class VOSIMTheme : public nanogui::Theme {
     public:
         VOSIMTheme(NVGcontext* ctx);
-    public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     };
 }

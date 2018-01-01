@@ -20,7 +20,6 @@ synui::ScopeGL::ScopeGL(Widget* parent)
     }
     )";
     m_shader.init("simple_shader", vs, fs);
-    setDrawBackground(false);
 }
 
 synui::ScopeGL::~ScopeGL() {
@@ -37,7 +36,7 @@ void synui::ScopeGL::draw(NVGcontext* ctx) {
 }
 
 void synui::ScopeGL::drawGL() {
-    glLineWidth(1.5f);
+    glLineWidth(3.0f);
     m_shader.bind();
     for (int i = 0; i < m_values.size(); i++) {
         m_shader.uploadAttrib("position", m_values[i]);

@@ -37,10 +37,13 @@ namespace synui {
     }
 
     syn::CircularView<double> OscilloscopeUnit::getScopeBuffer(int a_bufIndex) const {
-        int viewSize = isConnected(a_bufIndex) ? m_bufSize : 0;
-        return syn::CircularView<double>{
-            m_buffers[a_bufIndex].data(), int(m_buffers[a_bufIndex].size()), viewSize, m_readIndex
-        };
+        if (isConnected(a_bufIndex)) {
+            return syn::CircularView<double>{
+                m_buffers[a_bufIndex].data(), int(m_buffers[a_bufIndex].size()), m_bufSize, m_readIndex
+            };
+        } else {
+            return syn::CircularView<double>();
+        }
     }
 
     void OscilloscopeUnit::reset() {
@@ -102,7 +105,7 @@ namespace synui {
     void OscilloscopeUnit::_processPeriodic() {
         const double phase = READ_INPUT(m_iPhase);
         // sync on phase reset
-        if (phase - m_lastPhase < -0.5) {
+        if (m_lastPhase - phase > 0.5) {
             _sync();
         }
         m_samplesSinceLastSync++;
@@ -145,7 +148,7 @@ namespace synui {
             m_vm->getNewestVoiceID()));
         this->setCaption(unit->name());
 
-        m_bgColor = theme()->get<Color>("/OscilloscopeWidget/bg-color", {10, 255});
+        m_bgColor = theme()->get<Color>("/OscilloscopeWidget/bg-color", {20, 255});
         m_fgColor = theme()->get<Color>("/OscilloscopeWidget/fg-color", {255, 192, 0, 64});
         m_textColor = theme()->get<Color>("/OscilloscopeWidget/text-color", {240, 192});
         m_scopegl->setBackgroundColor(m_bgColor);
@@ -163,13 +166,16 @@ namespace synui {
         int numBuffers = unit->getNumScopeBuffers();
         for (int i = 0; i < numBuffers; i++) {
             syn::CircularView<double> buf = unit->getScopeBuffer(i);
-            const std::pair<int, int> argMinMax = buf.argMinMax();
-            if(i==0) {
-                yMin = buf[argMinMax.first];
-                yMax = buf[argMinMax.second];
-            } else {
-                yMin = std::min(buf[argMinMax.first], yMin);
-                yMax = std::max(buf[argMinMax.second], yMax);
+            if (buf.size()>0) {
+                const std::pair<int, int> argMinMax = buf.argMinMax();
+                if (i == 0) {
+                    yMin = buf[argMinMax.first];
+                    yMax = buf[argMinMax.second];
+                }
+                else {
+                    yMin = std::min(buf[argMinMax.first], yMin);
+                    yMax = std::max(buf[argMinMax.second], yMax);
+                }
             }
         }
         updateYBounds_(yMin, yMax);
@@ -183,10 +189,11 @@ namespace synui {
             currFgColor = nanogui::Color::fromHSLA(currFgColor);
             m_scopegl->setColor(i, currFgColor);
             // Unroll CircularView into a flat buffer
-            Eigen::Matrix2Xf flatValues(2, buf.size());
-            for (int j = 0; j < buf.size(); j++) {
-                flatValues(0, j) = j*2.0 / (buf.size() - 1) - 1.0;
-                flatValues(1, j) = syn::INVLERP(m_yMin, m_yMax, buf[j])*2.0 - 1.0;
+            Eigen::Matrix2Xf flatValues(2, std::min(buf.size(), width()));
+            for (int k = 0; k < flatValues.cols(); k++) {
+                float sample = k * (buf.size()-1.) * 1.0 / (flatValues.cols()-1.);
+                flatValues(0, k) = k * 2.0 / (flatValues.cols() - 1.) - 1.0;
+                flatValues(1, k) = syn::INVLERP(m_yMin, m_yMax, buf[int(sample)])*2.0 - 1.0;
             }
             m_scopegl->setValues(i, flatValues);
         }
@@ -195,6 +202,7 @@ namespace synui {
 
         drawGrid(ctx);
 
+        Widget::draw(ctx);
         nvgFontFace(ctx, "sans");
         if (!m_header.empty()) {
             nvgFontSize(ctx, 12.0f);
@@ -208,8 +216,7 @@ namespace synui {
             nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_BOTTOM);
             nvgFillColor(ctx, m_textColor);
             nvgText(ctx, mPos.x() + mSize.x() - 3, mPos.y() + mSize.y() - 1, m_footer.c_str(), nullptr);
-        }
-        
+        }        
     }
 
     void OscilloscopeWidget::drawGrid(NVGcontext* ctx) {
@@ -219,9 +226,9 @@ namespace synui {
         nvgSave(ctx);
         nvgTranslate(ctx, mPos.x(), mPos.y());
         const nanogui::Color tickColor = theme()->get<Color>("/OscilloscopeWidget/tick-color",
-            {0.86f, 1.0f, 0.0f, 1.00f});
+            { 0.86f, 1.0f, 0.0f, 1.00f });
         const nanogui::Color tickLabelColor = theme()->get<Color>("/OscilloscopeWidget/tick-label-color",
-            {0.752f, 0.85f, 0.15f, 1.00f});
+            { 0.752f, 0.85f, 0.15f, 1.00f });
         nvgFontFace(ctx, "mono");
         nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
         nvgFontSize(ctx, 12.0f);
@@ -246,7 +253,8 @@ namespace synui {
             yTickNegStep = -abs(m_yMin) / numYTicks;
             yTickPosStart = 0;
             yTickNegStart = yTickNegStep;
-        } else {
+        }
+        else {
             yTickPosStep = (m_yMax - m_yMin) / (2 * numYTicks);
             yTickNegStep = 0;
             yTickPosStart = m_yMin;
@@ -268,8 +276,8 @@ namespace synui {
                     oss << std::setprecision(i);
                     oss << yTick;
                     float txtWidth = nvgTextBounds(ctx, yTickStartX, px, oss.str().c_str(), nullptr, nullptr);
-                    if (i == 0 || txtWidth < yTickStartX-2) {
-                        nvgText(ctx, yTickStartX-2, px, oss.str().c_str(), nullptr);
+                    if (i == 0 || txtWidth < yTickStartX - 2) {
+                        nvgText(ctx, yTickStartX - 2, px, oss.str().c_str(), nullptr);
                         break;
                     }
                 }
@@ -292,8 +300,8 @@ namespace synui {
                     oss << std::setprecision(i);
                     oss << yTick;
                     float txtWidth = nvgTextBounds(ctx, yTickStartX, px, oss.str().c_str(), nullptr, nullptr);
-                    if (i == 0 || txtWidth < yTickStartX-2) {
-                        nvgText(ctx, yTickStartX-2, px, oss.str().c_str(), nullptr);
+                    if (i == 0 || txtWidth < yTickStartX - 2) {
+                        nvgText(ctx, yTickStartX - 2, px, oss.str().c_str(), nullptr);
                         break;
                     }
                 }
@@ -311,19 +319,19 @@ namespace synui {
         const float xTickStartY = m_topMargin;
         double xTick = 0.0;
         while (xTick <= 1.0) {
-            const float px = m_sideMargin + xTick * (width() - 2*m_sideMargin);
+            const float px = m_sideMargin + xTick * (width() - 2 * m_sideMargin);
             nvgBeginPath(ctx);
             nvgMoveTo(ctx, px, xTickStartY);
             nvgLineTo(ctx, px, xTickStartY + xTickSize);
             nvgStroke(ctx);
 
-            const float time = xTick * xMax * 1.0/unit->fs();
+            const float time = xTick * xMax * 1.0 / unit->fs();
             for (int i = 4; i >= 0; i--) {
                 std::ostringstream oss;
                 oss << std::setprecision(i);
                 oss << time;
                 float txtWidth = nvgTextBounds(ctx, yTickStartX, px, oss.str().c_str(), nullptr, nullptr);
-                if (i==0 || txtWidth < xTickStep*(width() - 2 * m_sideMargin)) {
+                if (i == 0 || txtWidth < xTickStep*(width() - 2 * m_sideMargin)) {
                     nvgText(ctx, px, xTickStartY + xTickSize + 2, oss.str().c_str(), nullptr);
                     break;
                 }
@@ -337,7 +345,7 @@ namespace synui {
     void OscilloscopeWidget::performLayout(NVGcontext* ctx) {
         Widget::performLayout(ctx);
         m_scopegl->setPosition({ m_sideMargin, m_topMargin });
-        m_scopegl->setSize({ width()-m_sideMargin*2, height()-m_topMargin-m_bottomMargin });
+        m_scopegl->setSize({ width() - m_sideMargin * 2, height() - m_topMargin - m_bottomMargin });
     }
 
     void OscilloscopeWidget::updateYBounds_(float a_yMin, float a_yMax) {
@@ -350,7 +358,7 @@ namespace synui {
         const double margin = 0.10 * syn::MAX(hi - lo, 1E-1);
         const double minSetPoint = lo - margin;
         const double maxSetPoint = hi + margin;
-        const double coeff = m_autoAdjustSpeed / (2 * DSP_PI * screen()->fps());
+        const double coeff = m_autoAdjustSpeed / (2 * SYN_PI * screen()->fps());
         m_yMin = m_yMin + coeff * (minSetPoint - m_yMin);
         m_yMax = m_yMax + coeff * (maxSetPoint - m_yMax);
 

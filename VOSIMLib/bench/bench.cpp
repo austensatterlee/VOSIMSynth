@@ -46,7 +46,7 @@ NONIUS_BENCHMARK("[lut][sin] lut_sin_table.plerp", [](nonius::chronometer& meter
 NONIUS_BENCHMARK("[lut][sin] std::sin", [](nonius::chronometer& meter) {
     const int runs = meter.runs();
     std::vector<double> phases(runs);
-    for (int i = 0; i < runs; i++) phases[i] = 2*DSP_PI * i * 1.0 / runs;
+    for (int i = 0; i < runs; i++) phases[i] = 2*SYN_PI * i * 1.0 / runs;
     double x;
     meter.measure([&x, &phases](int i) { x = std::sin(phases[i]); });
 })

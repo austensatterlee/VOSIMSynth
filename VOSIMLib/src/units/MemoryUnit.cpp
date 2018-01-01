@@ -125,12 +125,10 @@ namespace syn
         reset();
     }
 
-    //---------------------
-    // ResampleUnit
-    //---------------------
     VariableMemoryUnit::VariableMemoryUnit(const string& a_name) :
         Unit(a_name),
-        m_delaySamples(0)
+        m_delaySamples(0),
+        m_lastOutput(0)
     {
         addInput_(iIn, "in");
         addInput_(iReceive, "recv");
@@ -213,5 +211,54 @@ namespace syn
     void VariableMemoryUnit::onNoteOn_()
     {
         reset();
+    }
+
+    SampleAndHoldUnit::SampleAndHoldUnit(const string& a_name)
+        : Unit(a_name),
+          m_currValue(0),
+          m_phase(0.0),
+          m_step(0.0),
+          m_lastSync(0.0) {
+        addInput_(iIn, "in");
+        addInput_(iSync, "sync");
+        addParameter_(pFreq, UnitParameter{"freq", 0.0, 20e3, 0.0, UnitParameter::Freq});
+        addOutput_(0, "out");
+    }
+
+    SampleAndHoldUnit::SampleAndHoldUnit(const SampleAndHoldUnit& a_rhs)
+        : SampleAndHoldUnit(a_rhs.name()) {}
+
+    void SampleAndHoldUnit::reset() {
+        m_phase = 0.0;
+        m_currValue = 0.0;
+    }
+
+    void SampleAndHoldUnit::process_() {
+        BEGIN_PROC_FUNC
+        m_phase = syn::WRAP(m_phase + m_step, 1.0);
+        // sync
+        if (m_phase < m_step) {
+            m_currValue = READ_INPUT(iIn);
+        }
+        double trig = READ_INPUT(iSync);
+        if (m_lastSync - trig > 0.5) {
+            reset();
+            m_currValue = READ_INPUT(iIn);
+        }
+        m_lastSync = READ_INPUT(iSync);
+        WRITE_OUTPUT(0, m_currValue);
+        END_PROC_FUNC
+    }
+
+    void SampleAndHoldUnit::onParamChange_(int a_paramId) {
+        switch (a_paramId) {
+        case pFreq:
+        {
+            m_step = param(pFreq).getDouble() / fs();
+        }
+            break;
+        default:
+            break;
+        }
     }
 }

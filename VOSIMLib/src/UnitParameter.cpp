@@ -209,7 +209,10 @@ namespace syn {
         switch (m_unitsType) {
         case Freq:
         case Decibal:
-            return (log10(a_value) - m_logMin) / m_logRange;
+            if(m_logMin<=0)
+                return (a_value - m_min) / (m_max - m_min);
+            else
+                return (log10(a_value) - m_logMin) / m_logRange;
         case None:
         default:
             return (a_value - m_min) / (m_max - m_min);
@@ -221,7 +224,10 @@ namespace syn {
         switch (m_unitsType) {
             case Freq:
             case Decibal:
-                value = pow(10.0, value * m_logRange + m_logMin);
+                if(m_logMin<=0)
+                    value = value * (m_max - m_min) + m_min;
+                else
+                    value = pow(10.0, value * m_logRange + m_logMin);
                 break;
             case None:
             default:

@@ -26,6 +26,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <vosimlib/units/MemoryUnit.h>
 #include <vosimlib/units/MidiUnits.h>
 #include <vosimlib/units/StateVariableFilter.h>
+#include <vosimlib/units/NoiseUnits.h>
 #include <vosimlib/UnitFactory.h>
 #include <vosimlib/tables.h>
 #include "vosimsynth/ChildWindow.h"
@@ -157,6 +158,7 @@ void VOSIMSynth::registerUnits()
     uf.addUnitPrototype<syn::BasicOscillatorUnit>("Oscillators", "basic");
     uf.addUnitPrototype<syn::VosimOscillator>("Oscillators", "vosim");
     uf.addUnitPrototype<syn::FormantOscillator>("Oscillators", "fmt");
+    uf.addUnitPrototype<syn::NoiseUnit>("Oscillators", "noise");
 
     uf.addUnitPrototype<syn::ADSREnvelope>("Modulators", "ADSR");
     uf.addUnitPrototype<syn::LFOOscillatorUnit>("Modulators", "LFO");
@@ -166,7 +168,7 @@ void VOSIMSynth::registerUnits()
     uf.addUnitPrototype<syn::LadderFilterA>("Filters", "ldrA");
     uf.addUnitPrototype<syn::LadderFilterB>("Filters", "ldrB");
 
-    uf.addUnitPrototype<syn::OnePoleLPUnit>("Filters", "lag");
+    uf.addUnitPrototype<syn::OnePoleLPUnit>("Filters", "1P");
     uf.addUnitPrototype<syn::FollowerUnit>("Filters", "follow");
     uf.addUnitPrototype<syn::DCRemoverUnit>("Filters", "DC");
     
@@ -176,12 +178,14 @@ void VOSIMSynth::registerUnits()
     uf.addUnitPrototype<syn::RectifierUnit>("Math", "rect");
     uf.addUnitPrototype<syn::QuantizerUnit>("Math", "quant");
     uf.addUnitPrototype<syn::PanningUnit>("Math", "pan");
-    uf.addUnitPrototype<syn::SwitchUnit>("Math", "switch");
+    uf.addUnitPrototype<syn::SwitchUnit>("Math", "cmp");
     uf.addUnitPrototype<syn::ConstantUnit>("Math", "const");
-    uf.addUnitPrototype<syn::TanhUnit>("Math", "tanh");
 
     uf.addUnitPrototype<syn::MemoryUnit>("Delays", "z^-1");
     uf.addUnitPrototype<syn::VariableMemoryUnit>("Delays", "z^-t");
+
+    uf.addUnitPrototype<syn::SampleAndHoldUnit>("Processors", "S&H");
+    uf.addUnitPrototype<syn::TanhUnit>("Processors", "tanh");
     
     uf.addUnitPrototype<syn::PitchToFreqUnit>("Converters", "p2f");
     uf.addUnitPrototype<syn::FreqToPitchUnit>("Converters", "f2p");

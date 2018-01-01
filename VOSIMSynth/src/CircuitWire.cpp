@@ -118,7 +118,7 @@ void synui::CircuitWire::draw(NVGcontext* ctx) {
         float dangle = asin(dir[1]);
 
         Eigen::Vector2f headOffset = Eigen::Vector2f{0, 1} * noseSize;
-        Eigen::Vector2f noseOffset = Eigen::Vector2f{noseSize / sin(2 * DSP_PI / 180.0 * noseAngle), 0};
+        Eigen::Vector2f noseOffset = Eigen::Vector2f{noseSize / sin(2 * SYN_PI / 180.0 * noseAngle), 0};
 
         nvgBeginPath(ctx);
         nvgFillColor(ctx, wireColor);

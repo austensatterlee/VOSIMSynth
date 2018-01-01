@@ -52,8 +52,6 @@ else()
   set(PYTHON_EXECUTABLE ${PYTHON_EXECUTABLE_32})
 endif()
 
-setenv(FFTS_ROOT ${LIBS_DIR_SYS}/ffts CACHE PATH "")
-setenv(FFTS_INCLUDE_DIR ${FFTS_ROOT}/include CACHE PATH "")
 setenv(BOOST_ROOT "C:/users/austen/OneDrive/Code/libs/boost/boost_1_64_0" CACHE PATH "Boost directory (i.e. .../boost/boost_1_60)")
 setenv(MKL_DIR "E:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl" CACHE PATH "")
 
@@ -128,25 +126,6 @@ if(VOSIMPROJECT_TRACER_BUILD)
 endif()
 if(VOSIMPROJECT_BUILD_TESTS)
     enable_testing()
-endif()
-
-##
-# Configure compiled dependencies 
-##
-
-# FFTS
-find_library(FFTS_RELEASE_LIBRARY ffts ffts_static PATHS ${FFTS_ROOT} PATH_SUFFIXES lib)
-find_library(FFTS_DEBUG_LIBRARY fftsd ffts_staticd PATHS ${FFTS_ROOT} PATH_SUFFIXES lib)
-if(FFTS_RELEASE_LIBRARY STREQUAL "FFTS_RELEASE_LIBRARY-NOTFOUND")
-    message(WARNING "Unable to locate FFTS release library.")
-endif()
-if(FFTS_DEBUG_LIBRARY STREQUAL "FFTS_DEBUG_LIBRARY-NOTFOUND")
-    message(WARNING "Unable to locate FFTS debug library.")
-endif()
-if(NOT FFTS_RELEASE_LIBRARY STREQUAL "FFTS_RELEASE_LIBRARY-NOTFOUND" AND NOT FFTS_DEBUG_LIBRARY STREQUAL "FFTS_DEBUG_LIBRARY-NOTFOUND")
-    include_directories(${FFTS_INCLUDE_DIR})
-    list(APPEND DBG_LIBS ${FFTS_DEBUG_LIBRARY})
-    list(APPEND REL_LIBS ${FFTS_RELEASE_LIBRARY})
 endif()
 
 #################################

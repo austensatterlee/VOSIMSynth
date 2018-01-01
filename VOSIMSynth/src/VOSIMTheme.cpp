@@ -22,7 +22,7 @@ synui::VOSIMTheme::VOSIMTheme(NVGcontext* ctx)
     prop("/GainUnitWidget/bg-color") = Color(127, 32, 11, 255);
     prop("/GainUnitWidget/fg-color") = Color(32, 33, 68, 255);
 
-    prop("/OscilloscopeWidget/bg-color") = Color(20, 128);
+    prop("/OscilloscopeWidget/bg-color") = Color(20, 255);
     prop("/OscilloscopeWidget/fg-color") = Color(255, 192, 0, 128);
     prop("/OscilloscopeWidget/text-color") = Color(240, 192);
     prop("/OscilloscopeWidget/tick-color") = Color(219, 255, 0, 25);

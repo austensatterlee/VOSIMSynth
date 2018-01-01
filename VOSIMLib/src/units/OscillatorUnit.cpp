@@ -66,7 +66,8 @@ namespace syn
     void OscillatorUnit::tickPhase_(double a_phaseOffset)
     {        
         // sync
-        if (m_lastSync > 0.5 && READ_INPUT(iSync) < 0.5)
+        double sync = READ_INPUT(iSync);
+        if (m_lastSync <= 0.0 && sync > 0.0 || m_lastSync - sync > 0.5)
         {
             reset();
         }
@@ -173,7 +174,7 @@ namespace syn
         param(pGain).setMax(1e6);
         param(pGain).setControlType(UnitParameter::Unbounded);
         addParameter_(pBPMFreq, UnitParameter("rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM).setVisible(false));
-        addParameter_(pFreq, UnitParameter("freq", 0.01, 100.0, 1.0, UnitParameter::EUnitsType::Freq));
+        addParameter_(pFreq, UnitParameter("freq", 0.0, 100.0, 1.0, UnitParameter::EUnitsType::Freq));
         addParameter_(pWaveform, UnitParameter("waveform", wave_shape_names));
         addParameter_(pTempoSync, UnitParameter("tempo sync", false));
     }

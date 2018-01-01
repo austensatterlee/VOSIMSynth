@@ -318,7 +318,7 @@ namespace syn
         * Remove the specified connection.
         * \returns True if the connection existed, false if it was already disconnected.
         */
-        bool disconnectInput(int a_toInputPort);
+        bool disconnectInput(int a_inputPort);
 
         /**
          * Copies this unit into newly allocated memory (the caller is responsible for releasing the memory).

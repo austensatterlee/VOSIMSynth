@@ -97,7 +97,7 @@ void syn::TrapStateVariableFilter::process_()
     BEGIN_PROC_FUNC
     double fc = READ_INPUT(m_iFcMul) * (param(m_pFc).getDouble() + READ_INPUT(m_iFcAdd));
     fc = CLAMP(fc, param(m_pFc).getMin(), param(m_pFc).getMax());
-    m_F = tan(DSP_PI * fc / (fs() * c_oversamplingFactor));
+    m_F = tan(SYN_PI * fc / (fs() * c_oversamplingFactor));
 
     double input_res = READ_INPUT(m_iResMul) * param(m_pRes).getDouble() + READ_INPUT(m_iResAdd);
     input_res = CLAMP<double>(input_res, 0, 1);
@@ -126,7 +126,7 @@ void syn::TrapStateVariableFilter::process_()
 
 void syn::OnePoleLP::setFc(double a_fc, double a_fs)
 {
-    a_fc = DSP_PI * a_fc / a_fs;
+    a_fc = SYN_PI * a_fc / a_fs;
     double g = tan(a_fc);
 
     m_G = g / (1 + g);
@@ -178,7 +178,8 @@ void syn::OnePoleLPUnit::process_()
     implem.setFc(fc, fs());
 
      // sync
-    if (m_lastSync <= 0.0 && READ_INPUT(iSync) > 0.0)
+    double sync = READ_INPUT(iSync);
+    if (m_lastSync - sync > 0.5)
     {
         reset();
     }
@@ -236,10 +237,10 @@ void syn::LadderFilterA::process_()
     double fc = (param(pFc).getDouble() + READ_INPUT(iFcAdd)) * READ_INPUT(iFcMul); // freq cutoff
     fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());
 
-    double wd = DSP_PI * fc / fs;
+    double wd = SYN_PI * fc / fs;
 
     // Prepare parameter values and insert them into each stage.
-    double g = 4 * DSP_PI * VT * fc * (1.0 - wd) / (1.0 + wd);
+    double g = 4 * SYN_PI * VT * fc * (1.0 - wd) / (1.0 + wd);
     double drive = 1 + 3 * (param(pDrv).getDouble() + READ_INPUT(iDrvAdd));
     double res = 3.9 * (param(pFb).getDouble() + READ_INPUT(iFbAdd));
     double stage_gain = 1.0/(2.0*VT);

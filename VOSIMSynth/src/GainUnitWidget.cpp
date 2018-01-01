@@ -74,7 +74,7 @@ void synui::GainUnitWidget::draw(NVGcontext* ctx)
     // Draw X sign
     nvgBeginPath(ctx);
     nvgTranslate(ctx, size().x()*0.5, size().y()*0.5);
-    nvgRotate(ctx, DSP_PI*0.25f);
+    nvgRotate(ctx, SYN_PI*0.25f);
     nvgMoveTo(ctx, 0.0f, -handleRadius);
     nvgLineTo(ctx, 0.0f, handleRadius);
     nvgMoveTo(ctx, -handleRadius, 0.0f);

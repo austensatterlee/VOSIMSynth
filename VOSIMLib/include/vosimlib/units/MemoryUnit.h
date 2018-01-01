@@ -123,4 +123,40 @@ namespace syn {
         double m_delaySamples;
         double m_lastOutput;
     };
+
+    /**
+     * Sample & Hold unit
+     * 
+     * User can set the frequency using the frequency parameter. 
+     * When the sync input falls (falling edge), the phase resets and a new sample is read.
+     * If the frequency parameter is set to 0.0, the sample and hold
+     * can be completely controlled with the sync input.
+     */
+    class VOSIMLIB_API SampleAndHoldUnit : public Unit {
+        DERIVE_UNIT(SampleAndHoldUnit)
+    public:
+        enum Param {
+            pFreq = 0
+        };
+
+        enum Input {
+            iIn = 0,
+            iSync
+        };
+
+        explicit SampleAndHoldUnit(const string& a_name);
+
+        SampleAndHoldUnit(const SampleAndHoldUnit& a_rhs);
+
+        void reset() override;;
+    protected:
+        void process_() override;
+
+        void onParamChange_(int a_paramId) override;
+    private:
+        double m_currValue;
+        double m_phase;
+        double m_step;
+        double m_lastSync;
+    };
 }

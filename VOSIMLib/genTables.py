@@ -146,7 +146,7 @@ def GenerateBLTriangle(nharmonics, npoints=None, w0=1):
     bltri = sum([g*sin(h*sample_pts) for g, h in zip(gains, harmonics)], axis=0)
     return bltri/bltri.max()
 
-def GenerateBlimp(intervals=10, res=2048, fs=48000, fc=20000, beta=7.20, apgain=0.89, apbeta=0.7, ret_half=True):
+def GenerateBlimp(intervals=10, res=2048, fs=48000, fc=23000, beta=7.20, apgain=0.89, apbeta=0.7, ret_half=True):
     """
     Generate a bandlimited dirac delta impulse.
 
@@ -482,10 +482,24 @@ def scale_fir(fir):
     s = np.sum(fir * c)
     return fir/s
 
-def cutoff(mag, freqs=None):
-    freqs = freqs if freqs is not None else np.arange(len(mag))
-    corner_index = np.argmin(abs(mag-sqrt(2)/2.))
-    return freqs[corner_index]
+def transition_band(mags, freqs=None, stopband_db=-90):
+    """ Calculate the start and stop of the transition band from a frequency response """
+    freqs = freqs if freqs is not None else np.arange(len(mags))
+    mags = abs(mags)
+    passband_mag = 10**(-3/20.)
+    stopband_mag = 10**(stopband_db/20.)
+    passband_index = np.where((mags-passband_mag)<=0)[0][0]
+    stopband_index = np.where((mags-stopband_mag)<=0)[0][0] if min(mags)<stopband_mag else len(mags)-1
+    return np.array([freqs[passband_index], freqs[stopband_index]])
+
+def passband_ripple(mags):
+    """ Calculate the passband ripple (maximum deviation from unity) from a frequency response """
+    mags = abs(mags)
+    passband_mag = 10**(-3/20.)
+    passband_index = np.where((mags-passband_mag)<=0)[0][0]
+    passband = mags[:passband_index+1]
+    ripple = max(passband-passband.mean())
+    return np.array(ripple)
 
 def main(pargs):
     v = pargs.verbose
@@ -533,18 +547,18 @@ def main(pargs):
     bltri = norm_power(bltri)
 
     """Offline and online BLIMP for resampling"""
-    OFFLINE_BLIMP_INTERVALS = 127
+    OFFLINE_BLIMP_INTERVALS = 513
     OFFLINE_BLIMP_RES = 2048
 
-    ONLINE_BLIMP_INTERVALS = 11
+    ONLINE_BLIMP_INTERVALS = 19
     ONLINE_BLIMP_RES = 2048
 
     if v:
         print "Generating 'online' band-limited impulse table..."
-    blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS, ONLINE_BLIMP_RES, fc=22e3, fs=48e3)
+    blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS, ONLINE_BLIMP_RES, fc=23e3, fs=48e3)
     if v:
         print "Generating 'offline' band-limited impulse table..."
-    blimp_offline = GenerateBlimp(OFFLINE_BLIMP_INTERVALS, OFFLINE_BLIMP_RES, fc=23e3, fs=48e3)
+    blimp_offline = GenerateBlimp(OFFLINE_BLIMP_INTERVALS, OFFLINE_BLIMP_RES, fc=24e3, fs=48e3)
 
     if v:
         print "Generating C++ code..."
