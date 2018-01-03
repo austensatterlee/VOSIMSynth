@@ -80,7 +80,7 @@ namespace syn
     /**
      * 1 Pole "TPT" implementation
      */
-    struct OnePoleLP
+    struct VOSIMLIB_API OnePoleLP
     {
         /**
          * Set forward gain by specifying cutoff frequency and sampling rate.

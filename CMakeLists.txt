@@ -57,10 +57,11 @@ setenv(MKL_DIR "E:/Program Files (x86)/IntelSWTools/compilers_and_libraries/wind
 
 # Options
 optionenv(EIGEN_USE_MKL "Should eigen use MKL as its backend?" TRUE)
-optionenv(VOSIMPROJECT_USE_AVX2 "Compile with AVX2 optimizations?" FALSE)
 optionenv(VOSIMPROJECT_TRACER_BUILD "Enable tracing?" FALSE)
 optionenv(VOSIMPROJECT_BUILD_TESTS "Build tests?" TRUE)
 optionenv(VOSIMPROJECT_BUILD_BENCHMARKS "Build benchmarks?" FALSE)
+setenv(VOSIMPROJECT_EIS AVX2 CACHE STRING "Enhanced instruction set." )
+set_property(CACHE VOSIMPROJECT_EIS PROPERTY STRINGS AVX2 AVX SSE2 SSE NONE)
 setenv(VOSIMSYNTH_GL_VERSION 3.3 CACHE STRING "Version of OpenGL to use when creating GUI." )
 set_property(CACHE VOSIMSYNTH_GL_VERSION PROPERTY STRINGS 3.3 3.1)
 
@@ -94,12 +95,10 @@ if(MSVC)
   list(APPEND MSVC_REL  /Ox  /Ob2  /Oi  /Ot  /Oy  /fp:fast  /fp:except-  /Qpar  /GT  /GL)
   list(APPEND MSVC_RDEB /Ox  /Ob0  /Oi  /Ot  /Oy-  /fp:fast  /fp:except-  /Qpar  /GT /GL)
 
-  if(VOSIMPROJECT_USE_AVX2)
-    list(APPEND MSVC_REL /arch:AVX2)
-    list(APPEND MSVC_RDEB /arch:AVX2)
-  else()
-    list(APPEND MSVC_REL /arch:AVX)
-    list(APPEND MSVC_RDEB /arch:AVX)
+  if(NOT VOSIMPROJECT_EIS STREQUAL "NONE")
+      list(APPEND MSVC_REL /arch:${VOSIMPROJECT_EIS})
+      list(APPEND MSVC_RDEB /arch:${VOSIMPROJECT_EIS})
+      list(APPEND MSVC_DEB /arch:${VOSIMPROJECT_EIS})
   endif()
     
   add_compile_options("$<$<CONFIG:Release>:${MSVC_REL}>")

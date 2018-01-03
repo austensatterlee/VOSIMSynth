@@ -107,19 +107,18 @@ namespace syn
 
         const string& getName() const;
         int getId() const;
-        void setId(int a_id);
+        UnitParameter&  setId(int a_id);
         Unit* getParent() const;
-        void setParent(Unit* a_newParent);
+        UnitParameter&  setParent(Unit* a_newParent);
 
         EParamType getType() const;
 
         double getMin() const;
-
-        void setMin(double a_new_min);
-
+        UnitParameter& setMin(double a_new_min);
         double getMax() const;
-
-        void setMax(double a_new_max);
+        UnitParameter& setMax(double a_new_max);
+        double getShape() const { return m_shape; }
+        UnitParameter& setShape(double a_new_shape) { m_shape = a_new_shape; return *this; }
 
         double getDefaultValue() const;
 
@@ -174,7 +173,7 @@ namespace syn
         int m_id;
         double m_value, m_defaultValue;
         double m_min, m_max;
-        double m_logMin, m_logRange;
+        double m_shape;
         bool m_isVisible;
         EParamType m_type;
         EUnitsType m_unitsType;
