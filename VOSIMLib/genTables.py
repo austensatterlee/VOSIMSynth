@@ -168,7 +168,7 @@ def GenerateBlimp(intervals=10, res=2048, fs=48000, fc=23000, beta=7.20, apgain=
     apw = 1-apgain*ss.kaiser(pts, apbeta) # apodization window
     window = w*apw
     blimp = window*h
-    blimp = convolve(blimp, blimp, 'same')
+    blimp = ss.fftconvolve(blimp, blimp, 'same')
 
     # Scale
     blimp = scale_fir(blimp)

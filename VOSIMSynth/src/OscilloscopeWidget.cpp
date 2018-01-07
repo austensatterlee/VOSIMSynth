@@ -189,7 +189,7 @@ namespace synui {
             currFgColor = nanogui::Color::fromHSLA(currFgColor);
             m_scopegl->setColor(i, currFgColor);
             // Unroll CircularView into a flat buffer
-            Eigen::Matrix2Xf flatValues(2, std::min(buf.size(), width()));
+            Eigen::Matrix2Xf flatValues(2, std::min(buf.size(), width()*2));
             for (int k = 0; k < flatValues.cols(); k++) {
                 float sample = k * (buf.size()-1.) * 1.0 / (flatValues.cols()-1.);
                 flatValues(0, k) = k * 2.0 / (flatValues.cols() - 1.) - 1.0;

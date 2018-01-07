@@ -36,7 +36,7 @@ void synui::ScopeGL::draw(NVGcontext* ctx) {
 }
 
 void synui::ScopeGL::drawGL() {
-    glLineWidth(3.0f);
+    glLineWidth(2.0f);
     m_shader.bind();
     for (int i = 0; i < m_values.size(); i++) {
         m_shader.uploadAttrib("position", m_values[i]);

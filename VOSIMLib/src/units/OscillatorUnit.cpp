@@ -67,7 +67,7 @@ namespace syn
     {        
         // sync
         double sync = READ_INPUT(iSync);
-        if (m_lastSync <= 0.0 && sync > 0.0 || m_lastSync - sync > 0.5)
+        if (m_lastSync - sync > 0.5)
         {
             reset();
         }
