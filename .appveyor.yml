@@ -6,11 +6,13 @@ build:
 environment:
     PYTHON_EXECUTABLE_32: C:/Miniconda/python.exe
     PYTHON_EXECUTABLE_64: C:/Miniconda-x64/python.exe
-    BOOST_ROOT: C:/Libraries/boost_1_63_0 
-    USE_MSVC_RUNTIME_LIBRARY_DLL: OFF 
-    VOSIMLIB_SHARED: OFF 
-    VOSIMSYNTH_BUILD_VST: ON
-    BUILD_SHARED_LIBS: OFF 
+    BOOST_ROOT: C:/Libraries/boost_1_63_0
+    VOSIMLIB_BUILD_PYTHON: ON
+    VOSIMSYNTH_BUILD_STANDALONE: OFF
+    VOSIMPROJECT_BUILD_TESTS: ON
+    VOSIMPROJECT_BUILD_BENCHMARKS: ON
+    VOSIMLIB_SHARED: OFF
+    BUILD_SHARED_LIBS: OFF
 
     matrix:
         - GENERATOR: "Visual Studio 14 2015"
@@ -27,12 +29,26 @@ environment:
         - GENERATOR: "Visual Studio 14 2015 Win64"
           CONFIG: Debug
           PYTHON: C:/Miniconda-x64
-          BUILD_DIR: _build64
+          BUILD_DIR: _build64-sse2
+          VOSIMPROJECT_EIS: SSE2
 
         - GENERATOR: "Visual Studio 14 2015 Win64"
           CONFIG: Release
           PYTHON: C:/Miniconda-x64
-          BUILD_DIR: _build64
+          BUILD_DIR: _build64-sse2
+          VOSIMPROJECT_EIS: SSE2
+
+        - GENERATOR: "Visual Studio 14 2015 Win64"
+          CONFIG: Debug
+          PYTHON: C:/Miniconda-x64
+          BUILD_DIR: _build64-avx2
+          VOSIMPROJECT_EIS: AVX2
+
+        - GENERATOR: "Visual Studio 14 2015 Win64"
+          CONFIG: Release
+          PYTHON: C:/Miniconda-x64
+          BUILD_DIR: _build64-avx2
+          VOSIMPROJECT_EIS: AVX2
 
 install:
     - git submodule update --init --recursive
