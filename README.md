@@ -1,5 +1,5 @@
 # VOSIMSynth
-[![Build status](https://ci.appveyor.com/api/projects/status/49ghy4v5wbkmi0ot?svg=true)](https://ci.appveyor.com/project/austensatterlee/vosimsynth)
+[![Build status](https://ci.appveyor.com/api/projects/status/49ghy4v5wbkmi0ot/branch/newgraphics?svg=true)](https://ci.appveyor.com/project/austensatterlee/vosimsynth/branch/newgraphics)
 
 VOSIMSynth is a fully modular audio synthesizer with a focus on speed, audio quality, and ease of use.
 
