@@ -66,7 +66,7 @@ namespace syn {
             int intPart = index;
             double fracPart = index - intPart;
             assert(intPart <= size - 1);
-            if (intPart < size - 1) {
+            if (fracPart > 0.0 && intPart < size - 1) {
                 return m_data[intPart] + (m_data[intPart + 1] - m_data[intPart]) * fracPart;
             }
             return m_data[intPart];

@@ -41,7 +41,7 @@ void synui::ChildWindow::_openWindowImplem(HWND a_system_window) {
     UINT_PTR success = SetTimer(hwnd, m_timerId, 1000 / 120, reinterpret_cast<TIMERPROC>(_timerProc)); // timer callback 
     if (!success) {
         TRACEMSG("Unable to create timer!");
-        throw "Unable to create timer!";
+        throw std::runtime_error("Unable to create timer!");
     }
 }
 
@@ -70,7 +70,7 @@ synui::ChildWindow::ChildWindow(int a_width, int a_height)
     // Create GLFW window
     if (!(g_nGlfwClassReg++) && !glfwInit()) {
         TRACEMSG("Failed to init GLFW.");
-        throw "Failed to init GLFW.";
+        throw std::runtime_error("Failed to init GLFW.");
     } else {
         TRACEMSG("Successfully initialized GLFW.");
     }
@@ -108,7 +108,7 @@ void synui::ChildWindow::_createGlfwWindow(int a_width, int a_height) {
     if (!m_window) {
         glfwTerminate();
         TRACEMSG("Failed to create GLFW window.");
-        throw "Failed to create GLFW window.";
+        throw std::runtime_error("Failed to create GLFW window.");
     } else {
         TRACEMSG("Successfully created GLFW window.");
     }

@@ -37,7 +37,7 @@ namespace synui {
     }
 
     syn::CircularView<double> OscilloscopeUnit::getScopeBuffer(int a_bufIndex) const {
-        if (isConnected(a_bufIndex)) {
+        if (isInputConnected(a_bufIndex)) {
             return syn::CircularView<double>{
                 m_buffers[a_bufIndex].data(), int(m_buffers[a_bufIndex].size()), m_bufSize, m_readIndex
             };
@@ -93,7 +93,7 @@ namespace synui {
                     m_buffers[i][m_writeIndex] = READ_INPUT(i);
                 }
                 // Increment counters
-                if (isConnected(m_iPhase))
+                if (isInputConnected(m_iPhase))
                     _processPeriodic();
                 else
                     _processNonPeriodic();

@@ -186,7 +186,7 @@ def GenerateBlimp2(intervals=10, res=2048, fs=48e3, fc=20e3, beta=7.20, apgain=0
 
     apwin = 1-apgain*ss.kaiser(pts, apbeta) # apodization window
     blimp_fir *= apwin
-    blimp_fir = convolve(blimp_fir, blimp_fir, 'same')
+    blimp_fir = ss.fftconvolve(blimp_fir, blimp_fir, 'same')
 
     # Scale
     blimp_fir = scale_fir(blimp_fir)
@@ -270,7 +270,7 @@ def clipdb(s, cutoff):
     clipped[spos<thresh] = thresh
     return clipped
 
-def magspec(signal, pts=None, fs=None, xlog=False, ylog=False, **kwargs):
+def magspec(signal, pts=None, fs=None, xlog=False, ylog=False, ax=None, **kwargs):
     from matplotlib import pyplot as plt
     pts = pts or len(signal)
     k = arange(1, pts/2)
@@ -287,8 +287,7 @@ def magspec(signal, pts=None, fs=None, xlog=False, ylog=False, **kwargs):
     else:
         mag = abs(signalfft)**2
         ylabel = "Amp"
-    f = plt.gcf()
-    ax = plt.gca()
+    ax = ax or plt.gca()
     if xlogscale:
         ax.semilogx( freqs, mag, basex=10, **kwargs)
     else:
@@ -296,7 +295,6 @@ def magspec(signal, pts=None, fs=None, xlog=False, ylog=False, **kwargs):
     ax.set_xlabel("Hz")
     ax.set_ylabel(ylabel)
     ax.grid(True, which='both')
-    f.show()
 
 def maggain(signal1, signal2, pts=None, fs=None, xlog=False, ylog=False, **kwargs):
     from matplotlib import pyplot as plt
@@ -507,9 +505,11 @@ def main(pargs):
 
     """Sin table"""
     if v:
-        print "Generating sine table..."
+        sys.stdout.write("Generating sine table...")
     SINE_RES = 1024
     sintable = GenerateSine(SINE_RES)
+    if v:
+        print " samples:", len(sintable)
 
     """Pitch table"""
     if v:
@@ -524,27 +524,35 @@ def main(pargs):
 
     """Bandlimited saw wave"""
     if v:
-        print "Generating band-limited saw wavetable..."
+        sys.stdout.write("Generating band-limited saw wavetable...")
     BLSAW_HARMONICS = 4096
     blsaw = GenerateBLSaw(BLSAW_HARMONICS)
-    blsaw = convolve( prefilter, blsaw, 'same' ) # apply gain to high frequencies
+    blsaw = ss.fftconvolve( blsaw, prefilter, 'same' ) # apply gain to high frequencies
     blsaw = norm_power(blsaw)
+    blsaw /= blsaw.max()
+    if v:
+        print " samples:", len(blsaw)
 
     """Bandlimited square wave"""
     if v:
-        print "Generating band-limited square wavetable..."
+        sys.stdout.write("Generating band-limited square wavetable...")
     BLSQUARE_HARMONICS = 4096
     blsquare = GenerateBLSquare(BLSQUARE_HARMONICS)
-    blsquare = convolve( prefilter, blsquare, 'same' )
+    blsquare = ss.fftconvolve( blsquare, prefilter, 'same' )
     blsquare = norm_power(blsquare)
+    blsquare /= blsquare.max()
+    if v:
+        print " samples:", len(blsquare)
 
     """Bandlimited triangle wave"""
     if v:
-        print "Generating band-limited triangle wavetable..."
+        sys.stdout.write("Generating band-limited triangle wavetable...")
     BLTRI_HARMONICS = 4096
     bltri = GenerateBLTriangle(BLTRI_HARMONICS)
-    bltri = convolve( prefilter, bltri, 'same' )
-    bltri = norm_power(bltri)
+    bltri = ss.fftconvolve( bltri, prefilter, 'same' )
+    bltri /= bltri.max()
+    if v:
+        print " samples:", len(bltri)
 
     """Offline and online BLIMP for resampling"""
     OFFLINE_BLIMP_INTERVALS = 513
@@ -554,11 +562,16 @@ def main(pargs):
     ONLINE_BLIMP_RES = 2048
 
     if v:
-        print "Generating 'online' band-limited impulse table..."
+        sys.stdout.write("Generating 'online' band-limited impulse table...")
     blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS, ONLINE_BLIMP_RES, fc=23e3, fs=48e3)
     if v:
-        print "Generating 'offline' band-limited impulse table..."
+        print " samples:", len(blimp_online)
+
+    if v:
+        sys.stdout.write("Generating 'offline' band-limited impulse table...")
     blimp_offline = GenerateBlimp(OFFLINE_BLIMP_INTERVALS, OFFLINE_BLIMP_RES, fc=24e3, fs=48e3)
+    if v:
+        print " samples:", len(blimp_offline)
 
     if v:
         print "Generating C++ code..."

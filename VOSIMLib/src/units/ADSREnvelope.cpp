@@ -143,7 +143,7 @@ namespace syn {
     bool ADSREnvelope::isGateFalling() const { return (READ_INPUT(iGate) - m_lastGate) < -0.5; }
 
     void ADSREnvelope::onNoteOn_() {
-        if (!isConnected(iGate)) {
+        if (!isInputConnected(iGate)) {
             trigger();
         } else if (isGateRising()) {
             trigger();
@@ -151,7 +151,7 @@ namespace syn {
     }
 
     void ADSREnvelope::onNoteOff_() {
-        if (!isConnected(iGate)) {
+        if (!isInputConnected(iGate)) {
             release(m_lastOutput);
         } else if (isGateFalling()) {
             release(m_lastOutput);

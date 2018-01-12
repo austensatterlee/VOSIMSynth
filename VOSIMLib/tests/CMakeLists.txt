@@ -8,5 +8,4 @@ add_executable(vosimlib_tests ${TEST_FILES})
 target_include_directories(vosimlib_tests PRIVATE ${CATCH_ROOT})
 target_link_libraries(vosimlib_tests VOSIMLib)
 
-enable_testing()
-add_test(NAME run_tests COMMAND vosimlib_tests)
+add_test(NAME vosimlib_tests COMMAND vosimlib_tests)

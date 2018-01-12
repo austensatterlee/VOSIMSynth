@@ -53,7 +53,6 @@ else()
 endif()
 
 setenv(BOOST_ROOT "C:/users/austen/OneDrive/Code/libs/boost/boost_1_64_0" CACHE PATH "Boost directory (i.e. .../boost/boost_1_60)")
-setenv(MKL_DIR "E:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl" CACHE PATH "")
 
 # Options
 optionenv(EIGEN_USE_MKL "Should eigen use MKL as its backend?" TRUE)
@@ -156,7 +155,7 @@ set(IPLUG_FILES
 find_package(MKL)
 if(HAVE_MKL)
     list(APPEND ADDITIONAL_LIBRARIES ${MKL_LIBRARIES})
-    include_directories(${MKL_INCLUDE_DIRs})
+    include_directories(${MKL_INCLUDE_DIRS})
     if(EIGEN_USE_MKL)
       add_definitions(-DEIGEN_USE_MKL_ALL)
     endif()

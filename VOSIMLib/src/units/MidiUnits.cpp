@@ -38,7 +38,7 @@ void syn::GateUnit::onNoteOff_() {
 
 void syn::MidiCCUnit::process_() {
     BEGIN_PROC_FUNC
-        WRITE_OUTPUT(0, m_value); // divide by 128
+        WRITE_OUTPUT(0, m_value);
     END_PROC_FUNC
 }
 

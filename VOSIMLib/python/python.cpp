@@ -153,19 +153,12 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
 
         .def_property_readonly("inputNames", [](const syn::Unit& self) {
                 std::vector<std::string> input_names;
-                auto nc_inputs = self.inputs();
+                auto ncInputs = self.inputs();
                 for (int i = 0; i < self.numInputs(); i++) {
-                    int item_id = nc_inputs.ids()[i];
+                    int item_id = ncInputs.ids()[i];
                     input_names.push_back(self.inputName(item_id));
                 }
                 return input_names;
-            })
-
-        .def("output", [](const syn::Unit& self, const std::string& a_outputName) {
-                return self.outputs()[a_outputName];
-            })
-        .def("output", [](const syn::Unit& self, int a_index) {
-                return self.outputs().getByIndex(a_index);
             })
         .def_property_readonly("outputNames", [](const syn::Unit& self) {
                 std::vector<std::string> output_names;

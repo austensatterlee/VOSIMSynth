@@ -95,7 +95,7 @@ namespace syn {
 
         void noteOn(int a_noteNumber, int a_velocity);
 
-        void noteOff(int a_noteNumber, int a_velocity);
+        void noteOff(int a_noteNumber);
 
         void sendControlChange(int a_cc, double a_newvalue);
 

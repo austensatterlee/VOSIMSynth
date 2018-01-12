@@ -23,7 +23,7 @@ synui::CircuitWidget::CircuitWidget(Widget* a_parent, ChildWindow* a_mainWindow,
       m_grid{{0,0}, GridCell{}},
       m_gridSpacing(15),
       m_wireDrawStyle(WireDrawStyle::Curved),
-      m_gridDrawStyle(GridDrawStyle::Points),
+      m_gridDrawStyle(GridDrawStyle::Lines),
       m_state(new cwstate::IdleState()),
       m_uninitialized(true)
 {

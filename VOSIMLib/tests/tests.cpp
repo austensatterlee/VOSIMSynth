@@ -13,19 +13,7 @@
 
 std::random_device RandomDevice;
 
-template <typename T>
-T detect_denormals(const std::vector<T>& a_data) {
-    auto min_double = std::numeric_limits<double>::min;
-    const double epsilon = min_double();
-    int ndenormals = 0;
-    for (const T& x : a_data) {
-        if (std::abs(x) < epsilon)
-            ndenormals++;
-    }
-    return ndenormals;
-}
-
-TEST_CASE("Serialization can load what it saves", "[serialization]") {
+TEST_CASE("Check that serializer can load what it saves", "[serialization]") {
     syn::UnitFactory& uf = syn::UnitFactory::instance();
     uf.addUnitPrototype<syn::StateVariableFilter>("Filters", "svf");
     uf.addUnitPrototype<syn::TrapStateVariableFilter>("Filters", "tsvf");
@@ -73,57 +61,124 @@ TEST_CASE("Serialization can load what it saves", "[serialization]") {
     }
 }
 
+
 template<typename Out, typename In>
 static double measure_error(std::function<Out(In)> a_baseFunc, std::function<Out(In)> a_testFunc, In a, In b, int N) {
-    Out avg_error = 0;
+    Out max_error = 0;
     for (int i = 0; i < N; i++) {
         In phase = i * (b - a) / N + a; // lerp from -3 to 3
         Out base_result = a_baseFunc(phase);
         Out test_result = a_testFunc(phase);
-        avg_error += abs(base_result - test_result);
+        max_error = std::max(max_error, abs(base_result - test_result));
     }
-    avg_error *= 1. / N;
-    return avg_error;
+    return max_error;
 }
-
-TEST_CASE("Measure error for rational approximations of tanh.", "[fast_tanh]") {
+TEST_CASE("Measure error for rational approximation of tanh", "[fast_tanh]") {
     SECTION("fast_tanh_rat") {
-        double avg_error = measure_error<double, double>([](double in)->double { return tanh(in); }, syn::fast_tanh_rat<double>, -3.0, 3.0, 6e3);
-        INFO("Avg. error: " << avg_error);
-        REQUIRE(avg_error < 1e-2);
-    }
-    SECTION("fast_tanh_rat2") {
-        double avg_error = measure_error<double, double>([](double in)->double { return tanh(in); }, syn::fast_tanh_rat2<double>, -3.0, 3.0, 6e3);
-        INFO("Avg. error: " << avg_error);
-        REQUIRE(avg_error < 1e-2);
+        double max_error = measure_error<double, double>([](double in)->double { return tanh(in); }, syn::fast_tanh_rat<double>, -10.0, 10.0, 20e3);
+        INFO("Max error: " << max_error);
+        REQUIRE(max_error < 1e-3);
     }
 }
 
-TEST_CASE("Detect subnormals in ladder filter processing.", "[LadderFilter]") {
-    const int N = 1.440e6;
-    const double fs = 48e3;
-    syn::LadderFilterA ladder("ladder");
+TEST_CASE("Detect subnormals in filter processing", "[denormal]") {
+    const double fs = 44.1e3;
+    const int N = fs*30;
     double input = 1e-3; // Impulse at -60 dB
-    ladder.setFs(fs);
-    ladder.setParam(syn::LadderFilterA::pFc, 20000.0);
-    ladder.setParam(syn::LadderFilterA::pFb, 1.0);
-    ladder.setParam(syn::LadderFilterA::pDrv, 0.0);
-    ladder.connectInput(0, &input);
 
-    vector<double> ladder_out(N);
-    for (int i = 0; i < N; i++) {
-        ladder.tick();
-        ladder_out[i] = ladder.readOutput(0, 0);
-        input = 0.0;
+    SECTION("Ladder (Type A)") {
+        syn::LadderFilterA filt;
+        filt.setFs(fs);
+        filt.setParam(syn::LadderFilterA::pFc, 20000.0);
+        filt.setParam(syn::LadderFilterA::pFb, 0.0);
+        filt.setParam(syn::LadderFilterA::pDrv, 0.0);
+        filt.connectInput(syn::LadderFilterA::iAudioIn, &input);
+
+        vector<double> out(N);
+        int numDenormals = 0;
+        for (int i = 0; i < N; i++) {
+            filt.tick();
+            out[i] = filt.readOutput(0, 0);
+            if (syn::isDenormal(out[i])) {
+                numDenormals++;
+            }
+            input = 0.0;
+        }
+
+        INFO("Denormal count: " << numDenormals << "/" << N << " (" << numDenormals * 1. / N << "%)");
+        REQUIRE(numDenormals == 0);
     }
 
-    int ndenormals = detect_denormals(ladder_out);
-    INFO("Denormal count: " << ndenormals << "/" << N);
-    REQUIRE(ndenormals == 0);
+    SECTION("Ladder (Type B)") {
+        syn::LadderFilterB filt;
+        filt.setFs(fs);
+        filt.setParam(syn::LadderFilterB::pFc, 20000.0);
+        filt.setParam(syn::LadderFilterB::pFb, 0.0);
+        filt.setParam(syn::LadderFilterB::pDrv, 0.0);
+        filt.connectInput(syn::LadderFilterB::iAudioIn, &input);
+
+        vector<double> out(N);
+        int numDenormals = 0;
+        for (int i = 0; i < N; i++) {
+            filt.tick();
+            out[i] = filt.readOutput(0, 0);
+            if (syn::isDenormal(out[i])) {
+                numDenormals++;
+            }
+            input = 0.0;
+        }
+
+        INFO("Denormal count: " << numDenormals << "/" << N << " (" << numDenormals * 1. / N << "%)");
+        REQUIRE(numDenormals == 0);
+    }
+
+    SECTION("SVF") {
+        syn::StateVariableFilter filt;
+        filt.setFs(fs);
+        filt.setParam(syn::StateVariableFilter::pFc, 20000.0);
+        filt.setParam(syn::StateVariableFilter::pRes, 0.0);
+        filt.connectInput(syn::StateVariableFilter::iAudioIn, &input);
+
+        vector<double> out(N);
+        int numDenormals = 0;
+        for (int i = 0; i < N; i++) {
+            filt.tick();
+            out[i] = filt.readOutput(0, 0);
+            if (syn::isDenormal(out[i])) {
+                numDenormals++;
+            }
+            input = 0.0;
+        }
+
+        INFO("Denormal count: " << numDenormals << "/" << N << " (" << numDenormals * 1. / N << "%)");
+        REQUIRE(numDenormals == 0);
+    }
+
+    SECTION("TSVF") {
+        syn::TrapStateVariableFilter filt;
+        filt.setFs(fs);
+        filt.setParam(syn::TrapStateVariableFilter::pFc, 20000.0);
+        filt.setParam(syn::TrapStateVariableFilter::pRes, 0.0);
+        filt.connectInput(syn::TrapStateVariableFilter::iAudioIn, &input);
+
+        vector<double> out(N);
+        int numDenormals = 0;
+        for (int i = 0; i < N; i++) {
+            filt.tick();
+            out[i] = filt.readOutput(0, 0);
+            if (syn::isDenormal(out[i])) {
+                numDenormals++;
+            }
+            input = 0.0;
+        }
+
+        INFO("Denormal count: " << numDenormals << "/" << N << " (" << numDenormals * 1. / N << "%)");
+        REQUIRE(numDenormals == 0);
+    }
 }
 
-TEST_CASE("MemoryUnit stateless tick", "[MemoryUnit]") {
-    SECTION("Single MemoryUnit tick") {
+TEST_CASE("Check that units are ticked correctly", "[Unit]") {
+    SECTION("1-sample buffer solo unit") {
         syn::MemoryUnit mu("mu0");
         double input = 1.0;
         mu.connectInput(0, &input);
@@ -135,7 +190,7 @@ TEST_CASE("MemoryUnit stateless tick", "[MemoryUnit]") {
         REQUIRE(out2 == 1.0);
     }
 
-    SECTION("Buffer MemoryUnit tick") {
+    SECTION("10-sample buffer solo unit") {
         syn::MemoryUnit mu("mu0");
         typedef Eigen::Array<double, -1, -1, Eigen::RowMajor> io_type;
         io_type inputs(1, 10);
@@ -155,48 +210,88 @@ TEST_CASE("MemoryUnit stateless tick", "[MemoryUnit]") {
         REQUIRE(outputs(0, 8) == 7);
         REQUIRE(outputs(0, 9) == 8);
     }
-}
 
-TEST_CASE("SVF stateless tick", "[StateVariableFilter]") {
-    syn::StateVariableFilter svf("svf0");
-    REQUIRE(svf.inputName(0) == "in");
-    Eigen::Array<double, -1, -1, Eigen::RowMajor> inputs(1, 10);
-    Eigen::Array<double, -1, -1, Eigen::RowMajor> outputs(4, 10);
-    for (int i = 0; i < 10; i++) {
-        inputs(0, i) = i;
+    SECTION("10-sample buffer circuit") {
+        const int bufSize = 10;
+        Eigen::Array<double, 1, bufSize, Eigen::RowMajor> inputs;
+        for (int i = 0; i < 10; i++) {
+            inputs(0, i) = i;
+        }
+
+        syn::Circuit circ;
+        circ.setBufferSize(bufSize);
+        int circ_svf_id = circ.addUnit(new syn::StateVariableFilter("circ_svf"));
+        circ.connectInput(0, &inputs(0, 0));
+        circ.connectInternal(circ.getInputUnitId(), 0, circ_svf_id, 0);
+        circ.connectInternal(circ_svf_id, 0, circ.getOutputUnitId(), 0);
+        circ.tick();
+        Eigen::Array<double, 1, bufSize, Eigen::RowMajor> circ_output;
+        std::copy(circ.outputSource(0), circ.outputSource(0) + bufSize, &circ_output(0, 0));
+
+        syn::StateVariableFilter svf;
+        svf.setBufferSize(bufSize);
+        REQUIRE(svf.inputName(0) == "in");
+        Eigen::Array<double, -1, -1, Eigen::RowMajor> outputs(4, bufSize);
+        svf.tick(inputs, outputs);
+        for (int i = 0; i<bufSize; i++)
+            REQUIRE(outputs(0, i) == circ_output(0, i));        
     }
-    svf.tick(inputs, outputs);
-    REQUIRE(outputs.any());
 }
 
-TEST_CASE("IntMap access by index", "[IntMap]") {
+TEST_CASE("Circuit", "[Circuit]") {
+}
+
+TEST_CASE("Check IntMap use cases", "[IntMap]") {
     syn::IntMap<int, 8> nc;
-    Eigen::Array<double, 1, -1> nc_vec(8);
+    std::array<int, 8> nc_vec{};
+    nc_vec.fill(0);
     nc.add(0);
     nc.add(2);
     nc.add(4);
     REQUIRE(nc.getByIndex(0) == 0);
     REQUIRE(nc.getByIndex(1) == 2);
     REQUIRE(nc.getByIndex(2) == 4);
-    nc_vec[0] = nc.getByIndex(0);
-    nc_vec[1] = nc.getByIndex(1);
-    nc_vec[2] = nc.getByIndex(2);
 
-    nc.removeById(1);
-    REQUIRE(nc.getByIndex(0) == 0);
-    REQUIRE(nc.getByIndex(1) == 4);
-    nc.add(3);
-    REQUIRE(nc.getByIndex(0) == 0);
-    REQUIRE(nc.getByIndex(1) == 3);
-    REQUIRE(nc.getByIndex(2) == 4);
-    nc.removeById(0);
-    REQUIRE(nc.getByIndex(0) == 3);
-    REQUIRE(nc.getByIndex(1) == 4);
-    nc.removeById(1);
-    REQUIRE(nc.getByIndex(0) == 4);
-    nc.removeById(2);
-    REQUIRE(nc.empty());
-}
+    SECTION("Adding and deleting items") {
 
-TEST_CASE("Circuit", "[Circuit]") {
+        nc.removeById(1);
+        REQUIRE(nc.getByIndex(0) == 0);
+        REQUIRE(nc.getByIndex(1) == 4);
+        nc.add(3);
+        REQUIRE(nc.getByIndex(0) == 0);
+        REQUIRE(nc.getByIndex(1) == 3);
+        REQUIRE(nc.getByIndex(2) == 4);
+        nc.removeById(0);
+        REQUIRE(nc.getByIndex(0) == 3);
+        REQUIRE(nc.getByIndex(1) == 4);
+        nc.removeById(1);
+        REQUIRE(nc.getByIndex(0) == 4);
+        nc.removeById(2);
+        REQUIRE(nc.empty());
+    }
+
+    SECTION("STL compatibility") {
+        std::copy(nc.begin(), nc.end(), &nc_vec[0]);
+        REQUIRE(nc_vec[0] == 0);
+        REQUIRE(nc_vec[1] == 2);
+        REQUIRE(nc_vec[2] == 4);
+        std::transform(nc.begin(), nc.end(), &nc_vec[0], [](double x) { return x * x; });
+        REQUIRE(nc_vec[0] == 0);
+        REQUIRE(nc_vec[1] == 4);
+        REQUIRE(nc_vec[2] == 16);
+    }
+
+    SECTION("Range-based for loop") {
+        int i = 0;
+        for(auto e : nc) {
+            if (i == 0)
+                REQUIRE(e == 0);
+            else if (i == 1)
+                REQUIRE(e == 2);
+            else if (i == 2)
+                REQUIRE(e == 4);
+            i++;
+        }
+        REQUIRE(i == nc.size());
+    }
 }

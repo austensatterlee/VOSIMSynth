@@ -9,8 +9,6 @@ endif()
 
 list(APPEND VOSIMSYNTH_DEFS -DVST_API -DDLL_BUILD -DVST_FORCE_DEPRECATED -DVOSIMSYNTH_SHARED)
 
-set(ADDITIONAL_LIBRARIES "")
-
 ##
 # Boost
 ##
@@ -31,7 +29,9 @@ include_directories(${LIBS_DIR}/eigen)
 ##
 include_directories(${VOSIMLIB_DIR}/include)
 
+##
 # Run simple cmake converter to put font files into the data segment
+##
 
 # Glob up resource files
 file(GLOB resources "${CMAKE_CURRENT_SOURCE_DIR}/resources/*.ttf")
@@ -88,12 +88,11 @@ add_library(VOSIMSynth SHARED ${ALL_VOSIMSYNTH_FILES})
 set_target_properties(VOSIMSynth PROPERTIES DEBUG_POSTFIX -d)
 set_target_properties(VOSIMSynth PROPERTIES RELWITHDEBINFO_POSTFIX -rdb)
 
-list(REMOVE_DUPLICATES ADDITIONAL_LIBRARIES)
 target_link_libraries(VOSIMSynth
   "$<$<CONFIG:Release>:${REL_LIBS}>"
   "$<$<NOT:$<CONFIG:Release>>:${DBG_LIBS}>"
   VOSIMLib
-  ${ADDITIONAL_LIBRARIES}
+  ${MKL_LIBRARIES}
   )
 
 if (WIN32)

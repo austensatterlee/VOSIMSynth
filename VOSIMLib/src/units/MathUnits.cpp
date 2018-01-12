@@ -120,7 +120,7 @@ void syn::SummerUnit::process_()
         double output = param(m_pBias).getDouble();
         for (int i = 0; i < numInputs(); i++) {
             int id = inputs().ids()[i];
-            if (isConnected(id))
+            if (isInputConnected(id))
                 output += READ_INPUT(id);
         }
         WRITE_OUTPUT(0, output);
@@ -146,7 +146,7 @@ void syn::GainUnit::process_()
         double output = param(m_pGain).getDouble();
         for (int i = 0; i < numInputs(); i++) {
             int id = inputs().ids()[i];
-            if (isConnected(id))
+            if (isInputConnected(id))
                 output *= READ_INPUT(id);
         }
         WRITE_OUTPUT(0, output);

@@ -25,7 +25,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "vosimlib/UnitParameter.h"
 #include "vosimlib/UnitFactory.h"
 
-#include <eigen/Core>
+#include <Eigen/Core>
 
 
 #define MAX_PARAMS 16
@@ -43,7 +43,6 @@ public: \
 private:
 
 #define BEGIN_PROC_FUNC \
-    assert(m_currentBufferOffset==0 || m_currentBufferOffset==getBufferSize()); \
     for(m_currentBufferOffset=0;m_currentBufferOffset<getBufferSize();m_currentBufferOffset++){
 #define END_PROC_FUNC }
 #define READ_OUTPUT(OUTPUT) \
@@ -71,17 +70,41 @@ namespace syn
         bool isNoteOn;
     };
 
-    struct VOSIMLIB_API InputPort
-    {
-        InputPort() : InputPort(0.0) {}
+    struct VOSIMLIB_API InputPort {
+        InputPort()
+            : InputPort(0.0) {}
 
-        InputPort(double a_defVal) : defVal(a_defVal), src(nullptr) {}
+        explicit InputPort(double a_defVal)
+            : defVal(a_defVal),
+              src(nullptr) {}
 
         double defVal;
         const double* src;
     };
 
-    typedef std::vector<double> OutputPort;
+    struct VOSIMLIB_API OutputPort {
+        OutputPort()
+            : OutputPort(0) {}
+
+        explicit OutputPort(int a_bufSize)
+            : m_targetBuf(nullptr),
+              m_internalBuf(a_bufSize, 0.0) { }
+
+        double* buf() { return isConnected() ? m_targetBuf : m_internalBuf.data(); }
+        const double* buf() const { return isConnected() ? m_targetBuf : m_internalBuf.data(); }
+
+        void connect(double* a_targetBuf) { m_targetBuf = a_targetBuf == m_internalBuf.data() ? nullptr : a_targetBuf; }
+
+        void disconnect() { m_targetBuf = nullptr; }
+
+        bool isConnected() const { return m_targetBuf != nullptr; }
+
+        void resize(int a_size) { m_internalBuf.resize(a_size, 0.0); }
+
+    private:
+        double* m_targetBuf;
+        std::vector<double> m_internalBuf;
+    };
 
     const vector<string> g_bpmStrs = {"4", "7/2", "3", "5/2", "2", "3/2", "1", "3/4", "1/2", "3/8", "1/4", "3/16", "1/8", "3/32", "1/16", "3/64", "1/32", "1/64"};
     const vector<double> g_bpmVals = {4.0, 7.0 / 2.0, 3.0, 5.0 / 2.0, 2.0, 3.0 / 2.0, 1.0, 3.0 / 4.0, 1.0 / 2.0, 3.0 / 8.0, 1.0 / 4.0, 3.0 / 16.0, 1.0 / 8.0, 3.0 / 32.0, 1.0 / 16.0, 3.0 / 64.0, 1.0 / 32.0, 1.0 / 64.0};
@@ -165,7 +188,7 @@ namespace syn
 
         explicit Unit(const string& a_name);
 
-        virtual ~Unit();
+        virtual ~Unit() = default;
 
         const string& name() const { return m_name; }
         void setName(const string& a_name);
@@ -200,14 +223,17 @@ namespace syn
         void setTempo(double a_newTempo);
 
         /**
-         * Notify the unit of a note on event
+         * Notify the unit of a "note on" event
+         * 
+         * \param a_note Midi note number, ranging from 0 to 127, where 60 is middle C
+         * \param a_velocity Velocity of the note, ranging from 0 to 127
          */
         void noteOn(int a_note, int a_velocity);
 
         /**
-         * Notify the unit of a note off event
+         * Notify the unit of a "note off" event
          */
-        void noteOff(int a_note, int a_velocity);
+        void noteOff(int a_note);
 
         /**
          * Reset the unit's internal state (if any), as if Unit::tick had never been called.
@@ -289,10 +315,12 @@ namespace syn
 
         bool hasOutput(int a_id) const;
 
-        string outputName(int a_id) const { return m_outputPorts.getNameFromId(a_id); }
+        string outputName(int a_id) const;
 
         template <typename ID>
         const double& readOutput(const ID& a_id, int a_offset) const;
+
+        double* outputSource(int a_id);
 
         const StrMap<OutputPort, MAX_OUTPUTS>& outputs() const;
 
@@ -312,13 +340,31 @@ namespace syn
         /**
          * \returns True if the input port points to a non-null location in memory.
          */
-        bool isConnected(int a_inputPort) const;
+        bool isInputConnected(int a_inputPort) const;
 
         /**
         * Remove the specified connection.
         * \returns True if the connection existed, false if it was already disconnected.
         */
         bool disconnectInput(int a_inputPort);
+
+        /**
+         * Connect the specified input port to a location in memory.
+         * \param a_outputPort Output port number
+         * \param a_dst Destination buffer 
+         */
+        void connectOutput(int a_outputPort, double* a_dst);
+
+        /**
+         * \returns True if the output port points to an external buffer.
+         */
+        bool isOutputConnected(int a_outputPort) const;
+
+        /**
+         * Remove the specified connection.
+         * \returns True if the connection existed, false if it was already disconnected.
+         */
+        bool disconnectOutput(int a_outputPort);;
 
         /**
          * Copies this unit into newly allocated memory (the caller is responsible for releasing the memory).
@@ -404,7 +450,7 @@ namespace syn
     template <typename ID>
     const double& Unit::readOutput(const ID& a_id, int a_offset) const
     {
-        return m_outputPorts[a_id][a_offset];
+        return m_outputPorts[a_id].buf()[a_offset];
     }
 
     template <typename ID>
@@ -422,7 +468,7 @@ namespace syn
     template <typename ID>
     void Unit::writeOutput_(const ID& a_id, int a_offset, const double& a_val)
     {
-        m_outputPorts[a_id][a_offset] = a_val;
+        m_outputPorts[a_id].buf()[a_offset] = a_val;
     }
 
     template <typename ID, typename T>

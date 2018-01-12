@@ -23,20 +23,20 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 
 syn::StateVariableFilter::StateVariableFilter(const string& a_name) :
     Unit(a_name),
-    m_pFc(addParameter_(UnitParameter("fc", 0.01, 20000.0, 10000.0, UnitParameter::Freq))),
-    m_pRes(addParameter_(UnitParameter("res", 0.0, 1.0, 0.0))),
     m_prevBPOut(0.0), m_prevLPOut(0.0),
     m_F(0.0), m_damp(0.0)
 {
-    addInput_("in");
-    m_iFcAdd = addInput_("fc");
-    m_iFcMul = addInput_("fc[x]", 1.0);
-    m_iResAdd = addInput_("res");
-    m_iResMul = addInput_("res[x]", 1.0);
-    m_oLP = addOutput_("LP");
-    m_oHP = addOutput_("HP");
-    m_oBP = addOutput_("BP");
-    m_oN = addOutput_("N");
+    addParameter_(pFc, UnitParameter("fc", 0.01, 20000.0, 10000.0, UnitParameter::Freq));
+    addParameter_(pRes, UnitParameter("res", 0.0, 1.0, 0.0));
+    addInput_(iAudioIn, "in");
+    addInput_(iFcAdd, "fc");
+    addInput_(iFcMul, "fc[x]", 1.0);
+    addInput_(iResAdd, "res");
+    addInput_(iResMul, "res[x]", 1.0);
+    addOutput_(oLP, "LP");
+    addOutput_(oHP, "HP");
+    addOutput_(oBP, "BP");
+    addOutput_(oN, "N");
 }
 
 void syn::StateVariableFilter::reset()
@@ -48,21 +48,25 @@ void syn::StateVariableFilter::reset()
 void syn::StateVariableFilter::process_()
 {
     BEGIN_PROC_FUNC
-    double fc = READ_INPUT(m_iFcMul) * (param(m_pFc).getDouble() + READ_INPUT(m_iFcAdd));
-    fc = CLAMP(fc, param(m_pFc).getMin(), param(m_pFc).getMax());
+    double fc = READ_INPUT(iFcMul) * (param(pFc).getDouble() + READ_INPUT(iFcAdd));
+    fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());
     m_F = 2 * lut_sin_table().plerp(0.5 * fc / (fs() * c_oversamplingFactor));
 
-    double input_res = READ_INPUT(m_iResMul) * param(m_pRes).getDouble() + READ_INPUT(m_iResAdd);
+    double input_res = READ_INPUT(iResMul) * param(pRes).getDouble() + READ_INPUT(iResAdd);
     input_res = CLAMP<double>(input_res, 0, 1);
     double res = LERP(c_minRes, c_maxRes, input_res);
     m_damp = 1.0 / res;
 
-    double input = READ_INPUT(0);
+    double input = READ_INPUT(iAudioIn);
     double LPOut = 0, HPOut = 0, BPOut = 0;
     int i = c_oversamplingFactor;
     while (i--)
     {
         LPOut = m_prevLPOut + m_F * m_prevBPOut;
+        if (isDenormal(LPOut)) {
+            LPOut = 0.0;
+            reset();            
+        }
         HPOut = input - LPOut - m_damp * m_prevBPOut;
         BPOut = m_F * HPOut + m_prevBPOut;
 
@@ -71,10 +75,10 @@ void syn::StateVariableFilter::process_()
     }
     double NOut = HPOut + LPOut;
 
-    WRITE_OUTPUT(m_oLP, LPOut);
-    WRITE_OUTPUT(m_oHP, HPOut);
-    WRITE_OUTPUT(m_oBP, BPOut);
-    WRITE_OUTPUT(m_oN, NOut);
+    WRITE_OUTPUT(oLP, LPOut);
+    WRITE_OUTPUT(oHP, HPOut);
+    WRITE_OUTPUT(oBP, BPOut);
+    WRITE_OUTPUT(oN, NOut);
     END_PROC_FUNC
 }
 
@@ -95,32 +99,37 @@ void syn::TrapStateVariableFilter::reset()
 void syn::TrapStateVariableFilter::process_()
 {
     BEGIN_PROC_FUNC
-    double fc = READ_INPUT(m_iFcMul) * (param(m_pFc).getDouble() + READ_INPUT(m_iFcAdd));
-    fc = CLAMP(fc, param(m_pFc).getMin(), param(m_pFc).getMax());
+    double fc = READ_INPUT(iFcMul) * (param(pFc).getDouble() + READ_INPUT(iFcAdd));
+    fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());
     m_F = tan(SYN_PI * fc / (fs() * c_oversamplingFactor));
 
-    double input_res = READ_INPUT(m_iResMul) * param(m_pRes).getDouble() + READ_INPUT(m_iResAdd);
+    double input_res = READ_INPUT(iResMul) * param(pRes).getDouble() + READ_INPUT(iResAdd);
     input_res = CLAMP<double>(input_res, 0, 1);
     double res = LERP(c_minRes, c_maxRes, input_res);
     m_damp = 1.0 / res;
 
     double input = READ_INPUT(0);
     double LPOut = 0, BPOut = 0;
+    const double denom = 1 + m_F * (m_F + m_damp);
     int i = c_oversamplingFactor;
     while (i--)
     {
-        BPOut = (m_prevBPOut + m_F * (input + m_prevInput - (m_F + m_damp) * (m_prevBPOut) - 2 * m_prevLPOut)) / (1 + m_F * (m_F + m_damp));
-        LPOut = (m_prevLPOut + m_F * (2 * m_prevBPOut + m_F * (input + m_prevInput - m_prevLPOut) + m_damp * m_prevLPOut)) / (1 + m_F * (m_F + m_damp));
+        BPOut = (m_prevBPOut + m_F * (-2*m_prevLPOut + input + m_prevInput - m_prevBPOut*(m_F + m_damp))) / denom;
+        LPOut = (m_prevLPOut + m_F * ( 2*m_prevBPOut + m_F*(input + m_prevInput) - m_prevLPOut*(m_F - m_damp))) / denom;
+        if(isDenormal(LPOut) || isDenormal(BPOut)) {
+            BPOut = LPOut = 0.0;
+            reset();
+        }
         m_prevInput = input;
         m_prevBPOut = BPOut;
         m_prevLPOut = LPOut;
     }
     double HPOut = input - m_damp * BPOut - LPOut;
     double NOut = HPOut + LPOut;
-    WRITE_OUTPUT(m_oLP, LPOut);
-    WRITE_OUTPUT(m_oHP, HPOut);
-    WRITE_OUTPUT(m_oBP, BPOut);
-    WRITE_OUTPUT(m_oN, NOut);
+    WRITE_OUTPUT(oLP, LPOut);
+    WRITE_OUTPUT(oHP, HPOut);
+    WRITE_OUTPUT(oBP, BPOut);
+    WRITE_OUTPUT(oN, NOut);
     END_PROC_FUNC
 }
 
@@ -137,6 +146,10 @@ double syn::OnePoleLP::process(double a_input)
     double trap_in = m_G * (a_input - m_state);
     double output = trap_in + m_state;
     m_state = trap_in + output;
+    if (isDenormal(m_state)) {
+        output = 0.0;
+        reset();
+    }
     return output;
 }
 
@@ -268,7 +281,8 @@ void syn::LadderFilterA::process_()
         m_dV[3] = dV3;
         m_tV[3] = fast_tanh_rat(m_V[3] * stage_gain);
     }
-
+    if (isDenormal(m_V[3]))
+        reset();
     WRITE_OUTPUT(0, m_V[3]);
     END_PROC_FUNC
 }
@@ -323,6 +337,8 @@ void syn::LadderFilterB::process_()
         out_states[4] = m_LP[3].process(out_states[3]);
     }
     double out = m_ffGains.dot(out_states);
+    if (isDenormal(out))
+        reset();
     WRITE_OUTPUT(0, out);
     END_PROC_FUNC
 }

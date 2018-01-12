@@ -48,7 +48,7 @@ namespace syn
 
             // If the voice has not been sent a note off signal, perform reset unless legato is on
             if(voice.isNoteOn() && !m_legato) {
-                voice.noteOff(note, vel);
+                voice.noteOff(note);
             }
 
             // Remove from active voice list
@@ -68,8 +68,8 @@ namespace syn
     int VoiceManager::_stealIdleVoice() {
         // Try to find a voice that is already idle
         if (!m_idleVoices.empty()) {
-            int vind = m_idleVoices.back();
-            m_idleVoices.pop_back();
+            const int vind = m_idleVoices.front();
+            m_idleVoices.erase(m_idleVoices.begin());
             return vind;
         }
 
@@ -102,10 +102,10 @@ namespace syn
         _createVoice(a_noteNumber, a_velocity);
     }
 
-    void VoiceManager::noteOff(int a_noteNumber, int a_velocity) {
+    void VoiceManager::noteOff(int a_noteNumber) {
         if (m_voiceMap.find(a_noteNumber) != m_voiceMap.end()) {
             for (int vind : m_voiceMap[a_noteNumber]) {
-                m_circuits[vind].noteOff(a_noteNumber, a_velocity);
+                m_circuits[vind].noteOff(a_noteNumber);
                 if(std::find(m_releasedVoices.begin(), m_releasedVoices.end(), vind)==m_releasedVoices.end())
                     m_releasedVoices.push_back(vind);
             }
@@ -159,7 +159,7 @@ namespace syn
         for(int i=0;i<a_newMax;i++)
         {
             m_circuits[i] = Circuit(m_instrument);
-            m_circuits[i].setVoiceIndex(i>1 ? static_cast<double>(i)/(a_newMax-1) : 1.0);
+            m_circuits[i].setVoiceIndex(a_newMax>1 ? i * 1.0 / (a_newMax-1) : 1.0);
             m_idleVoices.push_back(i);
         }
     }

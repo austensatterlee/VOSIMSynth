@@ -55,7 +55,7 @@ namespace syn {
     protected:
         void process_() override {
             BEGIN_PROC_FUNC
-            WRITE_OUTPUT(0, velocity() * 0.0078125);
+            WRITE_OUTPUT(0, velocity() * 0.0078125); // divide by 128
             END_PROC_FUNC
         };
     };
