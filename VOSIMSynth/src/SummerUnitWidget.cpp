@@ -25,7 +25,7 @@ int synui::SummerUnitWidget::getInputPort(const Eigen::Vector2i& p) {
         // Find a free input port
         for (int i = 0; i < unit.numInputs(); i++) {
             int inputId = unit.inputs().ids()[i];
-            if (unit.inputSource(inputId) == nullptr) {
+            if (!unit.isInputConnected(inputId)) {
                 return inputId;
             }
         }

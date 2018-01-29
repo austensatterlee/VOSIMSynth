@@ -94,7 +94,7 @@ namespace syn
     bool Circuit::disconnectInternal(int a_fromId, int a_fromOutputPort, int a_toId, int a_toInputPort) {
         Unit* toUnit = m_units[a_toId];
         Unit* fromUnit = m_units[a_fromId];
-        assert(toUnit->inputSource(a_toInputPort) == &fromUnit->readOutput(a_fromOutputPort, 0));
+        assert(&toUnit->inputSource(a_toInputPort) == &fromUnit->output(a_fromOutputPort));
 
         bool result = toUnit->disconnectInput(a_toInputPort);
 
@@ -271,7 +271,7 @@ namespace syn
         }
 
         // make new connection
-        toUnit->connectInput(a_toInputPort, fromUnit->outputSource(a_fromOutputPort));
+        toUnit->connectInput(a_toInputPort, fromUnit->output(a_fromOutputPort));
 
         // record the connection upon success
         m_connectionRecords.emplace_back(a_fromId, a_fromOutputPort, a_toId, a_toInputPort);
@@ -282,8 +282,8 @@ namespace syn
     bool Circuit::connectInternal(const Unit& a_fromUnit, int a_fromOutputPort, const Unit& a_toUnit, int a_toInputPort) {
         const Unit* toUnitPtr = &a_toUnit;
         const Unit* fromUnitPtr = &a_fromUnit;
-        int fromId = m_units.getIdFromItem(toUnitPtr);
-        int toId = m_units.getIdFromItem(fromUnitPtr);
+        int fromId = m_units.getIdFromItem(fromUnitPtr);
+        int toId = m_units.getIdFromItem(toUnitPtr);
         return connectInternal(fromId, a_fromOutputPort, toId, a_toInputPort);
     }
 
@@ -300,11 +300,12 @@ namespace syn
     void Circuit::_recomputeGraph()
     {
         m_procGraph.reset();
+        m_execOrder.fill(nullptr);
         for(const auto& cr : m_connectionRecords) {
             m_procGraph.connect(m_units[cr.from_id], m_units[cr.to_id]);
         }
         auto execOrder = m_procGraph.linearize();
-        std::transform(execOrder.begin(), execOrder.end(), m_execOrder.begin(), [](auto p) { return p.first; });
+        std::transform(execOrder.begin(), execOrder.end(), m_execOrder.begin(), [](auto&& p) { return p.first; });
     }
 
     bool Circuit::isActive() const {
@@ -354,7 +355,7 @@ namespace syn
         for (int i = 0; i < m_units.size(); i++) { m_units[unitIndices[i]]->onPitchWheelChange_(a_value); }
     }
 
-    void Circuit::onInputConnection_(int a_inputPort) { m_inputUnit->connectInput(a_inputPort, &readInput(a_inputPort, 0)); }
+    void Circuit::onInputConnection_(int a_inputPort) { m_inputUnit->connectInput(a_inputPort, inputSource(a_inputPort)); }
 
     void Circuit::onInputDisconnection_(int a_inputPort) { m_inputUnit->disconnectInput(a_inputPort); }
 
@@ -392,19 +393,15 @@ namespace syn
     {
         Unit::setBufferSize(a_bufferSize);
 
+        for(auto&& buf : m_internalBuffers) {
+            buf.resize(a_bufferSize);
+        }
+
         /* Update buffer sizes of internal units */
         const int* unitIndices = m_units.ids();
         for (int i = 0; i < m_units.size(); i++)
         {
             m_units[unitIndices[i]]->setBufferSize(a_bufferSize);
-        }
-
-        /* Update internal connections, since the location of the unit output buffers may have changed */
-        for (const auto& cr : m_connectionRecords)
-        {
-            Unit* fromUnit = m_units[cr.from_id];
-            Unit* toUnit = m_units[cr.to_id];
-            toUnit->connectInput(cr.to_port, &fromUnit->readOutput(cr.from_port, 0));
         }
     }
 
@@ -414,6 +411,18 @@ namespace syn
         for (const auto& conn : m_connectionRecords)
         {
             if (conn.to_id == a_unitId && conn.to_port == a_inputId) {
+                connectedPorts.emplace_back(std::make_pair(conn.from_id, conn.from_port));
+            }
+        }
+        return connectedPorts;
+    }
+
+    vector<std::pair<int, int>> Circuit::getConnectionsFromInternalOutput(int a_unitId, int a_outputId) const
+    {
+        vector<std::pair<int, int>> connectedPorts;
+        for (const auto& conn : m_connectionRecords)
+        {
+            if (conn.from_id == a_unitId && conn.from_port == a_outputId) {
                 connectedPorts.emplace_back(std::make_pair(conn.from_id, conn.from_port));
             }
         }

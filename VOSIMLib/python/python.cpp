@@ -96,7 +96,8 @@ public:
 
     auto lerp(py::array_t<double> a_phase) const {
         auto closure = [this](double p) {
-                    if (0 <= p && p <= 1)
+                    auto ind = static_cast<const Base*>(this)->index(p);
+                    if (ind>=0 && ind<=1.0)
                         return static_cast<const Base*>(this)->lerp(p);
                     else
                         throw std::invalid_argument("Phase is out of bounds.");
@@ -266,7 +267,7 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
                  })
              .def("lerp", [](const PyLUT<syn::AffineTable>& a_self, py::array_t<double> a_phase) {
                      return a_self.lerp(a_phase);
-                 }, "Linear interpolation (0 <= phase <= 1)")
+                 }, "Linear interpolation")
              .def("plerp", [](const PyLUT<syn::AffineTable>& a_self, py::array_t<double> a_phase) {
                      return a_self.plerp(a_phase);
                  }, "Periodic linear interpolation (-inf < phase < inf).")

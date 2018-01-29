@@ -94,7 +94,7 @@ namespace syn
     class VOSIMLIB_API DirectedProcGraph {
     public:
         struct Props {
-            int level = -1;
+            int layer = -1;
         };
 
         void reset() {
@@ -105,12 +105,12 @@ namespace syn
         void connect(Node a_from, Node a_to) {
             m_adj[a_to].emplace(a_from);
             if (!m_adj.count(a_from)) {
-                m_adj.emplace(a_from, std::unordered_set<Node>{});
+                m_adj.emplace(a_from, std::unordered_multiset<Node>{});
             }
 
             m_revAdj[a_from].emplace(a_to);
             if (!m_revAdj.count(a_to)) {
-                m_revAdj.emplace(a_to, std::unordered_set<Node>{});
+                m_revAdj.emplace(a_to, std::unordered_multiset<Node>{});
             }
         }
 
@@ -135,8 +135,11 @@ namespace syn
             {
                 if (tempClosedSet.count(node))
                     return; // todo: cycle detected
-                if (permClosedSet.count(node))
+                if (permClosedSet.count(node)) {
+                    if (depth > props[node].layer)
+                        props[node].layer = depth;
                     return;
+                }
                 tempClosedSet.insert(node);
                 
                 const auto& children = m_adj.at(node);
@@ -146,15 +149,15 @@ namespace syn
                 }
                 permClosedSet.insert(node);
                 tempClosedSet.erase(node);
-                props[node].level = depth;
+                props[node].layer = depth;
                 order.push_back(node);
             };
 
             // Start the graph search at sink nodes            
-            for (const auto& node : m_revAdj)
+            for (const auto& p : m_revAdj)
             {
-                if(node.second.empty()) {
-                    visit(node.first, 0);
+                if(p.second.empty()) {
+                    visit(p.first, 0);
                 }
             }
 
@@ -169,16 +172,20 @@ namespace syn
         /**
          * \brief Adjacency list
          * 
-         *  Edges go from value nodes towards key nodes. If node `u` is in `m_adj[v]`, then the edge (u,v) is in the graph.
+         *  Allows looking up incoming edges. Edges go from value nodes towards
+         *  key nodes. If node `u` is in `m_adj[v]`, then the edge (u,v) is in
+         *  the graph.
          */
-        std::unordered_map<Node, std::unordered_set<Node>> m_adj;
+        std::unordered_map<Node, std::unordered_multiset<Node>> m_adj;
 
         /**
          * \brief Reversed adjacency list
          *
-         *  Edges go from key nodes towards value nodes. If node `u` is in `m_revAdj[v]`, then the edge (v,u) is in the graph.
+         *  Allows looking up outgoing edges. Edges go from key nodes towards
+         *  value nodes. If node `u` is in `m_revAdj[v]`, then the edge (v,u) is
+         *  in the graph.
          */
-        std::unordered_map<Node, std::unordered_set<Node>> m_revAdj; ///< Reverse adjacency list
+        std::unordered_map<Node, std::unordered_multiset<Node>> m_revAdj; ///< Reverse adjacency list
     };
 
     /**
@@ -231,7 +238,8 @@ namespace syn
          * \returns A vector of (unit_id, port_id) pairs.
          */
         vector<std::pair<int, int>> getConnectionsToInternalInput(int a_unitId, int a_inputId) const;
-        
+        vector<std::pair<int, int>> getConnectionsFromInternalOutput(int a_unitId, int a_outputId) const;
+
         /**
          * Get a list of all connections within the Circuit.
          */
@@ -261,6 +269,8 @@ namespace syn
         Unit* load(const json& j) override;
 
         void reset() override;
+
+        const std::array<Unit*, MAX_UNITS + 1>& execOrder() const { return m_execOrder; }
 
     protected:
         void process_() override;
@@ -299,6 +309,7 @@ namespace syn
 
         DirectedProcGraph<Unit*> m_procGraph;
         std::array<Unit*, MAX_UNITS+1> m_execOrder; ///< Unit execution order
+        std::vector<std::vector<double>> m_internalBuffers;
     };
 };
 

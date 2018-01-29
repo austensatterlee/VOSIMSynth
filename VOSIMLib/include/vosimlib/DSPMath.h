@@ -25,12 +25,17 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  * \date March 6, 2016
  */
 
-#ifndef __DSPMATH__
-#define __DSPMATH__
+#pragma once
 #include "vosimlib/common.h"
 #include <regex>
 
 #define SYN_PI 3.14159265358979323846264338327950288
+#define SYN_FIND(CONTAINER, ELEM) std::find(CONTAINER.cbegin(), CONTAINER.cend(), ELEM)
+#define SYN_FIND_IF(CONTAINER, ELEM) std::find_if(CONTAINER.cbegin(), CONTAINER.cend(), ELEM)
+#define SYN_CONTAINS(CONTAINER, ELEM) SYN_FIND(CONTAINER, ELEM)!=CONTAINER.cend()
+#define SYN_CONTAINS_IF(CONTAINER, ELEM) SYN_FIND_IF(CONTAINER, ELEM)!=CONTAINER.cend()
+#define SYN_VEC_FIND(VEC, ELEM) SYN_FIND(VEC, ELEM) - VEC.begin()
+#define SYN_VEC_FIND_IF(VEC, ELEM) SYN_FIND_IF(VEC, ELEM) - VEC.begin()
 
 namespace syn
 {
@@ -171,4 +176,3 @@ namespace syn
      */
     std::string incrementSuffix(const std::string& a_str, const std::string& a_sep=" ");    
 }
-#endif

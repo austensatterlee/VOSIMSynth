@@ -48,26 +48,25 @@ namespace syn {
             : m_data(a_data),
               size(a_size) {}
         
-        virtual ~LUT() {}
+        virtual ~LUT() = default;
 
         double lerp(double phase) const {
             double index = static_cast<const T*>(this)->index(phase);
-            index *= size;
 
             int intPart = static_cast<int>(index);
             double fracPart = index - intPart;
-            return m_data[intPart] * (1 - fracPart) + m_data[intPart + 1] * fracPart;
+            return LERP<double>(m_data[intPart], m_data[intPart + 1], fracPart);
         }
 
         double plerp(double phase) const {
             double index = static_cast<const T*>(this)->index(phase);
-            index = WRAP<double>(index) * size;
+            index = WRAP<double>(index, size);
 
             int intPart = index;
             double fracPart = index - intPart;
             assert(intPart <= size - 1);
             if (fracPart > 0.0 && intPart < size - 1) {
-                return m_data[intPart] + (m_data[intPart + 1] - m_data[intPart]) * fracPart;
+                return LERP<double>(m_data[intPart], m_data[intPart + 1], fracPart);
             }
             return m_data[intPart];
         }
@@ -84,7 +83,7 @@ namespace syn {
             : LUT<AffineTable>(a_data, a_size),
               m_min(a_min),
               m_max(a_max),
-              m_scale(1. / (a_max - a_min)) {}
+              m_scale((a_size-1) * 1.0 / (a_max - a_min)) {}
 
         double inputMin() const { return m_min; }
         double inputMax() const { return m_max; }
@@ -99,8 +98,8 @@ namespace syn {
         NormalTable(const double* a_data, int a_size)
             : LUT<NormalTable>(a_data, a_size) {}
 
-        static double index(double phase) {
-            return phase;
+        double index(double phase) const {
+            return phase * size;
         }
     };
 

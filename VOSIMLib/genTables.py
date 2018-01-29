@@ -203,7 +203,16 @@ def GenerateSine(n):
     c = sin(k*T*2*pi)
     return c
 
-def GeneratePitchTable(notestart, notefinish, npoints):
+def GeneratePitchTable(notestart, notefinish, res):
+    """ Generate a table that maps midi notes to frequency
+
+    notestart - lowest midi note
+    notefinish - highest midi note
+    res - number of points between midi notes
+
+    returns (midi notes, frequencies)
+    """
+    npoints = (notefinish-notestart)*res+1
     N = linspace(notestart, notefinish, npoints)
     return N, 440*2**((N-69.)/12.)
 
@@ -514,7 +523,7 @@ def main(pargs):
     """Pitch table"""
     if v:
         print "Generating pitch table..."
-    PITCH_RES = 1024
+    PITCH_RES = 10
     MIN_PITCH = -128
     MAX_PITCH = 256
     pitches, pitchtable = GeneratePitchTable(MIN_PITCH, MAX_PITCH, PITCH_RES)
@@ -528,7 +537,6 @@ def main(pargs):
     BLSAW_HARMONICS = 4096
     blsaw = GenerateBLSaw(BLSAW_HARMONICS)
     blsaw = ss.fftconvolve( blsaw, prefilter, 'same' ) # apply gain to high frequencies
-    blsaw = norm_power(blsaw)
     blsaw /= blsaw.max()
     if v:
         print " samples:", len(blsaw)
@@ -539,7 +547,6 @@ def main(pargs):
     BLSQUARE_HARMONICS = 4096
     blsquare = GenerateBLSquare(BLSQUARE_HARMONICS)
     blsquare = ss.fftconvolve( blsquare, prefilter, 'same' )
-    blsquare = norm_power(blsquare)
     blsquare /= blsquare.max()
     if v:
         print " samples:", len(blsquare)
@@ -596,8 +603,8 @@ def main(pargs):
                 res=ONLINE_BLIMP_RES)],
             ['PITCH_TABLE', dict(classname="AffineTable", data=pitchtable,
                 size=len(pitchtable),
-                input_min = MIN_PITCH,
-                input_max = MAX_PITCH)],
+                input_min = min(pitches),
+                input_max = max(pitches))],
             ['BL_SAW_TABLE', dict(classname="ResampledTable", data=blsaw,
                 size=len(blsaw),
                 blimp_online="lut_blimp_table_online()",

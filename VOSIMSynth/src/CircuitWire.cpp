@@ -12,10 +12,19 @@ std::string synui::CircuitWire::info() const {
     // List current output value for this wire held by each active voice
     std::vector<int> activeVoiceIndices = m_parentCircuit->m_vm->getActiveVoiceIndices();
     std::sort(activeVoiceIndices.begin(), activeVoiceIndices.end());
+    {
+        const syn::Unit& unit = m_parentCircuit->m_vm->getUnit(m_outputPort.first);
+        std::ostringstream portInfo, portAddress;
+        portInfo << "Output " << m_outputPort.second << " (" << unit.outputName(m_outputPort.second) << ")" << std::endl;
+        portAddress << std::showbase << std::internal << std::setfill('0') << std::setw(16) << std::hex;
+        portAddress << unit.outputs()[m_outputPort.second].buf();
+        os << portInfo.str() << portAddress.str() << std::endl;
+    }
+    os << std::setprecision(4) << std::showpos << std::showpoint;
     for (int vind : activeVoiceIndices) {
         const syn::Unit& unit = m_parentCircuit->m_vm->getUnit(m_outputPort.first, vind);
         double value = unit.readOutput(m_outputPort.second, 0);
-        os << "Voice " << vind << ": " << std::setprecision(4) << value << std::endl;
+        os << "Voice " << vind << ": " << std::setprecision(4) << std::showpos << value << std::endl;
     }
     return os.str();
 }
@@ -111,7 +120,7 @@ void synui::CircuitWire::draw(NVGcontext* ctx) {
         float noseAngle = 45.0;
 
         Eigen::Vector2i pt = m_end;
-        Eigen::Vector2i prevPt = m_parentCircuit->m_grid.toPixel(m_path[m_path.size() - 2], m_parentCircuit->gridSpacing());
+        Eigen::Vector2i prevPt = Grid2D<synui::CircuitWidget::GridCell>::toPixel(m_path[m_path.size() - 2], m_parentCircuit->gridSpacing());
 
         Eigen::Vector2f dir = (pt - prevPt).cast<float>();
         dir.normalize();

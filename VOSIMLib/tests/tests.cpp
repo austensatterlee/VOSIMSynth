@@ -1,4 +1,4 @@
-#include "tests.h"
+#include "Tests.h"
 #include <vosimlib/Unit.h>
 #include <vosimlib/Circuit.h>
 #include <vosimlib/DSPMath.h>
@@ -10,6 +10,9 @@
 
 #include <sstream>
 #include <random>
+#include <vosimlib/units/MidiUnits.h>
+#include <vosimlib/units/ADSREnvelope.h>
+#include <vosimlib/units/MathUnits.h>
 
 std::random_device RandomDevice;
 
@@ -61,6 +64,100 @@ TEST_CASE("Check that serializer can load what it saves", "[serialization]") {
     }
 }
 
+TEST_CASE("Check proc graph linearization", "[proc-graph]") {
+    SECTION("Circuit linearization") {
+        syn::Circuit* circ = new syn::Circuit("main");
+        syn::Unit* svfUnit = new syn::StateVariableFilter("svfUnit");
+        syn::Unit* oscUnit = new syn::BasicOscillatorUnit("oscUnit");
+        syn::Unit* noteUnit = new syn::MidiNoteUnit("noteUnit");
+        syn::Unit* envUnit = new syn::ADSREnvelope("envUnit");
+        syn::Unit* gainUnit = new syn::GainUnit("gainUnit");
+        syn::Unit* outUnit = &circ->getUnit(circ->getOutputUnitId());
+        circ->addUnit(svfUnit);
+        circ->addUnit(oscUnit);
+        circ->addUnit(noteUnit);
+        circ->addUnit(envUnit);
+        circ->addUnit(gainUnit);
+        circ->connectInternal(*svfUnit, 0, *outUnit, 0);
+        circ->connectInternal(*oscUnit, 0, *svfUnit, syn::StateVariableFilter::Input::iAudioIn);
+        circ->connectInternal(*oscUnit, 0, *gainUnit, 0);
+        circ->connectInternal(*oscUnit, 1, *svfUnit, syn::StateVariableFilter::Input::iFcAdd);
+        circ->connectInternal(*noteUnit, 0, *oscUnit, syn::TunedOscillatorUnit::Input::iNote);
+        circ->connectInternal(*envUnit, 0, *oscUnit, syn::OscillatorUnit::Input::iGainMul);
+        auto&& execOrder = circ->execOrder();
+        int execOrderSize = std::count_if(execOrder.begin(), execOrder.end(), [](auto&& ptr) { return ptr != nullptr; });
+        REQUIRE(execOrderSize == 6);
+        REQUIRE(SYN_CONTAINS(execOrder, svfUnit));
+        REQUIRE(SYN_CONTAINS(execOrder, oscUnit));
+        REQUIRE(SYN_CONTAINS(execOrder, noteUnit));
+        REQUIRE(SYN_CONTAINS(execOrder, envUnit));
+        REQUIRE(SYN_CONTAINS(execOrder, gainUnit));
+        REQUIRE(SYN_CONTAINS(execOrder, outUnit));
+        int svfInd = SYN_VEC_FIND(execOrder, svfUnit);
+        int oscInd = SYN_VEC_FIND(execOrder, oscUnit);
+        int noteInd = SYN_VEC_FIND(execOrder, noteUnit);
+        int envInd = SYN_VEC_FIND(execOrder, envUnit);
+        int gainInd = SYN_VEC_FIND(execOrder, gainUnit);
+        int outInd = SYN_VEC_FIND(execOrder, outUnit);
+        REQUIRE(svfInd < outInd);
+        REQUIRE(oscInd < svfInd);
+        REQUIRE(oscInd < gainInd);
+        REQUIRE(noteInd < oscInd);
+        REQUIRE(envInd < oscInd);
+
+        REQUIRE(svfUnit->output(0).hasExternalBuf());
+        REQUIRE(oscUnit->output(0).hasExternalBuf());
+        REQUIRE(noteUnit->output(0).hasExternalBuf());
+        REQUIRE(envUnit->output(0).hasExternalBuf());
+
+        REQUIRE(noteUnit->output(0).buf() != envUnit->output(0).buf());
+        REQUIRE(noteUnit->output(0).buf() != oscUnit->output(0).buf());
+        REQUIRE(noteUnit->output(0).buf() != oscUnit->output(1).buf());
+        REQUIRE(envUnit->output(0).buf() != oscUnit->output(0).buf());
+        REQUIRE(envUnit->output(0).buf() != oscUnit->output(1).buf());
+        REQUIRE(oscUnit->output(0).buf() != oscUnit->output(1).buf());
+        REQUIRE(oscUnit->output(0).buf() != svfUnit->output(0).buf());
+        REQUIRE(oscUnit->output(1).buf() != svfUnit->output(0).buf());
+    }
+
+    SECTION("Linearization") {
+        syn::DirectedProcGraph<int> pg;
+        pg.connect(0, 1);
+        pg.connect(0, 3);
+
+        pg.connect(1, 3);
+        pg.connect(1, 3);
+        pg.connect(1, 3);
+
+        pg.connect(2, 3);
+
+        std::vector<std::pair<int, syn::DirectedProcGraph<int>::Props>>&& res = pg.linearize();
+        std::vector<int> order(res.size());
+        std::transform(res.begin(), res.end(), order.begin(), [](auto&& p) { return p.first; });
+
+        REQUIRE(SYN_CONTAINS(order, 0));
+        REQUIRE(SYN_CONTAINS(order, 1));
+        REQUIRE(SYN_CONTAINS(order, 2));
+        REQUIRE(SYN_CONTAINS(order, 3));
+
+        int loc0 = SYN_VEC_FIND(order, 0);
+        int loc1 = SYN_VEC_FIND(order, 1);
+        int loc2 = SYN_VEC_FIND(order, 2);
+        int loc3 = SYN_VEC_FIND(order, 3);
+        REQUIRE(loc0 < loc1);
+        REQUIRE(loc0 < loc2);
+        REQUIRE(loc0 < loc3);
+        REQUIRE(loc1 < loc2);
+        REQUIRE(loc1 < loc3);
+        REQUIRE(loc2 < loc3);
+
+        REQUIRE(res[loc0].second.layer == 2);
+        REQUIRE(res[loc1].second.layer == 1);
+        REQUIRE(res[loc2].second.layer == 1);
+        REQUIRE(res[loc3].second.layer == 0);
+    }
+}
+
 
 template<typename Out, typename In>
 static double measure_error(std::function<Out(In)> a_baseFunc, std::function<Out(In)> a_testFunc, In a, In b, int N) {
@@ -92,7 +189,7 @@ TEST_CASE("Detect subnormals in filter processing", "[denormal]") {
         filt.setParam(syn::LadderFilterA::pFc, 20000.0);
         filt.setParam(syn::LadderFilterA::pFb, 0.0);
         filt.setParam(syn::LadderFilterA::pDrv, 0.0);
-        filt.connectInput(syn::LadderFilterA::iAudioIn, &input);
+        filt.connectInput(syn::LadderFilterA::iAudioIn, syn::ReadOnlyBuffer<double>{ &input });
 
         vector<double> out(N);
         int numDenormals = 0;
@@ -115,7 +212,7 @@ TEST_CASE("Detect subnormals in filter processing", "[denormal]") {
         filt.setParam(syn::LadderFilterB::pFc, 20000.0);
         filt.setParam(syn::LadderFilterB::pFb, 0.0);
         filt.setParam(syn::LadderFilterB::pDrv, 0.0);
-        filt.connectInput(syn::LadderFilterB::iAudioIn, &input);
+        filt.connectInput(syn::LadderFilterB::iAudioIn, syn::ReadOnlyBuffer<double>{&input});
 
         vector<double> out(N);
         int numDenormals = 0;
@@ -137,7 +234,7 @@ TEST_CASE("Detect subnormals in filter processing", "[denormal]") {
         filt.setFs(fs);
         filt.setParam(syn::StateVariableFilter::pFc, 20000.0);
         filt.setParam(syn::StateVariableFilter::pRes, 0.0);
-        filt.connectInput(syn::StateVariableFilter::iAudioIn, &input);
+        filt.connectInput(syn::StateVariableFilter::iAudioIn, syn::ReadOnlyBuffer<double>{&input});
 
         vector<double> out(N);
         int numDenormals = 0;
@@ -159,7 +256,7 @@ TEST_CASE("Detect subnormals in filter processing", "[denormal]") {
         filt.setFs(fs);
         filt.setParam(syn::TrapStateVariableFilter::pFc, 20000.0);
         filt.setParam(syn::TrapStateVariableFilter::pRes, 0.0);
-        filt.connectInput(syn::TrapStateVariableFilter::iAudioIn, &input);
+        filt.connectInput(syn::TrapStateVariableFilter::iAudioIn, syn::ReadOnlyBuffer<double>{&input});
 
         vector<double> out(N);
         int numDenormals = 0;
@@ -181,7 +278,7 @@ TEST_CASE("Check that units are ticked correctly", "[Unit]") {
     SECTION("1-sample buffer solo unit") {
         syn::MemoryUnit mu("mu0");
         double input = 1.0;
-        mu.connectInput(0, &input);
+        mu.connectInput(0, syn::ReadOnlyBuffer<double>{&input});
         mu.tick();
         double out1 = mu.readOutput(0, 0);
         mu.tick();
@@ -221,12 +318,12 @@ TEST_CASE("Check that units are ticked correctly", "[Unit]") {
         syn::Circuit circ;
         circ.setBufferSize(bufSize);
         int circ_svf_id = circ.addUnit(new syn::StateVariableFilter("circ_svf"));
-        circ.connectInput(0, &inputs(0, 0));
+        circ.connectInput(0, syn::ReadOnlyBuffer<double>{&inputs(0, 0)});
         circ.connectInternal(circ.getInputUnitId(), 0, circ_svf_id, 0);
         circ.connectInternal(circ_svf_id, 0, circ.getOutputUnitId(), 0);
         circ.tick();
         Eigen::Array<double, 1, bufSize, Eigen::RowMajor> circ_output;
-        std::copy(circ.outputSource(0), circ.outputSource(0) + bufSize, &circ_output(0, 0));
+        std::copy(circ.output(0).buf(), circ.output(0).buf() + bufSize, &circ_output(0, 0));
 
         syn::StateVariableFilter svf;
         svf.setBufferSize(bufSize);

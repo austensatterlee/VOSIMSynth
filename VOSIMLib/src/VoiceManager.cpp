@@ -158,7 +158,7 @@ namespace syn
         // Add new voices to the idle list
         for(int i=0;i<a_newMax;i++)
         {
-            m_circuits[i] = Circuit(m_instrument);
+            m_circuits[i] = m_instrument;
             m_circuits[i].setVoiceIndex(a_newMax>1 ? i * 1.0 / (a_newMax-1) : 1.0);
             m_idleVoices.push_back(i);
         }
@@ -213,12 +213,13 @@ namespace syn
             a_right_output[j] = 0;
         }
 
-        for (int sample = 0; sample < m_bufferSize; sample += m_internalBufferSize) {
-            for (int i = 0; i < m_activeVoices.size(); i++) {
+        for (int i = 0; i < m_activeVoices.size(); i++) {
+            for (int sample = 0; sample < m_bufferSize; sample += m_internalBufferSize) {
                 vind = m_activeVoices.at(i);
                 Circuit& voice = m_circuits[vind];
-                voice.connectInput(0, a_left_input);
-                voice.connectInput(1, a_right_input);
+                ReadOnlyBuffer<double> left{a_left_input}, right{a_right_input};
+                voice.connectInput(0, left);
+                voice.connectInput(1, right);
                 voice.tick();
                 for (int j = 0; j < m_internalBufferSize; j++) {
                     a_left_output[sample + j] += voice.readOutput(0, j);

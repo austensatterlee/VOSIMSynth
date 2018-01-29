@@ -28,31 +28,31 @@ environment:
 
         - GENERATOR: "Visual Studio 15 2017 Win64"
           CONFIG: Debug
+          VOSIMPROJECT_EIS: SSE2
           PYTHON: C:/Miniconda-x64
           BUILD_DIR: _build64-sse2
-          VOSIMPROJECT_EIS: SSE2
 
         - GENERATOR: "Visual Studio 15 2017 Win64"
           CONFIG: Release
+          VOSIMPROJECT_EIS: SSE2
           PYTHON: C:/Miniconda-x64
           BUILD_DIR: _build64-sse2
-          VOSIMPROJECT_EIS: SSE2
 
         - GENERATOR: "Visual Studio 15 2017 Win64"
           CONFIG: Debug
+          VOSIMPROJECT_EIS: AVX2
           PYTHON: C:/Miniconda-x64
           BUILD_DIR: _build64-avx2
-          VOSIMPROJECT_EIS: AVX2
 
         - GENERATOR: "Visual Studio 15 2017 Win64"
           CONFIG: Release
+          VOSIMPROJECT_EIS: AVX2
           PYTHON: C:/Miniconda-x64
           BUILD_DIR: _build64-avx2
-          VOSIMPROJECT_EIS: AVX2
 
 install:
     - git submodule update --init --recursive
-    - SET PATH=%PYTHON%;%PYTHON%/Scripts;%PATH%
+    - set PATH=%PYTHON%;%PYTHON%/Scripts;%PATH%
     - conda update -y conda
     - conda install -y numpy scipy
 
@@ -67,7 +67,8 @@ build_script:
     - cmake --build . --config "%CONFIG%"
 
 after_build:
-    - VOSIMLib\bench\%CONFIG%\vosimlib_bench.exe -r csv -o vosimlib_bench_results_%CONFIG%.csv
+    - set VOSIMLIB_BENCH_RESULTS=vosimlib_bench_results.%APPVEYOR_BUILD_VERSION%.%CONFIG%.csv
+    - VOSIMLib\bench\%CONFIG%\vosimlib_bench.exe -r csv -o %VOSIMLIB_BENCH_RESULTS%
 
 test_script:
     - ctest -j 2 -C %CONFIG% --output-on-failure
@@ -77,5 +78,5 @@ artifacts:
     name: 'VST'
   - path: '%BUILD_DIR%/VOSIMLib/%CONFIG%/*.pyd'
     name: 'Python Bindings'
-  - path: '%BUILD_DIR%/vosimlib_bench_results_%CONFIG%.csv'
+  - path: '%BUILD_DIR%/%VOSIMLIB_BENCH_RESULTS%'
     name: 'VOSIMLib benchmark'
