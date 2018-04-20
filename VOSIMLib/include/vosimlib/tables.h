@@ -42,12 +42,12 @@ namespace syn {
     protected:
         const double* m_data;
     public:
-        const int size;
+        const int m_size;
 
         LUT(const double* a_data, int a_size)
             : m_data(a_data),
-              size(a_size) {}
-        
+              m_size(a_size) {}
+
         virtual ~LUT() = default;
 
         double lerp(double phase) const {
@@ -60,12 +60,12 @@ namespace syn {
 
         double plerp(double phase) const {
             double index = static_cast<const T*>(this)->index(phase);
-            index = WRAP<double>(index, size);
+            index = WRAP<double>(index, m_size);
 
             int intPart = index;
             double fracPart = index - intPart;
             assert(intPart <= size - 1);
-            if (fracPart > 0.0 && intPart < size - 1) {
+            if (fracPart > 0.0 && intPart < m_size - 1) {
                 return LERP<double>(m_data[intPart], m_data[intPart + 1], fracPart);
             }
             return m_data[intPart];
@@ -83,7 +83,7 @@ namespace syn {
             : LUT<AffineTable>(a_data, a_size),
               m_min(a_min),
               m_max(a_max),
-              m_scale((a_size-1) * 1.0 / (a_max - a_min)) {}
+              m_scale((a_size - 1) * 1.0 / (a_max - a_min)) {}
 
         double inputMin() const { return m_min; }
         double inputMax() const { return m_max; }
@@ -99,7 +99,7 @@ namespace syn {
             : LUT<NormalTable>(a_data, a_size) {}
 
         double index(double phase) const {
-            return phase * size;
+            return phase * m_size;
         }
     };
 
@@ -111,7 +111,7 @@ namespace syn {
               res(a_res) {}
 
         BlimpTable(const BlimpTable& a_other)
-            : BlimpTable(a_other.m_data, a_other.size, a_other.taps, a_other.res) {}
+            : BlimpTable(a_other.m_data, a_other.m_size, a_other.taps, a_other.res) {}
 
         const int taps;
         const int res;
@@ -126,10 +126,11 @@ namespace syn {
      */
     class VOSIMLIB_API ResampledTable : public NormalTable {
     public:
-        ResampledTable(const double* a_table, int a_size, const BlimpTable& a_blimp_table_online, const BlimpTable& a_blimp_table_offline);
+        ResampledTable(const double* a_table, int a_size, const BlimpTable& a_blimp_table_online,
+                       const BlimpTable& a_blimp_table_offline);
 
         ResampledTable(const ResampledTable& a_o)
-            : ResampledTable(a_o.m_data, a_o.size, a_o.m_blimp_table_online, a_o.m_blimp_table_offline) {}
+            : ResampledTable(a_o.m_data, a_o.m_size, a_o.m_blimp_table_online, a_o.m_blimp_table_offline) {}
 
         void resample_tables();
 
@@ -147,23 +148,24 @@ namespace syn {
      * Retrieve a single sample from table as if it were resampled to have
      * the specified period, using fractional sinc interpolation/decimation.
      *
-     * \param size the size of the input table
-     * \param phase the desired phase to sample at, in the range [0,1).
-     * \param newSize the desired period to resample at (in fractional number of samples)
+     * \param size Size of the input table
+     * \param phase Phase to sample at, in the range [0,1).
+     * \param newSize Desired period of resampled table (in fractional number of samples)
      */
-    double VOSIMLIB_API getresampled_single(const double* table, int size, double phase, double newSize, const BlimpTable& blimp_table);
+    double VOSIMLIB_API getresampled_single(const double* table, int size, double phase, double newSize,
+                                            const BlimpTable& blimp_table);
     /**
      * Resample an entire table to have the specified period and store the
      * result in resampled_table (which should already be allocated), using
      * fractional sinc interpolation/decimation.
      *
-     * \param size the size of the input table
-     * \param resampled_table a pointer to the output table
-     * \param period the desired period to resample at (in fractional number
-     *        of samples). The allocated size of the output table should be
-     *        ceil(period).
+     * \param a_size Size of the input table.
+     * \param a_newTable Pointer to the output table.
+     * \param a_newSize Desired period of resampled table (in fractional number of samples). The allocated size of the output table should be ceil(period).
+     * \param a_preserve_amplitude Scales min and max of output table to match input table.
      */
-    void VOSIMLIB_API resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table, bool normalize = true);
+    void VOSIMLIB_API resample_table(const double* a_table, int a_size, double* a_newTable, double a_newSize,
+                                     const BlimpTable& a_blimp_table, bool a_preserve_amplitude = true);
 
     /**
      * \todo

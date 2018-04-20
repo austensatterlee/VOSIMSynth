@@ -35,7 +35,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "vosimsynth/widgets/SummerUnitWidget.h"
 #include "vosimsynth/widgets/GainUnitWidget.h"
 #include "vosimsynth/widgets/OscilloscopeWidget.h"
-#include "vosimsynth/Logging.h"
+#include "vosimlib/Logging.h"
 
 VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
     : IPLUG_CTOR(0, 1, instanceInfo),
@@ -44,7 +44,7 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
       m_tempo(0),
       m_tickCount(0)
 {
-    TIME_TRACE;
+    SYN_TIMING_TRACE;
     makeInstrument();
     makeGraphics();
     syn::lut_bl_tri_table();
@@ -53,7 +53,7 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 }
 
 void VOSIMSynth::makeGraphics() {
-    TIME_TRACE;
+    SYN_TIMING_TRACE;
     synui::MainGui* gui = new synui::MainGui(&m_voiceManager, GUI_WIDTH, GUI_HEIGHT, 800, 600);
     gui->onResize.connect_member(this, &VOSIMSynth::ResizeGraphics);
     AttachAppWindow(gui);
@@ -61,7 +61,7 @@ void VOSIMSynth::makeGraphics() {
 }
 
 void VOSIMSynth::makeInstrument() {
-    TIME_TRACE;
+    SYN_TIMING_TRACE;
     registerUnits();
     m_voiceManager.setMaxVoices(8);
 }
@@ -92,7 +92,7 @@ void VOSIMSynth::ProcessMidiMsg(IMidiMsg* pMsg) {
 }
 
 bool VOSIMSynth::SerializeState(ByteChunk* pChunk) {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     const syn::Circuit& circuit = m_voiceManager.getPrototypeCircuit();
     std::stringstream ss;
     json j;
@@ -109,7 +109,7 @@ bool VOSIMSynth::SerializeState(ByteChunk* pChunk) {
 }
 
 int VOSIMSynth::UnserializeState(ByteChunk* pChunk, int startPos) {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     syn::UnitFactory::instance().resetBuildCounts();
     string input;
     startPos = pChunk->Get(&input, startPos);
@@ -153,7 +153,7 @@ void VOSIMSynth::OnIdle() {
 
 void VOSIMSynth::registerUnits()
 {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     syn::UnitFactory& uf = syn::UnitFactory::instance();
     uf.addUnitPrototype<syn::BasicOscillatorUnit>("Oscillators", "basic");
     uf.addUnitPrototype<syn::VosimOscillator>("Oscillators", "vosim");
@@ -205,14 +205,14 @@ void VOSIMSynth::registerUnits()
 
 void VOSIMSynth::registerUnitWidgets(synui::CircuitWidget& a_cw)
 {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     a_cw.registerUnitWidget<syn::SummerUnit>([](synui::CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new synui::SummerUnitWidget(parent, a_vm, unitId); });
     a_cw.registerUnitWidget<syn::GainUnit>([](synui::CircuitWidget* parent, syn::VoiceManager* a_vm, int unitId) { return new synui::GainUnitWidget(parent, a_vm, unitId); });
 }
 
 
 void VOSIMSynth::Reset() {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     m_MIDIReceiver.Resize(GetBlockSize());
     m_voiceManager.setBufferSize(GetBlockSize());
     m_voiceManager.setFs(GetSampleRate());

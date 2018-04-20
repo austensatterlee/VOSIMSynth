@@ -12,13 +12,18 @@ def compute_bench_stats(data, verbose=False):
         stats = {}
         stats["mean"] = xdata.mean()
         stats["std"] = xdata.std()
+        stats["max"] = xdata.max()
+        stats["min"] = xdata.min()
         for s in stats.keys():
             stats["norm "+s] = stats[s]/stats[s].min()
         stats_df = pd.DataFrame(stats).T
         stats_df.columns=[re.sub("\[.*?\] ?","",x) for x in stats_df.columns]
         all_stats[fulltag] = stats_df
         if verbose:
-            stats_df_str = str(stats_df.T.sort_values(by="mean"))
+            # column_order = ['max','min','mean','std']
+            # column_order += ['norm '+x for x in column_order]
+            stats_df_sorted = stats_df.T.sort_values(by="max")
+            stats_df_str = stats_df_sorted.to_string()
             str_width = max(map(len, stats_df_str.split("\n")))
             tag_width = len(fulltag)
             num_spaces = 8 # str_width/2-tag_width/2

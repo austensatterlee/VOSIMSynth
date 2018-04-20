@@ -146,7 +146,7 @@ def GenerateBLTriangle(nharmonics, npoints=None, w0=1):
     bltri = sum([g*sin(h*sample_pts) for g, h in zip(gains, harmonics)], axis=0)
     return bltri/bltri.max()
 
-def GenerateBlimp(intervals=10, res=2048, fs=48000, fc=23000, beta=7.20, apgain=0.89, apbeta=0.7, ret_half=True):
+def GenerateBlimp(intervals=10, res=2048, fs=48000, fc=23000, beta=7.20, apgain=0.89, apbeta=0.7, ret_half=False):
     """
     Generate a bandlimited dirac delta impulse.
 
@@ -171,25 +171,21 @@ def GenerateBlimp(intervals=10, res=2048, fs=48000, fc=23000, beta=7.20, apgain=
     blimp = ss.fftconvolve(blimp, blimp, 'same')
 
     # Scale
-    blimp = scale_fir(blimp)
+    # blimp = scale_fir(blimp)
 
     if ret_half:
         return blimp[len(blimp)/2:]
     else:
         return blimp
 
-def GenerateBlimp2(intervals=10, res=2048, fs=48e3, fc=20e3, beta=7.20, apgain=0.89, apbeta=0.7, ret_half=True, width=None):
+def GenerateBlimp2(intervals=17, res=256, wc=22e3/48e3, width=1e3/48e3, ret_half=False):
     intervals=2*(int(intervals)/2)+1 # make intervals odd
-    res = 2*(int(res)/2)+1 # make oversample factor odd
     pts = res*intervals # impulse length in points
-    blimp_fir = ss.firwin(pts, 2*fc*1.0/fs*1.0/res, width=width, window=('kaiser', beta))
-
-    apwin = 1-apgain*ss.kaiser(pts, apbeta) # apodization window
-    blimp_fir *= apwin
-    blimp_fir = ss.fftconvolve(blimp_fir, blimp_fir, 'same')
+    pts = 2*(int(pts)/2)+1
+    blimp_fir = ss.firwin(pts, (wc*2./res), width=width)
 
     # Scale
-    blimp_fir = scale_fir(blimp_fir)
+    # blimp_fir = scale_fir(blimp_fir)
 
     if ret_half:
         half = blimp_fir[len(blimp_fir)/2:]
@@ -489,8 +485,9 @@ def scale_fir(fir):
     s = np.sum(fir * c)
     return fir/s
 
-def transition_band(mags, freqs=None, stopband_db=-90):
-    """ Calculate the start and stop of the transition band from a frequency response """
+def transition_band(ir, freqs=None, stopband_db=-90):
+    """ Calculate the start and stop of the transition band from an impulse response """
+    mags = np.fft.rfft(ir)
     freqs = freqs if freqs is not None else np.arange(len(mags))
     mags = abs(mags)
     passband_mag = 10**(-3/20.)
@@ -499,8 +496,9 @@ def transition_band(mags, freqs=None, stopband_db=-90):
     stopband_index = np.where((mags-stopband_mag)<=0)[0][0] if min(mags)<stopband_mag else len(mags)-1
     return np.array([freqs[passband_index], freqs[stopband_index]])
 
-def passband_ripple(mags):
-    """ Calculate the passband ripple (maximum deviation from unity) from a frequency response """
+def passband_ripple(ir):
+    """ Calculate the passband ripple (maximum deviation from unity) from a impulse response """
+    mags = np.fft.rfft(ir)
     mags = abs(mags)
     passband_mag = 10**(-3/20.)
     passband_index = np.where((mags-passband_mag)<=0)[0][0]
@@ -534,9 +532,8 @@ def main(pargs):
     """Bandlimited saw wave"""
     if v:
         sys.stdout.write("Generating band-limited saw wavetable...")
-    BLSAW_HARMONICS = 4096
+    BLSAW_HARMONICS = 1024
     blsaw = GenerateBLSaw(BLSAW_HARMONICS)
-    blsaw = ss.fftconvolve( blsaw, prefilter, 'same' ) # apply gain to high frequencies
     blsaw /= blsaw.max()
     if v:
         print " samples:", len(blsaw)
@@ -544,9 +541,8 @@ def main(pargs):
     """Bandlimited square wave"""
     if v:
         sys.stdout.write("Generating band-limited square wavetable...")
-    BLSQUARE_HARMONICS = 4096
+    BLSQUARE_HARMONICS = 1024
     blsquare = GenerateBLSquare(BLSQUARE_HARMONICS)
-    blsquare = ss.fftconvolve( blsquare, prefilter, 'same' )
     blsquare /= blsquare.max()
     if v:
         print " samples:", len(blsquare)
@@ -554,29 +550,29 @@ def main(pargs):
     """Bandlimited triangle wave"""
     if v:
         sys.stdout.write("Generating band-limited triangle wavetable...")
-    BLTRI_HARMONICS = 4096
+    BLTRI_HARMONICS = 1024
     bltri = GenerateBLTriangle(BLTRI_HARMONICS)
-    bltri = ss.fftconvolve( bltri, prefilter, 'same' )
     bltri /= bltri.max()
     if v:
         print " samples:", len(bltri)
 
     """Offline and online BLIMP for resampling"""
-    OFFLINE_BLIMP_INTERVALS = 513
-    OFFLINE_BLIMP_RES = 2048
+    OFFLINE_BLIMP_INTERVALS = 63
+    OFFLINE_BLIMP_RES = 256
 
-    ONLINE_BLIMP_INTERVALS = 19
-    ONLINE_BLIMP_RES = 2048
+    ONLINE_BLIMP_INTERVALS = 15
+    ONLINE_BLIMP_RES = 256
 
     if v:
         sys.stdout.write("Generating 'online' band-limited impulse table...")
-    blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS, ONLINE_BLIMP_RES, fc=23e3, fs=48e3)
+    blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS, ONLINE_BLIMP_RES, fc=20e3, fs=44.1e3, ret_half=True)
     if v:
         print " samples:", len(blimp_online)
 
     if v:
         sys.stdout.write("Generating 'offline' band-limited impulse table...")
-    blimp_offline = GenerateBlimp(OFFLINE_BLIMP_INTERVALS, OFFLINE_BLIMP_RES, fc=24e3, fs=48e3)
+    blimp_offline = GenerateBlimp(OFFLINE_BLIMP_INTERVALS, OFFLINE_BLIMP_RES, fc=20e3, fs=44.1e3, ret_half=True)
+    blimp_offline = ss.fftconvolve( blimp_offline, prefilter, 'same' )
     if v:
         print " samples:", len(blimp_offline)
 

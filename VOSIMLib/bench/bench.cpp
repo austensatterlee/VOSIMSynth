@@ -17,7 +17,7 @@ NONIUS_BENCHMARK("[lut][sin] lut_sin_table.getraw", [](nonius::chronometer& mete
     const int runs = meter.runs();
     std::vector<int> phases(runs);
     const auto& lut_sin_table = syn::lut_sin_table();
-    for (int i = 0; i < runs; i++) phases[i] = i * (1.0 / runs) * lut_sin_table.size;
+    for (int i = 0; i < runs; i++) phases[i] = i * (1.0 / runs) * lut_sin_table.m_size;
     double x;
     meter.measure([&x, &phases, &lut_sin_table](int i) { x = lut_sin_table[phases[i]]; });
 })
@@ -270,7 +270,7 @@ NONIUS_BENCHMARK("[math][mod] syn::WRAP", [](nonius::chronometer& meter) {
 NONIUS_BENCHMARK("[lut][saw] band-limited saw", [](nonius::chronometer& meter) {
     std::vector<double> periods(meter.runs());
     std::vector<double> phases(meter.runs());
-    std::uniform_int_distribution<> _periodGenerator(2, syn::lut_bl_saw_table().size - 1);
+    std::uniform_int_distribution<> _periodGenerator(2, syn::lut_bl_saw_table().m_size - 1);
     std::uniform_real_distribution<> _phaseGenerator(0.0, 1.0);
     std::transform(periods.begin(), periods.end(), periods.begin(), [&_periodGenerator](double& x) {return _periodGenerator(RandomDevice); });
     std::transform(phases.begin(), phases.end(), phases.begin(), [&_phaseGenerator](double& x) {return _phaseGenerator(RandomDevice); });

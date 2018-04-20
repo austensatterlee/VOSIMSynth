@@ -13,6 +13,7 @@
 #include <vosimlib/units/MidiUnits.h>
 #include <vosimlib/units/ADSREnvelope.h>
 #include <vosimlib/units/MathUnits.h>
+#include <vosimlib/tables.h>
 
 std::random_device RandomDevice;
 
@@ -104,11 +105,6 @@ TEST_CASE("Check proc graph linearization", "[proc-graph]") {
         REQUIRE(oscInd < gainInd);
         REQUIRE(noteInd < oscInd);
         REQUIRE(envInd < oscInd);
-
-        REQUIRE(svfUnit->output(0).hasExternalBuf());
-        REQUIRE(oscUnit->output(0).hasExternalBuf());
-        REQUIRE(noteUnit->output(0).hasExternalBuf());
-        REQUIRE(envUnit->output(0).hasExternalBuf());
 
         REQUIRE(noteUnit->output(0).buf() != envUnit->output(0).buf());
         REQUIRE(noteUnit->output(0).buf() != oscUnit->output(0).buf());
@@ -335,7 +331,31 @@ TEST_CASE("Check that units are ticked correctly", "[Unit]") {
     }
 }
 
-TEST_CASE("Circuit", "[Circuit]") {
+TEST_CASE("Test resampler", "[Resample]") {
+    Eigen::Matrix<double, 128, 1> original_table = Eigen::Array<double, 128, 1>::LinSpaced(0, 2 * SYN_PI).sin();
+
+    Eigen::Matrix<double, 128, 1> identical_table;
+    Eigen::Matrix<double, 250, 1> upsampled_table;
+    Eigen::Matrix<double, 33, 1> downsampled_table;
+    
+    for (int i = 0; i < identical_table.size(); i++) {
+        double phase = i * (1.0 / identical_table.size());
+        identical_table(i) = syn::getresampled_single(original_table.data(), original_table.size(), phase, original_table.size(), syn::lut_blimp_table_offline());
+    }
+    for (int i = 0; i < downsampled_table.size(); i++) {
+        double phase = i * (1.0 / downsampled_table.size());
+        downsampled_table(i) = syn::getresampled_single(original_table.data(), original_table.size(), phase, downsampled_table.size(), syn::lut_blimp_table_offline());
+    }
+    for (int i = 0; i < upsampled_table.size(); i++) {
+        double phase = i * (1.0 / upsampled_table.size());
+        upsampled_table(i) = syn::getresampled_single(original_table.data(), original_table.size(), phase, upsampled_table.size(), syn::lut_blimp_table_offline());
+    }
+
+    Eigen::IOFormat listFmt(Eigen::FullPrecision, 0, ", ", ",\n", "", "", "[", "]");
+    std::cout << "original=array(" << original_table.format(listFmt) << ")" << std::endl;
+    std::cout << "identical=array(" << identical_table.format(listFmt) << ")" << std::endl;
+    std::cout << "upsampled=array(" << upsampled_table.format(listFmt) << ")" << std::endl;
+    std::cout << "downsampled=array(" << downsampled_table.format(listFmt) << ")" << std::endl;
 }
 
 TEST_CASE("Check IntMap use cases", "[IntMap]") {

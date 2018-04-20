@@ -1,8 +1,8 @@
 #include "vosimsynth/ChildWindow.h"
 #include "vosimsynth/MainGUI.h"
-#include "vosimsynth/Logging.h"
 #include "vosimsynth/common.h"
 #include <vosimlib/Command.h>
+#include <vosimlib/Logging.h>
 #include <GLFW/glfw3.h>
 
 #if !defined(GL_VERSION_MAJOR)
@@ -30,7 +30,7 @@ VOID CALLBACK synui::ChildWindow::_timerProc(HWND a_hwnd, UINT /*message*/, UINT
 }
 
 void synui::ChildWindow::_openWindowImplem(HWND a_system_window) {
-    TIME_TRACE
+    SYN_TIMING_TRACE
 
     HWND hwnd = glfwGetWin32Window(m_window);
     SetWindowLongPtr(hwnd, GWL_STYLE, GetWindowLongPtr(hwnd, GWL_STYLE) | WS_POPUP | WS_CHILD);
@@ -40,13 +40,13 @@ void synui::ChildWindow::_openWindowImplem(HWND a_system_window) {
 
     UINT_PTR success = SetTimer(hwnd, m_timerId, 1000 / 120, reinterpret_cast<TIMERPROC>(_timerProc)); // timer callback 
     if (!success) {
-        TRACEMSG("Unable to create timer!");
+        SYN_MSG_TRACE("Unable to create timer!");
         throw std::runtime_error("Unable to create timer!");
     }
 }
 
 void synui::ChildWindow::_closeWindowImplem() {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     HWND hwnd = glfwGetWin32Window(m_window);
     SetParent(hwnd, NULL);
     SetWindowLongPtr(hwnd, GWL_STYLE, GetWindowLongPtr(hwnd, GWL_STYLE) & ~WS_CHILD);
@@ -60,32 +60,32 @@ synui::ChildWindow::ChildWindow(int a_width, int a_height)
       m_isOpen(false),
       m_guiInternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE),
       m_guiExternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE) {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     auto errorCallback = [](int a_error, const char* a_description)
     {
-        TRACEMSG(a_description);
+        SYN_MSG_TRACE(a_description);
         puts(a_description);
     };
     glfwSetErrorCallback(errorCallback);
     // Create GLFW window
     if (!(g_nGlfwClassReg++) && !glfwInit()) {
-        TRACEMSG("Failed to init GLFW.");
+        SYN_MSG_TRACE("Failed to init GLFW.");
         throw std::runtime_error("Failed to init GLFW.");
     } else {
-        TRACEMSG("Successfully initialized GLFW.");
+        SYN_MSG_TRACE("Successfully initialized GLFW.");
     }
     _createGlfwWindow(a_width, a_height);
 }
 
 synui::ChildWindow::~ChildWindow() {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     closeWindow();
     if (!--g_nGlfwClassReg)
         glfwTerminate();
 }
 
 void synui::ChildWindow::_createGlfwWindow(int a_width, int a_height) {
-    TIME_TRACE
+    SYN_TIMING_TRACE
 
 #if defined(GL_VERSION_MAJOR)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, GL_VERSION_MAJOR);
@@ -107,10 +107,10 @@ void synui::ChildWindow::_createGlfwWindow(int a_width, int a_height) {
     m_window = glfwCreateWindow(a_width, a_height, "VOSIMSynth", nullptr, nullptr);
     if (!m_window) {
         glfwTerminate();
-        TRACEMSG("Failed to create GLFW window.");
+        SYN_MSG_TRACE("Failed to create GLFW window.");
         throw std::runtime_error("Failed to create GLFW window.");
     } else {
-        TRACEMSG("Successfully created GLFW window.");
+        SYN_MSG_TRACE("Successfully created GLFW window.");
     }
 
     glfwSetWindowUserPointer(m_window, this);
@@ -121,13 +121,13 @@ void synui::ChildWindow::_createGlfwWindow(int a_width, int a_height) {
 #if defined(TRACER_BUILD)
         int glMajorVer = glfwGetWindowAttrib(m_window, GLFW_CONTEXT_VERSION_MAJOR);
         int glMinorVer = glfwGetWindowAttrib(m_window, GLFW_CONTEXT_VERSION_MINOR);
-        TRACEMSG("Using OpenGL version: %d.%d", glMajorVer, glMinorVer)
+        SYN_MSG_TRACE("Using OpenGL version: %d.%d", glMajorVer, glMinorVer)
 #endif
 }
 
 #if defined(_WIN32)
 bool synui::ChildWindow::openWindow(HWND a_systemWindow) {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     if (!m_isOpen) {
         m_isOpen = true;
         _openWindowImplem(a_systemWindow);
@@ -140,7 +140,7 @@ bool synui::ChildWindow::openWindow(HWND a_systemWindow) {
 #endif
 
 void synui::ChildWindow::closeWindow() {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     if (m_isOpen) {
         m_isOpen = false;
         _closeWindowImplem();
@@ -150,7 +150,7 @@ void synui::ChildWindow::closeWindow() {
 }
 
 bool synui::ChildWindow::queueExternalMessage(syn::Command* a_msg) {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     if (!m_guiExternalMsgQueue.write_available()) {
         return false;
     }
@@ -159,7 +159,7 @@ bool synui::ChildWindow::queueExternalMessage(syn::Command* a_msg) {
 }
 
 bool synui::ChildWindow::queueInternalMessage(syn::Command* a_msg) {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     if (!m_guiInternalMsgQueue.write_available()) {
         return false;
     }

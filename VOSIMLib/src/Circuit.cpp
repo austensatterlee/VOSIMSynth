@@ -260,7 +260,7 @@ namespace syn
 
         // remove record of old connection
         if (toUnit->isInputConnected(a_toInputPort)) {
-            const int nRecords = m_connectionRecords.size();
+            const int nRecords = int(m_connectionRecords.size());
             for (int i = 0; i < nRecords; i++) {
                 const ConnectionRecord& rec = m_connectionRecords[i];
                 if (rec.to_id == a_toId && rec.to_port == a_toInputPort) {

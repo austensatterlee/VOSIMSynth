@@ -4,9 +4,14 @@
 #include "vosimlib/units/OscillatorUnit.h"
 #include "vosimlib/units/MidiUnits.h"
 #include "vosimlib/units/MathUnits.h"
+#include <vosimlib/lut_tables.h>
 
 inline syn::Circuit makeTestCircuit() {
-    const int nFiltUnits = 24;
+    syn::lut_bl_tri_table();
+    syn::lut_bl_saw_table();
+    syn::lut_bl_square_table();
+
+    const int nFiltUnits = 32;
     const int nOscUnits = 8;
     syn::Circuit mycircuit;
     // Add a bunch of filter units in serial
@@ -33,7 +38,7 @@ inline syn::Circuit makeTestCircuit() {
         bosc[i] = new syn::BasicOscillatorUnit;
         mycircuit.addUnit(bosc[i]);
         mycircuit.connectInternal(mycircuit.getUnitId(*mnu), 0, mycircuit.getUnitId(*bosc[i]), syn::TunedOscillatorUnit::Input::iNote) ;
-        mycircuit.connectInternal(mycircuit.getUnitId(*bosc[i]), 0, mycircuit.getUnitId(*sum), i);
+        mycircuit.connectInternal(mycircuit.getUnitId(*bosc[i]), 0, mycircuit.getUnitId(*sum), i-1);
     }
     return mycircuit;
 }

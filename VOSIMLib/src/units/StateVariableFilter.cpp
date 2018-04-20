@@ -133,13 +133,13 @@ void syn::TrapStateVariableFilter::process_()
     END_PROC_FUNC
 }
 
-void syn::OnePoleLP::setFc(double a_fc, double a_fs)
+void syn::OnePoleLP::setFc(double a_fc)
 {
-    a_fc = SYN_PI * a_fc / a_fs;
-    double g = tan(a_fc);
-
+    double g = tan(m_fcScale * a_fc);
     m_G = g / (1 + g);
 }
+
+void syn::OnePoleLP::setFs(double a_fs) { m_fcScale = SYN_PI / a_fs; }
 
 double syn::OnePoleLP::process(double a_input)
 {
@@ -188,7 +188,7 @@ void syn::OnePoleLPUnit::process_()
     // Calculate gain for specified cutoff
     double fc = (param(pFc).getDouble() + READ_INPUT(iFcAdd)) * READ_INPUT(iFcMul); // freq cutoff
     fc = CLAMP(fc, param(pFc).getMin(), param(pFc).getMax());
-    implem.setFc(fc, fs());
+    implem.setFc(fc);
 
      // sync
     double sync = READ_INPUT(iSync);
@@ -205,8 +205,8 @@ void syn::OnePoleLPUnit::process_()
     END_PROC_FUNC
 }
 
-void syn::OnePoleLPUnit::onNoteOn_()
-{
+void syn::OnePoleLPUnit::onFsChange_() {
+    implem.setFs(fs());
 }
 
 syn::LadderFilterBase::LadderFilterBase(const string& a_name) : Unit(a_name)
@@ -310,7 +310,7 @@ void syn::LadderFilterB::process_()
     double drive = 1.0 + 3.0 * (param(pDrv).getDouble() + READ_INPUT(iDrvAdd));
     double res = 3.9 * (param(pFb).getDouble() + READ_INPUT(iFbAdd));
 
-    m_LP[0].setFc(fc, fs);
+    m_LP[0].setFc(fc);
     m_LP[1].m_G = m_LP[0].m_G;
     m_LP[2].m_G = m_LP[0].m_G;
     m_LP[3].m_G = m_LP[0].m_G;
@@ -337,8 +337,17 @@ void syn::LadderFilterB::process_()
         out_states[4] = m_LP[3].process(out_states[3]);
     }
     double out = m_ffGains.dot(out_states);
-    if (isDenormal(out))
+    if (isDenormal(out)) {
+        out = 0.0;
         reset();
+    }
     WRITE_OUTPUT(0, out);
     END_PROC_FUNC
+}
+
+void syn::LadderFilterB::onFsChange_() {
+    m_LP[0].setFs(fs());
+    m_LP[1].setFs(fs());
+    m_LP[2].setFs(fs());
+    m_LP[3].setFs(fs());
 }

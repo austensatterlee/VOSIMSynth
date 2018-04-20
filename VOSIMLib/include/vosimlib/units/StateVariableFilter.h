@@ -100,9 +100,14 @@ namespace syn
     struct VOSIMLIB_API OnePoleLP
     {
         /**
-         * Set forward gain by specifying cutoff frequency and sampling rate.
+         * Set forward gain by specifying cutoff frequency.
          */
-        void setFc(double a_fc, double a_fs);
+        void setFc(double a_fc);
+
+        /**
+         * Set sampling frequency
+         */
+        void setFs(double a_fs);
 
         double process(double a_input);
 
@@ -110,6 +115,7 @@ namespace syn
 
         double m_state = 0.0;
         double m_G = 0.0; /// feed forward gain
+        double m_fcScale = 1.0;
     };
 
 
@@ -149,7 +155,7 @@ namespace syn
 
     protected:
         void process_() override;
-        void onNoteOn_() override;
+        void onFsChange_() override;
     private:
         OnePoleLP implem;
         double m_lastSync;
@@ -162,7 +168,6 @@ namespace syn
 
     protected:
         void onNoteOn_() override;
-
     public:
         const int c_oversamplingFactor = 8;
 
@@ -208,6 +213,7 @@ namespace syn
         void reset() override;
     protected:
         void process_() override;
+        void onFsChange_() override;
     protected:
         typedef Eigen::Matrix<double, 1, 5> Vector5d;
         OnePoleLP m_LP[4];

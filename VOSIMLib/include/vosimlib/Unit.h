@@ -44,7 +44,6 @@ public: \
 private:
 
 #define BEGIN_PROC_FUNC \
-    TIME_TRACE;\
     for(m_currentBufferOffset=0;m_currentBufferOffset<getBufferSize();m_currentBufferOffset++){
 #define END_PROC_FUNC }
 #define READ_OUTPUT(OUTPUT) \

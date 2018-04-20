@@ -154,7 +154,12 @@ namespace syn
 
     double naive_tri(double a_phase);
     double naive_saw(double a_phase);
-    double naive_square(double a_phase);    
+    double naive_square(double a_phase); 
+
+    template<typename T>
+    T sinc(T a_arg) {
+        return a_arg ? sin(a_arg*SYN_PI) / (a_arg*SYN_PI) : 1.0;
+    }
 
 
     template<typename T>

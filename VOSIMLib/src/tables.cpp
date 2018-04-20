@@ -34,57 +34,48 @@ namespace syn
 
     void ResampledTable::resample_tables() {
         /* Construct resampled tables at ratios of powers of K */
-        m_num_resampled_tables = MAX<double>(1, log2(1.0*size) - 2);
+        m_num_resampled_tables = MIN<int>(3, MAX<int>(1, log2(1.0*m_size) - 2));
         m_resampled_sizes.resize(m_num_resampled_tables);
         m_resampled_tables.resize(m_num_resampled_tables);
-        double currsize = size;
+        double currsize = m_size;
         for (int i = 0; i < m_num_resampled_tables; i++) {
             m_resampled_sizes[i] = currsize;
             m_resampled_tables[i].resize(currsize);
-            resample_table(m_data, size, &m_resampled_tables[i][0], m_resampled_sizes[i], m_blimp_table_offline);
+            resample_table(m_data, m_size, &m_resampled_tables[i][0], m_resampled_sizes[i], m_blimp_table_offline);
             currsize *= 0.5;
         }
     }
 
     double ResampledTable::getresampled(double phase, double period) const {
-        int min_size_diff = -1;
-        int table_index = 0;
-        for (int i = 0; i < m_num_resampled_tables; i++) {
-            int curr_size_diff = m_resampled_sizes[i] - static_cast<int>(period);
-            if (curr_size_diff < 0) {
-                break;
-            }
-            if (curr_size_diff < min_size_diff || min_size_diff == -1) {
-                min_size_diff = curr_size_diff;
-                table_index = i;
-            }
-        }
-        //        int table_index = CLAMP<int>(log2(period) - log2(m_size), 0, m_num_resampled_tables-1);
+        auto ratio = period / m_size;
+        int table_index = CLAMP<int>(floor(log2(ratio)), 0, m_num_resampled_tables-1);
         return getresampled_single(&m_resampled_tables[table_index][0], m_resampled_sizes[table_index], phase, period, m_blimp_table_online);
     }
 
-    void resample_table(const double* table, int size, double* resampled_table, double period, const BlimpTable& blimp_table, bool normalize) {
+    void resample_table(const double* a_table, int a_size, double* a_newTable, double a_newSize, const BlimpTable& a_blimp_table, bool a_preserve_amplitude) {
         double phase = 0;
-        double phase_step = 1. / period;
-        double input_energy = 0.0;
-        double output_energy = 0.0;
+        double phase_step = 1. / a_newSize;
+        double input_max = 0.0, input_min = 0.0;
+        double output_max = 0.0, output_min = 0.0;
 
-        for (int i = 0; i < period; i++, phase += phase_step) {
-            resampled_table[i] = getresampled_single(table, size, phase, period, blimp_table);
-            if (normalize)
-                output_energy += resampled_table[i] * resampled_table[i];
+        for (int i = 0; i < a_newSize; i++) {
+            a_newTable[i] = getresampled_single(a_table, a_size, phase, a_newSize, a_blimp_table);
+            if (a_preserve_amplitude) {
+                output_min = i == 0 ? a_newTable[i] : syn::MIN(output_min, a_newTable[i]);
+                output_max = i == 0 ? a_newTable[i] : syn::MAX(output_max, a_newTable[i]);
+            }
+            phase += phase_step;
         }
         /* normalize */
-        if (normalize) {
-            for (int i = 0; i < size; i++)
+        if (a_preserve_amplitude) {
+            for (int i = 0; i < a_size; i++)
             {
-                input_energy += table[i] * table[i];
+                input_min = i == 0 ? a_table[i] : syn::MIN(input_min, a_table[i]);
+                input_max = i == 0 ? a_table[i] : syn::MAX(input_max, a_table[i]);
             }
-            double input_power = input_energy / size;
-            double output_power = output_energy / period;
-            double norm_gain = sqrt(input_power/output_power);
-            for (int i = 0; i < period; i++) {
-                resampled_table[i] = resampled_table[i] * norm_gain;
+            double scale = (output_max - output_min) / (input_max - input_min);
+            for (int i = 0; i < a_newSize; i++) {
+                a_newTable[i] = (a_newTable[i] - input_min) * scale + output_min;
             }
         }
     }
@@ -108,38 +99,31 @@ namespace syn
         double output = 0.0;
         double filt_sum = 0.0; // used to make the filter unity gain
 
-        // Backward pass
         double bkwd_filt_phase = offset;
+        double fwd_filt_phase = blimp_step - offset;
         int bkwd_table_index = index;
-        while (bkwd_filt_phase < blimp_table.size) {
+        int fwd_table_index = index + 1;
+        int steps = blimp_table.m_size / blimp_step;
+        for (int i = 0; i < steps; i++) {
 #if DO_LERP_FOR_SINC
-            double bkwd_filt_sample = blimp_table.plerp(bkwd_filt_phase / blimp_table.size);
+            double bkwd_filt_sample = blimp_table.plerp(bkwd_filt_phase / blimp_table.m_size);
+            double fwd_filt_sample = blimp_table.plerp(fwd_filt_phase / blimp_table.m_size);
 #else
             double bkwd_filt_sample = blimp_table[static_cast<int>(bkwd_filt_phase)];
+            double fwd_filt_sample = blimp_table[static_cast<int>(fwd_filt_phase)];
 #endif
             if (bkwd_table_index < 0) {
                 bkwd_table_index = size - 1;
             }
-            output += bkwd_filt_sample * table[bkwd_table_index--];
-            bkwd_filt_phase += blimp_step;
-            filt_sum += bkwd_filt_sample;
-        }
-
-        // Forward pass
-        double fwd_filt_phase = blimp_step - offset;
-        int fwd_table_index = index + 1;
-        while (fwd_filt_phase < blimp_table.size) {
-#if DO_LERP_FOR_SINC
-            double fwd_filt_sample = blimp_table.plerp(fwd_filt_phase / blimp_table.size);
-#else
-            double fwd_filt_sample = blimp_table[static_cast<int>(fwd_filt_phase)];
-#endif
             if (fwd_table_index >= size) {
                 fwd_table_index = 0;
             }
+            output += bkwd_filt_sample * table[bkwd_table_index--];
             output += fwd_filt_sample * table[fwd_table_index++];
-            fwd_filt_phase += blimp_step;
+            filt_sum += bkwd_filt_sample;
             filt_sum += fwd_filt_sample;
+            bkwd_filt_phase += blimp_step;
+            fwd_filt_phase += blimp_step;
         }
 
         return output / filt_sum;

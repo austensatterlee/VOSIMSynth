@@ -25,9 +25,11 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <mutex>
 
 #if defined(TRACER_BUILD)
-#define TIME_TRACE syn::TimingTracer __trcr(__FUNCTION__, __LINE__, "");
+#define SYN_TIMING_TRACE syn::TimingTracer __trcr(__FUNCTION__, __LINE__, "");
+#define SYN_MSG_TRACE(...) syn::GlobalLogFile::instance().log(__FUNCTION__, __LINE__, __VA_ARGS__);
 #else
-#define TIME_TRACE
+#define SYN_TIMING_TRACE
+#define SYN_MSG_TRACE(...)
 #endif
 
 #if !defined(LOGFILE)

@@ -5,8 +5,8 @@
 #include "vosimsynth/widgets/CircuitWidget.h"
 #include "vosimsynth/widgets/UnitEditor.h"
 #include "vosimsynth/widgets/OscilloscopeWidget.h"
-#include "vosimsynth/Logging.h"
 #include "vosimsynth/VOSIMTheme.h"
+#include <vosimlib/Logging.h>
 #include <vosimlib/VoiceManager.h>
 #include <vosimlib/Command.h>
 #include <vosimlib/UnitFactory.h>
@@ -18,7 +18,7 @@ using nanogui::Color;
 using nlohmann::json;
 
 synui::MainGui::operator json() const {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     json j;
     j["circuit"] = m_circuitWidget->operator json();
     j["settings"] = m_settingsFormHelper->operator json();
@@ -27,7 +27,7 @@ synui::MainGui::operator json() const {
 }
 
 synui::MainGui* synui::MainGui::load(const json& j) {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     // Load theme
     if(j.find("theme")!=j.end())
         m_screen->theme()->update(j.at("theme"));
@@ -40,13 +40,13 @@ synui::MainGui* synui::MainGui::load(const json& j) {
 }
 
 void synui::MainGui::reset() {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     m_unitEditorHost->reset();
     m_circuitWidget->reset();
 }
 
 void synui::MainGui::_onResize() {
-    TIME_TRACE        
+    SYN_TIMING_TRACE        
     m_sidePanelL->setFixedHeight(m_screen->height());
     m_screen->performLayout();
     m_sidePanelR->setPosition({m_sidePanelL->width(), m_buttonPanel->height()});
@@ -62,18 +62,18 @@ void synui::MainGui::_onResize() {
 }
 
 void synui::MainGui::_onOpen() {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     m_screen->setVisible(true);
     m_screen->performLayout();
 }
 
 void synui::MainGui::_onClose() {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     m_screen->setVisible(false);
 }
 
 void synui::MainGui::createUnitSelector_(nanogui::Widget* a_widget) {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     nanogui::BoxLayout* layout = new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 3, 3);
     a_widget->setLayout(layout);
 
@@ -105,7 +105,7 @@ void synui::MainGui::createUnitSelector_(nanogui::Widget* a_widget) {
 }
 
 void synui::MainGui::createSettingsEditor_(nanogui::Widget* a_widget) {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     auto layout = new nanogui::AdvancedGridLayout({ 10, 0, 10, 0 }, {});
     layout->setMargin(10);
     layout->setColStretch(2, 1);
@@ -183,7 +183,7 @@ void synui::MainGui::createSettingsEditor_(nanogui::Widget* a_widget) {
 }
 
 void synui::MainGui::createThemeEditor_(nanogui::Widget* a_widget) {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     auto layout = new nanogui::AdvancedGridLayout({ 10, 0, 10, 0 }, {});
     layout->setMargin(10);
     layout->setColStretch(2, 1);
@@ -315,7 +315,7 @@ void synui::MainGui::createThemeEditor_(nanogui::Widget* a_widget) {
 }
 
 void synui::MainGui::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     auto oscPanel = a_widget->add<nanogui::Widget>();
     oscPanel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 2, 3));
     // Add message that displays when no scopes exist
@@ -359,14 +359,14 @@ void synui::MainGui::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
 }
 
 void synui::MainGui::_onCreateWindow() {
-    TIME_TRACE
+    SYN_TIMING_TRACE
 
     GLFWwindow* window = getGlfwWindow_();
 
-    TRACEMSG("Initializing nanogui screen.");
+    SYN_MSG_TRACE("Initializing nanogui screen.");
     m_screen->initialize(window, false);
     m_screen->setTheme(new VOSIMTheme(m_screen->nvgContext()));
-    TRACEMSG("Finished initializing nanogui screen.");
+    SYN_MSG_TRACE("Finished initializing nanogui screen.");
 
     /* Setup event handlers. */
     glfwSetCursorPosCallback(window,
@@ -432,7 +432,7 @@ void synui::MainGui::_runLoop() {
 }
 
 void synui::MainGui::_rebuild() {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     /* Create left pane. */
     m_sidePanelL = new EnhancedWindow(m_screen, "");
     m_sidePanelL->setIsBackgroundWindow(true);
@@ -621,12 +621,12 @@ synui::MainGui::MainGui(syn::VoiceManager* a_vm, int a_width, int a_height, int 
       m_unitEditorHost(nullptr),
       m_sidePanelR(nullptr),
       m_circuitWidget(nullptr) {
-    TIME_TRACE
+    SYN_TIMING_TRACE
     _onCreateWindow();
 }
 
 synui::MainGui::~MainGui() {
-    TIME_TRACE
+    SYN_TIMING_TRACE
 }
 
 void synui::MainGui::alert(const std::string& a_title, const std::string& a_msg, nanogui::MessageDialog::Type a_type) {

@@ -29,7 +29,7 @@ namespace synui {
         virtual ~ScopeGL();
 
         void setNumBuffers(int a_numBuffers) { m_values.resize(a_numBuffers); m_color.resize(a_numBuffers); }
-        int numBuffers() const { return m_values.size(); }
+        int numBuffers() const { return int(m_values.size()); }
 
         void setValues(int a_buffer, const Eigen::MatrixXf& a_values) { m_values[a_buffer] = a_values; }
 
