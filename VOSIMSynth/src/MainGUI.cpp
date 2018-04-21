@@ -46,7 +46,7 @@ void synui::MainGui::reset() {
 }
 
 void synui::MainGui::_onResize() {
-    SYN_TIMING_TRACE        
+    SYN_TIMING_TRACE
     m_sidePanelL->setFixedHeight(m_screen->height());
     m_screen->performLayout();
     m_sidePanelR->setPosition({m_sidePanelL->width(), m_buttonPanel->height()});
@@ -148,8 +148,8 @@ void synui::MainGui::createSettingsEditor_(nanogui::Widget* a_widget) {
         m_vm->queueAction(syn::MakeCommand(f));
     }, [this]() {
         return m_vm->getMaxVoices();
-    }); 
-    
+    });
+
     helper->addVariable<int>("Internal buffer size", [this, helper](const int& size) {
         auto f = [this, size, helper]() {
             m_vm->setInternalBufferSize(size);
@@ -215,7 +215,7 @@ void synui::MainGui::createThemeEditor_(nanogui::Widget* a_widget) {
     ADD_FH_VAR("DefaultUnitWidget/hovered/shadow-feather", float, m_screen->theme()->prop("/DefaultUnitWidget/hovered/shadow-feather"));
     ADD_FH_VAR("DefaultUnitWidget/hovered/shadow-color", Color, m_screen->theme()->prop("/DefaultUnitWidget/hovered/shadow-color"));
 
-    helper->addGroup("OscilloscopeWidget"); 
+    helper->addGroup("OscilloscopeWidget");
     ADD_FH_VAR("OscilloscopeWidget/bg-color", Color, m_screen->theme()->prop("/OscilloscopeWidget/bg-color"));
     ADD_FH_VAR("OscilloscopeWidget/fg-color", Color, m_screen->theme()->prop("/OscilloscopeWidget/fg-color"));
     ADD_FH_VAR("OscilloscopeWidget/text-color", Color, m_screen->theme()->prop("/OscilloscopeWidget/text-color"));
@@ -336,7 +336,7 @@ void synui::MainGui::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
         if (unit.getClassIdentifier() == OscilloscopeUnit::classIdentifier()) {
             oscPanel->add<OscilloscopeWidget>(m_vm, unitId);
             m_screen->performLayout();
-        }        
+        }
     };
 
     const std::function<void(UnitWidget*)> removeScope = [this, oscPanel](UnitWidget* w) {

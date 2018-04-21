@@ -14,7 +14,7 @@ namespace synui {
         : Widget(a_parent),
           m_highlightedSubmenu(nullptr),
           m_disposable(a_disposable),
-          m_activated(false) 
+          m_activated(false)
     {
         m_itemContainer = new Widget(this);
         m_itemContainer->setPosition({0,0});
@@ -75,7 +75,7 @@ namespace synui {
             iconLbl->setFontSize(theme()->get("/ContextMenu/text-size", 20));
             iconLbl->setHeight(iconLbl->fontSize() * 2);
             m_itemLayout->setAnchor(iconLbl, Anchor{ 0, m_itemLayout->rowCount() - 1 });
-        }        
+        }
         return m_submenus[a_name];
     }
 

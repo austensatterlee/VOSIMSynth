@@ -9,7 +9,7 @@ using nanogui::Color;
 synui::GainUnitWidget::GainUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId)
     : SummerUnitWidget(a_parent, a_vm, a_unitId)
 {
-    
+
 }
 
 void synui::GainUnitWidget::draw(NVGcontext* ctx)
@@ -31,14 +31,14 @@ void synui::GainUnitWidget::draw(NVGcontext* ctx)
     Color iColor(19, 80, 130, 255);
 
     nvgBeginPath(ctx);
-    nvgEllipse(ctx, size().x() * 0.5, size().y() * 0.5, size().x() * 0.5, size().y() * 0.5);    
+    nvgEllipse(ctx, size().x() * 0.5, size().y() * 0.5, size().x() * 0.5, size().y() * 0.5);
     nvgFillColor(ctx, bgColor);
     nvgFill(ctx);
     if (contains(mousePos + position()) && !handleSelected)
     {
         nvgFillColor(ctx, bgHighlightColor);
-        nvgFill(ctx);        
-    }    
+        nvgFill(ctx);
+    }
 
     // Draw connected input ports
     for (int i = 0; i < getUnit_().numInputs(); i++)
@@ -69,7 +69,7 @@ void synui::GainUnitWidget::draw(NVGcontext* ctx)
     }
     nvgStrokeColor(ctx, handleStrokeColor);
     nvgStrokeWidth(ctx, 5.0f);
-    nvgStroke(ctx);    
+    nvgStroke(ctx);
 
     // Draw X sign
     nvgBeginPath(ctx);
@@ -82,7 +82,7 @@ void synui::GainUnitWidget::draw(NVGcontext* ctx)
     nvgStrokeColor(ctx, plusColor);
     nvgStrokeWidth(ctx, 2.0f);
     nvgStroke(ctx);
-    
+
     /* Draw highlight if enabled. */
     if (highlighted())
     {

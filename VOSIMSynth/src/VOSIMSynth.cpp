@@ -171,7 +171,7 @@ void VOSIMSynth::registerUnits()
     uf.addUnitPrototype<syn::OnePoleLPUnit>("Filters", "1P");
     uf.addUnitPrototype<syn::FollowerUnit>("Filters", "follow");
     uf.addUnitPrototype<syn::DCRemoverUnit>("Filters", "DC");
-    
+
     uf.addUnitPrototype<syn::SummerUnit>("Math", "sum");
     uf.addUnitPrototype<syn::GainUnit>("Math", "gain");
     uf.addUnitPrototype<syn::LerpUnit>("Math", "affine");
@@ -186,7 +186,7 @@ void VOSIMSynth::registerUnits()
 
     uf.addUnitPrototype<syn::SampleAndHoldUnit>("Processors", "S&H");
     uf.addUnitPrototype<syn::TanhUnit>("Processors", "tanh");
-    
+
     uf.addUnitPrototype<syn::PitchToFreqUnit>("Converters", "p2f");
     uf.addUnitPrototype<syn::FreqToPitchUnit>("Converters", "f2p");
 
@@ -195,7 +195,7 @@ void VOSIMSynth::registerUnits()
     uf.addUnitPrototype<syn::VelocityUnit>("MIDI", "vel");
     uf.addUnitPrototype<syn::MidiCCUnit>("MIDI", "CC");
     uf.addUnitPrototype<syn::VoiceIndexUnit>("MIDI", "voice");
-    
+
     uf.addUnitPrototype<synui::OscilloscopeUnit>("Visualizers", "scope");
 
     uf.addUnitPrototype<syn::Circuit>("", "circuit");

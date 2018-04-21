@@ -108,8 +108,8 @@ void synui::CircuitWire::draw(NVGcontext* ctx) {
     //            nvgBeginPath(ctx);
     //            nvgFillColor(ctx, nanogui::Color(0.0f,0.0f,0.0f,0.5f));
     //            for (auto gridPt : m_crossings)
-    //            {                
-    //                Vector2i pixelPt = m_parentCircuit->m_grid.toPixel({gridPt.first, gridPt.second}, m_parentCircuit->getGridSpacing());      
+    //            {
+    //                Vector2i pixelPt = m_parentCircuit->m_grid.toPixel({gridPt.first, gridPt.second}, m_parentCircuit->getGridSpacing());
     //                nvgCircle(ctx, pixelPt.x(), pixelPt.y(), 1.0f);
     //            }
     //            nvgFill(ctx);
@@ -189,7 +189,7 @@ int synui::CircuitWire::weight_func<CellType>::operator()(const Grid2D<CellType>
     else if(cell.contains(CircuitWidget::GridCell::State::Unit))
         score += 100;
     else if(!cell)
-        score += 1;    
+        score += 1;
     return score;
 }
 
@@ -199,7 +199,7 @@ void synui::CircuitWire::updatePath() {
     auto startCell = m_parentCircuit->m_grid.fromPixel(m_start, m_parentCircuit->gridSpacing());
     auto endCell = m_parentCircuit->m_grid.fromPixel(m_end, m_parentCircuit->gridSpacing());
 
-    // Remove from grid            
+    // Remove from grid
     m_parentCircuit->m_grid.map(
         [&](CircuitWidget::GridCell& cell) { cell.remove({CircuitWidget::GridCell::State::Wire, this}); }
     );

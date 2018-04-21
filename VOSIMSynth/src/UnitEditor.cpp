@@ -149,7 +149,7 @@ void synui::UnitEditor::_build()
 
             /* Build slider for "Bounded" parameters */
             nanogui::Slider* s = paramControlType == syn::UnitParameter::Bounded ? new nanogui::Slider(control) : nullptr;
-            
+
             if (s) {
                 s->setDefaultValue(param.getNorm(param.getDefaultValue()));
                 s->setRange({ 0.0,1.0 });
@@ -172,7 +172,7 @@ void synui::UnitEditor::_build()
                 int sig = param.getPrecision();
                 double valueIncr = std::pow(10, -sig);
 
-                bool isDirty = static_cast<nanogui::TextBox*>(fb)->value() != text || control->visible() != visible || fb->getValueIncrement() != valueIncr || (s && norm != s->value());               
+                bool isDirty = static_cast<nanogui::TextBox*>(fb)->value() != text || control->visible() != visible || fb->getValueIncrement() != valueIncr || (s && norm != s->value());
                 if (isDirty)
                 {
                     m_isDirty = true;
@@ -278,7 +278,7 @@ void synui::UnitEditorHost::addEditor(syn::UnitTypeId a_classId, int a_unitId)
     // Remove any editor already associated with this unit.
     if (m_editorMap.find(a_unitId) != m_editorMap.end())
         removeEditor(a_unitId);
-    
+
     // Construct the new editor.
     UnitEditorConstructor constructor = [](Widget* p, syn::VoiceManager* vm, int unitId) { return new UnitEditor(p, vm, unitId); };
     if (m_registeredUnitEditors.find(a_classId) != m_registeredUnitEditors.end())
@@ -303,8 +303,8 @@ void synui::UnitEditorHost::removeEditor(int a_unitId)
         removeChild(editor);
     }
     else
-    {    
-        Widget* selectedWidget = childAt(selectedIndex());    
+    {
+        Widget* selectedWidget = childAt(selectedIndex());
         removeChild(editor);
         int newIndex = childIndex(selectedWidget);
         setSelectedIndex(newIndex);

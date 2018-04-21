@@ -23,7 +23,7 @@ namespace synui {
           m_subCount(0),
           m_lastPhase(0.0),
           m_samplesSinceLastSync(0),
-          m_syncCount(0) 
+          m_syncCount(0)
     {
         addParameter_(pBufSize, {"buffer size", 3 * MAX_SUBP, MAX_BUF * MAX_SUBP, m_bufSize, UnitParameter::Samples});
         addParameter_(pNumPeriods, UnitParameter{"periods", 1, 16, 1}.setVisible(false));
@@ -216,7 +216,7 @@ namespace synui {
             nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_BOTTOM);
             nvgFillColor(ctx, m_textColor);
             nvgText(ctx, mPos.x() + mSize.x() - 3, mPos.y() + mSize.y() - 1, m_footer.c_str(), nullptr);
-        }        
+        }
     }
 
     void OscilloscopeWidget::drawGrid(NVGcontext* ctx) {

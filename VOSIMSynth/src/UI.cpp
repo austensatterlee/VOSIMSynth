@@ -43,7 +43,7 @@ namespace synui
 
         float bounds[4];
         nvgSave(a_ctx);
-        nvgTranslate(a_ctx, a_pos.x(), a_pos.y()+20);        
+        nvgTranslate(a_ctx, a_pos.x(), a_pos.y()+20);
         nvgFontFace(a_ctx, a_font.c_str());
         nvgFontSize(a_ctx, a_fontSize);
         nvgTextAlign(a_ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
