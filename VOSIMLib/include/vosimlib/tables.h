@@ -64,7 +64,7 @@ namespace syn {
 
             int intPart = index;
             double fracPart = index - intPart;
-            assert(intPart <= size - 1);
+            assert(intPart <= m_size - 1);
             if (fracPart > 0.0 && intPart < m_size - 1) {
                 return LERP<double>(m_data[intPart], m_data[intPart + 1], fracPart);
             }
