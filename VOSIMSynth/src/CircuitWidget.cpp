@@ -67,7 +67,7 @@ void synui::CircuitWidget::draw(NVGcontext* ctx) {
             const float ptSize = m_gridSpacing * 0.25f;
 
             auto pt = m_grid.unravel_index(i);
-            auto pixel = m_grid.toPixel(pt, m_gridSpacing);
+            auto pixel = Grid2D<GridCell>::toPixel(pt, m_gridSpacing);
             if (!m_grid.get(pt)) {
                 nvgStrokeColor(ctx, gridColor);
             } else if (m_grid.get(pt).contains(GridCell::State::Unit)) {

@@ -13,8 +13,8 @@ namespace syn {
     /*::/table_decl::*/
 
     /*::lut_defs::*/
-    BlimpTable& lut_blimp_table_offline() { static BlimpTable table(BLIMP_TABLE_OFFLINE, 8096, 63, 256); return table; }
-    BlimpTable& lut_blimp_table_online() { static BlimpTable table(BLIMP_TABLE_ONLINE, 1928, 15, 256); return table; }
+    BlimpTable& lut_blimp_table_offline() { static BlimpTable table(BLIMP_TABLE_OFFLINE, 12979, 101, 256); return table; }
+    BlimpTable& lut_blimp_table_online() { static BlimpTable table(BLIMP_TABLE_ONLINE, 3984, 31, 256); return table; }
     AffineTable& lut_pitch_table() { static AffineTable table(PITCH_TABLE, 3841, -128.0, 256.0); return table; }
     ResampledTable& lut_bl_saw_table() { static ResampledTable table(BL_SAW_TABLE, 2049, lut_blimp_table_online(), lut_blimp_table_offline()); return table; }
     ResampledTable& lut_bl_square_table() { static ResampledTable table(BL_SQUARE_TABLE, 2049, lut_blimp_table_online(), lut_blimp_table_offline()); return table; }

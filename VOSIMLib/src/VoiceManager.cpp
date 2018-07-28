@@ -159,7 +159,7 @@ namespace syn
         for(int i=0;i<a_newMax;i++)
         {
             m_circuits[i] = m_instrument;
-            m_circuits[i].setVoiceIndex(a_newMax>1 ? i * 1.0 / (a_newMax-1) : 1.0);
+            m_circuits[i].setVoiceIndex(a_newMax>1 ? (i+1) * 1.0 / a_newMax : 1.0);
             m_idleVoices.push_back(i);
         }
     }

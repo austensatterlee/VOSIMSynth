@@ -34,7 +34,7 @@ namespace syn
 
     void ResampledTable::resample_tables() {
         /* Construct resampled tables at ratios of powers of K */
-        m_num_resampled_tables = MIN<int>(3, MAX<int>(1, log2(1.0*m_size) - 2));
+        m_num_resampled_tables = MIN<int>(6, MAX<int>(1, log2(1.0*m_size) - 2));
         m_resampled_sizes.resize(m_num_resampled_tables);
         m_resampled_tables.resize(m_num_resampled_tables);
         double currsize = m_size;
@@ -48,7 +48,7 @@ namespace syn
 
     double ResampledTable::getresampled(double phase, double period) const {
         auto ratio = period / m_size;
-        int table_index = CLAMP<int>(floor(log2(ratio)), 0, m_num_resampled_tables-1);
+        int table_index = CLAMP<int>(floor(-log2(ratio)), 0, m_num_resampled_tables-1);
         return getresampled_single(&m_resampled_tables[table_index][0], m_resampled_sizes[table_index], phase, period, m_blimp_table_online);
     }
 

@@ -103,11 +103,6 @@ def GenerateBlit(pts, nharmonics=None):
     blit = fft.fftshift(fft.irfft(blit_spectrum))
     return blit
 
-def bl_prefilter():
-    prefilter_lhalf=[0.0028, -0.0119, 0.0322, -0.0709, 0.1375, -0.2544, 0.4385, -0.6334, 1.7224]
-    prefilter=make_symmetric_l(prefilter_lhalf)
-    return prefilter
-
 def GenerateBLSaw(nharmonics, npoints=None, w0=1):
     """ Generate band limited sawtooth wave """
     npoints = npoints or nharmonics*2+1
@@ -146,7 +141,7 @@ def GenerateBLTriangle(nharmonics, npoints=None, w0=1):
     bltri = sum([g*sin(h*sample_pts) for g, h in zip(gains, harmonics)], axis=0)
     return bltri/bltri.max()
 
-def GenerateBlimp(intervals=10, res=2048, fs=48000, fc=23000, beta=7.20, apgain=0.89, apbeta=0.7, ret_half=False):
+def GenerateBlimp(intervals=10, res=2048, fs=48e3, fc=20000, beta=7.20, apgain=0.89, apbeta=0.7, ret_half=False):
     """
     Generate a bandlimited dirac delta impulse.
 
@@ -526,15 +521,12 @@ def main(pargs):
     MAX_PITCH = 256
     pitches, pitchtable = GeneratePitchTable(MIN_PITCH, MAX_PITCH, PITCH_RES)
 
-    """Prefilter for bandlimited waveforms"""
-    prefilter = bl_prefilter()
-
     """Bandlimited saw wave"""
     if v:
         sys.stdout.write("Generating band-limited saw wavetable...")
     BLSAW_HARMONICS = 1024
     blsaw = GenerateBLSaw(BLSAW_HARMONICS)
-    blsaw /= blsaw.max()
+    blsaw /= np.abs(blsaw).max()
     if v:
         print " samples:", len(blsaw)
 
@@ -543,7 +535,7 @@ def main(pargs):
         sys.stdout.write("Generating band-limited square wavetable...")
     BLSQUARE_HARMONICS = 1024
     blsquare = GenerateBLSquare(BLSQUARE_HARMONICS)
-    blsquare /= blsquare.max()
+    blsquare /= np.abs(blsquare).max()
     if v:
         print " samples:", len(blsquare)
 
@@ -552,27 +544,26 @@ def main(pargs):
         sys.stdout.write("Generating band-limited triangle wavetable...")
     BLTRI_HARMONICS = 1024
     bltri = GenerateBLTriangle(BLTRI_HARMONICS)
-    bltri /= bltri.max()
+    bltri /= np.abs(bltri).max()
     if v:
         print " samples:", len(bltri)
 
     """Offline and online BLIMP for resampling"""
-    OFFLINE_BLIMP_INTERVALS = 63
+    OFFLINE_BLIMP_INTERVALS = 101
     OFFLINE_BLIMP_RES = 256
 
-    ONLINE_BLIMP_INTERVALS = 15
+    ONLINE_BLIMP_INTERVALS = 31
     ONLINE_BLIMP_RES = 256
 
     if v:
         sys.stdout.write("Generating 'online' band-limited impulse table...")
-    blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS, ONLINE_BLIMP_RES, fc=20e3, fs=44.1e3, ret_half=True)
+    blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS, ONLINE_BLIMP_RES, fc=19e3, fs=44.1e3, ret_half=True)
     if v:
         print " samples:", len(blimp_online)
 
     if v:
         sys.stdout.write("Generating 'offline' band-limited impulse table...")
-    blimp_offline = GenerateBlimp(OFFLINE_BLIMP_INTERVALS, OFFLINE_BLIMP_RES, fc=20e3, fs=44.1e3, ret_half=True)
-    blimp_offline = ss.fftconvolve( blimp_offline, prefilter, 'same' )
+    blimp_offline = GenerateBlimp(OFFLINE_BLIMP_INTERVALS, OFFLINE_BLIMP_RES, fc=21e3, fs=44.1e3, ret_half=True)
     if v:
         print " samples:", len(blimp_offline)
 

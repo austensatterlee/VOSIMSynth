@@ -28,10 +28,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 #include "vosimsynth/Grid.h"
 #include "vosimsynth/Signal.h"
-#include <vosimlib/Unit.h>
-#include <nanogui/widget.h>
-#include <eigen/Core>
 #include "vosimsynth/UI.h"
+#include <Eigen/Core>
+#include <nanogui/widget.h>
+#include <vosimlib/Unit.h>
 
 namespace syn {
     class VoiceManager;
