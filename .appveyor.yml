@@ -11,8 +11,8 @@ environment:
     VOSIMSYNTH_BUILD_STANDALONE: OFF
     VOSIMPROJECT_BUILD_TESTS: ON
     VOSIMPROJECT_BUILD_BENCHMARKS: ON
-    VOSIMLIB_SHARED: OFF
-    BUILD_SHARED_LIBS: OFF
+    VOSIMLIB_SHARED: OFF 
+    BUILD_SHARED_LIBS: OFF 
 
     matrix:
         - GENERATOR: "Visual Studio 15 2017"
@@ -49,6 +49,7 @@ environment:
           VOSIMPROJECT_EIS: AVX2
           PYTHON: C:/Miniconda-x64
           BUILD_DIR: _build64-avx2
+          VOSIMPROJECT_EIS: AVX2
 
 install:
     - git submodule update --init --recursive

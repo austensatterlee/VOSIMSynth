@@ -95,9 +95,9 @@ if(MSVC)
   list(APPEND MSVC_RDEB /Ox  /Ob0  /Oi  /Ot  /Oy-  /fp:fast  /fp:except-  /Qpar  /GT /GL)
 
   if(NOT VOSIMPROJECT_EIS STREQUAL "NONE")
-      list(APPEND MSVC_REL /arch:${VOSIMPROJECT_EIS})
-      list(APPEND MSVC_RDEB /arch:${VOSIMPROJECT_EIS})
-      list(APPEND MSVC_DEB /arch:${VOSIMPROJECT_EIS})
+    list(APPEND MSVC_REL /arch:${VOSIMPROJECT_EIS})
+    list(APPEND MSVC_RDEB /arch:${VOSIMPROJECT_EIS})
+    list(APPEND MSVC_DEB /arch:${VOSIMPROJECT_EIS})
   endif()
     
   add_compile_options("$<$<CONFIG:Release>:${MSVC_REL}>")
