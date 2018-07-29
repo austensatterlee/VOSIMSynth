@@ -1,4 +1,5 @@
 import re
+from __future__ import print_function
 
 HEADER_TEMPLATE=r"""/*
 Copyright 2016, Austen Satterlee
@@ -80,7 +81,7 @@ if __name__=="__main__":
 
     if parsed.command=="auto-add":
         if parsed.list:
-            print '\n'.join( find_valid_directories('src', 'include') )
+            print('\n'.join(find_valid_directories('src', 'include')))
             sys.exit(1)
         if not parsed.directory:
             sys.stderr.write("ERROR: Please provide a directory\n")

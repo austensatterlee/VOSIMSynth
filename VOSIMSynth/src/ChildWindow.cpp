@@ -38,7 +38,7 @@ void synui::ChildWindow::_openWindowImplem(HWND a_system_window) {
     // Try to force the window to update
     SetWindowPos(hwnd, a_system_window, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
-    UINT_PTR success = SetTimer(hwnd, m_timerId, 1000 / 60, reinterpret_cast<TIMERPROC>(_timerProc)); // timer callback
+    UINT_PTR success = SetTimer(hwnd, m_timerId, 1000 / 120, reinterpret_cast<TIMERPROC>(_timerProc)); // timer callback
     if (!success) {
         SYN_MSG_TRACE("Unable to create timer!");
         throw std::runtime_error("Unable to create timer!");

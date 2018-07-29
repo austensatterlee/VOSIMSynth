@@ -49,7 +49,6 @@ environment:
           VOSIMPROJECT_EIS: AVX2
           PYTHON: C:/Miniconda-x64
           BUILD_DIR: _build64-avx2
-          VOSIMPROJECT_EIS: AVX2
 
 install:
     - git submodule update --init --recursive

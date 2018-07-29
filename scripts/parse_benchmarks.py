@@ -1,3 +1,4 @@
+from __future__ import print_function
 import re
 import os
 import pandas as pd
@@ -27,11 +28,10 @@ def compute_bench_stats(data, verbose=False):
             str_width = max(map(len, stats_df_str.split("\n")))
             tag_width = len(fulltag)
             num_spaces = 8 # str_width/2-tag_width/2
-            print " "*num_spaces + "-"*len(fulltag)
-            print " "*num_spaces + fulltag
-            print " "*num_spaces + "-"*len(fulltag)
-            print stats_df_str
-            print
+            print(" "*num_spaces + "-"*len(fulltag))
+            print(" "*num_spaces + fulltag)
+            print(" "*num_spaces + "-"*len(fulltag))
+            print(stats_df_str, end="\n\n")
     return all_stats
 
 if __name__=="__main__":

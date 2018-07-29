@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 import re
 import os
@@ -47,6 +48,6 @@ if __name__=="__main__":
         if not args.dry:
             with open(fn, 'w') as fp:
                 fp.write(text)
-            print msg
-        else:            
-            print "(DRY RUN)", msg
+            print(msg)
+        else:
+            print("(DRY RUN)", msg)

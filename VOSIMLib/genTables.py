@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 from numpy import *
 from scipy import signal as ss
@@ -511,11 +512,11 @@ def main(pargs):
     SINE_RES = 1024
     sintable = GenerateSine(SINE_RES)
     if v:
-        print " samples:", len(sintable)
+        print(" samples:", len(sintable))
 
     """Pitch table"""
     if v:
-        print "Generating pitch table..."
+        print("Generating pitch table...")
     PITCH_RES = 10
     MIN_PITCH = -128
     MAX_PITCH = 256
@@ -528,7 +529,7 @@ def main(pargs):
     blsaw = GenerateBLSaw(BLSAW_HARMONICS)
     blsaw /= np.abs(blsaw).max()
     if v:
-        print " samples:", len(blsaw)
+        print(" samples:", len(blsaw))
 
     """Bandlimited square wave"""
     if v:
@@ -537,7 +538,7 @@ def main(pargs):
     blsquare = GenerateBLSquare(BLSQUARE_HARMONICS)
     blsquare /= np.abs(blsquare).max()
     if v:
-        print " samples:", len(blsquare)
+        print(" samples:", len(blsquare))
 
     """Bandlimited triangle wave"""
     if v:
@@ -546,7 +547,7 @@ def main(pargs):
     bltri = GenerateBLTriangle(BLTRI_HARMONICS)
     bltri /= np.abs(bltri).max()
     if v:
-        print " samples:", len(bltri)
+        print(" samples:", len(bltri))
 
     """Offline and online BLIMP for resampling"""
     OFFLINE_BLIMP_INTERVALS = 101
@@ -559,16 +560,16 @@ def main(pargs):
         sys.stdout.write("Generating 'online' band-limited impulse table...")
     blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS, ONLINE_BLIMP_RES, fc=19e3, fs=44.1e3, ret_half=True)
     if v:
-        print " samples:", len(blimp_online)
+        print(" samples:", len(blimp_online))
 
     if v:
         sys.stdout.write("Generating 'offline' band-limited impulse table...")
     blimp_offline = GenerateBlimp(OFFLINE_BLIMP_INTERVALS, OFFLINE_BLIMP_RES, fc=21e3, fs=44.1e3, ret_half=True)
     if v:
-        print " samples:", len(blimp_offline)
+        print(" samples:", len(blimp_offline))
 
     if v:
-        print "Generating C++ code..."
+        print("Generating C++ code...")
 
     """Generate C++ files"""
     NAMESPACE = "syn"
@@ -647,14 +648,14 @@ def main(pargs):
     # Backup old table data file
     if os.path.isfile(LUT_TABLEDATA_FILE):
         if v:
-            print "Backing up old {}...".format(LUT_TABLEDATA_FILE)
+            print("Backing up old {}...".format(LUT_TABLEDATA_FILE))
         old_table_data = open(LUT_TABLEDATA_FILE, 'r').read()
         with open(LUT_TABLEDATA_FILE+'.bk', 'w') as fp:
             fp.write(old_table_data)
 
     # Write new table data file
     if v:
-        print "Writing new {}...".format(os.path.realpath(LUT_TABLEDATA_FILE))
+        print("Writing new {}...".format(os.path.realpath(LUT_TABLEDATA_FILE)))
     with open(LUT_TABLEDATA_FILE, 'w') as fp:
         # Add code to namespace
         tabledata_def = """namespace {} {{
@@ -666,13 +667,13 @@ def main(pargs):
     old_code = ""
     if os.path.isfile(LUT_TABLEHDR_FILE):
         if v:
-            print "Backing up old {}...".format(LUT_TABLEHDR_FILE)
+            print("Backing up old {}...".format(LUT_TABLEHDR_FILE))
         old_code = open('{}'.format(LUT_TABLEHDR_FILE), 'r').read()
         with open('{}.bk'.format(LUT_TABLEHDR_FILE), 'w') as fp:
             fp.write(old_code)
 
     if v:
-        print "Writing new {}...".format(os.path.realpath(LUT_TABLEHDR_FILE))
+        print("Writing new {}...".format(os.path.realpath(LUT_TABLEHDR_FILE)))
     if clean:
         old_code = ""
     # Add tags if the file is empty
@@ -701,13 +702,13 @@ namespace {}{{
     old_code = ""
     if os.path.isfile(LUT_TABLESRC_FILE):
         if v:
-            print "Backing up old {}...".format(LUT_TABLESRC_FILE)
+            print("Backing up old {}...".format(LUT_TABLESRC_FILE))
         old_code = open('{}'.format(LUT_TABLESRC_FILE), 'r').read()
         with open('{}.bk'.format(LUT_TABLESRC_FILE), 'w') as fp:
             fp.write(old_code)
 
     if v:
-        print "Writing new {}...".format(os.path.realpath(LUT_TABLESRC_FILE))
+        print("Writing new {}...".format(os.path.realpath(LUT_TABLESRC_FILE)))
     if clean:
         old_code=""
     # Add tags if the file is empty

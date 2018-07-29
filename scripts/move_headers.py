@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 import re
 import os
@@ -52,7 +53,7 @@ if __name__=="__main__":
         newincludes.append(os.path.relpath(args.target, args.include_directory))
         if not args.update_only:
             if args.dry:
-                print "Moving {} -> {}".format(args.source, args.target)
+                print("Moving {} -> {}".format(args.source, args.target))
             else:
                 os.renames(args.source, args.target)
     elif os.path.isdir(args.source):
@@ -67,7 +68,7 @@ if __name__=="__main__":
             newincludes.append(os.path.relpath(newpath, args.include_directory))
             if not args.update_only:
                 if args.dry:
-                    print "Moving {} -> {}".format(oldpath, newpath)
+                    print("Moving {} -> {}".format(oldpath, newpath))
                 else:
                     os.renames(oldpath, newpath)
                     args.dependencies.append(newpath)
@@ -79,10 +80,10 @@ if __name__=="__main__":
     # Update include directives in dependencies
     for fn in args.dependencies:
         if not os.path.isfile(fn):
-            print "Dependency file '{}' does not exist...skipping".format(fn)
+            print("Dependency file '{}' does not exist...skipping".format(fn))
             continue
         if args.dry:
-            print "Modifying {}".format(fn)
+            print("Modifying {}".format(fn))
         else:
             contents = open(fn, 'r').read()
             for old,new in zip(oldincludes, newincludes):
