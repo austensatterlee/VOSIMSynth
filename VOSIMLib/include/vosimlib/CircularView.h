@@ -50,16 +50,18 @@ namespace syn {
               m_viewSize(a_viewSize),
               m_viewOffset(a_viewOffset) { }
 
-        int size() const { return m_viewSize; }
+        int size() const { return m_buf ? m_viewSize : 0; }
 
         const T& operator[](int a_index) const {
+            assert(size()>0);
             int index = WRAP(m_viewOffset + WRAP(a_index, m_viewSize), m_bufSize);
             return m_buf[index];
         }
 
         std::pair<int, int> argMinMax() const {
-            T currMin = (*this)[0], currMax = (*this)[0];
+            assert(size()>0);
             int minIndex = 0, maxIndex = 0;
+            T currMin = (*this)[0], currMax = (*this)[0];
             for (int i = 1; i < m_viewSize; i++) {
                 T currValue = (*this)[i];
                 if (currValue > currMax) {

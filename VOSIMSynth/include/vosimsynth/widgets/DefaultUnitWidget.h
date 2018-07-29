@@ -40,12 +40,12 @@ namespace synui {
         Eigen::Vector2i getOutputPortAbsPosition(int a_portId) override;
         int getInputPort(const Eigen::Vector2i& a_pos) override;
         int getOutputPort(const Eigen::Vector2i& a_pos) override;
+        void performLayout(NVGcontext* ctx) override;
         Eigen::Vector2i preferredSize(NVGcontext* ctx) const override;
 
         bool mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
 
     protected:
-        void onGridChange_() override;
         nanogui::Label* m_titleLabel;
         nanogui::TextBox* m_titleTextBox;
         std::map<int, nanogui::Label*> m_inputLabels;

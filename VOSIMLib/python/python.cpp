@@ -86,7 +86,7 @@ public:
 
     auto operator[](py::array_t<int> a_index) const {
         auto closure = [this](int i) {
-                    if (0 <= i && i <= this->size)
+                    if (0 <= i && i <= this->m_size)
                         return (*static_cast<const Base*>(this))[i];
                     else
                         throw std::invalid_argument("Index is out of bounds.");
@@ -96,7 +96,8 @@ public:
 
     auto lerp(py::array_t<double> a_phase) const {
         auto closure = [this](double p) {
-                    if (0 <= p && p <= 1)
+                    auto ind = static_cast<const Base*>(this)->index(p);
+                    if (ind>=0 && ind<=1.0)
                         return static_cast<const Base*>(this)->lerp(p);
                     else
                         throw std::invalid_argument("Phase is out of bounds.");
@@ -153,19 +154,12 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
 
         .def_property_readonly("inputNames", [](const syn::Unit& self) {
                 std::vector<std::string> input_names;
-                auto nc_inputs = self.inputs();
+                auto ncInputs = self.inputs();
                 for (int i = 0; i < self.numInputs(); i++) {
-                    int item_id = nc_inputs.ids()[i];
+                    int item_id = ncInputs.ids()[i];
                     input_names.push_back(self.inputName(item_id));
                 }
                 return input_names;
-            })
-
-        .def("output", [](const syn::Unit& self, const std::string& a_outputName) {
-                return self.outputs()[a_outputName];
-            })
-        .def("output", [](const syn::Unit& self, int a_index) {
-                return self.outputs().getByIndex(a_index);
             })
         .def_property_readonly("outputNames", [](const syn::Unit& self) {
                 std::vector<std::string> output_names;
@@ -261,7 +255,7 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
              .def("plerp", [](const PyLUT<syn::NormalTable>& a_self, py::array_t<double> a_phase) {
                      return a_self.plerp(a_phase);
                  }, "Periodic linear interpolation (-inf < phase < inf).")
-             .def_property_readonly("size", [](const syn::NormalTable& a_self) { return a_self.size; });
+             .def_property_readonly("size", [](const syn::NormalTable& a_self) { return a_self.m_size; });
 
     py::class_<syn::AffineTable, PyLUT<syn::AffineTable>> affineLut(m, "AffineTable");
     affineLut.def("__init__",
@@ -273,11 +267,11 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
                  })
              .def("lerp", [](const PyLUT<syn::AffineTable>& a_self, py::array_t<double> a_phase) {
                      return a_self.lerp(a_phase);
-                 }, "Linear interpolation (0 <= phase <= 1)")
+                 }, "Linear interpolation")
              .def("plerp", [](const PyLUT<syn::AffineTable>& a_self, py::array_t<double> a_phase) {
                      return a_self.plerp(a_phase);
                  }, "Periodic linear interpolation (-inf < phase < inf).")
-             .def_property_readonly("size", [](const syn::AffineTable& a_self) { return a_self.size; });
+             .def_property_readonly("size", [](const syn::AffineTable& a_self) { return a_self.m_size; });
 
     py::class_<syn::BlimpTable, PyLUT<syn::BlimpTable>> blimp(m, "BlimpTable", normalLut);
     blimp.def("__init__", [](syn::BlimpTable& inst, const Eigen::RowVectorXd& a_table, int a_taps, int a_res) {
@@ -294,7 +288,7 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
              }, "Periodic linear interpolation (-inf < phase < inf).")
          .def_property_readonly("taps", [](const syn::BlimpTable& a_self) { return a_self.taps; })
          .def_property_readonly("res", [](const syn::BlimpTable& a_self) { return a_self.res; })
-         .def_property_readonly("size", [](const syn::BlimpTable& a_self) { return a_self.size; });
+         .def_property_readonly("size", [](const syn::BlimpTable& a_self) { return a_self.m_size; });
 
     py::class_<syn::ResampledTable, PyLUT<syn::ResampledTable>> rstable(m, "ResampledTable", normalLut);
     rstable.def("__init__",
@@ -317,7 +311,7 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
                     };
                     return py::vectorize(closure)(a_phase, a_period);
                })
-           .def_property_readonly("size", [](const syn::ResampledTable& a_self) { return a_self.size; });
+           .def_property_readonly("size", [](const syn::ResampledTable& a_self) { return a_self.m_size; });
 
     m.def("blimp_offline", &syn::lut_blimp_table_offline, "Offline blimp table.", pybind11::return_value_policy::reference);
     m.def("blimp_online", &syn::lut_blimp_table_online, "Online blimp table.", pybind11::return_value_policy::reference);

@@ -48,7 +48,7 @@ namespace syn
 
             // If the voice has not been sent a note off signal, perform reset unless legato is on
             if(voice.isNoteOn() && !m_legato) {
-                voice.noteOff(note, vel);
+                voice.noteOff(note);
             }
 
             // Remove from active voice list
@@ -68,8 +68,8 @@ namespace syn
     int VoiceManager::_stealIdleVoice() {
         // Try to find a voice that is already idle
         if (!m_idleVoices.empty()) {
-            int vind = m_idleVoices.back();
-            m_idleVoices.pop_back();
+            const int vind = m_idleVoices.front();
+            m_idleVoices.erase(m_idleVoices.begin());
             return vind;
         }
 
@@ -102,10 +102,10 @@ namespace syn
         _createVoice(a_noteNumber, a_velocity);
     }
 
-    void VoiceManager::noteOff(int a_noteNumber, int a_velocity) {
+    void VoiceManager::noteOff(int a_noteNumber) {
         if (m_voiceMap.find(a_noteNumber) != m_voiceMap.end()) {
             for (int vind : m_voiceMap[a_noteNumber]) {
-                m_circuits[vind].noteOff(a_noteNumber, a_velocity);
+                m_circuits[vind].noteOff(a_noteNumber);
                 if(std::find(m_releasedVoices.begin(), m_releasedVoices.end(), vind)==m_releasedVoices.end())
                     m_releasedVoices.push_back(vind);
             }
@@ -158,8 +158,8 @@ namespace syn
         // Add new voices to the idle list
         for(int i=0;i<a_newMax;i++)
         {
-            m_circuits[i] = Circuit(m_instrument);
-            m_circuits[i].setVoiceIndex(i>1 ? static_cast<double>(i)/(a_newMax-1) : 1.0);
+            m_circuits[i] = m_instrument;
+            m_circuits[i].setVoiceIndex(a_newMax>1 ? (i+1) * 1.0 / a_newMax : 1.0);
             m_idleVoices.push_back(i);
         }
     }
@@ -213,12 +213,13 @@ namespace syn
             a_right_output[j] = 0;
         }
 
-        for (int sample = 0; sample < m_bufferSize; sample += m_internalBufferSize) {
-            for (int i = 0; i < m_activeVoices.size(); i++) {
+        for (int i = 0; i < m_activeVoices.size(); i++) {
+            for (int sample = 0; sample < m_bufferSize; sample += m_internalBufferSize) {
                 vind = m_activeVoices.at(i);
                 Circuit& voice = m_circuits[vind];
-                voice.connectInput(0, a_left_input);
-                voice.connectInput(1, a_right_input);
+                ReadOnlyBuffer<double> left{a_left_input}, right{a_right_input};
+                voice.connectInput(0, left);
+                voice.connectInput(1, right);
                 voice.tick();
                 for (int j = 0; j < m_internalBufferSize; j++) {
                     a_left_output[sample + j] += voice.readOutput(0, j);
@@ -246,7 +247,7 @@ namespace syn
             }
             return minVInd;
         }
-        else if (m_activeVoices.size() > 0) 
+        else if (!m_activeVoices.empty())
         {
             for (auto it = m_voiceMap.crbegin(); it != m_voiceMap.crend(); ++it) {
                 if (!it->second.empty() && m_circuits[it->second.front()].isActive()) {
@@ -325,7 +326,7 @@ namespace syn
         else if (!m_activeVoices.empty())
         {
             for (auto it = m_voiceMap.cbegin(); it != m_voiceMap.cend(); ++it) {
-                if (!it->second.empty()) {
+                if (!it->second.empty() && m_circuits[it->second.front()].isActive()) {
                     return it->second.front();
                 }
             }
@@ -334,7 +335,7 @@ namespace syn
     }
 
     int VoiceManager::getMaxVoices() const {
-        return m_circuits.size();
+        return int(m_circuits.size());
     }
 
     void VoiceManager::onIdle() {
@@ -381,7 +382,7 @@ namespace syn
 
     void VoiceManager::setPrototypeCircuit(const Circuit& a_circ) {
         m_instrument = Circuit{ a_circ };
-        setMaxVoices(m_circuits.size());
+        setMaxVoices(int(m_circuits.size()));
     }
 
     Unit& VoiceManager::getUnit(int a_id, int a_voiceInd) {

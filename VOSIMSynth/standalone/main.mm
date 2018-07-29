@@ -9,9 +9,9 @@ int main(int argc, char *argv[])
 void CenterWindow(HWND hwnd)
 {
   if (!hwnd) return;
-  
+
   id turd=(id)hwnd;
-  
+
   if ([turd isKindOfClass:[NSView class]])
   {
     NSWindow *w = [turd window];

@@ -10,8 +10,10 @@
 # HAVE_MKL          - True if Intel MKL found
 # MKL_ROOT_DIR      - root of MKL installation
 # MKL_INCLUDE_DIRS  - MKL include folder
-# MKL_LIBRARIES     - MKL libraries that are used by OpenCV
+# MKL_LIBRARIES     - MKL libraries
 #
+
+include(FindPackageHandleStandardArgs)
 
 macro (mkl_find_lib VAR NAME DIRS)
     find_path(${VAR} ${NAME} ${DIRS} NO_DEFAULT_PATH)
@@ -41,8 +43,8 @@ endmacro()
 
 
 if(NOT DEFINED MKL_USE_MULTITHREAD)
-    option(MKL_WITH_TBB "Use MKL with TBB multithreading" OFF)#ON IF WITH_TBB)
-    option(MKL_WITH_OPENMP "Use MKL with OpenMP multithreading" OFF)#ON IF WITH_OPENMP)
+    optionenv(MKL_WITH_TBB "Use MKL with TBB multithreading" OFF)#ON IF WITH_TBB)
+    optionenv(MKL_WITH_OPENMP "Use MKL with OpenMP multithreading" OFF)#ON IF WITH_OPENMP)
 endif()
 
 #check current MKL_ROOT_DIR

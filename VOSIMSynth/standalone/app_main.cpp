@@ -674,20 +674,20 @@ void Cleanup()
 BOOL InitApplication(HINSTANCE hinstance) {
     WNDCLASSEX wcx;
 
-    // Fill in the window class structure with parameters 
-    // that describe the main window. 
-    wcx.cbSize = sizeof(wcx); // size of structure 
-    wcx.style = CS_HREDRAW | CS_VREDRAW; // redraw if size changes 
-    wcx.lpfnWndProc = MainWndProc; // points to window procedure 
-    wcx.cbClsExtra = 0; // no extra class memory 
-    wcx.cbWndExtra = 0; // no extra window memory 
-    wcx.hInstance = hinstance; // handle to instance 
-    wcx.hIcon = LoadIcon(NULL, IDI_APPLICATION); // predefined app. icon 
-    wcx.hCursor = LoadCursor(NULL, IDC_ARROW); // predefined arrow 
-    wcx.hbrBackground = HBRUSH(GetStockObject(WHITE_BRUSH)); // white background brush 
+    // Fill in the window class structure with parameters
+    // that describe the main window.
+    wcx.cbSize = sizeof(wcx); // size of structure
+    wcx.style = CS_HREDRAW | CS_VREDRAW; // redraw if size changes
+    wcx.lpfnWndProc = MainWndProc; // points to window procedure
+    wcx.cbClsExtra = 0; // no extra class memory
+    wcx.cbWndExtra = 0; // no extra window memory
+    wcx.hInstance = hinstance; // handle to instance
+    wcx.hIcon = LoadIcon(NULL, IDI_APPLICATION); // predefined app. icon
+    wcx.hCursor = LoadCursor(NULL, IDC_ARROW); // predefined arrow
+    wcx.hbrBackground = HBRUSH(GetStockObject(WHITE_BRUSH)); // white background brush
     wcx.lpszMenuName = MAKEINTRESOURCE(IDR_MENU1);
-    wcx.lpszClassName = "MainWClass"; // name of window class 
-    wcx.hIconSm = HICON(LoadImage(hinstance, // small class icon 
+    wcx.lpszClassName = "MainWClass"; // name of window class
+    wcx.hIconSm = HICON(LoadImage(hinstance, // small class icon
         MAKEINTRESOURCE(IDI_ICON1),
         IMAGE_ICON,
         GetSystemMetrics(SM_CXSMICON),
@@ -700,19 +700,19 @@ BOOL InitApplication(HINSTANCE hinstance) {
 
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) {
 
-    // Save the application-instance handle. 
+    // Save the application-instance handle.
 
     gHINST = hInstance;
 
-    // Create the main window. 
+    // Create the main window.
 
     HWND hwnd = CreateWindow("MainWClass", PLUG_NAME, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, GUI_WIDTH, GUI_HEIGHT, NULL, NULL, hInstance, NULL);
 
     if (!hwnd)
         return FALSE;
 
-    // Show the window and send a WM_PAINT message to the window 
-    // procedure. 
+    // Show the window and send a WM_PAINT message to the window
+    // procedure.
     ShowWindow(hwnd, nCmdShow);
     UpdateWindow(hwnd);
     return TRUE;
@@ -805,7 +805,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
       UpdateINI(); // will write file if doesn't exist
     }
 
-    Init();    
+    Init();
 
     if (!InitApplication(hInstance))
         return FALSE;

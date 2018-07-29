@@ -22,10 +22,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "vosimlib/Unit.h"
 #include "vosimlib/IntMap.h"
 #include <vector>
-#include <list>
-
-using std::vector;
-using std::list;
+#include <unordered_set>
 
 #define MAX_UNITS 128
 
@@ -93,6 +90,104 @@ namespace syn
         OutputUnit(const OutputUnit& a_other) : OutputUnit(a_other.name()) {}
     };
 
+    template <typename Node>
+    class VOSIMLIB_API DirectedProcGraph {
+    public:
+        struct Props {
+            int layer = -1;
+        };
+
+        void reset() {
+            m_adj.clear();
+            m_revAdj.clear();
+        }
+
+        void connect(Node a_from, Node a_to) {
+            m_adj[a_to].emplace(a_from);
+            if (!m_adj.count(a_from)) {
+                m_adj.emplace(a_from, std::unordered_multiset<Node>{});
+            }
+
+            m_revAdj[a_from].emplace(a_to);
+            if (!m_revAdj.count(a_to)) {
+                m_revAdj.emplace(a_to, std::unordered_multiset<Node>{});
+            }
+        }
+
+        void disconnect(Node a_from, Node a_to) {
+            m_adj[a_to].erase(a_from);
+            if (m_adj[a_to].empty()) {
+                m_adj.erase(a_to);
+            }
+
+            m_revAdj[a_from].erase(a_to);
+            if (m_revAdj[a_from].empty()) {
+                m_revAdj.erase(a_from);
+            }
+        }
+
+        std::vector<std::pair<Node,Props>> linearize() const {
+            std::unordered_set<Node> permClosedSet;
+            std::unordered_set<Node> tempClosedSet;
+            std::unordered_map<Node, Props> props;
+            std::vector<Node> order;
+            std::function<void(Node, int)> visit = [&](Node node, int depth)
+            {
+                if (tempClosedSet.count(node))
+                    return; // todo: cycle detected
+                if (permClosedSet.count(node)) {
+                    if (depth > props[node].layer)
+                        props[node].layer = depth;
+                    return;
+                }
+                tempClosedSet.insert(node);
+                
+                const auto& children = m_adj.at(node);
+                for (const auto& child : children)
+                {
+                    visit(child, depth + 1);
+                }
+                permClosedSet.insert(node);
+                tempClosedSet.erase(node);
+                props[node].layer = depth;
+                order.push_back(node);
+            };
+
+            // Start the graph search at sink nodes            
+            for (const auto& p : m_revAdj)
+            {
+                if(p.second.empty()) {
+                    visit(p.first, 0);
+                }
+            }
+
+            // Create output
+            std::vector<std::pair<Node, Props>> out(order.size());
+            std::transform(order.begin(), order.end(), out.begin(), [&props](Node n) {return std::make_pair(n, props[n]); });
+            return out;
+        }
+
+
+    private:
+        /**
+         * \brief Adjacency list
+         * 
+         *  Allows looking up incoming edges. Edges go from value nodes towards
+         *  key nodes. If node `u` is in `m_adj[v]`, then the edge (u,v) is in
+         *  the graph.
+         */
+        std::unordered_map<Node, std::unordered_multiset<Node>> m_adj;
+
+        /**
+         * \brief Reversed adjacency list
+         *
+         *  Allows looking up outgoing edges. Edges go from key nodes towards
+         *  value nodes. If node `u` is in `m_revAdj[v]`, then the edge (v,u) is
+         *  in the graph.
+         */
+        std::unordered_map<Node, std::unordered_multiset<Node>> m_revAdj; ///< Reverse adjacency list
+    };
+
     /**
     * \class Circuit
     *
@@ -121,8 +216,8 @@ namespace syn
         void setVoiceIndex(double a_newVoiceIndex);
         double getVoiceIndex() const;
 
-        Unit& getUnit(int a_id);
-        const Unit& getUnit(int a_id) const;
+        Unit& getUnit(int a_unitId);
+        const Unit& getUnit(int a_unitId) const;
 
         int getInputUnitId() const;
         int getOutputUnitId() const;   
@@ -132,7 +227,6 @@ namespace syn
 
         int getNumUnits() const;
         const auto& getUnits() const { return m_units; }
-        Unit* const* getProcGraph() const;
 
         void notifyMidiControlChange(int a_cc, double a_value);
         void notifyPitchWheelChange(double a_value);
@@ -143,8 +237,9 @@ namespace syn
          * Retrieves a list of output ports connected to an input port.
          * \returns A vector of (unit_id, port_id) pairs.
          */
-        vector<std::pair<int, int>> getConnectionsToInternalInput(int a_id, int a_portid) const;
-        
+        vector<std::pair<int, int>> getConnectionsToInternalInput(int a_unitId, int a_inputId) const;
+        vector<std::pair<int, int>> getConnectionsFromInternalOutput(int a_unitId, int a_outputId) const;
+
         /**
          * Get a list of all connections within the Circuit.
          */
@@ -158,7 +253,7 @@ namespace syn
         /**
          * \returns True if the unit was added to the circuit (i.e. the provided id was not already taken).
          */
-        bool addUnit(Unit* a_unit, int a_id);
+        bool addUnit(Unit* a_unit, int a_unitId);
 
         bool removeUnit(const Unit& a_unit);
         bool removeUnit(int a_id);
@@ -174,6 +269,8 @@ namespace syn
         Unit* load(const json& j) override;
 
         void reset() override;
+
+        const std::array<Unit*, MAX_UNITS + 1>& execOrder() const { return m_execOrder; }
 
     protected:
         void process_() override;
@@ -204,13 +301,15 @@ namespace syn
     private:
         friend class VoiceManager;
 
-        double m_voiceIndex; ///< A number between 0 and 1 assigned to the circuit by a VoiceManager.
+        double m_voiceIndex; ///< A number between 0 and 1 assigned to the circuit by a VoiceManager
         IntMap<Unit*, MAX_UNITS> m_units;
         vector<ConnectionRecord> m_connectionRecords;
         InputUnit* m_inputUnit;
         OutputUnit* m_outputUnit;
 
-        array<Unit*, MAX_UNITS> m_procGraph;
+        DirectedProcGraph<Unit*> m_procGraph;
+        std::array<Unit*, MAX_UNITS+1> m_execOrder; ///< Unit execution order
+        std::vector<std::vector<double>> m_internalBuffers;
     };
 };
 

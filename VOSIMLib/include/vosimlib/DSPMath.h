@@ -25,12 +25,17 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  * \date March 6, 2016
  */
 
-#ifndef __DSPMATH__
-#define __DSPMATH__
+#pragma once
 #include "vosimlib/common.h"
 #include <regex>
 
-#define DSP_PI 3.14159265358979323846264338327950288
+#define SYN_PI 3.14159265358979323846264338327950288
+#define SYN_FIND(CONTAINER, ELEM) std::find(CONTAINER.cbegin(), CONTAINER.cend(), ELEM)
+#define SYN_FIND_IF(CONTAINER, ELEM) std::find_if(CONTAINER.cbegin(), CONTAINER.cend(), ELEM)
+#define SYN_CONTAINS(CONTAINER, ELEM) SYN_FIND(CONTAINER, ELEM)!=CONTAINER.cend()
+#define SYN_CONTAINS_IF(CONTAINER, ELEM) SYN_FIND_IF(CONTAINER, ELEM)!=CONTAINER.cend()
+#define SYN_VEC_FIND(VEC, ELEM) SYN_FIND(VEC, ELEM) - VEC.begin()
+#define SYN_VEC_FIND_IF(VEC, ELEM) SYN_FIND_IF(VEC, ELEM) - VEC.begin()
 
 namespace syn
 {
@@ -38,15 +43,15 @@ namespace syn
      * Linearly interpolate between pt1 and pt2.
      */
     template <typename T>
-    T LERP(const T& pt1, const T& pt2, const T& frac) {
-        return (pt2 - pt1)*frac + pt1;
+    T LERP(T pt1, T pt2, T frac) {
+        return pt2 * frac + pt1 * (1 - frac);
     }
 
     /**
      * Scale lerped_pt from a value between pt1 and pt2 to a value between 0 and 1.
      */
     template <typename T>
-    T INVLERP(const T& pt1, const T& pt2, const T& lerped_pt) {
+    T INVLERP(T pt1, T pt2, T lerped_pt) {
         return (lerped_pt - pt1) / (pt2 - pt1);
     }
 
@@ -54,17 +59,17 @@ namespace syn
      * Clamps val to be in the range [min_val, max_val].
      */
     template <typename T>
-    constexpr const T& CLAMP(const T& val, const T& min_val, const T& max_val) {
+    constexpr T CLAMP(T val, T min_val, T max_val) {
         return val < min_val ? min_val : (val > max_val ? max_val : val);
     }
 
     template <typename T>
-    constexpr const T& MAX(const T& val1, const T& val2) {
+    constexpr T MAX(T val1, T val2) {
         return val1 < val2 ? val2 : val1;
     }
 
     template <typename T>
-    constexpr const T& MIN(const T& val1, const T& val2) {
+    constexpr T MIN(T val1, T val2) {
         return val1 > val2 ? val2 : val1;
     }
 
@@ -72,15 +77,12 @@ namespace syn
      * Computes x modulo m 
      */
     template <typename T>
-    T WRAP(const T& x, const T& m=1.0) {
-        if (!m)
-            return x;
-        T newx = x;
-        while (newx >= m)
-            newx -= m;
-        while (newx < 0)
-            newx += m;
-        return newx;
+    T WRAP(T x, T m=1.0) {
+        while (x >= m)
+            x -= m;
+        while (x < 0)
+            x += m;
+        return x;
     }
 
     /**
@@ -90,21 +92,25 @@ namespace syn
      * \param right_m the right (maximum) boundary
      */
     template <typename T>
-    T WRAP2(const T& x, const T& left_m, const T& right_m) {
+    T WRAP2(T x, T left_m, T right_m) {
         const T m = right_m - left_m;
-        if (!m)
-            return x;
-        T newx = x;
-        while (newx >= right_m)
-            newx -= m;
-        while (newx < left_m)
-            newx += m;
-        return newx;
+        while (x >= right_m)
+            x -= m;
+        while (x < left_m)
+            x += m;
+        return x;
     }
 
     template <typename T>
-    T sgn(const T& val) {
+    T sgn(T val) {
         return (T(0) < val) - (val < T(0));
+    }
+
+    template <typename T>
+    bool isDenormal(T a_x) {
+        constexpr auto minVal = std::numeric_limits<T>::min;
+        constexpr T epsilon = minVal();
+        return (a_x != 0 && std::abs(a_x) <= epsilon);
     }
 
     /////////////////////////////////////
@@ -148,22 +154,20 @@ namespace syn
 
     double naive_tri(double a_phase);
     double naive_saw(double a_phase);
-    double naive_square(double a_phase);    
+    double naive_square(double a_phase); 
 
-
-    /// Best if |x|<3.1
     template<typename T>
-    T fast_tanh_rat(const T& x_) {
-        const T x = abs(x_);
-        return sgn(x_)*(-.67436811832e-5 + (.2468149110712040 + (.583691066395175e-1 + .3357335044280075e-1*x)*x)*x) / (.2464845986383725 + (.609347197060491e-1 + (.1086202599228572 + .2874707922475963e-1*x)*x)*x);
+    T sinc(T a_arg) {
+        return a_arg ? sin(a_arg*SYN_PI) / (a_arg*SYN_PI) : 1.0;
     }
 
+
     template<typename T>
-    T fast_tanh_rat2(const T& x) {
+    T fast_tanh_rat(T x) {
         const double ax = abs(x);
         const double x2 = x * x;
         const double z = x * (0.773062670268356 + ax + (0.757118539838817 + 0.0139332362248817 * x2 * x2) * x2 * ax);
-        return(z / (0.795956503022967 + abs(z)));
+        return(z / (0.795956503022967 + abs(z)));        
     }
 
     //////////////////
@@ -177,4 +181,3 @@ namespace syn
      */
     std::string incrementSuffix(const std::string& a_str, const std::string& a_sep=" ");    
 }
-#endif

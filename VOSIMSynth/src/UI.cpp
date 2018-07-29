@@ -1,4 +1,5 @@
 #include "vosimsynth/UI.h"
+#include <GLFW/glfw3.h>
 
 namespace synui
 {
@@ -36,13 +37,13 @@ namespace synui
         nvgRestore(ctx);
     }
 
-    void drawTooltip(NVGcontext* a_ctx, const Vector2i& a_pos, const std::string& a_str, float alpha, float a_fontSize, const std::string& a_font)
+    void drawTooltip(NVGcontext* a_ctx, const Vector2i& a_pos, const std::string& a_str, float alpha, int a_width, float a_fontSize, const std::string& a_font)
     {
-        int tooltipWidth = 150;
+        int tooltipWidth = a_width;
 
         float bounds[4];
         nvgSave(a_ctx);
-        nvgTranslate(a_ctx, a_pos.x(), a_pos.y()+20);        
+        nvgTranslate(a_ctx, a_pos.x(), a_pos.y()+20);
         nvgFontFace(a_ctx, a_font.c_str());
         nvgFontSize(a_ctx, a_fontSize);
         nvgTextAlign(a_ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
@@ -107,6 +108,6 @@ namespace synui
         else
             alpha = 1.0 - alpha / m_fadeOut;
         if (alpha > 0)
-            drawTooltip(a_nvg, m_pos, a_str, alpha, 15, m_font);
+            drawTooltip(a_nvg, m_pos, a_str, alpha, 150, 12, m_font);
     }
 }

@@ -102,14 +102,14 @@ namespace synui
     void drawRectShadow(NVGcontext* ctx, float x, float y, float w, float h, float r = 1.0f, float s = 5.0f, float f=1.0f, const nanogui::Color& a_shadowColor = {0.0f, 0.5f}, const nanogui::Color& a_transparentColor = {0.0f, 1.0f});
     void drawRadialShadow(NVGcontext* ctx, float x, float y, float r, float s, float f, const nanogui::Color& a_shadowColor = {0.0f, 0.5f}, const nanogui::Color& a_transparentColor = {0.0f, 1.0f});
 
-    void drawTooltip(NVGcontext* a_ctx, const Vector2i& a_pos, const std::string& a_str, float alpha, float a_fontSize = 15.0f, const std::string& a_font = "sans");
+    void drawTooltip(NVGcontext* a_ctx, const Vector2i& a_pos, const std::string& a_str, float alpha, int a_width=150, float a_fontSize = 15.0f, const std::string& a_font = "sans");
 
 
 
     class Tooltip {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     public:
-        Tooltip(float a_delay = 0.25f, float a_fadeIn = 1.0f, float a_fadeOut = 0.5f);
+        Tooltip(float a_delay = 0.25f, float a_fadeIn = 0.1f, float a_fadeOut = 0.25f);
 
         void setFont(const std::string& a_font) { m_font = a_font; }
         const std::string& font(const std::string& a_font) const { return m_font; }

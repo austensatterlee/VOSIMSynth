@@ -18,11 +18,4 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #pragma once
-#include <nanogui/theme.h>
 
-namespace synui {    
-    class VOSIMTheme : public nanogui::Theme {
-    public:
-        VOSIMTheme(NVGcontext* ctx);
-    };
-}

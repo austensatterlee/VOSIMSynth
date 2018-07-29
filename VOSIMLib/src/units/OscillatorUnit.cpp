@@ -49,16 +49,11 @@ namespace syn
         m_basePhase = 0.0;
     }
 
-    /******************************
-    * Oscillator methods
-    *
-    ******************************/
-
     void OscillatorUnit::updatePhaseStep_()
     {
         if (m_freq)
         {
-            m_period = fs() / m_freq;
+            m_period = MAX(fs() / m_freq, 2.0);
             m_phase_step = 1. / m_period;
         }
         else
@@ -71,7 +66,8 @@ namespace syn
     void OscillatorUnit::tickPhase_(double a_phaseOffset)
     {        
         // sync
-        if (m_lastSync > 0.5 && READ_INPUT(iSync) < 0.5)
+        double sync = READ_INPUT(iSync);
+        if (m_lastSync - sync > 0.5)
         {
             reset();
         }
@@ -138,7 +134,7 @@ namespace syn
     BasicOscillatorUnit::BasicOscillatorUnit(const string& a_name) :
         TunedOscillatorUnit(a_name)
     {
-        addParameter_(pWaveform, UnitParameter("waveform", WAVE_SHAPE_NAMES));
+        addParameter_(pWaveform, UnitParameter("waveform", wave_shape_names));
     }
 
     BasicOscillatorUnit::BasicOscillatorUnit(const BasicOscillatorUnit& a_rhs) : BasicOscillatorUnit(a_rhs.name()) {}
@@ -148,7 +144,7 @@ namespace syn
         BEGIN_PROC_FUNC
         TunedOscillatorUnit::process_();
         double output;
-        WAVE_SHAPE shape = static_cast<WAVE_SHAPE>(param(pWaveform).getInt());
+        WaveShape shape = static_cast<WaveShape>(param(pWaveform).getInt());
         switch (shape)
         {
             case SAW_WAVE:
@@ -178,8 +174,8 @@ namespace syn
         param(pGain).setMax(1e6);
         param(pGain).setControlType(UnitParameter::Unbounded);
         addParameter_(pBPMFreq, UnitParameter("rate", g_bpmStrs, g_bpmVals, 0, UnitParameter::EUnitsType::BPM).setVisible(false));
-        addParameter_(pFreq, UnitParameter("freq", 0.01, 100.0, 1.0, UnitParameter::EUnitsType::Freq));
-        addParameter_(pWaveform, UnitParameter("waveform", WAVE_SHAPE_NAMES));
+        addParameter_(pFreq, UnitParameter("freq", 0.0, 100.0, 1.0, UnitParameter::EUnitsType::Freq));
+        addParameter_(pWaveform, UnitParameter("waveform", wave_shape_names));
         addParameter_(pTempoSync, UnitParameter("tempo sync", false));
     }
 
@@ -197,7 +193,7 @@ namespace syn
         }
         OscillatorUnit::process_();
         double output, quadoutput;
-        WAVE_SHAPE shape = static_cast<WAVE_SHAPE>(param(pWaveform).getInt());
+        WaveShape shape = static_cast<WaveShape>(param(pWaveform).getInt());
         switch (shape)
         {
             case SAW_WAVE:

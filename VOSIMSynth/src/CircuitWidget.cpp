@@ -11,6 +11,7 @@
 #include <vosimlib/VoiceManager.h>
 #include <vosimlib/Command.h>
 #include <vosimlib/units/MathUnits.h>
+#include <GLFW/glfw3.h>
 #include <unordered_set>
 #include <set>
 
@@ -21,7 +22,8 @@ synui::CircuitWidget::CircuitWidget(Widget* a_parent, ChildWindow* a_mainWindow,
       m_vm(a_vm),
       m_grid{{0,0}, GridCell{}},
       m_gridSpacing(15),
-      m_wireDrawStyle(Curved),
+      m_wireDrawStyle(WireDrawStyle::Curved),
+      m_gridDrawStyle(GridDrawStyle::Lines),
       m_state(new cwstate::IdleState()),
       m_uninitialized(true)
 {
@@ -50,33 +52,57 @@ void synui::CircuitWidget::draw(NVGcontext* ctx) {
 
     /* Draw background */
     nvgBeginPath(ctx);
-    nanogui::Color backgroundColor = theme()->get<nanogui::Color>("/CircuitWidget/bg-color", {30, 255});
+    nanogui::Color backgroundColor = theme()->get<nanogui::Color>("/CircuitWidget/bg-color", {0, 255});
+    nanogui::Color gridColor = backgroundColor.contrastingColor(); gridColor.a() = 20 / 255.f;
     nvgRect(ctx, 0, 0, mSize.x(), mSize.y());
     nvgFillColor(ctx, backgroundColor);
     nvgFill(ctx);
 
     /* Draw grid */
-    for (int i = 0; i < m_grid.getSize(); i++) {
-        float ptSize = m_gridSpacing * 0.5f;
-        const float strokeWidth = 1.0f;
-
-        auto pt = m_grid.unravel_index(i);
-        auto pixel = m_grid.toPixel(pt, m_gridSpacing);
-        if (!m_grid.get(pt)) {
-            nvgStrokeColor(ctx, nanogui::Color{70,255});
-        } else if (m_grid.get(pt).contains(GridCell::State::Unit)) {
-            nvgStrokeColor(ctx, nanogui::Color{10, 255});
-        } else if (m_grid.get(pt).contains(GridCell::State::Wire)) {
-            nvgStrokeColor(ctx, nanogui::Color{25,25,75,255});
-        }
-
-        nvgBeginPath(ctx);
-        nvgMoveTo(ctx, pixel.x() - ptSize * 0.5f, pixel.y());
-        nvgLineTo(ctx, pixel.x() + ptSize * 0.5f, pixel.y());
-        nvgMoveTo(ctx, pixel.x(), pixel.y() - ptSize * 0.5f);
-        nvgLineTo(ctx, pixel.x(), pixel.y() + ptSize * 0.5f);
+    const float strokeWidth = 2.0f;
+    if (m_gridDrawStyle == GridDrawStyle::Points) {
         nvgStrokeWidth(ctx, strokeWidth);
-        nvgStroke(ctx);
+        nvgLineCap(ctx, NVG_ROUND);
+        for (int i = 0; i < m_grid.getSize(); i++) {
+            const float ptSize = m_gridSpacing * 0.25f;
+
+            auto pt = m_grid.unravel_index(i);
+            auto pixel = Grid2D<GridCell>::toPixel(pt, m_gridSpacing);
+            if (!m_grid.get(pt)) {
+                nvgStrokeColor(ctx, gridColor);
+            } else if (m_grid.get(pt).contains(GridCell::State::Unit)) {
+                nvgStrokeColor(ctx, nanogui::Color{10, 255});
+            } else if (m_grid.get(pt).contains(GridCell::State::Wire)) {
+                nvgStrokeColor(ctx, nanogui::Color{25,25,75,255});
+            }
+
+            nvgBeginPath(ctx);
+            nvgMoveTo(ctx, pixel.x() - ptSize * 0.5f, pixel.y());
+            nvgLineTo(ctx, pixel.x() + ptSize * 0.5f, pixel.y());
+            nvgMoveTo(ctx, pixel.x(), pixel.y() - ptSize * 0.5f);
+            nvgLineTo(ctx, pixel.x(), pixel.y() + ptSize * 0.5f);
+            nvgStroke(ctx);
+        }
+    } else if (m_gridDrawStyle == GridDrawStyle::Lines) {
+        int nCols = m_grid.getShape().y(), nRows = m_grid.getShape().x();
+        nvgStrokeColor(ctx, gridColor);
+        nvgStrokeWidth(ctx, strokeWidth);
+        for (int r = 0; r < nRows; r++) {
+            Eigen::Vector2i px0 = m_grid.toPixel({r, 0}, m_gridSpacing);
+            Eigen::Vector2i px1 = m_grid.toPixel({r, nCols - 1}, m_gridSpacing);
+            nvgBeginPath(ctx);
+            nvgMoveTo(ctx, px0.x(), px0.y());
+            nvgLineTo(ctx, px1.x(), px1.y());
+            nvgStroke(ctx);
+        }
+        for (int c = 0; c < nCols; c++) {
+            Eigen::Vector2i px0 = m_grid.toPixel({0, c}, m_gridSpacing);
+            Eigen::Vector2i px1 = m_grid.toPixel({nRows - 1, c}, m_gridSpacing);
+            nvgBeginPath(ctx);
+            nvgMoveTo(ctx, px0.x(), px0.y());
+            nvgLineTo(ctx, px1.x(), px1.y());
+            nvgStroke(ctx);
+        }
     }
 
     /* Highlight wires connected to a unit in the current selection */
@@ -129,10 +155,6 @@ void synui::CircuitWidget::performLayout(NVGcontext* ctx) {
         if (!w.second->visible())
             continue;
         oldSizes[w.first] = w.second->size();
-        // update layout
-        w.second->onGridChange_();
-        // reset size so it doesn't affect next layout computation
-        w.second->setSize({0,0});
     }
     Widget::performLayout(ctx);
     for (const auto w : m_unitWidgets) {
@@ -259,13 +281,9 @@ synui::UnitWidget* synui::CircuitWidget::createUnitWidget(syn::UnitTypeId a_clas
             m_unitWidgets[unitId]->setHighlighted(true);
         });
     m_unitWidgets[a_unitId] = widget;
-    // Update the widget's size
-    Vector2i pref = widget->preferredSize(screen()->nvgContext()), fix = widget->fixedSize();
-    widget->setSize(Vector2i(
-        fix[0] ? fix[0] : pref[0],
-        fix[1] ? fix[1] : pref[1]
-    ));
     onAddUnit(widget);
+    // Update the widget's layout
+    performLayout(screen()->nvgContext());
     return widget;
 }
 
@@ -614,12 +632,16 @@ bool synui::cwstate::IdleState::mouseButtonEvent(CircuitWidget& cw, const Vector
 bool synui::cwstate::IdleState::mouseMotionEvent(CircuitWidget& cw, const Vector2i& p, const Vector2i& rel, int button, int modifiers) {
     Vector2i mousePos = p - cw.position();
 
-    if (cw.Widget::mouseMotionEvent(p, rel, button, modifiers))
+    if (cw.Widget::mouseMotionEvent(p, rel, button, modifiers)) {
+        m_tooltip.deactivate();
         return true;
+    }
 
     Grid2DPoint gridPt = cw.grid().fromPixel(mousePos, cw.gridSpacing());
-    if (!cw.grid().contains(gridPt))
+    if (!cw.grid().contains(gridPt)) {
+        m_tooltip.deactivate();
         return true;
+    }
 
     // Find new highlighted wire, if any
     const auto& cell = cw.grid().get(gridPt);
@@ -645,12 +667,13 @@ bool synui::cwstate::IdleState::mouseMotionEvent(CircuitWidget& cw, const Vector
         m_tooltip.deactivate();
         m_highlightedWire->highlight = CircuitWire::None;
         m_highlightedWire = nullptr;
-    } else if (wireFound) {
+    } else if (wireFound && m_highlightedWire) {
         m_tooltip.activate(mousePos);
         m_tooltip.setFont("mono");
     }
 
     if (m_clickedWidget) {
+        m_tooltip.deactivate();
         changeState(cw, *new MovingUnitState());
         return true;
     }
@@ -658,11 +681,13 @@ bool synui::cwstate::IdleState::mouseMotionEvent(CircuitWidget& cw, const Vector
 }
 
 void synui::cwstate::IdleState::draw(CircuitWidget& cw, NVGcontext* ctx) {
+    if (!cw.mouseFocus() && m_tooltip.isActive())
+        m_tooltip.deactivate();
     if (m_lastHighlightedWire) {
         if (find(cw.wires().begin(), cw.wires().end(), m_lastHighlightedWire) != cw.wires().end()) {
             string info = m_lastHighlightedWire->info();
             if (!info.empty())
-                m_tooltip.draw(ctx, m_lastHighlightedWire->info());
+                m_tooltip.draw(ctx, info);
         }
     }
 }
@@ -833,6 +858,7 @@ bool synui::cwstate::MovingUnitState::mouseButtonEvent(CircuitWidget& cw, const 
             else
                 cw.updateUnitPos(w, oldPos, true);
         }
+        cw.performLayout(cw.screen()->nvgContext());
         changeState(cw, *new IdleState());
     }
     return true;

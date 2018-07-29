@@ -120,7 +120,7 @@ void syn::SummerUnit::process_()
         double output = param(m_pBias).getDouble();
         for (int i = 0; i < numInputs(); i++) {
             int id = inputs().ids()[i];
-            if (isConnected(id))
+            if (isInputConnected(id))
                 output += READ_INPUT(id);
         }
         WRITE_OUTPUT(0, output);
@@ -146,7 +146,7 @@ void syn::GainUnit::process_()
         double output = param(m_pGain).getDouble();
         for (int i = 0; i < numInputs(); i++) {
             int id = inputs().ids()[i];
-            if (isConnected(id))
+            if (isInputConnected(id))
                 output *= READ_INPUT(id);
         }
         WRITE_OUTPUT(0, output);
@@ -244,7 +244,7 @@ syn::TanhUnit::TanhUnit(const TanhUnit& a_rhs) : TanhUnit(a_rhs.name()) {}
 
 void syn::TanhUnit::process_() {
     BEGIN_PROC_FUNC
-        double input = READ_INPUT(0);
+    double input = READ_INPUT(0);
     double sat = param(pSat).getDouble();
     WRITE_OUTPUT(0, fast_tanh_rat(input * sat) / fast_tanh_rat(sat));
     END_PROC_FUNC

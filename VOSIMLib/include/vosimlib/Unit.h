@@ -24,8 +24,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "vosimlib/StrMap.h"
 #include "vosimlib/UnitParameter.h"
 #include "vosimlib/UnitFactory.h"
+#include "vosimlib/Logging.h"
 
-#include <eigen/Core>
+#include <Eigen/Core>
+
 
 #define MAX_PARAMS 16
 #define MAX_INPUTS 8
@@ -42,7 +44,6 @@ public: \
 private:
 
 #define BEGIN_PROC_FUNC \
-    assert(m_currentBufferOffset==0 || m_currentBufferOffset==getBufferSize()); \
     for(m_currentBufferOffset=0;m_currentBufferOffset<getBufferSize();m_currentBufferOffset++){
 #define END_PROC_FUNC }
 #define READ_OUTPUT(OUTPUT) \
@@ -70,17 +71,75 @@ namespace syn
         bool isNoteOn;
     };
 
-    struct VOSIMLIB_API InputPort
-    {
-        InputPort() : InputPort(0.0) {}
-
-        InputPort(double a_defVal) : defVal(a_defVal), src(nullptr) {}
-
-        double defVal;
-        const double* src;
+    template<typename T>
+    class VOSIMLIB_API Buffer {
+    public:
+        virtual ~Buffer() = default;
+        virtual const T* buf() const = 0;
     };
 
-    typedef std::vector<double> OutputPort;
+    template<typename T>
+    class VOSIMLIB_API ReadOnlyBuffer : public Buffer<T> {
+    public:
+        ReadOnlyBuffer() : ReadOnlyBuffer(nullptr) {}
+        ReadOnlyBuffer(const T* a_buf) : m_buf(a_buf) {}
+        const T* buf() const override { return m_buf; }
+    private:
+        const T* m_buf;
+    };
+
+    template<typename T>
+    struct VOSIMLIB_API OutputPort : public Buffer<T> {
+        OutputPort()
+            : OutputPort(0) {}
+
+        OutputPort(T* a_targetBuf)
+            : m_extBuf(a_targetBuf),
+              m_intBuf() {}
+
+        explicit OutputPort(int a_bufSize)
+            : m_extBuf(nullptr),
+              m_intBuf(a_bufSize, 0.0) { }
+
+        T* buf() { return hasExternalBuf() ? m_extBuf : m_intBuf.data(); }
+        const T* buf() const override { return hasExternalBuf() ? m_extBuf : m_intBuf.data(); }
+
+        T read(int a_offset) const { return buf()[a_offset]; }
+
+        void setBuf(T* a_targetBuf) { m_extBuf = a_targetBuf == m_intBuf.data() ? nullptr : a_targetBuf; }
+
+        void unsetBuf() { m_extBuf = nullptr; }
+
+        bool hasExternalBuf() const { return m_extBuf != nullptr; }
+
+        void resize(int a_size) { m_intBuf.resize(a_size, 0.0); }
+
+    private:
+        T* m_extBuf;
+        std::vector<T> m_intBuf;
+    };
+
+    template<typename T>
+    struct VOSIMLIB_API InputPort {
+        InputPort()
+            : InputPort(0.0) {}
+
+        explicit InputPort(T a_defVal)
+            : defVal(a_defVal),
+              src(nullptr) {}
+    
+    private:
+        friend class Unit;
+
+        void connect(const Buffer<T>* a_output) { src = a_output; }
+
+        void disconnect() { src = nullptr; }
+
+        bool isConnected() const { return src != nullptr; }
+
+        T defVal;
+        const Buffer<T>* src;
+    };
 
     const vector<string> g_bpmStrs = {"4", "7/2", "3", "5/2", "2", "3/2", "1", "3/4", "1/2", "3/8", "1/4", "3/16", "1/8", "3/32", "1/16", "3/64", "1/32", "1/64"};
     const vector<double> g_bpmVals = {4.0, 7.0 / 2.0, 3.0, 5.0 / 2.0, 2.0, 3.0 / 2.0, 1.0, 3.0 / 4.0, 1.0 / 2.0, 3.0 / 8.0, 1.0 / 4.0, 3.0 / 16.0, 1.0 / 8.0, 3.0 / 32.0, 1.0 / 16.0, 3.0 / 64.0, 1.0 / 32.0, 1.0 / 64.0};
@@ -158,13 +217,17 @@ namespace syn
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     public:
-        typedef Eigen::Array<double, -1, -1, Eigen::RowMajor> dynamic_buffer_t;
+        typedef double SampleType;
+        typedef Eigen::Array<SampleType, -1, -1, Eigen::RowMajor> dynamic_buffer_t;
+        typedef OutputPort<SampleType> OutputPort;
+        typedef Buffer<SampleType> Buffer;
+        typedef InputPort<SampleType> InputPort;
 
         Unit();
 
         explicit Unit(const string& a_name);
 
-        virtual ~Unit();
+        virtual ~Unit() = default;
 
         const string& name() const { return m_name; }
         void setName(const string& a_name);
@@ -199,14 +262,17 @@ namespace syn
         void setTempo(double a_newTempo);
 
         /**
-         * Notify the unit of a note on event
+         * Notify the unit of a "note on" event
+         * 
+         * \param a_note Midi note number, ranging from 0 to 127, where 60 is middle C
+         * \param a_velocity Velocity of the note, ranging from 0 to 127
          */
         void noteOn(int a_note, int a_velocity);
 
         /**
-         * Notify the unit of a note off event
+         * Notify the unit of a "note off" event
          */
-        void noteOff(int a_note, int a_velocity);
+        void noteOff(int a_note);
 
         /**
          * Reset the unit's internal state (if any), as if Unit::tick had never been called.
@@ -223,6 +289,9 @@ namespace syn
          */
         void notifyParameterChanged(int a_id);
 
+        /**
+         * Return the unit's sampling frequency
+         */
         double fs() const;
 
         double tempo() const;
@@ -234,16 +303,18 @@ namespace syn
         int velocity() const;
 
         /**
-         * This method is used to determine the lifespan of a voice.
-         * By default, this method returns true when a note is on and false otherwise.
-         * It should be overriden to suite the unit's specific needs.
+         * Determines whether or not this unit should be ticked.
+         *
+         * Default implementation returns true when a note is on and false
+         * otherwise.  Override if the unit should be ticked before note on or
+         * after note off events (e.g. an envelope).
          */
         virtual bool isActive() const;
 
         /**
          * Returns a pointer to the unit's parent Circuit, or nullptr if there is none.
          */
-        const Circuit* parent() const;
+        Circuit* parent() const;
 
         /**
          * Determines whether or not the unit contains a specific parameter.
@@ -275,20 +346,21 @@ namespace syn
 
         const string& inputName(int a_id) const;
 
-        const double& readInput(int a_id, int a_offset) const;
+        double readInput(int a_id, int a_offset) const;
 
-        const double* inputSource(int a_id) const;
+        const Buffer& inputSource(int a_id) const;
 
         const StrMap<InputPort, MAX_INPUTS>& inputs() const;
 
         bool hasOutput(int a_id) const;
 
-        string outputName(int a_id) const { return m_outputPorts.getNameFromId(a_id); }
+        string outputName(int a_id) const;
 
-        template <typename ID>
-        const double& readOutput(const ID& a_id, int a_offset) const;
+        double readOutput(int a_id, int a_offset) const;
 
         const StrMap<OutputPort, MAX_OUTPUTS>& outputs() const;
+
+        OutputPort& output(int a_id);
 
         int numParams() const;
 
@@ -297,22 +369,23 @@ namespace syn
         int numOutputs() const;
 
         /**
-        * Connect the specified input port to a location in memory.
-        * \param a_inputPort The desired input port of this unit
-        * \param a_src A pointer to the memory to read the input from
+        * Connect the specified input port to an output.
+        * \param a_inputPort Input port number
+        * \param a_output
         */
-        void connectInput(int a_inputPort, const double* a_src);
+        void connectInput(int a_inputPort, const Buffer& a_output);
+        void connectOutput(int a_outputPort, Unit* a_target, int a_inputPort);
 
         /**
          * \returns True if the input port points to a non-null location in memory.
          */
-        bool isConnected(int a_inputPort) const;
+        bool isInputConnected(int a_inputPort) const;
 
         /**
         * Remove the specified connection.
         * \returns True if the connection existed, false if it was already disconnected.
         */
-        bool disconnectInput(int a_toInputPort);
+        bool disconnectInput(int a_inputPort);
 
         /**
          * Copies this unit into newly allocated memory (the caller is responsible for releasing the memory).
@@ -396,12 +469,6 @@ namespace syn
     };
 
     template <typename ID>
-    const double& Unit::readOutput(const ID& a_id, int a_offset) const
-    {
-        return m_outputPorts[a_id][a_offset];
-    }
-
-    template <typename ID>
     UnitParameter& Unit::param(const ID& a_id)
     {
         return m_parameters[a_id];
@@ -416,7 +483,7 @@ namespace syn
     template <typename ID>
     void Unit::writeOutput_(const ID& a_id, int a_offset, const double& a_val)
     {
-        m_outputPorts[a_id][a_offset] = a_val;
+        m_outputPorts[a_id].buf()[a_offset] = a_val;
     }
 
     template <typename ID, typename T>

@@ -8,4 +8,4 @@ add_executable(vosimsynth_tests ${TEST_FILES})
 target_include_directories(vosimsynth_tests PRIVATE ${CATCH_ROOT})
 target_link_libraries(vosimsynth_tests VOSIMSynth)
 
-add_test(NAME run_tests COMMAND vosimsynth_tests)
+add_test(NAME vosimsynth_tests COMMAND vosimsynth_tests)

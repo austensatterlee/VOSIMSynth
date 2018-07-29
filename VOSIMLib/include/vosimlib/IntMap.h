@@ -337,16 +337,16 @@ namespace syn {
     }
 
     template <typename T, int MAXSIZE>
-    bool IntMap<T, MAXSIZE>::add(int a_id, const T& a_item) {
-        if (a_id >= MAXSIZE)
+    bool IntMap<T, MAXSIZE>::add(int a_index, const T& a_item) {
+        if (a_index >= MAXSIZE)
             return false;
-        if (_checkId(a_id)>=0)
+        if (_checkId(a_index)>=0)
             return false;
-        m_data[a_id] = a_item;
-        m_existances[a_id] = true;
+        m_data[a_index] = a_item;
+        m_existances[a_index] = true;
 
         // update index list
-        m_ids[m_size] = a_id;
+        m_ids[m_size] = a_index;
         std::sort(std::begin(m_ids), std::end(m_ids), id_comparator<int>());
 
         m_size++;

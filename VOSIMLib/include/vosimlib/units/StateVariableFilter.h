@@ -34,25 +34,42 @@ namespace syn
     {
         DERIVE_UNIT(StateVariableFilter)
     public:
-
         const int c_oversamplingFactor = 8;
+
+        enum Param
+        {
+            pFc = 0,
+            pRes
+        };
+
+        enum Input
+        {
+            iAudioIn = 0,
+            iFcAdd,
+            iFcMul,
+            iResAdd,
+            iResMul
+        };
+
+        enum Output {
+            oLP = 0,
+            oBP,
+            oN,
+            oHP
+        };
 
         explicit StateVariableFilter(const string& a_name);
 
         StateVariableFilter(const StateVariableFilter& a_rhs) :
             StateVariableFilter(a_rhs.name()) {}
 
-        virtual void reset() override;
+        void reset() override;
 
     protected:
 
         void process_() override;
         void onNoteOn_() override;
 
-        int m_pFc, m_pRes;
-        int m_iResAdd, m_iResMul;
-        int m_iFcAdd, m_iFcMul;
-        int m_oLP, m_oBP, m_oN, m_oHP;
         double m_prevBPOut, m_prevLPOut;
         double m_F, m_damp;
 
@@ -69,7 +86,7 @@ namespace syn
         TrapStateVariableFilter(const TrapStateVariableFilter& a_rhs) :
             TrapStateVariableFilter(a_rhs.name()) {}
 
-        virtual void reset() override;
+        void reset() override;
     protected:
         void process_() override;
 
@@ -80,12 +97,17 @@ namespace syn
     /**
      * 1 Pole "TPT" implementation
      */
-    struct OnePoleLP
+    struct VOSIMLIB_API OnePoleLP
     {
         /**
-         * Set forward gain by specifying cutoff frequency and sampling rate.
+         * Set forward gain by specifying cutoff frequency.
          */
-        void setFc(double a_fc, double a_fs);
+        void setFc(double a_fc);
+
+        /**
+         * Set sampling frequency
+         */
+        void setFs(double a_fs);
 
         double process(double a_input);
 
@@ -93,6 +115,7 @@ namespace syn
 
         double m_state = 0.0;
         double m_G = 0.0; /// feed forward gain
+        double m_fcScale = 1.0;
     };
 
 
@@ -128,11 +151,11 @@ namespace syn
 
         double getState() const;
 
-        virtual void reset() override;;
+        void reset() override;;
 
     protected:
         void process_() override;
-        void onNoteOn_() override;
+        void onFsChange_() override;
     private:
         OnePoleLP implem;
         double m_lastSync;
@@ -145,7 +168,6 @@ namespace syn
 
     protected:
         void onNoteOn_() override;
-
     public:
         const int c_oversamplingFactor = 8;
 
@@ -177,9 +199,9 @@ namespace syn
         void process_() override;
     protected:
         const double VT = 0.312;
-        std::array<double, 5> m_V;
-        std::array<double, 5> m_dV;
-        std::array<double, 5> m_tV;
+        std::array<double, 4> m_V;
+        std::array<double, 4> m_dV;
+        std::array<double, 4> m_tV;
     };
 
     class VOSIMLIB_API LadderFilterB : public LadderFilterBase
@@ -191,6 +213,7 @@ namespace syn
         void reset() override;
     protected:
         void process_() override;
+        void onFsChange_() override;
     protected:
         typedef Eigen::Matrix<double, 1, 5> Vector5d;
         OnePoleLP m_LP[4];

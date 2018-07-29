@@ -26,6 +26,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
+#include "ScopeGL.h"
 #include <vosimlib/Unit.h>
 #include <vosimlib/VoiceManager.h>
 #include <vosimlib/CircularView.h>
@@ -46,11 +47,11 @@ namespace synui {
         explicit OscilloscopeUnit(const string& a_name);
 
         OscilloscopeUnit(const OscilloscopeUnit& a_rhs)
-            :
-            OscilloscopeUnit(a_rhs.name()) {}
+            : OscilloscopeUnit(a_rhs.name()) {}
 
-        int getNumBuffers() const;
-        syn::CircularView<double> OscilloscopeUnit::getBuffer(int a_bufIndex) const;
+        int getNumScopeBuffers() const { return m_buffers.size(); }
+        syn::CircularView<double> getScopeBuffer(int a_bufIndex) const;
+        int getScopeBufferSize() const { return m_bufSize; }
         int getDecimationFactor() const { return m_subPeriod; }
 
         void reset() override;
@@ -75,7 +76,7 @@ namespace synui {
         int m_subCount;
         double m_lastPhase;
         int m_samplesSinceLastSync;
-        int m_syncCount;
+        int m_syncCount;        
         vector<Eigen::VectorXd> m_buffers;
         int m_iPhase;
     };
@@ -96,15 +97,17 @@ namespace synui {
               m_yMin(-1.0),
               m_yMax(1.0),
               m_autoAdjustSpeed(60.0),
-              m_values(),
               m_sideMargin(50),
               m_bottomMargin(40),
-              m_topMargin(20) {}
+              m_topMargin(20) {
+            m_scopegl = new ScopeGL(this);
+        }
 
         void draw(NVGcontext* ctx) override;
         void drawGrid(NVGcontext* ctx);
 
         Eigen::Vector2i OscilloscopeWidget::preferredSize(NVGcontext *) const override { return Eigen::Vector2i(400, 200); }
+        void performLayout(NVGcontext* ctx) override;
 
         const string &caption() const { return m_caption; }
         void setCaption(const string &caption) { m_caption = caption; }
@@ -114,18 +117,6 @@ namespace synui {
 
         const string &footer() const { return m_footer; }
         void setFooter(const string &footer) { m_footer = footer; }
-
-        const Color &backgroundColor() const { return m_bgColor; }
-        void setBackgroundColor(const Color &backgroundColor) { m_bgColor = backgroundColor; }
-
-        const Color &foregroundColor() const { return m_fgColor; }
-        void setForegroundColor(const Color &foregroundColor) { m_fgColor = foregroundColor; }
-
-        const Color &textColor() const { return m_textColor; }
-        void setTextColor(const Color &textColor) { m_textColor = textColor; }
-
-        syn::CircularView<double> values() const { return m_values; }
-        void setValues(const syn::CircularView<double>& values) { m_values = values; }
 
         int getUnitId() const { return m_unitId; }
         void setUnitId(int a_id) { m_unitId = a_id; }
@@ -152,7 +143,7 @@ namespace synui {
         int m_unitId;
         double m_yMin, m_yMax;
         double m_autoAdjustSpeed;
-        syn::CircularView<double> m_values;
+        ScopeGL* m_scopegl;
 
         int m_sideMargin, m_bottomMargin, m_topMargin;
         string m_caption, m_header, m_footer;

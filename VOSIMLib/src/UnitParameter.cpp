@@ -30,8 +30,7 @@ namespace syn {
         m_defaultValue(0),
         m_min(0),
         m_max(1),
-        m_logMin(0),
-        m_logRange(0),
+        m_shape(0.0),
         m_isVisible(true),
         m_type(Null),
         m_unitsType(None),
@@ -41,7 +40,7 @@ namespace syn {
 
     UnitParameter::UnitParameter(const string& a_name, bool a_defaultValue)
         :
-        UnitParameter(a_name, {"Off","On"}, {0,1}, 0) { m_type = Bool; }
+        UnitParameter(a_name, {"Off", "On"}, {0, 1}, 0) { m_type = Bool; }
 
     UnitParameter::UnitParameter(const string& a_name, int a_min, int a_max,
                                  int a_defaultValue, EUnitsType a_unitsType)
@@ -52,14 +51,14 @@ namespace syn {
         m_defaultValue(a_defaultValue),
         m_min(a_min),
         m_max(a_max),
-        m_logMin(0),
-        m_logRange(0),
+        m_shape(0.0),
         m_isVisible(true),
         m_type(Int),
-        m_unitsType(a_unitsType),
         m_controlType(Bounded),
         m_displayPrecision(0),
-        m_parent(nullptr) { }
+        m_parent(nullptr) {
+        setUnitsType(a_unitsType);
+    }
 
     UnitParameter::UnitParameter(const string& a_name,
                                  const vector<string>& a_optionNames,
@@ -70,20 +69,19 @@ namespace syn {
         m_id(-1),
         m_min(0),
         m_max(a_optionNames.size() - 1),
-        m_logMin(0),
-        m_logRange(0),
+        m_shape(0.0),
         m_isVisible(true),
         m_type(Enum),
-        m_unitsType(a_unitsType),
         m_controlType(Bounded),
         m_displayPrecision(0),
         m_parent(nullptr) {
         m_defaultValue = a_defaultOption;
         m_value = m_defaultValue;
+        setUnitsType(a_unitsType);
         double optionValue;
         for (int i = 0; i < a_optionNames.size(); i++) {
             if (a_optionValues.empty()) { optionValue = i; } else { optionValue = a_optionValues[i]; }
-            m_displayTexts.push_back({optionValue, a_optionNames[i]});
+            m_displayTexts.emplace_back(optionValue, a_optionNames[i]);
         }
     }
 
@@ -96,14 +94,14 @@ namespace syn {
         m_defaultValue(a_defaultValue),
         m_min(a_min),
         m_max(a_max),
-        m_logMin(log10(a_min)),
-        m_logRange(log10(a_max) - log10(a_min)),
+        m_shape(0.0),
         m_isVisible(true),
         m_type(Double),
-        m_unitsType(a_unitsType),
         m_controlType(Bounded),
         m_displayPrecision(a_displayPrecision),
-        m_parent(nullptr) { }
+        m_parent(nullptr) {
+        setUnitsType(a_unitsType);
+    }
 
     void UnitParameter::reset() { m_value = m_defaultValue; }
 
@@ -111,29 +109,34 @@ namespace syn {
 
     int UnitParameter::getId() const { return m_id; }
 
-    void UnitParameter::setId(int a_id) { m_id = a_id; }
+    UnitParameter& UnitParameter::setId(int a_id) {
+        m_id = a_id;
+        return *this;
+    }
 
     Unit* UnitParameter::getParent() const { return m_parent; }
 
-    void UnitParameter::setParent(Unit* a_newParent) { m_parent = a_newParent; }
+    UnitParameter& UnitParameter::setParent(Unit* a_newParent) {
+        m_parent = a_newParent;
+        return *this;
+    }
 
     UnitParameter::EParamType UnitParameter::getType() const { return m_type; }
 
     double UnitParameter::getMin() const { return m_min; }
 
-    void UnitParameter::setMin(double a_new_min) {
+    UnitParameter& UnitParameter::setMin(double a_new_min) {
         m_min = a_new_min;
-        m_logMin = log10(a_new_min);
-        m_logRange = log10(m_max) - m_logMin;
         set(m_value);
+        return *this;
     }
 
     double UnitParameter::getMax() const { return m_max; }
 
-    void UnitParameter::setMax(double a_new_max) {
+    UnitParameter& UnitParameter::setMax(double a_new_max) {
         m_max = a_new_max;
-        m_logRange = log10(m_max) - m_logMin;
         set(m_value);
+        return *this;
     }
 
     double UnitParameter::getDefaultValue() const { return m_defaultValue; }
@@ -152,19 +155,35 @@ namespace syn {
 
     UnitParameter& UnitParameter::setControlType(EControlType a_newControlType) {
         m_controlType = a_newControlType;
-        return * this;
+        return *this;
     }
 
     UnitParameter& UnitParameter::setUnitsType(EUnitsType a_newUnitsType) {
+        switch (a_newUnitsType) {
+            break;
+        case Freq:
+            setShape(3.0);
+            break;
+        case BPM:
+        case Semitones:
+        case Octaves:
+        case Seconds:
+        case Decibal:
+        case Samples:
+        case None:
+        default:
+            setShape(1.0);
+            break;
+        }
         m_unitsType = a_newUnitsType;
-        return * this;
+        return *this;
     }
 
     bool UnitParameter::isVisible() const { return m_isVisible; }
 
     UnitParameter& UnitParameter::setVisible(bool a_visible) {
         m_isVisible = a_visible;
-        return * this;
+        return *this;
     }
 
     bool UnitParameter::getBool() const { return m_value > 0.5; }
@@ -206,39 +225,25 @@ namespace syn {
     }
 
     double UnitParameter::getNorm(double a_value) const {
-        switch (m_unitsType) {
-        case Freq:
-        case Decibal:
-            return (log10(a_value) - m_logMin) / m_logRange;
-        case None:
-        default:
-            return (a_value - m_min) / (m_max - m_min);
-        }
+        double curved_norm = INVLERP<double>(m_min, m_max, a_value);
+        double norm = std::pow(curved_norm, 1. / m_shape);
+        return norm;
     }
 
     bool UnitParameter::setNorm(double a_norm_value) {
-        double value = CLAMP<double>(a_norm_value, 0, 1);
-        switch (m_unitsType) {
-            case Freq:
-            case Decibal:
-                value = pow(10.0, value * m_logRange + m_logMin);
-                break;
-            case None:
-            default:
-                value = value * (m_max - m_min) + m_min;
-                break;
-        }
+        double curved_norm = std::pow(CLAMP<double>(a_norm_value, 0., 1.), m_shape);
+        double value = LERP<double>(m_min, m_max, curved_norm);
         return set(value);
     }
 
     bool UnitParameter::setFromString(const string& a_str) {
-        if (getType() != Enum && getType() != Bool ) {
+        if (getType() != Enum && getType() != Bool) {
             try {
                 size_t num_digits;
                 double value = stod(a_str, &num_digits);
 
                 // adjust parameter precision
-                size_t decimal_pos = a_str.find_first_of(".");
+                size_t decimal_pos = a_str.find_first_of('.');
                 if (decimal_pos != string::npos) {
                     int newParamPrecision = static_cast<int>(num_digits) - static_cast<int>(decimal_pos) - 1;
                     setPrecision(newParamPrecision);
@@ -276,12 +281,13 @@ namespace syn {
         if (idx >= 0 && idx < m_displayTexts.size()) { return m_displayTexts[idx].m_text; }
 
         // If no display text is found, return numeral
-
         char displaytext[MAX_PARAM_STR_LEN];
         if (getType() != Double) { snprintf(displaytext, MAX_PARAM_STR_LEN, "%d", idx); } else {
             double displayValue = getDouble();
             // if precision is set, print out that many digits
-            if (getPrecision() > 0) { snprintf(displaytext, MAX_PARAM_STR_LEN, "%.*f", m_displayPrecision, displayValue); } else { snprintf(displaytext, MAX_PARAM_STR_LEN, "%g", displayValue); }
+            if (getPrecision() > 0) {
+                snprintf(displaytext, MAX_PARAM_STR_LEN, "%.*f", m_displayPrecision, displayValue);
+            } else { snprintf(displaytext, MAX_PARAM_STR_LEN, "%g", displayValue); }
         }
         return string(displaytext);
     }
@@ -289,31 +295,31 @@ namespace syn {
     string UnitParameter::getUnitsString() const {
         string units;
         switch (m_unitsType) {
-            case Freq:
-                units = "Hz";
-                break;
-            case BPM:
-                units = "BPM";
-                break;
-            case Semitones:
-                units = "semi";
-                break;
-            case Octaves:
-                units = "oct";
-                break;
-            case Seconds:
-                units = "s";
-                break;
-            case Decibal:
-                units = "dB";
-                break;
-            case Samples:
-                units = "smpls";
-                break;
-            case None:
-            default:
-                units = "";
-                break;
+        case Freq:
+            units = "Hz";
+            break;
+        case BPM:
+            units = "BPM";
+            break;
+        case Semitones:
+            units = "semi";
+            break;
+        case Octaves:
+            units = "oct";
+            break;
+        case Seconds:
+            units = "s";
+            break;
+        case Decibal:
+            units = "dB";
+            break;
+        case Samples:
+            units = "smpls";
+            break;
+        case None:
+        default:
+            units = "";
+            break;
         }
         return units;
     }
@@ -324,7 +330,7 @@ namespace syn {
         setFromString(j["value"].get<string>());
         m_type = static_cast<EParamType>(j["data_type"].get<int>());
         m_displayTexts.clear();
-        for (const json& k : j["display_texts"]) { m_displayTexts.push_back(DisplayText{k}); }
+        for (const json& k : j["display_texts"]) { m_displayTexts.emplace_back(k); }
         m_min = j["min"];
         m_max = j["max"];
         return *this;

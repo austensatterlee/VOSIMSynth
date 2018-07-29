@@ -17,16 +17,7 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
- * \file units/MathUnits.h
- * \brief
- * \details
- * \author Austen Satterlee
- * \date 24/01/2016
- */
-
-#ifndef __MATHUNITS__
-#define __MATHUNITS__
+#pragma once
 #include "vosimlib/Unit.h"
 #include "vosimlib/units/MemoryUnit.h"
 #include "vosimlib/DSPMath.h"
@@ -76,7 +67,7 @@ namespace syn {
     };
 
     /**
-     * Full-wave rectifier
+     * Rectifier
      */
     class VOSIMLIB_API RectifierUnit : public Unit {
         DERIVE_UNIT(RectifierUnit)
@@ -239,20 +230,20 @@ namespace syn {
     };
 
     /**
-     * Signal switch
+     * Signal comparator.
      *
-     * Output `a` if `ctrl` is larger than `comp`, otherwise output `b`.
+     * `>`: Output 1 if `in` is greater than `cmp`, otherwise output 0.
+     * `<=`: Output 1 if `in` is less than or equal to `cmp`, otherwise output 0.
      */
     class VOSIMLIB_API SwitchUnit : public Unit {
         DERIVE_UNIT(SwitchUnit)
     public:
         explicit SwitchUnit(const string& a_name)
             : Unit(a_name) {
-            addInput_("low");
-            addInput_("high");
-            addInput_("cmp");
             addInput_("in");
-            addOutput_("out");
+            addInput_("cmp");
+            addOutput_(">");
+            addOutput_("<=");
         }
 
         SwitchUnit(const SwitchUnit& a_rhs)
@@ -264,9 +255,10 @@ namespace syn {
     protected:
         void process_() override {
             BEGIN_PROC_FUNC
-            double comp = READ_INPUT(2);
-            double ctrl = READ_INPUT(3);
-            WRITE_OUTPUT(0, ctrl > comp ? READ_INPUT(0) : READ_INPUT(1));
+            double in = READ_INPUT(0);
+            double comp = READ_INPUT(1);
+            WRITE_OUTPUT(0, in > comp ? 1 : 0);
+            WRITE_OUTPUT(1, in <= comp ? 1 : 0);
             END_PROC_FUNC
         }
     };
@@ -322,5 +314,3 @@ namespace syn {
         void process_() override;
     };
 }
-
-#endif

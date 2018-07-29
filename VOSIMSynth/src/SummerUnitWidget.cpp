@@ -3,6 +3,7 @@
 #include "vosimsynth/UI.h"
 #include <vosimlib/Unit.h>
 #include <nanogui/theme.h>
+#include <GLFW/glfw3.h>
 
 using nanogui::Color;
 
@@ -24,7 +25,7 @@ int synui::SummerUnitWidget::getInputPort(const Eigen::Vector2i& p) {
         // Find a free input port
         for (int i = 0; i < unit.numInputs(); i++) {
             int inputId = unit.inputs().ids()[i];
-            if (unit.inputSource(inputId) == nullptr) {
+            if (!unit.isInputConnected(inputId)) {
                 return inputId;
             }
         }
@@ -78,7 +79,7 @@ void synui::SummerUnitWidget::draw(NVGcontext* ctx) {
     // Draw outer circles (ports)
     for (int i = 0; i < getUnit_().numInputs() - 1; i++) {
         int a_portId = getUnit_().inputs().ids()[i];
-        if (getUnit_().isConnected(a_portId)) {
+        if (getUnit_().isInputConnected(a_portId)) {
             nvgBeginPath(ctx);
             Vector2i portPos = getInputPortAbsPosition(a_portId) - absolutePosition();
             nvgCircle(ctx, portPos.x(), portPos.y(), 2);

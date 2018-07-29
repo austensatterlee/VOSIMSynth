@@ -12,10 +12,19 @@ std::string synui::CircuitWire::info() const {
     // List current output value for this wire held by each active voice
     std::vector<int> activeVoiceIndices = m_parentCircuit->m_vm->getActiveVoiceIndices();
     std::sort(activeVoiceIndices.begin(), activeVoiceIndices.end());
+    {
+        const syn::Unit& unit = m_parentCircuit->m_vm->getUnit(m_outputPort.first);
+        std::ostringstream portInfo, portAddress;
+        portInfo << "Output " << m_outputPort.second << " (" << unit.outputName(m_outputPort.second) << ")" << std::endl;
+        portAddress << std::showbase << std::internal << std::setfill('0') << std::setw(16) << std::hex;
+        portAddress << unit.outputs()[m_outputPort.second].buf();
+        os << portInfo.str() << portAddress.str() << std::endl;
+    }
+    os << std::setprecision(4) << std::showpos << std::showpoint;
     for (int vind : activeVoiceIndices) {
         const syn::Unit& unit = m_parentCircuit->m_vm->getUnit(m_outputPort.first, vind);
         double value = unit.readOutput(m_outputPort.second, 0);
-        os << "Voice " << vind << ": " << std::setprecision(4) << value << std::endl;
+        os << "Voice " << vind << ": " << std::setprecision(4) << std::showpos << value << std::endl;
     }
     return os.str();
 }
@@ -63,7 +72,7 @@ void synui::CircuitWire::draw(NVGcontext* ctx) {
         Eigen::Vector2i currPixelPt = i >= m_path.size() - 1 ? m_end : m_parentCircuit->m_grid.toPixel(currGridPt, gs);
         nvgLineTo(ctx, currPixelPt.x(), currPixelPt.y());
 
-        if (m_parentCircuit->wireDrawStyle() == CircuitWidget::Curved) {
+        if (m_parentCircuit->wireDrawStyle() == CircuitWidget::WireDrawStyle::Curved) {
             const float curvature = 0.5;
             Eigen::Vector2i dCurrGridPt = nextGridPt - currGridPt;
             Eigen::Vector2i dNextGridPt = nextGridPt2 - nextGridPt;
@@ -99,8 +108,8 @@ void synui::CircuitWire::draw(NVGcontext* ctx) {
     //            nvgBeginPath(ctx);
     //            nvgFillColor(ctx, nanogui::Color(0.0f,0.0f,0.0f,0.5f));
     //            for (auto gridPt : m_crossings)
-    //            {                
-    //                Vector2i pixelPt = m_parentCircuit->m_grid.toPixel({gridPt.first, gridPt.second}, m_parentCircuit->getGridSpacing());      
+    //            {
+    //                Vector2i pixelPt = m_parentCircuit->m_grid.toPixel({gridPt.first, gridPt.second}, m_parentCircuit->getGridSpacing());
     //                nvgCircle(ctx, pixelPt.x(), pixelPt.y(), 1.0f);
     //            }
     //            nvgFill(ctx);
@@ -111,14 +120,14 @@ void synui::CircuitWire::draw(NVGcontext* ctx) {
         float noseAngle = 45.0;
 
         Eigen::Vector2i pt = m_end;
-        Eigen::Vector2i prevPt = m_parentCircuit->m_grid.toPixel(m_path[m_path.size() - 2], m_parentCircuit->gridSpacing());
+        Eigen::Vector2i prevPt = Grid2D<synui::CircuitWidget::GridCell>::toPixel(m_path[m_path.size() - 2], m_parentCircuit->gridSpacing());
 
         Eigen::Vector2f dir = (pt - prevPt).cast<float>();
         dir.normalize();
         float dangle = asin(dir[1]);
 
         Eigen::Vector2f headOffset = Eigen::Vector2f{0, 1} * noseSize;
-        Eigen::Vector2f noseOffset = Eigen::Vector2f{noseSize / sin(2 * DSP_PI / 180.0 * noseAngle), 0};
+        Eigen::Vector2f noseOffset = Eigen::Vector2f{noseSize / sin(2 * SYN_PI / 180.0 * noseAngle), 0};
 
         nvgBeginPath(ctx);
         nvgFillColor(ctx, wireColor);
@@ -180,7 +189,7 @@ int synui::CircuitWire::weight_func<CellType>::operator()(const Grid2D<CellType>
     else if(cell.contains(CircuitWidget::GridCell::State::Unit))
         score += 100;
     else if(!cell)
-        score += 1;    
+        score += 1;
     return score;
 }
 
@@ -190,7 +199,7 @@ void synui::CircuitWire::updatePath() {
     auto startCell = m_parentCircuit->m_grid.fromPixel(m_start, m_parentCircuit->gridSpacing());
     auto endCell = m_parentCircuit->m_grid.fromPixel(m_end, m_parentCircuit->gridSpacing());
 
-    // Remove from grid            
+    // Remove from grid
     m_parentCircuit->m_grid.map(
         [&](CircuitWidget::GridCell& cell) { cell.remove({CircuitWidget::GridCell::State::Wire, this}); }
     );

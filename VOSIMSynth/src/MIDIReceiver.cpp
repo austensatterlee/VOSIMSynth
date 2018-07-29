@@ -55,7 +55,7 @@ namespace syn {
                 }
                 else {
                     m_keyStatus[noteNumber] = false;
-                    m_vm.noteOff(noteNumber, velocity);
+                    m_vm.noteOff(noteNumber);
                 }
             }
             else if (status == IMidiMsg::kControlChange) {

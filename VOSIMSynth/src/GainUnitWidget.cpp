@@ -9,7 +9,7 @@ using nanogui::Color;
 synui::GainUnitWidget::GainUnitWidget(CircuitWidget* a_parent, syn::VoiceManager* a_vm, int a_unitId)
     : SummerUnitWidget(a_parent, a_vm, a_unitId)
 {
-    
+
 }
 
 void synui::GainUnitWidget::draw(NVGcontext* ctx)
@@ -31,20 +31,20 @@ void synui::GainUnitWidget::draw(NVGcontext* ctx)
     Color iColor(19, 80, 130, 255);
 
     nvgBeginPath(ctx);
-    nvgEllipse(ctx, size().x() * 0.5, size().y() * 0.5, size().x() * 0.5, size().y() * 0.5);    
+    nvgEllipse(ctx, size().x() * 0.5, size().y() * 0.5, size().x() * 0.5, size().y() * 0.5);
     nvgFillColor(ctx, bgColor);
     nvgFill(ctx);
     if (contains(mousePos + position()) && !handleSelected)
     {
         nvgFillColor(ctx, bgHighlightColor);
-        nvgFill(ctx);        
-    }    
+        nvgFill(ctx);
+    }
 
     // Draw connected input ports
     for (int i = 0; i < getUnit_().numInputs(); i++)
     {
         int a_portId = getUnit_().inputs().ids()[i];
-        if(getUnit_().isConnected(a_portId)){
+        if(getUnit_().isInputConnected(a_portId)){
             nvgBeginPath(ctx);
             Vector2i portPos = getInputPortAbsPosition(a_portId) - absolutePosition();
             nvgCircle(ctx, portPos.x(), portPos.y(), 2);
@@ -69,12 +69,12 @@ void synui::GainUnitWidget::draw(NVGcontext* ctx)
     }
     nvgStrokeColor(ctx, handleStrokeColor);
     nvgStrokeWidth(ctx, 5.0f);
-    nvgStroke(ctx);    
+    nvgStroke(ctx);
 
     // Draw X sign
     nvgBeginPath(ctx);
     nvgTranslate(ctx, size().x()*0.5, size().y()*0.5);
-    nvgRotate(ctx, DSP_PI*0.25f);
+    nvgRotate(ctx, float(SYN_PI)*0.25f);
     nvgMoveTo(ctx, 0.0f, -handleRadius);
     nvgLineTo(ctx, 0.0f, handleRadius);
     nvgMoveTo(ctx, -handleRadius, 0.0f);
@@ -82,7 +82,7 @@ void synui::GainUnitWidget::draw(NVGcontext* ctx)
     nvgStrokeColor(ctx, plusColor);
     nvgStrokeWidth(ctx, 2.0f);
     nvgStroke(ctx);
-    
+
     /* Draw highlight if enabled. */
     if (highlighted())
     {

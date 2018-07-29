@@ -1,4 +1,4 @@
-image: Visual Studio 2015
+image: Visual Studio 2017
 
 build:
     verbosity: detailed
@@ -6,53 +6,54 @@ build:
 environment:
     PYTHON_EXECUTABLE_32: C:/Miniconda/python.exe
     PYTHON_EXECUTABLE_64: C:/Miniconda-x64/python.exe
-    BOOST_ROOT: C:/Libraries/boost_1_63_0
+    BOOST_ROOT: C:/Libraries/boost_1_65_1
     VOSIMLIB_BUILD_PYTHON: ON
     VOSIMSYNTH_BUILD_STANDALONE: OFF
     VOSIMPROJECT_BUILD_TESTS: ON
     VOSIMPROJECT_BUILD_BENCHMARKS: ON
-    VOSIMLIB_SHARED: OFF
-    BUILD_SHARED_LIBS: OFF
+    VOSIMLIB_SHARED: OFF 
+    BUILD_SHARED_LIBS: OFF 
 
     matrix:
-        - GENERATOR: "Visual Studio 14 2015"
+        - GENERATOR: "Visual Studio 15 2017"
           CONFIG: Debug
           PYTHON: C:/Miniconda
           ARCH: x86
           BUILD_DIR: _build32
 
-        - GENERATOR: "Visual Studio 14 2015"
+        - GENERATOR: "Visual Studio 15 2017"
           CONFIG: Release
           PYTHON: C:/Miniconda
           BUILD_DIR: _build32
 
-        - GENERATOR: "Visual Studio 14 2015 Win64"
+        - GENERATOR: "Visual Studio 15 2017 Win64"
           CONFIG: Debug
+          VOSIMPROJECT_EIS: SSE2
           PYTHON: C:/Miniconda-x64
           BUILD_DIR: _build64-sse2
-          VOSIMPROJECT_EIS: SSE2
 
-        - GENERATOR: "Visual Studio 14 2015 Win64"
+        - GENERATOR: "Visual Studio 15 2017 Win64"
           CONFIG: Release
+          VOSIMPROJECT_EIS: SSE2
           PYTHON: C:/Miniconda-x64
           BUILD_DIR: _build64-sse2
-          VOSIMPROJECT_EIS: SSE2
 
-        - GENERATOR: "Visual Studio 14 2015 Win64"
+        - GENERATOR: "Visual Studio 15 2017 Win64"
           CONFIG: Debug
+          VOSIMPROJECT_EIS: AVX2
           PYTHON: C:/Miniconda-x64
           BUILD_DIR: _build64-avx2
-          VOSIMPROJECT_EIS: AVX2
 
-        - GENERATOR: "Visual Studio 14 2015 Win64"
+        - GENERATOR: "Visual Studio 15 2017 Win64"
           CONFIG: Release
+          VOSIMPROJECT_EIS: AVX2
           PYTHON: C:/Miniconda-x64
           BUILD_DIR: _build64-avx2
           VOSIMPROJECT_EIS: AVX2
 
 install:
     - git submodule update --init --recursive
-    - SET PATH=%PYTHON%;%PYTHON%/Scripts;%PATH%
+    - set PATH=%PYTHON%;%PYTHON%/Scripts;%PATH%
     - conda update -y conda
     - conda install -y numpy scipy
 
@@ -66,11 +67,17 @@ build_script:
     - cd
     - cmake --build . --config "%CONFIG%"
 
+after_build:
+    - set VOSIMLIB_BENCH_RESULTS=vosimlib_bench_results.%APPVEYOR_BUILD_VERSION%.%CONFIG%.csv
+    - VOSIMLib\bench\%CONFIG%\vosimlib_bench.exe -r csv -o %VOSIMLIB_BENCH_RESULTS%
+
 test_script:
-    - ctest -V -j 2 -C %CONFIG%
+    - ctest -j 2 -C %CONFIG% --output-on-failure
 
 artifacts:
   - path: '%BUILD_DIR%/VOSIMSynth/%CONFIG%/*.dll'
     name: 'VST'
   - path: '%BUILD_DIR%/VOSIMLib/%CONFIG%/*.pyd'
     name: 'Python Bindings'
+  - path: '%BUILD_DIR%/%VOSIMLIB_BENCH_RESULTS%'
+    name: 'VOSIMLib benchmark'

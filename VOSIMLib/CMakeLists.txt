@@ -7,8 +7,6 @@ if(VOSIMLIB_SHARED)
   list(APPEND VOSIMLIB_DEFS -DVOSIMLIB_SHARED)
 endif()
 
-set(ADDITIONAL_LIBRARIES "")
-
 ##
 # Eigen
 ##
@@ -31,10 +29,13 @@ include_directories(${Boost_INCLUDE_DIRS})
 ##
 set(GENTABLES_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/table_data.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/lut_tables.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/vosimlib/lut_tables.h)
 set(GENTABLES_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/genTables.py)
-add_custom_command(OUTPUT ${GENTABLES_OUTPUT} COMMAND python 
-    ARGS ${CMAKE_CURRENT_SOURCE_DIR}/genTables.py --verbose 
-    DEPENDS ${GENTABLES_DEPENDS} COMMENT "Generating wavetables..." 
-    PRE_BUILD VERBATIM WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_custom_command(OUTPUT ${GENTABLES_OUTPUT} COMMAND python
+    ARGS ${CMAKE_CURRENT_SOURCE_DIR}/genTables.py --verbose
+    DEPENDS ${GENTABLES_DEPENDS} COMMENT "Generating wavetables..."
+    PRE_BUILD
+    VERBATIM
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
 
 ##
 # VOSIMLib source files
@@ -68,10 +69,7 @@ else()
   set_target_properties(VOSIMLib PROPERTIES MINSIZEREL_POSTFIX -s)
   set_target_properties(VOSIMLib PROPERTIES RELWITHDEBINFO_POSTFIX -s)
 endif()
-target_link_libraries(VOSIMLib ${ADDITIONAL_LIBRARIES})
-if(WIN32)
-  target_compile_definitions(VOSIMLib PRIVATE -DWIN32_LEAN_AND_MEAN)
-endif()
+target_link_libraries(VOSIMLib ${MKL_LIBRARIES})
 
 ##
 # Add tests target
