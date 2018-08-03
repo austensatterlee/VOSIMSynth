@@ -272,7 +272,7 @@ namespace syn
         /**
          * Notify the unit of a "note off" event
          */
-        void noteOff(int a_note);
+        void noteOff();
 
         /**
          * Reset the unit's internal state (if any), as if Unit::tick had never been called.

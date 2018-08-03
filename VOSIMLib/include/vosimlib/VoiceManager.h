@@ -23,12 +23,10 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "vosimlib/Unit.h"
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/lockfree/policies.hpp>
-#include <map>
 
 #define MAX_VOICEMANAGER_MSG_QUEUE_SIZE 1024
 #define MAX_VOICES 16
 
-using std::map;
 using std::string;
 using boost::lockfree::spsc_queue;
 using boost::lockfree::capacity;
@@ -50,15 +48,14 @@ namespace syn {
         VoiceManager()
             :
             m_queuedActions{MAX_VOICEMANAGER_MSG_QUEUE_SIZE},
+            m_lastVoiceIndex(0),
+            m_voiceTicks(0),
             m_bufferSize(1),
             m_internalBufferSize(1),
-            m_tickCount(0),
-            m_activeVoices(MAX_VOICES),
-            m_idleVoices(MAX_VOICES),
-            m_garbageList(MAX_VOICES),
             m_instrument{"main"},
             m_voiceStealingPolicy(Oldest),
-            m_legato(false) {
+            m_legato(false)
+        {
             setBufferSize(m_bufferSize);
             setInternalBufferSize(m_internalBufferSize);
         }
@@ -75,10 +72,6 @@ namespace syn {
          */
         bool queueAction(Command* a_action);
 
-        unsigned getTickCount() const;
-
-        void setFs(double a_newFs);
-
         /**
          * \brief The number of samples read and produced by the tick() method of the VoiceManager.
          */
@@ -90,15 +83,12 @@ namespace syn {
         void setInternalBufferSize(int a_internalBufferSize);
         int getInternalBufferSize() const { return m_internalBufferSize; }
 
+        void setFs(double a_newFs);
         void setTempo(double a_newTempo);
-
         void noteOn(int a_noteNumber, int a_velocity);
-
         void noteOff(int a_noteNumber);
-
-        void sendControlChange(int a_cc, double a_newvalue);
-
-        void sendPitchWheelChange(double a_newvalue);
+        void sendControlChange(int a_cc, double a_value);
+        void sendPitchWheelChange(double a_value);
 
         void setMaxVoices(int a_newMax);
 
@@ -108,10 +98,7 @@ namespace syn {
 
         int getMaxVoices() const;
 
-        int getLowestVoiceID(bool a_preferReleased=false) const;
-        int getNewestVoiceID(bool a_preferReleased=false) const;
-        int getOldestVoiceID(bool a_preferReleased=false) const;
-        int getHighestVoiceID(bool a_preferReleased=false) const;
+        int getNewestVoiceIndex() const;
 
         void onIdle();
 
@@ -119,8 +106,8 @@ namespace syn {
          * Retrieves a unit from a specific voice circuit.
          * If \p a_voiceId is negative, the unit is retrieved from the prototype circuit.
          */
-        Unit& getUnit(int a_id, int a_voiceId = -1);
-        const Unit& getUnit(int a_id, int a_voiceId = -1) const;
+        Unit& getUnit(int a_id, int a_voiceInd = -1);
+        const Unit& getUnit(int a_id, int a_voiceInd = -1) const;
 
         Circuit& getPrototypeCircuit();
         const Circuit& getPrototypeCircuit() const;
@@ -145,28 +132,16 @@ namespace syn {
          */
         void _flushActionQueue();
 
-        int _createVoice(int a_note, int a_velocity);
-
-        void _makeIdle(int a_voiceIndex);
-
-        int _stealIdleVoice();
-
     private:
-        typedef std::vector<int> VoiceIndexList;
-        typedef map<int, std::vector<int>> VoiceMap;
-
         spsc_queue<Command*> m_queuedActions;
 
-        vector<Circuit> m_circuits;
+        vector<Circuit> m_voices;
+        vector<int> m_voiceBirths; ///< value of `m_voiceTicks` recorded upon voice activation
+        int m_lastVoiceIndex;
+        int m_voiceTicks; ///< counts the total number of voices activated since the beginning
         int m_bufferSize; ///< size of the buffers that will be written to by VoiceManager::tick
         int m_internalBufferSize; ///< size of the voice buffers that will be read from by VoiceManager::tick
-        int m_tickCount;
 
-        VoiceMap m_voiceMap; ///< maps midi notes to voice indices
-        VoiceIndexList m_activeVoices; ///< list of active voice indices
-        VoiceIndexList m_idleVoices; ///< list of idle voice indices
-        VoiceIndexList m_garbageList; ///< pre-allocated storage for collecting idle voices during audio processing
-        VoiceIndexList m_releasedVoices; ///< list of voices that are active but have been sent a note off signal
         Circuit m_instrument;
 
         VoiceStealPolicy m_voiceStealingPolicy; ///< Determines which voices are replaced when all of them are active

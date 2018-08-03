@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import division
 import numpy as np
 from numpy import *
 from scipy import signal as ss
@@ -18,7 +19,7 @@ def RealCepstrum(n, signal):
     return realCepstrum
 
 def MinimumPhase(n, realCepstrum):
-    nd2 = n/2
+    nd2 = n//2
     realTime = zeros(n)
     imagTime = zeros(n)
     realTime[0] = realCepstrum[0]
@@ -97,8 +98,8 @@ def GenerateBlit(pts, nharmonics=None):
     Generate a band-limited impulse train using the FFT
 
     """
-    nharmonics = nharmonics or (pts/2 if pts%2!=0 else pts/2-1)
-    fftpts = pts/2+1
+    nharmonics = nharmonics or (pts//2 if pts%2!=0 else pts//2-1)
+    fftpts = pts//2+1
     blit_spectrum = zeros(fftpts)
     blit_spectrum[:nharmonics+1] = 1.0
     blit = fft.fftshift(fft.irfft(blit_spectrum))
@@ -107,9 +108,9 @@ def GenerateBlit(pts, nharmonics=None):
 def GenerateBLSaw(nharmonics, npoints=None, w0=1):
     """ Generate band limited sawtooth wave """
     npoints = npoints or nharmonics*2+1
-    nharmonics = min(nharmonics, npoints/2-1 if npoints%2 else npoints/2)
+    nharmonics = min(nharmonics, npoints//2-1 if npoints%2 else npoints//2)
 
-    harmonics = [w0*x for x in xrange(1, nharmonics+1)]
+    harmonics = [w0*x for x in range(1, nharmonics+1)]
 
     gains = [1./x for x in harmonics]
 
@@ -120,9 +121,9 @@ def GenerateBLSaw(nharmonics, npoints=None, w0=1):
 
 def GenerateBLSquare(nharmonics, npoints=None, w0=1):
     npoints = npoints or nharmonics*2+1
-    nharmonics = min(nharmonics, npoints/2-1 if npoints%2 else npoints/2)
+    nharmonics = min(nharmonics, npoints//2-1 if npoints%2 else npoints//2)
 
-    harmonics = [w0*x for x in xrange(1, nharmonics+1) if x%2]
+    harmonics = [w0*x for x in range(1, nharmonics+1) if x%2]
 
     gains = [1./x for x in harmonics]
 
@@ -132,9 +133,9 @@ def GenerateBLSquare(nharmonics, npoints=None, w0=1):
 
 def GenerateBLTriangle(nharmonics, npoints=None, w0=1):
     npoints = npoints or nharmonics*2+1
-    nharmonics = min(nharmonics, npoints/2-1 if npoints%2 else npoints/2)
+    nharmonics = min(nharmonics, npoints//2-1 if npoints%2 else npoints//2)
 
-    harmonics = [w0*x for x in xrange(1, nharmonics+1) if x%2]
+    harmonics = [w0*x for x in range(1, nharmonics+1) if x%2]
 
     gains = [1./x**2 if not i%2 else -1./x**2 for i, x in enumerate(harmonics)]
 
@@ -153,8 +154,8 @@ def GenerateBlimp(intervals=10, res=2048, fs=48e3, fc=20000, beta=7.20, apgain=0
     beta - first window param
     apgain - apodizing window gain
     """
-    intervals=2*(int(intervals)/2)+1 # make intervals odd
-    res = 2*(int(res)/2)+1 # make oversample factor odd
+    intervals=2*(int(intervals)//2)+1 # make intervals odd
+    res = 2*(int(res)//2)+1 # make oversample factor odd
     pts = res*intervals # impulse length in points
     ind = intervals*2*(arange(pts) - (pts-1)/2.)/(pts-1.) # pts points spread across [-intervals/2, intervals/2)
     x = fc*1./fs*ind # pts points spread across fc/fs*[-intervals/2, intervals/2)
@@ -170,24 +171,9 @@ def GenerateBlimp(intervals=10, res=2048, fs=48e3, fc=20000, beta=7.20, apgain=0
     # blimp = scale_fir(blimp)
 
     if ret_half:
-        return blimp[len(blimp)/2:]
+        return blimp[len(blimp)//2:]
     else:
         return blimp
-
-def GenerateBlimp2(intervals=17, res=256, wc=22e3/48e3, width=1e3/48e3, ret_half=False):
-    intervals=2*(int(intervals)/2)+1 # make intervals odd
-    pts = res*intervals # impulse length in points
-    pts = 2*(int(pts)/2)+1
-    blimp_fir = ss.firwin(pts, (wc*2./res), width=width)
-
-    # Scale
-    # blimp_fir = scale_fir(blimp_fir)
-
-    if ret_half:
-        half = blimp_fir[len(blimp_fir)/2:]
-        return half
-
-    return blimp_fir
 
 def GenerateSine(n):
     k = arange(n)
@@ -237,10 +223,10 @@ def MakeTableStr(table, name, ctype="double"):
     tablestr = "{} {}[{}] = {{\n".format(ctype, name, table.size)
     cellstr = "{:.18f}"
     ind = 0
-    for i in xrange(rows):
+    for i in range(rows):
         if i!=0:
             tablestr+='\n'
-        for j in xrange(cols):
+        for j in range(cols):
             tablestr+=cellstr.format(table[ind])
             tablestr+=', '
             ind+=1
@@ -274,7 +260,7 @@ def clipdb(s, cutoff):
 def magspec(signal, pts=None, fs=None, xlog=False, ylog=False, ax=None, **kwargs):
     from matplotlib import pyplot as plt
     pts = pts or len(signal)
-    k = arange(1, pts/2)
+    k = arange(1, pts//2)
     fs = fs or 1.
     xlogscale, ylogscale = (xlog, ylog)
     xlogscale = kwargs.pop('xlog', xlogscale)
@@ -361,7 +347,7 @@ def resample(signal, new_table_size, filt, filt_res, numperiods=1, isperiodic=Tr
     filt_res - oversampling factor of filter kernel
 
     """
-    filt_len = len(filt)/filt_res
+    filt_len = len(filt)//filt_res
     siglen = len(signal)
     ratio = new_table_size*1.0/siglen
     newsiglen = int(new_table_size*numperiods)
@@ -436,7 +422,7 @@ def sinclowpass(signal, fc, winlen=10):
     newsignal = zeros(len(signal))
     M = arange(len(signal))
     # for m in M:
-        # for n in xrange(N):
+        # for n in range(N):
             # newsignal[m] += signal[n]*sinc(fc*(m-n))
         # newsignal[m]*=2*fc
     fc = fc
@@ -445,7 +431,7 @@ def sinclowpass(signal, fc, winlen=10):
     sincfir *= apwin
     sincfir /= sincfir.max()
     for m in M:
-        for n in xrange(m-winlen+1, m+winlen+1):
+        for n in range(m-winlen+1, m+winlen+1):
             k = clip(n, 0, len(signal)-1)
             newsignal[m] += signal[k]*sincfir[m-n+winlen]
     return newsignal*fc
@@ -521,6 +507,8 @@ def main(pargs):
     MIN_PITCH = -128
     MAX_PITCH = 256
     pitches, pitchtable = GeneratePitchTable(MIN_PITCH, MAX_PITCH, PITCH_RES)
+    if v:
+        print(" samples:", len(pitchtable))
 
     """Bandlimited saw wave"""
     if v:

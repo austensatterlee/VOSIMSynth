@@ -17,12 +17,14 @@ environment:
     matrix:
         - GENERATOR: "Visual Studio 15 2017"
           CONFIG: Debug
+          VOSIMPROJECT_EIS: NONE
           PYTHON: C:/Miniconda
           ARCH: x86
           BUILD_DIR: _build32
 
         - GENERATOR: "Visual Studio 15 2017"
           CONFIG: Release
+          VOSIMPROJECT_EIS: NONE
           PYTHON: C:/Miniconda
           BUILD_DIR: _build32
 
@@ -67,7 +69,7 @@ build_script:
     - cmake --build . --config "%CONFIG%"
 
 after_build:
-    - set VOSIMLIB_BENCH_RESULTS=vosimlib_bench_results.%APPVEYOR_BUILD_VERSION%.%CONFIG%.csv
+    - set VOSIMLIB_BENCH_RESULTS=vosimlib_bench_results.%APPVEYOR_BUILD_VERSION%.%VOSIMPROJECT_EIS%.%CONFIG%.csv
     - VOSIMLib\bench\%CONFIG%\vosimlib_bench.exe -r csv -o %VOSIMLIB_BENCH_RESULTS%
 
 test_script:

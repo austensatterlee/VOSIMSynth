@@ -341,7 +341,7 @@ namespace syn
     void Circuit::onNoteOff_()
     {
         const int* unitIndices = m_units.ids();
-        for (int i = 0; i < m_units.size(); i++) { m_units[unitIndices[i]]->noteOff(note()); }
+        for (int i = 0; i < m_units.size(); i++) { m_units[unitIndices[i]]->noteOff(); }
     }
 
     void Circuit::onMidiControlChange_(int a_cc, double a_value)

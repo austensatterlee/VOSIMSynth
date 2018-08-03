@@ -145,7 +145,7 @@ namespace synui {
             return;
 
         const OscilloscopeUnit* unit = static_cast<const OscilloscopeUnit*>(&m_vm->getUnit(m_unitId,
-            m_vm->getNewestVoiceID()));
+            m_vm->getNewestVoiceIndex()));
         this->setCaption(unit->name());
 
         m_bgColor = theme()->get<Color>("/OscilloscopeWidget/bg-color", {20, 255});
@@ -221,7 +221,7 @@ namespace synui {
 
     void OscilloscopeWidget::drawGrid(NVGcontext* ctx) {
         const OscilloscopeUnit* unit = static_cast<const OscilloscopeUnit*>(&m_vm->getUnit(m_unitId,
-            m_vm->getNewestVoiceID()));
+            m_vm->getNewestVoiceIndex()));
 
         nvgSave(ctx);
         nvgTranslate(ctx, mPos.x(), mPos.y());

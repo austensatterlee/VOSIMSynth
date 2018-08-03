@@ -62,7 +62,7 @@ namespace syn
         onNoteOn_();
     }
 
-    void Unit::noteOff(int a_note)
+    void Unit::noteOff()
     {
         m_midiData.isNoteOn = false;
         onNoteOff_();
