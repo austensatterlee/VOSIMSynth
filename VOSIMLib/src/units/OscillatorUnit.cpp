@@ -148,17 +148,17 @@ namespace syn
         switch (shape)
         {
             case SAW_WAVE:
-                output = lut_bl_saw_table().getresampled(m_phase, m_period);
+                output = lut_bl_saw_table().getResampled(m_phase, m_period);
                 break;
             case SINE_WAVE:
                 output = lut_sin_table().plerp(m_phase);
                 break;
             case TRI_WAVE:
-                output = lut_bl_tri_table().getresampled(m_phase, m_period);
+                output = lut_bl_tri_table().getResampled(m_phase, m_period);
                 break;
             default:
             case SQUARE_WAVE:
-                output = lut_bl_square_table().getresampled(m_phase, m_period);
+                output = lut_bl_square_table().getResampled(m_phase, m_period);
                 break;
         }
         WRITE_OUTPUT(oOut, m_gain * output + m_bias);

@@ -86,7 +86,7 @@ public:
 
     auto operator[](py::array_t<int> a_index) const {
         auto closure = [this](int i) {
-                    if (0 <= i && i <= this->m_size)
+                    if (0 <= i && i < this->m_size)
                         return (*static_cast<const Base*>(this))[i];
                     else
                         throw std::invalid_argument("Index is out of bounds.");
@@ -97,7 +97,7 @@ public:
     auto lerp(py::array_t<double> a_phase) const {
         auto closure = [this](double p) {
                     auto ind = static_cast<const Base*>(this)->index(p);
-                    if (ind>=0 && ind<=1.0)
+                    if (ind >= 0 && ind <= this->m_size-1)
                         return static_cast<const Base*>(this)->lerp(p);
                     else
                         throw std::invalid_argument("Phase is out of bounds.");
@@ -119,7 +119,7 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
     unit.def(py::init<const std::string &>())
         .def("tick", [](syn::Unit& self, const MatrixXdR& a_inputs) {
                 if (a_inputs.rows() > self.numInputs())
-                    throw std::runtime_error("Input buffer should have " + std::to_string(self.numOutputs()) + " rows.");
+                    throw std::runtime_error("Input buffer should have at most " + std::to_string(self.numOutputs()) + " rows.");
                 ArrayXXdR outputs(self.numOutputs(), a_inputs.cols());
                 self.tick(a_inputs, outputs);
                 return outputs;
@@ -307,11 +307,12 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
            .def("get", [](syn::ResampledTable& a_self, py::array_t<double> a_phase, py::array_t<double> a_period) {                   
                     auto closure = [&a_self](double phase, double period)
                     {
-                        return a_self.getresampled(phase, period);
+                        return a_self.getResampled(phase, period);
                     };
                     return py::vectorize(closure)(a_phase, a_period);
                })
-           .def_property_readonly("size", [](const syn::ResampledTable& a_self) { return a_self.m_size; });
+           .def_property_readonly("size", [](const syn::ResampledTable& a_self) { return a_self.m_size; })
+           .def_property_readonly("resampled_tables", [](const syn::ResampledTable& a_self) { return a_self.resampledTables(); });
 
     m.def("blimp_offline", &syn::lut_blimp_table_offline, "Offline blimp table.", pybind11::return_value_policy::reference);
     m.def("blimp_online", &syn::lut_blimp_table_online, "Online blimp table.", pybind11::return_value_policy::reference);

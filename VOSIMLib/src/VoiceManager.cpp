@@ -80,7 +80,6 @@ namespace syn
                 currVoiceIndex = 0;
         } while (currVoiceIndex != m_lastVoiceIndex);
 
-        // TODO: If not legato, release voice for a few ms before retriggering
         m_voices[bestVoiceIndex].noteOn(a_noteNumber, a_velocity);
         m_lastVoiceIndex = bestVoiceIndex;
         m_voiceBirths[bestVoiceIndex] = m_voiceTicks;

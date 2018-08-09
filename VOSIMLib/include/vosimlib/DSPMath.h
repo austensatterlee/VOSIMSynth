@@ -37,8 +37,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #define SYN_VEC_FIND(VEC, ELEM) SYN_FIND(VEC, ELEM) - VEC.begin()
 #define SYN_VEC_FIND_IF(VEC, ELEM) SYN_FIND_IF(VEC, ELEM) - VEC.begin()
 
-namespace syn
-{
+namespace syn {
     /**
      * Linearly interpolate between pt1 and pt2.
      */
@@ -77,7 +76,7 @@ namespace syn
      * Computes x modulo m 
      */
     template <typename T>
-    T WRAP(T x, T m=1.0) {
+    T WRAP(T x, T m = 1.0) {
         while (x >= m)
             x -= m;
         while (x < 0)
@@ -106,13 +105,6 @@ namespace syn
         return (T(0) < val) - (val < T(0));
     }
 
-    template <typename T>
-    bool isDenormal(T a_x) {
-        constexpr auto minVal = std::numeric_limits<T>::min;
-        constexpr T epsilon = minVal();
-        return (a_x != 0 && std::abs(a_x) <= epsilon);
-    }
-
     /////////////////////////////////////
     // Time unit conversion functions  //
     /////////////////////////////////////
@@ -134,7 +126,7 @@ namespace syn
     double samplesToFreq(double samples, double fs);
 
     double samplesToPeriod(double samples, double fs);
-    
+
     double samplesToBPM(double samples, double fs, double tempo);
 
     double lin2db(double lin);
@@ -154,20 +146,20 @@ namespace syn
 
     double naive_tri(double a_phase);
     double naive_saw(double a_phase);
-    double naive_square(double a_phase); 
+    double naive_square(double a_phase);
 
-    template<typename T>
+    template <typename T>
     T sinc(T a_arg) {
-        return a_arg ? sin(a_arg*SYN_PI) / (a_arg*SYN_PI) : 1.0;
+        return a_arg ? sin(a_arg * SYN_PI) / (a_arg * SYN_PI) : 1.0;
     }
 
 
-    template<typename T>
+    template <typename T>
     T fast_tanh_rat(T x) {
         const double ax = abs(x);
         const double x2 = x * x;
         const double z = x * (0.773062670268356 + ax + (0.757118539838817 + 0.0139332362248817 * x2 * x2) * x2 * ax);
-        return(z / (0.795956503022967 + abs(z)));        
+        return (z / (0.795956503022967 + abs(z)));
     }
 
     //////////////////
@@ -179,5 +171,5 @@ namespace syn
      * If the string ends with a number, this function creates a new string with that number incremented by one.
      * If the string does not end with a number, this function returns a new string with "_0" concatenated at the end.
      */
-    std::string incrementSuffix(const std::string& a_str, const std::string& a_sep=" ");    
+    std::string incrementSuffix(const std::string& a_str, const std::string& a_sep = " ");
 }

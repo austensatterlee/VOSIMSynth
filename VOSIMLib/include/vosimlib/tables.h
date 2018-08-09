@@ -62,17 +62,18 @@ namespace syn {
             double index = static_cast<const T*>(this)->index(phase);
             index = WRAP<double>(index, m_size);
 
-            int intPart = index;
-            double fracPart = index - intPart;
-            assert(intPart <= m_size - 1);
-            if (fracPart > 0.0 && intPart < m_size - 1) {
-                return LERP<double>(m_data[intPart], m_data[intPart + 1], fracPart);
-            }
-            return m_data[intPart];
+            int k = index;
+            double p = index - k;
+            int k_next = k + 1 == m_size ? 0 : k + 1;
+            return LERP<double>(m_data[k], m_data[k_next], p);
         }
 
         double operator[](int index) const {
             return m_data[index];
+        }
+
+        double index(double phase) const {
+            return phase;
         }
     };
 
@@ -103,15 +104,12 @@ namespace syn {
         }
     };
 
-    class VOSIMLIB_API BlimpTable : public NormalTable {
+    class VOSIMLIB_API BlimpTable : public LUT<BlimpTable> {
     public:
         BlimpTable(const double* a_data, int a_size, int a_taps, int a_res)
-            : NormalTable(a_data, a_size),
+            : LUT<BlimpTable>(a_data, a_size),
               taps(a_taps),
               res(a_res) {}
-
-        BlimpTable(const BlimpTable& a_other)
-            : BlimpTable(a_other.m_data, a_other.m_size, a_other.taps, a_other.res) {}
 
         const int taps;
         const int res;
@@ -132,11 +130,16 @@ namespace syn {
         ResampledTable(const ResampledTable& a_o)
             : ResampledTable(a_o.m_data, a_o.m_size, a_o.m_blimp_table_online, a_o.m_blimp_table_offline) {}
 
-        void resample_tables();
 
         /// Retrieve a single sample from the table at the specified phase, as if the table were resampled to have the given period.
-        double getresampled(double phase, double period) const;
-    protected:
+        double getResampled(double a_phase, double a_period) const;
+
+        const std::vector<std::vector<double>>& resampledTables() const { return m_resampled_tables; }
+
+    private:
+        void _resample_tables();
+
+    private:
         int m_num_resampled_tables;
         std::vector<int> m_resampled_sizes;
         std::vector<std::vector<double>> m_resampled_tables;

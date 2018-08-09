@@ -160,16 +160,6 @@ void synui::MainGui::createSettingsEditor_(nanogui::Widget* a_widget) {
         return m_vm->getInternalBufferSize();
     });
 
-    helper->addSerializableVariable<bool>("legato", "Legato", [this, helper](const bool& legato) {
-        auto f = [this, legato, helper]() {
-            m_vm->setLegato(legato);
-            helper->refresh();
-        };
-        m_vm->queueAction(syn::MakeCommand(f));
-    }, [this]() {
-        return m_vm->getLegato();
-    });
-
     using VoiceStealPolicy = syn::VoiceManager::VoiceStealPolicy;
     helper->addVariable<VoiceStealPolicy>("Voice Stealing", [this, helper](const VoiceStealPolicy& policy) {
         auto f = [this, policy, helper]() {

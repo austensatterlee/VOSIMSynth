@@ -278,7 +278,7 @@ namespace syn {
     string UnitParameter::getValueString() const {
         int idx = getInt();
         // Check for a matching display text
-        if (idx >= 0 && idx < m_displayTexts.size()) { return m_displayTexts[idx].m_text; }
+        if (idx >= 0 && idx < int(m_displayTexts.size())) { return m_displayTexts[idx].m_text; }
 
         // If no display text is found, return numeral
         char displaytext[MAX_PARAM_STR_LEN];

@@ -20,25 +20,21 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include "vosimlib/DSPMath.h"
 
 namespace syn {
-    ADSREnvelope::ADSREnvelope(const string& name) :
-        Unit(name),
-        m_currStage(Off),
-        m_phase(0),
-        m_currInitial(0),
-        m_currTarget(1) ,
+    ADSREnvelope::ADSREnvelope(const string& a_name) :
+        Unit(a_name),
+        m_currState(Off),
         m_lastOutput(0),
-        m_lastGate(0)
+        m_lastGate(false)
     {
-        addInput_(iAttack, "atk");
-        addInput_(iDecay, "dec");
-        addInput_(iSustain, "sus");
-        addInput_(iRelease, "rel");
         addInput_(iGate, "gate");
-        addParameter_(pAttack, UnitParameter("atk", 0.0, 1.0, 0.001));
-        addParameter_(pDecay, UnitParameter("dec", 0.0, 1.0, 0.1));
+        addParameter_(pAtkTime, UnitParameter("atk", 0.0, 1.0, 0.010));
+        addParameter_(pDecTime, UnitParameter("dec", 0.0, 1.0, 0.100));
         addParameter_(pSustain, UnitParameter("sus", 0.0, 1.0, 0.707));
-        addParameter_(pRelease, UnitParameter("rel", 0.0, 1.0, 0.20));
+        addParameter_(pRelTime, UnitParameter("rel", 0.0, 1.0, 0.200));
         addParameter_(pTimescale, UnitParameter("timescale", 1, 10, 1, UnitParameter::Seconds));
+        addParameter_(pUpShape, UnitParameter("rise", 0.001, 1.0, 0.22));
+        addParameter_(pDownShape, UnitParameter("fall", 0.001, 1.0, 0.007));
+        addParameter_(pLegato, UnitParameter("legato", false));
         addOutput_("out");
     }
 
@@ -47,138 +43,163 @@ namespace syn {
 
     void ADSREnvelope::process_() {
         BEGIN_PROC_FUNC
-        /* Determine phase increment based on current segment */
-        double segment_time;
-        switch (m_currStage) {
+
+        double output = 0.0;
+        switch(m_currState) {
+        case Off:
+            break;
         case Attack:
-            segment_time = param(pAttack).getDouble() + READ_INPUT(iAttack);
-            m_currTarget = 1.0;
+            output = m_atkBias + m_lastOutput * m_atkFb;
+            if(output>=1.0) {
+                output = 1.0;
+                m_currState = Decay;
+            }
             break;
         case Decay:
-            segment_time = param(pDecay).getDouble() + READ_INPUT(iDecay);
-            m_currTarget = param(pSustain).getDouble() + READ_INPUT(iSustain);
+            output = m_decBias + m_lastOutput * m_decFb;
+            if (output <= m_sustain) {
+                output = m_sustain;
+                m_currState = Sustain;
+            }
             break;
         case Sustain:
-            segment_time = 2./fs();
-            m_currInitial = m_lastOutput;
-            m_currTarget = param(pSustain).getDouble() + READ_INPUT(iSustain);
+            if (m_lastOutput > m_sustain)
+                output = m_decBias + m_lastOutput * m_decFb;
+            else
+                output = m_sustain;
             break;
         case Release:
-            // Multiply the segment length by the actual distance the release stage with cover.
-            segment_time = (param(pRelease).getDouble() + READ_INPUT(iRelease))*m_currInitial;
-            m_currTarget = 0;
+            output = m_relBias + m_lastOutput * m_relFb;
+            if (output <= 0.0) {
+                output = 0.0;
+                m_currState = Off;
+            }
             break;
-        case Off:
-        default:
-            segment_time=-1;
+        case Retrigger:
+            output = -1.376e-2 + m_lastOutput * 0.9862;
+            if (output <= 0.0) {
+                output = 0.0;
+                m_currState = Attack;
+            }
             break;
-        }
-
-        /* Calculate output */
-        double output = 0;
-        if (segment_time >= 0) {
-            segment_time = segment_time * param(pTimescale).getInt();
-            double phase_step = segment_time > 0.0 ? 1./(fs()*segment_time) : 1.0;
-            m_phase += phase_step;          
-            /* Compute output */
-            //double output = LERP(m_initial, m_target, m_phase);
-            //@todo: this is just a test. it should be done more cleanly, possible in a new nonlinear unit
-            //double tau = -segment_time / -13.8;
-            double shape = 0.3; // std::exp(-1.0 / (tau*getFs()));
-            output = LERP<double>(m_currInitial, m_currTarget, INVLERP<double>(1, shape, pow(shape, m_phase)));        
         }
  
-        WRITE_OUTPUT(0, output);
         m_lastOutput = output;
+        WRITE_OUTPUT(0, output);
         
-        /* Detect rising and falling gate edges */
-        bool rising = isGateRising();
-        bool falling = isGateFalling();
-        m_lastGate = READ_INPUT(iGate);
-
-        /* Handle transitions caused by external signals (risingEdge, fallingEdge) */
-        if (rising) {
-            trigger();
-        }
-        if (falling) {
-            switch (m_currStage) {
-            case Decay:
-            case Sustain:
-            case Attack:
-                release(output);
-                break;
-            case Off:
-            case Release:
-            default:
-                break;
+        /* Handle transitions caused by external gate */
+        if (isInputConnected(iGate)) {
+            bool gate = READ_INPUT(iGate) > 0.5;
+            if (gate && !m_lastGate) {
+                m_currState = Attack;
+            } else if (!gate && m_lastGate) {
+                m_currState = Release;
             }
+            m_lastGate = gate;
         }
 
-        /* Handle transitions caused by an internal signal (phase reset) */
-        if (m_phase >= 1.0) {
-            m_phase = 0;
-            switch (m_currStage) {
-            case Attack:
-                m_currStage = Decay;
-                m_currInitial = m_lastOutput;
-                break;
-            case Decay:
-                m_currStage = Sustain;
-                m_currInitial = m_lastOutput;
-                break;
-            case Release:
-                reset();
-                break;
-            case Off:
-            case Sustain:
-            default:
-                break;
-            }
-        }
         END_PROC_FUNC
     }
 
-    bool ADSREnvelope::isGateRising() const { return (READ_INPUT(iGate) - m_lastGate) > 0.5; }
-
-    bool ADSREnvelope::isGateFalling() const { return (READ_INPUT(iGate) - m_lastGate) < -0.5; }
-
     void ADSREnvelope::onNoteOn_() {
         if (!isInputConnected(iGate)) {
-            trigger();
-        } else if (isGateRising()) {
-            trigger();
+            if (m_currState != Off && !m_legato)
+                m_currState = Retrigger;
+            else if (m_currState == Off || m_currState == Release)
+                m_currState = Attack;
         }
     }
 
     void ADSREnvelope::onNoteOff_() {
         if (!isInputConnected(iGate)) {
-            release(m_lastOutput);
-        } else if (isGateFalling()) {
-            release(m_lastOutput);
+            m_currState = Release;
         }
     }
 
-    void ADSREnvelope::trigger() {
-        m_currStage = Attack;
-        m_phase = 0;
-        m_currInitial = 0.0;
-        m_currTarget = 1.0;
+    void ADSREnvelope::onParamChange_(int a_paramId) {
+        auto value = param(a_paramId).get<double>();
+        switch(static_cast<Param>(a_paramId)) {
+        case pAtkTime:
+            setAttackTime_(value);
+            break;
+        case pDecTime:
+            setDecayTime_(value);
+            break;
+        case pSustain:
+            m_sustain = value;
+            setDecayTime_(m_decTime);
+            break;
+        case pRelTime:
+            setReleaseTime_(value);
+            break;
+        case pUpShape:
+            setTargetRatioUp_(value);
+            setAttackTime_(m_atkTime);
+            break;
+        case pDownShape:
+            setTargetRatioDown_(value);
+            setDecayTime_(m_decTime);
+            setReleaseTime_(m_relTime);
+            break;
+        case pTimescale:
+            m_timeScale = value;
+            setAttackTime_(m_atkTime);
+            setDecayTime_(m_decTime);
+            setReleaseTime_(m_relTime);
+            break;
+        case pLegato:
+            m_legato = param(a_paramId).get<bool>();
+            break;
+        }
     }
 
-    void ADSREnvelope::release(double a_releaseValue) {
-        m_currStage = Release;
-        m_currInitial = a_releaseValue;
-        m_phase = 0;
+    void ADSREnvelope::onFsChange_() {
+        setAttackTime_(m_atkTime);
+        setDecayTime_(m_decTime);
+        setReleaseTime_(m_relTime);
+    }
+
+    void ADSREnvelope::setAttackTime_(double a_time) {
+        m_atkTime = a_time;
+        m_atkFb = calcFb_(a_time, m_targetRatioUp);
+        m_atkBias = (1.0 + m_targetRatioUp) * (1.0 - m_atkFb);
+    }
+
+    void ADSREnvelope::setDecayTime_(double a_time) {
+        m_decTime = a_time;
+        m_decFb = calcFb_(a_time, m_targetRatioDown);
+        m_decBias = (m_sustain - m_targetRatioDown) * (1.0 - m_decFb);
+    }
+    void ADSREnvelope::setReleaseTime_(double a_time) {
+        m_relTime = a_time;
+        m_relFb = calcFb_(a_time, m_targetRatioDown);
+        m_relBias = -m_targetRatioDown * (1.0 - m_relFb);
+    }
+    void ADSREnvelope::setTargetRatioUp_(double a_targetRatio) {
+        if (a_targetRatio < 0.000000001)
+            a_targetRatio = 0.000000001;  // -180 dB
+        m_targetRatioUp = a_targetRatio;
+    }
+    void ADSREnvelope::setTargetRatioDown_(double a_targetRatio) {
+        if (a_targetRatio < 0.000000001)
+            a_targetRatio = 0.000000001;  // -180 dB
+        m_targetRatioDown = a_targetRatio;
+    }
+
+    double ADSREnvelope::calcFb_(double a_time, double a_targetRatio) {
+        // Original calc: 
+        return a_time <= 0 ? 0.0 : exp(-log((1.0 + a_targetRatio) / a_targetRatio) / (a_time * fs() * m_timeScale));
+        // Alternative calc:
+        // return (a_time <= 0) ? 0.0 : pow(a_targetRatio / (a_targetRatio + 1.), 1. / (a_time * fs() * m_timeScale));
     }
 
     void ADSREnvelope::reset() {
-        m_currStage = Off;
-        m_phase = 0;
-        m_lastGate = 0;
+        m_currState = Off;
         m_lastOutput = 0;
+        m_lastGate = false;
     }
 
     bool ADSREnvelope::isActive() const {
-        return m_currStage != Off;
+        return m_currState != Off;
     }
 }

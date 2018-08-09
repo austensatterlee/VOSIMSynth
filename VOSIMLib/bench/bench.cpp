@@ -277,7 +277,7 @@ NONIUS_BENCHMARK("[lut][saw] band-limited saw", [](nonius::chronometer& meter) {
     double x;
     meter.measure([&x, &periods, &phases](int i)
     {
-        x = syn::lut_bl_saw_table().getresampled(phases[i], periods[i]);
+        x = syn::lut_bl_saw_table().getResampled(phases[i], periods[i]);
         return x;
     });
 })

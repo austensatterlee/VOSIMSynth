@@ -215,9 +215,7 @@ namespace syn
         void process_() override;
         void onFsChange_() override;
     protected:
-        typedef Eigen::Matrix<double, 1, 5> Vector5d;
         OnePoleLP m_LP[4];
-        Vector5d m_ffGains; /// state feed forward gains
     };
 }
 #endif

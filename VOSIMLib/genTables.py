@@ -11,6 +11,23 @@ LUT_TABLEDATA_FILE = os.path.join(script_dir, "src/table_data.cpp")
 LUT_TABLEHDR_FILE = os.path.join(script_dir, "include/vosimlib/lut_tables.h")
 LUT_TABLESRC_FILE = os.path.join(script_dir, "src/lut_tables.cpp")
 
+class config:
+    SINE_RES = 1024
+
+    PITCH_RES = 10
+    MIN_PITCH = -128
+    MAX_PITCH = 256
+
+    BLSAW_PTS = 2048
+    BLSQUARE_PTS = 2048
+    BLTRI_PTS = 2048
+
+    OFFLINE_BLIMP_INTERVALS = 200
+    OFFLINE_BLIMP_RES = 2048
+    ONLINE_BLIMP_INTERVALS = 20
+    ONLINE_BLIMP_RES = 2048
+
+
 def RealCepstrum(n, signal):
     freq = fft.fft(signal)
     freq = log(abs(freq))
@@ -54,21 +71,21 @@ def GenerateMinBLEP(nZeroCrossings, nOverSampling):
 
     return minBLEP
 
-def DSF(w, fc, fm, nharmonics, npoints=None):
+def DSF(w, fc, fm, harmonics, pts=None):
     """
     Digital summation formula.
 
-    Computes the sum of (w^k sin(u + k*v)) from k=0 to `nharmonics`.
-    u = 2*pi*fc*n/npoints for n=0 to npoints-1
-    v = 2*pi*fm*n/npoints for n=0 to npoints-1
+    Computes the sum of (w^k sin(u + k*v)) from k=0 to `harmonics`.
+    u = 2*pi*fc*n/pts for n=0 to pts-1
+    v = 2*pi*fm*n/pts for n=0 to pts-1
 
     """
-    npoints = npoints or 2*nharmonics+1
-    sample_pts = arange(npoints)*2.0*pi/npoints
+    pts = pts or 2*harmonics+1
+    sample_pts = arange(pts)*2.0*pi/pts
     u = fc*sample_pts
     v = fm*sample_pts
 
-    nh = nharmonics
+    nh = harmonics
     # num = (w*sin(v-u) + sin(u)) + w**(nh+1) * (w * sin(u + nh*v) - sin(u + (nh+1)*v))
     # den = (1 + w*w - 2*w*cos(v))
     cnum = exp(1j*u) * (1 - w**(nh+1)*exp(1j*v*(nh+1)))
@@ -93,87 +110,73 @@ def RCCoefs(fc, fs):
     acoefs /= acoefs[0]
     return bcoefs, acoefs
 
-def GenerateBlit(pts, nharmonics=None):
-    """
-    Generate a band-limited impulse train using the FFT
-
-    """
-    nharmonics = nharmonics or (pts//2 if pts%2!=0 else pts//2-1)
-    fftpts = pts//2+1
-    blit_spectrum = zeros(fftpts)
-    blit_spectrum[:nharmonics+1] = 1.0
-    blit = fft.fftshift(fft.irfft(blit_spectrum))
-    return blit
-
-def GenerateBLSaw(nharmonics, npoints=None, w0=1):
+def GenerateBLSaw(harmonics=None, pts=None, w0=1):
     """ Generate band limited sawtooth wave """
-    npoints = npoints or nharmonics*2+1
-    nharmonics = min(nharmonics, npoints//2-1 if npoints%2 else npoints//2)
+    assert(harmonics or pts)
+    pts = pts or harmonics*2+1
+    max_harmonics = pts//2 if pts%2 else pts//2-1
+    harmonics = harmonics or max_harmonics
+    harmonics = min(harmonics, max_harmonics)
 
-    harmonics = [w0*x for x in range(1, nharmonics+1)]
-
+    harmonics = [w0*x for x in range(1, harmonics+1)]
     gains = [1./x for x in harmonics]
 
-    sample_pts = arange(npoints)*2.0*pi/npoints
+    sample_pts = arange(pts)*2.0*pi/pts
     blsaw = sum([g*sin(h*sample_pts) for g, h in zip(gains, harmonics)], axis=0)
     blsaw = -fft.fftshift(blsaw)
-    return blsaw/blsaw.max()
+    return blsaw/np.abs(blsaw).max()
 
-def GenerateBLSquare(nharmonics, npoints=None, w0=1):
-    npoints = npoints or nharmonics*2+1
-    nharmonics = min(nharmonics, npoints//2-1 if npoints%2 else npoints//2)
+def GenerateBLSquare(harmonics=None, pts=None, w0=1):
+    assert(harmonics or pts)
+    pts = pts or harmonics*2+1
+    max_harmonics = pts//2 if pts%2 else pts//2-1
+    harmonics = harmonics or max_harmonics
 
-    harmonics = [w0*x for x in range(1, nharmonics+1) if x%2]
-
+    harmonics = [w0*x for x in range(1, harmonics+1) if x%2]
     gains = [1./x for x in harmonics]
 
-    sample_pts = arange(npoints)*2.0*pi/npoints;
+    sample_pts = arange(pts)*2.0*pi/pts;
     blsquare = sum([g*sin(h*sample_pts) for g, h in zip(gains, harmonics)], axis=0)
-    return blsquare/blsquare.max()
+    return blsquare/np.abs(blsquare.max())
 
-def GenerateBLTriangle(nharmonics, npoints=None, w0=1):
-    npoints = npoints or nharmonics*2+1
-    nharmonics = min(nharmonics, npoints//2-1 if npoints%2 else npoints//2)
+def GenerateBLTriangle(harmonics=None, pts=None, w0=1):
+    assert(harmonics or pts)
+    pts = pts or harmonics*2+1
+    max_harmonics = pts//2 if pts%2 else pts//2-1
+    harmonics = harmonics or max_harmonics
 
-    harmonics = [w0*x for x in range(1, nharmonics+1) if x%2]
-
+    harmonics = [w0*x for x in range(1, harmonics+1) if x%2]
     gains = [1./x**2 if not i%2 else -1./x**2 for i, x in enumerate(harmonics)]
 
-    sample_pts = arange(npoints)*2.0*pi/npoints
+    sample_pts = arange(pts)*2.0*pi/pts
     bltri = sum([g*sin(h*sample_pts) for g, h in zip(gains, harmonics)], axis=0)
-    return bltri/bltri.max()
+    return bltri/np.abs(bltri.max())
 
-def GenerateBlimp(intervals=10, res=2048, fs=48e3, fc=20000, beta=7.20, apgain=0.89, apbeta=0.7, ret_half=False):
+def GenerateBlimp(intervals, res, fs=48e3, fc=18.3e3, beta=9.00, apgain=0.9, apbeta=0.7, ret_half=False):
     """
     Generate a bandlimited dirac delta impulse.
 
-    intervals - number of samples (sampled at fs) to span
-    res - number of points per sample; e.g. oversampling amount
+    intervals - number of samples (sampled at fs) to span (# of taps)
+    res - number of points per sample (oversampling amount)
     fs - sampling frequency
     fc - cutoff
     beta - first window param
     apgain - apodizing window gain
     """
-    intervals=2*(int(intervals)//2)+1 # make intervals odd
-    res = 2*(int(res)//2)+1 # make oversample factor odd
-    pts = res*intervals # impulse length in points
+    pts = 2*(res*intervals//2)+1 # impulse length in points
     ind = intervals*2*(arange(pts) - (pts-1)/2.)/(pts-1.) # pts points spread across [-intervals/2, intervals/2)
     x = fc*1./fs*ind # pts points spread across fc/fs*[-intervals/2, intervals/2)
     h = sinc(x)
 
     w = ss.kaiser(pts, beta) # window
-    apw = 1-apgain*ss.kaiser(pts, apbeta) # apodization window
-    window = w*apw
-    blimp = window*h
-    blimp = ss.fftconvolve(blimp, blimp, 'same')
 
-    # Scale
-    # blimp = scale_fir(blimp)
+    apw = 1-apgain*ss.kaiser(pts, apbeta) # apodization window
+    blimp = h*w*apw
+    blimp /= blimp.max()
 
     if ret_half:
-        return blimp[len(blimp)//2:]
-    else:
-        return blimp
+        blimp = blimp[len(blimp)//2:]
+    return blimp
 
 def GenerateSine(n):
     k = arange(n)
@@ -190,8 +193,8 @@ def GeneratePitchTable(notestart, notefinish, res):
 
     returns (midi notes, frequencies)
     """
-    npoints = (notefinish-notestart)*res+1
-    N = linspace(notestart, notefinish, npoints)
+    pts = (notefinish-notestart)*res+1
+    N = linspace(notestart, notefinish, pts)
     return N, 440*2**((N-69.)/12.)
 
 """Tools"""
@@ -471,7 +474,8 @@ def transition_band(ir, freqs=None, stopband_db=-90):
     """ Calculate the start and stop of the transition band from an impulse response """
     mags = np.fft.rfft(ir)
     freqs = freqs if freqs is not None else np.arange(len(mags))
-    mags = abs(mags)
+    freqs = freqs[1:]
+    mags = abs(mags)[1:]
     passband_mag = 10**(-3/20.)
     stopband_mag = 10**(stopband_db/20.)
     passband_index = np.where((mags-passband_mag)<=0)[0][0]
@@ -495,64 +499,49 @@ def main(pargs):
     """Sin table"""
     if v:
         sys.stdout.write("Generating sine table...")
-    SINE_RES = 1024
-    sintable = GenerateSine(SINE_RES)
+    sintable = GenerateSine(config.SINE_RES)
     if v:
         print(" samples:", len(sintable))
 
     """Pitch table"""
     if v:
         print("Generating pitch table...")
-    PITCH_RES = 10
-    MIN_PITCH = -128
-    MAX_PITCH = 256
-    pitches, pitchtable = GeneratePitchTable(MIN_PITCH, MAX_PITCH, PITCH_RES)
+    pitches, pitchtable = GeneratePitchTable(config.MIN_PITCH, config.MAX_PITCH, config.PITCH_RES)
     if v:
         print(" samples:", len(pitchtable))
 
     """Bandlimited saw wave"""
     if v:
         sys.stdout.write("Generating band-limited saw wavetable...")
-    BLSAW_HARMONICS = 1024
-    blsaw = GenerateBLSaw(BLSAW_HARMONICS)
-    blsaw /= np.abs(blsaw).max()
+    blsaw = GenerateBLSaw(pts=config.BLSAW_PTS)
     if v:
         print(" samples:", len(blsaw))
 
     """Bandlimited square wave"""
     if v:
         sys.stdout.write("Generating band-limited square wavetable...")
-    BLSQUARE_HARMONICS = 1024
-    blsquare = GenerateBLSquare(BLSQUARE_HARMONICS)
-    blsquare /= np.abs(blsquare).max()
+    blsquare = GenerateBLSquare(pts=config.BLSQUARE_PTS)
     if v:
         print(" samples:", len(blsquare))
 
     """Bandlimited triangle wave"""
     if v:
         sys.stdout.write("Generating band-limited triangle wavetable...")
-    BLTRI_HARMONICS = 1024
-    bltri = GenerateBLTriangle(BLTRI_HARMONICS)
-    bltri /= np.abs(bltri).max()
+    bltri = GenerateBLTriangle(pts=config.BLTRI_PTS)
     if v:
         print(" samples:", len(bltri))
 
     """Offline and online BLIMP for resampling"""
-    OFFLINE_BLIMP_INTERVALS = 101
-    OFFLINE_BLIMP_RES = 256
-
-    ONLINE_BLIMP_INTERVALS = 31
-    ONLINE_BLIMP_RES = 256
 
     if v:
         sys.stdout.write("Generating 'online' band-limited impulse table...")
-    blimp_online = GenerateBlimp(ONLINE_BLIMP_INTERVALS, ONLINE_BLIMP_RES, fc=19e3, fs=44.1e3, ret_half=True)
+    blimp_online = GenerateBlimp(config.ONLINE_BLIMP_INTERVALS, config.ONLINE_BLIMP_RES, fc=18.3e3, fs=48e3, ret_half=True)
     if v:
         print(" samples:", len(blimp_online))
 
     if v:
         sys.stdout.write("Generating 'offline' band-limited impulse table...")
-    blimp_offline = GenerateBlimp(OFFLINE_BLIMP_INTERVALS, OFFLINE_BLIMP_RES, fc=21e3, fs=44.1e3, ret_half=True)
+    blimp_offline = GenerateBlimp(config.OFFLINE_BLIMP_INTERVALS, config.OFFLINE_BLIMP_RES, fc=21e3, fs=48e3, ret_half=True)
     if v:
         print(" samples:", len(blimp_offline))
 
@@ -571,12 +560,12 @@ def main(pargs):
     tables = [
             ['BLIMP_TABLE_OFFLINE', dict(classname="BlimpTable", data=blimp_offline,
                 size=len(blimp_offline),
-                intervals=OFFLINE_BLIMP_INTERVALS,
-                res=OFFLINE_BLIMP_RES)],
+                intervals=config.OFFLINE_BLIMP_INTERVALS,
+                res=config.OFFLINE_BLIMP_RES)],
             ['BLIMP_TABLE_ONLINE', dict(classname="BlimpTable", data=blimp_online,
                 size=len(blimp_online),
-                intervals=ONLINE_BLIMP_INTERVALS,
-                res=ONLINE_BLIMP_RES)],
+                intervals=config.ONLINE_BLIMP_INTERVALS,
+                res=config.ONLINE_BLIMP_RES)],
             ['PITCH_TABLE', dict(classname="AffineTable", data=pitchtable,
                 size=len(pitchtable),
                 input_min = min(pitches),

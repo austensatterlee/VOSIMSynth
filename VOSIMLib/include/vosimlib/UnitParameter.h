@@ -129,7 +129,6 @@ namespace syn
         UnitParameter& setControlType(EControlType a_newControlType);
 
         UnitParameter& setUnitsType(EUnitsType a_newUnitsType);
-
         UnitParameter& setVisible(bool a_visible);
 
         bool isVisible() const;

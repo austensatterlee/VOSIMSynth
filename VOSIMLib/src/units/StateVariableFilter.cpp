@@ -62,10 +62,6 @@ void syn::StateVariableFilter::process_() {
         int i = c_oversamplingFactor;
         while (i--) {
             LPOut = m_prevLPOut + m_F * m_prevBPOut;
-            if (isDenormal(LPOut)) {
-                LPOut = 0.0;
-                reset();
-            }
             HPOut = input - LPOut - m_damp * m_prevBPOut;
             BPOut = m_F * HPOut + m_prevBPOut;
 
@@ -114,10 +110,6 @@ void syn::TrapStateVariableFilter::process_() {
                     denom;
             LPOut = (m_prevLPOut + m_F * (2 * m_prevBPOut + m_F * (input + m_prevInput) - m_prevLPOut * (m_F - m_damp)))
                     / denom;
-            if (isDenormal(LPOut) || isDenormal(BPOut)) {
-                BPOut = LPOut = 0.0;
-                reset();
-            }
             m_prevInput = input;
             m_prevBPOut = BPOut;
             m_prevLPOut = LPOut;
@@ -142,10 +134,6 @@ double syn::OnePoleLP::process(double a_input) {
     double trap_in = m_G * (a_input - m_state);
     double output = trap_in + m_state;
     m_state = trap_in + output;
-    if (isDenormal(m_state)) {
-        output = 0.0;
-        reset();
-    }
     return output;
 }
 
@@ -268,15 +256,12 @@ void syn::LadderFilterA::process_() {
             m_dV[3] = dV3;
             m_tV[3] = fast_tanh_rat(m_V[3] * stage_gain);
         }
-        if (isDenormal(m_V[3]))
-            reset();
         WRITE_OUTPUT(0, m_V[3]);
     END_PROC_FUNC
 }
 
 syn::LadderFilterB::LadderFilterB(const string& a_name)
-    : LadderFilterBase(a_name),
-      m_ffGains(Eigen::Matrix<double, 5, 1>::Unit(4)) {}
+    : LadderFilterBase(a_name) {}
 
 void syn::LadderFilterB::reset() {
     m_LP[0].reset();
@@ -322,11 +307,7 @@ void syn::LadderFilterB::process_() {
             out_states[3] = m_LP[2].process(out_states[2]);
             out_states[4] = m_LP[3].process(out_states[3]);
         }
-        double out = m_ffGains.dot(Vector5d{ out_states });
-        if (isDenormal(out)) {
-            out = 0.0;
-            reset();
-        }
+        double out = out_states[4];
         WRITE_OUTPUT(0, out);
     END_PROC_FUNC
 }

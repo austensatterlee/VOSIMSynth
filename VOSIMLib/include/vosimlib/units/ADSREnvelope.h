@@ -17,16 +17,7 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
-* \file units/ADSREnvelope.h
-* \brief
-* \details
-* \author Austen Satterlee
-* \date March 6, 2016
-*/
-
-#ifndef __ADSRENVELOPE__
-#define __ADSRENVELOPE__
+#pragma once
 #include "vosimlib/Unit.h"
 
 namespace syn {
@@ -34,53 +25,61 @@ namespace syn {
         DERIVE_UNIT(ADSREnvelope)
     public:
         enum Param {
-            pAttack = 0,
-            pDecay,
+            pAtkTime = 0,
+            pDecTime,
             pSustain,
-            pRelease,
-            pTimescale
+            pRelTime,
+            pTimescale,
+            pUpShape,
+            pDownShape,
+            pLegato
         };
 
         enum Input {
-            iGate = 0,
-            iAttack,
-            iDecay,
-            iSustain,
-            iRelease
+            iGate = 0
         };
 
-        explicit ADSREnvelope(const string& name);
+        explicit ADSREnvelope(const string& a_name);
 
         ADSREnvelope(const ADSREnvelope& a_rhs);
 
-    protected:
-        void process_() override;
-        bool isGateRising() const;
-        bool isGateFalling() const;
-        void onNoteOn_() override;
-        void onNoteOff_() override;
-
     public:
         bool isActive() const override;
-
-        void trigger();
-        void release(double a_releaseValue);
         void reset() override;
+
+    protected:
+        void process_() override;
+        void onNoteOn_() override;
+        void onNoteOff_() override;
+        void onParamChange_(int a_paramId) override;
+        void onFsChange_() override;
+        void setAttackTime_(double a_time);
+        void setDecayTime_(double a_time);
+        void setReleaseTime_(double a_time);
+        void setTargetRatioUp_(double a_targetRatio);
+        void setTargetRatioDown_(double a_targetRatio);
+        double calcFb_(double a_time, double a_targetRatio);
+
     private:
-        enum EADSRStage {
+        enum State {
             Off = 0,
             Attack,
             Decay,
             Sustain,
-            Release
+            Release,
+            Retrigger
         };
 
-        EADSRStage m_currStage;
-        double m_phase;
-        double m_currInitial;
-        double m_currTarget;
+        double m_sustain;
+        double m_timeScale;
+        double m_atkTime, m_atkBias, m_atkFb;
+        double m_decTime, m_decBias, m_decFb;
+        double m_relTime, m_relBias, m_relFb;
+        double m_targetRatioUp, m_targetRatioDown;
+        bool m_legato;
+
+        State m_currState;
         double m_lastOutput;
-        double m_lastGate;
+        bool m_lastGate;
     };
 }
-#endif

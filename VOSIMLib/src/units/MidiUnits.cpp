@@ -31,6 +31,12 @@ void syn::GateUnit::process_() {
     END_PROC_FUNC
 }
 
+void syn::GateUnit::onNoteOn_() {
+    if(isNoteOn()) {
+        m_queuedNoteOff = true;
+    }
+}
+
 void syn::GateUnit::onNoteOff_() {
     m_queuedNoteOff = true;
     m_triggerFired = false;

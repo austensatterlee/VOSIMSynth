@@ -90,6 +90,7 @@ namespace syn {
     protected:
         void process_() override;
 
+        void onNoteOn_() override;
         void onNoteOff_() override;
     private:
         bool m_queuedNoteOff;

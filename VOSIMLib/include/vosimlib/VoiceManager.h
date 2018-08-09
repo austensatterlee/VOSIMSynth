@@ -122,9 +122,6 @@ namespace syn {
 
         VoiceStealPolicy getVoiceStealPolicy() const { return m_voiceStealingPolicy; }
         void setVoiceStealPolicy(VoiceStealPolicy a_newPolicy) { m_voiceStealingPolicy = a_newPolicy; }
-        
-        bool getLegato() const { return m_legato; }
-        void setLegato(bool a_newLegato) { m_legato = a_newLegato; }
 
     private:
         /**
