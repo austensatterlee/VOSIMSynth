@@ -143,7 +143,7 @@ namespace syn
     {
         BEGIN_PROC_FUNC
         TunedOscillatorUnit::process_();
-        double output;
+        double output = 0.0;
         WaveShape shape = static_cast<WaveShape>(param(pWaveform).getInt());
         switch (shape)
         {
@@ -156,7 +156,6 @@ namespace syn
             case TRI_WAVE:
                 output = lut_bl_tri_table().getResampled(m_phase, m_period);
                 break;
-            default:
             case SQUARE_WAVE:
                 output = lut_bl_square_table().getResampled(m_phase, m_period);
                 break;

@@ -54,16 +54,16 @@ namespace syn
         return getresampled_single(&m_resampled_tables[table_index][0], m_resampled_sizes[table_index], a_phase, a_period, m_blimp_table_online);
     }
 
-    void resample_table(const double* a_table, int a_size, double* a_newTable, double a_newSize, const BlimpTable& a_blimp_table, bool a_preserve_amplitude) {
-        double phase_step = 1. / a_newSize;
+    void resample_table(const double* a_table, int a_size, double* a_new_table, double a_new_period, const BlimpTable& a_blimp_table, bool a_preserve_amplitude) {
+        double phase_step = 1. / a_new_period;
         double input_max = 0.0, input_min = 0.0;
         double output_max = 0.0, output_min = 0.0;
-
-        for (int i = 0; i < a_newSize; i++) {
-            a_newTable[i] = getresampled_single(a_table, a_size, phase_step*i, a_newSize, a_blimp_table);
+        int new_size = ceil(a_new_period);
+        for (int i = 0; i < new_size; i++) {
+            a_new_table[i] = getresampled_single(a_table, a_size, phase_step*i, a_new_period, a_blimp_table);
             if (a_preserve_amplitude) {
-                output_min = i == 0 ? a_newTable[i] : syn::MIN(output_min, a_newTable[i]);
-                output_max = i == 0 ? a_newTable[i] : syn::MAX(output_max, a_newTable[i]);
+                output_min = i == 0 ? a_new_table[i] : syn::MIN(output_min, a_new_table[i]);
+                output_max = i == 0 ? a_new_table[i] : syn::MAX(output_max, a_new_table[i]);
             }
         }
         /* normalize */
@@ -74,8 +74,8 @@ namespace syn
                 input_max = i == 0 ? a_table[i] : syn::MAX(input_max, a_table[i]);
             }
             double scale = (output_max - output_min) / (input_max - input_min);
-            for (int i = 0; i < a_newSize; i++) {
-                a_newTable[i] = (a_newTable[i] - input_min) * scale + output_min;
+            for (int i = 0; i < new_size; i++) {
+                a_new_table[i] = (a_new_table[i] - input_min) * scale + output_min;
             }
         }
     }
@@ -84,9 +84,9 @@ namespace syn
     {
     }
 
-    double getresampled_single(const double* table, int size, double phase, double newSize, const BlimpTable& blimp_table) {
-        double ratio = newSize * (1.0 / size);
-        phase = WRAP(phase, 1.0)*size;
+    double getresampled_single(const double* table, int size, double phase, double new_period, const BlimpTable& blimp_table) {
+        double ratio = new_period / size;
+        phase = WRAP(phase, 1.0) * size;
 
         double blimp_step = blimp_table.res;
         // Lower the cutoff frequency to the new nyquist if we're downsampling
@@ -101,26 +101,35 @@ namespace syn
         double bkwd_filt_phase = offset;
         double fwd_filt_phase = blimp_step - offset;
         int bkwd_table_index = index;
-        int fwd_table_index = index + 1;
-        int steps = blimp_table.m_size / blimp_step;
+        int fwd_table_index = index == size-1 ? 0 : index + 1;
+        int steps = (blimp_table.m_size - fwd_filt_phase) / blimp_step;
         for (int i = 0; i < steps; i++) {
 #if DO_LERP_FOR_SINC
-            double bkwd_filt_sample = blimp_table.plerp(bkwd_filt_phase);
-            double fwd_filt_sample = blimp_table.plerp(fwd_filt_phase);
+            double bkwd_filt_sample = blimp_table.lerp(bkwd_filt_phase);
+            double fwd_filt_sample = blimp_table.lerp(fwd_filt_phase);
 #else
             double bkwd_filt_sample = blimp_table[static_cast<int>(bkwd_filt_phase)];
             double fwd_filt_sample = blimp_table[static_cast<int>(fwd_filt_phase)];
 #endif
-            if (bkwd_table_index < 0) {
-                bkwd_table_index = size - 1;
-            }
-            if (fwd_table_index >= size) {
-                fwd_table_index = 0;
-            }
-            output += bkwd_filt_sample * table[bkwd_table_index--] + fwd_filt_sample * table[fwd_table_index++];
+            output += bkwd_filt_sample * table[bkwd_table_index] + fwd_filt_sample * table[fwd_table_index];
             filt_sum += bkwd_filt_sample + fwd_filt_sample;
+
             bkwd_filt_phase += blimp_step;
             fwd_filt_phase += blimp_step;
+
+            bkwd_table_index = bkwd_table_index == 0 ? size - 1 : bkwd_table_index - 1;
+            fwd_table_index = fwd_table_index == size - 1 ? 0 : fwd_table_index + 1;
+        }
+        if (bkwd_filt_phase < blimp_table.m_size - blimp_step) {
+            // Backward pass computes one more sample than forward pass
+            double bkwd_filt_sample = blimp_table.lerp(bkwd_filt_phase);
+            output += bkwd_filt_sample * table[bkwd_table_index];
+            filt_sum += bkwd_filt_sample;
+        } else if (fwd_filt_phase < blimp_table.m_size - blimp_step) {
+            // Backward pass computes one more sample than forward pass
+            double fwd_filt_sample = blimp_table.lerp(fwd_filt_phase);
+            output += fwd_filt_sample * table[fwd_table_index];
+            filt_sum += fwd_filt_sample;
         }
 
         return output / filt_sum;

@@ -75,6 +75,10 @@ namespace syn {
         double index(double phase) const {
             return phase;
         }
+
+        const double* data() const {
+            return m_data;
+        }
     };
 
     class VOSIMLIB_API AffineTable : public LUT<AffineTable> {
@@ -155,7 +159,7 @@ namespace syn {
      * \param phase Phase to sample at, in the range [0,1).
      * \param newSize Desired period of resampled table (in fractional number of samples)
      */
-    double VOSIMLIB_API getresampled_single(const double* table, int size, double phase, double newSize,
+    double VOSIMLIB_API getresampled_single(const double* table, int size, double phase, double new_period,
                                             const BlimpTable& blimp_table);
     /**
      * Resample an entire table to have the specified period and store the
@@ -167,7 +171,7 @@ namespace syn {
      * \param a_newSize Desired period of resampled table (in fractional number of samples). The allocated size of the output table should be ceil(period).
      * \param a_preserve_amplitude Scales min and max of output table to match input table.
      */
-    void VOSIMLIB_API resample_table(const double* a_table, int a_size, double* a_newTable, double a_newSize,
+    void VOSIMLIB_API resample_table(const double* a_table, int a_size, double* a_new_table, double a_new_period,
                                      const BlimpTable& a_blimp_table, bool a_preserve_amplitude = true);
 
     /**

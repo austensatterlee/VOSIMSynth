@@ -109,6 +109,12 @@ public:
         auto closure = [this](double p) { return static_cast<const Base*>(this)->plerp(p); };
         return py::vectorize(closure)(a_phase);
     }
+
+    auto data() const {
+        const double* d = static_cast<const Base*>(this)->data();
+        auto size = static_cast<const Base*>(this)->m_size;
+        return std::vector<double>(d, d+size);
+    }
 };
 
 
@@ -255,6 +261,7 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
              .def("plerp", [](const PyLUT<syn::NormalTable>& a_self, py::array_t<double> a_phase) {
                      return a_self.plerp(a_phase);
                  }, "Periodic linear interpolation (-inf < phase < inf).")
+             .def_property_readonly("data", [](const PyLUT<syn::NormalTable>& a_self) { return a_self.data(); })
              .def_property_readonly("size", [](const syn::NormalTable& a_self) { return a_self.m_size; });
 
     py::class_<syn::AffineTable, PyLUT<syn::AffineTable>> affineLut(m, "AffineTable");
@@ -271,6 +278,7 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
              .def("plerp", [](const PyLUT<syn::AffineTable>& a_self, py::array_t<double> a_phase) {
                      return a_self.plerp(a_phase);
                  }, "Periodic linear interpolation (-inf < phase < inf).")
+             .def_property_readonly("data", [](const PyLUT<syn::AffineTable>& a_self) { return a_self.data(); })
              .def_property_readonly("size", [](const syn::AffineTable& a_self) { return a_self.m_size; });
 
     py::class_<syn::BlimpTable, PyLUT<syn::BlimpTable>> blimp(m, "BlimpTable", normalLut);
@@ -286,6 +294,7 @@ PYBIND11_PLUGIN(pyVOSIMLib) {
          .def("plerp", [](const PyLUT<syn::BlimpTable>& a_self, py::array_t<double> a_phase) {
                  return a_self.plerp(a_phase);
              }, "Periodic linear interpolation (-inf < phase < inf).")
+         .def_property_readonly("data", [](const PyLUT<syn::BlimpTable>& a_self) { return a_self.data(); })
          .def_property_readonly("taps", [](const syn::BlimpTable& a_self) { return a_self.taps; })
          .def_property_readonly("res", [](const syn::BlimpTable& a_self) { return a_self.res; })
          .def_property_readonly("size", [](const syn::BlimpTable& a_self) { return a_self.m_size; });
