@@ -13,7 +13,7 @@ struct IPlugInstanceInfo
 class IPlugVST : public IPlugBase
 {
 protected:
-	void AttachAppWindow(synui::MainGui* a_window) override;
+	void AttachAppWindow(synui::VOSIMSynthGUI* a_window) override;
 public:
 	IPlugVST(IPlugInstanceInfo instanceInfo,
 	         int nParams,

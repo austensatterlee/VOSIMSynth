@@ -1,5 +1,5 @@
 #include "IPlugVST.h"
-#include <vosimsynth/MainGui.h>
+#include <vosimsynth/VOSIMSynthGUI.h>
 #include <stdio.h>
 #include "vosimsynth/resource.h"
 
@@ -214,7 +214,7 @@ EHost IPlugVST::GetHost()
   return host;
 }
 
-void IPlugVST::AttachAppWindow(synui::MainGui* a_window) {
+void IPlugVST::AttachAppWindow(synui::VOSIMSynthGUI* a_window) {
       if (a_window)
       {
         IPlugBase::AttachAppWindow(a_window);
@@ -239,7 +239,7 @@ void IPlugVST::AttachAppWindow(synui::MainGui* a_window) {
 
 void IPlugVST::ResizeGraphics(int w, int h)
 {
-  synui::ChildWindow* vosimWindow = GetAppWindow();
+  synui::SystemWindow* vosimWindow = GetAppWindow();
 
   if (vosimWindow)
   {
@@ -482,7 +482,7 @@ VstIntPtr VSTCALLBACK IPlugVST::VSTDispatcher(AEffect *pEffect, VstInt32 opCode,
     }
     case effEditOpen:
     {
-       synui::ChildWindow* pGraphics = _this->GetAppWindow();
+       synui::SystemWindow* pGraphics = _this->GetAppWindow();
       
       if (pGraphics)
       {

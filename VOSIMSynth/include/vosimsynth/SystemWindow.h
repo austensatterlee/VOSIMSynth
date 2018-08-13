@@ -37,10 +37,10 @@ namespace synui {
     /**
      * Handles creation, event loop, and destruction of a system child window.
      */
-    class ChildWindow {
+    class SystemWindow {
     public:
-        ChildWindow(int a_width, int a_height);
-        virtual ~ChildWindow();
+        SystemWindow(int a_width, int a_height);
+        virtual ~SystemWindow();
 
         /// Open the system window
         bool openWindow(SystemHandle a_systemWindow);

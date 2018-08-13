@@ -1,9 +1,9 @@
-#include "vosimsynth/ChildWindow.h"
+#include "vosimsynth/SystemWindow.h"
 #include "vosimsynth/UI.h"
 #include "vosimsynth/widgets/CircuitWidget.h"
 #include "vosimsynth/widgets/UnitWidget.h"
 #include "vosimsynth/widgets/DefaultUnitWidget.h"
-#include "vosimsynth/MainGUI.h"
+#include "vosimsynth/VOSIMSynthGUI.h"
 #include "vosimsynth/widgets/UnitEditor.h"
 #include "vosimsynth/widgets/ContextMenu.h"
 #include "vosimsynth/widgets/CircuitWire.h"
@@ -15,7 +15,7 @@
 #include <unordered_set>
 #include <set>
 
-synui::CircuitWidget::CircuitWidget(Widget* a_parent, ChildWindow* a_mainWindow, UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm)
+synui::CircuitWidget::CircuitWidget(Widget* a_parent, SystemWindow* a_mainWindow, UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm)
     : Widget(a_parent),
       m_window(a_mainWindow),
       m_unitEditorHost(a_unitEditorHost),

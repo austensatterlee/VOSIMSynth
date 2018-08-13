@@ -17,15 +17,7 @@ You should have received a copy of the GNU General Public License
 along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
-* \file units/StateVariableFilter.h
-* \brief
-* \details
-* \author Austen Satterlee
-* \date March 11, 2016
-*/
-#ifndef __STATEVARIABLEFILTER__
-#define __STATEVARIABLEFILTER__
+#pragma once
 #include "vosimlib/Unit.h"
 
 namespace syn
@@ -218,4 +210,3 @@ namespace syn
         OnePoleLP m_LP[4];
     };
 }
-#endif

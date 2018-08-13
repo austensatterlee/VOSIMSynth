@@ -21,11 +21,11 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <nanogui/window.h>
 
 namespace synui {
-    class EnhancedWindow : public nanogui::Window {
+    class EnhancedWindowWidget : public nanogui::Window {
     public:
-        typedef std::function<void(EnhancedWindow*, NVGcontext*)> DrawFunc;
+        typedef std::function<void(EnhancedWindowWidget*, NVGcontext*)> DrawFunc;
 
-        EnhancedWindow(Widget* a_parent, const std::string& a_title);
+        EnhancedWindowWidget(Widget* a_parent, const std::string& a_title);
 
         bool mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
 

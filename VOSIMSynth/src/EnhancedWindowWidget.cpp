@@ -1,9 +1,9 @@
-#include "vosimsynth/widgets/EnhancedWindow.h"
+#include "vosimsynth/widgets/EnhancedWindowWidget.h"
 #include <nanogui/entypo.h>
 #include <nanogui/button.h>
 #include <nanogui/screen.h>
 
-synui::EnhancedWindow::EnhancedWindow(Widget* a_parent, const std::string& a_title)
+synui::EnhancedWindowWidget::EnhancedWindowWidget(Widget* a_parent, const std::string& a_title)
     : Window(a_parent, a_title) {
     if (!a_title.empty()) {
         // Close button
@@ -13,7 +13,7 @@ synui::EnhancedWindow::EnhancedWindow(Widget* a_parent, const std::string& a_tit
     }
 }
 
-bool synui::EnhancedWindow::mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) {
+bool synui::EnhancedWindowWidget::mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) {
     if (!title().empty()) {
         return Window::mouseButtonEvent(p, button, down, modifiers);
     } else {
@@ -22,7 +22,7 @@ bool synui::EnhancedWindow::mouseButtonEvent(const Eigen::Vector2i& p, int butto
     }
 }
 
-void synui::EnhancedWindow::draw(NVGcontext* ctx) {
+void synui::EnhancedWindowWidget::draw(NVGcontext* ctx) {
     if (m_drawCallback) {
         m_drawCallback(this, ctx);
     } else {
@@ -30,7 +30,7 @@ void synui::EnhancedWindow::draw(NVGcontext* ctx) {
     }
 }
 
-nanogui::Button* synui::EnhancedWindow::createOpenButton(Widget* a_parent, const std::string& text, int icon,
+nanogui::Button* synui::EnhancedWindowWidget::createOpenButton(Widget* a_parent, const std::string& text, int icon,
                                                          std::function<void()> a_callback) {
     auto openButton = new nanogui::Button(a_parent, text, icon);
     openButton->setFixedSize({20,20});
@@ -44,5 +44,5 @@ nanogui::Button* synui::EnhancedWindow::createOpenButton(Widget* a_parent, const
     return openButton;
 }
 
-void synui::EnhancedWindow::setDrawCallback(DrawFunc f) { m_drawCallback = f; }
-synui::EnhancedWindow::DrawFunc synui::EnhancedWindow::getDrawCallback() const { return m_drawCallback; }
+void synui::EnhancedWindowWidget::setDrawCallback(DrawFunc f) { m_drawCallback = f; }
+synui::EnhancedWindowWidget::DrawFunc synui::EnhancedWindowWidget::getDrawCallback() const { return m_drawCallback; }

@@ -26,7 +26,7 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
-#include "ChildWindow.h"
+#include "SystemWindow.h"
 #include "Signal.h"
 #include "SerializableFormHelper.h"
 #include <nanogui/messagedialog.h>
@@ -49,7 +49,7 @@ namespace syn {
 struct GLFWwindow;
 
 namespace synui {
-    class EnhancedWindow;
+    class EnhancedWindowWidget;
     class UnitEditorHost;
     class CircuitWidget;
     using DlgType = nanogui::MessageDialog::Type;    
@@ -57,18 +57,18 @@ namespace synui {
     /**
      * Handles the logic of creating the GUI and gluing the components toegether.
      */
-    class MainGui : public ChildWindow {
+    class VOSIMSynthGUI : public SystemWindow {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     public:
-        MainGui(syn::VoiceManager* a_vm, int a_width, int a_height, int a_minWidth = 0, int a_minHeight = 0);
-        ~MainGui();
+        VOSIMSynthGUI(syn::VoiceManager* a_vm, int a_width, int a_height, int a_minWidth = 0, int a_minHeight = 0);
+        ~VOSIMSynthGUI();
 
         /// Create a temporary message box
         void alert(const std::string& a_title, const std::string& a_msg, DlgType a_type = DlgType::Information);
 
         operator nlohmann::json() const;
-        MainGui* load(const nlohmann::json& j);
+        VOSIMSynthGUI* load(const nlohmann::json& j);
 
         /// Reset the GUI to its initial state
         void reset();
@@ -103,14 +103,14 @@ namespace synui {
         std::shared_ptr<SerializableFormHelper> m_themeFormHelper;
 
         // Widgets
-        EnhancedWindow* m_buttonPanel;
+        EnhancedWindowWidget* m_buttonPanel;
 
-        EnhancedWindow* m_sidePanelL;
+        EnhancedWindowWidget* m_sidePanelL;
         nanogui::TabWidget* m_tabWidget;
         nanogui::Widget* m_unitSelector;
         UnitEditorHost* m_unitEditorHost;
 
-        EnhancedWindow* m_sidePanelR;
+        EnhancedWindowWidget* m_sidePanelR;
         CircuitWidget* m_circuitWidget;
     };
 }

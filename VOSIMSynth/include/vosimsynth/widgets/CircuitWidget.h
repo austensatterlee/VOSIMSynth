@@ -40,7 +40,7 @@ namespace syn {
 }
 
 namespace synui {
-    class ChildWindow;
+    class SystemWindow;
     class UnitWidget;
     class UnitEditorHost;
     class UnitEditor;
@@ -144,7 +144,7 @@ namespace synui {
          * \param a_unitEditorHost The widget that will host unit editor interfaces.
          * \param a_vm Voice manager from the real-time thread.
          */
-        CircuitWidget(Widget* a_parent, ChildWindow* a_mainWindow, UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm);
+        CircuitWidget(Widget* a_parent, SystemWindow* a_mainWindow, UnitEditorHost* a_unitEditorHost, syn::VoiceManager* a_vm);
 
         bool mouseButtonEvent(const Eigen::Vector2i& p, int button, bool down, int modifiers) override;
         bool mouseMotionEvent(const Eigen::Vector2i& p, const Eigen::Vector2i& rel, int button, int modifiers) override;
@@ -257,7 +257,7 @@ namespace synui {
         void _changeState(cwstate::State* a_state);
 
     private:
-        ChildWindow* m_window;
+        SystemWindow* m_window;
         UnitEditorHost* m_unitEditorHost;
         syn::VoiceManager* m_vm;
         std::unordered_map<syn::UnitTypeId, UnitWidgetConstructor> m_registeredUnitWidgets;

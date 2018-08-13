@@ -1,6 +1,6 @@
-#include "vosimsynth/MainGUI.h"
-#include "vosimsynth/ChildWindow.h"
-#include "vosimsynth/widgets/EnhancedWindow.h"
+#include "vosimsynth/VOSIMSynthGUI.h"
+#include "vosimsynth/SystemWindow.h"
+#include "vosimsynth/widgets/EnhancedWindowWidget.h"
 #include "vosimsynth/widgets/UnitWidget.h"
 #include "vosimsynth/widgets/CircuitWidget.h"
 #include "vosimsynth/widgets/UnitEditor.h"
@@ -17,7 +17,7 @@
 using nanogui::Color;
 using nlohmann::json;
 
-synui::MainGui::operator json() const {
+synui::VOSIMSynthGUI::operator json() const {
     SYN_TIMING_TRACE
     json j;
     j["circuit"] = m_circuitWidget->operator json();
@@ -26,7 +26,7 @@ synui::MainGui::operator json() const {
     return j;
 }
 
-synui::MainGui* synui::MainGui::load(const json& j) {
+synui::VOSIMSynthGUI* synui::VOSIMSynthGUI::load(const json& j) {
     SYN_TIMING_TRACE
     // Load theme
     if(j.find("theme")!=j.end())
@@ -39,13 +39,13 @@ synui::MainGui* synui::MainGui::load(const json& j) {
     return this;
 }
 
-void synui::MainGui::reset() {
+void synui::VOSIMSynthGUI::reset() {
     SYN_TIMING_TRACE
     m_unitEditorHost->reset();
     m_circuitWidget->reset();
 }
 
-void synui::MainGui::_onResize() {
+void synui::VOSIMSynthGUI::_onResize() {
     SYN_TIMING_TRACE
     m_sidePanelL->setFixedHeight(m_screen->height());
     m_screen->performLayout();
@@ -61,18 +61,18 @@ void synui::MainGui::_onResize() {
     onResize(m_screen->width(), m_screen->height());
 }
 
-void synui::MainGui::_onOpen() {
+void synui::VOSIMSynthGUI::_onOpen() {
     SYN_TIMING_TRACE
     m_screen->setVisible(true);
     m_screen->performLayout();
 }
 
-void synui::MainGui::_onClose() {
+void synui::VOSIMSynthGUI::_onClose() {
     SYN_TIMING_TRACE
     m_screen->setVisible(false);
 }
 
-void synui::MainGui::createUnitSelector_(nanogui::Widget* a_widget) {
+void synui::VOSIMSynthGUI::createUnitSelector_(nanogui::Widget* a_widget) {
     SYN_TIMING_TRACE
     nanogui::BoxLayout* layout = new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 3, 3);
     a_widget->setLayout(layout);
@@ -104,7 +104,7 @@ void synui::MainGui::createUnitSelector_(nanogui::Widget* a_widget) {
     }
 }
 
-void synui::MainGui::createSettingsEditor_(nanogui::Widget* a_widget) {
+void synui::VOSIMSynthGUI::createSettingsEditor_(nanogui::Widget* a_widget) {
     SYN_TIMING_TRACE
     auto layout = new nanogui::AdvancedGridLayout({ 10, 0, 10, 0 }, {});
     layout->setMargin(10);
@@ -172,7 +172,7 @@ void synui::MainGui::createSettingsEditor_(nanogui::Widget* a_widget) {
     })->setItems({ "Oldest", "Newest", "Highest", "Lowest" });
 }
 
-void synui::MainGui::createThemeEditor_(nanogui::Widget* a_widget) {
+void synui::VOSIMSynthGUI::createThemeEditor_(nanogui::Widget* a_widget) {
     SYN_TIMING_TRACE
     auto layout = new nanogui::AdvancedGridLayout({ 10, 0, 10, 0 }, {});
     layout->setMargin(10);
@@ -304,7 +304,7 @@ void synui::MainGui::createThemeEditor_(nanogui::Widget* a_widget) {
 #undef ADD_FH_VAR
 }
 
-void synui::MainGui::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
+void synui::VOSIMSynthGUI::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
     SYN_TIMING_TRACE
     auto oscPanel = a_widget->add<nanogui::Widget>();
     oscPanel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 2, 3));
@@ -348,7 +348,7 @@ void synui::MainGui::createOscilloscopeViewer_(nanogui::Widget* a_widget) {
     m_circuitWidget->onRemoveUnit.connect(removeScope);
 }
 
-void synui::MainGui::_onCreateWindow() {
+void synui::VOSIMSynthGUI::_onCreateWindow() {
     SYN_TIMING_TRACE
 
     GLFWwindow* window = getGlfwWindow_();
@@ -362,14 +362,14 @@ void synui::MainGui::_onCreateWindow() {
     glfwSetCursorPosCallback(window,
         [](GLFWwindow* w, double x, double y)
         {
-            static_cast<MainGui*>(glfwGetWindowUserPointer(w))->m_screen->cursorPosCallbackEvent(x, y);
+            static_cast<VOSIMSynthGUI*>(glfwGetWindowUserPointer(w))->m_screen->cursorPosCallbackEvent(x, y);
         }
     );
 
     glfwSetMouseButtonCallback(window,
         [](GLFWwindow* w, int button, int action, int modifiers)
         {
-            auto gui = static_cast<MainGui*>(glfwGetWindowUserPointer(w));
+            auto gui = static_cast<VOSIMSynthGUI*>(glfwGetWindowUserPointer(w));
             gui->m_screen->mouseButtonCallbackEvent(button, action, modifiers);
         }
     );
@@ -377,34 +377,34 @@ void synui::MainGui::_onCreateWindow() {
     glfwSetKeyCallback(window,
         [](GLFWwindow* w, int key, int scancode, int action, int mods)
         {
-            static_cast<MainGui*>(glfwGetWindowUserPointer(w))->m_screen->keyCallbackEvent(key, scancode, action, mods);
+            static_cast<VOSIMSynthGUI*>(glfwGetWindowUserPointer(w))->m_screen->keyCallbackEvent(key, scancode, action, mods);
         }
     );
 
     glfwSetCharCallback(window,
         [](GLFWwindow* w, unsigned int codepoint)
         {
-            static_cast<MainGui*>(glfwGetWindowUserPointer(w))->m_screen->charCallbackEvent(codepoint);
+            static_cast<VOSIMSynthGUI*>(glfwGetWindowUserPointer(w))->m_screen->charCallbackEvent(codepoint);
         }
     );
 
     glfwSetDropCallback(window,
         [](GLFWwindow* w, int count, const char** filenames)
         {
-            static_cast<MainGui*>(glfwGetWindowUserPointer(w))->m_screen->dropCallbackEvent(count, filenames);
+            static_cast<VOSIMSynthGUI*>(glfwGetWindowUserPointer(w))->m_screen->dropCallbackEvent(count, filenames);
         }
     );
 
     glfwSetScrollCallback(window,
         [](GLFWwindow* w, double x, double y)
         {
-            static_cast<MainGui*>(glfwGetWindowUserPointer(w))->m_screen->scrollCallbackEvent(x, y);
+            static_cast<VOSIMSynthGUI*>(glfwGetWindowUserPointer(w))->m_screen->scrollCallbackEvent(x, y);
         }
     );
 
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* w, int width, int height)
     {
-        auto gui = static_cast<MainGui*>(glfwGetWindowUserPointer(w));
+        auto gui = static_cast<VOSIMSynthGUI*>(glfwGetWindowUserPointer(w));
         if (width < gui->m_minWidth || height < gui->m_minHeight) {
             glfwSetWindowSize(w, std::max(width, gui->m_minWidth), std::max(height, gui->m_minHeight));
         } else {
@@ -417,19 +417,19 @@ void synui::MainGui::_onCreateWindow() {
     _onResize();
 }
 
-void synui::MainGui::_runLoop() {
+void synui::VOSIMSynthGUI::_runLoop() {
     m_screen->drawAll();
 }
 
-void synui::MainGui::_rebuild() {
+void synui::VOSIMSynthGUI::_rebuild() {
     SYN_TIMING_TRACE
     /* Create left pane. */
-    m_sidePanelL = new EnhancedWindow(m_screen, "");
+    m_sidePanelL = new EnhancedWindowWidget(m_screen, "");
     m_sidePanelL->setIsBackgroundWindow(true);
     m_sidePanelL->setLayout(new nanogui::GridLayout(nanogui::Orientation::Horizontal, 1, nanogui::Alignment::Fill, 5, 0));
     m_sidePanelL->setFixedHeight(m_screen->height());
     m_sidePanelL->setFixedWidth(200);
-    m_sidePanelL->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
+    m_sidePanelL->setDrawCallback([](EnhancedWindowWidget* self, NVGcontext* ctx) {
         Color fillColor = self->theme()->get<Color>("/window/unfocused/fill").cwiseProduct(Color(0.9f, 1.0f));
 
         nvgSave(ctx);
@@ -460,10 +460,10 @@ void synui::MainGui::_rebuild() {
     m_tabWidget->setActiveTab(0);
 
     /* Create right pane. */
-    m_sidePanelR = new EnhancedWindow(m_screen, "");
+    m_sidePanelR = new EnhancedWindowWidget(m_screen, "");
     m_sidePanelR->setIsBackgroundWindow(true);
     m_sidePanelR->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill, 0, 0));
-    m_sidePanelR->setDrawCallback([](EnhancedWindow* self, NVGcontext* ctx) {
+    m_sidePanelR->setDrawCallback([](EnhancedWindowWidget* self, NVGcontext* ctx) {
         Color fillColor = self->theme()->get<Color>("/window/unfocused/fill").cwiseProduct(Color(0.9f, 1.0f));
         Color shineColor = self->theme()->prop("/border/light");
         Color shadowColor = self->theme()->prop("/border/dark");
@@ -506,9 +506,9 @@ void synui::MainGui::_rebuild() {
     m_circuitWidget = new CircuitWidget(m_sidePanelR, this, m_unitEditorHost, m_vm);
 
     /* Create button panel */
-    m_buttonPanel = new EnhancedWindow(m_screen, "");
+    m_buttonPanel = new EnhancedWindowWidget(m_screen, "");
     m_buttonPanel->setIsBackgroundWindow(true);
-    m_buttonPanel->setDrawCallback([this](EnhancedWindow* self, NVGcontext* ctx) {
+    m_buttonPanel->setDrawCallback([this](EnhancedWindowWidget* self, NVGcontext* ctx) {
         Color fillColor = self->theme()->get<Color>("/window/unfocused/fill").cwiseProduct(Color(0.9f, 1.0f));
 
         nvgSave(ctx);
@@ -546,7 +546,7 @@ void synui::MainGui::_rebuild() {
     buttonPanelLayout->appendCol(0, 1.0);
 
     /* Create oscilloscope viewer window. */
-    auto oscViewer = new EnhancedWindow(m_screen, "Visualizers");
+    auto oscViewer = new EnhancedWindowWidget(m_screen, "Visualizers");
     oscViewer->setVisible(false);
     oscViewer->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Vertical, nanogui::Alignment::Fill));
     auto oscScrollPanel = oscViewer->add<nanogui::VScrollPanel>();
@@ -561,7 +561,7 @@ void synui::MainGui::_rebuild() {
     buttonPanelLayout->setAnchor(osc_viewer_button, nanogui::AdvancedGridLayout::Anchor{ buttonPanelLayout->colCount() - 1,0 });
 
     /* Create the settings editor window. */
-    auto settingsEditor = new EnhancedWindow(m_screen, "Settings");
+    auto settingsEditor = new EnhancedWindowWidget(m_screen, "Settings");
     settingsEditor->setVisible(false);
     auto settingsScrollPanel = new nanogui::VScrollPanel(settingsEditor);
     settingsScrollPanel->setMaxHeight(400);
@@ -578,7 +578,7 @@ void synui::MainGui::_rebuild() {
     buttonPanelLayout->setAnchor(settings_button, nanogui::AdvancedGridLayout::Anchor{ buttonPanelLayout->colCount() - 1,0 });
 
     /* Create the theme editor window. */
-    auto themeEditor = new EnhancedWindow(m_screen, "Theme");
+    auto themeEditor = new EnhancedWindowWidget(m_screen, "Theme");
     themeEditor->setVisible(false);
     auto themeScrollPanel = new nanogui::VScrollPanel(themeEditor);
     themeScrollPanel->setMaxHeight(400);
@@ -597,8 +597,8 @@ void synui::MainGui::_rebuild() {
     m_screen->performLayout();
 }
 
-synui::MainGui::MainGui(syn::VoiceManager* a_vm, int a_width, int a_height, int a_minWidth, int a_minHeight)
-    : ChildWindow(a_width, a_height),
+synui::VOSIMSynthGUI::VOSIMSynthGUI(syn::VoiceManager* a_vm, int a_width, int a_height, int a_minWidth, int a_minHeight)
+    : SystemWindow(a_width, a_height),
       m_minWidth(a_minWidth),
       m_minHeight(a_minHeight),
       m_showFps(false),
@@ -615,10 +615,10 @@ synui::MainGui::MainGui(syn::VoiceManager* a_vm, int a_width, int a_height, int 
     _onCreateWindow();
 }
 
-synui::MainGui::~MainGui() {
+synui::VOSIMSynthGUI::~VOSIMSynthGUI() {
     SYN_TIMING_TRACE
 }
 
-void synui::MainGui::alert(const std::string& a_title, const std::string& a_msg, nanogui::MessageDialog::Type a_type) {
+void synui::VOSIMSynthGUI::alert(const std::string& a_title, const std::string& a_msg, nanogui::MessageDialog::Type a_type) {
     new nanogui::MessageDialog(m_screen, a_type, a_title, a_msg);
 }

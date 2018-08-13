@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.12)
 project(VOSIMProject)
 enable_language(C CXX RC)
 
@@ -52,7 +52,7 @@ else()
   set(PYTHON_EXECUTABLE ${PYTHON_EXECUTABLE_32})
 endif()
 
-setenv(BOOST_ROOT "C:/users/austen/OneDrive/Code/libs/boost/boost_1_64_0" CACHE PATH "Boost directory (i.e. .../boost/boost_1_60)")
+setenv(BOOST_ROOT "C:/users/austen/OneDrive/Code/libs/boost/boost_1_64_0" CACHE PATH "Boost directory (i.e. .../boost/boost_X_XX)")
 
 # Options
 optionenv(EIGEN_USE_MKL "Should eigen use MKL as its backend?" TRUE)

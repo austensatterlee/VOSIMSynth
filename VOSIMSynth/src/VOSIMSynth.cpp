@@ -29,8 +29,8 @@ along with VOSIMProject. If not, see <http://www.gnu.org/licenses/>.
 #include <vosimlib/units/NoiseUnits.h>
 #include <vosimlib/UnitFactory.h>
 #include <vosimlib/tables.h>
-#include "vosimsynth/ChildWindow.h"
-#include "vosimsynth/MainGUI.h"
+#include "vosimsynth/SystemWindow.h"
+#include "vosimsynth/VOSIMSynthGUI.h"
 #include "vosimsynth/widgets/CircuitWidget.h"
 #include "vosimsynth/widgets/SummerUnitWidget.h"
 #include "vosimsynth/widgets/GainUnitWidget.h"
@@ -54,7 +54,7 @@ VOSIMSynth::VOSIMSynth(IPlugInstanceInfo instanceInfo)
 
 void VOSIMSynth::makeGraphics() {
     SYN_TIMING_TRACE;
-    synui::MainGui* gui = new synui::MainGui(&m_voiceManager, GUI_WIDTH, GUI_HEIGHT, 800, 600);
+    synui::VOSIMSynthGUI* gui = new synui::VOSIMSynthGUI(&m_voiceManager, GUI_WIDTH, GUI_HEIGHT, 800, 600);
     gui->onResize.connect_member(this, &VOSIMSynth::ResizeGraphics);
     AttachAppWindow(gui);
     registerUnitWidgets(*gui->circuitWidget());

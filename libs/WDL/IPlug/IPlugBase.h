@@ -20,19 +20,19 @@
 // All version ints are stored as 0xVVVVRRMM: V = version, R = revision, M = minor revision.
 
 namespace synui {
-    class MainGui;
+    class VOSIMSynthGUI; // TODO: IPlugBase should be templated on this class
 }
 
 class IPlugBase
 {
 private:
-    synui::MainGui* m_appWindow;
+    synui::VOSIMSynthGUI* m_appWindow;
 protected:
-    virtual void AttachAppWindow(synui::MainGui* a_appWindow) {
+    virtual void AttachAppWindow(synui::VOSIMSynthGUI* a_appWindow) {
         m_appWindow = a_appWindow;
     }
 public:
-    synui::MainGui* GetAppWindow() const {
+    synui::VOSIMSynthGUI* GetAppWindow() const {
         return m_appWindow;
     }
 public:

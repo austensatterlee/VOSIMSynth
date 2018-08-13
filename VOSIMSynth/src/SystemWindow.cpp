@@ -1,5 +1,5 @@
-#include "vosimsynth/ChildWindow.h"
-#include "vosimsynth/MainGUI.h"
+#include "vosimsynth/SystemWindow.h"
+#include "vosimsynth/VOSIMSynthGUI.h"
 #include "vosimsynth/common.h"
 #include <vosimlib/Command.h>
 #include <vosimlib/Logging.h>
@@ -20,16 +20,16 @@
 
 static int g_nGlfwClassReg = 0;
 
-VOID CALLBACK synui::ChildWindow::_timerProc(HWND a_hwnd, UINT /*message*/, UINT /*idTimer*/, DWORD /*dwTime*/) {
+VOID CALLBACK synui::SystemWindow::_timerProc(HWND a_hwnd, UINT /*message*/, UINT /*idTimer*/, DWORD /*dwTime*/) {
     GLFWwindow* window = static_cast<GLFWwindow*>(GetPropW(a_hwnd, L"GLFW"));
-    ChildWindow* _this = static_cast<ChildWindow*>(glfwGetWindowUserPointer(window));
+    SystemWindow* _this = static_cast<SystemWindow*>(glfwGetWindowUserPointer(window));
     if (_this->m_isOpen) {
         _this->_flushMessageQueues();
         _this->_runLoop();
     }
 }
 
-void synui::ChildWindow::_openWindowImplem(HWND a_system_window) {
+void synui::SystemWindow::_openWindowImplem(HWND a_system_window) {
     SYN_TIMING_TRACE
 
     HWND hwnd = glfwGetWin32Window(m_window);
@@ -45,7 +45,7 @@ void synui::ChildWindow::_openWindowImplem(HWND a_system_window) {
     }
 }
 
-void synui::ChildWindow::_closeWindowImplem() {
+void synui::SystemWindow::_closeWindowImplem() {
     SYN_TIMING_TRACE
     HWND hwnd = glfwGetWin32Window(m_window);
     SetParent(hwnd, NULL);
@@ -55,7 +55,7 @@ void synui::ChildWindow::_closeWindowImplem() {
 }
 #endif // _WIN32
 
-synui::ChildWindow::ChildWindow(int a_width, int a_height)
+synui::SystemWindow::SystemWindow(int a_width, int a_height)
     : m_window(nullptr),
       m_isOpen(false),
       m_guiInternalMsgQueue(MAX_GUI_MSG_QUEUE_SIZE),
@@ -77,14 +77,14 @@ synui::ChildWindow::ChildWindow(int a_width, int a_height)
     _createGlfwWindow(a_width, a_height);
 }
 
-synui::ChildWindow::~ChildWindow() {
+synui::SystemWindow::~SystemWindow() {
     SYN_TIMING_TRACE
     closeWindow();
     if (!--g_nGlfwClassReg)
         glfwTerminate();
 }
 
-void synui::ChildWindow::_createGlfwWindow(int a_width, int a_height) {
+void synui::SystemWindow::_createGlfwWindow(int a_width, int a_height) {
     SYN_TIMING_TRACE
 
 #if defined(GL_VERSION_MAJOR)
@@ -126,7 +126,7 @@ void synui::ChildWindow::_createGlfwWindow(int a_width, int a_height) {
 }
 
 #if defined(_WIN32)
-bool synui::ChildWindow::openWindow(HWND a_systemWindow) {
+bool synui::SystemWindow::openWindow(HWND a_systemWindow) {
     SYN_TIMING_TRACE
     if (!m_isOpen) {
         m_isOpen = true;
@@ -139,7 +139,7 @@ bool synui::ChildWindow::openWindow(HWND a_systemWindow) {
 }
 #endif
 
-void synui::ChildWindow::closeWindow() {
+void synui::SystemWindow::closeWindow() {
     SYN_TIMING_TRACE
     if (m_isOpen) {
         m_isOpen = false;
@@ -149,7 +149,7 @@ void synui::ChildWindow::closeWindow() {
     }
 }
 
-bool synui::ChildWindow::queueExternalMessage(syn::Command* a_msg) {
+bool synui::SystemWindow::queueExternalMessage(syn::Command* a_msg) {
     SYN_TIMING_TRACE
     if (!m_guiExternalMsgQueue.write_available()) {
         return false;
@@ -158,7 +158,7 @@ bool synui::ChildWindow::queueExternalMessage(syn::Command* a_msg) {
     return true;
 }
 
-bool synui::ChildWindow::queueInternalMessage(syn::Command* a_msg) {
+bool synui::SystemWindow::queueInternalMessage(syn::Command* a_msg) {
     SYN_TIMING_TRACE
     if (!m_guiInternalMsgQueue.write_available()) {
         return false;
@@ -167,19 +167,19 @@ bool synui::ChildWindow::queueInternalMessage(syn::Command* a_msg) {
     return true;
 }
 
-int synui::ChildWindow::getWidth() const {
+int synui::SystemWindow::getWidth() const {
     int width;
     glfwGetWindowSize(m_window, &width, nullptr);
     return width;
 }
 
-int synui::ChildWindow::getHeight() const {
+int synui::SystemWindow::getHeight() const {
     int height;
     glfwGetWindowSize(m_window, nullptr, &height);
     return height;
 }
 
-void synui::ChildWindow::_flushMessageQueues() {
+void synui::SystemWindow::_flushMessageQueues() {
     syn::Command* msg;
     while (m_guiInternalMsgQueue.pop(msg)) {
         (*msg)();
