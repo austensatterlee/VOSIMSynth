@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.3)
 project(VOSIMLib)
 
 optionenv(VOSIMLIB_SHARED "Build as a shared library?" FALSE)
