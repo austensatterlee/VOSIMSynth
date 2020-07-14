@@ -4,8 +4,8 @@ build:
     verbosity: detailed
 
 environment:
-    PYTHON_EXECUTABLE_32: C:/Miniconda/python.exe
-    PYTHON_EXECUTABLE_64: C:/Miniconda-x64/python.exe
+    PYTHON_EXECUTABLE_32: C:/Python38/python.exe
+    PYTHON_EXECUTABLE_64: C:/Python38-x64/python.exe
     BOOST_ROOT: C:/Libraries/boost_1_65_1
     VOSIMLIB_BUILD_PYTHON: ON
     VOSIMSYNTH_BUILD_STANDALONE: OFF
@@ -18,45 +18,46 @@ environment:
         - GENERATOR: "Visual Studio 15 2017"
           CONFIG: Debug
           VOSIMPROJECT_EIS: NONE
-          PYTHON: C:/Miniconda
+          PYTHON: C:/Python38
           ARCH: x86
           BUILD_DIR: _build32
 
         - GENERATOR: "Visual Studio 15 2017"
           CONFIG: Release
           VOSIMPROJECT_EIS: NONE
-          PYTHON: C:/Miniconda
+          PYTHON: C:/Python38
           BUILD_DIR: _build32
 
         - GENERATOR: "Visual Studio 15 2017 Win64"
           CONFIG: Debug
           VOSIMPROJECT_EIS: SSE2
-          PYTHON: C:/Miniconda-x64
+          PYTHON: C:/Python38-x64
           BUILD_DIR: _build64-sse2
 
         - GENERATOR: "Visual Studio 15 2017 Win64"
           CONFIG: Release
           VOSIMPROJECT_EIS: SSE2
-          PYTHON: C:/Miniconda-x64
+          PYTHON: C:/Python38-x64
           BUILD_DIR: _build64-sse2
 
         - GENERATOR: "Visual Studio 15 2017 Win64"
           CONFIG: Debug
           VOSIMPROJECT_EIS: AVX2
-          PYTHON: C:/Miniconda-x64
+          PYTHON: C:/Python38-x64
           BUILD_DIR: _build64-avx2
 
         - GENERATOR: "Visual Studio 15 2017 Win64"
           CONFIG: Release
           VOSIMPROJECT_EIS: AVX2
-          PYTHON: C:/Miniconda-x64
+          PYTHON: C:/Python38-x64
           BUILD_DIR: _build64-avx2
 
 install:
     - git submodule update --init --recursive
-    - set PATH=%PYTHON%;%PYTHON%/Scripts;%PATH%
-    - conda update -y conda
-    - conda install -y numpy scipy
+    - set PATH=%PATH%;%PYTHON%;%PYTHON%/Scripts
+    - echo %PYTHON%
+    - where python
+    - python -m pip install -U pip numpy scipy
 
 before_build:
     - pushd VOSIMLib && python genTables.py -v && popd
